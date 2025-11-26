@@ -81,6 +81,7 @@ type Trunk struct {
 	// if the resource has not been updated, this field will show as null.
 	UpdatedAt time.Time `json:"updated_at"`
 
+	// RevisionNumber optionally set via extensions/standard-attr-revisions
 	RevisionNumber int `json:"revision_number"`
 
 	// UUID of the trunk's parent port

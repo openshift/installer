@@ -19,11 +19,13 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"maps"
 	"reflect"
 	"time"
 
 	"github.com/go-logr/logr"
 	"github.com/pkg/errors"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -33,35 +35,32 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
-	"sigs.k8s.io/controller-runtime/pkg/cache/informertest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/api/v1beta1/index"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	"sigs.k8s.io/cluster-api/api/core/v1beta2/index"
+	runtimehooksv1 "sigs.k8s.io/cluster-api/api/runtime/hooks/v1alpha1"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/external"
-	externalfake "sigs.k8s.io/cluster-api/controllers/external/fake"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	runtimecatalog "sigs.k8s.io/cluster-api/exp/runtime/catalog"
 	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
-	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
 	"sigs.k8s.io/cluster-api/exp/topology/desiredstate"
 	"sigs.k8s.io/cluster-api/exp/topology/scope"
 	"sigs.k8s.io/cluster-api/feature"
-	"sigs.k8s.io/cluster-api/internal/controllers/topology/cluster/structuredmerge"
 	"sigs.k8s.io/cluster-api/internal/hooks"
 	"sigs.k8s.io/cluster-api/internal/util/ssa"
 	"sigs.k8s.io/cluster-api/internal/webhooks"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	"sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
@@ -94,7 +93,7 @@ type Reconciler struct {
 	// desiredStateGenerator is used to generate the desired state.
 	desiredStateGenerator desiredstate.Generator
 
-	patchHelperFactory structuredmerge.PatchHelperFactoryFunc
+	ssaCache ssa.Cache
 }
 
 func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, options controller.Options) error {
@@ -135,7 +134,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 			)),
 		).
 		Watches(
-			&expv1.MachinePool{},
+			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(r.machinePoolToCluster),
 			// Only trigger Cluster reconciliation if the MachinePool is topology owned, the resource is changed.
 			builder.WithPredicates(predicates.All(mgr.GetScheme(), predicateLog,
@@ -159,9 +158,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 	}
 	r.desiredStateGenerator = desiredstate.NewGenerator(r.Client, r.ClusterCache, r.RuntimeClient)
 	r.recorder = mgr.GetEventRecorderFor("topology/cluster-controller")
-	if r.patchHelperFactory == nil {
-		r.patchHelperFactory = serverSideApplyPatchHelperFactory(r.Client, ssa.NewCache())
-	}
+	r.ssaCache = ssa.NewCache("topology/cluster")
 	return nil
 }
 
@@ -169,12 +166,8 @@ func clusterChangeIsRelevant(scheme *runtime.Scheme, logger logr.Logger) predica
 	dropNotRelevant := func(cluster *clusterv1.Cluster) *clusterv1.Cluster {
 		c := cluster.DeepCopy()
 		// Drop metadata fields which are impacted by not relevant changes.
-		c.ObjectMeta.ManagedFields = nil
-		c.ObjectMeta.ResourceVersion = ""
-
-		// Drop changes on v1beta2 conditions; when v1beta2 conditions will be moved top level, we will review this
-		// selectively drop changes not relevant for this controller.
-		c.Status.V1Beta2 = nil
+		c.ManagedFields = nil
+		c.ResourceVersion = ""
 		return c
 	}
 
@@ -221,12 +214,8 @@ func machineDeploymentChangeIsRelevant(scheme *runtime.Scheme, logger logr.Logge
 	dropNotRelevant := func(machineDeployment *clusterv1.MachineDeployment) *clusterv1.MachineDeployment {
 		md := machineDeployment.DeepCopy()
 		// Drop metadata fields which are impacted by not relevant changes.
-		md.ObjectMeta.ManagedFields = nil
-		md.ObjectMeta.ResourceVersion = ""
-
-		// Drop changes on v1beta2 conditions; when v1beta2 conditions will be moved top level, we will review this
-		// selectively drop changes not relevant for this controller.
-		md.Status.V1Beta2 = nil
+		md.ManagedFields = nil
+		md.ResourceVersion = ""
 		return md
 	}
 
@@ -264,22 +253,7 @@ func machineDeploymentChangeIsRelevant(scheme *runtime.Scheme, logger logr.Logge
 	}
 }
 
-// SetupForDryRun prepares the Reconciler for a dry run execution.
-func (r *Reconciler) SetupForDryRun(recorder record.EventRecorder) {
-	r.desiredStateGenerator = desiredstate.NewGenerator(r.Client, r.ClusterCache, r.RuntimeClient)
-	r.recorder = recorder
-	r.externalTracker = external.ObjectTracker{
-		Controller:      externalfake.Controller{},
-		Cache:           &informertest.FakeInformers{},
-		Scheme:          r.Client.Scheme(),
-		PredicateLogger: ptr.To(logr.New(log.NullLogSink{})),
-	}
-	r.patchHelperFactory = dryRunPatchHelperFactory(r.Client)
-}
-
 func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Result, reterr error) {
-	log := ctrl.LoggerFrom(ctx)
-
 	// Fetch the Cluster instance.
 	cluster := &clusterv1.Cluster{}
 	if err := r.Client.Get(ctx, req.NamespacedName, cluster); err != nil {
@@ -296,7 +270,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	// NOTE: We're already filtering events, but this is a safeguard for cases like e.g. when
 	// there are MachineDeployments which have the topology owned label, but the corresponding
 	// cluster is not topology owned.
-	if cluster.Spec.Topology == nil {
+	if !cluster.Spec.Topology.IsDefined() {
 		return ctrl.Result{}, nil
 	}
 
@@ -315,11 +289,11 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 			return
 		}
 		options := []patch.Option{
-			patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-				clusterv1.TopologyReconciledCondition,
+			patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+				clusterv1.TopologyReconciledV1Beta1Condition,
 			}},
-			patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-				clusterv1.ClusterTopologyReconciledV1Beta2Condition,
+			patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+				clusterv1.ClusterTopologyReconciledCondition,
 			}},
 		}
 		if err := patchHelper.Patch(ctx, cluster, options...); err != nil {
@@ -329,26 +303,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	}()
 
 	// Return early if the Cluster is paused.
-	if cluster.Spec.Paused || annotations.HasPaused(cluster) {
+	if ptr.Deref(cluster.Spec.Paused, false) || annotations.HasPaused(cluster) {
 		return ctrl.Result{}, nil
 	}
 
 	// In case the object is deleted, the managed topology stops to reconcile;
 	// (the other controllers will take care of deletion).
-	if !cluster.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !cluster.DeletionTimestamp.IsZero() {
 		return r.reconcileDelete(ctx, cluster)
 	}
 
 	// Handle normal reconciliation loop.
-	result, err := r.reconcile(ctx, s)
-	if err != nil {
-		// Requeue if the reconcile failed because connection to workload cluster was down.
-		if errors.Is(err, clustercache.ErrClusterNotConnected) {
-			log.V(5).Info("Requeuing because connection to the workload cluster is down")
-			return ctrl.Result{RequeueAfter: time.Minute}, nil
-		}
-	}
-	return result, err
+	return r.reconcile(ctx, s)
 }
 
 // reconcile handles cluster reconciliation.
@@ -367,9 +333,9 @@ func (r *Reconciler) reconcile(ctx context.Context, s *scope.Scope) (ctrl.Result
 	// is not up to date.
 	// Note: This doesn't require requeue as a change to ClusterClass observedGeneration will cause an additional reconcile
 	// in the Cluster.
-	if !conditions.Has(clusterClass, clusterv1.ClusterClassVariablesReconciledCondition) ||
-		conditions.IsFalse(clusterClass, clusterv1.ClusterClassVariablesReconciledCondition) {
-		return ctrl.Result{}, errors.Errorf("ClusterClass is not successfully reconciled: status of %s condition on ClusterClass must be \"True\"", clusterv1.ClusterClassVariablesReconciledCondition)
+	if !conditions.Has(clusterClass, clusterv1.ClusterClassVariablesReadyCondition) ||
+		conditions.IsFalse(clusterClass, clusterv1.ClusterClassVariablesReadyCondition) {
+		return ctrl.Result{}, errors.Errorf("ClusterClass is not successfully reconciled: status of %s condition on ClusterClass must be \"True\"", clusterv1.ClusterClassVariablesReadyCondition)
 	}
 	if clusterClass.GetGeneration() != clusterClass.Status.ObservedGeneration {
 		return ctrl.Result{}, errors.Errorf("ClusterClass is not successfully reconciled: ClusterClass.status.observedGeneration must be %d, but is %d", clusterClass.GetGeneration(), clusterClass.Status.ObservedGeneration)
@@ -463,9 +429,16 @@ func (r *Reconciler) callBeforeClusterCreateHook(ctx context.Context, s *scope.S
 	// If the cluster objects (InfraCluster, ControlPlane, etc) are not yet created we are in the creation phase.
 	// Call the BeforeClusterCreate hook before proceeding.
 	log := ctrl.LoggerFrom(ctx)
-	if s.Current.Cluster.Spec.InfrastructureRef == nil && s.Current.Cluster.Spec.ControlPlaneRef == nil {
+
+	if !s.Current.Cluster.Spec.InfrastructureRef.IsDefined() && !s.Current.Cluster.Spec.ControlPlaneRef.IsDefined() {
+		v1beta1Cluster := &clusterv1beta1.Cluster{}
+		// DeepCopy cluster because ConvertFrom has side effects like adding the conversion annotation.
+		if err := v1beta1Cluster.ConvertFrom(s.Current.Cluster.DeepCopy()); err != nil {
+			return ctrl.Result{}, errors.Wrap(err, "error converting Cluster to v1beta1 Cluster")
+		}
+
 		hookRequest := &runtimehooksv1.BeforeClusterCreateRequest{
-			Cluster: *s.Current.Cluster,
+			Cluster: *cleanupCluster(v1beta1Cluster),
 		}
 		hookResponse := &runtimehooksv1.BeforeClusterCreateResponse{}
 		if err := r.RuntimeClient.CallAllExtensions(ctx, runtimehooksv1.BeforeClusterCreate, s.Current.Cluster, hookRequest, hookResponse); err != nil {
@@ -530,7 +503,7 @@ func (r *Reconciler) machineDeploymentToCluster(_ context.Context, o client.Obje
 // machinePoolToCluster is a handler.ToRequestsFunc to be used to enqueue requests for reconciliation
 // for Cluster to update when one of its own MachinePools gets updated.
 func (r *Reconciler) machinePoolToCluster(_ context.Context, o client.Object) []ctrl.Request {
-	mp, ok := o.(*expv1.MachinePool)
+	mp, ok := o.(*clusterv1.MachinePool)
 	if !ok {
 		panic(fmt.Sprintf("Expected a MachinePool but got a %T", o))
 	}
@@ -552,8 +525,14 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, cluster *clusterv1.Clu
 	log := ctrl.LoggerFrom(ctx)
 	if feature.Gates.Enabled(feature.RuntimeSDK) {
 		if !hooks.IsOkToDelete(cluster) {
+			v1beta1Cluster := &clusterv1beta1.Cluster{}
+			// DeepCopy cluster because ConvertFrom has side effects like adding the conversion annotation.
+			if err := v1beta1Cluster.ConvertFrom(cluster.DeepCopy()); err != nil {
+				return ctrl.Result{}, errors.Wrap(err, "error converting Cluster to v1beta1 Cluster")
+			}
+
 			hookRequest := &runtimehooksv1.BeforeClusterDeleteRequest{
-				Cluster: *cluster,
+				Cluster: *cleanupCluster(v1beta1Cluster),
 			}
 			hookResponse := &runtimehooksv1.BeforeClusterDeleteResponse{}
 			if err := r.RuntimeClient.CallAllExtensions(ctx, runtimehooksv1.BeforeClusterDelete, cluster, hookRequest, hookResponse); err != nil {
@@ -573,16 +552,18 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, cluster *clusterv1.Clu
 	return ctrl.Result{}, nil
 }
 
-// serverSideApplyPatchHelperFactory makes use of managed fields provided by server side apply and is used by the controller.
-func serverSideApplyPatchHelperFactory(c client.Client, ssaCache ssa.Cache) structuredmerge.PatchHelperFactoryFunc {
-	return func(ctx context.Context, original, modified client.Object, opts ...structuredmerge.HelperOption) (structuredmerge.PatchHelper, error) {
-		return structuredmerge.NewServerSidePatchHelper(ctx, original, modified, c, ssaCache, opts...)
-	}
-}
+func cleanupCluster(cluster *clusterv1beta1.Cluster) *clusterv1beta1.Cluster {
+	// Optimize size of Cluster by not sending status, the managedFields and some specific annotations.
+	cluster.SetManagedFields(nil)
 
-// dryRunPatchHelperFactory makes use of a two-ways patch and is used in situations where we cannot rely on managed fields.
-func dryRunPatchHelperFactory(c client.Client) structuredmerge.PatchHelperFactoryFunc {
-	return func(_ context.Context, original, modified client.Object, opts ...structuredmerge.HelperOption) (structuredmerge.PatchHelper, error) {
-		return structuredmerge.NewTwoWaysPatchHelper(original, modified, c, opts...)
+	// The conversion that we run before calling cleanupCluster does not clone annotations
+	// So we have to do it here to not modify the original Cluster.
+	if cluster.Annotations != nil {
+		annotations := maps.Clone(cluster.Annotations)
+		delete(annotations, corev1.LastAppliedConfigAnnotation)
+		delete(annotations, conversion.DataAnnotation)
+		cluster.Annotations = annotations
 	}
+	cluster.Status = clusterv1beta1.ClusterStatus{}
+	return cluster
 }

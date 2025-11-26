@@ -32,8 +32,8 @@ import (
 
 	"github.com/blang/semver/v4"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/version"
 )
 
@@ -47,8 +47,8 @@ type machinesByVersion []*clusterv1.Machine
 func (v machinesByVersion) Len() int      { return len(v) }
 func (v machinesByVersion) Swap(i, j int) { v[i], v[j] = v[j], v[i] }
 func (v machinesByVersion) Less(i, j int) bool {
-	vi, _ := semver.ParseTolerant(*v[i].Spec.Version)
-	vj, _ := semver.ParseTolerant(*v[j].Spec.Version)
+	vi, _ := semver.ParseTolerant(v[i].Spec.Version)
+	vj, _ := semver.ParseTolerant(v[j].Spec.Version)
 	comp := version.Compare(vi, vj, version.WithBuildTags())
 	if comp == 0 {
 		return v[i].Name < v[j].Name
@@ -241,8 +241,8 @@ func (s Machines) DeepCopy() Machines {
 }
 
 // ConditionGetters returns the slice with machines converted into conditions.Getter.
-func (s Machines) ConditionGetters() []conditions.Getter {
-	res := make([]conditions.Getter, 0, len(s))
+func (s Machines) ConditionGetters() []v1beta1conditions.Getter {
+	res := make([]v1beta1conditions.Getter, 0, len(s))
 	for _, v := range s {
 		value := *v
 		res = append(res, &value)
@@ -273,10 +273,10 @@ func (s Machines) sortedByVersion() []*clusterv1.Machine {
 // LowestVersion returns the lowest version among all the machine with
 // defined versions. If no machine has a defined version it returns an
 // empty string.
-func (s Machines) LowestVersion() *string {
+func (s Machines) LowestVersion() string {
 	machines := s.Filter(WithVersion())
 	if len(machines) == 0 {
-		return nil
+		return ""
 	}
 	m := machines.sortedByVersion()[0]
 	return m.Spec.Version

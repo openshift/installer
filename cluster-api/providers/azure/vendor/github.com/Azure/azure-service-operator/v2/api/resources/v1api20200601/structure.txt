@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601
 ----------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-06-01"
+
 ResourceGroup: Resource
 ├── Spec: Object (5 properties)
 │   ├── AzureName: Validated<string> (2 rules)
@@ -24,3 +25,4 @@ ResourceGroup: Resource
     │   └── ProvisioningState: *string
     ├── Tags: map[string]string
     └── Type: *string
+

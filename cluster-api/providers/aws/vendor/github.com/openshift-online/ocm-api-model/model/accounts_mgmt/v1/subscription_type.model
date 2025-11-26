@@ -1,0 +1,63 @@
+/*
+Copyright (c) 2021 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+
+class Subscription {
+	Plan Plan
+	ClusterID String
+	ExternalClusterID String
+	OrganizationID String
+	// Last telemetry authorization request for this  cluster/subscription in Unix time
+	LastTelemetryDate Date
+	CreatedAt Date
+	UpdatedAt Date
+	SupportLevel String
+	ServiceLevel String
+	Usage String
+	ProductBundle String
+	SystemUnits String
+	CpuTotal Integer
+	SocketTotal Integer
+	DisplayName String
+	Managed Boolean
+	Status String
+	// The origin of cluster registration (values are defined in AMS at pkg/api/subscription_types.go).
+	Provenance String
+	// Last time this subscription were reconciled about cluster usage.
+	LastReconcileDate Date
+	ConsumerUUID String
+	ConsoleURL String
+	Labels []Label
+	Capabilities []Capability
+	// Last time status was set to Released for this cluster/subscription.
+	LastReleasedAt Date
+	// Flag used to denote whether or not the owner of the cluster has released the ownership and ready to be transferred to a different user.
+	Released Boolean
+	// Metrics array. One or zero elements will present.
+	Metrics []SubscriptionMetrics
+	NotificationContacts []Account
+	CloudAccountID String
+	CloudProviderID String
+	BillingMarketplaceAccount String
+	RegionID String
+	RhRegionID String
+	ClusterBillingModel BillingModel
+	// If the subscription is a trial, date the trial ends.
+	TrialEndDate Date
+
+	// Link to the account that created the subscription.
+	link Creator Account
+}

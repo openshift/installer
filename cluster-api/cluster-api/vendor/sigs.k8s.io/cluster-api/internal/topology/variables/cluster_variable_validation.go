@@ -29,8 +29,9 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	celconfig "k8s.io/apiserver/pkg/apis/cel"
+	"k8s.io/utils/ptr"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 // ValidateClusterVariables validates ClusterVariables based on the definitions in ClusterClass `.status.variables`.
@@ -117,7 +118,7 @@ func validateRequiredVariables(values map[string]*clusterv1.ClusterVariable, def
 
 	for name, def := range definitions {
 		// Check the required value for the specific variable definition. If the variable is not required continue.
-		if !def.Definitions[0].Required {
+		if !ptr.Deref(def.Definitions[0].Required, false) {
 			continue
 		}
 

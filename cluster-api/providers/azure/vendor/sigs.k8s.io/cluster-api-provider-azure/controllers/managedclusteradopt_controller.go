@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -88,8 +88,8 @@ func (r *ManagedClusterAdoptReconciler) Reconcile(ctx context.Context, req ctrl.
 	}
 
 	for _, owner := range managedCluster.GetOwnerReferences() {
-		if owner.APIVersion == infrav1alpha.GroupVersion.Identifier() &&
-			owner.Kind == infrav1alpha.AzureASOManagedControlPlaneKind {
+		if matchesASOManagedAPIGroup(owner.APIVersion) &&
+			owner.Kind == infrav1.AzureASOManagedControlPlaneKind {
 			return ctrl.Result{}, nil
 		}
 	}
@@ -103,13 +103,13 @@ func (r *ManagedClusterAdoptReconciler) Reconcile(ctx context.Context, req ctrl.
 		},
 		Spec: clusterv1.ClusterSpec{
 			InfrastructureRef: &corev1.ObjectReference{
-				APIVersion: infrav1alpha.GroupVersion.Identifier(),
-				Kind:       infrav1alpha.AzureASOManagedClusterKind,
+				APIVersion: infrav1.GroupVersion.Identifier(),
+				Kind:       infrav1.AzureASOManagedClusterKind,
 				Name:       managedCluster.Name,
 			},
 			ControlPlaneRef: &corev1.ObjectReference{
-				APIVersion: infrav1alpha.GroupVersion.Identifier(),
-				Kind:       infrav1alpha.AzureASOManagedControlPlaneKind,
+				APIVersion: infrav1.GroupVersion.Identifier(),
+				Kind:       infrav1.AzureASOManagedControlPlaneKind,
 				Name:       managedCluster.Name,
 			},
 		},
@@ -143,13 +143,13 @@ func (r *ManagedClusterAdoptReconciler) Reconcile(ctx context.Context, req ctrl.
 		Spec: resourceGroup.Spec,
 	}
 
-	asoManagedCluster := &infrav1alpha.AzureASOManagedCluster{
+	asoManagedCluster := &infrav1.AzureASOManagedCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: managedCluster.Namespace,
 			Name:      managedCluster.Name,
 		},
-		Spec: infrav1alpha.AzureASOManagedClusterSpec{
-			AzureASOManagedClusterTemplateResourceSpec: infrav1alpha.AzureASOManagedClusterTemplateResourceSpec{
+		Spec: infrav1.AzureASOManagedClusterSpec{
+			AzureASOManagedClusterTemplateResourceSpec: infrav1.AzureASOManagedClusterTemplateResourceSpec{
 				Resources: []runtime.RawExtension{
 					{Object: resourceGroup},
 				},
@@ -180,13 +180,13 @@ func (r *ManagedClusterAdoptReconciler) Reconcile(ctx context.Context, req ctrl.
 		Spec: managedCluster.Spec,
 	}
 
-	asoManagedControlPlane := &infrav1alpha.AzureASOManagedControlPlane{
+	asoManagedControlPlane := &infrav1.AzureASOManagedControlPlane{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: cluster.Namespace,
 			Name:      managedCluster.Name,
 		},
-		Spec: infrav1alpha.AzureASOManagedControlPlaneSpec{
-			AzureASOManagedControlPlaneTemplateResourceSpec: infrav1alpha.AzureASOManagedControlPlaneTemplateResourceSpec{
+		Spec: infrav1.AzureASOManagedControlPlaneSpec{
+			AzureASOManagedControlPlaneTemplateResourceSpec: infrav1.AzureASOManagedControlPlaneTemplateResourceSpec{
 				Resources: []runtime.RawExtension{
 					{Object: managedCluster},
 				},

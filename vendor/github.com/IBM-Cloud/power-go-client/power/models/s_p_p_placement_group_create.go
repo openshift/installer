@@ -22,12 +22,18 @@ type SPPPlacementGroupCreate struct {
 
 	// The name of the Shared Processor Pool Placement Group; minimum of 2 characters, maximum of 12, the only special character allowed is the underscore '_'.
 	// Required: true
+	// Max Length: 12
+	// Min Length: 2
+	// Pattern: ^[a-zA-Z0-9_]+$
 	Name *string `json:"name"`
 
 	// The placement group policy
 	// Required: true
 	// Enum: ["affinity","anti-affinity"]
 	Policy *string `json:"policy"`
+
+	// user tags
+	UserTags Tags `json:"userTags,omitempty"`
 }
 
 // Validate validates this s p p placement group create
@@ -42,6 +48,10 @@ func (m *SPPPlacementGroupCreate) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateUserTags(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
@@ -51,6 +61,18 @@ func (m *SPPPlacementGroupCreate) Validate(formats strfmt.Registry) error {
 func (m *SPPPlacementGroupCreate) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	if err := validate.MinLength("name", "body", *m.Name, 2); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("name", "body", *m.Name, 12); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("name", "body", *m.Name, `^[a-zA-Z0-9_]+$`); err != nil {
 		return err
 	}
 
@@ -100,8 +122,48 @@ func (m *SPPPlacementGroupCreate) validatePolicy(formats strfmt.Registry) error 
 	return nil
 }
 
-// ContextValidate validates this s p p placement group create based on context it is used
+func (m *SPPPlacementGroupCreate) validateUserTags(formats strfmt.Registry) error {
+	if swag.IsZero(m.UserTags) { // not required
+		return nil
+	}
+
+	if err := m.UserTags.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this s p p placement group create based on the context it is used
 func (m *SPPPlacementGroupCreate) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateUserTags(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *SPPPlacementGroupCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("userTags")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("userTags")
+		}
+		return err
+	}
+
 	return nil
 }
 

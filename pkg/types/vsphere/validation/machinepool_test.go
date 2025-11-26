@@ -127,7 +127,7 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expectedErrMsg: `^test-path.zones: Invalid value: \[\]string{"Zone%\^@112233"}: cluster name must begin with a lower-case letter$`,
+			expectedErrMsg: `^test-path.zones: Invalid value: \["Zone%\^@112233"\]: cluster name must begin with a lower-case letter$`,
 		},
 		{
 			name:     "multi-zone valid",

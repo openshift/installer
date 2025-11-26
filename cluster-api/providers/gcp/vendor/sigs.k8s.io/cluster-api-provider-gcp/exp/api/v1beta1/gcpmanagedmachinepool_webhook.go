@@ -17,12 +17,13 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	"fmt"
 
-	"github.com/google/go-cmp/cmp"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	webhookutils "sigs.k8s.io/cluster-api-provider-gcp/util/webhook"
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
@@ -34,169 +35,247 @@ const (
 )
 
 // log is for logging in this package.
-var gcpmanagedmachinepoollog = logf.Log.WithName("gcpmanagedmachinepool-resource")
+var gcpmanagedmachinepoollog = logf.Log.WithName("gcpmanagedmachinepooltemplate-resource")
 
 func (r *GCPManagedMachinePool) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	w := new(gcpManagedMachinePoolWebhook)
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(r).
+		WithValidator(w).
+		WithDefaulter(w).
 		Complete()
 }
 
 //+kubebuilder:webhook:path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-gcpmanagedmachinepool,mutating=true,failurePolicy=fail,sideEffects=None,groups=infrastructure.cluster.x-k8s.io,resources=gcpmanagedmachinepools,verbs=create;update,versions=v1beta1,name=mgcpmanagedmachinepool.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Defaulter = &GCPManagedMachinePool{}
+type gcpManagedMachinePoolWebhook struct{}
+
+var _ webhook.CustomDefaulter = &gcpManagedMachinePoolWebhook{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (r *GCPManagedMachinePool) Default() {
-	gcpmanagedmachinepoollog.Info("default", "name", r.Name)
+func (*gcpManagedMachinePoolWebhook) Default(_ context.Context, _ runtime.Object) error {
+	return nil
 }
 
 //+kubebuilder:webhook:path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-gcpmanagedmachinepool,mutating=false,failurePolicy=fail,sideEffects=None,groups=infrastructure.cluster.x-k8s.io,resources=gcpmanagedmachinepools,verbs=create;update,versions=v1beta1,name=vgcpmanagedmachinepool.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &GCPManagedMachinePool{}
+var _ webhook.CustomValidator = &gcpManagedMachinePoolWebhook{}
 
-// validateSpec validates that the GCPManagedMachinePool spec is valid.
-func (r *GCPManagedMachinePool) validateSpec() field.ErrorList {
+func validateNodePoolName(name string, fldPath *field.Path) *field.Error {
+	if len(name) > maxNodePoolNameLength {
+		return (field.Invalid(
+			fldPath,
+			name,
+			fmt.Sprintf("node pool name cannot have more than %d characters", maxNodePoolNameLength),
+		))
+	}
+
+	return nil
+}
+
+func validateScaling(scaling *NodePoolAutoScaling, minField, maxField, locationPolicyField *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	// Validate node pool name
-	if len(r.Spec.NodePoolName) > maxNodePoolNameLength {
-		allErrs = append(allErrs,
-			field.Invalid(field.NewPath("spec", "NodePoolName"),
-				r.Spec.NodePoolName, fmt.Sprintf("node pool name cannot have more than %d characters", maxNodePoolNameLength)),
-		)
+	// cannot specify autoscaling config if autoscaling is disabled
+	if scaling.EnableAutoscaling != nil && !*scaling.EnableAutoscaling {
+		if scaling.MinCount != nil {
+			allErrs = append(allErrs, field.Forbidden(minField, "minCount cannot be specified when autoscaling is disabled"))
+		}
+		if scaling.MaxCount != nil {
+			allErrs = append(allErrs, field.Forbidden(maxField, "maxCount cannot be specified when autoscaling is disabled"))
+		}
+		if scaling.LocationPolicy != nil {
+			allErrs = append(allErrs, field.Forbidden(locationPolicyField, "locationPolicy cannot be specified when autoscaling is disabled"))
+		}
 	}
 
-	if errs := r.validateScaling(); errs != nil || len(errs) == 0 {
-		allErrs = append(allErrs, errs...)
-	}
-
-	if errs := r.validateNonNegative(); errs != nil || len(errs) == 0 {
-		allErrs = append(allErrs, errs...)
+	if scaling.MinCount != nil {
+		// validates min >= 0
+		if *scaling.MinCount < 0 {
+			allErrs = append(allErrs, field.Invalid(minField, *scaling.MinCount, "must be greater or equal zero"))
+		}
+		// validates min <= max
+		if scaling.MaxCount != nil && *scaling.MaxCount < *scaling.MinCount {
+			allErrs = append(allErrs, field.Invalid(maxField, *scaling.MaxCount, "must be greater than field "+minField.String()))
+		}
 	}
 
 	if len(allErrs) == 0 {
 		return nil
 	}
-	return allErrs
-}
-
-// validateScaling validates that the GCPManagedMachinePool autoscaling spec is valid.
-func (r *GCPManagedMachinePool) validateScaling() field.ErrorList {
-	var allErrs field.ErrorList
-	if r.Spec.Scaling != nil {
-		minField := field.NewPath("spec", "scaling", "minCount")
-		maxField := field.NewPath("spec", "scaling", "maxCount")
-		locationPolicyField := field.NewPath("spec", "scaling", "locationPolicy")
-
-		minCount := r.Spec.Scaling.MinCount
-		maxCount := r.Spec.Scaling.MaxCount
-		locationPolicy := r.Spec.Scaling.LocationPolicy
-
-		// cannot specify autoscaling config if autoscaling is disabled
-		if r.Spec.Scaling.EnableAutoscaling != nil && !*r.Spec.Scaling.EnableAutoscaling {
-			if minCount != nil {
-				allErrs = append(allErrs, field.Forbidden(minField, "minCount cannot be specified when autoscaling is disabled"))
-			}
-			if maxCount != nil {
-				allErrs = append(allErrs, field.Forbidden(maxField, "maxCount cannot be specified when autoscaling is disabled"))
-			}
-			if locationPolicy != nil {
-				allErrs = append(allErrs, field.Forbidden(locationPolicyField, "locationPolicy cannot be specified when autoscaling is disabled"))
-			}
-		}
-
-		if minCount != nil {
-			// validates min >= 0
-			if *minCount < 0 {
-				allErrs = append(allErrs, field.Invalid(minField, *minCount, "must be greater or equal zero"))
-			}
-			// validates min <= max
-			if maxCount != nil && *maxCount < *minCount {
-				allErrs = append(allErrs, field.Invalid(maxField, *maxCount, "must be greater than field "+minField.String()))
-			}
-		}
-	}
-	if len(allErrs) == 0 {
-		return nil
-	}
-	return allErrs
-}
-
-func appendErrorIfNegative[T int32 | int64](value *T, name string, errs *field.ErrorList) {
-	if value != nil && *value < 0 {
-		*errs = append(*errs, field.Invalid(field.NewPath("spec", name), *value, "must be non-negative"))
-	}
-}
-
-// validateNonNegative validates that non-negative GCPManagedMachinePool spec fields are not negative.
-func (r *GCPManagedMachinePool) validateNonNegative() field.ErrorList {
-	var allErrs field.ErrorList
-
-	appendErrorIfNegative(r.Spec.DiskSizeGb, "diskSizeGb", &allErrs)
-	appendErrorIfNegative(r.Spec.MaxPodsPerNode, "maxPodsPerNode", &allErrs)
-	appendErrorIfNegative(r.Spec.LocalSsdCount, "localSsdCount", &allErrs)
-
-	return allErrs
-}
-
-func appendErrorIfMutated(old, update interface{}, name string, errs *field.ErrorList) {
-	if !cmp.Equal(old, update) {
-		*errs = append(
-			*errs,
-			field.Invalid(field.NewPath("spec", name), update, "field is immutable"),
-		)
-	}
-}
-
-// validateImmutable validates that immutable GCPManagedMachinePool spec fields are not mutated.
-func (r *GCPManagedMachinePool) validateImmutable(old *GCPManagedMachinePool) field.ErrorList {
-	var allErrs field.ErrorList
-
-	appendErrorIfMutated(old.Spec.InstanceType, r.Spec.InstanceType, "instanceType", &allErrs)
-	appendErrorIfMutated(old.Spec.NodePoolName, r.Spec.NodePoolName, "nodePoolName", &allErrs)
-	appendErrorIfMutated(old.Spec.MachineType, r.Spec.MachineType, "machineType", &allErrs)
-	appendErrorIfMutated(old.Spec.DiskSizeGb, r.Spec.DiskSizeGb, "diskSizeGb", &allErrs)
-	appendErrorIfMutated(old.Spec.DiskType, r.Spec.DiskType, "diskType", &allErrs)
-	appendErrorIfMutated(old.Spec.LocalSsdCount, r.Spec.LocalSsdCount, "localSsdCount", &allErrs)
-	appendErrorIfMutated(old.Spec.Management, r.Spec.Management, "management", &allErrs)
-	appendErrorIfMutated(old.Spec.MaxPodsPerNode, r.Spec.MaxPodsPerNode, "maxPodsPerNode", &allErrs)
-	appendErrorIfMutated(old.Spec.NodeNetwork.PodRangeName, r.Spec.NodeNetwork.PodRangeName, "podRangeName", &allErrs)
-	appendErrorIfMutated(old.Spec.NodeNetwork.CreatePodRange, r.Spec.NodeNetwork.CreatePodRange, "createPodRange", &allErrs)
-	appendErrorIfMutated(old.Spec.NodeNetwork.PodRangeCidrBlock, r.Spec.NodeNetwork.PodRangeCidrBlock, "podRangeCidrBlock", &allErrs)
-	appendErrorIfMutated(old.Spec.NodeSecurity, r.Spec.NodeSecurity, "nodeSecurity", &allErrs)
 
 	return allErrs
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPManagedMachinePool) ValidateCreate() (admission.Warnings, error) {
-	gcpmanagedmachinepoollog.Info("validate create", "name", r.Name)
+func (*gcpManagedMachinePoolWebhook) ValidateCreate(_ context.Context, obj runtime.Object) (admission.Warnings, error) {
+	r, ok := obj.(*GCPManagedMachinePool)
+	if !ok {
+		return nil, fmt.Errorf("expected an GCPManagedMachinePool object but got %T", r)
+	}
+
+	gcpmanagedmachinepoollog.Info("Validating GCPManagedMachinePool create", "name", r.Name)
+
 	var allErrs field.ErrorList
 
-	if errs := r.validateSpec(); errs != nil || len(errs) == 0 {
-		allErrs = append(allErrs, errs...)
+	if err := validateNodePoolName(
+		r.Spec.NodePoolName,
+		field.NewPath("spec", "NodePoolName")); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if r.Spec.Scaling != nil {
+		if errs := validateScaling(
+			r.Spec.Scaling,
+			field.NewPath("spec", "scaling", "minCount"),
+			field.NewPath("spec", "scaling", "maxCount"),
+			field.NewPath("spec", "scaling", "locationPolicy"),
+		); len(errs) > 0 {
+			allErrs = append(allErrs, errs...)
+		}
+	}
+
+	if err := webhookutils.ValidateNonNegative(
+		field.NewPath("spec", "template", "spec", "diskSizeGb"),
+		r.Spec.DiskSizeGb,
+	); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateNonNegative(
+		field.NewPath("spec", "template", "spec", "localSsdCount"),
+		r.Spec.LocalSsdCount,
+	); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateNonNegative(
+		field.NewPath("spec", "template", "spec", "maxPodsPerNode"),
+		r.Spec.MaxPodsPerNode,
+	); err != nil {
+		allErrs = append(allErrs, err)
 	}
 
 	if len(allErrs) == 0 {
 		return nil, nil
 	}
 
-	return nil, apierrors.NewInvalid(GroupVersion.WithKind("GCPManagedMachinePool").GroupKind(), r.Name, allErrs)
+	return nil, apierrors.NewInvalid(
+		r.GroupVersionKind().GroupKind(),
+		r.Name,
+		allErrs,
+	)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPManagedMachinePool) ValidateUpdate(oldRaw runtime.Object) (admission.Warnings, error) {
-	gcpmanagedmachinepoollog.Info("validate update", "name", r.Name)
-	var allErrs field.ErrorList
-	old := oldRaw.(*GCPManagedMachinePool)
-
-	if errs := r.validateImmutable(old); errs != nil {
-		allErrs = append(allErrs, errs...)
+func (*gcpManagedMachinePoolWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	old, ok := oldObj.(*GCPManagedMachinePool)
+	if !ok {
+		return nil, fmt.Errorf("expected an GCPManagedMachinePool object but got %T", old)
 	}
 
-	if errs := r.validateSpec(); errs != nil || len(errs) == 0 {
-		allErrs = append(allErrs, errs...)
+	r, ok := newObj.(*GCPManagedMachinePool)
+	if !ok {
+		return nil, fmt.Errorf("expected an GCPManagedMachinePool object but got %T", r)
+	}
+
+	gcpmanagedmachinepoollog.Info("Validating GCPManagedMachinePool update", "name", r.Name)
+
+	var allErrs field.ErrorList
+
+	if r.Spec.Scaling != nil {
+		if errs := validateScaling(
+			r.Spec.Scaling,
+			field.NewPath("spec", "scaling", "minCount"),
+			field.NewPath("spec", "scaling", "maxCount"),
+			field.NewPath("spec", "scaling", "locationPolicy"),
+		); len(errs) > 0 {
+			allErrs = append(allErrs, errs...)
+		}
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "instanceType"),
+		old.Spec.InstanceType,
+		r.Spec.InstanceType); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "nodePoolName"),
+		old.Spec.NodePoolName,
+		r.Spec.NodePoolName); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "machineType"),
+		old.Spec.MachineType,
+		r.Spec.MachineType); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "diskSizeGb"),
+		old.Spec.DiskSizeGb,
+		r.Spec.DiskSizeGb); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "diskType"),
+		old.Spec.DiskType,
+		r.Spec.DiskType); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "localSsdCount"),
+		old.Spec.LocalSsdCount,
+		r.Spec.LocalSsdCount); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "management"),
+		old.Spec.Management,
+		r.Spec.Management); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "maxPodsPerNode"),
+		old.Spec.MaxPodsPerNode,
+		r.Spec.MaxPodsPerNode); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "nodeNetwork", "podRangeName"),
+		old.Spec.NodeNetwork.PodRangeName,
+		r.Spec.NodeNetwork.PodRangeName); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "nodeNetwork", "createPodRange"),
+		old.Spec.NodeNetwork.CreatePodRange,
+		r.Spec.NodeNetwork.CreatePodRange); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "nodeNetwork", "podRangeCidrBlock"),
+		old.Spec.NodeNetwork.PodRangeCidrBlock,
+		r.Spec.NodeNetwork.PodRangeCidrBlock); err != nil {
+		allErrs = append(allErrs, err)
+	}
+
+	if err := webhookutils.ValidateImmutable(
+		field.NewPath("spec", "nodeSecurity"),
+		old.Spec.NodeSecurity,
+		r.Spec.NodeSecurity); err != nil {
+		allErrs = append(allErrs, err)
 	}
 
 	if len(allErrs) == 0 {
@@ -207,8 +286,6 @@ func (r *GCPManagedMachinePool) ValidateUpdate(oldRaw runtime.Object) (admission
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (r *GCPManagedMachinePool) ValidateDelete() (admission.Warnings, error) {
-	gcpmanagedmachinepoollog.Info("validate delete", "name", r.Name)
-
+func (*gcpManagedMachinePoolWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }

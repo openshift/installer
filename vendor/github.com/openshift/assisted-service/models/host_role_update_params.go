@@ -36,6 +36,9 @@ const (
 	// HostRoleUpdateParamsMaster captures enum value "master"
 	HostRoleUpdateParamsMaster HostRoleUpdateParams = "master"
 
+	// HostRoleUpdateParamsArbiter captures enum value "arbiter"
+	HostRoleUpdateParamsArbiter HostRoleUpdateParams = "arbiter"
+
 	// HostRoleUpdateParamsWorker captures enum value "worker"
 	HostRoleUpdateParamsWorker HostRoleUpdateParams = "worker"
 )
@@ -45,7 +48,7 @@ var hostRoleUpdateParamsEnum []interface{}
 
 func init() {
 	var res []HostRoleUpdateParams
-	if err := json.Unmarshal([]byte(`["auto-assign","master","worker"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["auto-assign","master","arbiter","worker"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

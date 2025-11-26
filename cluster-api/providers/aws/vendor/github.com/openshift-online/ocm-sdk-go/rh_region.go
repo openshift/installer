@@ -18,16 +18,16 @@ func GetRhRegions(ocmServiceUrl string) (map[string]Region, error) {
 	var regions map[string]Region
 	url, err := DetermineRegionDiscoveryUrl(ocmServiceUrl)
 	if err != nil {
-		return regions, fmt.Errorf("Can't determine region discovery URL: %s\n", err)
+		return regions, fmt.Errorf("can't determine region discovery URL: %s", err)
 	}
 	// Adding nolint here in order to prevent linter from failing due to variable http get
 	resp, err := http.Get(url) //nolint
 	if err != nil {
-		return regions, fmt.Errorf("Can't retrieve shards: %s", err)
+		return regions, fmt.Errorf("can't retrieve shards: %s", err)
 	}
 	err = json2.NewDecoder(resp.Body).Decode(&regions)
 	if err != nil {
-		return regions, fmt.Errorf("Can't decode shards: %s", err)
+		return regions, fmt.Errorf("can't decode shards: %s", err)
 	}
 	return regions, nil
 }
@@ -42,7 +42,7 @@ func GetRhRegion(ocmServiceUrl string, regionName string) (Region, error) {
 			return regValue, nil
 		}
 	}
-	return Region{}, fmt.Errorf("Can't find region %s", regionName)
+	return Region{}, fmt.Errorf("can't find region %s", regionName)
 }
 
 func DetermineRegionDiscoveryUrl(ocmServiceUrl string) (string, error) {

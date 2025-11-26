@@ -73,6 +73,9 @@ type ListOptsBuilder interface {
 // ListOpts holds options for listing Volume Types. It is passed to the volumetypes.List
 // function.
 type ListOpts struct {
+	// Specifies whether the query should include public or private Volume Types.
+	// By default, it queries both types.
+	IsPublic visibility `q:"is_public"`
 	// Comma-separated list of sort keys and optional sort directions in the
 	// form of <key>[:<direction>].
 	Sort string `q:"sort"`
@@ -84,8 +87,22 @@ type ListOpts struct {
 	Marker string `q:"marker"`
 }
 
+type visibility string
+
+const (
+	// VisibilityDefault enables querying both public and private Volume Types.
+	VisibilityDefault visibility = "None"
+	// VisibilityPublic restricts the query to only public Volume Types.
+	VisibilityPublic visibility = "true"
+	// VisibilityPrivate restricts the query to only private Volume Types.
+	VisibilityPrivate visibility = "false"
+)
+
 // ToVolumeTypeListQuery formats a ListOpts into a query string.
 func (opts ListOpts) ToVolumeTypeListQuery() (string, error) {
+	if opts.IsPublic == "" {
+		opts.IsPublic = VisibilityDefault
+	}
 	q, err := gophercloud.BuildQueryString(opts)
 	return q.String(), err
 }
@@ -93,14 +110,14 @@ func (opts ListOpts) ToVolumeTypeListQuery() (string, error) {
 // List returns Volume types.
 func List(client *gophercloud.ServiceClient, opts ListOptsBuilder) pagination.Pager {
 	url := listURL(client)
-
-	if opts != nil {
-		query, err := opts.ToVolumeTypeListQuery()
-		if err != nil {
-			return pagination.Pager{Err: err}
-		}
-		url += query
+	if opts == nil {
+		opts = ListOpts{}
 	}
+	query, err := opts.ToVolumeTypeListQuery()
+	if err != nil {
+		return pagination.Pager{Err: err}
+	}
+	url += query
 
 	return pagination.NewPager(client, url, func(r pagination.PageResult) pagination.Page {
 		return VolumeTypePage{pagination.LinkedPageBase{PageResult: r}}

@@ -27,7 +27,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -43,16 +42,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/external"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/internal/hooks"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/collections"
 	"sigs.k8s.io/cluster-api/util/conditions"
-	v1beta2conditions "sigs.k8s.io/cluster-api/util/conditions/v1beta2"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/finalizers"
 	clog "sigs.k8s.io/cluster-api/util/log"
 	"sigs.k8s.io/cluster-api/util/patch"
@@ -113,7 +111,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		)
 	if feature.Gates.Enabled(feature.MachinePool) {
 		b = b.Watches(
-			&expv1.MachinePool{},
+			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(r.machinePoolToCluster),
 			builder.WithPredicates(predicates.ResourceIsChanged(mgr.GetScheme(), predicateLog)),
 		)
@@ -159,23 +157,33 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retRes ct
 		return ctrl.Result{}, err
 	}
 
-	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, cluster); err != nil || isPaused || conditionChanged {
-		return ctrl.Result{}, err
-	}
-
-	s := &scope{
-		cluster: cluster,
-	}
-
 	// Initialize the patch helper.
 	patchHelper, err := patch.NewHelper(cluster, r.Client)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
 
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, cluster, cluster); err != nil || isPaused || requeue {
+		return ctrl.Result{}, err
+	}
+
+	s := &scope{
+		cluster: cluster,
+	}
+	if cluster.Spec.Topology.IsDefined() {
+		s.clusterClass = &clusterv1.ClusterClass{}
+		if err := r.Client.Get(ctx, cluster.GetClassKey(), s.clusterClass); err != nil {
+			return ctrl.Result{}, errors.Wrapf(err, "failed to get ClusterClass %s", cluster.GetClassKey())
+		}
+	}
+
 	defer func() {
 		// Always reconcile the Status.
-		r.updateStatus(ctx, s)
+		if err := r.updateStatus(ctx, s); err != nil {
+			retRes = ctrl.Result{}
+			reterr = kerrors.NewAggregate([]error{reterr, err})
+			return
+		}
 
 		// Always attempt to Patch the Cluster object and status after each reconciliation.
 		// Patch ObservedGeneration only if the reconciliation completed successfully
@@ -192,28 +200,6 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retRes ct
 		}
 	}()
 
-	lastProbeSuccessTime := r.ClusterCache.GetLastProbeSuccessTimestamp(ctx, client.ObjectKeyFromObject(cluster))
-	if time.Since(lastProbeSuccessTime) > r.RemoteConnectionGracePeriod {
-		var msg string
-		if lastProbeSuccessTime.IsZero() {
-			msg = "Remote connection probe failed"
-		} else {
-			msg = fmt.Sprintf("Remote connection probe failed, probe last succeeded at %s", lastProbeSuccessTime.Format(time.RFC3339))
-		}
-		v1beta2conditions.Set(cluster, metav1.Condition{
-			Type:    clusterv1.ClusterRemoteConnectionProbeV1Beta2Condition,
-			Status:  metav1.ConditionFalse,
-			Reason:  clusterv1.ClusterRemoteConnectionProbeFailedV1Beta2Reason,
-			Message: msg,
-		})
-	} else {
-		v1beta2conditions.Set(cluster, metav1.Condition{
-			Type:   clusterv1.ClusterRemoteConnectionProbeV1Beta2Condition,
-			Status: metav1.ConditionTrue,
-			Reason: clusterv1.ClusterRemoteConnectionProbeSucceededV1Beta2Reason,
-		})
-	}
-
 	alwaysReconcile := []clusterReconcileFunc{
 		r.reconcileInfrastructure,
 		r.reconcileControlPlane,
@@ -221,7 +207,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retRes ct
 	}
 
 	// Handle deletion reconciliation loop.
-	if !cluster.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !cluster.DeletionTimestamp.IsZero() {
 		reconcileDelete := append(
 			alwaysReconcile,
 			r.reconcileDelete,
@@ -231,8 +217,8 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retRes ct
 	}
 
 	// Handle normal reconciliation loop.
-	if cluster.Spec.Topology != nil {
-		if cluster.Spec.ControlPlaneRef == nil || cluster.Spec.InfrastructureRef == nil {
+	if cluster.Spec.Topology.IsDefined() {
+		if !cluster.Spec.ControlPlaneRef.IsDefined() || !cluster.Spec.InfrastructureRef.IsDefined() {
 			// TODO: add a condition to surface this scenario
 			log.Info("Waiting for the topology to be generated")
 			return ctrl.Result{}, nil
@@ -242,17 +228,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retRes ct
 	reconcileNormal := append(
 		alwaysReconcile,
 		r.reconcileKubeconfig,
-		r.reconcileControlPlaneInitialized,
+		r.reconcileV1Beta1ControlPlaneInitialized,
 	)
 	return doReconcile(ctx, reconcileNormal, s)
 }
 
 func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *clusterv1.Cluster, options ...patch.Option) error {
 	// Always update the readyCondition by summarizing the state of other conditions.
-	conditions.SetSummary(cluster,
-		conditions.WithConditions(
-			clusterv1.ControlPlaneReadyCondition,
-			clusterv1.InfrastructureReadyCondition,
+	v1beta1conditions.SetSummary(cluster,
+		v1beta1conditions.WithConditions(
+			clusterv1.ControlPlaneReadyV1Beta1Condition,
+			clusterv1.InfrastructureReadyV1Beta1Condition,
 		),
 	)
 
@@ -260,27 +246,28 @@ func patchCluster(ctx context.Context, patchHelper *patch.Helper, cluster *clust
 	// Also, if requested, we are adding additional options like e.g. Patch ObservedGeneration when issuing the
 	// patch at the end of the reconcile loop.
 	options = append(options,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-			clusterv1.ReadyCondition,
-			clusterv1.ControlPlaneReadyCondition,
-			clusterv1.InfrastructureReadyCondition,
+		patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+			clusterv1.ReadyV1Beta1Condition,
+			clusterv1.ControlPlaneReadyV1Beta1Condition,
+			clusterv1.InfrastructureReadyV1Beta1Condition,
 		}},
-		patch.WithOwnedV1Beta2Conditions{Conditions: []string{
-			clusterv1.ClusterInfrastructureReadyV1Beta2Condition,
-			clusterv1.ClusterControlPlaneAvailableV1Beta2Condition,
-			clusterv1.ClusterControlPlaneInitializedV1Beta2Condition,
-			clusterv1.ClusterControlPlaneMachinesReadyV1Beta2Condition,
-			clusterv1.ClusterControlPlaneMachinesUpToDateV1Beta2Condition,
-			clusterv1.ClusterWorkersAvailableV1Beta2Condition,
-			clusterv1.ClusterWorkerMachinesReadyV1Beta2Condition,
-			clusterv1.ClusterWorkerMachinesUpToDateV1Beta2Condition,
-			clusterv1.ClusterRemoteConnectionProbeV1Beta2Condition,
-			clusterv1.ClusterRollingOutV1Beta2Condition,
-			clusterv1.ClusterScalingUpV1Beta2Condition,
-			clusterv1.ClusterScalingDownV1Beta2Condition,
-			clusterv1.ClusterRemediatingV1Beta2Condition,
-			clusterv1.ClusterDeletingV1Beta2Condition,
-			clusterv1.ClusterAvailableV1Beta2Condition,
+		patch.WithOwnedConditions{Conditions: []string{
+			clusterv1.PausedCondition,
+			clusterv1.ClusterInfrastructureReadyCondition,
+			clusterv1.ClusterControlPlaneAvailableCondition,
+			clusterv1.ClusterControlPlaneInitializedCondition,
+			clusterv1.ClusterControlPlaneMachinesReadyCondition,
+			clusterv1.ClusterControlPlaneMachinesUpToDateCondition,
+			clusterv1.ClusterWorkersAvailableCondition,
+			clusterv1.ClusterWorkerMachinesReadyCondition,
+			clusterv1.ClusterWorkerMachinesUpToDateCondition,
+			clusterv1.ClusterRemoteConnectionProbeCondition,
+			clusterv1.ClusterRollingOutCondition,
+			clusterv1.ClusterScalingUpCondition,
+			clusterv1.ClusterScalingDownCondition,
+			clusterv1.ClusterRemediatingCondition,
+			clusterv1.ClusterDeletingCondition,
+			clusterv1.ClusterAvailableCondition,
 		}},
 	)
 	return patchHelper.Patch(ctx, cluster, options...)
@@ -315,6 +302,10 @@ type scope struct {
 	// cluster is the Cluster object being reconciled.
 	// It is set at the beginning of the reconcile function.
 	cluster *clusterv1.Cluster
+
+	// clusterClass is the ClusterClass referenced by the object being reconciled.
+	// It is set at the beginning of the reconcile function.
+	clusterClass *clusterv1.ClusterClass
 
 	// infraCluster is the Infrastructure Cluster object that is referenced by the
 	// Cluster. It is set after reconcileInfrastructure is called.
@@ -351,8 +342,8 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 	// If the RuntimeSDK and ClusterTopology flags are enabled, for clusters with managed topologies
 	// only proceed with delete if the cluster is marked as `ok-to-delete`
 	if feature.Gates.Enabled(feature.RuntimeSDK) && feature.Gates.Enabled(feature.ClusterTopology) {
-		if cluster.Spec.Topology != nil && !hooks.IsOkToDelete(cluster) {
-			s.deletingReason = clusterv1.ClusterDeletingWaitingForBeforeDeleteHookV1Beta2Reason
+		if cluster.Spec.Topology.IsDefined() && !hooks.IsOkToDelete(cluster) {
+			s.deletingReason = clusterv1.ClusterDeletingWaitingForBeforeDeleteHookReason
 			s.deletingMessage = "Waiting for BeforeClusterDelete hook"
 			return ctrl.Result{}, nil
 		}
@@ -360,14 +351,14 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 
 	// If it failed to get descendants, no-op.
 	if !s.getDescendantsSucceeded {
-		s.deletingReason = clusterv1.ClusterDeletingInternalErrorV1Beta2Reason
+		s.deletingReason = clusterv1.ClusterDeletingInternalErrorReason
 		s.deletingMessage = "Please check controller logs for errors" //nolint:goconst // Not making this a constant for now
 		return reconcile.Result{}, nil
 	}
 
 	children, err := s.descendants.filterOwnedDescendants(cluster)
 	if err != nil {
-		s.deletingReason = clusterv1.ClusterDeletingInternalErrorV1Beta2Reason
+		s.deletingReason = clusterv1.ClusterDeletingInternalErrorReason
 		s.deletingMessage = "Please check controller logs for errors"
 		return reconcile.Result{}, errors.Wrapf(err, "failed to extract direct descendants")
 	}
@@ -399,7 +390,7 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 		}
 
 		if len(errs) > 0 {
-			s.deletingReason = clusterv1.ClusterDeletingInternalErrorV1Beta2Reason
+			s.deletingReason = clusterv1.ClusterDeletingInternalErrorReason
 			s.deletingMessage = "Please check controller logs for errors"
 			return ctrl.Result{}, kerrors.NewAggregate(errs)
 		}
@@ -411,7 +402,7 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 
 		log.Info("Cluster still has descendants - need to requeue", "descendants", strings.Join(names, "; "), "indirect descendants count", indirect)
 
-		s.deletingReason = clusterv1.ClusterDeletingWaitingForWorkersDeletionV1Beta2Reason
+		s.deletingReason = clusterv1.ClusterDeletingWaitingForWorkersDeletionReason
 		for i := range names {
 			names[i] = "* " + names[i]
 		}
@@ -421,18 +412,18 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 		return ctrl.Result{RequeueAfter: deleteRequeueAfter}, nil
 	}
 
-	if cluster.Spec.ControlPlaneRef != nil {
+	if cluster.Spec.ControlPlaneRef.IsDefined() {
 		if s.controlPlane == nil {
 			if !s.controlPlaneIsNotFound {
 				// In case there was a generic error (different than isNotFound) in reading the InfraCluster, do not continue with deletion.
 				// Note: this error surfaces in reconcile reconcileControlPlane.
-				s.deletingReason = clusterv1.ClusterDeletingInternalErrorV1Beta2Reason
+				s.deletingReason = clusterv1.ClusterDeletingInternalErrorReason
 				s.deletingMessage = "Please check controller logs for errors"
 
 				return ctrl.Result{}, nil
 			}
 			// All good - the control plane resource has been deleted
-			conditions.MarkFalse(cluster, clusterv1.ControlPlaneReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+			v1beta1conditions.MarkFalse(cluster, clusterv1.ControlPlaneReadyV1Beta1Condition, clusterv1.DeletedV1Beta1Reason, clusterv1.ConditionSeverityInfo, "")
 		}
 
 		if s.controlPlane != nil {
@@ -441,7 +432,7 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 				// Once it's been deleted, the cluster will get processed again.
 				if err := r.Client.Delete(ctx, s.controlPlane); err != nil {
 					if !apierrors.IsNotFound(err) {
-						s.deletingReason = clusterv1.ClusterDeletingInternalErrorV1Beta2Reason
+						s.deletingReason = clusterv1.ClusterDeletingInternalErrorReason
 						s.deletingMessage = "Please check controller logs for errors"
 						return ctrl.Result{}, errors.Wrapf(err,
 							"failed to delete %v %q for Cluster %q in namespace %q",
@@ -451,26 +442,28 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 			}
 
 			// Return here so we don't remove the finalizer yet.
-			s.deletingReason = clusterv1.ClusterDeletingWaitingForControlPlaneDeletionV1Beta2Reason
+			s.deletingReason = clusterv1.ClusterDeletingWaitingForControlPlaneDeletionReason
 			s.deletingMessage = fmt.Sprintf("Waiting for %s to be deleted", cluster.Spec.ControlPlaneRef.Kind)
 
-			log.Info("Cluster still has descendants - need to requeue", "controlPlaneRef", cluster.Spec.ControlPlaneRef.Name)
+			// We are watching it, will try again when it is deleted.
+			ref := cluster.Spec.ControlPlaneRef
+			log.Info("Cluster still has descendants - waiting for control plane deletion", ref.Kind, klog.KRef(cluster.Namespace, ref.Name))
 			return ctrl.Result{}, nil
 		}
 	}
 
-	if cluster.Spec.InfrastructureRef != nil {
+	if cluster.Spec.InfrastructureRef.IsDefined() {
 		if s.infraCluster == nil {
 			if !s.infraClusterIsNotFound {
 				// In case there was a generic error (different than isNotFound) in reading the InfraCluster, do not continue with deletion.
 				// Note: this error surfaces in reconcile reconcileInfrastructure.
-				s.deletingReason = clusterv1.ClusterDeletingInternalErrorV1Beta2Reason
+				s.deletingReason = clusterv1.ClusterDeletingInternalErrorReason
 				s.deletingMessage = "Please check controller logs for errors"
 
 				return ctrl.Result{}, nil
 			}
 			// All good - the infra resource has been deleted
-			conditions.MarkFalse(cluster, clusterv1.InfrastructureReadyCondition, clusterv1.DeletedReason, clusterv1.ConditionSeverityInfo, "")
+			v1beta1conditions.MarkFalse(cluster, clusterv1.InfrastructureReadyV1Beta1Condition, clusterv1.DeletedV1Beta1Reason, clusterv1.ConditionSeverityInfo, "")
 		}
 
 		if s.infraCluster != nil {
@@ -479,7 +472,7 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 				// Once it's been deleted, the cluster will get processed again.
 				if err := r.Client.Delete(ctx, s.infraCluster); err != nil {
 					if !apierrors.IsNotFound(err) {
-						s.deletingReason = clusterv1.ClusterDeletingInternalErrorV1Beta2Reason
+						s.deletingReason = clusterv1.ClusterDeletingInternalErrorReason
 						s.deletingMessage = "Please check controller logs for errors"
 						return ctrl.Result{}, errors.Wrapf(err,
 							"failed to delete %v %q for Cluster %q in namespace %q",
@@ -489,15 +482,17 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, s *scope) (reconcile.R
 			}
 
 			// Return here so we don't remove the finalizer yet.
-			s.deletingReason = clusterv1.ClusterDeletingWaitingForInfrastructureDeletionV1Beta2Reason
+			s.deletingReason = clusterv1.ClusterDeletingWaitingForInfrastructureDeletionReason
 			s.deletingMessage = fmt.Sprintf("Waiting for %s to be deleted", cluster.Spec.InfrastructureRef.Kind)
 
-			log.Info("Cluster still has descendants - need to requeue", "infrastructureRef", cluster.Spec.InfrastructureRef.Name)
+			// We are watching it, will try again when it is deleted.
+			ref := cluster.Spec.InfrastructureRef
+			log.Info("Cluster still has descendants - waiting for infrastructure cluster deletion", ref.Kind, klog.KRef(cluster.Namespace, ref.Name))
 			return ctrl.Result{}, nil
 		}
 	}
 
-	s.deletingReason = clusterv1.ClusterDeletingDeletionCompletedV1Beta2Reason
+	s.deletingReason = clusterv1.ClusterDeletingDeletionCompletedReason
 	s.deletingMessage = "Deletion completed"
 
 	controllerutil.RemoveFinalizer(cluster, clusterv1.ClusterFinalizer)
@@ -513,7 +508,7 @@ type clusterDescendants struct {
 	workerMachines         collections.Machines
 	machinesToBeRemediated collections.Machines
 	unhealthyMachines      collections.Machines
-	machinePools           expv1.MachinePoolList
+	machinePools           clusterv1.MachinePoolList
 }
 
 // objectsPendingDeleteCount returns the number of descendants pending delete.
@@ -524,7 +519,7 @@ func (c *clusterDescendants) objectsPendingDeleteCount(cluster *clusterv1.Cluste
 		len(c.machineSets.Items) +
 		len(c.workerMachines)
 
-	if cluster.Spec.ControlPlaneRef == nil {
+	if !cluster.Spec.ControlPlaneRef.IsDefined() {
 		n += len(c.controlPlaneMachines)
 	}
 
@@ -535,7 +530,7 @@ func (c *clusterDescendants) objectsPendingDeleteCount(cluster *clusterv1.Cluste
 // Note: infrastructure cluster, control plane object and its controlled machines are not included.
 func (c *clusterDescendants) objectsPendingDeleteNames(cluster *clusterv1.Cluster) []string {
 	descendants := make([]string, 0)
-	if cluster.Spec.ControlPlaneRef == nil {
+	if !cluster.Spec.ControlPlaneRef.IsDefined() {
 		controlPlaneMachineNames := make([]string, len(c.controlPlaneMachines))
 		for i, controlPlaneMachine := range c.controlPlaneMachines.UnsortedList() {
 			controlPlaneMachineNames[i] = controlPlaneMachine.Name
@@ -672,7 +667,7 @@ func (c *clusterDescendants) filterOwnedDescendants(cluster *clusterv1.Cluster) 
 	// limitation is about the deletion workflow, which is governed by this function.
 	// More specifically, when deleting a Cluster with stand-alone control plane machines, stand-alone control plane machines
 	// will be decommissioned in parallel with other machines, no matter of them being added as last in this list.
-	if cluster.Spec.ControlPlaneRef == nil {
+	if !cluster.Spec.ControlPlaneRef.IsDefined() {
 		lists = append(lists, toObjectList(c.controlPlaneMachines))
 	}
 
@@ -685,19 +680,19 @@ func (c *clusterDescendants) filterOwnedDescendants(cluster *clusterv1.Cluster) 
 	return ownedDescendants, nil
 }
 
-func (r *Reconciler) reconcileControlPlaneInitialized(ctx context.Context, s *scope) (ctrl.Result, error) {
+func (r *Reconciler) reconcileV1Beta1ControlPlaneInitialized(ctx context.Context, s *scope) (ctrl.Result, error) {
 	log := ctrl.LoggerFrom(ctx)
 	cluster := s.cluster
 
 	// Skip checking if the control plane is initialized when using a Control Plane Provider (this is reconciled in
 	// reconcileControlPlane instead).
-	if cluster.Spec.ControlPlaneRef != nil {
-		log.V(4).Info("Skipping reconcileControlPlaneInitialized because cluster has a controlPlaneRef")
+	if cluster.Spec.ControlPlaneRef.IsDefined() {
+		log.V(4).Info("Skipping reconcileV1Beta1ControlPlaneInitialized because cluster has a controlPlaneRef")
 		return ctrl.Result{}, nil
 	}
 
-	if conditions.IsTrue(cluster, clusterv1.ControlPlaneInitializedCondition) {
-		log.V(4).Info("Skipping reconcileControlPlaneInitialized because control plane already initialized")
+	if v1beta1conditions.IsTrue(cluster, clusterv1.ControlPlaneInitializedV1Beta1Condition) {
+		log.V(4).Info("Skipping reconcileV1Beta1ControlPlaneInitialized because control plane already initialized")
 		return ctrl.Result{}, nil
 	}
 
@@ -710,13 +705,13 @@ func (r *Reconciler) reconcileControlPlaneInitialized(ctx context.Context, s *sc
 	}
 
 	for _, m := range machines {
-		if util.IsControlPlaneMachine(m) && m.Status.NodeRef != nil {
-			conditions.MarkTrue(cluster, clusterv1.ControlPlaneInitializedCondition)
+		if util.IsControlPlaneMachine(m) && m.Status.NodeRef.IsDefined() {
+			v1beta1conditions.MarkTrue(cluster, clusterv1.ControlPlaneInitializedV1Beta1Condition)
 			return ctrl.Result{}, nil
 		}
 	}
 
-	conditions.MarkFalse(cluster, clusterv1.ControlPlaneInitializedCondition, clusterv1.MissingNodeRefReason, clusterv1.ConditionSeverityInfo, "Waiting for the first control plane machine to have its status.nodeRef set")
+	v1beta1conditions.MarkFalse(cluster, clusterv1.ControlPlaneInitializedV1Beta1Condition, clusterv1.MissingNodeRefV1Beta1Reason, clusterv1.ConditionSeverityInfo, "Waiting for the first control plane machine to have its status.nodeRef set")
 
 	return ctrl.Result{}, nil
 }
@@ -731,7 +726,7 @@ func (r *Reconciler) controlPlaneMachineToCluster(ctx context.Context, o client.
 	if !util.IsControlPlaneMachine(m) {
 		return nil
 	}
-	if m.Status.NodeRef == nil {
+	if !m.Status.NodeRef.IsDefined() {
 		return nil
 	}
 
@@ -740,7 +735,7 @@ func (r *Reconciler) controlPlaneMachineToCluster(ctx context.Context, o client.
 		return nil
 	}
 
-	if conditions.IsTrue(cluster, clusterv1.ControlPlaneInitializedCondition) {
+	if conditions.IsTrue(cluster, clusterv1.ClusterControlPlaneInitializedCondition) {
 		return nil
 	}
 
@@ -771,7 +766,7 @@ func (r *Reconciler) machineDeploymentToCluster(_ context.Context, o client.Obje
 // machinePoolToCluster is a handler.ToRequestsFunc to be used to enqueue requests for reconciliation
 // for Cluster to update when one of its own MachinePools gets updated.
 func (r *Reconciler) machinePoolToCluster(_ context.Context, o client.Object) []ctrl.Request {
-	mp, ok := o.(*expv1.MachinePool)
+	mp, ok := o.(*clusterv1.MachinePool)
 	if !ok {
 		panic(fmt.Sprintf("Expected a MachinePool but got a %T", o))
 	}

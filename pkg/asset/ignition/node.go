@@ -2,6 +2,7 @@ package ignition
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 
 	"github.com/clarketm/json"
@@ -30,7 +31,10 @@ func Marshal(input interface{}) ([]byte, error) {
 func FilesFromAsset(pathPrefix string, username string, mode int, asset asset.WritableAsset) []igntypes.File {
 	var files []igntypes.File
 	for _, f := range asset.Files() {
-		files = append(files, FileFromBytes(filepath.Join(pathPrefix, f.Filename), username, mode, f.Data))
+		// f.Filename is using platform-specific path separators
+		// while its used in CoreOS, thus we need to convert it to Unix path separators
+		normalizedFilename := path.Join(pathPrefix, filepath.ToSlash(f.Filename))
+		files = append(files, FileFromBytes(normalizedFilename, username, mode, f.Data))
 	}
 	return files
 }

@@ -146,6 +146,10 @@ const (
 	// InstanceReadyCondition reports on current status of the EC2 instance. Ready indicates the instance is in a Running state.
 	InstanceReadyCondition clusterv1.ConditionType = "InstanceReady"
 
+	// DedicatedHostReleaseCondition reports on the status of dedicated host release operations.
+	// This condition tracks whether the dedicated host has been successfully released or if there are failures.
+	DedicatedHostReleaseCondition clusterv1.ConditionType = "DedicatedHostRelease"
+
 	// InstanceNotFoundReason used when the instance couldn't be retrieved.
 	InstanceNotFoundReason = "InstanceNotFound"
 	// InstanceTerminatedReason instance is in a terminated state.
@@ -191,4 +195,7 @@ const (
 
 	// S3BucketFailedReason is used when any errors occur during reconciliation of an S3 bucket.
 	S3BucketFailedReason = "S3BucketCreationFailed"
+
+	// DedicatedHostReleaseFailedReason used when the dedicated host release fails.
+	DedicatedHostReleaseFailedReason = "DedicatedHostReleaseFailed"
 )

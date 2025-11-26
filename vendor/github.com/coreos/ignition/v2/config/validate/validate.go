@@ -83,7 +83,7 @@ func ValidateUnusedKeys(v reflect.Value, c path.ContextPath, root tree.Node) (r 
 	mapNode, ok := node.(tree.MapNode)
 	if !ok {
 		// Something is wrong, we won't be able to report unused keys here, so just warn about it and stop trying
-		r.AddOnWarn(c, fmt.Errorf("context tree does not match content tree at %s. Line and column reporting may be inconsistent. Unused keys may not be reported.", c.String()))
+		r.AddOnWarn(c, fmt.Errorf("context tree does not match content tree at %s. Line and column reporting may be inconsistent. Unused keys may not be reported", c.String()))
 		return
 	}
 
@@ -94,7 +94,7 @@ func ValidateUnusedKeys(v reflect.Value, c path.ContextPath, root tree.Node) (r 
 	}
 	for key := range mapNode.Keys {
 		if _, ok := fieldMap[key]; !ok {
-			r.AddOnWarn(c.Append(tree.Key(key)), fmt.Errorf("Unused key %s", key))
+			r.AddOnWarn(c.Append(tree.Key(key)), fmt.Errorf("unused key %s", key))
 		}
 	}
 	return

@@ -214,7 +214,7 @@ func guessMachineCPUCount(machineType string) int64 {
 		}
 	case 3:
 		switch split[0] {
-		case "c2", "m1", "m2", "n1", "n2", "n2d", "e2":
+		case "c2", "m1", "m2", "n1", "n2", "n2d", "e2", "g2":
 			if c, err := strconv.ParseInt(split[2], 10, 0); err == nil {
 				return c
 			}

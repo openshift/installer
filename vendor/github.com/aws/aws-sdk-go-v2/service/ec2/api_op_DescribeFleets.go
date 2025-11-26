@@ -11,11 +11,14 @@ import (
 	smithyhttp "github.com/aws/smithy-go/transport/http"
 )
 
-// Describes the specified EC2 Fleet or all of your EC2 Fleets. If a fleet is of
-// type instant , you must specify the fleet ID in the request, otherwise the fleet
-// does not appear in the response. For more information, see Describe your EC2
-// Fleet (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-ec2-fleet.html#monitor-ec2-fleet)
-// in the Amazon EC2 User Guide.
+// Describes the specified EC2 Fleet or all of your EC2 Fleets.
+//
+// If a fleet is of type instant , you must specify the fleet ID in the request,
+// otherwise the fleet does not appear in the response.
+//
+// For more information, see [Describe your EC2 Fleet] in the Amazon EC2 User Guide.
+//
+// [Describe your EC2 Fleet]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/manage-ec2-fleet.html#monitor-ec2-fleet
 func (c *Client) DescribeFleets(ctx context.Context, params *DescribeFleetsInput, optFns ...func(*Options)) (*DescribeFleetsOutput, error) {
 	if params == nil {
 		params = &DescribeFleetsInput{}
@@ -40,26 +43,34 @@ type DescribeFleetsInput struct {
 	DryRun *bool
 
 	// The filters.
+	//
 	//   - activity-status - The progress of the EC2 Fleet ( error |
 	//   pending-fulfillment | pending-termination | fulfilled ).
+	//
 	//   - excess-capacity-termination-policy - Indicates whether to terminate running
 	//   instances if the target capacity is decreased below the current EC2 Fleet size (
 	//   true | false ).
+	//
 	//   - fleet-state - The state of the EC2 Fleet ( submitted | active | deleted |
 	//   failed | deleted-running | deleted-terminating | modifying ).
+	//
 	//   - replace-unhealthy-instances - Indicates whether EC2 Fleet should replace
 	//   unhealthy instances ( true | false ).
+	//
 	//   - type - The type of request ( instant | request | maintain ).
 	Filters []types.Filter
 
-	// The IDs of the EC2 Fleets. If a fleet is of type instant , you must specify the
-	// fleet ID, otherwise it does not appear in the response.
+	// The IDs of the EC2 Fleets.
+	//
+	// If a fleet is of type instant , you must specify the fleet ID, otherwise it does
+	// not appear in the response.
 	FleetIds []string
 
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	MaxResults *int32
 
 	// The token returned from a previous paginated request. Pagination continues from
@@ -127,6 +138,9 @@ func (c *Client) addOperationDescribeFleetsMiddlewares(stack *middleware.Stack, 
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -137,6 +151,15 @@ func (c *Client) addOperationDescribeFleetsMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeFleets(options.Region), middleware.Before); err != nil {
@@ -157,23 +180,28 @@ func (c *Client) addOperationDescribeFleetsMiddlewares(stack *middleware.Stack, 
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeFleetsAPIClient is a client that implements the DescribeFleets
-// operation.
-type DescribeFleetsAPIClient interface {
-	DescribeFleets(context.Context, *DescribeFleetsInput, ...func(*Options)) (*DescribeFleetsOutput, error)
-}
-
-var _ DescribeFleetsAPIClient = (*Client)(nil)
 
 // DescribeFleetsPaginatorOptions is the paginator options for DescribeFleets
 type DescribeFleetsPaginatorOptions struct {
 	// The maximum number of items to return for this request. To get the next page of
 	// items, make another request with the token returned in the output. For more
-	// information, see Pagination (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination)
-	// .
+	// information, see [Pagination].
+	//
+	// [Pagination]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/Query-Requests.html#api-pagination
 	Limit int32
 
 	// Set to true if pagination should stop if the service returns a pagination token
@@ -234,6 +262,9 @@ func (p *DescribeFleetsPaginator) NextPage(ctx context.Context, optFns ...func(*
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeFleets(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -252,6 +283,14 @@ func (p *DescribeFleetsPaginator) NextPage(ctx context.Context, optFns ...func(*
 
 	return result, nil
 }
+
+// DescribeFleetsAPIClient is a client that implements the DescribeFleets
+// operation.
+type DescribeFleetsAPIClient interface {
+	DescribeFleets(context.Context, *DescribeFleetsInput, ...func(*Options)) (*DescribeFleetsOutput, error)
+}
+
+var _ DescribeFleetsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeFleets(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

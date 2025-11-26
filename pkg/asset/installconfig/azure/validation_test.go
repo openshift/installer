@@ -14,7 +14,7 @@ import (
 	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/azure/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -156,13 +156,13 @@ var (
 	invalidResourceSkuRegion = "centralus"
 
 	invalidateVirtualNetwork               = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "invalid-virtual-network" }
-	invalidateComputeSubnet                = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet = "invalid-compute-subnet" }
-	invalidateControlPlaneSubnet           = func(ic *types.InstallConfig) { ic.Azure.ControlPlaneSubnet = "invalid-controlplane-subnet" }
+	invalidateComputeSubnet                = func(ic *types.InstallConfig) { ic.Azure.Subnets[0].Name = "invalid-compute-subnet" }
+	invalidateControlPlaneSubnet           = func(ic *types.InstallConfig) { ic.Azure.Subnets[1].Name = "invalid-controlplane-subnet" }
 	invalidateRegion                       = func(ic *types.InstallConfig) { ic.Azure.Region = "neverland" }
 	invalidateRegionCapabilities           = func(ic *types.InstallConfig) { ic.Azure.Region = "australiacentral2" }
 	invalidateRegionLetterCase             = func(ic *types.InstallConfig) { ic.Azure.Region = "Central US" }
 	removeVirtualNetwork                   = func(ic *types.InstallConfig) { ic.Azure.VirtualNetwork = "" }
-	removeSubnets                          = func(ic *types.InstallConfig) { ic.Azure.ComputeSubnet, ic.Azure.ControlPlaneSubnet = "", "" }
+	removeSubnets                          = func(ic *types.InstallConfig) { ic.Azure.Subnets = nil }
 	premiumDiskCompute                     = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.OSDisk.DiskType = "Premium_LRS" }
 	nonpremiumInstanceTypeDiskCompute      = func(ic *types.InstallConfig) { ic.Compute[0].Platform.Azure.InstanceType = "Standard_D4_v4" }
 	premiumDiskControlPlane                = func(ic *types.InstallConfig) { ic.ControlPlane.Platform.Azure.OSDisk.DiskType = "Premium_LRS" }
@@ -197,6 +197,19 @@ var (
 
 	virtualNetworkAPIResult = &aznetwork.VirtualNetwork{
 		Name: &validVirtualNetwork,
+		VirtualNetworkPropertiesFormat: &aznetwork.VirtualNetworkPropertiesFormat{
+			Subnets: &[]aznetwork.Subnet{{
+				Name: &validComputeSubnet,
+				SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+					AddressPrefix: to.StringPtr("10.0.0.0/24"),
+				},
+			}, {
+				Name: &validControlPlaneSubnet,
+				SubnetPropertiesFormat: &aznetwork.SubnetPropertiesFormat{
+					AddressPrefix: to.StringPtr("10.0.1.0/24"),
+				},
+			}},
+		},
 	}
 	computeSubnetAPIResult = &aznetwork.Subnet{
 		Name: &validComputeSubnet,
@@ -377,7 +390,7 @@ var (
 	validBootDiagnosticsResourceGroup  = "valid-resource-group"
 	validStorageAccountValues          = func(ic *types.InstallConfig) {
 		ic.ControlPlane.Platform.Azure.BootDiagnostics = &azure.BootDiagnostics{
-			Type:               v1beta1.UserManagedDiagnosticsStorage,
+			Type:               capz.UserManagedDiagnosticsStorage,
 			ResourceGroup:      validBootDiagnosticsResourceGroup,
 			StorageAccountName: validBootDiagnosticsStorageAccount,
 		}
@@ -396,9 +409,14 @@ func validInstallConfig() *types.InstallConfig {
 				Region:                   validRegion,
 				NetworkResourceGroupName: validNetworkResourceGroup,
 				VirtualNetwork:           validVirtualNetwork,
-				ComputeSubnet:            validComputeSubnet,
-				ControlPlaneSubnet:       validControlPlaneSubnet,
 				DefaultMachinePlatform:   &azure.MachinePool{},
+				Subnets: []azure.SubnetSpec{{
+					Name: validControlPlaneSubnet,
+					Role: capz.SubnetControlPlane,
+				}, {
+					Name: validComputeSubnet,
+					Role: capz.SubnetNode,
+				}},
 			},
 		},
 		ControlPlane: &types.MachinePool{
@@ -409,6 +427,7 @@ func validInstallConfig() *types.InstallConfig {
 		},
 		Compute: []types.MachinePool{{
 			Architecture: types.ArchitectureAMD64,
+			Name:         types.MachinePoolComputeRoleName,
 			Platform: types.MachinePoolPlatform{
 				Azure: &azure.MachinePool{},
 			},
@@ -445,17 +464,17 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Invalid compute subnet",
 			edits:    editFunctions{invalidateComputeSubnet},
-			errorMsg: "failed to retrieve compute subnet",
+			errorMsg: `platform.azure.subnetSpec.subnets: Invalid value: "invalid-compute-subnet": subnet does not exist in the vnet`,
 		},
 		{
 			name:     "Invalid control plane subnet",
 			edits:    editFunctions{invalidateControlPlaneSubnet},
-			errorMsg: "failed to retrieve control plane subnet",
+			errorMsg: `platform.azure.subnetSpec.subnets: Invalid value: "invalid-controlplane-subnet": subnet does not exist in the vnet`,
 		},
 		{
 			name:     "Invalid both subnets",
 			edits:    editFunctions{invalidateControlPlaneSubnet, invalidateComputeSubnet},
-			errorMsg: "failed to retrieve compute subnet",
+			errorMsg: `platform.azure.subnetSpec.subnets: Invalid value: "invalid-compute-subnet": subnet does not exist in the vnet, platform.azure.subnetSpec.subnets: Invalid value: "invalid-controlplane-subnet": subnet does not exist in the vnet`,
 		},
 		{
 			name:     "Valid instance types",
@@ -485,7 +504,7 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 		{
 			name:     "Undefined default instance types",
 			edits:    editFunctions{undefinedDefaultInstanceTypes},
-			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, compute\[0\].platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": unable to determine HyperVGeneration version\]`,
+			errorMsg: `\[controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, compute\[0\].platform.azure.type: Invalid value: "Dne_D2_v4": not found in region centralus, controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": failed to get control plane capabilities: not found in region centralus, controlPlane.platform.azure.type: Invalid value: "Dne_D2_v4": unable to determine HyperVGeneration version, compute\[0\].platform.azure.type: Invalid value: "Dne_D2_v4": failed to get compute capabilities: not found in region centralus\]`,
 		},
 		{
 			name:     "Invalid compute instance types",
@@ -651,12 +670,13 @@ func TestAzureInstallConfigValidation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			editedInstallConfig := validInstallConfig()
+			ic := validInstallConfig()
 			for _, edit := range tc.edits {
-				edit(editedInstallConfig)
+				edit(ic)
 			}
-
-			aggregatedErrors := Validate(azureClient, editedInstallConfig)
+			metadata := NewMetadata(ic.Azure, ic.ControlPlane, ic.WorkerMachinePool())
+			metadata.UseMockClient(azureClient)
+			aggregatedErrors := Validate(azureClient, metadata, ic)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
@@ -806,7 +826,7 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid disk encryption set for default pool",
 			edits:    editFunctions{invalidDiskEncryptionSetDefaultMachinePlatform},
-			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Valid disk encryption set for control-plane",
@@ -816,7 +836,7 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid disk encryption set for control-plane",
 			edits:    editFunctions{invalidDiskEncryptionSetControlPlane},
-			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Valid disk encryption set for compute",
@@ -826,7 +846,7 @@ func TestAzureDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid disk encryption set for compute",
 			edits:    editFunctions{invalidDiskEncryptionSetCompute},
-			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 	}
 
@@ -871,12 +891,12 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set not found for default pool",
 			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetDefaultMachinePlatform},
-			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for default pool",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetDefaultMachinePlatform},
-			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^platform.azure.defaultMachinePlatform.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
 		},
 		{
 			name:     "Valid security profile disk encryption set for control-plane",
@@ -886,12 +906,12 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set not found for control-plane",
 			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetControlPlane},
-			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for control-plane",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetControlPlane},
-			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
 		},
 		{
 			name:     "Valid security profile disk encryption set for compute",
@@ -901,12 +921,12 @@ func TestAzureSecurityProfileDiskEncryptionSet(t *testing.T) {
 		{
 			name:     "Invalid security profile disk encryption set not found for compute",
 			edits:    editFunctions{invalidConfidentialVMDiskEncryptionSetCompute},
-			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: failed to get disk encryption set$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, invalidDiskEncryptionSetName),
 		},
 		{
 			name:     "Invalid security profile disk encryption set with default encryption type for compute",
 			edits:    editFunctions{invalidTypeConfidentialVMDiskEncryptionSetCompute},
-			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: azure.DiskEncryptionSet{SubscriptionID:"%s", ResourceGroup:"%s", Name:"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
+			errorMsg: fmt.Sprintf(`^compute\[0\].platform.azure.osDisk.securityProfile.diskEncryptionSet: Invalid value: {"subscriptionId":"%s","resourceGroup":"%s","name":"%s"}: the disk encryption set should be created with type %s$`, validDiskEncryptionSetSubscriptionID, validDiskEncryptionSetResourceGroup, validDiskEncryptionSetName, azenc.ConfidentialVMEncryptedWithCustomerKey),
 		},
 	}
 
@@ -1207,12 +1227,13 @@ func TestAzureUltraSSDCapability(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			editedInstallConfig := validInstallConfig()
+			ic := validInstallConfig()
 			for _, edit := range tc.edits {
-				edit(editedInstallConfig)
+				edit(ic)
 			}
-
-			aggregatedErrors := Validate(azureClient, editedInstallConfig)
+			metadata := NewMetadata(ic.Azure, ic.ControlPlane, ic.WorkerMachinePool())
+			metadata.UseMockClient(azureClient)
+			aggregatedErrors := Validate(azureClient, metadata, ic)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
@@ -1516,17 +1537,15 @@ func TestAzureMarketplaceImages(t *testing.T) {
 	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), "Dne_D2_v4", validRegion).Return(nil, fmt.Errorf("not found in region centralus")).AnyTimes()
 	azureClient.EXPECT().GetVMCapabilities(gomock.Any(), gomock.Any(), gomock.Any()).Return(vmCapabilities["Standard_D8s_v3"], nil).AnyTimes()
 
-	// HyperVGenerations
-	azureClient.EXPECT().GetHyperVGenerationVersion(gomock.Any(), gomock.Any(), gomock.Any(), "V1").Return("", fmt.Errorf("instance type Standard_D8s_v3 supports HyperVGenerations [V2] but the specified image is for HyperVGeneration V1; to correct this issue either specify a compatible instance type or change the HyperVGeneration for the image by using a different SKU")).AnyTimes()
-	azureClient.EXPECT().GetHyperVGenerationVersion(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return("V2", nil).AnyTimes()
-
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			editedInstallConfig := validInstallConfig()
+			ic := validInstallConfig()
 			for _, edit := range tc.edits {
-				edit(editedInstallConfig)
+				edit(ic)
 			}
-			aggregatedErrors := validateMarketplaceImages(azureClient, editedInstallConfig)
+			metadata := NewMetadata(ic.Azure, ic.ControlPlane, ic.WorkerMachinePool())
+			metadata.UseMockClient(azureClient)
+			aggregatedErrors := validateMarketplaceImages(azureClient, metadata, ic)
 			err := aggregatedErrors.ToAggregate()
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, err)

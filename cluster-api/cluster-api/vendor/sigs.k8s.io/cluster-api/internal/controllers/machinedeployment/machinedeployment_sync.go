@@ -35,11 +35,11 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/internal/controllers/machinedeployment/mdutil"
 	"sigs.k8s.io/cluster-api/internal/util/hash"
 	"sigs.k8s.io/cluster-api/internal/util/ssa"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
 )
 
@@ -320,16 +320,13 @@ func (r *Reconciler) computeDesiredMachineSet(ctx context.Context, deployment *c
 	desiredMS.Spec.Template.Annotations = cloneStringMap(deployment.Spec.Template.Annotations)
 
 	// Set all other in-place mutable fields.
-	desiredMS.Spec.MinReadySeconds = ptr.Deref(deployment.Spec.MinReadySeconds, 0)
-	if deployment.Spec.Strategy != nil && deployment.Spec.Strategy.RollingUpdate != nil {
-		desiredMS.Spec.DeletePolicy = ptr.Deref(deployment.Spec.Strategy.RollingUpdate.DeletePolicy, "")
-	} else {
-		desiredMS.Spec.DeletePolicy = ""
-	}
+	desiredMS.Spec.Template.Spec.MinReadySeconds = deployment.Spec.Template.Spec.MinReadySeconds
+	desiredMS.Spec.Deletion.Order = deployment.Spec.Deletion.Order
 	desiredMS.Spec.Template.Spec.ReadinessGates = deployment.Spec.Template.Spec.ReadinessGates
-	desiredMS.Spec.Template.Spec.NodeDrainTimeout = deployment.Spec.Template.Spec.NodeDrainTimeout
-	desiredMS.Spec.Template.Spec.NodeDeletionTimeout = deployment.Spec.Template.Spec.NodeDeletionTimeout
-	desiredMS.Spec.Template.Spec.NodeVolumeDetachTimeout = deployment.Spec.Template.Spec.NodeVolumeDetachTimeout
+	desiredMS.Spec.Template.Spec.Deletion.NodeDrainTimeoutSeconds = deployment.Spec.Template.Spec.Deletion.NodeDrainTimeoutSeconds
+	desiredMS.Spec.Template.Spec.Deletion.NodeDeletionTimeoutSeconds = deployment.Spec.Template.Spec.Deletion.NodeDeletionTimeoutSeconds
+	desiredMS.Spec.Template.Spec.Deletion.NodeVolumeDetachTimeoutSeconds = deployment.Spec.Template.Spec.Deletion.NodeVolumeDetachTimeoutSeconds
+	desiredMS.Spec.MachineNaming = deployment.Spec.MachineNaming
 
 	return desiredMS, nil
 }
@@ -476,37 +473,40 @@ func (r *Reconciler) scale(ctx context.Context, deployment *clusterv1.MachineDep
 
 // syncDeploymentStatus checks if the status is up-to-date and sync it if necessary.
 func (r *Reconciler) syncDeploymentStatus(allMSs []*clusterv1.MachineSet, newMS *clusterv1.MachineSet, md *clusterv1.MachineDeployment) error {
-	md.Status = calculateStatus(allMSs, newMS, md)
+	// Set replica counters on MD status.
+	setReplicas(md, allMSs)
+	calculateV1Beta1Status(allMSs, newMS, md)
 
 	// minReplicasNeeded will be equal to md.Spec.Replicas when the strategy is not RollingUpdateMachineDeploymentStrategyType.
 	minReplicasNeeded := *(md.Spec.Replicas) - mdutil.MaxUnavailable(*md)
 
-	if md.Status.AvailableReplicas >= minReplicasNeeded {
-		// NOTE: The structure of calculateStatus() does not allow us to update the machinedeployment directly, we can only update the status obj it returns. Ideally, we should change calculateStatus() --> updateStatus() to be consistent with the rest of the code base, until then, we update conditions here.
-		conditions.MarkTrue(md, clusterv1.MachineDeploymentAvailableCondition)
+	availableReplicas := int32(0)
+	if md.Status.Deprecated != nil && md.Status.Deprecated.V1Beta1 != nil {
+		availableReplicas = md.Status.Deprecated.V1Beta1.AvailableReplicas
+	}
+	if availableReplicas >= minReplicasNeeded {
+		// NOTE: The structure of calculateV1Beta1Status() does not allow us to update the machinedeployment directly, we can only update the status obj it returns. Ideally, we should change calculateV1Beta1Status() --> updateStatus() to be consistent with the rest of the code base, until then, we update conditions here.
+		v1beta1conditions.MarkTrue(md, clusterv1.MachineDeploymentAvailableV1Beta1Condition)
 	} else {
-		conditions.MarkFalse(md, clusterv1.MachineDeploymentAvailableCondition, clusterv1.WaitingForAvailableMachinesReason, clusterv1.ConditionSeverityWarning, "Minimum availability requires %d replicas, current %d available", minReplicasNeeded, md.Status.AvailableReplicas)
+		v1beta1conditions.MarkFalse(md, clusterv1.MachineDeploymentAvailableV1Beta1Condition, clusterv1.WaitingForAvailableMachinesV1Beta1Reason, clusterv1.ConditionSeverityWarning, "Minimum availability requires %d replicas, current %d available", minReplicasNeeded, ptr.Deref(md.Status.AvailableReplicas, 0))
 	}
 
 	if newMS != nil {
 		// Report a summary of current status of the MachineSet object owned by this MachineDeployment.
-		conditions.SetMirror(md, clusterv1.MachineSetReadyCondition,
+		v1beta1conditions.SetMirror(md, clusterv1.MachineSetReadyV1Beta1Condition,
 			newMS,
-			conditions.WithFallbackValue(false, clusterv1.WaitingForMachineSetFallbackReason, clusterv1.ConditionSeverityInfo, ""),
+			v1beta1conditions.WithFallbackValue(false, clusterv1.WaitingForMachineSetFallbackV1Beta1Reason, clusterv1.ConditionSeverityInfo, ""),
 		)
 	} else {
-		conditions.MarkFalse(md, clusterv1.MachineSetReadyCondition, clusterv1.WaitingForMachineSetFallbackReason, clusterv1.ConditionSeverityInfo, "MachineSet not found")
+		v1beta1conditions.MarkFalse(md, clusterv1.MachineSetReadyV1Beta1Condition, clusterv1.WaitingForMachineSetFallbackV1Beta1Reason, clusterv1.ConditionSeverityInfo, "MachineSet not found")
 	}
-
-	// Set v1beta replica counters on MD status.
-	setReplicas(md, allMSs)
 
 	return nil
 }
 
-// calculateStatus calculates the latest status for the provided deployment by looking into the provided MachineSets.
-func calculateStatus(allMSs []*clusterv1.MachineSet, newMS *clusterv1.MachineSet, deployment *clusterv1.MachineDeployment) clusterv1.MachineDeploymentStatus {
-	availableReplicas := mdutil.GetAvailableReplicaCountForMachineSets(allMSs)
+// calculateV1Beta1Status calculates the latest status for the provided deployment by looking into the provided MachineSets.
+func calculateV1Beta1Status(allMSs []*clusterv1.MachineSet, newMS *clusterv1.MachineSet, deployment *clusterv1.MachineDeployment) {
+	availableReplicas := mdutil.GetV1Beta1AvailableReplicaCountForMachineSets(allMSs)
 	totalReplicas := mdutil.GetReplicaCountForMachineSets(allMSs)
 	unavailableReplicas := totalReplicas - availableReplicas
 
@@ -516,44 +516,17 @@ func calculateStatus(allMSs []*clusterv1.MachineSet, newMS *clusterv1.MachineSet
 		unavailableReplicas = 0
 	}
 
-	// Calculate the label selector. We check the error in the MD reconcile function, ignore here.
-	selector, _ := metav1.LabelSelectorAsSelector(&deployment.Spec.Selector)
-
-	status := clusterv1.MachineDeploymentStatus{
-		// TODO: Ensure that if we start retrying status updates, we won't pick up a new Generation value.
-		ObservedGeneration:  deployment.Generation,
-		Selector:            selector.String(),
-		Replicas:            mdutil.GetActualReplicaCountForMachineSets(allMSs),
-		UpdatedReplicas:     mdutil.GetActualReplicaCountForMachineSets([]*clusterv1.MachineSet{newMS}),
-		ReadyReplicas:       mdutil.GetReadyReplicaCountForMachineSets(allMSs),
-		AvailableReplicas:   availableReplicas,
-		UnavailableReplicas: unavailableReplicas,
-		Conditions:          deployment.Status.Conditions,
-
-		// preserve v1beta2 status
-		V1Beta2: deployment.Status.V1Beta2,
+	if deployment.Status.Deprecated == nil {
+		deployment.Status.Deprecated = &clusterv1.MachineDeploymentDeprecatedStatus{}
+	}
+	if deployment.Status.Deprecated.V1Beta1 == nil {
+		deployment.Status.Deprecated.V1Beta1 = &clusterv1.MachineDeploymentV1Beta1DeprecatedStatus{}
 	}
 
-	if *deployment.Spec.Replicas == status.ReadyReplicas {
-		status.Phase = string(clusterv1.MachineDeploymentPhaseRunning)
-	}
-	if *deployment.Spec.Replicas > status.ReadyReplicas {
-		status.Phase = string(clusterv1.MachineDeploymentPhaseScalingUp)
-	}
-	// This is the same as unavailableReplicas, but we have to recalculate because unavailableReplicas
-	// would have been reset to zero above if it was negative
-	if totalReplicas-availableReplicas < 0 {
-		status.Phase = string(clusterv1.MachineDeploymentPhaseScalingDown)
-	}
-	for _, ms := range allMSs {
-		if ms != nil {
-			if ms.Status.FailureReason != nil || ms.Status.FailureMessage != nil {
-				status.Phase = string(clusterv1.MachineDeploymentPhaseFailed)
-				break
-			}
-		}
-	}
-	return status
+	deployment.Status.Deprecated.V1Beta1.UpdatedReplicas = ptr.Deref(mdutil.GetActualReplicaCountForMachineSets([]*clusterv1.MachineSet{newMS}), 0)
+	deployment.Status.Deprecated.V1Beta1.ReadyReplicas = mdutil.GetV1Beta1ReadyReplicaCountForMachineSets(allMSs)
+	deployment.Status.Deprecated.V1Beta1.AvailableReplicas = availableReplicas
+	deployment.Status.Deprecated.V1Beta1.UnavailableReplicas = unavailableReplicas
 }
 
 func (r *Reconciler) scaleMachineSet(ctx context.Context, ms *clusterv1.MachineSet, newScale int32, deployment *clusterv1.MachineDeployment) error {
@@ -601,39 +574,33 @@ func (r *Reconciler) scaleMachineSet(ctx context.Context, ms *clusterv1.MachineS
 	return nil
 }
 
-// cleanupDeployment is responsible for cleaning up a deployment i.e. retains all but the latest N old machine sets
-// where N=d.Spec.RevisionHistoryLimit. Old machine sets are older versions of the machinetemplate of a deployment kept
-// around by default 1) for historical reasons and 2) for the ability to rollback a deployment.
+// cleanupDeployment is responsible for cleaning up a MachineDeployment.
 func (r *Reconciler) cleanupDeployment(ctx context.Context, oldMSs []*clusterv1.MachineSet, deployment *clusterv1.MachineDeployment) error {
 	log := ctrl.LoggerFrom(ctx)
 
-	if deployment.Spec.RevisionHistoryLimit == nil {
-		return nil
-	}
-
 	// Avoid deleting machine set with deletion timestamp set
 	aliveFilter := func(ms *clusterv1.MachineSet) bool {
-		return ms != nil && ms.ObjectMeta.DeletionTimestamp.IsZero()
+		return ms != nil && ms.DeletionTimestamp.IsZero()
 	}
 
 	cleanableMSes := mdutil.FilterMachineSets(oldMSs, aliveFilter)
 
-	diff := int32(len(cleanableMSes)) - *deployment.Spec.RevisionHistoryLimit
-	if diff <= 0 {
+	cleanableMSCount := int32(len(cleanableMSes))
+	if cleanableMSCount == 0 {
 		return nil
 	}
 
 	sort.Sort(mdutil.MachineSetsByCreationTimestamp(cleanableMSes))
 	log.V(4).Info("Looking to cleanup old machine sets for deployment")
 
-	for i := range diff {
+	for i := range cleanableMSCount {
 		ms := cleanableMSes[i]
 		if ms.Spec.Replicas == nil {
 			return errors.Errorf("spec replicas for machine set %v is nil, this is unexpected", ms.Name)
 		}
 
 		// Avoid delete machine set with non-zero replica counts
-		if ms.Status.Replicas != 0 || *(ms.Spec.Replicas) != 0 || ms.Generation > ms.Status.ObservedGeneration || !ms.DeletionTimestamp.IsZero() {
+		if ptr.Deref(ms.Status.Replicas, 0) != 0 || *(ms.Spec.Replicas) != 0 || ms.Generation > ms.Status.ObservedGeneration || !ms.DeletionTimestamp.IsZero() {
 			continue
 		}
 

@@ -39,7 +39,7 @@ func TestMain(m *testing.M) {
 	// Set up the logger for testing
 	log.SetLogger(logr.Logger{})
 
-	os.Exit(testscript.RunMain(m, map[string]func() int{
+	os.Exit(testscript.RunMain(m, map[string]func() int{ //nolint:staticcheck //TODO: OCPBUGS-64696
 		"node-joiner": func() int {
 			if err := nodeJoiner(); err != nil {
 				return 1

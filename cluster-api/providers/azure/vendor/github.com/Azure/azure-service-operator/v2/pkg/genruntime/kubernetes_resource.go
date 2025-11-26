@@ -8,7 +8,7 @@ package genruntime
 import (
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -74,13 +74,13 @@ func NewEmptyVersionedResourceFromGVK(scheme *runtime.Scheme, gvk schema.GroupVe
 	// Create an empty resource at the desired version
 	rsrc, err := scheme.New(gvk)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to create new %s", gvk)
+		return nil, eris.Wrapf(err, "unable to create new %s", gvk)
 	}
 
 	// Convert it to our interface
 	mo, ok := rsrc.(ARMMetaObject)
 	if !ok {
-		return nil, errors.Errorf("expected resource %s to implement genruntime.ARMMetaObject", gvk)
+		return nil, eris.Errorf("expected resource %s to implement genruntime.ARMMetaObject", gvk)
 	}
 
 	// Ensure GVK is populated
@@ -94,7 +94,7 @@ func NewEmptyVersionedResourceFromGVK(scheme *runtime.Scheme, gvk schema.GroupVe
 func GetAPIVersion(metaObject ARMMetaObject, scheme *runtime.Scheme) (string, error) {
 	rsrc, err := NewEmptyVersionedResource(metaObject, scheme)
 	if err != nil {
-		return "", errors.Wrapf(err, "unable return API version for %s", metaObject.GetObjectKind().GroupVersionKind())
+		return "", eris.Wrapf(err, "unable return API version for %s", metaObject.GetObjectKind().GroupVersionKind())
 	}
 
 	return rsrc.GetAPIVersion(), nil
@@ -107,7 +107,7 @@ func GetResourceTypeAndProvider(res ARMMetaObject) (string, []string, error) {
 
 	split := strings.Split(rawType, "/")
 	if len(split) <= 1 {
-		return "", nil, errors.Errorf("unexpected resource type format: %q", rawType)
+		return "", nil, eris.Errorf("unexpected resource type format: %q", rawType)
 	}
 
 	// The first item is always the provider

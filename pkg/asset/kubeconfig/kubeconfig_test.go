@@ -71,7 +71,6 @@ contexts:
     user: admin
   name: admin
 current-context: admin
-preferences: {}
 users:
 - name: admin
   user:
@@ -96,7 +95,6 @@ contexts:
     user: kubelet
   name: kubelet
 current-context: kubelet
-preferences: {}
 users:
 - name: kubelet
   user:

@@ -5,8 +5,8 @@ import (
 	"crypto/tls"
 	"encoding/pem"
 	"errors"
-	"io/fs"
 	"os"
+	"path/filepath"
 	"strconv"
 
 	"github.com/vmware/govmomi/find"
@@ -22,27 +22,47 @@ import (
 	_ "github.com/vmware/govmomi/vapi/simulator"
 )
 
-const (
-	esxi7U2BuildNumber    int    = 17630552
-	esxi7U2Version        string = "7.0.2"
-	vcenter7U2BuildNumber int    = 17694817
-	vcenter7U2Version     string = "7.0.2"
-)
+// VSphereSimulator contains the vSphere versioning that will be used in the simulator.
+type VSphereSimulator struct {
+	VCenterVersion string
+	VCenterBuild   int
+	EsxiVersion    string
+	EsxiBuild      int
+}
+
+// NewSimulator creates a new VSphereSimulator, if versions are empty or 0 default values are used.
+func NewSimulator(vcenterVersion, esxiVersion string, vcenterBuild, esxiBuild int) *VSphereSimulator {
+	vss := &VSphereSimulator{
+		VCenterVersion: vcenterVersion,
+		VCenterBuild:   vcenterBuild,
+		EsxiVersion:    esxiVersion,
+		EsxiBuild:      esxiBuild,
+	}
+
+	if vss.VCenterVersion == "" || vss.EsxiVersion == "" {
+		return &VSphereSimulator{
+			VCenterVersion: "8.0.0",
+			VCenterBuild:   20519528,
+			EsxiVersion:    "8.0.0",
+			EsxiBuild:      20513097,
+		}
+	}
+	return vss
+}
 
 // StartSimulator starts an instance of the simulator which listens on 127.0.0.1.
 // Call GetClient to retrieve a vim25.client which will connect to and trust this
 // simulator
-func StartSimulator(setVersionToSupported bool) (*simulator.Server, error) {
+func (vss *VSphereSimulator) StartSimulator() (*simulator.Server, error) {
 	model := simulator.VPX()
 
 	// Change the simulated vCenter and ESXi hosts
 	// to the version and build we support.
-	if setVersionToSupported {
-		esx.HostSystem.Config.Product.Build = strconv.Itoa(esxi7U2BuildNumber)
-		esx.HostSystem.Config.Product.Version = esxi7U2Version
-		model.ServiceContent.About.Build = strconv.Itoa(vcenter7U2BuildNumber)
-		model.ServiceContent.About.Version = vcenter7U2Version
-	}
+
+	esx.HostSystem.Config.Product.Build = strconv.Itoa(vss.EsxiBuild)
+	esx.HostSystem.Config.Product.Version = vss.EsxiVersion
+	model.ServiceContent.About.Build = strconv.Itoa(vss.VCenterBuild)
+	model.ServiceContent.About.Version = vss.VCenterVersion
 
 	model.ClusterHost = 6
 	model.Folder = 1
@@ -63,12 +83,12 @@ func StartSimulator(setVersionToSupported bool) (*simulator.Server, error) {
 
 // GetClient returns a vim25 client which connects to and trusts the simulator
 func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error) {
-	tmpCAdir := "/tmp/vcsimca"
+	tmpCAdir := filepath.Join(os.TempDir(), "vcsimca")
 	err := os.Mkdir(tmpCAdir, os.ModePerm)
 
 	if err != nil {
 		// If the error is not file existing return err
-		if !errors.Is(err, fs.ErrExist) {
+		if !os.IsExist(err) {
 			return nil, nil, err
 		}
 	}
@@ -81,8 +101,16 @@ func GetClient(server *simulator.Server) (*vim25.Client, *session.Manager, error
 	if err != nil {
 		return nil, nil, err
 	}
+	defer os.Remove(tempFile.Name())
+	defer tempFile.Close()
+
 	_, err = tempFile.Write(pem.EncodeToMemory(&pemBlock))
 	if err != nil {
+		return nil, nil, err
+	}
+
+	// Close the file so the CA bundle can be read
+	if err := tempFile.Close(); err != nil {
 		return nil, nil, err
 	}
 

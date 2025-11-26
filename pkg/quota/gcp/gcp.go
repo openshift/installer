@@ -13,29 +13,30 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	configv1 "github.com/openshift/api/config/v1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
 	"github.com/openshift/installer/pkg/quota"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 // Load load the quota information for a project and provided services. It provides information
 // about the usage and limit for each resource quota.
 // roles/servicemanagement.quotaViewer role allows users to fetch the required details.
-func Load(ctx context.Context, project string, serviceEndpoints []configv1.GCPServiceEndpoint, services ...string) ([]quota.Quota, error) {
+func Load(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint, services ...string) ([]quota.Quota, error) {
 	ssn, err := gcpconfig.GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
 	}
 
-	options := []option.ClientOption{
-		option.WithCredentials(ssn.Credentials),
+	serviceUsageOpts := []option.ClientOption{}
+	if gcptypes.ShouldUseEndpointForInstaller(endpoint) {
+		serviceUsageOpts = append(serviceUsageOpts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPServiceUsage))
 	}
-	servicesSvc, err := gcpconfig.GetServiceUsageService(ctx, serviceEndpoints)
+	servicesSvc, err := gcpconfig.GetServiceUsageService(ctx, serviceUsageOpts...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create services svc")
 	}
-	// TODO: the monitoring service was not previously noted ...
-	metricsSvc, err := monitoring.NewMetricClient(ctx, options...)
+	metricsOptions := []option.ClientOption{option.WithCredentials(ssn.Credentials)}
+	metricsSvc, err := monitoring.NewMetricClient(ctx, metricsOptions...)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create metrics svc")
 	}

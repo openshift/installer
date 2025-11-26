@@ -33,6 +33,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -41,17 +42,18 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	runtimehooksv1 "sigs.k8s.io/cluster-api/api/runtime/hooks/v1alpha1"
+	runtimev1 "sigs.k8s.io/cluster-api/api/runtime/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
-	runtimev1 "sigs.k8s.io/cluster-api/exp/runtime/api/v1alpha1"
 	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
-	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
 	"sigs.k8s.io/cluster-api/feature"
+	"sigs.k8s.io/cluster-api/internal/contract"
 	internalruntimeclient "sigs.k8s.io/cluster-api/internal/runtime/client"
 	"sigs.k8s.io/cluster-api/internal/topology/variables"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/cache"
-	"sigs.k8s.io/cluster-api/util/conversion"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/cluster-api/util/paused"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -100,7 +102,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 		return errors.Wrap(err, "failed setting up with a controller manager")
 	}
 
-	r.discoverVariablesCache = cache.New[runtimeclient.CallExtensionCacheEntry]()
+	r.discoverVariablesCache = cache.New[runtimeclient.CallExtensionCacheEntry](cache.DefaultTTL)
 	return nil
 }
 
@@ -114,11 +116,16 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retres ct
 		return ctrl.Result{}, err
 	}
 
-	if isPaused, conditionChanged, err := paused.EnsurePausedCondition(ctx, r.Client, nil, clusterClass); err != nil || isPaused || conditionChanged {
+	patchHelper, err := patch.NewHelper(clusterClass, r.Client)
+	if err != nil {
 		return ctrl.Result{}, err
 	}
 
-	if !clusterClass.ObjectMeta.DeletionTimestamp.IsZero() {
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, nil, clusterClass); err != nil || isPaused || requeue {
+		return ctrl.Result{}, err
+	}
+
+	if !clusterClass.DeletionTimestamp.IsZero() {
 		return ctrl.Result{}, nil
 	}
 
@@ -126,22 +133,18 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (retres ct
 		clusterClass: clusterClass,
 	}
 
-	patchHelper, err := patch.NewHelper(clusterClass, r.Client)
-	if err != nil {
-		return ctrl.Result{}, err
-	}
-
 	defer func() {
 		updateStatus(ctx, s)
 
 		patchOpts := []patch.Option{
-			patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-				clusterv1.ClusterClassRefVersionsUpToDateCondition,
-				clusterv1.ClusterClassVariablesReconciledCondition,
+			patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+				clusterv1.ClusterClassRefVersionsUpToDateV1Beta1Condition,
+				clusterv1.ClusterClassVariablesReconciledV1Beta1Condition,
 			}},
-			patch.WithOwnedV1Beta2Conditions{Conditions: []string{
-				clusterv1.ClusterClassRefVersionsUpToDateV1Beta2Condition,
-				clusterv1.ClusterClassVariablesReadyV1Beta2Condition,
+			patch.WithOwnedConditions{Conditions: []string{
+				clusterv1.PausedCondition,
+				clusterv1.ClusterClassRefVersionsUpToDateCondition,
+				clusterv1.ClusterClassVariablesReadyCondition,
 			}},
 		}
 
@@ -211,35 +214,16 @@ func (r *Reconciler) reconcileExternalReferences(ctx context.Context, s *scope) 
 	clusterClass := s.clusterClass
 
 	// Collect all the reference from the ClusterClass to templates.
-	refs := []*corev1.ObjectReference{}
-
-	if clusterClass.Spec.Infrastructure.Ref != nil {
-		refs = append(refs, clusterClass.Spec.Infrastructure.Ref)
+	refs := []clusterv1.ClusterClassTemplateReference{
+		clusterClass.Spec.Infrastructure.TemplateRef,
+		clusterClass.Spec.ControlPlane.TemplateRef,
 	}
-
-	if clusterClass.Spec.ControlPlane.Ref != nil {
-		refs = append(refs, clusterClass.Spec.ControlPlane.Ref)
-	}
-	if clusterClass.Spec.ControlPlane.MachineInfrastructure != nil && clusterClass.Spec.ControlPlane.MachineInfrastructure.Ref != nil {
-		refs = append(refs, clusterClass.Spec.ControlPlane.MachineInfrastructure.Ref)
-	}
-
+	refs = append(refs, clusterClass.Spec.ControlPlane.MachineInfrastructure.TemplateRef)
 	for _, mdClass := range clusterClass.Spec.Workers.MachineDeployments {
-		if mdClass.Template.Bootstrap.Ref != nil {
-			refs = append(refs, mdClass.Template.Bootstrap.Ref)
-		}
-		if mdClass.Template.Infrastructure.Ref != nil {
-			refs = append(refs, mdClass.Template.Infrastructure.Ref)
-		}
+		refs = append(refs, mdClass.Bootstrap.TemplateRef, mdClass.Infrastructure.TemplateRef)
 	}
-
 	for _, mpClass := range clusterClass.Spec.Workers.MachinePools {
-		if mpClass.Template.Bootstrap.Ref != nil {
-			refs = append(refs, mpClass.Template.Bootstrap.Ref)
-		}
-		if mpClass.Template.Infrastructure.Ref != nil {
-			refs = append(refs, mpClass.Template.Infrastructure.Ref)
-		}
+		refs = append(refs, mpClass.Bootstrap.TemplateRef, mpClass.Infrastructure.TemplateRef)
 	}
 
 	// Ensure all referenced objects are owned by the ClusterClass.
@@ -251,7 +235,12 @@ func (r *Reconciler) reconcileExternalReferences(ctx context.Context, s *scope) 
 	reconciledRefs := sets.Set[string]{}
 	outdatedRefs := []outdatedRef{}
 	for i := range refs {
-		ref := refs[i]
+		// Skip empty refs.
+		if !refs[i].IsDefined() {
+			continue
+		}
+
+		ref := refs[i].ToObjectReference(s.clusterClass.Namespace)
 		uniqueKey := uniqueObjectRefKey(ref)
 
 		// Continue as we only have to reconcile every referenced object once.
@@ -272,7 +261,7 @@ func (r *Reconciler) reconcileExternalReferences(ctx context.Context, s *scope) 
 		// Check if the template reference is outdated, i.e. it is not using the latest apiVersion
 		// for the current CAPI contract.
 		updatedRef := ref.DeepCopy()
-		if err := conversion.UpdateReferenceAPIContract(ctx, r.Client, updatedRef); err != nil {
+		if err := contract.UpdateReferenceAPIContract(ctx, r.Client, updatedRef); err != nil {
 			errs = append(errs, err)
 		}
 		if ref.GroupVersionKind().Version != updatedRef.GroupVersionKind().Version {
@@ -306,7 +295,7 @@ func (r *Reconciler) reconcileVariables(ctx context.Context, s *scope) (ctrl.Res
 	// to the ClusterClass status.
 	if feature.Gates.Enabled(feature.RuntimeSDK) {
 		for _, patch := range clusterClass.Spec.Patches {
-			if patch.External == nil || patch.External.DiscoverVariablesExtension == nil {
+			if patch.External == nil || patch.External.DiscoverVariablesExtension == "" {
 				continue
 			}
 			req := &runtimehooksv1.DiscoverVariablesRequest{}
@@ -317,7 +306,7 @@ func (r *Reconciler) reconcileVariables(ctx context.Context, s *scope) (ctrl.Res
 			// This also mitigates spikes when ClusterClass re-syncs happen or when changes to the ExtensionConfig are applied.
 			// DiscoverVariables is expected to return a "static" response and usually there are few ExtensionConfigs in a mgmt cluster.
 			resp := &runtimehooksv1.DiscoverVariablesResponse{}
-			err := r.RuntimeClient.CallExtension(ctx, runtimehooksv1.DiscoverVariables, clusterClass, *patch.External.DiscoverVariablesExtension, req, resp,
+			err := r.RuntimeClient.CallExtension(ctx, runtimehooksv1.DiscoverVariables, clusterClass, patch.External.DiscoverVariablesExtension, req, resp,
 				runtimeclient.WithCaching{Cache: r.discoverVariablesCache, CacheKeyFunc: cacheKeyFunc})
 			if err != nil {
 				errs = append(errs, errors.Wrapf(err, "failed to call DiscoverVariables for patch %s", patch.Name))
@@ -327,14 +316,29 @@ func (r *Reconciler) reconcileVariables(ctx context.Context, s *scope) (ctrl.Res
 				errs = append(errs, errors.Errorf("patch %s returned status %q with message %q", patch.Name, resp.Status, resp.Message))
 				continue
 			}
-			if resp.Variables != nil {
-				validationErrors := variables.ValidateClusterClassVariables(ctx, nil, resp.Variables, field.NewPath(patch.Name, "variables")).ToAggregate()
+
+			v1beta2Variables := make([]clusterv1.ClusterClassVariable, 0, len(resp.Variables))
+			for _, variable := range resp.Variables {
+				v := clusterv1.ClusterClassVariable{}
+				// Note: This conversion func converts Required == false to &false.
+				// This is intended as the Required field is required (so nil would not be valid)
+				// Accordingly we don't have to drop Required == &false in dropFalsePtrBool() below.
+				if err := clusterv1beta1.Convert_v1beta1_ClusterClassVariable_To_v1beta2_ClusterClassVariable(&variable, &v, nil); err != nil {
+					errs = append(errs, errors.Errorf("failed to convert variable %s to v1beta2", variable.Name))
+					continue
+				}
+				v.Schema.OpenAPIV3Schema = *dropFalsePtrBool(&v.Schema.OpenAPIV3Schema)
+				v1beta2Variables = append(v1beta2Variables, v)
+			}
+
+			if len(v1beta2Variables) > 0 && len(errs) == 0 {
+				validationErrors := variables.ValidateClusterClassVariables(ctx, nil, v1beta2Variables, field.NewPath(patch.Name, "variables")).ToAggregate()
 				if validationErrors != nil {
 					errs = append(errs, validationErrors)
 					continue
 				}
 
-				for _, variable := range resp.Variables {
+				for _, variable := range v1beta2Variables {
 					// If a variable of the same name already exists in allVariableDefinitions add the new definition to the existing list.
 					if _, ok := allVariableDefinitions[variable.Name]; ok {
 						allVariableDefinitions[variable.Name] = addDefinitionToExistingStatusVariable(variable, patch.Name, allVariableDefinitions[variable.Name])
@@ -368,7 +372,7 @@ func (r *Reconciler) reconcileVariables(ctx context.Context, s *scope) (ctrl.Res
 
 	variablesWithConflict := []string{}
 	for _, v := range clusterClass.Status.Variables {
-		if v.DefinitionsConflict {
+		if ptr.Deref(v.DefinitionsConflict, false) {
 			variablesWithConflict = append(variablesWithConflict, v.Name)
 		}
 	}
@@ -385,13 +389,13 @@ func (r *Reconciler) reconcileVariables(ctx context.Context, s *scope) (ctrl.Res
 func addNewStatusVariable(variable clusterv1.ClusterClassVariable, from string) *clusterv1.ClusterClassStatusVariable {
 	return &clusterv1.ClusterClassStatusVariable{
 		Name:                variable.Name,
-		DefinitionsConflict: false,
+		DefinitionsConflict: ptr.To(false),
 		Definitions: []clusterv1.ClusterClassStatusVariableDefinition{
 			{
-				From:     from,
-				Required: variable.Required,
-				Metadata: variable.Metadata,
-				Schema:   variable.Schema,
+				From:                      from,
+				Required:                  variable.Required,
+				DeprecatedV1Beta1Metadata: variable.DeprecatedV1Beta1Metadata,
+				Schema:                    variable.Schema,
 			},
 		}}
 }
@@ -399,26 +403,65 @@ func addNewStatusVariable(variable clusterv1.ClusterClassVariable, from string) 
 func addDefinitionToExistingStatusVariable(variable clusterv1.ClusterClassVariable, from string, existingVariable *clusterv1.ClusterClassStatusVariable) *clusterv1.ClusterClassStatusVariable {
 	combinedVariable := existingVariable.DeepCopy()
 	newVariableDefinition := clusterv1.ClusterClassStatusVariableDefinition{
-		From:     from,
-		Required: variable.Required,
-		Metadata: variable.Metadata,
-		Schema:   variable.Schema,
+		From:                      from,
+		Required:                  variable.Required,
+		DeprecatedV1Beta1Metadata: variable.DeprecatedV1Beta1Metadata,
+		Schema:                    variable.Schema,
 	}
 	combinedVariable.Definitions = append(existingVariable.Definitions, newVariableDefinition)
 
 	// If the new definition is different from any existing definition, set DefinitionsConflict to true.
 	// If definitions already conflict, no need to check.
-	if !combinedVariable.DefinitionsConflict {
+	if !ptr.Deref(combinedVariable.DefinitionsConflict, false) {
 		currentDefinition := combinedVariable.Definitions[0]
-		if !(currentDefinition.Required == newVariableDefinition.Required && reflect.DeepEqual(currentDefinition.Schema, newVariableDefinition.Schema) && reflect.DeepEqual(currentDefinition.Metadata, newVariableDefinition.Metadata)) {
-			combinedVariable.DefinitionsConflict = true
+		if ptr.Deref(currentDefinition.Required, false) != ptr.Deref(newVariableDefinition.Required, false) ||
+			!reflect.DeepEqual(dropFalsePtrBool(&currentDefinition.Schema.OpenAPIV3Schema), dropFalsePtrBool(&newVariableDefinition.Schema.OpenAPIV3Schema)) ||
+			!reflect.DeepEqual(currentDefinition.DeprecatedV1Beta1Metadata, newVariableDefinition.DeprecatedV1Beta1Metadata) {
+			combinedVariable.DefinitionsConflict = ptr.To(true)
 		}
 	}
 	return combinedVariable
 }
 
-func refString(ref *corev1.ObjectReference) string {
-	return fmt.Sprintf("%s %s/%s", ref.GroupVersionKind().String(), ref.Namespace, ref.Name)
+// dropFalsePtrBool drops false values from *bool properties, which are not relevant for the semantic of the variable.
+func dropFalsePtrBool(in *clusterv1.JSONSchemaProps) *clusterv1.JSONSchemaProps {
+	if in == nil {
+		return nil
+	}
+	ret := in.DeepCopy()
+
+	if !ptr.Deref(ret.UniqueItems, false) {
+		ret.UniqueItems = nil
+	}
+	if !ptr.Deref(ret.ExclusiveMaximum, false) {
+		ret.ExclusiveMaximum = nil
+	}
+	if !ptr.Deref(ret.ExclusiveMinimum, false) {
+		ret.ExclusiveMinimum = nil
+	}
+	if !ptr.Deref(ret.XPreserveUnknownFields, false) {
+		ret.XPreserveUnknownFields = nil
+	}
+	if !ptr.Deref(ret.XIntOrString, false) {
+		ret.XIntOrString = nil
+	}
+
+	for name, property := range ret.Properties {
+		ret.Properties[name] = *dropFalsePtrBool(&property)
+	}
+	ret.AdditionalProperties = dropFalsePtrBool(ret.AdditionalProperties)
+	ret.Items = dropFalsePtrBool(ret.Items)
+	for i, value := range ret.AllOf {
+		ret.AllOf[i] = *dropFalsePtrBool(&value)
+	}
+	for i, value := range ret.OneOf {
+		ret.OneOf[i] = *dropFalsePtrBool(&value)
+	}
+	for i, value := range ret.AnyOf {
+		ret.AnyOf[i] = *dropFalsePtrBool(&value)
+	}
+	ret.Not = dropFalsePtrBool(ret.Not)
+	return ret
 }
 
 func (r *Reconciler) reconcileExternal(ctx context.Context, clusterClass *clusterv1.ClusterClass, ref *corev1.ObjectReference) error {
@@ -480,8 +523,8 @@ func (r *Reconciler) extensionConfigToClusterClass(ctx context.Context, o client
 			continue
 		}
 		for _, patch := range clusterClass.Spec.Patches {
-			if patch.External != nil && patch.External.DiscoverVariablesExtension != nil {
-				extName, err := internalruntimeclient.ExtensionNameFromHandlerName(*patch.External.DiscoverVariablesExtension)
+			if patch.External != nil && patch.External.DiscoverVariablesExtension != "" {
+				extName, err := internalruntimeclient.ExtensionNameFromHandlerName(patch.External.DiscoverVariablesExtension)
 				if err != nil {
 					log.Error(err, "failed to reconcile ClusterClass for ExtensionConfig")
 					continue

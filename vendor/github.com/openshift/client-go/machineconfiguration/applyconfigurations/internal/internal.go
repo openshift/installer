@@ -3,10 +3,10 @@
 package internal
 
 import (
-	"fmt"
-	"sync"
+	fmt "fmt"
+	sync "sync"
 
-	typed "sigs.k8s.io/structured-merge-diff/v4/typed"
+	typed "sigs.k8s.io/structured-merge-diff/v6/typed"
 )
 
 func Parser() *typed.Parser {
@@ -63,6 +63,16 @@ var schemaYAML = typed.YAMLObject(`types:
     elementType:
       namedType: __untyped_deduced_
     elementRelationship: separable
+- name: com.github.openshift.api.machineconfiguration.v1.MachineConfigNode
+  scalar: untyped
+  list:
+    elementType:
+      namedType: __untyped_atomic_
+    elementRelationship: atomic
+  map:
+    elementType:
+      namedType: __untyped_deduced_
+    elementRelationship: separable
 - name: com.github.openshift.api.machineconfiguration.v1.MachineConfigPool
   scalar: untyped
   list:
@@ -73,59 +83,36 @@ var schemaYAML = typed.YAMLObject(`types:
     elementType:
       namedType: __untyped_deduced_
     elementRelationship: separable
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.BuildInputs
+- name: com.github.openshift.api.machineconfiguration.v1.MachineOSBuild
+  scalar: untyped
+  list:
+    elementType:
+      namedType: __untyped_atomic_
+    elementRelationship: atomic
   map:
-    fields:
-    - name: baseImagePullSecret
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.ImageSecretObjectReference
-      default: {}
-    - name: baseOSExtensionsImagePullspec
-      type:
-        scalar: string
-    - name: baseOSImagePullspec
-      type:
-        scalar: string
-    - name: containerFile
-      type:
-        list:
-          elementType:
-            namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSContainerfile
-          elementRelationship: associative
-          keys:
-          - containerfileArch
-    - name: imageBuilder
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSImageBuilder
-    - name: releaseVersion
-      type:
-        scalar: string
-    - name: renderedImagePushSecret
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.ImageSecretObjectReference
-      default: {}
-    - name: renderedImagePushspec
-      type:
-        scalar: string
-      default: ""
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.BuildOutputs
+    elementType:
+      namedType: __untyped_deduced_
+    elementRelationship: separable
+- name: com.github.openshift.api.machineconfiguration.v1.MachineOSConfig
+  scalar: untyped
+  list:
+    elementType:
+      namedType: __untyped_atomic_
+    elementRelationship: atomic
   map:
-    fields:
-    - name: currentImagePullSecret
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.ImageSecretObjectReference
-      default: {}
-    unions:
-    - fields:
-      - fieldName: currentImagePullSecret
-        discriminatorValue: CurrentImagePullSecret
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.ImageSecretObjectReference
+    elementType:
+      namedType: __untyped_deduced_
+    elementRelationship: separable
+- name: com.github.openshift.api.machineconfiguration.v1.PinnedImageSet
+  scalar: untyped
+  list:
+    elementType:
+      namedType: __untyped_atomic_
+    elementRelationship: atomic
   map:
-    fields:
-    - name: name
-      type:
-        scalar: string
-      default: ""
+    elementType:
+      namedType: __untyped_deduced_
+    elementRelationship: separable
 - name: com.github.openshift.api.machineconfiguration.v1alpha1.MCOObjectReference
   map:
     fields:
@@ -165,14 +152,6 @@ var schemaYAML = typed.YAMLObject(`types:
       type:
         namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MCOObjectReference
       default: {}
-    - name: pinnedImageSets
-      type:
-        list:
-          elementType:
-            namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineConfigNodeSpecPinnedImageSet
-          elementRelationship: associative
-          keys:
-          - name
     - name: pool
       type:
         namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MCOObjectReference
@@ -181,13 +160,6 @@ var schemaYAML = typed.YAMLObject(`types:
   map:
     fields:
     - name: desired
-      type:
-        scalar: string
-      default: ""
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineConfigNodeSpecPinnedImageSet
-  map:
-    fields:
-    - name: name
       type:
         scalar: string
       default: ""
@@ -240,204 +212,10 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: lastFailedGeneration
       type:
         scalar: numeric
-    - name: lastFailedGenerationErrors
+    - name: lastFailedGenerationError
       type:
-        list:
-          elementType:
-            scalar: string
-          elementRelationship: atomic
+        scalar: string
     - name: name
-      type:
-        scalar: string
-      default: ""
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineConfigPoolReference
-  map:
-    fields:
-    - name: name
-      type:
-        scalar: string
-      default: ""
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSBuild
-  map:
-    fields:
-    - name: apiVersion
-      type:
-        scalar: string
-    - name: kind
-      type:
-        scalar: string
-    - name: metadata
-      type:
-        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
-      default: {}
-    - name: spec
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSBuildSpec
-      default: {}
-    - name: status
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSBuildStatus
-      default: {}
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSBuildSpec
-  map:
-    fields:
-    - name: configGeneration
-      type:
-        scalar: numeric
-      default: 0
-    - name: desiredConfig
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.RenderedMachineConfigReference
-      default: {}
-    - name: machineOSConfig
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSConfigReference
-      default: {}
-    - name: renderedImagePushspec
-      type:
-        scalar: string
-      default: ""
-    - name: version
-      type:
-        scalar: numeric
-      default: 0
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSBuildStatus
-  map:
-    fields:
-    - name: buildEnd
-      type:
-        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
-    - name: buildStart
-      type:
-        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Time
-    - name: builderReference
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSBuilderReference
-    - name: conditions
-      type:
-        list:
-          elementType:
-            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
-          elementRelationship: associative
-          keys:
-          - type
-    - name: finalImagePullspec
-      type:
-        scalar: string
-    - name: relatedObjects
-      type:
-        list:
-          elementType:
-            namedType: com.github.openshift.api.machineconfiguration.v1alpha1.ObjectReference
-          elementRelationship: atomic
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSBuilderReference
-  map:
-    fields:
-    - name: buildPod
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.ObjectReference
-    - name: imageBuilderType
-      type:
-        scalar: string
-      default: ""
-    unions:
-    - discriminator: imageBuilderType
-      fields:
-      - fieldName: buildPod
-        discriminatorValue: PodImageBuilder
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSConfig
-  map:
-    fields:
-    - name: apiVersion
-      type:
-        scalar: string
-    - name: kind
-      type:
-        scalar: string
-    - name: metadata
-      type:
-        namedType: io.k8s.apimachinery.pkg.apis.meta.v1.ObjectMeta
-      default: {}
-    - name: spec
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSConfigSpec
-      default: {}
-    - name: status
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSConfigStatus
-      default: {}
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSConfigReference
-  map:
-    fields:
-    - name: name
-      type:
-        scalar: string
-      default: ""
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSConfigSpec
-  map:
-    fields:
-    - name: buildInputs
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.BuildInputs
-      default: {}
-    - name: buildOutputs
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.BuildOutputs
-      default: {}
-    - name: machineConfigPool
-      type:
-        namedType: com.github.openshift.api.machineconfiguration.v1alpha1.MachineConfigPoolReference
-      default: {}
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSConfigStatus
-  map:
-    fields:
-    - name: conditions
-      type:
-        list:
-          elementType:
-            namedType: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
-          elementRelationship: associative
-          keys:
-          - type
-    - name: currentImagePullspec
-      type:
-        scalar: string
-    - name: observedGeneration
-      type:
-        scalar: numeric
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSContainerfile
-  map:
-    fields:
-    - name: containerfileArch
-      type:
-        scalar: string
-      default: ""
-    - name: content
-      type:
-        scalar: string
-      default: ""
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.MachineOSImageBuilder
-  map:
-    fields:
-    - name: imageBuilderType
-      type:
-        scalar: string
-      default: ""
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.ObjectReference
-  map:
-    fields:
-    - name: group
-      type:
-        scalar: string
-      default: ""
-    - name: name
-      type:
-        scalar: string
-      default: ""
-    - name: namespace
-      type:
-        scalar: string
-    - name: resource
       type:
         scalar: string
       default: ""
@@ -491,13 +269,6 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - type
-- name: com.github.openshift.api.machineconfiguration.v1alpha1.RenderedMachineConfigReference
-  map:
-    fields:
-    - name: name
-      type:
-        scalar: string
-      default: ""
 - name: io.k8s.apimachinery.pkg.apis.meta.v1.Condition
   map:
     fields:

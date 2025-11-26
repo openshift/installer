@@ -46,7 +46,7 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		if len(p.FailureDomains) == 0 {
 			return append(allErrs, field.Required(fldPath.Child("failureDomains"), "must be defined"))
 		}
-		allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+		allErrs = append(allErrs, validateFailureDomains(p, fldPath, fldPath.Child("failureDomains"), isLegacyUpi)...)
 
 		// Validate hosts if configured for static IP
 		if p.Hosts != nil {
@@ -68,7 +68,7 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 			if p.FailureDomains[0].Name != conversion.GeneratedFailureDomainName &&
 				p.FailureDomains[0].Zone != conversion.GeneratedFailureDomainZone &&
 				p.FailureDomains[0].Region != conversion.GeneratedFailureDomainRegion {
-				allErrs = append(allErrs, validateFailureDomains(p, fldPath.Child("failureDomains"), isLegacyUpi)...)
+				allErrs = append(allErrs, validateFailureDomains(p, fldPath, fldPath.Child("failureDomains"), isLegacyUpi)...)
 			}
 		}
 	}
@@ -151,7 +151,7 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 	return allErrs
 }
 
-func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUpi bool) field.ErrorList {
+func validateFailureDomains(p *vsphere.Platform, platformFldPath *field.Path, fldPath *field.Path, isLegacyUpi bool) field.ErrorList { //nolint:gocyclo
 	var fdNames []string
 	tagUrnPattern := regexp.MustCompile(`^(urn):(vmomi):(InventoryServiceTag):([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}):([^:]+)$`)
 	allErrs := field.ErrorList{}
@@ -318,6 +318,12 @@ func validateFailureDomains(p *vsphere.Platform, fldPath *field.Path, isLegacyUp
 			}
 
 			p.FailureDomains[index].Topology.ResourcePool = filepath.Clean(p.FailureDomains[index].Topology.ResourcePool)
+		}
+
+		// Validate that template and clusterOSImage are mutually exclusive
+		if len(failureDomain.Topology.Template) > 0 && len(p.ClusterOSImage) > 0 {
+			allErrs = append(allErrs, field.Invalid(topologyFld.Child("template"), failureDomain.Topology.Template, "cannot be specified when clusterOSImage is set"))
+			allErrs = append(allErrs, field.Invalid(platformFldPath.Child("clusterOSImage"), p.ClusterOSImage, "cannot be specified when failuredomain.topology.template is set"))
 		}
 
 		if len(failureDomain.Topology.Template) > 0 {

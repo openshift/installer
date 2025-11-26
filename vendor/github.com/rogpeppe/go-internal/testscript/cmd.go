@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -592,7 +593,7 @@ func (ts *TestScript) waitBackgroundOne(bgName string) {
 	// Remove this process from the list of running background processes.
 	for i := range ts.background {
 		if bg == &ts.background[i] {
-			ts.background = append(ts.background[:i], ts.background[i+1:]...)
+			ts.background = slices.Delete(ts.background, i, i+1)
 			break
 		}
 	}

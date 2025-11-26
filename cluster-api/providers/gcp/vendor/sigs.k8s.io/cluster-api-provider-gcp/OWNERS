@@ -2,7 +2,6 @@
 
 approvers:
   - sig-cluster-lifecycle-leads
-  - sig-gcp-leads
   - cluster-api-admins
   - cluster-api-maintainers
   - cluster-api-gcp-maintainers
@@ -16,5 +15,6 @@ emeritus_approvers:
   - gab-satchi
   - justinsb
   - krousey
+  - richardcase
   - roberthbailey
   - rsmitty

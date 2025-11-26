@@ -6,7 +6,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/sirupsen/logrus"
@@ -22,19 +21,10 @@ func copyAMIToRegion(ctx context.Context, installConfig *installconfig.InstallCo
 
 	logrus.Infof("Copying AMI %s to region %s", amiID, installConfig.AWS.Region)
 
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(installConfig.Config.AWS.Region))
+	client, err := installConfig.AWS.EC2Client(ctx)
 	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
+		return "", err
 	}
-
-	client := ec2.NewFromConfig(cfg, func(options *ec2.Options) {
-		options.Region = installConfig.Config.AWS.Region
-		for _, endpoint := range installConfig.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "ec2") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
-	})
 
 	res, err := client.CopyImage(ctx, &ec2.CopyImageInput{
 		Name:          aws.String(fmt.Sprintf("%s-master", infraID)),

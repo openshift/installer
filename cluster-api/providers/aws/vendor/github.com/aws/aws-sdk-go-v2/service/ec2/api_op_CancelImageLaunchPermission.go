@@ -11,9 +11,9 @@ import (
 )
 
 // Removes your Amazon Web Services account from the launch permissions for the
-// specified AMI. For more information, see Cancel having an AMI shared with your
-// Amazon Web Services account (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cancel-sharing-an-AMI.html)
-// in the Amazon EC2 User Guide.
+// specified AMI. For more information, see [Cancel having an AMI shared with your Amazon Web Services account]in the Amazon EC2 User Guide.
+//
+// [Cancel having an AMI shared with your Amazon Web Services account]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cancel-sharing-an-AMI.html
 func (c *Client) CancelImageLaunchPermission(ctx context.Context, params *CancelImageLaunchPermissionInput, optFns ...func(*Options)) (*CancelImageLaunchPermissionOutput, error) {
 	if params == nil {
 		params = &CancelImageLaunchPermissionInput{}
@@ -99,6 +99,9 @@ func (c *Client) addOperationCancelImageLaunchPermissionMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -109,6 +112,15 @@ func (c *Client) addOperationCancelImageLaunchPermissionMiddlewares(stack *middl
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCancelImageLaunchPermissionValidationMiddleware(stack); err != nil {
@@ -130,6 +142,18 @@ func (c *Client) addOperationCancelImageLaunchPermissionMiddlewares(stack *middl
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

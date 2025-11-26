@@ -19,7 +19,6 @@ package webhooks
 import (
 	"context"
 	"fmt"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -30,23 +29,23 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 var (
 	// Minimum time allowed for a node to start up.
-	minNodeStartupTimeout = metav1.Duration{Duration: 30 * time.Second}
+	minNodeStartupTimeoutSeconds = int32(30)
 	// We allow users to disable the nodeStartupTimeout by setting the duration to 0.
-	disabledNodeStartupTimeout = clusterv1.ZeroDuration
+	disabledNodeStartupTimeoutSeconds = int32(0)
 )
 
-// SetMinNodeStartupTimeout allows users to optionally set a custom timeout
+// SetMinNodeStartupTimeoutSeconds allows users to optionally set a custom timeout
 // for the validation webhook.
 //
 // This function is mostly used within envtest (integration tests), and should
 // never be used in a production environment.
-func SetMinNodeStartupTimeout(d metav1.Duration) {
-	minNodeStartupTimeout = d
+func SetMinNodeStartupTimeoutSeconds(d int32) {
+	minNodeStartupTimeoutSeconds = d
 }
 
 func (webhook *MachineHealthCheck) SetupWebhookWithManager(mgr ctrl.Manager) error {
@@ -57,8 +56,8 @@ func (webhook *MachineHealthCheck) SetupWebhookWithManager(mgr ctrl.Manager) err
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta1-machinehealthcheck,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinehealthchecks,versions=v1beta1,name=validation.machinehealthcheck.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta1-machinehealthcheck,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinehealthchecks,versions=v1beta1,name=default.machinehealthcheck.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta2-machinehealthcheck,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinehealthchecks,versions=v1beta2,name=validation.machinehealthcheck.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta2-machinehealthcheck,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machinehealthchecks,versions=v1beta2,name=default.machinehealthcheck.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 // MachineHealthCheck implements a validation and defaulting webhook for MachineHealthCheck.
 type MachineHealthCheck struct{}
@@ -78,17 +77,8 @@ func (webhook *MachineHealthCheck) Default(_ context.Context, obj runtime.Object
 	}
 	m.Labels[clusterv1.ClusterNameLabel] = m.Spec.ClusterName
 
-	if m.Spec.MaxUnhealthy == nil {
-		defaultMaxUnhealthy := intstr.FromString("100%")
-		m.Spec.MaxUnhealthy = &defaultMaxUnhealthy
-	}
-
-	if m.Spec.NodeStartupTimeout == nil {
-		m.Spec.NodeStartupTimeout = &clusterv1.DefaultNodeStartupTimeout
-	}
-
-	if m.Spec.RemediationTemplate != nil && m.Spec.RemediationTemplate.Namespace == "" {
-		m.Spec.RemediationTemplate.Namespace = m.Namespace
+	if m.Spec.Checks.NodeStartupTimeoutSeconds == nil {
+		m.Spec.Checks.NodeStartupTimeoutSeconds = &clusterv1.DefaultNodeStartupTimeoutSeconds
 	}
 
 	return nil
@@ -157,7 +147,8 @@ func (webhook *MachineHealthCheck) validate(oldMHC, newMHC *clusterv1.MachineHea
 		)
 	}
 
-	allErrs = append(allErrs, webhook.validateCommonFields(newMHC, specPath)...)
+	allErrs = append(allErrs, validateMachineHealthCheckNodeStartupTimeoutSeconds(specPath, newMHC.Spec.Checks.NodeStartupTimeoutSeconds)...)
+	allErrs = append(allErrs, validateMachineHealthCheckUnhealthyLessThanOrEqualTo(specPath, newMHC.Spec.Remediation.TriggerIf.UnhealthyLessThanOrEqualTo)...)
 
 	if len(allErrs) == 0 {
 		return nil
@@ -165,37 +156,29 @@ func (webhook *MachineHealthCheck) validate(oldMHC, newMHC *clusterv1.MachineHea
 	return apierrors.NewInvalid(clusterv1.GroupVersion.WithKind("MachineHealthCheck").GroupKind(), newMHC.Name, allErrs)
 }
 
-// ValidateCommonFields validates NodeStartupTimeout, MaxUnhealthy, and RemediationTemplate of the MHC.
-// These are the fields in common with other types which define MachineHealthChecks such as MachineHealthCheckClass and MachineHealthCheckTopology.
-func (webhook *MachineHealthCheck) validateCommonFields(m *clusterv1.MachineHealthCheck, fldPath *field.Path) field.ErrorList {
+func validateMachineHealthCheckNodeStartupTimeoutSeconds(fldPath *field.Path, nodeStartupTimeoutSeconds *int32) field.ErrorList {
 	var allErrs field.ErrorList
-
-	if m.Spec.NodeStartupTimeout != nil &&
-		m.Spec.NodeStartupTimeout.Seconds() != disabledNodeStartupTimeout.Seconds() &&
-		m.Spec.NodeStartupTimeout.Seconds() < minNodeStartupTimeout.Seconds() {
+	if nodeStartupTimeoutSeconds != nil &&
+		*nodeStartupTimeoutSeconds != disabledNodeStartupTimeoutSeconds &&
+		*nodeStartupTimeoutSeconds < minNodeStartupTimeoutSeconds {
 		allErrs = append(
 			allErrs,
-			field.Invalid(fldPath.Child("nodeStartupTimeout"), m.Spec.NodeStartupTimeout.String(), "must be at least 30s"),
+			field.Invalid(fldPath.Child("checks", "nodeStartupTimeoutSeconds"), *nodeStartupTimeoutSeconds, "must be at least 30s"),
 		)
 	}
-	if m.Spec.MaxUnhealthy != nil {
-		if _, err := intstr.GetScaledValueFromIntOrPercent(m.Spec.MaxUnhealthy, 0, false); err != nil {
+	return allErrs
+}
+
+func validateMachineHealthCheckUnhealthyLessThanOrEqualTo(fldPath *field.Path, unhealthyLessThanOrEqualTo *intstr.IntOrString) field.ErrorList {
+	var allErrs field.ErrorList
+	if unhealthyLessThanOrEqualTo != nil {
+		// Note: total and roundUp parameters don't matter for validation.
+		if _, err := intstr.GetScaledValueFromIntOrPercent(unhealthyLessThanOrEqualTo, 0, false); err != nil {
 			allErrs = append(
 				allErrs,
-				field.Invalid(fldPath.Child("maxUnhealthy"), m.Spec.MaxUnhealthy, fmt.Sprintf("must be either an int or a percentage: %v", err.Error())),
+				field.Invalid(fldPath.Child("remediation", "triggerIf", "unhealthyLessThanOrEqualTo"), unhealthyLessThanOrEqualTo.String(), fmt.Sprintf("must be either an int or a percentage: %v", err.Error())),
 			)
 		}
 	}
-	if m.Spec.RemediationTemplate != nil && m.Spec.RemediationTemplate.Namespace != m.Namespace {
-		allErrs = append(
-			allErrs,
-			field.Invalid(
-				fldPath.Child("remediationTemplate", "namespace"),
-				m.Spec.RemediationTemplate.Namespace,
-				"must match metadata.namespace",
-			),
-		)
-	}
-
 	return allErrs
 }

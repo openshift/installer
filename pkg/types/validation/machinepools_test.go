@@ -435,7 +435,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			expectedError: `^test-path\.diskSetup\.etcd: Too many: 2: must have at most 1 items$`,
+			expectedError: `^test-path\.diskSetup\.etcd: Too many: 2: must have at most 1 item$`,
 		},
 		{
 			name:     "invalid multiple swap disks",
@@ -459,7 +459,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}
 				return p
 			}(),
-			expectedError: `^test-path\.diskSetup\.swap: Too many: 2: must have at most 1 items$`,
+			expectedError: `^test-path\.diskSetup\.swap: Too many: 2: must have at most 1 item$`,
 		},
 		{
 			name:     "valid mixed disk types",

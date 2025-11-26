@@ -3,7 +3,7 @@ package manifests
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,8 +19,8 @@ import (
 )
 
 var (
-	noCfgFilename  = filepath.Join(manifestDir, "cluster-network-02-config.yml")
-	cnoCfgFilename = filepath.Join(manifestDir, "cluster-network-03-config.yml")
+	noCfgFilename  = path.Join(manifestDir, "cluster-network-02-config.yml")
+	cnoCfgFilename = path.Join(manifestDir, "cluster-network-03-config.yml")
 	// Cluster Network MTU for AWS Local Zone deployments on edge machine pools.
 	ovnKubernetesNetworkMtuEdge uint32 = 1200
 )

@@ -36,6 +36,21 @@ type Snapshot struct {
 
 	// User-defined key-value pairs.
 	Metadata map[string]string `json:"metadata"`
+
+	// Progress of the snapshot creation.
+	Progress string `json:"os-extended-snapshot-attributes:progress"`
+
+	// Project ID that owns the snapshot.
+	ProjectID string `json:"os-extended-snapshot-attributes:project_id"`
+
+	// ID of the group snapshot, if applicable.
+	GroupSnapshotID string `json:"group_snapshot_id"`
+
+	// User ID that created the snapshot.
+	UserID string `json:"user_id"`
+
+	// Indicates whether the snapshot consumes quota.
+	ConsumesQuota bool `json:"consumes_quota"`
 }
 
 // CreateResult contains the response body and error from a Create request.

@@ -143,15 +143,16 @@
                 "name"
               ],
               "parameters": {
+                "extraLocationTypes": {
+                  "description": "Optional. Unless explicitly documented otherwise, don't use this unsupported field which is primarily intended for internal usage.",
+                  "location": "query",
+                  "repeated": true,
+                  "type": "string"
+                },
                 "filter": {
                   "description": "A filter to narrow down results to a preferred subset. The filtering language accepts strings like `\"displayName=tokyo\"`, and is documented in more detail in [AIP-160](https://google.aip.dev/160).",
                   "location": "query",
                   "type": "string"
-                },
-                "includeUnrevealedLocations": {
-                  "description": "If true, the returned list will include locations which are not yet revealed.",
-                  "location": "query",
-                  "type": "boolean"
                 },
                 "name": {
                   "description": "The resource that owns the locations collection, if applicable.",
@@ -907,7 +908,7 @@
       }
     }
   },
-  "revision": "20241204",
+  "revision": "20250910",
   "rootUrl": "https://file.googleapis.com/",
   "schemas": {
     "Backup": {
@@ -1163,6 +1164,10 @@
       "properties": {
         "consumerDefinedName": {
           "description": "consumer_defined_name is the name of the instance set by the service consumers. Generally this is different from the `name` field which reperesents the system-assigned id of the instance which the service consumers do not recognize. This is a required field for tenants onboarding to Maintenance Window notifications (go/slm-rollout-maintenance-policies#prerequisites).",
+          "type": "string"
+        },
+        "consumerProjectNumber": {
+          "description": "Optional. The consumer_project_number associated with this Apigee instance. This field is added specifically to support Apigee integration with SLM Rollout and UMM. It represents the numerical project ID of the GCP project that consumes this Apigee instance. It is used for SLM rollout notifications and UMM integration, enabling proper mapping to customer projects and log delivery for Apigee instances. This field complements consumer_project_id and may be used for specific Apigee scenarios where the numerical ID is required.",
           "type": "string"
         },
         "createTime": {
@@ -1448,16 +1453,22 @@
       "description": "A Filestore instance.",
       "id": "Instance",
       "properties": {
-        "configurablePerformanceEnabled": {
-          "description": "Output only. Indicates whether this instance's performance is configurable. If enabled, adjust it using the 'performance_config' field.",
+        "capacityStepSizeGb": {
+          "description": "Output only. The increase/decrease capacity step size in GB.",
+          "format": "int64",
           "readOnly": true,
-          "type": "boolean"
+          "type": "string"
         },
         "createTime": {
           "description": "Output only. The time when the instance was created.",
           "format": "google-datetime",
           "readOnly": true,
           "type": "string"
+        },
+        "customPerformanceSupported": {
+          "description": "Output only. Indicates whether this instance supports configuring its performance. If true, the user can configure the instance's performance by using the 'performance_config' field.",
+          "readOnly": true,
+          "type": "boolean"
         },
         "deletionProtectionEnabled": {
           "description": "Optional. Indicates whether the instance is protected against deletion.",
@@ -1492,6 +1503,18 @@
           },
           "description": "Resource labels to represent user provided metadata.",
           "type": "object"
+        },
+        "maxCapacityGb": {
+          "description": "Output only. The max capacity of the instance in GB.",
+          "format": "int64",
+          "readOnly": true,
+          "type": "string"
+        },
+        "minCapacityGb": {
+          "description": "Output only. The min capacity of the instance in GB.",
+          "format": "int64",
+          "readOnly": true,
+          "type": "string"
         },
         "name": {
           "description": "Output only. The resource name of the instance, in the format `projects/{project}/locations/{location}/instances/{instance}`.",
@@ -1851,12 +1874,14 @@
           "enum": [
             "CONNECT_MODE_UNSPECIFIED",
             "DIRECT_PEERING",
-            "PRIVATE_SERVICE_ACCESS"
+            "PRIVATE_SERVICE_ACCESS",
+            "PRIVATE_SERVICE_CONNECT"
           ],
           "enumDescriptions": [
             "Not set.",
             "Connect via direct peering to the Filestore service.",
-            "Connect to your Filestore instance using Private Service Access. Private services access provides an IP address range for multiple Google Cloud services, including Filestore."
+            "Connect to your Filestore instance using Private Service Access. Private services access provides an IP address range for multiple Google Cloud services, including Filestore.",
+            "Connect to your Filestore instance using Private Service Connect. A connection policy must exist in the region for the VPC network and the google-cloud-filestore service class."
           ],
           "type": "string"
         },
@@ -1886,6 +1911,10 @@
         "network": {
           "description": "The name of the Google Compute Engine [VPC network](https://cloud.google.com/vpc/docs/vpc) to which the instance is connected.",
           "type": "string"
+        },
+        "pscConfig": {
+          "$ref": "PscConfig",
+          "description": "Optional. Private Service Connect configuration. Should only be set when connect_mode is PRIVATE_SERVICE_CONNECT."
         },
         "reservedIpRange": {
           "description": "Optional, reserved_ip_range can have one of the following two types of values. * CIDR range value when using DIRECT_PEERING connect mode. * [Allocated IP address range](https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address) when using PRIVATE_SERVICE_ACCESS connect mode. When the name of an allocated IP address range is specified, it must be one of the ranges associated with the private service access connection. When specified as a direct CIDR value, it must be a /29 CIDR block for Basic tier, a /24 CIDR block for High Scale tier, or a /26 CIDR block for Enterprise tier in one of the [internal IP address ranges](https://www.arin.net/reference/research/statistics/address_filters/) that identifies the range of IP addresses reserved for this instance. For example, 10.0.0.0/29, 192.168.0.0/24 or 192.168.0.0/26, respectively. The range you specify can't overlap with either existing subnets or assigned IP address ranges for other Filestore instances in the selected VPC network.",
@@ -1928,6 +1957,10 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "network": {
+          "description": "Optional. The source VPC network for ip_ranges. Required for instances using Private Service Connect, optional otherwise. If provided, must be the same network specified in the `NetworkConfig.network` field.",
+          "type": "string"
         },
         "squashMode": {
           "description": "Either NO_ROOT_SQUASH, for allowing root access on the exported directory, or ROOT_SQUASH, for not allowing root access. The default is NO_ROOT_SQUASH.",
@@ -2035,7 +2068,7 @@
         },
         "iopsPerTb": {
           "$ref": "IOPSPerTB",
-          "description": "Provision IOPS dynamically based on the capacity of the instance. Provisioned read IOPS will be calculated by multiplying the capacity of the instance in TiB by the `iops_per_tb` value. For example, for a 2 TiB instance with an `iops_per_tb` value of 17000 the provisioned read IOPS will be 34000. If the calculated value is outside the supported range for the instance's capacity during instance creation, instance creation will fail with an `InvalidArgument` error. Similarly, if an instance capacity update would result in a value outside the supported range, the update will fail with an `InvalidArgument` error."
+          "description": "Provision IOPS dynamically based on the capacity of the instance. Provisioned IOPS will be calculated by multiplying the capacity of the instance in TiB by the `iops_per_tb` value. For example, for a 2 TiB instance with an `iops_per_tb` value of 17000 the provisioned IOPS will be 34000. If the calculated value is outside the supported range for the instance's capacity during instance creation, instance creation will fail with an `InvalidArgument` error. Similarly, if an instance capacity update would result in a value outside the supported range, the update will fail with an `InvalidArgument` error."
         }
       },
       "type": "object"
@@ -2044,6 +2077,12 @@
       "description": "The enforced performance limits, calculated from the instance's performance configuration.",
       "id": "PerformanceLimits",
       "properties": {
+        "maxIops": {
+          "description": "Output only. The max IOPS.",
+          "format": "int64",
+          "readOnly": true,
+          "type": "string"
+        },
         "maxReadIops": {
           "description": "Output only. The max read IOPS.",
           "format": "int64",
@@ -2074,7 +2113,23 @@
     "PromoteReplicaRequest": {
       "description": "PromoteReplicaRequest promotes a Filestore standby instance (replica).",
       "id": "PromoteReplicaRequest",
-      "properties": {},
+      "properties": {
+        "peerInstance": {
+          "description": "Optional. The resource name of the peer instance to promote, in the format `projects/{project_id}/locations/{location_id}/instances/{instance_id}`. The peer instance is required if the operation is called on an active instance.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "PscConfig": {
+      "description": "Private Service Connect configuration.",
+      "id": "PscConfig",
+      "properties": {
+        "endpointProject": {
+          "description": "Optional. Consumer service project in which the Private Service Connect endpoint would be set up. This is optional, and only relevant in case the network is a shared VPC. If this is not specified, the endpoint would be setup in the VPC host project.",
+          "type": "string"
+        }
+      },
       "type": "object"
     },
     "ReplicaConfig": {
@@ -2098,14 +2153,22 @@
             "CREATING",
             "READY",
             "REMOVING",
-            "FAILED"
+            "FAILED",
+            "PROMOTING",
+            "PAUSING",
+            "PAUSED",
+            "RESUMING"
           ],
           "enumDescriptions": [
             "State not set.",
             "The replica is being created.",
             "The replica is ready.",
             "The replica is being removed.",
-            "The replica is experiencing an issue and might be unusable. You can get further details from the `stateReasons` field of the `ReplicaConfig` object."
+            "The replica is experiencing an issue and might be unusable. You can get further details from the `stateReasons` field of the `ReplicaConfig` object.",
+            "The replica is being promoted.",
+            "The replica is being paused.",
+            "The replica is paused.",
+            "The replica is being resumed."
           ],
           "readOnly": true,
           "type": "string"
@@ -2115,16 +2178,28 @@
           "items": {
             "enum": [
               "STATE_REASON_UNSPECIFIED",
-              "PEER_INSTANCE_UNREACHABLE"
+              "PEER_INSTANCE_UNREACHABLE",
+              "REMOVE_FAILED",
+              "PAUSE_FAILED",
+              "RESUME_FAILED"
             ],
             "enumDescriptions": [
               "Reason not specified.",
-              "The peer instance is unreachable."
+              "The peer instance is unreachable.",
+              "The remove replica peer instance operation failed.",
+              "The pause replica operation failed.",
+              "The resume replica operation failed."
             ],
             "type": "string"
           },
           "readOnly": true,
           "type": "array"
+        },
+        "stateUpdateTime": {
+          "description": "Output only. The time when the replica state was updated.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
         }
       },
       "type": "object"

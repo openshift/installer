@@ -5,8 +5,8 @@
                 "hyperVGen2": {
                     "publisher": "azureopenshift",
                     "offer": "aro4",
-                    "sku": "419-arm",
-                    "version": "419.6.20250523"
+                    "sku": "420-arm",
+                    "version": "9.6.20251015"
                 }
             }
         }
@@ -17,14 +17,14 @@
                 "hyperVGen1": {
                     "publisher": "azureopenshift",
                     "offer": "aro4",
-                    "sku": "aro_419",
-                    "version": "419.6.20250523"
+                    "sku": "aro_420",
+                    "version": "9.6.20251015"
                 },
                 "hyperVGen2": {
                     "publisher": "azureopenshift",
                     "offer": "aro4",
-                    "sku": "419-v2",
-                    "version": "419.6.20250523"
+                    "sku": "420-v2",
+                    "version": "9.6.20251015"
                 }
             },
             "ocp": {

@@ -26,6 +26,7 @@ import (
 	"github.com/openshift/assisted-service/models"
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	machineconfigclient "github.com/openshift/client-go/machineconfiguration/clientset/versioned"
+	operatorclient "github.com/openshift/client-go/operator/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
@@ -51,6 +52,7 @@ import (
 type ClusterInfo struct {
 	Client                       kubernetes.Interface
 	OpenshiftClient              configclient.Interface
+	OpenshiftOperatorClient      operatorclient.Interface
 	OpenshiftMachineConfigClient machineconfigclient.Interface
 	addNodesConfig               AddNodesConfig
 
@@ -118,7 +120,7 @@ func (ci *ClusterInfo) Generate(ctx context.Context, dependencies asset.Parents)
 		ci.retrieveUserTrustBundle,
 		ci.retrieveArchitecture,
 		ci.retrieveImageDigestMirrorSets,
-		ci.retrieveImageContentPolicies,
+		ci.retrieveImageContentSourcePolicies,
 		ci.retrieveOsImage,
 		ci.retrieveIgnitionEndpointWorker,
 		ci.retrievePlatformType,
@@ -142,7 +144,7 @@ func (ci *ClusterInfo) Generate(ctx context.Context, dependencies asset.Parents)
 }
 
 func (ci *ClusterInfo) initClients() error {
-	if ci.Client != nil && ci.OpenshiftClient != nil {
+	if ci.Client != nil && ci.OpenshiftClient != nil && ci.OpenshiftOperatorClient != nil {
 		return nil
 	}
 
@@ -163,6 +165,12 @@ func (ci *ClusterInfo) initClients() error {
 		return err
 	}
 	ci.OpenshiftClient = openshiftClient
+
+	operatorClient, err := operatorclient.NewForConfig(config)
+	if err != nil {
+		return err
+	}
+	ci.OpenshiftOperatorClient = operatorClient
 
 	openshiftMachineConfigClient, err := machineconfigclient.NewForConfig(config)
 	if err != nil {
@@ -196,10 +204,13 @@ func (ci *ClusterInfo) retrieveProxy() error {
 	if err != nil {
 		return err
 	}
+	// Remove any duplicates in noProxy
+	noProxy := ci.removeDuplicates(proxy.Spec.NoProxy)
+
 	ci.Proxy = &types.Proxy{
 		HTTPProxy:  proxy.Spec.HTTPProxy,
 		HTTPSProxy: proxy.Spec.HTTPSProxy,
-		NoProxy:    proxy.Spec.NoProxy,
+		NoProxy:    noProxy,
 	}
 
 	return nil
@@ -429,8 +440,8 @@ func (ci *ClusterInfo) retrieveImageDigestMirrorSets() error {
 	return nil
 }
 
-func (ci *ClusterInfo) retrieveImageContentPolicies() error {
-	imageContentPolicies, err := ci.OpenshiftClient.ConfigV1().ImageContentPolicies().List(context.Background(), metav1.ListOptions{})
+func (ci *ClusterInfo) retrieveImageContentSourcePolicies() error {
+	imageContentSourcePolicies, err := ci.OpenshiftOperatorClient.OperatorV1alpha1().ImageContentSourcePolicies().List(context.Background(), metav1.ListOptions{})
 	if err != nil {
 		// Older oc client may not have sufficient permissions,
 		// falling back to previous implementation.
@@ -451,14 +462,12 @@ func (ci *ClusterInfo) retrieveImageContentPolicies() error {
 		return nil
 	}
 
-	for _, icp := range imageContentPolicies.Items {
-		for _, digestMirror := range icp.Spec.RepositoryDigestMirrors {
+	for _, icsp := range imageContentSourcePolicies.Items {
+		for _, digestMirror := range icsp.Spec.RepositoryDigestMirrors {
 			digestSource := types.ImageContentSource{
 				Source: digestMirror.Source,
 			}
-			for _, m := range digestMirror.Mirrors {
-				digestSource.Mirrors = append(digestSource.Mirrors, string(m))
-			}
+			digestSource.Mirrors = append(digestSource.Mirrors, digestMirror.Mirrors...)
 			ci.DeprecatedImageContentSources = append(ci.DeprecatedImageContentSources, digestSource)
 		}
 	}
@@ -681,4 +690,32 @@ func (ci *ClusterInfo) reportResult(ctx context.Context) error {
 	}
 
 	return workflowreport.GetReport(ctx).StageResult(workflow.StageClusterInspection, string(data))
+}
+
+func (ci *ClusterInfo) removeDuplicates(input string) string {
+	entries := strings.Split(strings.TrimSpace(input), ",")
+
+	duplicates := []string{}
+	uniqueMap := make(map[string]bool)
+	var uniqueList []string
+	for _, entry := range entries {
+		trimmedEntry := strings.TrimSpace(entry)
+
+		// Check if the entry is not empty and hasn't been added to the map yet
+		if trimmedEntry == "" {
+			continue
+		}
+		if _, exists := uniqueMap[trimmedEntry]; !exists {
+			// If it doesn't exist, add it to the map and the unique list
+			uniqueMap[trimmedEntry] = true
+			uniqueList = append(uniqueList, trimmedEntry)
+		} else {
+			duplicates = append(duplicates, trimmedEntry)
+		}
+	}
+
+	if len(duplicates) > 0 {
+		logrus.Infof("Duplicates detected in noProxy: %v", duplicates)
+	}
+	return strings.Join(uniqueList, ",")
 }

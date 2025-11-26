@@ -1,5 +1,10 @@
 ---
+version: 2
 project_name: govmomi
+
+env:
+  - GO_VERSION=1.24
+  - ALPINE_VERSION=3.21
 
 builds:
   - id: govc
@@ -37,7 +42,9 @@ builds:
 
 nfpms:
   - package_name: govmomi
-    builds:
+    vendor: Broadcom
+    license: Apache 2.0
+    ids:
       - govc
       - vcsim
     homepage: https://github.com/vmware/govmomi
@@ -49,7 +56,7 @@ nfpms:
 
 archives:
   - id: govcbuild
-    builds:
+    ids:
       - govc
     name_template: >-
       govc_
@@ -59,14 +66,14 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
     format_overrides: &overrides
       - goos: windows
-        format: zip
+        formats:
+          - zip
     files: &extrafiles
       - CHANGELOG.md
       - LICENSE.txt
       - README.md
-
   - id: vcsimbuild
-    builds:
+    ids:
       - vcsim
     name_template: >-
       vcsim_
@@ -78,7 +85,7 @@ archives:
     files: *extrafiles
 
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
 
 checksum:
   name_template: "checksums.txt"
@@ -91,49 +98,6 @@ changelog:
       - "^test:"
       - Merge pull request
       - Merge branch
-
-# upload disabled since it is maintained in homebrew-core
-brews:
-  - name: govc
-    ids:
-      - govcbuild
-    repository:
-      owner: govmomi
-      name: homebrew-tap
-      # TODO: create token in specified tap repo, add as secret to govmomi repo and reference in release workflow
-      # token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    # enable once we do fully automated releases
-    skip_upload: true
-    commit_author:
-      name: Alfred the Narwhal
-      email: cna-alfred@vmware.com
-    directory: Formula
-    homepage: "https://github.com/vmware/govmomi/blob/main/govc/README.md"
-    description: "govc is a vSphere CLI built on top of govmomi."
-    test: |
-      system "#{bin}/govc version"
-    install: |
-      bin.install "govc"
-  - name: vcsim
-    ids:
-      - vcsimbuild
-    repository:
-      owner: govmomi
-      name: homebrew-tap
-      # TODO: create token in specified tap repo, add as secret to govmomi repo and reference in release workflow
-      # token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-    # enable once we do fully automated releases
-    skip_upload: true
-    commit_author:
-      name: Alfred the Narwhal
-      email: cna-alfred@vmware.com
-    directory: Formula
-    homepage: "https://github.com/vmware/govmomi/blob/main/vcsim/README.md"
-    description: "vcsim is a vSphere API simulator built on top of govmomi."
-    test: |
-      system "#{bin}/vcsim -h"
-    install: |
-      bin.install "vcsim"
 
 dockers:
   - image_templates:
@@ -151,6 +115,30 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.url=https://github.com/vmware/govmomi"
       - "--platform=linux/amd64"
+      - "--build-arg=GO_VERSION={{.Env.GO_VERSION}}"
+
+  - image_templates:
+      - "vmware/govc:{{ .Tag }}-runner"
+      - "vmware/govc:alpine-{{ .Tag }}-runner"
+      - "vmware/govc:{{ .ShortCommit }}-runner"
+      - "vmware/govc:alpine-{{ .ShortCommit }}-runner"
+      - "vmware/govc:latest-runner"
+      - "vmware/govc:alpine-latest-runner"
+    dockerfile: Dockerfile.govc.runner
+    ids:
+      - govc
+    extra_files:
+      - scripts/runner/entrypoint.sh
+    build_flag_templates:
+      - "--pull"
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--label=org.opencontainers.image.url=https://github.com/vmware/govmomi"
+      - "--platform=linux/amd64"
+      - "--build-arg=ALPINE_VERSION={{.Env.ALPINE_VERSION}}"
+
   - image_templates:
       - "vmware/vcsim:{{ .Tag }}"
       - "vmware/vcsim:{{ .ShortCommit }}"
@@ -166,3 +154,4 @@ dockers:
       - "--label=org.opencontainers.image.version={{.Version}}"
       - "--label=org.opencontainers.image.url=https://github.com/vmware/govmomi"
       - "--platform=linux/amd64"
+      - "--build-arg=GO_VERSION={{.Env.GO_VERSION}}"

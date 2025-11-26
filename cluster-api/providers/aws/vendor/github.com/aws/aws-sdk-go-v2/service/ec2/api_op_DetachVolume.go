@@ -18,14 +18,18 @@ import (
 // detaching. If this happens, detachment can be delayed indefinitely until you
 // unmount the volume, force detachment, reboot the instance, or all three. If an
 // EBS volume is the root device of an instance, it can't be detached while the
-// instance is running. To detach the root volume, stop the instance first. When a
-// volume with an Amazon Web Services Marketplace product code is detached from an
-// instance, the product code is no longer associated with the instance. You can't
-// detach or force detach volumes that are attached to Amazon ECS or Fargate tasks.
-// Attempting to do this results in the UnsupportedOperationException exception
-// with the Unable to detach volume attached to ECS tasks error message. For more
-// information, see Detach an Amazon EBS volume (https://docs.aws.amazon.com/ebs/latest/userguide/ebs-detaching-volume.html)
-// in the Amazon EBS User Guide.
+// instance is running. To detach the root volume, stop the instance first.
+//
+// When a volume with an Amazon Web Services Marketplace product code is detached
+// from an instance, the product code is no longer associated with the instance.
+//
+// You can't detach or force detach volumes that are attached to Amazon Web
+// Services-managed resources. Attempting to do this results in the
+// UnsupportedOperationException exception.
+//
+// For more information, see [Detach an Amazon EBS volume] in the Amazon EBS User Guide.
+//
+// [Detach an Amazon EBS volume]: https://docs.aws.amazon.com/ebs/latest/userguide/ebs-detaching-volume.html
 func (c *Client) DetachVolume(ctx context.Context, params *DetachVolumeInput, optFns ...func(*Options)) (*DetachVolumeOutput, error) {
 	if params == nil {
 		params = &DetachVolumeInput{}
@@ -76,7 +80,8 @@ type DetachVolumeInput struct {
 // Describes volume attachment details.
 type DetachVolumeOutput struct {
 
-	// The ARN of the Amazon ECS or Fargate task to which the volume is attached.
+	// The ARN of the Amazon Web Services-managed resource to which the volume is
+	// attached.
 	AssociatedResource *string
 
 	// The time stamp when the attachment initiated.
@@ -85,17 +90,23 @@ type DetachVolumeOutput struct {
 	// Indicates whether the EBS volume is deleted on instance termination.
 	DeleteOnTermination *bool
 
-	// The device name. If the volume is attached to a Fargate task, this parameter
-	// returns null .
+	// The device name.
+	//
+	// If the volume is attached to an Amazon Web Services-managed resource, this
+	// parameter returns null .
 	Device *string
 
-	// The ID of the instance. If the volume is attached to a Fargate task, this
+	// The ID of the instance.
+	//
+	// If the volume is attached to an Amazon Web Services-managed resource, this
 	// parameter returns null .
 	InstanceId *string
 
-	// The service principal of Amazon Web Services service that owns the underlying
-	// instance to which the volume is attached. This parameter is returned only for
-	// volumes that are attached to Fargate tasks.
+	// The service principal of the Amazon Web Services service that owns the
+	// underlying resource to which the volume is attached.
+	//
+	// This parameter is returned only for volumes that are attached to Amazon Web
+	// Services-managed resources.
 	InstanceOwningService *string
 
 	// The attachment state of the volume.
@@ -153,6 +164,9 @@ func (c *Client) addOperationDetachVolumeMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -163,6 +177,15 @@ func (c *Client) addOperationDetachVolumeMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetachVolumeValidationMiddleware(stack); err != nil {
@@ -184,6 +207,18 @@ func (c *Client) addOperationDetachVolumeMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

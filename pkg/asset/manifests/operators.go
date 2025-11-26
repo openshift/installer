@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/base64"
+	"path"
 	"path/filepath"
 	"strings"
 	"text/template"
@@ -22,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/library-go/pkg/crypto"
 )
@@ -31,7 +33,7 @@ const (
 )
 
 var (
-	kubeSysConfigPath = filepath.Join(manifestDir, "cluster-config.yaml")
+	kubeSysConfigPath = path.Join(manifestDir, "cluster-config.yaml")
 
 	_ asset.WritableAsset = (*Manifests)(nil)
 
@@ -83,6 +85,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.MachineConfigServerCAConfigMap{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
+		&BMCVerifyCAConfigMap{},
 	}
 }
 
@@ -99,8 +102,9 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	clusterCSIDriverConfig := &ClusterCSIDriverConfig{}
 	imageDigestMirrorSet := &ImageDigestMirrorSet{}
 	mcoCfgTemplate := &manifests.MCO{}
+	bmcVerifyCAConfigMap := &BMCVerifyCAConfigMap{}
 
-	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate)
+	dependencies.Get(installConfig, ingress, dns, network, infra, proxy, scheduler, imageContentSourcePolicy, imageDigestMirrorSet, clusterCSIDriverConfig, mcoCfgTemplate, bmcVerifyCAConfigMap)
 
 	redactedConfig, err := redactedInstallConfig(*installConfig.Config)
 	if err != nil {
@@ -138,6 +142,7 @@ func (m *Manifests) Generate(_ context.Context, dependencies asset.Parents) erro
 	m.FileList = append(m.FileList, imageContentSourcePolicy.Files()...)
 	m.FileList = append(m.FileList, clusterCSIDriverConfig.Files()...)
 	m.FileList = append(m.FileList, imageDigestMirrorSet.Files()...)
+	m.FileList = append(m.FileList, bmcVerifyCAConfigMap.Files()...)
 
 	asset.SortFiles(m.FileList)
 
@@ -170,7 +175,6 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		RootCaCert:            string(rootCA.Cert()),
 		RootCACertBase64:      base64.StdEncoding.EncodeToString(rootCA.Cert()),
 		RootCASignerKeyBase64: base64.StdEncoding.EncodeToString(rootCA.Key()),
-		IsFCOS:                installConfig.Config.IsFCOS(),
 		IsSCOS:                installConfig.Config.IsSCOS(),
 		IsOKD:                 installConfig.Config.IsOKD(),
 	}
@@ -215,7 +219,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		dependencies.Get(a)
 		for _, f := range a.Files() {
 			files = append(files, &asset.File{
-				Filename: filepath.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
+				Filename: path.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
 				Data:     applyTemplateData(f.Data, templateData),
 			})
 		}
@@ -280,7 +284,8 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 	newConfig := config
 
 	newConfig.PullSecret = ""
-	if newConfig.Platform.VSphere != nil {
+	switch {
+	case newConfig.Platform.VSphere != nil:
 		p := config.VSphere
 		newVCenters := make([]vsphere.VCenter, len(p.VCenters))
 		for i, v := range p.VCenters {
@@ -308,6 +313,30 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 			FailureDomains:             p.FailureDomains,
 		}
 		newConfig.Platform.VSphere = &newVSpherePlatform
+
+	case newConfig.Platform.Nutanix != nil:
+		p := config.Nutanix
+		newPrismCentral := nutanix.PrismCentral{
+			Endpoint: p.PrismCentral.Endpoint,
+			Username: "",
+			Password: "",
+		}
+		newNutanixPlatform := nutanix.Platform{
+			PrismCentral:           newPrismCentral,
+			PrismElements:          p.PrismElements,
+			ClusterOSImage:         p.ClusterOSImage,
+			PreloadedOSImageName:   p.PreloadedOSImageName,
+			DeprecatedAPIVIP:       p.DeprecatedAPIVIP,
+			APIVIPs:                p.APIVIPs,
+			DeprecatedIngressVIP:   p.DeprecatedIngressVIP,
+			IngressVIPs:            p.IngressVIPs,
+			DefaultMachinePlatform: p.DefaultMachinePlatform,
+			SubnetUUIDs:            p.SubnetUUIDs,
+			LoadBalancer:           p.LoadBalancer,
+			FailureDomains:         p.FailureDomains,
+			PrismAPICallTimeout:    p.PrismAPICallTimeout,
+		}
+		newConfig.Platform.Nutanix = &newNutanixPlatform
 	}
 
 	return yaml.Marshal(newConfig)

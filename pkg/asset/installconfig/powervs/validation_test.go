@@ -357,7 +357,7 @@ func TestValidateCustomVPCSettings(t *testing.T) {
 					ic.Platform.PowerVS.VPCSubnets = []string{validVPCSubnet}
 				},
 			},
-			errorMsg: `VPC.vpcSubnets: Invalid value: "null": invalid without vpcName`,
+			errorMsg: `VPC.vpcSubnets: Invalid value: null: invalid without vpcName`,
 		},
 		{
 			name: "VPC found, but not subnet",
@@ -377,7 +377,7 @@ func TestValidateCustomVPCSettings(t *testing.T) {
 					ic.Platform.PowerVS.VPCSubnets = []string{wrongVPCSubnet}
 				},
 			},
-			errorMsg: `VPC.vpcSubnets: Invalid value: "null": not attached to VPC`,
+			errorMsg: `VPC.vpcSubnets: Invalid value: null: not attached to VPC`,
 		},
 		{
 			name: "region specified, VPC found, subnet found, and properly attached",

@@ -11,15 +11,23 @@ import (
 )
 
 // Sets the AMI state to disabled and removes all launch permissions from the AMI.
-// A disabled AMI can't be used for instance launches. A disabled AMI can't be
-// shared. If an AMI was public or previously shared, it is made private. If an AMI
-// was shared with an Amazon Web Services account, organization, or Organizational
-// Unit, they lose access to the disabled AMI. A disabled AMI does not appear in
-// DescribeImages (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html)
-// API calls by default. Only the AMI owner can disable an AMI. You can re-enable a
-// disabled AMI using EnableImage (http://amazonaws.com/AWSEC2/latest/APIReference/API_EnableImage.html)
-// . For more information, see Disable an AMI (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/disable-an-ami.html)
-// in the Amazon EC2 User Guide.
+// A disabled AMI can't be used for instance launches.
+//
+// A disabled AMI can't be shared. If an AMI was public or previously shared, it
+// is made private. If an AMI was shared with an Amazon Web Services account,
+// organization, or Organizational Unit, they lose access to the disabled AMI.
+//
+// A disabled AMI does not appear in [DescribeImages] API calls by default.
+//
+// Only the AMI owner can disable an AMI.
+//
+// You can re-enable a disabled AMI using [EnableImage].
+//
+// For more information, see [Disable an AMI] in the Amazon EC2 User Guide.
+//
+// [DescribeImages]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeImages.html
+// [Disable an AMI]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/disable-an-ami.html
+// [EnableImage]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_EnableImage.html
 func (c *Client) DisableImage(ctx context.Context, params *DisableImageInput, optFns ...func(*Options)) (*DisableImageOutput, error) {
 	if params == nil {
 		params = &DisableImageInput{}
@@ -105,6 +113,9 @@ func (c *Client) addOperationDisableImageMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -115,6 +126,15 @@ func (c *Client) addOperationDisableImageMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDisableImageValidationMiddleware(stack); err != nil {
@@ -136,6 +156,18 @@ func (c *Client) addOperationDisableImageMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

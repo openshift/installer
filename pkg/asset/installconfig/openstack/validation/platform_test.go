@@ -404,7 +404,7 @@ func TestMachineSubnet(t *testing.T) {
 			}(),
 			cloudInfo:      validPlatformCloudInfo(),
 			networking:     validNetworking(),
-			expectedErrMsg: `platform.openstack.externalDNS: Invalid value: \[\]string{"1.2.3.4"}: externalDNS is set, externalDNS is not supported when ControlPlanePort is set`,
+			expectedErrMsg: `platform.openstack.externalDNS: Invalid value: \["1.2.3.4"\]: externalDNS is set, externalDNS is not supported when ControlPlanePort is set`,
 		},
 		{
 			name: "control plane port subnet not found",

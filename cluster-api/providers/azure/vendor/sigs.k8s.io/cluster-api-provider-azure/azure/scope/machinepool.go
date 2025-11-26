@@ -200,6 +200,7 @@ func (m *MachinePoolScope) ScaleSetSpec(ctx context.Context) azure.ResourceSpecG
 		PublicLBName:                 m.OutboundLBName(infrav1.Node),
 		PublicLBAddressPoolName:      m.OutboundPoolName(infrav1.Node),
 		AcceleratedNetworking:        m.AzureMachinePool.Spec.Template.NetworkInterfaces[0].AcceleratedNetworking,
+		AdditionalCapabilities:       m.AzureMachinePool.Spec.Template.AdditionalCapabilities,
 		Identity:                     m.AzureMachinePool.Spec.Identity,
 		UserAssignedIdentities:       m.AzureMachinePool.Spec.UserAssignedIdentities,
 		DiagnosticsProfile:           m.AzureMachinePool.Spec.Template.Diagnostics,
@@ -324,7 +325,7 @@ func (m *MachinePoolScope) NeedsRequeue() bool {
 	}
 
 	desiredMatchesActual := len(m.vmssState.Instances) == int(m.DesiredReplicas())
-	return !(state != nil && infrav1.IsTerminalProvisioningState(*state) && desiredMatchesActual)
+	return state == nil || !infrav1.IsTerminalProvisioningState(*state) || !desiredMatchesActual
 }
 
 // DesiredReplicas returns the replica count on machine pool or 0 if machine pool replicas is nil.
@@ -615,19 +616,20 @@ func (m *MachinePoolScope) setProvisioningStateAndConditions(v infrav1.Provision
 		} else {
 			conditions.MarkFalse(m.AzureMachinePool, infrav1.ScaleSetDesiredReplicasCondition, infrav1.ScaleSetScaleDownReason, clusterv1.ConditionSeverityInfo, "")
 		}
-		m.SetNotReady()
+		m.SetReady()
 	case v == infrav1.Updating:
 		conditions.MarkFalse(m.AzureMachinePool, infrav1.ScaleSetModelUpdatedCondition, infrav1.ScaleSetModelOutOfDateReason, clusterv1.ConditionSeverityInfo, "")
-		m.SetNotReady()
+		m.SetReady()
 	case v == infrav1.Creating:
 		conditions.MarkFalse(m.AzureMachinePool, infrav1.ScaleSetRunningCondition, infrav1.ScaleSetCreatingReason, clusterv1.ConditionSeverityInfo, "")
 		m.SetNotReady()
 	case v == infrav1.Deleting:
 		conditions.MarkFalse(m.AzureMachinePool, infrav1.ScaleSetRunningCondition, infrav1.ScaleSetDeletingReason, clusterv1.ConditionSeverityInfo, "")
 		m.SetNotReady()
+	case v == infrav1.Failed:
+		conditions.MarkFalse(m.AzureMachinePool, infrav1.ScaleSetRunningCondition, infrav1.ScaleSetProvisionFailedReason, clusterv1.ConditionSeverityInfo, "")
 	default:
 		conditions.MarkFalse(m.AzureMachinePool, infrav1.ScaleSetRunningCondition, string(v), clusterv1.ConditionSeverityInfo, "")
-		m.SetNotReady()
 	}
 }
 
@@ -745,6 +747,9 @@ func (m *MachinePoolScope) GetBootstrapData(ctx context.Context) (string, error)
 
 // calculateBootstrapDataHash calculates the sha256 hash of the bootstrap data.
 func (m *MachinePoolScope) calculateBootstrapDataHash(_ context.Context) (string, error) {
+	if m.cache == nil {
+		return "", fmt.Errorf("machinepool cache is nil")
+	}
 	bootstrapData := m.cache.BootstrapData
 	h := sha256.New()
 	n, err := io.WriteString(h, bootstrapData)

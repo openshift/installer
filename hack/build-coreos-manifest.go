@@ -22,10 +22,8 @@ import (
 
 const (
 	streamRHCOSJSON            = "data/data/coreos/rhcos.json"
-	streamFCOSJSON             = "data/data/coreos/fcos.json"
 	streamSCOSJSON             = "data/data/coreos/scos.json"
 	streamMarketplaceRHCOSJSON = "data/data/coreos/marketplace-rhcos.json"
-	fcosTAG                    = "okd"
 	scosTAG                    = "scos"
 	dest                       = "bin/manifests/coreos-bootimages.yaml"
 )
@@ -78,9 +76,6 @@ func getBootImages() ([]byte, error) {
 	var streamJSON string
 	tags, _ := os.LookupEnv("TAGS")
 	switch {
-	case strings.Contains(tags, fcosTAG):
-		streamJSON = streamFCOSJSON
-		okd = true
 	case strings.Contains(tags, scosTAG):
 		streamJSON = streamSCOSJSON
 		okd = true

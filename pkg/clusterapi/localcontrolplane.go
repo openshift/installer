@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	capnv1 "github.com/nutanix-cloud-native/cluster-api-provider-nutanix/api/v1beta1"
 	"github.com/sirupsen/logrus"
@@ -21,7 +22,7 @@ import (
 	capiv1 "sigs.k8s.io/cluster-api-provider-ibmcloud/api/v1beta2"
 	capov1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1beta1"
 	capvv1 "sigs.k8s.io/cluster-api-provider-vsphere/apis/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -82,6 +83,11 @@ func (c *localControlPlane) Run(ctx context.Context) error {
 	}
 	if c.APIServerLog, err = os.Create(filepath.Join(command.RootOpts.Dir, ArtifactsDir, "kube-apiserver.log")); err != nil {
 		return fmt.Errorf("failed to create kube-apiserver log file: %w", err)
+	}
+
+	if runtime.GOOS == "windows" {
+		os.Setenv("TEST_ASSET_ETCD", filepath.Join(c.BinDir, "etcd.exe"))
+		os.Setenv("TEST_ASSET_KUBE_APISERVER", filepath.Join(c.BinDir, "kube-apiserver.exe"))
 	}
 
 	log.SetLogger(klog.NewKlogr())

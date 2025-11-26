@@ -1,3 +1,62 @@
+# v1.9.0 (2025-10-07)
+
+* **Feature**: Cache first calculated checksum and reuse it in retry, this feature avoids checksum re-calculation and enables request payload consistency check among attempts.
+
+# v1.8.9 (2025-09-26)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.8 (2025-09-23)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.7 (2025-09-08)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.6 (2025-08-29)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.5 (2025-08-27)
+
+* **Dependency Update**: Update to smithy-go v1.23.0.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.4 (2025-08-21)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.3 (2025-08-11)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.2 (2025-08-04)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.1 (2025-07-30)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.8.0 (2025-07-28)
+
+* **Feature**: Add support for HTTP interceptors.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.7.5 (2025-07-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.7.4 (2025-06-17)
+
+* **Dependency Update**: Update to smithy-go v1.22.4.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.7.3 (2025-06-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
 # v1.7.2 (2025-05-22)
 
 * **Bug Fix**: Handle checksum for unseekable body with 0 content length

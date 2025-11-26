@@ -26,12 +26,12 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/internal/controllers/machinedeployment/mdutil"
 	"sigs.k8s.io/cluster-api/util/patch"
 )
 
-// rolloutOnDelete implements the logic for the OnDelete MachineDeploymentStrategyType.
+// rolloutOnDelete implements the logic for the OnDelete rollout strategy.
 func (r *Reconciler) rolloutOnDelete(ctx context.Context, md *clusterv1.MachineDeployment, msList []*clusterv1.MachineSet, templateExists bool) error {
 	newMS, oldMSs, err := r.getAllMachineSetsAndSyncRevision(ctx, md, msList, true, templateExists)
 	if err != nil {
@@ -74,7 +74,7 @@ func (r *Reconciler) rolloutOnDelete(ctx context.Context, md *clusterv1.MachineD
 	return nil
 }
 
-// reconcileOldMachineSetsOnDelete handles reconciliation of Old MachineSets associated with the MachineDeployment in the OnDelete MachineDeploymentStrategyType.
+// reconcileOldMachineSetsOnDelete handles reconciliation of Old MachineSets associated with the MachineDeployment in the OnDelete rollout strategy.
 func (r *Reconciler) reconcileOldMachineSetsOnDelete(ctx context.Context, oldMSs []*clusterv1.MachineSet, allMSs []*clusterv1.MachineSet, deployment *clusterv1.MachineDeployment) error {
 	log := ctrl.LoggerFrom(ctx)
 	if deployment.Spec.Replicas == nil {
@@ -163,24 +163,11 @@ func (r *Reconciler) reconcileOldMachineSetsOnDelete(ctx context.Context, oldMSs
 	return nil
 }
 
-// reconcileNewMachineSetOnDelete handles reconciliation of the latest MachineSet associated with the MachineDeployment in the OnDelete MachineDeploymentStrategyType.
+// reconcileNewMachineSetOnDelete handles reconciliation of the latest MachineSet associated with the MachineDeployment in the OnDelete rollout strategy.
 func (r *Reconciler) reconcileNewMachineSetOnDelete(ctx context.Context, allMSs []*clusterv1.MachineSet, newMS *clusterv1.MachineSet, deployment *clusterv1.MachineDeployment) error {
-	// logic same as reconcile logic for RollingUpdate
-	log := ctrl.LoggerFrom(ctx, "MachineSet", klog.KObj(newMS))
-
-	if newMS.Annotations != nil {
-		if _, ok := newMS.Annotations[clusterv1.DisableMachineCreateAnnotation]; ok {
-			log.V(4).Info("removing annotation on latest MachineSet to enable machine creation")
-			patchHelper, err := patch.NewHelper(newMS, r.Client)
-			if err != nil {
-				return err
-			}
-			delete(newMS.Annotations, clusterv1.DisableMachineCreateAnnotation)
-			err = patchHelper.Patch(ctx, newMS)
-			if err != nil {
-				return err
-			}
-		}
+	if err := r.cleanupDisableMachineCreateAnnotation(ctx, newMS); err != nil {
+		return err
 	}
+
 	return r.reconcileNewMachineSet(ctx, allMSs, newMS, deployment)
 }

@@ -8,7 +8,8 @@ aliases:
     - vincepri
 
   cluster-api-admins:
-    - CecileRobertMichon
+    - fabriziopandini
+    - sbueringer
     - vincepri
 
   cluster-api-maintainers:
@@ -18,14 +19,10 @@ aliases:
     - sbueringer
     - vincepri
 
-  sig-gcp-leads:
-    - abgworrall
-
   cluster-api-gcp-maintainers:
     - cpanato
+    - damdo
     - dims
-    - richardcase
+    - salasberryfin
 
   cluster-api-gcp-reviewers:
-    - damdo
-    - salasberryfin

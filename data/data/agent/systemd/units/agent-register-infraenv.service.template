@@ -4,7 +4,6 @@ Wants=network-online.target assisted-service.service
 PartOf=assisted-service-pod.service
 After=network-online.target assisted-service.service agent-register-cluster.service agent-import-cluster.service
 ConditionPathExists=/etc/assisted/node0
-ConditionPathExists=!/etc/assisted/interactive-ui
 
 [Service]
 Environment=PODMAN_SYSTEMD_UNIT=%n
@@ -13,7 +12,7 @@ EnvironmentFile=/etc/assisted/rendezvous-host.env
 EnvironmentFile=/usr/local/share/assisted-service/agent-images.env
 EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
-ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=agent-register-infraenv -v /etc/assisted/manifests:/manifests --env SERVICE_BASE_URL --env IMAGE_TYPE_ISO --env USER_AUTH_TOKEN $SERVICE_IMAGE /usr/local/bin/agent-installer-client registerInfraEnv
+ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=passthrough --rm --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=agent-register-infraenv -v /etc/assisted/manifests:/manifests --env SERVICE_BASE_URL --env IMAGE_TYPE_ISO --env USER_AUTH_TOKEN $SERVICE_IMAGE /usr/local/bin/agent-installer-client registerInfraEnv
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 
@@ -24,4 +23,4 @@ RestartSec=30
 RemainAfterExit=true
 
 [Install]
-WantedBy=start-cluster-installation.service agent-add-node.service
+WantedBy=start-cluster-installation.service agent-add-node.service agent-start-ui.service

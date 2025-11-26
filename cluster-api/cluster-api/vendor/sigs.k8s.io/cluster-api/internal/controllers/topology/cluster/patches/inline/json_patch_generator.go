@@ -29,11 +29,12 @@ import (
 	"github.com/pkg/errors"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	runtimehooksv1 "sigs.k8s.io/cluster-api/api/runtime/hooks/v1alpha1"
 	"sigs.k8s.io/cluster-api/exp/runtime/topologymutation"
 	"sigs.k8s.io/cluster-api/internal/contract"
 	"sigs.k8s.io/cluster-api/internal/controllers/topology/cluster/patches/api"
@@ -135,7 +136,7 @@ func matchesSelector(req *runtimehooksv1.GeneratePatchesRequestItem, templateVar
 	}
 
 	// Check if the request is for an InfrastructureCluster.
-	if selector.MatchResources.InfrastructureCluster {
+	if ptr.Deref(selector.MatchResources.InfrastructureCluster, false) {
 		// Cluster.spec.infrastructureRef holds the InfrastructureCluster.
 		if req.HolderReference.Kind == "Cluster" && req.HolderReference.FieldPath == "spec.infrastructureRef" {
 			return true
@@ -143,12 +144,17 @@ func matchesSelector(req *runtimehooksv1.GeneratePatchesRequestItem, templateVar
 	}
 
 	// Check if the request is for a ControlPlane or the InfrastructureMachineTemplate of a ControlPlane.
-	if selector.MatchResources.ControlPlane {
+	if ptr.Deref(selector.MatchResources.ControlPlane, false) {
 		// Cluster.spec.controlPlaneRef holds the ControlPlane.
 		if req.HolderReference.Kind == "Cluster" && req.HolderReference.FieldPath == "spec.controlPlaneRef" {
 			return true
 		}
 		// *.spec.machineTemplate.infrastructureRef holds the InfrastructureMachineTemplate of a ControlPlane.
+		// Note: this field path is only used in this context.
+		if req.HolderReference.FieldPath == strings.Join(contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Path(), ".") {
+			return true
+		}
+		// *.spec.machineTemplate.spec.infrastructureRef holds the InfrastructureMachineTemplate of a ControlPlane.
 		// Note: this field path is only used in this context.
 		if req.HolderReference.FieldPath == strings.Join(contract.ControlPlane().MachineTemplate().InfrastructureRef().Path(), ".") {
 			return true
@@ -219,14 +225,14 @@ func matchesSelector(req *runtimehooksv1.GeneratePatchesRequestItem, templateVar
 	return false
 }
 
-func patchIsEnabled(enabledIf *string, variables map[string]apiextensionsv1.JSON) (bool, error) {
+func patchIsEnabled(enabledIf string, variables map[string]apiextensionsv1.JSON) (bool, error) {
 	// If enabledIf is not set, patch is enabled.
-	if enabledIf == nil {
+	if enabledIf == "" {
 		return true, nil
 	}
 
 	// Rendered template.
-	value, err := renderValueTemplate(*enabledIf, variables)
+	value, err := renderValueTemplate(enabledIf, variables)
 	if err != nil {
 		return false, errors.Wrapf(err, "failed to calculate value for enabledIf")
 	}
@@ -281,10 +287,10 @@ func calculateValue(patch clusterv1.JSONPatch, variables map[string]apiextension
 	if patch.Value != nil && patch.ValueFrom != nil {
 		return nil, errors.Errorf("failed to calculate value: both .value and .valueFrom are set")
 	}
-	if patch.ValueFrom != nil && patch.ValueFrom.Variable == nil && patch.ValueFrom.Template == nil {
+	if patch.ValueFrom != nil && patch.ValueFrom.Variable == "" && patch.ValueFrom.Template == "" {
 		return nil, errors.Errorf("failed to calculate value: .valueFrom is set, but neither .valueFrom.variable nor .valueFrom.template are set")
 	}
-	if patch.ValueFrom != nil && patch.ValueFrom.Variable != nil && patch.ValueFrom.Template != nil {
+	if patch.ValueFrom != nil && patch.ValueFrom.Variable != "" && patch.ValueFrom.Template != "" {
 		return nil, errors.Errorf("failed to calculate value: .valueFrom is set, but both .valueFrom.variable and .valueFrom.template are set")
 	}
 
@@ -294,8 +300,8 @@ func calculateValue(patch clusterv1.JSONPatch, variables map[string]apiextension
 	}
 
 	// Return variable.
-	if patch.ValueFrom.Variable != nil {
-		value, err := patchvariables.GetVariableValue(variables, *patch.ValueFrom.Variable)
+	if patch.ValueFrom.Variable != "" {
+		value, err := patchvariables.GetVariableValue(variables, patch.ValueFrom.Variable)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to calculate value")
 		}
@@ -303,7 +309,7 @@ func calculateValue(patch clusterv1.JSONPatch, variables map[string]apiextension
 	}
 
 	// Return rendered value template.
-	value, err := renderValueTemplate(*patch.ValueFrom.Template, variables)
+	value, err := renderValueTemplate(patch.ValueFrom.Template, variables)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to calculate value for template")
 	}

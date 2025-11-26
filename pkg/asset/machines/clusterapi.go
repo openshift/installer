@@ -15,6 +15,7 @@ import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
+	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/yaml"
 
@@ -47,6 +48,7 @@ import (
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
+	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -235,7 +237,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		}
 
 		if len(mpool.Zones) == 0 {
-			azs, err := client.GetAvailabilityZones(ctx, ic.Platform.Azure.Region, mpool.InstanceType)
+			azs, err := installConfig.Azure.VMAvailabilityZones(ctx, mpool.InstanceType)
 			if err != nil {
 				return fmt.Errorf("failed to fetch availability zones: %w", err)
 			}
@@ -259,7 +261,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 				mpool.OSImage.Publisher = *img.Plan.Publisher
 			}
 		}
-		capabilities, err := client.GetVMCapabilities(ctx, mpool.InstanceType, installConfig.Config.Platform.Azure.Region)
+		capabilities, err := installConfig.Azure.ControlPlaneCapabilities()
 		if err != nil {
 			return err
 		}
@@ -272,7 +274,12 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			}
 		}
 		pool.Platform.Azure = &mpool
-		subnet := ic.Azure.ControlPlaneSubnet
+		subnet := installConfig.Config.Azure.ControlPlaneSubnetName(clusterID.InfraID)
+		for _, sub := range installConfig.Config.Azure.Subnets {
+			if sub.Role == v1beta1.SubnetControlPlane {
+				subnet = sub.Name
+			}
+		}
 
 		hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
 		if err != nil {
@@ -289,16 +296,17 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			session.Credentials.SubscriptionID,
 			session,
 			&azure.MachineInput{
-				Subnet:          subnet,
-				Role:            "master",
-				UserDataSecret:  "master-user-data",
-				HyperVGen:       hyperVGen,
-				UseImageGallery: installConfig.Azure.CloudName != azuretypes.StackCloud,
-				Private:         installConfig.Config.Publish == types.InternalPublishingStrategy,
-				UserTags:        installConfig.Config.Platform.Azure.UserTags,
-				Platform:        installConfig.Config.Platform.Azure,
-				Pool:            &pool,
-				StorageSuffix:   session.Environment.StorageEndpointSuffix,
+				Subnet:         subnet,
+				Role:           "master",
+				UserDataSecret: "master-user-data",
+				HyperVGen:      hyperVGen,
+				Environment:    installConfig.Azure.CloudName,
+				Private:        installConfig.Config.Publish == types.InternalPublishingStrategy,
+				UserTags:       installConfig.Config.Platform.Azure.UserTags,
+				Platform:       installConfig.Config.Platform.Azure,
+				Pool:           &pool,
+				StorageSuffix:  session.Environment.StorageEndpointSuffix,
+				RHCOS:          rhcosImage.ControlPlane,
 			},
 		)
 		if err != nil {
@@ -312,7 +320,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		mpool.Set(ic.Platform.GCP.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.GCP)
 		if len(mpool.Zones) == 0 {
-			azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType, ic.Platform.GCP.ServiceEndpoints)
+			azs, err := gcp.ZonesForInstanceType(ic.Platform.GCP.ProjectID, ic.Platform.GCP.Region, mpool.InstanceType, ic.Platform.GCP.Endpoint)
 			if err != nil {
 				return errors.Wrap(err, "failed to fetch availability zones")
 			}
@@ -413,7 +421,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 		if err != nil {
 			return fmt.Errorf("unable to generate CAPI machines for vSphere %w", err)
 		}
-	case openstacktypes.Name:
+	case openstacktypes.Name, powervctypes.Name:
 		mpool := defaultOpenStackMachinePoolPlatform()
 		mpool.Set(ic.Platform.OpenStack.DefaultMachinePlatform)
 		mpool.Set(pool.Platform.OpenStack)

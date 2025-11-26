@@ -23,10 +23,11 @@ import (
 const (
 	cloudsSecret          = "azure-cloud-credentials"
 	cloudsSecretNamespace = "openshift-machine-api"
+	controlPlaneRoleName  = "master"
 )
 
 // Machines returns a list of machines for a machinepool.
-func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, useImageGallery bool, session *icazure.Session) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
+func Machines(clusterID string, config *types.InstallConfig, pool *types.MachinePool, osImage, role, userDataSecret string, capabilities map[string]string, session *icazure.Session) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if configPlatform := config.Platform.Name(); configPlatform != azure.Name {
 		return nil, nil, fmt.Errorf("non-Azure configuration: %q", configPlatform)
 	}
@@ -49,12 +50,19 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	}
 	var machines []machineapi.Machine
 	machineSetProvider := &machineapi.AzureMachineProviderSpec{}
+
+	networkResourceGroup, virtualNetworkName, subnets, err := getNetworkInfo(platform, clusterID, role, nil)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to get subnets for role %s : %w", role, err)
+	}
+
 	for idx := int64(0); idx < total; idx++ {
 		var azIndex int
 		if len(azs) > 0 {
 			azIndex = int(idx) % len(azs)
 		}
-		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, useImageGallery, session)
+		subnetIndex := int(idx) % len(subnets)
+		provider, err := provider(platform, mpool, osImage, userDataSecret, clusterID, role, &azIndex, capabilities, session, networkResourceGroup, virtualNetworkName, subnets[subnetIndex])
 		if err != nil {
 			return nil, nil, errors.Wrap(err, "failed to create provider")
 		}
@@ -151,12 +159,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 	return machines, controlPlaneMachineSet, nil
 }
 
-func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, useImageGallery bool, session *icazure.Session) (*machineapi.AzureMachineProviderSpec, error) {
+func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string, userDataSecret string, clusterID string, role string, azIdx *int, capabilities map[string]string, session *icazure.Session, networkResourceGroup, virtualNetwork, subnet string) (*machineapi.AzureMachineProviderSpec, error) {
 	var az string
 	if len(mpool.Zones) > 0 && azIdx != nil {
 		az = mpool.Zones[*azIdx]
 	}
-
 	hyperVGen, err := icazure.GetHyperVGenerationVersion(capabilities, "")
 	if err != nil {
 		return nil, err
@@ -172,37 +179,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	}
 	rg := platform.ClusterResourceGroupName(clusterID)
 
-	var image machineapi.Image
-	if mpool.OSImage.Publisher != "" {
-		image.Type = machineapi.AzureImageTypeMarketplaceWithPlan
-		if mpool.OSImage.Plan == azure.ImageNoPurchasePlan {
-			image.Type = machineapi.AzureImageTypeMarketplaceNoPlan
-		}
-		image.Publisher = mpool.OSImage.Publisher
-		image.Offer = mpool.OSImage.Offer
-		image.SKU = mpool.OSImage.SKU
-		image.Version = mpool.OSImage.Version
-	} else if useImageGallery {
-		// image gallery names cannot have dashes
-		galleryName := strings.ReplaceAll(clusterID, "-", "_")
-		id := clusterID
-		if hyperVGen == "V2" {
-			id += "-gen2"
-		}
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s/versions/latest", rg, galleryName, id)
-		image.ResourceID = imageID
-	} else {
-		imageID := fmt.Sprintf("/resourceGroups/%s/providers/Microsoft.Compute/images/%s", rg, clusterID)
-		if hyperVGen == "V2" && platform.CloudName != azure.StackCloud {
-			imageID += "-gen2"
-		}
-		image.ResourceID = imageID
-	}
-
-	networkResourceGroup, virtualNetwork, subnet, err := getNetworkInfo(platform, clusterID, role)
-	if err != nil {
-		return nil, err
-	}
+	image := mapiImage(mpool.OSImage, platform.CloudName, hyperVGen, rg, session.Credentials.SubscriptionID, clusterID, osImage)
 
 	if mpool.OSDisk.DiskType == "" {
 		mpool.OSDisk.DiskType = "Premium_LRS"
@@ -325,7 +302,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 
 func getBootDiagnosticObject(diag *azure.BootDiagnostics, cloudName string, role string) *machineapi.AzureDiagnostics {
 	if diag == nil {
-		if role == "master" {
+		if role == controlPlaneRoleName {
 			return &machineapi.AzureDiagnostics{Boot: &machineapi.AzureBootDiagnostics{StorageAccountType: machineapi.AzureManagedAzureDiagnosticsStorage}}
 		}
 		return nil
@@ -361,20 +338,46 @@ func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.Contro
 	return nil
 }
 
-func getNetworkInfo(platform *azure.Platform, clusterID, role string) (string, string, string, error) {
+func getNetworkInfo(platform *azure.Platform, clusterID, role string, subnetZones []string) (string, string, []string, error) {
 	networkResourceGroupName := platform.NetworkResourceGroupName
 	if platform.VirtualNetwork == "" {
 		networkResourceGroupName = platform.ClusterResourceGroupName(clusterID)
 	}
-
+	virtualNetworkName := platform.VirtualNetworkName(clusterID)
+	var subnetRole capz.SubnetRole
+	var defaultSubnet string
 	switch role {
 	case "worker":
-		return networkResourceGroupName, platform.VirtualNetworkName(clusterID), platform.ComputeSubnetName(clusterID), nil
-	case "master":
-		return networkResourceGroupName, platform.VirtualNetworkName(clusterID), platform.ControlPlaneSubnetName(clusterID), nil
+		subnetRole = capz.SubnetNode
+		defaultSubnet = platform.ComputeSubnetName(clusterID)
+	case controlPlaneRoleName:
+		subnetRole = capz.SubnetControlPlane
+		defaultSubnet = platform.ControlPlaneSubnetName(clusterID)
 	default:
-		return "", "", "", fmt.Errorf("unrecognized machine role %s", role)
+		return "", "", nil, fmt.Errorf("unrecognized machine role %s", role)
 	}
+
+	subnets := []string{}
+	for _, subnetSpec := range platform.Subnets {
+		if subnetSpec.Role == subnetRole {
+			subnets = append(subnets, subnetSpec.Name)
+		}
+	}
+
+	if len(subnets) == 0 {
+		subnets = append(subnets, defaultSubnet)
+		if platform.OutboundType == azure.NATGatewayMultiZoneOutboundType && subnetRole == capz.SubnetNode {
+			// Starting from 2 here since there is one already added. For default installs, there has to
+			// be one guaranteed and then for multi zone, we need to add extra per availability zone.
+			// This code will only run if multi zone so the first one is already set and we start from 2.
+			if subnetZones != nil {
+				for i := 2; i <= len(subnetZones); i++ {
+					subnets = append(subnets, fmt.Sprintf("%s-%d", defaultSubnet, i))
+				}
+			}
+		}
+	}
+	return networkResourceGroupName, virtualNetworkName, subnets, nil
 }
 
 // getVMNetworkingType should set the correct capability for instance type
@@ -425,4 +428,31 @@ func generateSecurityProfile(mpool *azure.MachinePool) *machineapi.SecurityProfi
 	}
 
 	return securityProfile
+}
+
+func mapiImage(osImage azure.OSImage, azEnv azure.CloudEnvironment, gen, rg, sub, infraID, rhcosImg string) machineapi.Image {
+	cImg := capzImage(osImage, azEnv, gen, rg, sub, infraID, rhcosImg)
+	mImg := machineapi.Image{}
+
+	if cImg.ID != nil {
+		mImg.ResourceID = trimSubscriptionPrefix(*cImg.ID)
+	} else if cImg.Marketplace != nil {
+		mImg.Publisher = cImg.Marketplace.Publisher
+		mImg.Offer = cImg.Marketplace.Offer
+		mImg.SKU = cImg.Marketplace.SKU
+		mImg.Version = cImg.Marketplace.Version
+		mImg.Type = machineapi.AzureImageTypeMarketplaceNoPlan
+		if cImg.Marketplace.ThirdPartyImage {
+			mImg.Type = machineapi.AzureImageTypeMarketplaceWithPlan
+		}
+	}
+	return mImg
+}
+
+// trimSubscriptionPrefix takes an image id string
+// formatted for CAPZ and returns a string formatted
+// for MAPI, by removing the /subspcription/ prefix.
+func trimSubscriptionPrefix(image string) string {
+	rgIndex := strings.Index(image, "/resourceGroups/")
+	return image[rgIndex:]
 }

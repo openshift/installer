@@ -3,33 +3,42 @@ package bootstrap
 import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 )
+
+// sourceSetKey represents the set of fields that have to be unique to form
+// a merged list without duplicate entries for Image sources.
+type sourceSetKey struct {
+	Source       string
+	SourcePolicy configv1.MirrorSourcePolicy
+}
 
 // MergedMirrorSets consolidates a list of ImageDigestSources so that each
 // source appears only once.
 func MergedMirrorSets(sources []types.ImageDigestSource) []types.ImageDigestSource {
-	sourceSet := make(map[string][]string)
-	mirrorSet := make(map[string]sets.String)
-	orderedSources := []string{}
+	sourceSet := make(map[sourceSetKey][]string)
+	mirrorSet := make(map[sourceSetKey]sets.Set[string])
+	orderedSources := []sourceSetKey{}
 
 	for _, group := range sources {
-		if _, ok := sourceSet[group.Source]; !ok {
-			orderedSources = append(orderedSources, group.Source)
-			sourceSet[group.Source] = nil
-			mirrorSet[group.Source] = sets.NewString()
+		key := sourceSetKey{Source: group.Source, SourcePolicy: group.SourcePolicy}
+		if _, ok := sourceSet[key]; !ok {
+			orderedSources = append(orderedSources, key)
+			sourceSet[key] = nil
+			mirrorSet[key] = sets.New[string]()
 		}
 		for _, mirror := range group.Mirrors {
-			if !mirrorSet[group.Source].Has(mirror) {
-				sourceSet[group.Source] = append(sourceSet[group.Source], mirror)
-				mirrorSet[group.Source].Insert(mirror)
+			if !mirrorSet[key].Has(mirror) {
+				sourceSet[key] = append(sourceSet[key], mirror)
+				mirrorSet[key].Insert(mirror)
 			}
 		}
 	}
 
 	out := []types.ImageDigestSource{}
 	for _, source := range orderedSources {
-		out = append(out, types.ImageDigestSource{Source: source, Mirrors: sourceSet[source]})
+		out = append(out, types.ImageDigestSource{Source: source.Source, Mirrors: sourceSet[source], SourcePolicy: source.SourcePolicy})
 	}
 	return out
 }
@@ -39,7 +48,7 @@ func MergedMirrorSets(sources []types.ImageDigestSource) []types.ImageDigestSour
 func ContentSourceToDigestMirror(sources []types.ImageContentSource) []types.ImageDigestSource {
 	digestSources := []types.ImageDigestSource{}
 	for _, s := range sources {
-		digestSources = append(digestSources, types.ImageDigestSource(s))
+		digestSources = append(digestSources, types.ImageDigestSource{Source: s.Source, Mirrors: s.Mirrors})
 	}
 	return digestSources
 }

@@ -20,13 +20,14 @@ package drain
 import (
 	"context"
 	"fmt"
+	"maps"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/pkg/errors"
-	"golang.org/x/exp/maps"
 	corev1 "k8s.io/api/core/v1"
 	policyv1 "k8s.io/api/policy/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -37,7 +38,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/internal/webhooks"
 	clog "sigs.k8s.io/cluster-api/util/log"
 )
@@ -315,7 +316,7 @@ func (d *Helper) EvictPods(ctx context.Context, podDeleteList *PodDeleteList) Ev
 
 	// Trigger evictions for at most 10s. We'll continue on the next reconcile if we hit the timeout.
 	evictionTimeout := 10 * time.Second
-	ctx, cancel := context.WithTimeout(ctx, evictionTimeout)
+	ctx, cancel := context.WithTimeoutCause(ctx, evictionTimeout, errors.New("eviction timeout expired"))
 	defer cancel()
 
 	res := EvictionResult{
@@ -467,7 +468,7 @@ func (r EvictionResult) DrainCompleted() bool {
 }
 
 // ConditionMessage returns a condition message for the case where a drain is not completed.
-func (r EvictionResult) ConditionMessage(nodeDrainStartTime *metav1.Time) string {
+func (r EvictionResult) ConditionMessage(nodeDrainStartTime metav1.Time) string {
 	if r.DrainCompleted() {
 		return ""
 	}
@@ -484,8 +485,7 @@ func (r EvictionResult) ConditionMessage(nodeDrainStartTime *metav1.Time) string
 			conditionMessage, kind, PodListToString(r.PodsDeletionTimestampSet, 3))
 	}
 	if len(r.PodsFailedEviction) > 0 {
-		sortedFailureMessages := maps.Keys(r.PodsFailedEviction)
-		sort.Strings(sortedFailureMessages)
+		sortedFailureMessages := slices.Sorted(maps.Keys(r.PodsFailedEviction))
 
 		skippedFailureMessages := []string{}
 		if len(sortedFailureMessages) > 5 {
@@ -500,7 +500,7 @@ func (r EvictionResult) ConditionMessage(nodeDrainStartTime *metav1.Time) string
 			}
 			// Note: the code computing stale warning for the machine deleting condition is making assumptions on the format/content of this message.
 			// Same applies for other conditions where deleting is involved, e.g. MachineSet's Deleting and ScalingDown condition.
-			failureMessage = strings.Replace(failureMessage, "Cannot evict pod as it would violate the pod's disruption budget.", "cannot evict pod as it would violate the pod's disruption budget.", -1)
+			failureMessage = strings.ReplaceAll(failureMessage, "Cannot evict pod as it would violate the pod's disruption budget.", "cannot evict pod as it would violate the pod's disruption budget.")
 			if !strings.HasPrefix(failureMessage, "cannot evict pod as it would violate the pod's disruption budget.") {
 				failureMessage = "failed to evict Pod, " + failureMessage
 			}

@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
-	infrav1alpha "sigs.k8s.io/cluster-api-provider-azure/api/v1alpha1"
+	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-azure/util/tele"
 )
 
@@ -84,8 +84,8 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 
 	for _, owner := range agentPool.GetOwnerReferences() {
-		if owner.APIVersion == infrav1alpha.GroupVersion.Identifier() &&
-			owner.Kind == infrav1alpha.AzureASOManagedMachinePoolKind {
+		if matchesASOManagedAPIGroup(owner.APIVersion) &&
+			owner.Kind == infrav1.AzureASOManagedMachinePoolKind {
 			return ctrl.Result{}, nil
 		}
 	}
@@ -126,8 +126,8 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 	var managedControlPlaneOwner *metav1.OwnerReference
 	for _, owner := range managedCluster.GetOwnerReferences() {
-		if owner.APIVersion == infrav1alpha.GroupVersion.Identifier() &&
-			owner.Kind == infrav1alpha.AzureASOManagedControlPlaneKind &&
+		if matchesASOManagedAPIGroup(owner.APIVersion) &&
+			owner.Kind == infrav1.AzureASOManagedControlPlaneKind &&
 			owner.Name == agentPool.Owner().Name {
 			managedControlPlaneOwner = ptr.To(owner)
 			break
@@ -136,7 +136,7 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	if managedControlPlaneOwner == nil {
 		return ctrl.Result{}, fmt.Errorf("ManagedCluster %s is not owned by any AzureASOManagedControlPlane", managedClusterKey)
 	}
-	asoManagedControlPlane := &infrav1alpha.AzureASOManagedControlPlane{}
+	asoManagedControlPlane := &infrav1.AzureASOManagedControlPlane{}
 	managedControlPlaneKey := client.ObjectKey{
 		Namespace: namespace,
 		Name:      managedControlPlaneOwner.Name,
@@ -147,13 +147,13 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 	}
 	clusterName := asoManagedControlPlane.Labels[clusterv1.ClusterNameLabel]
 
-	asoManagedMachinePool := &infrav1alpha.AzureASOManagedMachinePool{
+	asoManagedMachinePool := &infrav1.AzureASOManagedMachinePool{
 		ObjectMeta: metav1.ObjectMeta{
 			Namespace: namespace,
 			Name:      agentPool.Name,
 		},
-		Spec: infrav1alpha.AzureASOManagedMachinePoolSpec{
-			AzureASOManagedMachinePoolTemplateResourceSpec: infrav1alpha.AzureASOManagedMachinePoolTemplateResourceSpec{
+		Spec: infrav1.AzureASOManagedMachinePoolSpec{
+			AzureASOManagedMachinePoolTemplateResourceSpec: infrav1.AzureASOManagedMachinePoolTemplateResourceSpec{
 				Resources: []runtime.RawExtension{
 					{Object: agentPool},
 				},
@@ -176,8 +176,8 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 					},
 					ClusterName: clusterName,
 					InfrastructureRef: corev1.ObjectReference{
-						APIVersion: infrav1alpha.GroupVersion.Identifier(),
-						Kind:       infrav1alpha.AzureASOManagedMachinePoolKind,
+						APIVersion: infrav1.GroupVersion.Identifier(),
+						Kind:       infrav1.AzureASOManagedMachinePoolKind,
 						Name:       asoManagedMachinePool.Name,
 					},
 				},
@@ -187,7 +187,7 @@ func (r *AgentPoolAdoptReconciler) Reconcile(ctx context.Context, req ctrl.Reque
 
 	if ptr.Deref(agentPool.Spec.EnableAutoScaling, false) {
 		machinePool.Annotations = map[string]string{
-			clusterv1.ReplicasManagedByAnnotation: infrav1alpha.ReplicasManagedByAKS,
+			clusterv1.ReplicasManagedByAnnotation: infrav1.ReplicasManagedByAKS,
 		}
 	}
 

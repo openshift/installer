@@ -40,10 +40,9 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	EKSClusterName string `json:"eksClusterName,omitempty"`
 
-	// +optional
-
 	// IdentityRef is a reference to an identity to be used when reconciling the managed control plane.
 	// If no identity is specified, the default identity for this controller will be used.
+	// +optional
 	IdentityRef *infrav1.AWSIdentityReference `json:"identityRef,omitempty"`
 
 	// NetworkSpec encapsulates all things related to AWS network.
@@ -87,6 +86,30 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// feature flag to incorporate these into the created role.
 	// +optional
 	RoleAdditionalPolicies *[]string `json:"roleAdditionalPolicies,omitempty"`
+
+	// RolePath sets the path to the role. For more information about paths, see IAM Identifiers
+	// (https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html)
+	// in the IAM User Guide.
+	//
+	// This parameter is optional. If it is not included, it defaults to a slash
+	// (/).
+	// +optional
+	RolePath string `json:"rolePath,omitempty"`
+
+	// RolePermissionsBoundary sets the ARN of the managed policy that is used
+	// to set the permissions boundary for the role.
+	//
+	// A permissions boundary policy defines the maximum permissions that identity-based
+	// policies can grant to an entity, but does not grant permissions. Permissions
+	// boundaries do not define the maximum permissions that a resource-based policy
+	// can grant to an entity. To learn more, see Permissions boundaries for IAM
+	// entities (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html)
+	// in the IAM User Guide.
+	//
+	// For more information about policy types, see Policy types (https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies.html#access_policy-types)
+	// in the IAM User Guide.
+	// +optional
+	RolePermissionsBoundary string `json:"rolePermissionsBoundary,omitempty"`
 
 	// Logging specifies which EKS Cluster logs should be enabled. Entries for
 	// each of the enabled logs will be sent to CloudWatch
@@ -164,14 +187,24 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	Addons *[]Addon `json:"addons,omitempty"`
 
-	// IdentityProviderconfig is used to specify the oidc provider config
+	// OIDCIdentityProviderConfig is used to specify the OIDC provider config
 	// to be attached with this eks cluster
 	// +optional
 	OIDCIdentityProviderConfig *OIDCIdentityProviderConfig `json:"oidcIdentityProviderConfig,omitempty"`
 
+	// AccessConfig specifies the access configuration information for the cluster
+	// +optional
+	AccessConfig *AccessConfig `json:"accessConfig,omitempty"`
+
 	// VpcCni is used to set configuration options for the VPC CNI plugin
 	// +optional
 	VpcCni VpcCni `json:"vpcCni,omitempty"`
+
+	// BootstrapSelfManagedAddons is used to set configuration options for
+	// bare EKS cluster without EKS default networking addons
+	// If you set this value to false when creating a cluster, the default networking add-ons will not be installed
+	// +kubebuilder:default=true
+	BootstrapSelfManagedAddons bool `json:"bootstrapSelfManagedAddons,omitempty"`
 
 	// RestrictPrivateSubnets indicates that the EKS control plane should only use private subnets.
 	// +kubebuilder:default=false
@@ -179,6 +212,15 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 
 	// KubeProxy defines managed attributes of the kube-proxy daemonset
 	KubeProxy KubeProxy `json:"kubeProxy,omitempty"`
+
+	// The cluster upgrade policy to use for the cluster.
+	// (Official AWS docs for this policy: https://docs.aws.amazon.com/eks/latest/userguide/view-upgrade-policy.html)
+	// `extended` upgrade policy indicates that the cluster will enter into extended support once the Kubernetes version reaches end of standard support. You will incur extended support charges with this setting. You can upgrade your cluster to a standard supported Kubernetes version to stop incurring extended support charges.
+	// `standard` upgrade policy indicates that the cluster is eligible for automatic upgrade at the end of standard support. You will not incur extended support charges with this setting but your EKS cluster will automatically upgrade to the next supported Kubernetes version in standard support.
+	// If omitted, new clusters will use the AWS default upgrade policy (which at the time of writing is "extended") and existing clusters will have their upgrade policy unchanged.
+	// +kubebuilder:validation:Enum=extended;standard
+	// +optional
+	UpgradePolicy UpgradePolicy `json:"upgradePolicy,omitempty"`
 }
 
 // KubeProxy specifies how the kube-proxy daemonset is managed.
@@ -217,6 +259,21 @@ type EndpointAccess struct {
 	// Private points VPC-internal control plane access to the private endpoint
 	// +optional
 	Private *bool `json:"private,omitempty"`
+}
+
+// AccessConfig represents the access configuration information for the cluster
+type AccessConfig struct {
+	// AuthenticationMode specifies the desired authentication mode for the cluster
+	// Defaults to config_map
+	// +kubebuilder:default=config_map
+	// +kubebuilder:validation:Enum=config_map;api;api_and_config_map
+	AuthenticationMode EKSAuthenticationMode `json:"authenticationMode,omitempty"`
+
+	// BootstrapClusterCreatorAdminPermissions grants cluster admin permissions
+	// to the IAM identity creating the cluster. Only applied during creation,
+	// ignored when updating existing clusters. Defaults to true.
+	// +kubebuilder:default=true
+	BootstrapClusterCreatorAdminPermissions *bool `json:"bootstrapClusterCreatorAdminPermissions,omitempty"`
 }
 
 // EncryptionConfig specifies the encryption configuration for the EKS clsuter.

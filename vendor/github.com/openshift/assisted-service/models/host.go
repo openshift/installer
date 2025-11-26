@@ -66,6 +66,9 @@ type Host struct {
 	// The domain name resolution result.
 	DomainNameResolutions string `json:"domain_name_resolutions,omitempty" gorm:"type:text"`
 
+	// The host's BMC credentials that will be used in TNF.
+	FencingCredentials string `json:"fencing_credentials,omitempty" gorm:"type:text"`
+
 	// free addresses
 	FreeAddresses string `json:"free_addresses,omitempty" gorm:"type:text"`
 

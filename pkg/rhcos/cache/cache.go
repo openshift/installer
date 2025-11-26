@@ -18,7 +18,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/thedevsaddam/retry"
 	"github.com/ulikunitz/xz"
-	"golang.org/x/sys/unix"
 )
 
 const (
@@ -99,12 +98,12 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 		}
 	}()
 
-	err = unix.Flock(int(flock.Fd()), unix.LOCK_EX)
+	err = flockFile(flock, true)
 	if err != nil {
 		return err
 	}
 	defer func() {
-		err2 := unix.Flock(int(flock.Fd()), unix.LOCK_UN)
+		err2 := flockFile(flock, false)
 		if err == nil {
 			err = err2
 		}

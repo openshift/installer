@@ -25,12 +25,12 @@ import (
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/feature"
 )
 
@@ -128,12 +128,12 @@ func validatePatchDefinitions(patch clusterv1.ClusterClassPatch, clusterClass *c
 					"patch.external can be used only if the RuntimeSDK feature flag is enabled",
 				))
 		}
-		if patch.External.ValidateExtension == nil && patch.External.GenerateExtension == nil {
+		if patch.External.ValidateTopologyExtension == "" && patch.External.GeneratePatchesExtension == "" {
 			allErrs = append(allErrs,
 				field.Invalid(
 					path.Child("external"),
 					patch.External,
-					"one of validateExtension and generateExtension must be defined",
+					"one of validateTopologyExtension and generatePatchesExtension must be defined",
 				))
 		}
 	}
@@ -141,17 +141,17 @@ func validatePatchDefinitions(patch clusterv1.ClusterClassPatch, clusterClass *c
 }
 
 // validateSelectors validates if enabledIf is a valid template if it is set.
-func validateEnabledIf(enabledIf *string, path *field.Path) field.ErrorList {
+func validateEnabledIf(enabledIf string, path *field.Path) field.ErrorList {
 	var allErrs field.ErrorList
 
-	if enabledIf != nil {
+	if enabledIf != "" {
 		// Error if template can not be parsed.
-		_, err := template.New("enabledIf").Funcs(sprig.HermeticTxtFuncMap()).Parse(*enabledIf)
+		_, err := template.New("enabledIf").Funcs(sprig.HermeticTxtFuncMap()).Parse(enabledIf)
 		if err != nil {
 			allErrs = append(allErrs,
 				field.Invalid(
 					path,
-					*enabledIf,
+					enabledIf,
 					fmt.Sprintf("template can not be parsed: %v", err),
 				))
 		}
@@ -166,9 +166,9 @@ func validateSelectors(selector clusterv1.PatchSelector, class *clusterv1.Cluste
 	var allErrs field.ErrorList
 
 	// Return an error if none of the possible selectors are enabled.
-	if !(selector.MatchResources.InfrastructureCluster || selector.MatchResources.ControlPlane ||
-		(selector.MatchResources.MachineDeploymentClass != nil && len(selector.MatchResources.MachineDeploymentClass.Names) > 0) ||
-		(selector.MatchResources.MachinePoolClass != nil && len(selector.MatchResources.MachinePoolClass.Names) > 0)) {
+	if !ptr.Deref(selector.MatchResources.InfrastructureCluster, false) && !ptr.Deref(selector.MatchResources.ControlPlane, false) &&
+		(selector.MatchResources.MachineDeploymentClass == nil || len(selector.MatchResources.MachineDeploymentClass.Names) == 0) &&
+		(selector.MatchResources.MachinePoolClass == nil || len(selector.MatchResources.MachinePoolClass.Names) == 0) {
 		return append(allErrs,
 			field.Invalid(
 				path,
@@ -177,8 +177,8 @@ func validateSelectors(selector clusterv1.PatchSelector, class *clusterv1.Cluste
 			))
 	}
 
-	if selector.MatchResources.InfrastructureCluster {
-		if !selectorMatchTemplate(selector, class.Spec.Infrastructure.Ref) {
+	if ptr.Deref(selector.MatchResources.InfrastructureCluster, false) {
+		if !selectorMatchTemplate(selector, class.Spec.Infrastructure.TemplateRef) {
 			allErrs = append(allErrs, field.Invalid(
 				path.Child("matchResources", "infrastructureCluster"),
 				selector.MatchResources.InfrastructureCluster,
@@ -187,13 +187,13 @@ func validateSelectors(selector clusterv1.PatchSelector, class *clusterv1.Cluste
 		}
 	}
 
-	if selector.MatchResources.ControlPlane {
+	if ptr.Deref(selector.MatchResources.ControlPlane, false) {
 		match := false
-		if selectorMatchTemplate(selector, class.Spec.ControlPlane.Ref) {
+		if selectorMatchTemplate(selector, class.Spec.ControlPlane.TemplateRef) {
 			match = true
 		}
-		if class.Spec.ControlPlane.MachineInfrastructure != nil &&
-			selectorMatchTemplate(selector, class.Spec.ControlPlane.MachineInfrastructure.Ref) {
+		if class.Spec.ControlPlane.MachineInfrastructure.TemplateRef.IsDefined() &&
+			selectorMatchTemplate(selector, class.Spec.ControlPlane.MachineInfrastructure.TemplateRef) {
 			match = true
 		}
 		if !match {
@@ -224,8 +224,8 @@ func validateSelectors(selector clusterv1.PatchSelector, class *clusterv1.Cluste
 				}
 
 				if matches {
-					if selectorMatchTemplate(selector, md.Template.Infrastructure.Ref) ||
-						selectorMatchTemplate(selector, md.Template.Bootstrap.Ref) {
+					if selectorMatchTemplate(selector, md.Infrastructure.TemplateRef) ||
+						selectorMatchTemplate(selector, md.Bootstrap.TemplateRef) {
 						match = true
 						break
 					}
@@ -260,8 +260,8 @@ func validateSelectors(selector clusterv1.PatchSelector, class *clusterv1.Cluste
 				}
 
 				if matches {
-					if selectorMatchTemplate(selector, mp.Template.Infrastructure.Ref) ||
-						selectorMatchTemplate(selector, mp.Template.Bootstrap.Ref) {
+					if selectorMatchTemplate(selector, mp.Infrastructure.TemplateRef) ||
+						selectorMatchTemplate(selector, mp.Bootstrap.TemplateRef) {
 						match = true
 						break
 					}
@@ -292,7 +292,7 @@ func validateSelectorName(name string, path *field.Path, resourceName string, in
 		}
 
 		// the * rune can appear only at the beginning, or ending of the selector.
-		if strings.Contains(name, "*") && !(strings.HasPrefix(name, "*") || strings.HasSuffix(name, "*")) {
+		if strings.Contains(name, "*") && !strings.HasPrefix(name, "*") && !strings.HasSuffix(name, "*") {
 			// templateMDClass or templateMPClass can only have "*" rune at the start or end of the string
 			return field.Invalid(
 				path.Child("matchResources", resourceName, "names").Index(index),
@@ -311,10 +311,7 @@ func validateSelectorName(name string, path *field.Path, resourceName string, in
 }
 
 // selectorMatchTemplate returns true if APIVersion and Kind for the given selector match the reference.
-func selectorMatchTemplate(selector clusterv1.PatchSelector, reference *corev1.ObjectReference) bool {
-	if reference == nil {
-		return false
-	}
+func selectorMatchTemplate(selector clusterv1.PatchSelector, reference clusterv1.ClusterClassTemplateReference) bool {
 	return selector.Kind == reference.Kind && selector.APIVersion == reference.APIVersion
 }
 
@@ -395,7 +392,7 @@ func validateJSONPatchValues(jsonPatch clusterv1.JSONPatch, variableSet map[stri
 				))
 		}
 	}
-	if jsonPatch.ValueFrom != nil && jsonPatch.ValueFrom.Template == nil && jsonPatch.ValueFrom.Variable == nil {
+	if jsonPatch.ValueFrom != nil && jsonPatch.ValueFrom.Template == "" && jsonPatch.ValueFrom.Variable == "" {
 		allErrs = append(allErrs,
 			field.Invalid(
 				path.Child("valueFrom"),
@@ -403,7 +400,7 @@ func validateJSONPatchValues(jsonPatch clusterv1.JSONPatch, variableSet map[stri
 				"valueFrom must set either template or variable",
 			))
 	}
-	if jsonPatch.ValueFrom != nil && jsonPatch.ValueFrom.Template != nil && jsonPatch.ValueFrom.Variable != nil {
+	if jsonPatch.ValueFrom != nil && jsonPatch.ValueFrom.Template != "" && jsonPatch.ValueFrom.Variable != "" {
 		allErrs = append(allErrs,
 			field.Invalid(
 				path.Child("valueFrom"),
@@ -412,28 +409,28 @@ func validateJSONPatchValues(jsonPatch clusterv1.JSONPatch, variableSet map[stri
 			))
 	}
 
-	if jsonPatch.ValueFrom != nil && jsonPatch.ValueFrom.Template != nil {
+	if jsonPatch.ValueFrom != nil && jsonPatch.ValueFrom.Template != "" {
 		// Error if template can not be parsed.
-		_, err := template.New("valueFrom.template").Funcs(sprig.HermeticTxtFuncMap()).Parse(*jsonPatch.ValueFrom.Template)
+		_, err := template.New("valueFrom.template").Funcs(sprig.HermeticTxtFuncMap()).Parse(jsonPatch.ValueFrom.Template)
 		if err != nil {
 			allErrs = append(allErrs,
 				field.Invalid(
 					path.Child("valueFrom", "template"),
-					*jsonPatch.ValueFrom.Template,
+					jsonPatch.ValueFrom.Template,
 					fmt.Sprintf("template can not be parsed: %v", err),
 				))
 		}
 	}
 
 	// If set validate that the variable is valid.
-	if jsonPatch.ValueFrom != nil && jsonPatch.ValueFrom.Variable != nil {
+	if jsonPatch.ValueFrom != nil && jsonPatch.ValueFrom.Variable != "" {
 		// If the variable is one of the list of builtin variables it's valid.
-		if strings.HasPrefix(*jsonPatch.ValueFrom.Variable, "builtin.") {
-			if _, ok := builtinVariables[*jsonPatch.ValueFrom.Variable]; !ok {
+		if strings.HasPrefix(jsonPatch.ValueFrom.Variable, "builtin.") {
+			if _, ok := builtinVariables[jsonPatch.ValueFrom.Variable]; !ok {
 				allErrs = append(allErrs,
 					field.Invalid(
 						path.Child("valueFrom", "variable"),
-						*jsonPatch.ValueFrom.Variable,
+						jsonPatch.ValueFrom.Variable,
 						"not a defined builtin variable",
 					))
 			}
@@ -442,13 +439,13 @@ func validateJSONPatchValues(jsonPatch clusterv1.JSONPatch, variableSet map[stri
 			// validating if the whole path is an existing variable.
 			// This could be done by re-using getVariableValue of the json patch
 			// generator but requires a refactoring first.
-			variableName := getVariableName(*jsonPatch.ValueFrom.Variable)
+			variableName := getVariableName(jsonPatch.ValueFrom.Variable)
 			if _, ok := variableSet[variableName]; !ok {
 				allErrs = append(allErrs,
 					field.Invalid(
 						path.Child("valueFrom", "variable"),
-						*jsonPatch.ValueFrom.Variable,
-						fmt.Sprintf("variable with name %s cannot be found", *jsonPatch.ValueFrom.Variable),
+						jsonPatch.ValueFrom.Variable,
+						fmt.Sprintf("variable with name %s cannot be found", jsonPatch.ValueFrom.Variable),
 					))
 			}
 		}
@@ -472,10 +469,15 @@ var builtinVariables = sets.Set[string]{}.Insert(
 	"builtin.cluster.name",
 	"builtin.cluster.namespace",
 	"builtin.cluster.uid",
+	"builtin.cluster.metadata.labels",
+	"builtin.cluster.metadata.annotations",
 
 	// ClusterTopology builtins.
 	"builtin.cluster.topology",
+	"builtin.cluster.topology.classRef.name",
+	"builtin.cluster.topology.classRef.namespace",
 	"builtin.cluster.topology.class",
+	"builtin.cluster.topology.classNamespace",
 	"builtin.cluster.topology.version",
 
 	// ClusterNetwork builtins
@@ -483,7 +485,6 @@ var builtinVariables = sets.Set[string]{}.Insert(
 	"builtin.cluster.network.serviceDomain",
 	"builtin.cluster.network.services",
 	"builtin.cluster.network.pods",
-	"builtin.cluster.network.ipFamily",
 
 	// ControlPlane builtins.
 	"builtin.controlPlane",

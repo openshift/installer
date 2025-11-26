@@ -15,6 +15,7 @@ var map_AWSMachineProviderConfig = map[string]string{
 	"":                        "AWSMachineProviderConfig is the Schema for the awsmachineproviderconfigs API Compatibility level 2: Stable within a major release for a minimum of 9 months or 3 minor releases (whichever is longer).",
 	"ami":                     "ami is the reference to the AMI from which to create the machine instance.",
 	"instanceType":            "instanceType is the type of instance to create. Example: m4.xlarge",
+	"cpuOptions":              "cpuOptions defines CPU-related settings for the instance, including the confidential computing policy. When omitted, this means no opinion and the AWS platform is left to choose a reasonable default. More info: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_CpuOptionsRequest.html, https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html",
 	"tags":                    "tags is the set of tags to add to apply to an instance, in addition to the ones added by default by the actuator. These tags are additive. The actuator will ensure these tags are present, but will not remove any other tags that may exist on the instance.",
 	"iamInstanceProfile":      "iamInstanceProfile is a reference to an IAM role to assign to the instance",
 	"userDataSecret":          "userDataSecret contains a local reference to a secret that contains the UserData to apply to the instance",
@@ -34,6 +35,7 @@ var map_AWSMachineProviderConfig = map[string]string{
 	"placementGroupPartition": "placementGroupPartition is the partition number within the placement group in which to launch the instance. This must be an integer value between 1 and 7. It is only valid if the placement group, referred in `PlacementGroupName` was created with strategy set to partition.",
 	"capacityReservationId":   "capacityReservationId specifies the target Capacity Reservation into which the instance should be launched. The field size should be greater than 0 and the field input must start with cr-***",
 	"marketType":              "marketType specifies the type of market for the EC2 instance. Valid values are OnDemand, Spot, CapacityBlock and omitted.\n\nDefaults to OnDemand. When SpotMarketOptions is provided, the marketType defaults to \"Spot\".\n\nWhen set to OnDemand the instance runs as a standard OnDemand instance. When set to Spot the instance runs as a Spot instance. When set to CapacityBlock the instance utilizes pre-purchased compute capacity (capacity blocks) with AWS Capacity Reservations. If this value is selected, capacityReservationID must be specified to identify the target reservation.",
+	"hostPlacement":           "hostPlacement configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL), and to gain visibility and control over instance placement on a physical server. When omitted, the instance is not constrained to a dedicated host.",
 }
 
 func (AWSMachineProviderConfig) SwaggerDoc() map[string]string {
@@ -82,6 +84,24 @@ func (BlockDeviceMappingSpec) SwaggerDoc() map[string]string {
 	return map_BlockDeviceMappingSpec
 }
 
+var map_CPUOptions = map[string]string{
+	"":                    "CPUOptions defines CPU-related settings for the instance, including the confidential computing policy. If provided, it must not be empty — at least one field must be set.",
+	"confidentialCompute": "confidentialCompute specifies whether confidential computing should be enabled for the instance, and, if so, which confidential computing technology to use. Valid values are: Disabled, AMDEncryptedVirtualizationNestedPaging and omitted. When set to Disabled, confidential computing will be disabled for the instance. When set to AMDEncryptedVirtualizationNestedPaging, AMD SEV-SNP will be used as the confidential computing technology for the instance. In this case, ensure the following conditions are met: 1) The selected instance type supports AMD SEV-SNP. 2) The selected AWS region supports AMD SEV-SNP. 3) The selected AMI supports AMD SEV-SNP. More details can be checked at https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html When omitted, this means no opinion and the AWS platform is left to choose a reasonable default, which is subject to change without notice. The current default is Disabled.",
+}
+
+func (CPUOptions) SwaggerDoc() map[string]string {
+	return map_CPUOptions
+}
+
+var map_DedicatedHost = map[string]string{
+	"":   "DedicatedHost represents the configuration for the usage of dedicated host.",
+	"id": "id identifies the AWS Dedicated Host on which the instance must run. The value must start with \"h-\" followed by 17 lowercase hexadecimal characters (0-9 and a-f). Must be exactly 19 characters in length.",
+}
+
+func (DedicatedHost) SwaggerDoc() map[string]string {
+	return map_DedicatedHost
+}
+
 var map_EBSBlockDeviceSpec = map[string]string{
 	"":                    "EBSBlockDeviceSpec describes a block device for an EBS volume. https://docs.aws.amazon.com/goto/WebAPI/ec2-2016-11-15/EbsBlockDevice",
 	"deleteOnTermination": "Indicates whether the EBS volume is deleted on machine termination.\n\nDeprecated: setting this field has no effect.",
@@ -104,6 +124,16 @@ var map_Filter = map[string]string{
 
 func (Filter) SwaggerDoc() map[string]string {
 	return map_Filter
+}
+
+var map_HostPlacement = map[string]string{
+	"":              "HostPlacement is the type that will be used to configure the placement of AWS instances.",
+	"affinity":      "affinity specifies the affinity setting for the instance. Allowed values are AnyAvailable and DedicatedHost. When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set. When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host.",
+	"dedicatedHost": "dedicatedHost specifies the exact host that an instance should be restarted on if stopped. dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise.",
+}
+
+func (HostPlacement) SwaggerDoc() map[string]string {
+	return map_HostPlacement
 }
 
 var map_LoadBalancerReference = map[string]string{
@@ -442,6 +472,7 @@ var map_GCPMachineProviderSpec = map[string]string{
 	"projectID":              "projectID is the project in which the GCP machine provider will create the VM.",
 	"gpus":                   "gpus is a list of GPUs to be attached to the VM.",
 	"preemptible":            "preemptible indicates if created instance is preemptible.",
+	"provisioningModel":      "provisioningModel is an optional field that determines the provisioning model for the GCP machine instance. Valid values are \"Spot\" and omitted. When set to Spot, the instance runs as a Google Cloud Spot instance which provides significant cost savings but may be preempted by Google Cloud Platform when resources are needed elsewhere. When omitted, the machine will be provisioned as a standard on-demand instance. This field cannot be used together with the preemptible field.",
 	"onHostMaintenance":      "onHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot. This is required to be set to \"Terminate\" if you want to provision machine with attached GPUs. Otherwise, allowed values are \"Migrate\" and \"Terminate\". If omitted, the platform chooses a default, which is subject to change over time, currently that default is \"Migrate\".",
 	"restartPolicy":          "restartPolicy determines the behavior when an instance crashes or the underlying infrastructure provider stops the instance as part of a maintenance event (default \"Always\"). Cannot be \"Always\" with preemptible instances. Otherwise, allowed values are \"Always\" and \"Never\". If omitted, the platform chooses a default, which is subject to change over time, currently that default is \"Always\". RestartPolicy represents AutomaticRestart in GCP compute api",
 	"shieldedInstanceConfig": "shieldedInstanceConfig is the Shielded VM configuration for the VM",
@@ -625,7 +656,7 @@ var map_MachineHealthCheckSpec = map[string]string{
 	"":                    "MachineHealthCheckSpec defines the desired state of MachineHealthCheck",
 	"selector":            "Label selector to match machines whose health will be exercised. Note: An empty selector will match all machines.",
 	"unhealthyConditions": "unhealthyConditions contains a list of the conditions that determine whether a node is considered unhealthy.  The conditions are combined in a logical OR, i.e. if any of the conditions is met, the node is unhealthy.",
-	"maxUnhealthy":        "Any farther remediation is only allowed if at most \"MaxUnhealthy\" machines selected by \"selector\" are not healthy. Expects either a postive integer value or a percentage value. Percentage values must be positive whole numbers and are capped at 100%. Both 0 and 0% are valid and will block all remediation.",
+	"maxUnhealthy":        "Any farther remediation is only allowed if at most \"MaxUnhealthy\" machines selected by \"selector\" are not healthy. Expects either a postive integer value or a percentage value. Percentage values must be positive whole numbers and are capped at 100%. Both 0 and 0% are valid and will block all remediation. Defaults to 100% if not set.",
 	"nodeStartupTimeout":  "Machines older than this duration without a node will be considered to have failed and will be remediated. To prevent Machines without Nodes from being removed, disable startup checks by setting this value explicitly to \"0\". Expects an unsigned duration string of decimal numbers each with optional fraction and a unit suffix, eg \"300ms\", \"1.5h\" or \"2h45m\". Valid time units are \"ns\", \"us\" (or \"µs\"), \"ms\", \"s\", \"m\", \"h\".",
 	"remediationTemplate": "remediationTemplate is a reference to a remediation template provided by an infrastructure provider.\n\nThis field is completely optional, when filled, the MachineHealthCheck controller creates a new object from the template referenced and hands off remediation of the machine to a controller that lives outside of Machine API Operator.",
 }

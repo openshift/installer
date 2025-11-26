@@ -33,7 +33,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/finalizers"
@@ -124,7 +124,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 			return ctrl.Result{}, nil
 		}
 		// Error reading the object - requeue the request.
-		return ctrl.Result{}, errors.Wrapf(err, "failed to get MachineSet/%s", req.NamespacedName.Name)
+		return ctrl.Result{}, errors.Wrapf(err, "failed to get MachineSet/%s", req.Name)
 	}
 
 	log := ctrl.LoggerFrom(ctx).WithValues("Cluster", klog.KRef(ms.Namespace, ms.Spec.ClusterName))
@@ -171,7 +171,7 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (_ ctrl.Re
 	}()
 
 	// Handle deletion reconciliation loop.
-	if !ms.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !ms.DeletionTimestamp.IsZero() {
 		return ctrl.Result{}, r.reconcileDelete(ctx, ms)
 	}
 
@@ -213,12 +213,12 @@ func (r *Reconciler) reconcileDelete(ctx context.Context, ms *clusterv1.MachineS
 
 	// Delete unused templates.
 	ref := ms.Spec.Template.Spec.Bootstrap.ConfigRef
-	if err := DeleteTemplateIfUnused(ctx, r.Client, templatesInUse, ref); err != nil {
-		return errors.Wrapf(err, "failed to delete %s %s for MachineSet %s", ref.Kind, klog.KRef(ref.Namespace, ref.Name), klog.KObj(ms))
+	if err := DeleteTemplateIfUnused(ctx, r.Client, templatesInUse, ref, ms.Namespace); err != nil {
+		return errors.Wrapf(err, "failed to delete %s %s for MachineSet %s", ref.Kind, klog.KRef(ms.Namespace, ref.Name), klog.KObj(ms))
 	}
-	ref = &ms.Spec.Template.Spec.InfrastructureRef
-	if err := DeleteTemplateIfUnused(ctx, r.Client, templatesInUse, ref); err != nil {
-		return errors.Wrapf(err, "failed to delete %s %s for MachineSet %s", ref.Kind, klog.KRef(ref.Namespace, ref.Name), klog.KObj(ms))
+	ref = ms.Spec.Template.Spec.InfrastructureRef
+	if err := DeleteTemplateIfUnused(ctx, r.Client, templatesInUse, ref, ms.Namespace); err != nil {
+		return errors.Wrapf(err, "failed to delete %s %s for MachineSet %s", ref.Kind, klog.KRef(ms.Namespace, ref.Name), klog.KObj(ms))
 	}
 
 	// Remove the finalizer so the MachineSet can be garbage collected by Kubernetes.

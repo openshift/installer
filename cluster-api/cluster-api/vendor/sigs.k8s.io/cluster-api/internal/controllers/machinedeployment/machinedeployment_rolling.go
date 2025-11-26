@@ -21,11 +21,14 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/internal/controllers/machinedeployment/mdutil"
+	"sigs.k8s.io/cluster-api/util/patch"
 )
 
 // rolloutRolling implements the logic for rolling a new MachineSet.
@@ -72,6 +75,10 @@ func (r *Reconciler) rolloutRolling(ctx context.Context, md *clusterv1.MachineDe
 }
 
 func (r *Reconciler) reconcileNewMachineSet(ctx context.Context, allMSs []*clusterv1.MachineSet, newMS *clusterv1.MachineSet, deployment *clusterv1.MachineDeployment) error {
+	if err := r.cleanupDisableMachineCreateAnnotation(ctx, newMS); err != nil {
+		return err
+	}
+
 	if deployment.Spec.Replicas == nil {
 		return errors.Errorf("spec.replicas for MachineDeployment %v is nil, this is unexpected", client.ObjectKeyFromObject(deployment))
 	}
@@ -118,7 +125,7 @@ func (r *Reconciler) reconcileOldMachineSets(ctx context.Context, allMSs []*clus
 
 	allMachinesCount := mdutil.GetReplicaCountForMachineSets(allMSs)
 	log.V(4).Info("New MachineSet has available machines",
-		"machineset", client.ObjectKeyFromObject(newMS).String(), "available-replicas", newMS.Status.AvailableReplicas)
+		"machineset", client.ObjectKeyFromObject(newMS).String(), "available-replicas", ptr.Deref(newMS.Status.AvailableReplicas, 0))
 	maxUnavailable := mdutil.MaxUnavailable(*deployment)
 
 	// Check if we can scale down. We can scale down in the following 2 cases:
@@ -151,8 +158,10 @@ func (r *Reconciler) reconcileOldMachineSets(ctx context.Context, allMSs []*clus
 	// * The new MachineSet created must start with 0 replicas because allMachinesCount is already at 13.
 	// * However, newMSMachinesUnavailable would also be 0, so the 2 old MachineSets could be scaled down by 5 (13 - 8 - 0), which would then
 	// allow the new MachineSet to be scaled up by 5.
+	availableReplicas := ptr.Deref(newMS.Status.AvailableReplicas, 0)
+
 	minAvailable := *(deployment.Spec.Replicas) - maxUnavailable
-	newMSUnavailableMachineCount := *(newMS.Spec.Replicas) - newMS.Status.AvailableReplicas
+	newMSUnavailableMachineCount := *(newMS.Spec.Replicas) - availableReplicas
 	maxScaledDown := allMachinesCount - minAvailable - newMSUnavailableMachineCount
 	if maxScaledDown <= 0 {
 		return nil
@@ -185,7 +194,7 @@ func (r *Reconciler) cleanupUnhealthyReplicas(ctx context.Context, oldMSs []*clu
 
 	sort.Sort(mdutil.MachineSetsByCreationTimestamp(oldMSs))
 
-	// Scale down all old MachineSets with any unhealthy replicas. MachineSet will honour Spec.DeletePolicy
+	// Scale down all old MachineSets with any unhealthy replicas. MachineSet will honour spec.deletion.order
 	// for deleting Machines. Machines with a deletion timestamp, with a failure message or without a nodeRef
 	// are preferred for all strategies.
 	// This results in a best effort to remove machines backing unhealthy nodes.
@@ -206,7 +215,7 @@ func (r *Reconciler) cleanupUnhealthyReplicas(ctx context.Context, oldMSs []*clu
 			continue
 		}
 
-		oldMSAvailableReplicas := targetMS.Status.AvailableReplicas
+		oldMSAvailableReplicas := ptr.Deref(targetMS.Status.AvailableReplicas, 0)
 		log.V(4).Info("Found available Machines in old MachineSet",
 			"count", oldMSAvailableReplicas, "target-machineset", client.ObjectKeyFromObject(targetMS).String())
 		if oldMSReplicas == oldMSAvailableReplicas {
@@ -247,7 +256,7 @@ func (r *Reconciler) scaleDownOldMachineSetsForRollingUpdate(ctx context.Context
 	minAvailable := *(deployment.Spec.Replicas) - maxUnavailable
 
 	// Find the number of available machines.
-	availableMachineCount := mdutil.GetAvailableReplicaCountForMachineSets(allMSs)
+	availableMachineCount := ptr.Deref(mdutil.GetAvailableReplicaCountForMachineSets(allMSs), 0)
 
 	// Check if we can scale down.
 	if availableMachineCount <= minAvailable {
@@ -292,4 +301,26 @@ func (r *Reconciler) scaleDownOldMachineSetsForRollingUpdate(ctx context.Context
 	}
 
 	return totalScaledDown, nil
+}
+
+// cleanupDisableMachineCreateAnnotation will remove the disable machine create annotation from new MachineSets that were created during reconcileOldMachineSetsOnDelete.
+func (r *Reconciler) cleanupDisableMachineCreateAnnotation(ctx context.Context, newMS *clusterv1.MachineSet) error {
+	log := ctrl.LoggerFrom(ctx, "MachineSet", klog.KObj(newMS))
+
+	if newMS.Annotations != nil {
+		if _, ok := newMS.Annotations[clusterv1.DisableMachineCreateAnnotation]; ok {
+			log.V(4).Info("removing annotation on latest MachineSet to enable machine creation")
+			patchHelper, err := patch.NewHelper(newMS, r.Client)
+			if err != nil {
+				return err
+			}
+			delete(newMS.Annotations, clusterv1.DisableMachineCreateAnnotation)
+			err = patchHelper.Patch(ctx, newMS)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }

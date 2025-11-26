@@ -508,6 +508,9 @@ type CreateOpts struct {
 
 	// DiskConfig [optional] controls how the created server's disk is partitioned.
 	DiskConfig DiskConfig `json:"OS-DCF:diskConfig,omitempty"`
+
+	// HypervisorHostname is the name of the hypervisor to which the server is scheduled.
+	HypervisorHostname string `json:"hypervisor_hostname,omitempty"`
 }
 
 // ToServerCreateMap assembles a request body based on the contents of a
@@ -648,6 +651,12 @@ type UpdateOpts struct {
 
 	// AccessIPv6 provides a new IPv6 address for the instance.
 	AccessIPv6 string `json:"accessIPv6,omitempty"`
+
+	// Hostname changes the hostname of the server.
+	// Requires microversion 2.90 or later.
+	// Note: This information is published via the metadata service and requires
+	// application such as cloud-init to propagate it through to the instance.
+	Hostname *string `json:"hostname,omitempty"`
 }
 
 // ToServerUpdateMap formats an UpdateOpts structure into a request body.

@@ -1,0 +1,30 @@
+/*
+Copyright (c) 2023 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// BillingModelItem represents a billing model
+class BillingModelItem {
+	// BillingModelType is the type of the BillingModel. e.g. standard, marketplace.
+	BillingModelType String
+
+	// Indicates the marketplace of the billing model. e.g. gcp, aws, etc.
+	Marketplace String
+
+	// User friendly display name of the billing model.
+	DisplayName String
+
+	// Single line description of the billing model.
+	Description String
+}

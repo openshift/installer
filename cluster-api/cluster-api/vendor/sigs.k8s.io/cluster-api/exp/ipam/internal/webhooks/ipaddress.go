@@ -27,12 +27,13 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	ipamv1 "sigs.k8s.io/cluster-api/exp/ipam/api/v1beta1"
+	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta2"
 	"sigs.k8s.io/cluster-api/internal/util/compare"
 )
 
@@ -44,7 +45,7 @@ func (webhook *IPAddress) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-ipam-cluster-x-k8s-io-v1beta1-ipaddress,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=ipam.cluster.x-k8s.io,resources=ipaddresses,versions=v1beta1,name=validation.ipaddress.ipam.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update;delete,path=/validate-ipam-cluster-x-k8s-io-v1beta2-ipaddress,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=ipam.cluster.x-k8s.io,resources=ipaddresses,versions=v1beta2,name=validation.ipaddress.ipam.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 // +kubebuilder:rbac:groups=ipam.cluster.x-k8s.io,resources=ipaddressclaims,verbs=get;list;watch
 
 // IPAddress implements a validating webhook for IPAddress.
@@ -105,7 +106,7 @@ func (webhook *IPAddress) validate(ctx context.Context, ip *ipamv1.IPAddress) er
 			))
 	}
 
-	if ip.Spec.Prefix < 0 {
+	if ptr.Deref(ip.Spec.Prefix, 0) < 0 {
 		allErrs = append(allErrs,
 			field.Invalid(
 				specPath.Child("prefix"),
@@ -113,19 +114,19 @@ func (webhook *IPAddress) validate(ctx context.Context, ip *ipamv1.IPAddress) er
 				"prefix cannot be negative",
 			))
 	}
-	if addr.Is4() && ip.Spec.Prefix > 32 {
+	if addr.Is4() && ptr.Deref(ip.Spec.Prefix, 0) > 32 {
 		allErrs = append(allErrs,
 			field.Invalid(
 				specPath.Child("prefix"),
-				ip.Spec.Prefix,
+				ptr.Deref(ip.Spec.Prefix, 0),
 				"prefix is too large for an IPv4 address",
 			))
 	}
-	if addr.Is6() && ip.Spec.Prefix > 128 {
+	if addr.Is6() && ptr.Deref(ip.Spec.Prefix, 0) > 128 {
 		allErrs = append(allErrs,
 			field.Invalid(
 				specPath.Child("prefix"),
-				ip.Spec.Prefix,
+				ptr.Deref(ip.Spec.Prefix, 0),
 				"prefix is too large for an IPv6 address",
 			))
 	}
@@ -141,18 +142,10 @@ func (webhook *IPAddress) validate(ctx context.Context, ip *ipamv1.IPAddress) er
 		}
 	}
 
-	if ip.Spec.PoolRef.APIGroup == nil {
-		allErrs = append(allErrs,
-			field.Invalid(
-				specPath.Child("poolRef.apiGroup"),
-				ip.Spec.PoolRef.APIGroup,
-				"the pool reference needs to contain a group"))
-	}
-
 	claim := &ipamv1.IPAddressClaim{}
-	err = webhook.Client.Get(ctx, types.NamespacedName{Name: ip.Spec.ClaimRef.Name, Namespace: ip.ObjectMeta.Namespace}, claim)
+	err = webhook.Client.Get(ctx, types.NamespacedName{Name: ip.Spec.ClaimRef.Name, Namespace: ip.Namespace}, claim)
 	if err != nil && !apierrors.IsNotFound(err) {
-		log.Error(err, "Failed to fetch claim", "IPAddressClaim", klog.KRef(ip.ObjectMeta.Namespace, ip.Spec.ClaimRef.Name))
+		log.Error(err, "Failed to fetch claim", "IPAddressClaim", klog.KRef(ip.Namespace, ip.Spec.ClaimRef.Name))
 		allErrs = append(allErrs,
 			field.InternalError(
 				specPath.Child("claimRef"),
@@ -162,10 +155,9 @@ func (webhook *IPAddress) validate(ctx context.Context, ip *ipamv1.IPAddress) er
 	}
 
 	if claim.Name != "" && // only report non-matching pool if the claim exists
-		!(ip.Spec.PoolRef.APIGroup != nil && claim.Spec.PoolRef.APIGroup != nil &&
-			*ip.Spec.PoolRef.APIGroup == *claim.Spec.PoolRef.APIGroup &&
-			ip.Spec.PoolRef.Kind == claim.Spec.PoolRef.Kind &&
-			ip.Spec.PoolRef.Name == claim.Spec.PoolRef.Name) {
+		(ip.Spec.PoolRef.APIGroup != claim.Spec.PoolRef.APIGroup ||
+			ip.Spec.PoolRef.Kind != claim.Spec.PoolRef.Kind ||
+			ip.Spec.PoolRef.Name != claim.Spec.PoolRef.Name) {
 		allErrs = append(allErrs,
 			field.Invalid(
 				specPath.Child("poolRef"),

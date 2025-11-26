@@ -49,7 +49,6 @@ kind: AgentClusterInstall
 metadata:
   annotations:
     agent-install.openshift.io/install-config-overrides: '{"platform":{"external":{"platformName":"some-cloud-provider"}}}'
-  creationTimestamp: null
   name: ostest
   namespace: cluster0
 spec:

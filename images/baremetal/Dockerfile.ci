@@ -2,10 +2,10 @@
 # It builds an image containing openshift-install.
 
 # The binaries in these images are dynamically linked
-FROM registry.ci.openshift.org/ocp/4.20:etcd AS etcd
-FROM registry.ci.openshift.org/ocp/4.20:hyperkube AS kas
+FROM registry.ci.openshift.org/ocp/4.21:etcd AS etcd
+FROM registry.ci.openshift.org/ocp/4.21:hyperkube AS kas
 
-FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.20 AS builder
+FROM registry.ci.openshift.org/ocp/builder:rhel-9-golang-1.24-openshift-4.21 AS builder
 ARG TAGS="baremetal fipscapable"
 ARG SKIP_ENVTEST="y"
 WORKDIR /go/src/github.com/openshift/installer
@@ -17,7 +17,7 @@ RUN mkdir -p cluster-api/bin/$(go env GOOS)_$(go env GOHOSTARCH) && \
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build.sh
 RUN DEFAULT_ARCH="$(go env GOHOSTARCH)" hack/build-node-joiner.sh
 
-FROM registry.ci.openshift.org/ocp/4.20:base-rhel9
+FROM registry.ci.openshift.org/ocp/4.21:base-rhel9
 
 COPY --from=builder /go/src/github.com/openshift/installer/images/baremetal/manifests /manifests
 COPY --from=builder /go/src/github.com/openshift/installer/bin/openshift-install /bin/openshift-install

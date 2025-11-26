@@ -24,7 +24,7 @@ import (
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	corev1 "k8s.io/api/core/v1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // Cloud alias for cloud.Cloud interface.
@@ -58,6 +58,7 @@ type ClusterGetter interface {
 	NetworkName() string
 	NetworkProject() string
 	IsSharedVpc() bool
+	SkipFirewallRuleCreation() bool
 	Network() *infrav1.Network
 	AdditionalLabels() infrav1.Labels
 	FailureDomains() clusterv1.FailureDomains

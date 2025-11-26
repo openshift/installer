@@ -20,6 +20,11 @@ package desiredstate
 import (
 	"context"
 	"fmt"
+	"maps"
+	"reflect"
+	"slices"
+	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -31,13 +36,13 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	runtimehooksv1 "sigs.k8s.io/cluster-api/api/runtime/hooks/v1alpha1"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/external"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	runtimecatalog "sigs.k8s.io/cluster-api/exp/runtime/catalog"
 	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
-	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
 	"sigs.k8s.io/cluster-api/exp/topology/scope"
 	"sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/internal/contract"
@@ -49,6 +54,7 @@ import (
 	"sigs.k8s.io/cluster-api/internal/topology/selectors"
 	"sigs.k8s.io/cluster-api/internal/webhooks"
 	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/conversion"
 )
 
 // Generator is a generator to generate the desired state.
@@ -62,7 +68,7 @@ func NewGenerator(client client.Client, clusterCache clustercache.ClusterCache, 
 		Client:        client,
 		ClusterCache:  clusterCache,
 		RuntimeClient: runtimeClient,
-		patchEngine:   patches.NewEngine(runtimeClient),
+		patchEngine:   patches.NewEngine(client, runtimeClient),
 	}
 }
 
@@ -96,7 +102,7 @@ func (g *generator) Generate(ctx context.Context, s *scope.Scope) (*scope.Cluste
 
 	// If the clusterClass mandates the controlPlane has infrastructureMachines, compute the InfrastructureMachineTemplate for the ControlPlane.
 	if s.Blueprint.HasControlPlaneInfrastructureMachine() {
-		if desiredState.ControlPlane.InfrastructureMachineTemplate, err = computeControlPlaneInfrastructureMachineTemplate(ctx, s); err != nil {
+		if desiredState.ControlPlane.InfrastructureMachineTemplate, err = g.computeControlPlaneInfrastructureMachineTemplate(ctx, s); err != nil {
 			return nil, errors.Wrapf(err, "failed to compute ControlPlane InfrastructureMachineTemplate")
 		}
 	}
@@ -118,16 +124,30 @@ func (g *generator) Generate(ctx context.Context, s *scope.Scope) (*scope.Cluste
 	// - Make upgrade decisions on the control plane.
 	// - Making upgrade decisions on machine pools.
 	if len(s.Current.MachinePools) > 0 {
-		client, err := g.ClusterCache.GetClient(ctx, client.ObjectKeyFromObject(s.Current.Cluster))
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to check if any MachinePool is upgrading")
+		machinePoolsHaveMachines := false
+		for _, mp := range s.Current.MachinePools {
+			if len(mp.Object.Status.NodeRefs) > 0 {
+				machinePoolsHaveMachines = true
+				break
+			}
 		}
-		// Mark all the MachinePools that are currently upgrading.
-		mpUpgradingNames, err := s.Current.MachinePools.Upgrading(ctx, client)
-		if err != nil {
-			return nil, errors.Wrap(err, "failed to check if any MachinePool is upgrading")
+
+		// MachinePools can only be upgrading if they have Machines.
+		// Skipping over the check if they have no Machines, also to avoid failing
+		// desired state calculation during Cluster creation where there is no
+		// connection to the workload cluster yet.
+		if machinePoolsHaveMachines {
+			client, err := g.ClusterCache.GetClient(ctx, client.ObjectKeyFromObject(s.Current.Cluster))
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to check if any MachinePool is upgrading")
+			}
+			// Mark all the MachinePools that are currently upgrading.
+			mpUpgradingNames, err := s.Current.MachinePools.Upgrading(ctx, client)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to check if any MachinePool is upgrading")
+			}
+			s.UpgradeTracker.MachinePools.MarkUpgrading(mpUpgradingNames...)
 		}
-		s.UpgradeTracker.MachinePools.MarkUpgrading(mpUpgradingNames...)
 	}
 
 	// Compute the desired state of the ControlPlane object, eventually adding a reference to the
@@ -139,20 +159,18 @@ func (g *generator) Generate(ctx context.Context, s *scope.Scope) (*scope.Cluste
 	// Compute the desired state of the ControlPlane MachineHealthCheck if defined.
 	// The MachineHealthCheck will have the same name as the ControlPlane Object and a selector for the ControlPlane InfrastructureMachines.
 	if s.Blueprint.IsControlPlaneMachineHealthCheckEnabled() {
+		checks, remediation := s.Blueprint.ControlPlaneMachineHealthCheckClass()
 		desiredState.ControlPlane.MachineHealthCheck = computeMachineHealthCheck(
 			ctx,
 			desiredState.ControlPlane.Object,
 			selectors.ForControlPlaneMHC(),
 			s.Current.Cluster,
-			s.Blueprint.ControlPlaneMachineHealthCheckClass())
+			checks, remediation)
 	}
 
 	// Compute the desired state for the Cluster object adding a reference to the
 	// InfrastructureCluster and the ControlPlane objects generated by the previous step.
-	desiredState.Cluster, err = computeCluster(ctx, s, desiredState.InfrastructureCluster, desiredState.ControlPlane.Object)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to compute Cluster")
-	}
+	desiredState.Cluster = computeCluster(ctx, s, desiredState.InfrastructureCluster, desiredState.ControlPlane.Object)
 
 	// If required, compute the desired state of the MachineDeployments from the list of MachineDeploymentTopologies
 	// defined in the cluster.
@@ -189,16 +207,21 @@ func (g *generator) Generate(ctx context.Context, s *scope.Scope) (*scope.Cluste
 // corresponding template defined in the blueprint.
 func computeInfrastructureCluster(_ context.Context, s *scope.Scope) (*unstructured.Unstructured, error) {
 	template := s.Blueprint.InfrastructureClusterTemplate
-	templateClonedFromRef := s.Blueprint.ClusterClass.Spec.Infrastructure.Ref
+	templateClonedFromRef := s.Blueprint.ClusterClass.Spec.Infrastructure.TemplateRef.ToObjectReference(s.Blueprint.ClusterClass.Namespace)
 	cluster := s.Current.Cluster
 	currentRef := cluster.Spec.InfrastructureRef
+
+	nameTemplate := "{{ .cluster.name }}-{{ .random }}"
+	if s.Blueprint.ClusterClass.Spec.Infrastructure.Naming.Template != "" {
+		nameTemplate = s.Blueprint.ClusterClass.Spec.Infrastructure.Naming.Template
+	}
 
 	infrastructureCluster, err := templateToObject(templateToInput{
 		template:              template,
 		templateClonedFromRef: templateClonedFromRef,
 		cluster:               cluster,
-		nameGenerator:         topologynames.SimpleNameGenerator(fmt.Sprintf("%s-", cluster.Name)),
-		currentObjectRef:      currentRef,
+		nameGenerator:         topologynames.InfraClusterNameGenerator(nameTemplate, cluster.Name),
+		currentObjectName:     currentRef.Name,
 		// Note: It is not possible to add an ownerRef to Cluster at this stage, otherwise the provisioning
 		// of the infrastructure cluster starts no matter of the object being actually referenced by the Cluster itself.
 	})
@@ -220,18 +243,33 @@ func computeInfrastructureCluster(_ context.Context, s *scope.Scope) (*unstructu
 
 // computeControlPlaneInfrastructureMachineTemplate computes the desired state for InfrastructureMachineTemplate
 // that should be referenced by the ControlPlane object.
-func computeControlPlaneInfrastructureMachineTemplate(_ context.Context, s *scope.Scope) (*unstructured.Unstructured, error) {
+func (g *generator) computeControlPlaneInfrastructureMachineTemplate(ctx context.Context, s *scope.Scope) (*unstructured.Unstructured, error) {
 	template := s.Blueprint.ControlPlane.InfrastructureMachineTemplate
-	templateClonedFromRef := s.Blueprint.ClusterClass.Spec.ControlPlane.MachineInfrastructure.Ref
+	templateClonedFromRef := s.Blueprint.ClusterClass.Spec.ControlPlane.MachineInfrastructure.TemplateRef.ToObjectReference(s.Blueprint.ClusterClass.Namespace)
 	cluster := s.Current.Cluster
 
 	// Check if the current control plane object has a machineTemplate.infrastructureRef already defined.
 	// TODO: Move the next few lines into a method on scope.ControlPlaneState
-	var currentRef *corev1.ObjectReference
+	var currentObjectName string
 	if s.Current.ControlPlane != nil && s.Current.ControlPlane.Object != nil {
-		var err error
-		if currentRef, err = contract.ControlPlane().MachineTemplate().InfrastructureRef().Get(s.Current.ControlPlane.Object); err != nil {
-			return nil, errors.Wrap(err, "failed to get spec.machineTemplate.infrastructureRef for the current ControlPlane object")
+		// Determine contract version used by the ControlPlane.
+		contractVersion, err := contract.GetContractVersionForVersion(ctx, g.Client, s.Current.ControlPlane.Object.GroupVersionKind().GroupKind(), s.Current.ControlPlane.Object.GroupVersionKind().Version)
+		if err != nil {
+			return nil, errors.Wrapf(err, "failed to get contract version for the ControlPlane object")
+		}
+
+		if contractVersion == "v1beta1" {
+			currentRef, err := contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Get(s.Current.ControlPlane.Object)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to get spec.machineTemplate.infrastructureRef for the current ControlPlane object")
+			}
+			currentObjectName = currentRef.Name
+		} else {
+			currentRef, err := contract.ControlPlane().MachineTemplate().InfrastructureRef().Get(s.Current.ControlPlane.Object)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to get spec.machineTemplate.spec.infrastructureRef for the current ControlPlane object")
+			}
+			currentObjectName = currentRef.Name
 		}
 	}
 
@@ -240,7 +278,7 @@ func computeControlPlaneInfrastructureMachineTemplate(_ context.Context, s *scop
 		templateClonedFromRef: templateClonedFromRef,
 		cluster:               cluster,
 		nameGenerator:         topologynames.SimpleNameGenerator(topologynames.ControlPlaneInfrastructureMachineTemplateNamePrefix(cluster.Name)),
-		currentObjectRef:      currentRef,
+		currentObjectName:     currentObjectName,
 		// Note: we are adding an ownerRef to Cluster so the template will be automatically garbage collected
 		// in case of errors in between creating this template and updating the Cluster object
 		// with the reference to the ControlPlane object using this template.
@@ -252,7 +290,7 @@ func computeControlPlaneInfrastructureMachineTemplate(_ context.Context, s *scop
 // corresponding template defined in the blueprint.
 func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, infrastructureMachineTemplate *unstructured.Unstructured) (*unstructured.Unstructured, error) {
 	template := s.Blueprint.ControlPlane.Template
-	templateClonedFromRef := s.Blueprint.ClusterClass.Spec.ControlPlane.Ref
+	templateClonedFromRef := s.Blueprint.ClusterClass.Spec.ControlPlane.TemplateRef.ToObjectReference(s.Blueprint.ClusterClass.Namespace)
 	cluster := s.Current.Cluster
 	currentRef := cluster.Spec.ControlPlaneRef
 
@@ -272,8 +310,8 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 	controlPlaneAnnotations := util.MergeMap(topologyMetadata.Annotations, clusterClassMetadata.Annotations)
 
 	nameTemplate := "{{ .cluster.name }}-{{ .random }}"
-	if s.Blueprint.ClusterClass.Spec.ControlPlane.NamingStrategy != nil && s.Blueprint.ClusterClass.Spec.ControlPlane.NamingStrategy.Template != nil {
-		nameTemplate = *s.Blueprint.ClusterClass.Spec.ControlPlane.NamingStrategy.Template
+	if s.Blueprint.ClusterClass.Spec.ControlPlane.Naming.Template != "" {
+		nameTemplate = s.Blueprint.ClusterClass.Spec.ControlPlane.Naming.Template
 	}
 
 	controlPlane, err := templateToObject(templateToInput{
@@ -281,7 +319,7 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 		templateClonedFromRef: templateClonedFromRef,
 		cluster:               cluster,
 		nameGenerator:         topologynames.ControlPlaneNameGenerator(nameTemplate, cluster.Name),
-		currentObjectRef:      currentRef,
+		currentObjectName:     currentRef.Name,
 		labels:                controlPlaneLabels,
 		annotations:           controlPlaneAnnotations,
 		// Note: It is not possible to add an ownerRef to Cluster at this stage, otherwise the provisioning
@@ -300,34 +338,49 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 		}
 	}
 
+	// Determine contract version used by the ControlPlane.
+	contractVersion, err := contract.GetContractVersionForVersion(ctx, g.Client, controlPlane.GroupVersionKind().GroupKind(), controlPlane.GroupVersionKind().Version)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get contract version for the ControlPlane object")
+	}
+
 	// If the ClusterClass mandates the controlPlane has infrastructureMachines, add a reference to InfrastructureMachine
 	// template and metadata to be used for the control plane machines.
 	if s.Blueprint.HasControlPlaneInfrastructureMachine() {
 		// We have to copy the template to avoid modifying the one from desired state.
-		refCopy := infrastructureMachineTemplate.DeepCopy()
+		desiredRef := contract.ObjToRef(infrastructureMachineTemplate)
 
-		// If the ControlPlane already exists, avoid downgrading the version if it was bumped
-		// by the control plane controller in the meantime.
-		if s.Current.ControlPlane.Object != nil {
-			currentRef, err := contract.ControlPlane().MachineTemplate().InfrastructureRef().Get(s.Current.ControlPlane.Object)
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed get spec.machineTemplate.infrastructureRef from the ControlPlane object")
+		if contractVersion == "v1beta1" {
+			// If contract v1beta1 is used and the ControlPlane already exists, avoid downgrading the version if it was bumped
+			// by the control plane controller in the meantime.
+			if s.Current.ControlPlane.Object != nil {
+				currentRef, err := contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Get(s.Current.ControlPlane.Object)
+				if err != nil {
+					return nil, errors.Wrapf(err, "failed to get %s from the ControlPlane object", contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Path())
+				}
+				desiredRef, err = calculateRefDesiredAPIVersion(currentRef, infrastructureMachineTemplate)
+				if err != nil {
+					return nil, errors.Wrapf(err, "failed to calculate desired %s", contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Path())
+				}
 			}
-			desiredRef, err := calculateRefDesiredAPIVersion(currentRef, refCopy)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to calculate desired spec.machineTemplate.infrastructureRef")
+			if err := contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Set(controlPlane, desiredRef); err != nil {
+				return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().InfrastructureV1Beta1Ref().Path())
 			}
-			refCopy.SetAPIVersion(desiredRef.APIVersion)
-		}
-		if err := contract.ControlPlane().MachineTemplate().InfrastructureRef().Set(controlPlane, refCopy); err != nil {
-			return nil, errors.Wrap(err, "failed to spec.machineTemplate.infrastructureRef in the ControlPlane object")
+		} else {
+			if err := contract.ControlPlane().MachineTemplate().InfrastructureRef().Set(controlPlane, &clusterv1.ContractVersionedObjectReference{
+				APIGroup: desiredRef.GroupVersionKind().Group,
+				Kind:     desiredRef.Kind,
+				Name:     desiredRef.Name,
+			}); err != nil {
+				return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().InfrastructureRef().Path())
+			}
 		}
 
 		// Add the ControlPlane labels and annotations to the ControlPlane machines as well.
 		// Note: We have to ensure the machine template metadata copied from the control plane template is not overwritten.
 		controlPlaneMachineTemplateMetadata, err := contract.ControlPlane().MachineTemplate().Metadata().Get(controlPlane)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get spec.machineTemplate.metadata from the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to get %s from the ControlPlane object", contract.ControlPlane().MachineTemplate().Metadata().Path())
 		}
 
 		controlPlaneMachineTemplateMetadata.Labels = util.MergeMap(controlPlaneLabels, controlPlaneMachineTemplateMetadata.Labels)
@@ -338,7 +391,7 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 				Labels:      controlPlaneMachineTemplateMetadata.Labels,
 				Annotations: controlPlaneMachineTemplateMetadata.Annotations,
 			}); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.machineTemplate.metadata in the ControlPlane object")
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().Metadata().Path())
 		}
 	}
 
@@ -346,41 +399,72 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 	// NOTE: If the Topology.ControlPlane.replicas value is nil, it is assumed that the control plane controller
 	// does not implement support for this field and the ControlPlane object is generated without the number of Replicas.
 	if s.Blueprint.Topology.ControlPlane.Replicas != nil {
-		if err := contract.ControlPlane().Replicas().Set(controlPlane, int64(*s.Blueprint.Topology.ControlPlane.Replicas)); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.replicas in the ControlPlane object")
+		if err := contract.ControlPlane().Replicas().Set(controlPlane, *s.Blueprint.Topology.ControlPlane.Replicas); err != nil {
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().Replicas().Path())
 		}
 	}
 
-	// If it is required to manage the NodeDrainTimeout for the control plane, set the corresponding field.
-	nodeDrainTimeout := s.Blueprint.ClusterClass.Spec.ControlPlane.NodeDrainTimeout
-	if s.Blueprint.Topology.ControlPlane.NodeDrainTimeout != nil {
-		nodeDrainTimeout = s.Blueprint.Topology.ControlPlane.NodeDrainTimeout
+	// If it is required to manage the readinessGates for the control plane, set the corresponding field.
+	// NOTE: If readinessGates value from both Cluster and ClusterClass is nil, it is assumed that the control plane controller
+	// does not implement support for this field and the ControlPlane object is generated without readinessGates.
+	if s.Blueprint.Topology.ControlPlane.ReadinessGates != nil {
+		if err := contract.ControlPlane().MachineTemplate().ReadinessGates(contractVersion).Set(controlPlane, s.Blueprint.Topology.ControlPlane.ReadinessGates); err != nil {
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().ReadinessGates(contractVersion).Path())
+		}
+	} else if s.Blueprint.ClusterClass.Spec.ControlPlane.ReadinessGates != nil {
+		if err := contract.ControlPlane().MachineTemplate().ReadinessGates(contractVersion).Set(controlPlane, s.Blueprint.ClusterClass.Spec.ControlPlane.ReadinessGates); err != nil {
+			return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().ReadinessGates(contractVersion).Path())
+		}
+	}
+
+	// If it is required to manage the NodeDrainTimeoutSeconds for the control plane, set the corresponding field.
+	nodeDrainTimeout := s.Blueprint.ClusterClass.Spec.ControlPlane.Deletion.NodeDrainTimeoutSeconds
+	if s.Blueprint.Topology.ControlPlane.Deletion.NodeDrainTimeoutSeconds != nil {
+		nodeDrainTimeout = s.Blueprint.Topology.ControlPlane.Deletion.NodeDrainTimeoutSeconds
 	}
 	if nodeDrainTimeout != nil {
-		if err := contract.ControlPlane().MachineTemplate().NodeDrainTimeout().Set(controlPlane, *nodeDrainTimeout); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.machineTemplate.nodeDrainTimeout in the ControlPlane object")
+		if contractVersion == "v1beta1" {
+			if err := contract.ControlPlane().MachineTemplate().NodeDrainTimeout().Set(controlPlane, metav1.Duration{Duration: time.Duration(*nodeDrainTimeout) * time.Second}); err != nil {
+				return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeDrainTimeout().Path())
+			}
+		} else {
+			if err := contract.ControlPlane().MachineTemplate().NodeDrainTimeoutSeconds().Set(controlPlane, *nodeDrainTimeout); err != nil {
+				return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeDrainTimeoutSeconds().Path())
+			}
 		}
 	}
 
-	// If it is required to manage the NodeVolumeDetachTimeout for the control plane, set the corresponding field.
-	nodeVolumeDetachTimeout := s.Blueprint.ClusterClass.Spec.ControlPlane.NodeVolumeDetachTimeout
-	if s.Blueprint.Topology.ControlPlane.NodeVolumeDetachTimeout != nil {
-		nodeVolumeDetachTimeout = s.Blueprint.Topology.ControlPlane.NodeVolumeDetachTimeout
+	// If it is required to manage the NodeVolumeDetachTimeoutSeconds for the control plane, set the corresponding field.
+	nodeVolumeDetachTimeout := s.Blueprint.ClusterClass.Spec.ControlPlane.Deletion.NodeVolumeDetachTimeoutSeconds
+	if s.Blueprint.Topology.ControlPlane.Deletion.NodeVolumeDetachTimeoutSeconds != nil {
+		nodeVolumeDetachTimeout = s.Blueprint.Topology.ControlPlane.Deletion.NodeVolumeDetachTimeoutSeconds
 	}
 	if nodeVolumeDetachTimeout != nil {
-		if err := contract.ControlPlane().MachineTemplate().NodeVolumeDetachTimeout().Set(controlPlane, *nodeVolumeDetachTimeout); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.machineTemplate.nodeVolumeDetachTimeout in the ControlPlane object")
+		if contractVersion == "v1beta1" {
+			if err := contract.ControlPlane().MachineTemplate().NodeVolumeDetachTimeout().Set(controlPlane, metav1.Duration{Duration: time.Duration(*nodeVolumeDetachTimeout) * time.Second}); err != nil {
+				return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeVolumeDetachTimeout().Path())
+			}
+		} else {
+			if err := contract.ControlPlane().MachineTemplate().NodeVolumeDetachTimeoutSeconds().Set(controlPlane, *nodeVolumeDetachTimeout); err != nil {
+				return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeVolumeDetachTimeoutSeconds().Path())
+			}
 		}
 	}
 
-	// If it is required to manage the NodeDeletionTimeout for the control plane, set the corresponding field.
-	nodeDeletionTimeout := s.Blueprint.ClusterClass.Spec.ControlPlane.NodeDeletionTimeout
-	if s.Blueprint.Topology.ControlPlane.NodeDeletionTimeout != nil {
-		nodeDeletionTimeout = s.Blueprint.Topology.ControlPlane.NodeDeletionTimeout
+	// If it is required to manage the NodeDeletionTimeoutSeconds for the control plane, set the corresponding field.
+	nodeDeletionTimeout := s.Blueprint.ClusterClass.Spec.ControlPlane.Deletion.NodeDeletionTimeoutSeconds
+	if s.Blueprint.Topology.ControlPlane.Deletion.NodeDeletionTimeoutSeconds != nil {
+		nodeDeletionTimeout = s.Blueprint.Topology.ControlPlane.Deletion.NodeDeletionTimeoutSeconds
 	}
 	if nodeDeletionTimeout != nil {
-		if err := contract.ControlPlane().MachineTemplate().NodeDeletionTimeout().Set(controlPlane, *nodeDeletionTimeout); err != nil {
-			return nil, errors.Wrap(err, "failed to set spec.machineTemplate.nodeDeletionTimeout in the ControlPlane object")
+		if contractVersion == "v1beta1" {
+			if err := contract.ControlPlane().MachineTemplate().NodeDeletionTimeout().Set(controlPlane, metav1.Duration{Duration: time.Duration(*nodeDeletionTimeout) * time.Second}); err != nil {
+				return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeDeletionTimeout().Path())
+			}
+		} else {
+			if err := contract.ControlPlane().MachineTemplate().NodeDeletionTimeoutSeconds().Set(controlPlane, *nodeDeletionTimeout); err != nil {
+				return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().MachineTemplate().NodeDeletionTimeoutSeconds().Path())
+			}
 		}
 	}
 
@@ -390,7 +474,7 @@ func (g *generator) computeControlPlane(ctx context.Context, s *scope.Scope, inf
 		return nil, errors.Wrap(err, "failed to compute version of control plane")
 	}
 	if err := contract.ControlPlane().Version().Set(controlPlane, version); err != nil {
-		return nil, errors.Wrap(err, "failed to set spec.version in the ControlPlane object")
+		return nil, errors.Wrapf(err, "failed to set %s in the ControlPlane object", contract.ControlPlane().Version().Path())
 	}
 
 	return controlPlane, nil
@@ -462,9 +546,15 @@ func (g *generator) computeControlPlaneVersion(ctx context.Context, s *scope.Sco
 			// Call the hook only if we are tracking the intent to do so. If it is not tracked it means we don't need to call the
 			// hook because we didn't go through an upgrade or we already called the hook after the upgrade.
 			if hooks.IsPending(runtimehooksv1.AfterControlPlaneUpgrade, s.Current.Cluster) {
+				v1beta1Cluster := &clusterv1beta1.Cluster{}
+				// DeepCopy cluster because ConvertFrom has side effects like adding the conversion annotation.
+				if err := v1beta1Cluster.ConvertFrom(s.Current.Cluster.DeepCopy()); err != nil {
+					return "", errors.Wrap(err, "error converting Cluster to v1beta1 Cluster")
+				}
+
 				// Call all the registered extension for the hook.
 				hookRequest := &runtimehooksv1.AfterControlPlaneUpgradeRequest{
-					Cluster:           *s.Current.Cluster,
+					Cluster:           *cleanupCluster(v1beta1Cluster),
 					KubernetesVersion: desiredVersion,
 				}
 				hookResponse := &runtimehooksv1.AfterControlPlaneUpgradeResponse{}
@@ -490,19 +580,6 @@ func (g *generator) computeControlPlaneVersion(ctx context.Context, s *scope.Sco
 		return *currentVersion, nil
 	}
 
-	// If the control plane supports replicas, check if the control plane is in the middle of a scale operation.
-	// If yes, then do not pick up the desiredVersion yet. We will pick up the new version after the control plane is stable.
-	if s.Blueprint.Topology.ControlPlane.Replicas != nil {
-		cpScaling, err := contract.ControlPlane().IsScaling(s.Current.ControlPlane.Object)
-		if err != nil {
-			return "", errors.Wrap(err, "failed to check if the control plane is scaling")
-		}
-		if cpScaling {
-			s.UpgradeTracker.ControlPlane.IsScaling = true
-			return *currentVersion, nil
-		}
-	}
-
 	// If the control plane is not upgrading or scaling, we can assume the control plane is stable.
 	// However, we should also check for the MachineDeployments/MachinePools upgrading.
 	// If the MachineDeployments/MachinePools are upgrading, then do not pick up the desiredVersion yet.
@@ -513,10 +590,45 @@ func (g *generator) computeControlPlaneVersion(ctx context.Context, s *scope.Sco
 	}
 
 	if feature.Gates.Enabled(feature.RuntimeSDK) {
+		var hookAnnotations []string
+		for key := range s.Current.Cluster.Annotations {
+			if strings.HasPrefix(key, clusterv1.BeforeClusterUpgradeHookAnnotationPrefix) {
+				hookAnnotations = append(hookAnnotations, key)
+			}
+		}
+		if len(hookAnnotations) > 0 {
+			slices.Sort(hookAnnotations)
+			message := fmt.Sprintf("annotations [%s] are set", strings.Join(hookAnnotations, ", "))
+			if len(hookAnnotations) == 1 {
+				message = fmt.Sprintf("annotation [%s] is set", strings.Join(hookAnnotations, ", "))
+			}
+			// Add the hook with a response to the tracker so we can later update the condition.
+			s.HookResponseTracker.Add(runtimehooksv1.BeforeClusterUpgrade, &runtimehooksv1.BeforeClusterUpgradeResponse{
+				CommonRetryResponse: runtimehooksv1.CommonRetryResponse{
+					// RetryAfterSeconds needs to be set because having only hooks without RetryAfterSeconds
+					// would lead to not updating the condition. We can rely on getting an event when the
+					// annotation gets removed so we set twice of the default sync-period to not cause additional reconciles.
+					RetryAfterSeconds: 20 * 60,
+					CommonResponse: runtimehooksv1.CommonResponse{
+						Message: message,
+					},
+				},
+			})
+
+			log.Info(fmt.Sprintf("Cluster upgrade to version %q is blocked by %q hook (via annotations)", desiredVersion, runtimecatalog.HookName(runtimehooksv1.BeforeClusterUpgrade)), "hooks", strings.Join(hookAnnotations, ","))
+			return *currentVersion, nil
+		}
+
 		// At this point the control plane and the machine deployments are stable and we are almost ready to pick
 		// up the desiredVersion. Call the BeforeClusterUpgrade hook before picking up the desired version.
+		v1beta1Cluster := &clusterv1beta1.Cluster{}
+		// DeepCopy cluster because ConvertFrom has side effects like adding the conversion annotation.
+		if err := v1beta1Cluster.ConvertFrom(s.Current.Cluster.DeepCopy()); err != nil {
+			return "", errors.Wrap(err, "error converting Cluster to v1beta1 Cluster")
+		}
+
 		hookRequest := &runtimehooksv1.BeforeClusterUpgradeRequest{
-			Cluster:               *s.Current.Cluster,
+			Cluster:               *cleanupCluster(v1beta1Cluster),
 			FromKubernetesVersion: *currentVersion,
 			ToKubernetesVersion:   desiredVersion,
 		}
@@ -550,7 +662,7 @@ func (g *generator) computeControlPlaneVersion(ctx context.Context, s *scope.Sco
 // NOTE: Some fields of the Cluster’s fields contribute to defining the Cluster blueprint (e.g. Cluster.Spec.Topology),
 // while some other fields should be managed as part of the actual Cluster (e.g. Cluster.Spec.ControlPlaneRef); in this func
 // we are concerned only about the latest group of fields.
-func computeCluster(_ context.Context, s *scope.Scope, infrastructureCluster, controlPlane *unstructured.Unstructured) (*clusterv1.Cluster, error) {
+func computeCluster(_ context.Context, s *scope.Scope, infrastructureCluster, controlPlane *unstructured.Unstructured) *clusterv1.Cluster {
 	cluster := s.Current.Cluster.DeepCopy()
 
 	// Enforce the topology labels.
@@ -564,17 +676,10 @@ func computeCluster(_ context.Context, s *scope.Scope, infrastructureCluster, co
 
 	// Set the references to the infrastructureCluster and controlPlane objects.
 	// NOTE: Once set for the first time, the references are not expected to change.
-	var err error
-	cluster.Spec.InfrastructureRef, err = calculateRefDesiredAPIVersion(cluster.Spec.InfrastructureRef, infrastructureCluster)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to calculate infrastructureRef")
-	}
-	cluster.Spec.ControlPlaneRef, err = calculateRefDesiredAPIVersion(cluster.Spec.ControlPlaneRef, controlPlane)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to calculate controlPlaneRef")
-	}
+	cluster.Spec.InfrastructureRef = contract.ObjToContractVersionedObjectReference(infrastructureCluster)
+	cluster.Spec.ControlPlaneRef = contract.ObjToContractVersionedObjectReference(controlPlane)
 
-	return cluster, nil
+	return cluster
 }
 
 // calculateRefDesiredAPIVersion returns the desired ref calculated from desiredReferencedObject
@@ -644,7 +749,7 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 
 	// Compute the bootstrap template.
 	currentMachineDeployment := s.Current.MachineDeployments[machineDeploymentTopology.Name]
-	var currentBootstrapTemplateRef *corev1.ObjectReference
+	var currentBootstrapTemplateRef clusterv1.ContractVersionedObjectReference
 	if currentMachineDeployment != nil && currentMachineDeployment.BootstrapTemplate != nil {
 		currentBootstrapTemplateRef = currentMachineDeployment.Object.Spec.Template.Spec.Bootstrap.ConfigRef
 	}
@@ -654,7 +759,7 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 		templateClonedFromRef: contract.ObjToRef(machineDeploymentBlueprint.BootstrapTemplate),
 		cluster:               s.Current.Cluster,
 		nameGenerator:         topologynames.SimpleNameGenerator(topologynames.BootstrapTemplateNamePrefix(s.Current.Cluster.Name, machineDeploymentTopology.Name)),
-		currentObjectRef:      currentBootstrapTemplateRef,
+		currentObjectName:     currentBootstrapTemplateRef.Name,
 		// Note: we are adding an ownerRef to Cluster so the template will be automatically garbage collected
 		// in case of errors in between creating this template and creating/updating the MachineDeployment object
 		// with the reference to this template.
@@ -673,7 +778,7 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 	desiredMachineDeployment.BootstrapTemplate.SetLabels(bootstrapTemplateLabels)
 
 	// Compute the Infrastructure template.
-	var currentInfraMachineTemplateRef *corev1.ObjectReference
+	var currentInfraMachineTemplateRef *clusterv1.ContractVersionedObjectReference
 	if currentMachineDeployment != nil && currentMachineDeployment.InfrastructureMachineTemplate != nil {
 		currentInfraMachineTemplateRef = &currentMachineDeployment.Object.Spec.Template.Spec.InfrastructureRef
 	}
@@ -682,7 +787,7 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 		templateClonedFromRef: contract.ObjToRef(machineDeploymentBlueprint.InfrastructureMachineTemplate),
 		cluster:               s.Current.Cluster,
 		nameGenerator:         topologynames.SimpleNameGenerator(topologynames.InfrastructureMachineTemplateNamePrefix(s.Current.Cluster.Name, machineDeploymentTopology.Name)),
-		currentObjectRef:      currentInfraMachineTemplateRef,
+		currentObjectName:     ptr.Deref(currentInfraMachineTemplateRef, clusterv1.ContractVersionedObjectReference{}).Name,
 		// Note: we are adding an ownerRef to Cluster so the template will be automatically garbage collected
 		// in case of errors in between creating this template and creating/updating the MachineDeployment object
 		// with the reference to this template.
@@ -707,44 +812,72 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 		minReadySeconds = machineDeploymentTopology.MinReadySeconds
 	}
 
-	strategy := machineDeploymentClass.Strategy
-	if machineDeploymentTopology.Strategy != nil {
-		strategy = machineDeploymentTopology.Strategy
+	var rollout clusterv1.MachineDeploymentRolloutSpec
+	if !reflect.DeepEqual(machineDeploymentClass.Rollout, clusterv1.MachineDeploymentRolloutSpec{}) {
+		rollout = clusterv1.MachineDeploymentRolloutSpec{
+			Strategy: clusterv1.MachineDeploymentRolloutStrategy{
+				Type: machineDeploymentClass.Rollout.Strategy.Type,
+				RollingUpdate: clusterv1.MachineDeploymentRolloutStrategyRollingUpdate{
+					MaxUnavailable: machineDeploymentClass.Rollout.Strategy.RollingUpdate.MaxUnavailable,
+					MaxSurge:       machineDeploymentClass.Rollout.Strategy.RollingUpdate.MaxSurge,
+				},
+			},
+		}
+	}
+	if !reflect.DeepEqual(machineDeploymentTopology.Rollout, clusterv1.MachineDeploymentTopologyRolloutSpec{}) {
+		rollout = clusterv1.MachineDeploymentRolloutSpec{
+			Strategy: clusterv1.MachineDeploymentRolloutStrategy{
+				Type: machineDeploymentTopology.Rollout.Strategy.Type,
+				RollingUpdate: clusterv1.MachineDeploymentRolloutStrategyRollingUpdate{
+					MaxUnavailable: machineDeploymentTopology.Rollout.Strategy.RollingUpdate.MaxUnavailable,
+					MaxSurge:       machineDeploymentTopology.Rollout.Strategy.RollingUpdate.MaxSurge,
+				},
+			},
+		}
+	}
+
+	remediationMaxInFlight := machineDeploymentClass.HealthCheck.Remediation.MaxInFlight
+	if machineDeploymentTopology.HealthCheck.Remediation.MaxInFlight != nil {
+		remediationMaxInFlight = machineDeploymentTopology.HealthCheck.Remediation.MaxInFlight
 	}
 
 	failureDomain := machineDeploymentClass.FailureDomain
-	if machineDeploymentTopology.FailureDomain != nil {
+	if machineDeploymentTopology.FailureDomain != "" {
 		failureDomain = machineDeploymentTopology.FailureDomain
 	}
 
-	nodeDrainTimeout := machineDeploymentClass.NodeDrainTimeout
-	if machineDeploymentTopology.NodeDrainTimeout != nil {
-		nodeDrainTimeout = machineDeploymentTopology.NodeDrainTimeout
+	deletionOrder := machineDeploymentClass.Deletion.Order
+	if machineDeploymentTopology.Deletion.Order != "" {
+		deletionOrder = machineDeploymentTopology.Deletion.Order
 	}
 
-	nodeVolumeDetachTimeout := machineDeploymentClass.NodeVolumeDetachTimeout
-	if machineDeploymentTopology.NodeVolumeDetachTimeout != nil {
-		nodeVolumeDetachTimeout = machineDeploymentTopology.NodeVolumeDetachTimeout
+	nodeDrainTimeout := machineDeploymentClass.Deletion.NodeDrainTimeoutSeconds
+	if machineDeploymentTopology.Deletion.NodeDrainTimeoutSeconds != nil {
+		nodeDrainTimeout = machineDeploymentTopology.Deletion.NodeDrainTimeoutSeconds
 	}
 
-	nodeDeletionTimeout := machineDeploymentClass.NodeDeletionTimeout
-	if machineDeploymentTopology.NodeDeletionTimeout != nil {
-		nodeDeletionTimeout = machineDeploymentTopology.NodeDeletionTimeout
+	nodeVolumeDetachTimeout := machineDeploymentClass.Deletion.NodeVolumeDetachTimeoutSeconds
+	if machineDeploymentTopology.Deletion.NodeVolumeDetachTimeoutSeconds != nil {
+		nodeVolumeDetachTimeout = machineDeploymentTopology.Deletion.NodeVolumeDetachTimeoutSeconds
+	}
+
+	nodeDeletionTimeout := machineDeploymentClass.Deletion.NodeDeletionTimeoutSeconds
+	if machineDeploymentTopology.Deletion.NodeDeletionTimeoutSeconds != nil {
+		nodeDeletionTimeout = machineDeploymentTopology.Deletion.NodeDeletionTimeoutSeconds
+	}
+
+	readinessGates := machineDeploymentClass.ReadinessGates
+	if machineDeploymentTopology.ReadinessGates != nil {
+		readinessGates = machineDeploymentTopology.ReadinessGates
 	}
 
 	// Compute the MachineDeployment object.
-	desiredBootstrapTemplateRef, err := calculateRefDesiredAPIVersion(currentBootstrapTemplateRef, desiredMachineDeployment.BootstrapTemplate)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to calculate desired bootstrap template ref")
-	}
-	desiredInfraMachineTemplateRef, err := calculateRefDesiredAPIVersion(currentInfraMachineTemplateRef, desiredMachineDeployment.InfrastructureMachineTemplate)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to calculate desired infrastructure machine template ref")
-	}
+	desiredBootstrapTemplateRef := contract.ObjToContractVersionedObjectReference(desiredMachineDeployment.BootstrapTemplate)
+	desiredInfraMachineTemplateRef := contract.ObjToContractVersionedObjectReference(desiredMachineDeployment.InfrastructureMachineTemplate)
 
 	nameTemplate := "{{ .cluster.name }}-{{ .machineDeployment.topologyName }}-{{ .random }}"
-	if machineDeploymentClass.NamingStrategy != nil && machineDeploymentClass.NamingStrategy.Template != nil {
-		nameTemplate = *machineDeploymentClass.NamingStrategy.Template
+	if machineDeploymentClass.Naming.Template != "" {
+		nameTemplate = machineDeploymentClass.Naming.Template
 	}
 
 	name, err := topologynames.MachineDeploymentNameGenerator(nameTemplate, s.Current.Cluster.Name, machineDeploymentTopology.Name).GenerateName()
@@ -762,19 +895,28 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 			Namespace: s.Current.Cluster.Namespace,
 		},
 		Spec: clusterv1.MachineDeploymentSpec{
-			ClusterName:     s.Current.Cluster.Name,
-			MinReadySeconds: minReadySeconds,
-			Strategy:        strategy,
+			ClusterName: s.Current.Cluster.Name,
+			Rollout:     rollout,
+			Deletion: clusterv1.MachineDeploymentDeletionSpec{
+				Order: deletionOrder,
+			},
+			Remediation: clusterv1.MachineDeploymentRemediationSpec{
+				MaxInFlight: remediationMaxInFlight,
+			},
 			Template: clusterv1.MachineTemplateSpec{
 				Spec: clusterv1.MachineSpec{
-					ClusterName:             s.Current.Cluster.Name,
-					Version:                 ptr.To(version),
-					Bootstrap:               clusterv1.Bootstrap{ConfigRef: desiredBootstrapTemplateRef},
-					InfrastructureRef:       *desiredInfraMachineTemplateRef,
-					FailureDomain:           failureDomain,
-					NodeDrainTimeout:        nodeDrainTimeout,
-					NodeVolumeDetachTimeout: nodeVolumeDetachTimeout,
-					NodeDeletionTimeout:     nodeDeletionTimeout,
+					ClusterName:       s.Current.Cluster.Name,
+					Version:           version,
+					Bootstrap:         clusterv1.Bootstrap{ConfigRef: desiredBootstrapTemplateRef},
+					InfrastructureRef: desiredInfraMachineTemplateRef,
+					FailureDomain:     failureDomain,
+					Deletion: clusterv1.MachineDeletionSpec{
+						NodeDrainTimeoutSeconds:        nodeDrainTimeout,
+						NodeVolumeDetachTimeoutSeconds: nodeVolumeDetachTimeout,
+						NodeDeletionTimeoutSeconds:     nodeDeletionTimeout,
+					},
+					ReadinessGates:  readinessGates,
+					MinReadySeconds: minReadySeconds,
 				},
 			},
 		},
@@ -827,12 +969,13 @@ func (g *generator) computeMachineDeployment(ctx context.Context, s *scope.Scope
 	// If the ClusterClass defines a MachineHealthCheck for the MachineDeployment add it to the desired state.
 	if s.Blueprint.IsMachineDeploymentMachineHealthCheckEnabled(&machineDeploymentTopology) {
 		// Note: The MHC is going to use a selector that provides a minimal set of labels which are common to all MachineSets belonging to the MachineDeployment.
+		checks, remediation := s.Blueprint.MachineDeploymentMachineHealthCheckClass(&machineDeploymentTopology)
 		desiredMachineDeployment.MachineHealthCheck = computeMachineHealthCheck(
 			ctx,
 			desiredMachineDeploymentObj,
 			selectors.ForMachineDeploymentMHC(desiredMachineDeploymentObj),
 			s.Current.Cluster,
-			s.Blueprint.MachineDeploymentMachineHealthCheckClass(&machineDeploymentTopology))
+			checks, remediation)
 	}
 	return desiredMachineDeployment, nil
 }
@@ -854,7 +997,7 @@ func (g *generator) computeMachineDeploymentVersion(s *scope.Scope, machineDeplo
 	}
 
 	// Get the current version of the machine deployment.
-	currentVersion := *currentMDState.Object.Spec.Template.Spec.Version
+	currentVersion := currentMDState.Object.Spec.Template.Spec.Version
 
 	// Return early if the currentVersion is already equal to the desiredVersion
 	// no further checks required.
@@ -901,7 +1044,7 @@ func (g *generator) computeMachineDeploymentVersion(s *scope.Scope, machineDeplo
 //   - the mdTopology has the ClusterTopologyHoldUpgradeSequenceAnnotation annotation.
 //   - another md topology which is before mdTopology in the workers.machineDeployments list has the
 //     ClusterTopologyHoldUpgradeSequenceAnnotation annotation.
-func isMachineDeploymentDeferred(clusterTopology *clusterv1.Topology, mdTopology clusterv1.MachineDeploymentTopology) bool {
+func isMachineDeploymentDeferred(clusterTopology clusterv1.Topology, mdTopology clusterv1.MachineDeploymentTopology) bool {
 	// If mdTopology has the ClusterTopologyDeferUpgradeAnnotation annotation => md is deferred.
 	if _, ok := mdTopology.Metadata.Annotations[clusterv1.ClusterTopologyDeferUpgradeAnnotation]; ok {
 		return true
@@ -969,7 +1112,7 @@ func (g *generator) computeMachinePool(_ context.Context, s *scope.Scope, machin
 
 	// Compute the bootstrap config.
 	currentMachinePool := s.Current.MachinePools[machinePoolTopology.Name]
-	var currentBootstrapConfigRef *corev1.ObjectReference
+	var currentBootstrapConfigRef clusterv1.ContractVersionedObjectReference
 	if currentMachinePool != nil && currentMachinePool.BootstrapObject != nil {
 		currentBootstrapConfigRef = currentMachinePool.Object.Spec.Template.Spec.Bootstrap.ConfigRef
 	}
@@ -979,7 +1122,7 @@ func (g *generator) computeMachinePool(_ context.Context, s *scope.Scope, machin
 		templateClonedFromRef: contract.ObjToRef(machinePoolBlueprint.BootstrapTemplate),
 		cluster:               s.Current.Cluster,
 		nameGenerator:         topologynames.SimpleNameGenerator(topologynames.BootstrapConfigNamePrefix(s.Current.Cluster.Name, machinePoolTopology.Name)),
-		currentObjectRef:      currentBootstrapConfigRef,
+		currentObjectName:     currentBootstrapConfigRef.Name,
 		// Note: we are adding an ownerRef to Cluster so the template will be automatically garbage collected
 		// in case of errors in between creating this template and creating/updating the MachinePool object
 		// with the reference to this template.
@@ -998,7 +1141,7 @@ func (g *generator) computeMachinePool(_ context.Context, s *scope.Scope, machin
 	desiredMachinePool.BootstrapObject.SetLabels(bootstrapObjectLabels)
 
 	// Compute the InfrastructureMachinePool.
-	var currentInfraMachinePoolRef *corev1.ObjectReference
+	var currentInfraMachinePoolRef *clusterv1.ContractVersionedObjectReference
 	if currentMachinePool != nil && currentMachinePool.InfrastructureMachinePoolObject != nil {
 		currentInfraMachinePoolRef = &currentMachinePool.Object.Spec.Template.Spec.InfrastructureRef
 	}
@@ -1007,7 +1150,7 @@ func (g *generator) computeMachinePool(_ context.Context, s *scope.Scope, machin
 		templateClonedFromRef: contract.ObjToRef(machinePoolBlueprint.InfrastructureMachinePoolTemplate),
 		cluster:               s.Current.Cluster,
 		nameGenerator:         topologynames.SimpleNameGenerator(topologynames.InfrastructureMachinePoolNamePrefix(s.Current.Cluster.Name, machinePoolTopology.Name)),
-		currentObjectRef:      currentInfraMachinePoolRef,
+		currentObjectName:     ptr.Deref(currentInfraMachinePoolRef, clusterv1.ContractVersionedObjectReference{}).Name,
 		// Note: we are adding an ownerRef to Cluster so the template will be automatically garbage collected
 		// in case of errors in between creating this template and creating/updating the MachinePool object
 		// with the reference to this template.
@@ -1037,34 +1180,28 @@ func (g *generator) computeMachinePool(_ context.Context, s *scope.Scope, machin
 		failureDomains = machinePoolTopology.FailureDomains
 	}
 
-	nodeDrainTimeout := machinePoolClass.NodeDrainTimeout
-	if machinePoolTopology.NodeDrainTimeout != nil {
-		nodeDrainTimeout = machinePoolTopology.NodeDrainTimeout
+	nodeDrainTimeout := machinePoolClass.Deletion.NodeDrainTimeoutSeconds
+	if machinePoolTopology.Deletion.NodeDrainTimeoutSeconds != nil {
+		nodeDrainTimeout = machinePoolTopology.Deletion.NodeDrainTimeoutSeconds
 	}
 
-	nodeVolumeDetachTimeout := machinePoolClass.NodeVolumeDetachTimeout
-	if machinePoolTopology.NodeVolumeDetachTimeout != nil {
-		nodeVolumeDetachTimeout = machinePoolTopology.NodeVolumeDetachTimeout
+	nodeVolumeDetachTimeout := machinePoolClass.Deletion.NodeVolumeDetachTimeoutSeconds
+	if machinePoolTopology.Deletion.NodeVolumeDetachTimeoutSeconds != nil {
+		nodeVolumeDetachTimeout = machinePoolTopology.Deletion.NodeVolumeDetachTimeoutSeconds
 	}
 
-	nodeDeletionTimeout := machinePoolClass.NodeDeletionTimeout
-	if machinePoolTopology.NodeDeletionTimeout != nil {
-		nodeDeletionTimeout = machinePoolTopology.NodeDeletionTimeout
+	nodeDeletionTimeout := machinePoolClass.Deletion.NodeDeletionTimeoutSeconds
+	if machinePoolTopology.Deletion.NodeDeletionTimeoutSeconds != nil {
+		nodeDeletionTimeout = machinePoolTopology.Deletion.NodeDeletionTimeoutSeconds
 	}
 
 	// Compute the MachinePool object.
-	desiredBootstrapConfigRef, err := calculateRefDesiredAPIVersion(currentBootstrapConfigRef, desiredMachinePool.BootstrapObject)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to calculate desired bootstrap config ref")
-	}
-	desiredInfraMachinePoolRef, err := calculateRefDesiredAPIVersion(currentInfraMachinePoolRef, desiredMachinePool.InfrastructureMachinePoolObject)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to calculate desired infrastructure machine pool ref")
-	}
+	desiredBootstrapConfigRef := contract.ObjToContractVersionedObjectReference(desiredMachinePool.BootstrapObject)
+	desiredInfraMachinePoolRef := contract.ObjToContractVersionedObjectReference(desiredMachinePool.InfrastructureMachinePoolObject)
 
 	nameTemplate := "{{ .cluster.name }}-{{ .machinePool.topologyName }}-{{ .random }}"
-	if machinePoolClass.NamingStrategy != nil && machinePoolClass.NamingStrategy.Template != nil {
-		nameTemplate = *machinePoolClass.NamingStrategy.Template
+	if machinePoolClass.Naming.Template != "" {
+		nameTemplate = machinePoolClass.Naming.Template
 	}
 
 	name, err := topologynames.MachinePoolNameGenerator(nameTemplate, s.Current.Cluster.Name, machinePoolTopology.Name).GenerateName()
@@ -1072,28 +1209,30 @@ func (g *generator) computeMachinePool(_ context.Context, s *scope.Scope, machin
 		return nil, errors.Wrap(err, "failed to generate name for MachinePool")
 	}
 
-	desiredMachinePoolObj := &expv1.MachinePool{
+	desiredMachinePoolObj := &clusterv1.MachinePool{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: expv1.GroupVersion.String(),
+			APIVersion: clusterv1.GroupVersion.String(),
 			Kind:       "MachinePool",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      name,
 			Namespace: s.Current.Cluster.Namespace,
 		},
-		Spec: expv1.MachinePoolSpec{
-			ClusterName:     s.Current.Cluster.Name,
-			MinReadySeconds: minReadySeconds,
-			FailureDomains:  failureDomains,
+		Spec: clusterv1.MachinePoolSpec{
+			ClusterName:    s.Current.Cluster.Name,
+			FailureDomains: failureDomains,
 			Template: clusterv1.MachineTemplateSpec{
 				Spec: clusterv1.MachineSpec{
-					ClusterName:             s.Current.Cluster.Name,
-					Version:                 ptr.To(version),
-					Bootstrap:               clusterv1.Bootstrap{ConfigRef: desiredBootstrapConfigRef},
-					InfrastructureRef:       *desiredInfraMachinePoolRef,
-					NodeDrainTimeout:        nodeDrainTimeout,
-					NodeVolumeDetachTimeout: nodeVolumeDetachTimeout,
-					NodeDeletionTimeout:     nodeDeletionTimeout,
+					ClusterName:       s.Current.Cluster.Name,
+					Version:           version,
+					Bootstrap:         clusterv1.Bootstrap{ConfigRef: desiredBootstrapConfigRef},
+					InfrastructureRef: desiredInfraMachinePoolRef,
+					Deletion: clusterv1.MachineDeletionSpec{
+						NodeDrainTimeoutSeconds:        nodeDrainTimeout,
+						NodeVolumeDetachTimeoutSeconds: nodeVolumeDetachTimeout,
+						NodeDeletionTimeoutSeconds:     nodeDeletionTimeout,
+					},
+					MinReadySeconds: minReadySeconds,
 				},
 			},
 		},
@@ -1155,7 +1294,7 @@ func (g *generator) computeMachinePoolVersion(s *scope.Scope, machinePoolTopolog
 	}
 
 	// Get the current version of the machine pool.
-	currentVersion := *currentMPState.Object.Spec.Template.Spec.Version
+	currentVersion := currentMPState.Object.Spec.Template.Spec.Version
 
 	// Return early if the currentVersion is already equal to the desiredVersion
 	// no further checks required.
@@ -1202,7 +1341,7 @@ func (g *generator) computeMachinePoolVersion(s *scope.Scope, machinePoolTopolog
 //   - the mpTopology has the ClusterTopologyHoldUpgradeSequenceAnnotation annotation.
 //   - another mp topology which is before mpTopology in the workers.machinePools list has the
 //     ClusterTopologyHoldUpgradeSequenceAnnotation annotation.
-func isMachinePoolDeferred(clusterTopology *clusterv1.Topology, mpTopology clusterv1.MachinePoolTopology) bool {
+func isMachinePoolDeferred(clusterTopology clusterv1.Topology, mpTopology clusterv1.MachinePoolTopology) bool {
 	// If mpTopology has the ClusterTopologyDeferUpgradeAnnotation annotation => mp is deferred.
 	if _, ok := mpTopology.Metadata.Annotations[clusterv1.ClusterTopologyDeferUpgradeAnnotation]; ok {
 		return true
@@ -1236,7 +1375,7 @@ type templateToInput struct {
 	templateClonedFromRef *corev1.ObjectReference
 	cluster               *clusterv1.Cluster
 	nameGenerator         topologynames.NameGenerator
-	currentObjectRef      *corev1.ObjectReference
+	currentObjectName     string
 	labels                map[string]string
 	annotations           map[string]string
 	// OwnerRef is an optional OwnerReference to attach to the cloned object.
@@ -1280,8 +1419,8 @@ func templateToObject(in templateToInput) (*unstructured.Unstructured, error) {
 		return nil, errors.Wrapf(err, "failed to generate name for %s", object.GetKind())
 	}
 	object.SetName(name)
-	if in.currentObjectRef != nil && in.currentObjectRef.Name != "" {
-		object.SetName(in.currentObjectRef.Name)
+	if in.currentObjectName != "" {
+		object.SetName(in.currentObjectName)
 	}
 
 	return object, nil
@@ -1344,15 +1483,15 @@ func templateToTemplate(in templateToInput) (*unstructured.Unstructured, error) 
 		return nil, errors.Wrapf(err, "failed to generate name for %s", template.GetKind())
 	}
 	template.SetName(name)
-	if in.currentObjectRef != nil && in.currentObjectRef.Name != "" {
-		template.SetName(in.currentObjectRef.Name)
+	if in.currentObjectName != "" {
+		template.SetName(in.currentObjectName)
 	}
 	template.SetNamespace(in.cluster.Namespace)
 
 	return template, nil
 }
 
-func computeMachineHealthCheck(ctx context.Context, healthCheckTarget client.Object, selector *metav1.LabelSelector, cluster *clusterv1.Cluster, check *clusterv1.MachineHealthCheckClass) *clusterv1.MachineHealthCheck {
+func computeMachineHealthCheck(ctx context.Context, healthCheckTarget client.Object, selector *metav1.LabelSelector, cluster *clusterv1.Cluster, mhcChecks clusterv1.MachineHealthCheckChecks, mhcRemediation clusterv1.MachineHealthCheckRemediation) *clusterv1.MachineHealthCheck {
 	// Create a MachineHealthCheck with the spec given in the ClusterClass.
 	mhc := &clusterv1.MachineHealthCheck{
 		TypeMeta: metav1.TypeMeta{
@@ -1372,13 +1511,10 @@ func computeMachineHealthCheck(ctx context.Context, healthCheckTarget client.Obj
 			},
 		},
 		Spec: clusterv1.MachineHealthCheckSpec{
-			ClusterName:         cluster.Name,
-			Selector:            *selector,
-			UnhealthyConditions: check.UnhealthyConditions,
-			MaxUnhealthy:        check.MaxUnhealthy,
-			UnhealthyRange:      check.UnhealthyRange,
-			NodeStartupTimeout:  check.NodeStartupTimeout,
-			RemediationTemplate: check.RemediationTemplate,
+			ClusterName: cluster.Name,
+			Selector:    *selector,
+			Checks:      mhcChecks,
+			Remediation: mhcRemediation,
 		},
 	}
 
@@ -1398,4 +1534,20 @@ func getOwnerReferenceFrom(obj, owner client.Object) *metav1.OwnerReference {
 		}
 	}
 	return nil
+}
+
+func cleanupCluster(cluster *clusterv1beta1.Cluster) *clusterv1beta1.Cluster {
+	// Optimize size of Cluster by not sending status, the managedFields and some specific annotations.
+	cluster.SetManagedFields(nil)
+
+	// The conversion that we run before calling cleanupCluster does not clone annotations
+	// So we have to do it here to not modify the original Cluster.
+	if cluster.Annotations != nil {
+		annotations := maps.Clone(cluster.Annotations)
+		delete(annotations, corev1.LastAppliedConfigAnnotation)
+		delete(annotations, conversion.DataAnnotation)
+		cluster.Annotations = annotations
+	}
+	cluster.Status = clusterv1beta1.ClusterStatus{}
+	return cluster
 }

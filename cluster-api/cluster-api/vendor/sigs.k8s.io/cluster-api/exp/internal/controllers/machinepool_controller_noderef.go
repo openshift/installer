@@ -26,16 +26,16 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/noderefutil"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	"sigs.k8s.io/cluster-api/internal/util/taints"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
 )
 
@@ -64,8 +64,13 @@ func (r *MachinePoolReconciler) reconcileNodeRefs(ctx context.Context, s *scope)
 
 	// Check that the Machine doesn't already have a NodeRefs.
 	// Return early if there is no work to do.
-	if mp.Status.Replicas == mp.Status.ReadyReplicas && len(mp.Status.NodeRefs) == int(mp.Status.ReadyReplicas) {
-		conditions.MarkTrue(mp, expv1.ReplicasReadyCondition)
+	// TODO (v1beta2) Use new replica counters
+	readyReplicas := int32(0)
+	if mp.Status.Deprecated != nil && mp.Status.Deprecated.V1Beta1 != nil {
+		readyReplicas = mp.Status.Deprecated.V1Beta1.ReadyReplicas
+	}
+	if ptr.Deref(mp.Status.Replicas, 0) == readyReplicas && len(mp.Status.NodeRefs) == int(readyReplicas) {
+		v1beta1conditions.MarkTrue(mp, clusterv1.ReplicasReadyV1Beta1Condition)
 		return ctrl.Result{}, nil
 	}
 
@@ -89,8 +94,7 @@ func (r *MachinePoolReconciler) reconcileNodeRefs(ctx context.Context, s *scope)
 		return ctrl.Result{}, errors.New("failed to get Node references")
 	}
 
-	// Get the Node references.
-	nodeRefsResult, err := r.getNodeReferences(ctx, mp.Spec.ProviderIDList, mp.Spec.MinReadySeconds, s.nodeRefMap)
+	nodeRefsResult, err := r.getNodeReferences(ctx, mp.Spec.ProviderIDList, ptr.Deref(mp.Spec.Template.Spec.MinReadySeconds, 0), s.nodeRefMap)
 	if err != nil {
 		if err == errNoAvailableNodes {
 			log.Info("Cannot assign NodeRefs to MachinePool, no matching Nodes")
@@ -101,9 +105,15 @@ func (r *MachinePoolReconciler) reconcileNodeRefs(ctx context.Context, s *scope)
 		return ctrl.Result{}, errors.Wrapf(err, "failed to get node references")
 	}
 
-	mp.Status.ReadyReplicas = int32(nodeRefsResult.ready)
-	mp.Status.AvailableReplicas = int32(nodeRefsResult.available)
-	mp.Status.UnavailableReplicas = mp.Status.Replicas - mp.Status.AvailableReplicas
+	if mp.Status.Deprecated == nil {
+		mp.Status.Deprecated = &clusterv1.MachinePoolDeprecatedStatus{}
+	}
+	if mp.Status.Deprecated.V1Beta1 == nil {
+		mp.Status.Deprecated.V1Beta1 = &clusterv1.MachinePoolV1Beta1DeprecatedStatus{}
+	}
+	mp.Status.Deprecated.V1Beta1.ReadyReplicas = int32(nodeRefsResult.ready)
+	mp.Status.Deprecated.V1Beta1.AvailableReplicas = int32(nodeRefsResult.available)
+	mp.Status.Deprecated.V1Beta1.UnavailableReplicas = ptr.Deref(mp.Status.Replicas, 0) - mp.Status.Deprecated.V1Beta1.AvailableReplicas
 	mp.Status.NodeRefs = nodeRefsResult.references
 
 	log.Info("Set MachinePool's NodeRefs", "nodeRefs", mp.Status.NodeRefs)
@@ -115,14 +125,14 @@ func (r *MachinePoolReconciler) reconcileNodeRefs(ctx context.Context, s *scope)
 		return ctrl.Result{}, err
 	}
 
-	if mp.Status.Replicas != mp.Status.ReadyReplicas || len(nodeRefsResult.references) != int(mp.Status.ReadyReplicas) {
-		log.Info("Not enough ready replicas or node references", "nodeRefs", len(nodeRefsResult.references), "readyReplicas", mp.Status.ReadyReplicas, "replicas", mp.Status.Replicas)
-		conditions.MarkFalse(mp, expv1.ReplicasReadyCondition, expv1.WaitingForReplicasReadyReason, clusterv1.ConditionSeverityInfo, "")
+	if ptr.Deref(mp.Status.Replicas, 0) != mp.Status.Deprecated.V1Beta1.ReadyReplicas || len(nodeRefsResult.references) != int(mp.Status.Deprecated.V1Beta1.ReadyReplicas) {
+		log.Info("Not enough ready replicas or node references", "nodeRefs", len(nodeRefsResult.references), "readyReplicas", ptr.Deref(mp.Status.ReadyReplicas, 0), "replicas", ptr.Deref(mp.Status.Replicas, 0))
+		v1beta1conditions.MarkFalse(mp, clusterv1.ReplicasReadyV1Beta1Condition, clusterv1.WaitingForReplicasReadyV1Beta1Reason, clusterv1.ConditionSeverityInfo, "")
 		return ctrl.Result{RequeueAfter: 30 * time.Second}, nil
 	}
 
 	// At this point, the required number of replicas are ready
-	conditions.MarkTrue(mp, expv1.ReplicasReadyCondition)
+	v1beta1conditions.MarkTrue(mp, clusterv1.ReplicasReadyV1Beta1Condition)
 	return ctrl.Result{}, nil
 }
 
@@ -161,7 +171,7 @@ func (r *MachinePoolReconciler) deleteRetiredNodes(ctx context.Context, c client
 	return nil
 }
 
-func (r *MachinePoolReconciler) getNodeReferences(ctx context.Context, providerIDList []string, minReadySeconds *int32, nodeRefsMap map[string]*corev1.Node) (getNodeReferencesResult, error) {
+func (r *MachinePoolReconciler) getNodeReferences(ctx context.Context, providerIDList []string, minReadySeconds int32, nodeRefsMap map[string]*corev1.Node) (getNodeReferencesResult, error) {
 	log := ctrl.LoggerFrom(ctx, "providerIDList", len(providerIDList))
 
 	var ready, available int
@@ -175,7 +185,7 @@ func (r *MachinePoolReconciler) getNodeReferences(ctx context.Context, providerI
 		if node, ok := nodeRefsMap[providerID]; ok {
 			if noderefutil.IsNodeReady(node) {
 				ready++
-				if noderefutil.IsNodeAvailable(node, *minReadySeconds, metav1.Now()) {
+				if noderefutil.IsNodeAvailable(node, minReadySeconds, metav1.Now()) {
 					available++
 				}
 			}
@@ -195,7 +205,7 @@ func (r *MachinePoolReconciler) getNodeReferences(ctx context.Context, providerI
 }
 
 // patchNodes patches the nodes with the cluster name and cluster namespace annotations.
-func (r *MachinePoolReconciler) patchNodes(ctx context.Context, c client.Client, references []corev1.ObjectReference, mp *expv1.MachinePool) error {
+func (r *MachinePoolReconciler) patchNodes(ctx context.Context, c client.Client, references []corev1.ObjectReference, mp *clusterv1.MachinePool) error {
 	log := ctrl.LoggerFrom(ctx)
 	for _, nodeRef := range references {
 		node := &corev1.Node{}

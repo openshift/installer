@@ -69,7 +69,6 @@ spec:
 apiVersion: agent-install.openshift.io/v1beta1
 kind: InfraEnv
 metadata:
-  creationTimestamp: null
   name: ostest
   namespace: cluster0
 spec:
@@ -90,11 +89,12 @@ status:
   debugInfo:
     eventsURL: ""
 -- expected/rendezvous-host.env --
+#{{ $$isIPv6 := false }}{{ $$host := .RendezvousIP }}{{ range ( len .RendezvousIP ) }}{{if eq ( index ( slice $$host . ) 0 ) ':'}}{{ $$isIPv6 = true }}{{ end }}{{ end }}
 NODE_ZERO_IP={{.RendezvousIP}}
-SERVICE_BASE_URL=http://{{.RendezvousIP}}:8090/
-IMAGE_SERVICE_BASE_URL=http://{{.RendezvousIP}}:8888/
+SERVICE_BASE_URL=http://{{ if $$isIPv6 }}{{ printf "[%s]" .RendezvousIP }}{{ else }}{{ .RendezvousIP }}{{ end }}:8090/
+IMAGE_SERVICE_BASE_URL=http://{{ if $$isIPv6 }}{{ printf "[%s]" .RendezvousIP }}{{ else }}{{ .RendezvousIP }}{{ end }}:8888/
 PULL_SECRET_TOKEN=
 USER_AUTH_TOKEN=
 WORKFLOW_TYPE=install-interactive-disconnected
-AIUI_APP_API_URL=http://{{.RendezvousIP}}:8090/
-AIUI_URL=http://{{.RendezvousIP}}:3001/
+AIUI_APP_API_URL=http://{{ if $$isIPv6 }}{{ printf "[%s]" .RendezvousIP }}{{ else }}{{ .RendezvousIP }}{{ end }}:8090/
+AIUI_URL=http://{{ if $$isIPv6 }}{{ printf "[%s]" .RendezvousIP }}{{ else }}{{ .RendezvousIP }}{{ end }}:3001/

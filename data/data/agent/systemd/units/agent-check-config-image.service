@@ -2,6 +2,7 @@
 Description=Displays message to console if config image has not been inserted or mounted in unconfigured-ignition environment
 Wants=network-online.target
 After=network-online.target
+ConditionPathExists=!/etc/assisted/no-config-image
 
 [Service]
 Type=oneshot

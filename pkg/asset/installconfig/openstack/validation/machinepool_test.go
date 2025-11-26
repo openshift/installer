@@ -368,7 +368,7 @@ func TestOpenStackMachinepoolValidation(t *testing.T) {
 			}(),
 			cloudInfo:      validMpoolCloudInfo(),
 			expectedError:  true,
-			expectedErrMsg: `compute\[0\].platform.openstack.rootVolume.zones: Invalid value: \[\]string{"AZ1", "AZ2"}: there must be either just one volume availability zone common to all nodes or the number of compute and volume availability zones must be equal`,
+			expectedErrMsg: `compute\[0\].platform.openstack.rootVolume.zones.zone\[0\]: Invalid value: "AZ1": Zone either does not exist in this cloud, or is not available, compute\[0\].platform.openstack.rootVolume.zones.zone\[1\]: Invalid value: "AZ2": Zone either does not exist in this cloud, or is not available, compute\[0\].platform.openstack.rootVolume.zones: Invalid value: \["AZ1","AZ2"\]: there must be either just one volume availability zone common to all nodes or the number of compute and volume availability zones must be equal`,
 		},
 		{
 			name:         "invalid volume types",

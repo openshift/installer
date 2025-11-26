@@ -20,22 +20,21 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/validation/field"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/labels"
 	"sigs.k8s.io/cluster-api/util/version"
 )
 
-const defaultNodeDeletionTimeout = 10 * time.Second
+const defaultNodeDeletionTimeoutSeconds = int32(10)
 
 func (webhook *Machine) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
@@ -45,8 +44,8 @@ func (webhook *Machine) SetupWebhookWithManager(mgr ctrl.Manager) error {
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta1-machine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machines,versions=v1beta1,name=validation.machine.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta1-machine,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machines,versions=v1beta1,name=default.machine.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-cluster-x-k8s-io-v1beta2-machine,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machines,versions=v1beta2,name=validation.machine.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-cluster-x-k8s-io-v1beta2-machine,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=cluster.x-k8s.io,resources=machines,versions=v1beta2,name=default.machine.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 // Machine implements a validation and defaulting webhook for Machine.
 type Machine struct{}
@@ -66,21 +65,13 @@ func (webhook *Machine) Default(_ context.Context, obj runtime.Object) error {
 	}
 	m.Labels[clusterv1.ClusterNameLabel] = m.Spec.ClusterName
 
-	if m.Spec.Bootstrap.ConfigRef != nil && m.Spec.Bootstrap.ConfigRef.Namespace == "" {
-		m.Spec.Bootstrap.ConfigRef.Namespace = m.Namespace
+	if m.Spec.Version != "" && !strings.HasPrefix(m.Spec.Version, "v") {
+		normalizedVersion := "v" + m.Spec.Version
+		m.Spec.Version = normalizedVersion
 	}
 
-	if m.Spec.InfrastructureRef.Namespace == "" {
-		m.Spec.InfrastructureRef.Namespace = m.Namespace
-	}
-
-	if m.Spec.Version != nil && !strings.HasPrefix(*m.Spec.Version, "v") {
-		normalizedVersion := "v" + *m.Spec.Version
-		m.Spec.Version = &normalizedVersion
-	}
-
-	if m.Spec.NodeDeletionTimeout == nil {
-		m.Spec.NodeDeletionTimeout = &metav1.Duration{Duration: defaultNodeDeletionTimeout}
+	if m.Spec.Deletion.NodeDeletionTimeoutSeconds == nil {
+		m.Spec.Deletion.NodeDeletionTimeoutSeconds = ptr.To(defaultNodeDeletionTimeoutSeconds)
 	}
 
 	return nil
@@ -119,39 +110,17 @@ func (webhook *Machine) ValidateDelete(_ context.Context, _ runtime.Object) (adm
 func (webhook *Machine) validate(oldM, newM *clusterv1.Machine) error {
 	var allErrs field.ErrorList
 	specPath := field.NewPath("spec")
-	if newM.Spec.Bootstrap.ConfigRef == nil && newM.Spec.Bootstrap.DataSecretName == nil {
+	if !newM.Spec.Bootstrap.ConfigRef.IsDefined() && newM.Spec.Bootstrap.DataSecretName == nil {
 		// MachinePool Machines don't have a bootstrap configRef, so don't require it. The bootstrap config is instead owned by the MachinePool.
 		if !labels.IsMachinePoolOwned(newM) {
 			allErrs = append(
 				allErrs,
 				field.Required(
-					specPath.Child("bootstrap", "data"),
+					specPath.Child("bootstrap"),
 					"expected either spec.bootstrap.dataSecretName or spec.bootstrap.configRef to be populated",
 				),
 			)
 		}
-	}
-
-	if newM.Spec.Bootstrap.ConfigRef != nil && newM.Spec.Bootstrap.ConfigRef.Namespace != newM.Namespace {
-		allErrs = append(
-			allErrs,
-			field.Invalid(
-				specPath.Child("bootstrap", "configRef", "namespace"),
-				newM.Spec.Bootstrap.ConfigRef.Namespace,
-				"must match metadata.namespace",
-			),
-		)
-	}
-
-	if newM.Spec.InfrastructureRef.Namespace != newM.Namespace {
-		allErrs = append(
-			allErrs,
-			field.Invalid(
-				specPath.Child("infrastructureRef", "namespace"),
-				newM.Spec.InfrastructureRef.Namespace,
-				"must match metadata.namespace",
-			),
-		)
 	}
 
 	if oldM != nil && oldM.Spec.ClusterName != newM.Spec.ClusterName {
@@ -161,9 +130,9 @@ func (webhook *Machine) validate(oldM, newM *clusterv1.Machine) error {
 		)
 	}
 
-	if newM.Spec.Version != nil {
-		if !version.KubeSemver.MatchString(*newM.Spec.Version) {
-			allErrs = append(allErrs, field.Invalid(specPath.Child("version"), *newM.Spec.Version, "must be a valid semantic version"))
+	if newM.Spec.Version != "" {
+		if !version.KubeSemver.MatchString(newM.Spec.Version) {
+			allErrs = append(allErrs, field.Invalid(specPath.Child("version"), newM.Spec.Version, "must be a valid semantic version"))
 		}
 	}
 

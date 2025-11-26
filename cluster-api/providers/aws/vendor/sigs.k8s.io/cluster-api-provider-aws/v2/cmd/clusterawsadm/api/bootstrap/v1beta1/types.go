@@ -83,6 +83,14 @@ type AWSIAMRoleSpec struct {
 	// ExtraStatements are additional IAM statements to be included inline for the role.
 	ExtraStatements []iamv1.StatementEntry `json:"extraStatements,omitempty"`
 
+	// Path sets the path to the role.
+	// +optional
+	Path string `json:"path,omitempty"`
+
+	// PermissionsBoundary sets the ARN of the managed policy that is used to set the permissions boundary for the role.
+	// +optional
+	PermissionsBoundary string `json:"permissionsBoundary,omitempty"`
+
 	// TrustStatements is an IAM PolicyDocument defining what identities are allowed to assume this role.
 	// See "sigs.k8s.io/cluster-api-provider-aws/v2/cmd/clusterawsadm/api/iam/v1beta1" for more documentation.
 	TrustStatements []iamv1.StatementEntry `json:"trustStatements,omitempty"`

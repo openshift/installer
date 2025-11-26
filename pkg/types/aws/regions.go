@@ -15,6 +15,7 @@ var (
 		"ap-northeast-2": "Asia Pacific (Seoul)",
 		"ap-southeast-1": "Asia Pacific (Singapore)",
 		"ap-southeast-2": "Asia Pacific (Sydney)",
+		"ap-southeast-6": "Asia Pacific (New Zealand)",
 		"ap-east-2":      "Asia Pacific (Taipei)",
 		"ap-southeast-7": "Asia Pacific (Thailand)",
 		"ap-northeast-1": "Asia Pacific (Tokyo)",

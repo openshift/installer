@@ -8,7 +8,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	os.Exit(testscript.RunMain(m, map[string]func() int{
+	os.Exit(testscript.RunMain(m, map[string]func() int{ //nolint:staticcheck //TODO OCPBUGS-64696
 		"openshift-install": func() int {
 			main()
 			return 0

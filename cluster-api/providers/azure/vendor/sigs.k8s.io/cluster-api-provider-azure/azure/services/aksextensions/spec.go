@@ -91,13 +91,14 @@ func (s *AKSExtensionSpec) Parameters(_ context.Context, existingAKSExtension *a
 			Type: (*asokubernetesconfigurationv1.Extension_Properties_AksAssignedIdentity_Type_Spec)(ptr.To(s.AKSAssignedIdentityType)),
 		}
 	}
-	if s.Scope.ScopeType == infrav1.ExtensionScopeCluster {
+	switch s.Scope.ScopeType {
+	case infrav1.ExtensionScopeCluster:
 		aksExtension.Spec.Scope = &asokubernetesconfigurationv1.Scope{
 			Cluster: &asokubernetesconfigurationv1.ScopeCluster{
 				ReleaseNamespace: ptr.To(s.Scope.ReleaseNamespace),
 			},
 		}
-	} else if s.Scope.ScopeType == infrav1.ExtensionScopeNamespace {
+	case infrav1.ExtensionScopeNamespace:
 		aksExtension.Spec.Scope = &asokubernetesconfigurationv1.Scope{
 			Namespace: &asokubernetesconfigurationv1.ScopeNamespace{
 				TargetNamespace: ptr.To(s.Scope.TargetNamespace),

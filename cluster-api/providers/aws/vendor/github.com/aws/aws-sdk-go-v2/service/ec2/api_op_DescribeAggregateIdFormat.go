@@ -13,8 +13,11 @@ import (
 
 // Describes the longer ID format settings for all resource types in a specific
 // Region. This request is useful for performing a quick audit to determine whether
-// a specific Region is fully opted in for longer IDs (17-character IDs). This
-// request only returns information about resource types that support longer IDs.
+// a specific Region is fully opted in for longer IDs (17-character IDs).
+//
+// This request only returns information about resource types that support longer
+// IDs.
+//
 // The following resource types support longer IDs: bundle | conversion-task |
 // customer-gateway | dhcp-options | elastic-ip-allocation | elastic-ip-association
 // | export-task | flow-log | image | import-task | instance | internet-gateway |
@@ -108,6 +111,9 @@ func (c *Client) addOperationDescribeAggregateIdFormatMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -118,6 +124,15 @@ func (c *Client) addOperationDescribeAggregateIdFormatMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeAggregateIdFormat(options.Region), middleware.Before); err != nil {
@@ -136,6 +151,18 @@ func (c *Client) addOperationDescribeAggregateIdFormatMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

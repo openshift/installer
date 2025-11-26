@@ -30,7 +30,12 @@ func (o *ClusterUninstaller) listFirewalls(ctx context.Context) ([]cloudResource
 // that determines whether a particular result should be returned or not.
 func (o *ClusterUninstaller) listFirewallsWithFilter(ctx context.Context, fields string, filterFunc resourceFilterFunc) ([]cloudResource, error) {
 	o.Logger.Debugf("Listing firewall rules")
+
 	results := []cloudResource{}
+
+	if o.firewallRulesManagement == gcp.UnmanagedFirewallRules {
+		return results, nil
+	}
 
 	findFirewallRules := func(projectID string) ([]cloudResource, error) {
 		ctx, cancel := context.WithTimeout(ctx, defaultTimeout)

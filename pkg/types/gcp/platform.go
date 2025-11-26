@@ -3,8 +3,20 @@ package gcp
 import (
 	"fmt"
 
-	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types/dns"
+)
+
+// FirewallRulesManagementPolicy defines the management policy for firewall rules in the cluster.
+// +kubebuilder:validation:Enum:="Managed";"Unmanaged"
+type FirewallRulesManagementPolicy string
+
+const (
+	// ManagedFirewallRules indicates that the firewall rules should be managed by the cluster.
+	ManagedFirewallRules FirewallRulesManagementPolicy = "Managed"
+
+	// UnmanagedFirewallRules indicates that the firewall rules should be managed by the user. The
+	// firewall rules should exist prior to the installation occurs.
+	UnmanagedFirewallRules FirewallRulesManagementPolicy = "Unmanaged"
 )
 
 // DNS contains the gcp dns zone information for the cluster.
@@ -25,6 +37,26 @@ type DNSZone struct {
 
 	// Name is the name of the dns-managed zone.
 	Name string `json:"name"`
+}
+
+// PSCEndpoint contains the information to describe a Private Service Connect
+// endpoint.
+type PSCEndpoint struct {
+	// Name contains the name of the private service connect endpoint.
+	Name string `json:"name"`
+
+	// Region is the region where the endpoint resides.
+	// When the region is empty, the location is assumed to be global.
+	// +optional
+	Region string `json:"region,omitempty"`
+
+	// ClusterUseOnly should be set to true when the installer should use
+	// the public api endpoints and all cluster operators should use the
+	// api endpoint overrides. The value should be false when the installer
+	// and cluster operators should use the api endpoint overrides; that is,
+	// the installer is being run in the same network as the cluster.
+	// +optional
+	ClusterUseOnly *bool `json:"clusterUseOnly,omitempty"`
 }
 
 // Platform stores all the global configuration that all machinesets
@@ -80,16 +112,21 @@ type Platform struct {
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
 
-	// ServiceEndpoints list contains custom endpoints which will override default
-	// service endpoint of GCP Services.
-	// There must be only one ServiceEndpoint for a service.
+	// Endpoint is the private service connect endpoint.
 	// +optional
-	ServiceEndpoints []configv1.GCPServiceEndpoint `json:"serviceEndpoints,omitempty"`
+	Endpoint *PSCEndpoint `json:"endpoint,omitempty"`
 
 	// DNS contains the dns zone information for the cluster. The DNS information can
 	// only be supplied during Shared VPC (XPN) installs.
 	// +optional
 	DNS *DNS `json:"dns,omitempty"`
+
+	// FirewallRulesManagement specifies the management policy for the cluster. Managed indicates that
+	// the firewall rules will be created and destroyed by the cluster. Unmanaged indicates that the
+	// user should create and destroy the firewall rules.
+	// +default="Managed"
+	// +optional
+	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.
@@ -150,4 +187,10 @@ func GetConfiguredServiceAccount(platform *Platform, mpool *MachinePool) string 
 // The default should be used when an existing service account is not configured.
 func GetDefaultServiceAccount(platform *Platform, clusterID string, role string) string {
 	return fmt.Sprintf("%s-%s@%s.iam.gserviceaccount.com", clusterID, role[0:1], platform.ProjectID)
+}
+
+// ShouldUseEndpointForInstaller returns true when the endpoint should be used for GCP api endpoint overrides in the
+// installer.
+func ShouldUseEndpointForInstaller(endpoint *PSCEndpoint) bool {
+	return endpoint != nil && endpoint.ClusterUseOnly != nil && !(*endpoint.ClusterUseOnly)
 }

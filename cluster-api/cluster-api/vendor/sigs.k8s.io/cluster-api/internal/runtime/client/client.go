@@ -45,10 +45,10 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	ctrlclient "sigs.k8s.io/controller-runtime/pkg/client"
 
-	runtimev1 "sigs.k8s.io/cluster-api/exp/runtime/api/v1alpha1"
+	runtimehooksv1 "sigs.k8s.io/cluster-api/api/runtime/hooks/v1alpha1"
+	runtimev1 "sigs.k8s.io/cluster-api/api/runtime/v1beta2"
 	runtimecatalog "sigs.k8s.io/cluster-api/exp/runtime/catalog"
 	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
-	runtimehooksv1 "sigs.k8s.io/cluster-api/exp/runtime/hooks/api/v1alpha1"
 	runtimemetrics "sigs.k8s.io/cluster-api/internal/runtime/metrics"
 	runtimeregistry "sigs.k8s.io/cluster-api/internal/runtime/registry"
 	"sigs.k8s.io/cluster-api/util"
@@ -60,6 +60,8 @@ const defaultDiscoveryTimeout = 10 * time.Second
 
 // Options are creation options for a Client.
 type Options struct {
+	CertFile string // Path of the PEM-encoded client certificate.
+	KeyFile  string // Path of the PEM-encoded client key.
 	Catalog  *runtimecatalog.Catalog
 	Registry runtimeregistry.ExtensionRegistry
 	Client   ctrlclient.Client
@@ -68,6 +70,8 @@ type Options struct {
 // New returns a new Client.
 func New(options Options) runtimeclient.Client {
 	return &client{
+		certFile: options.CertFile,
+		keyFile:  options.KeyFile,
 		catalog:  options.Catalog,
 		registry: options.Registry,
 		client:   options.Client,
@@ -77,6 +81,8 @@ func New(options Options) runtimeclient.Client {
 var _ runtimeclient.Client = &client{}
 
 type client struct {
+	certFile string
+	keyFile  string
 	catalog  *runtimecatalog.Catalog
 	registry runtimeregistry.ExtensionRegistry
 	client   ctrlclient.Client
@@ -102,6 +108,8 @@ func (c *client) Discover(ctx context.Context, extensionConfig *runtimev1.Extens
 	request := &runtimehooksv1.DiscoveryRequest{}
 	response := &runtimehooksv1.DiscoveryResponse{}
 	opts := &httpCallOptions{
+		certFile:        c.certFile,
+		keyFile:         c.keyFile,
 		catalog:         c.catalog,
 		config:          extensionConfig.Spec.ClientConfig,
 		registrationGVH: hookGVH,
@@ -116,7 +124,7 @@ func (c *client) Discover(ctx context.Context, extensionConfig *runtimev1.Extens
 	if response.GetStatus() == runtimehooksv1.ResponseStatusFailure {
 		log.Info(fmt.Sprintf("Failed to discover extension %q: got failure response with message %v", extensionConfig.Name, response.GetMessage()))
 		// Don't add the message to the error as it is may be unique causing too many reconciliations. Ref: https://github.com/kubernetes-sigs/cluster-api/issues/6921
-		return nil, errors.Errorf("failed to discover extension %q: got failure response", extensionConfig.Name)
+		return nil, errors.Errorf("failed to discover extension %q: got failure response, please check controller logs for errors", extensionConfig.Name)
 	}
 
 	// Check to see if the response is valid.
@@ -141,8 +149,8 @@ func (c *client) Discover(ctx context.Context, extensionConfig *runtimev1.Extens
 					APIVersion: handler.RequestHook.APIVersion,
 					Hook:       handler.RequestHook.Hook,
 				},
-				TimeoutSeconds: handler.TimeoutSeconds,
-				FailurePolicy:  (*runtimev1.FailurePolicy)(handler.FailurePolicy),
+				TimeoutSeconds: ptr.Deref(handler.TimeoutSeconds, 0),
+				FailurePolicy:  runtimev1.FailurePolicy(ptr.Deref(handler.FailurePolicy, "")),
 			},
 		)
 	}
@@ -305,8 +313,8 @@ func (c *client) CallExtension(ctx context.Context, hook runtimecatalog.Hook, fo
 
 	log.V(4).Info(fmt.Sprintf("Calling extension handler %q", name))
 	timeoutDuration := runtimehooksv1.DefaultHandlersTimeoutSeconds * time.Second
-	if registration.TimeoutSeconds != nil {
-		timeoutDuration = time.Duration(*registration.TimeoutSeconds) * time.Second
+	if registration.TimeoutSeconds != 0 {
+		timeoutDuration = time.Duration(registration.TimeoutSeconds) * time.Second
 	}
 
 	// Prepare the request by merging the settings in the registration with the settings in the request.
@@ -329,6 +337,8 @@ func (c *client) CallExtension(ctx context.Context, hook runtimecatalog.Hook, fo
 	}
 
 	httpOpts := &httpCallOptions{
+		certFile:        c.certFile,
+		keyFile:         c.keyFile,
 		catalog:         c.catalog,
 		config:          registration.ClientConfig,
 		registrationGVH: registration.GroupVersionHook,
@@ -340,10 +350,10 @@ func (c *client) CallExtension(ctx context.Context, hook runtimecatalog.Hook, fo
 	if err != nil {
 		// If the error is errCallingExtensionHandler then apply failure policy to calculate
 		// the effective result of the operation.
-		ignore := *registration.FailurePolicy == runtimev1.FailurePolicyIgnore
+		ignore := registration.FailurePolicy == runtimev1.FailurePolicyIgnore
 		if _, ok := err.(errCallingExtensionHandler); ok && ignore {
 			// Update the response to a default success response and return.
-			log.Error(err, fmt.Sprintf("Ignoring error calling extension handler because of FailurePolicy %q", *registration.FailurePolicy))
+			log.Error(err, fmt.Sprintf("Ignoring error calling extension handler because of FailurePolicy %q", registration.FailurePolicy))
 			response.SetStatus(runtimehooksv1.ResponseStatusSuccess)
 			response.SetMessage("")
 			return nil
@@ -356,7 +366,7 @@ func (c *client) CallExtension(ctx context.Context, hook runtimecatalog.Hook, fo
 	if response.GetStatus() == runtimehooksv1.ResponseStatusFailure {
 		log.Info(fmt.Sprintf("Failed to call extension handler %q: got failure response with message %v", name, response.GetMessage()))
 		// Don't add the message to the error as it is may be unique causing too many reconciliations. Ref: https://github.com/kubernetes-sigs/cluster-api/issues/6921
-		return errors.Errorf("failed to call extension handler %q: got failure response", name)
+		return errors.Errorf("failed to call extension handler %q: got failure response, please check controller logs for errors", name)
 	}
 
 	if retryResponse, ok := response.(runtimehooksv1.RetryResponseObject); ok && retryResponse.GetRetryAfterSeconds() != 0 {
@@ -396,6 +406,8 @@ func cloneAndAddSettings(request runtimehooksv1.RequestObject, registrationSetti
 }
 
 type httpCallOptions struct {
+	certFile        string
+	keyFile         string
 	catalog         *runtimecatalog.Catalog
 	config          runtimev1.ClientConfig
 	registrationGVH runtimecatalog.GroupVersionHook
@@ -471,7 +483,7 @@ func httpCall(ctx context.Context, request, response runtime.Object, opts *httpC
 		extensionURL.RawQuery = values.Encode()
 
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, opts.timeout)
+		ctx, cancel = context.WithTimeoutCause(ctx, opts.timeout, errors.New("http request timeout expired"))
 		defer cancel()
 	}
 
@@ -484,6 +496,8 @@ func httpCall(ctx context.Context, request, response runtime.Object, opts *httpC
 	client := http.DefaultClient
 	tlsConfig, err := transport.TLSConfigFor(&transport.Config{
 		TLS: transport.TLSConfig{
+			CertFile:   opts.certFile,
+			KeyFile:    opts.keyFile,
 			CAData:     opts.config.CABundle,
 			ServerName: extensionURL.Hostname(),
 		},
@@ -542,7 +556,7 @@ func httpCall(ctx context.Context, request, response runtime.Object, opts *httpC
 
 func urlForExtension(config runtimev1.ClientConfig, gvh runtimecatalog.GroupVersionHook, name string) (*url.URL, error) {
 	var u *url.URL
-	if config.Service != nil {
+	if config.Service.IsDefined() {
 		// The Extension's ClientConfig points ot a service. Construct the URL to the service.
 		svc := config.Service
 		host := svc.Name + "." + svc.Namespace + ".svc"
@@ -553,16 +567,16 @@ func urlForExtension(config runtimev1.ClientConfig, gvh runtimecatalog.GroupVers
 			Scheme: "https",
 			Host:   host,
 		}
-		if svc.Path != nil {
-			u.Path = *svc.Path
+		if svc.Path != "" {
+			u.Path = svc.Path
 		}
 	} else {
-		if config.URL == nil {
+		if config.URL == "" {
 			return nil, errors.New("failed to compute URL: at least one of service and url should be defined in config")
 		}
 
 		var err error
-		u, err = url.Parse(*config.URL)
+		u, err = url.Parse(config.URL)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to compute URL: failed to parse url from clientConfig")
 		}
@@ -600,7 +614,7 @@ func defaultAndValidateDiscoveryResponse(cat *runtimecatalog.Catalog, discovery 
 			errs = append(errs, errors.Errorf("handler name %s is not valid: %s", handler.Name, errStrings))
 		}
 
-		// Timeout should be a positive integer not greater than 30.
+		// TimeoutSeconds should be a positive integer not greater than 30.
 		if *handler.TimeoutSeconds < 0 || *handler.TimeoutSeconds > 30 {
 			errs = append(errs, errors.Errorf("handler %s timeoutSeconds %d must be between 0 and 30", handler.Name, *handler.TimeoutSeconds))
 		}

@@ -13,12 +13,15 @@ import (
 
 // Modifies the instance tenancy attribute of the specified VPC. You can change
 // the instance tenancy attribute of a VPC to default only. You cannot change the
-// instance tenancy attribute to dedicated . After you modify the tenancy of the
-// VPC, any new instances that you launch into the VPC have a tenancy of default ,
-// unless you specify otherwise during launch. The tenancy of any existing
-// instances in the VPC is not affected. For more information, see Dedicated
-// Instances (https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-instance.html)
-// in the Amazon EC2 User Guide.
+// instance tenancy attribute to dedicated .
+//
+// After you modify the tenancy of the VPC, any new instances that you launch into
+// the VPC have a tenancy of default , unless you specify otherwise during launch.
+// The tenancy of any existing instances in the VPC is not affected.
+//
+// For more information, see [Dedicated Instances] in the Amazon EC2 User Guide.
+//
+// [Dedicated Instances]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/dedicated-instance.html
 func (c *Client) ModifyVpcTenancy(ctx context.Context, params *ModifyVpcTenancyInput, optFns ...func(*Options)) (*ModifyVpcTenancyOutput, error) {
 	if params == nil {
 		params = &ModifyVpcTenancyInput{}
@@ -109,6 +112,9 @@ func (c *Client) addOperationModifyVpcTenancyMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -119,6 +125,15 @@ func (c *Client) addOperationModifyVpcTenancyMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpModifyVpcTenancyValidationMiddleware(stack); err != nil {
@@ -140,6 +155,18 @@ func (c *Client) addOperationModifyVpcTenancyMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

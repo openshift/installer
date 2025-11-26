@@ -35,6 +35,9 @@ const (
 
 	// ImageTypeMinimalIso captures enum value "minimal-iso"
 	ImageTypeMinimalIso ImageType = "minimal-iso"
+
+	// ImageTypeDisconnectedIso captures enum value "disconnected-iso"
+	ImageTypeDisconnectedIso ImageType = "disconnected-iso"
 )
 
 // for schema
@@ -42,7 +45,7 @@ var imageTypeEnum []interface{}
 
 func init() {
 	var res []ImageType
-	if err := json.Unmarshal([]byte(`["full-iso","minimal-iso"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["full-iso","minimal-iso","disconnected-iso"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

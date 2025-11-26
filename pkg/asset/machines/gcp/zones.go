@@ -5,18 +5,23 @@ import (
 	"fmt"
 	"time"
 
+	"google.golang.org/api/option"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	configv1 "github.com/openshift/api/config/v1"
 	gcpconfig "github.com/openshift/installer/pkg/asset/installconfig/gcp"
+	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
 // ZonesForInstanceType retrieves a filtered list of availability zones where
 // the particular instance type is available. This is mainly necessary for
 // arm64, since the instance t2a-standard-* is not available in all
 // availability zones.
-func ZonesForInstanceType(project, region, instanceType string, serviceEndpoints []configv1.GCPServiceEndpoint) ([]string, error) {
-	svc, err := gcpconfig.GetComputeService(context.Background(), serviceEndpoints)
+func ZonesForInstanceType(project, region, instanceType string, endpoint *gcptypes.PSCEndpoint) ([]string, error) {
+	opts := []option.ClientOption{}
+	if gcptypes.ShouldUseEndpointForInstaller(endpoint) {
+		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
+	}
+	svc, err := gcpconfig.GetComputeService(context.Background(), opts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create compute service: %w", err)
 	}

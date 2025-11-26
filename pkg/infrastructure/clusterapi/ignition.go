@@ -21,6 +21,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/tls"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
 
@@ -153,6 +154,10 @@ func addLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs
 			case awstypes.Name:
 				if infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig.DNSType == configv1.ClusterHostedDNSType {
 					infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig.ClusterHosted = &cloudLBInfo
+				}
+			case azuretypes.Name:
+				if infra.Status.PlatformStatus.Azure.CloudLoadBalancerConfig.DNSType == configv1.ClusterHostedDNSType {
+					infra.Status.PlatformStatus.Azure.CloudLoadBalancerConfig.ClusterHosted = &cloudLBInfo
 				}
 			default:
 				return fmt.Errorf("invalid platform %s", platform)

@@ -33,10 +33,11 @@ export GOPROXY
 export GO111MODULE=on
 
 # Go version
-GOLANG_VERSION := 1.22.11
+GOLANG_VERSION := 1.24.6
+GOLANG_DIRECTIVE_VERSION ?= 1.24.0
 
 # Kubebuilder
-export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.31.0
+export KUBEBUILDER_ENVTEST_KUBERNETES_VERSION ?= 1.33.0
 export KUBEBUILDER_CONTROLPLANE_START_TIMEOUT ?=60s
 export KUBEBUILDER_CONTROLPLANE_STOP_TIMEOUT ?=60s
 
@@ -62,11 +63,11 @@ CONVERSION_VERIFIER:= $(TOOLS_BIN_DIR)/conversion-verifier
 # Binaries.
 CLUSTERCTL := $(BIN_DIR)/clusterctl
 
-CONTROLLER_GEN_VER := v0.17.1
+CONTROLLER_GEN_VER := v0.17.3
 CONTROLLER_GEN_BIN := controller-gen
 CONTROLLER_GEN := $(TOOLS_BIN_DIR)/$(CONTROLLER_GEN_BIN)-$(CONTROLLER_GEN_VER)
 
-CONVERSION_GEN_VER := v0.31.5
+CONVERSION_GEN_VER := v0.32.0
 CONVERSION_GEN_BIN := conversion-gen
 CONVERSION_GEN := $(TOOLS_BIN_DIR)/$(CONVERSION_GEN_BIN)-$(CONVERSION_GEN_VER)
 
@@ -74,11 +75,9 @@ ENVSUBST_VER := v1.4.2
 ENVSUBST_BIN := envsubst
 ENVSUBST := $(TOOLS_BIN_DIR)/$(ENVSUBST_BIN)
 
-GOLANGCI_LINT_VER := v1.63.4
-GOLANGCI_LINT_BIN := golangci-lint
-GOLANGCI_LINT := $(TOOLS_BIN_DIR)/$(GOLANGCI_LINT_BIN)-$(GOLANGCI_LINT_VER)
+GOLANGCI_LINT_VER := v2.4.0
 
-KIND_VER := v0.26.0
+KIND_VER := v0.29.0
 KIND_BIN := kind
 KIND := $(TOOLS_BIN_DIR)/$(KIND_BIN)-$(KIND_VER)
 
@@ -90,7 +89,7 @@ RELEASE_NOTES_VER := v0.11.0
 RELEASE_NOTES_BIN := release-notes
 RELEASE_NOTES := $(TOOLS_BIN_DIR)/$(RELEASE_NOTES_BIN)-$(RELEASE_NOTES_VER)
 
-GINKGO_VER := v2.22.2
+GINKGO_VER := v2.23.3
 GINKGO_BIN := ginkgo
 GINKGO := $(TOOLS_BIN_DIR)/$(GINKGO_BIN)-$(GINKGO_VER)
 GINKGO_PKG := github.com/onsi/ginkgo/v2/ginkgo
@@ -101,13 +100,9 @@ KUBECTL := $(TOOLS_BIN_DIR)/$(KUBECTL_BIN)-$(KUBECTL_VER)
 
 TIMEOUT := $(shell command -v timeout || command -v gtimeout)
 
-SETUP_ENVTEST_VER := v0.0.0-20240522175850-2e9781e9fc60
+SETUP_ENVTEST_VER := v0.0.0-20250827153409-7085be7a745a
 SETUP_ENVTEST_BIN := setup-envtest
 SETUP_ENVTEST := $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)
-
-GO_APIDIFF_VER := v0.6.0
-GO_APIDIFF_BIN := go-apidiff
-GO_APIDIFF := $(TOOLS_BIN_DIR)/$(GO_APIDIFF_BIN)
 
 GOTESTSUM_VER := v1.6.4
 GOTESTSUM_BIN := gotestsum
@@ -244,9 +239,6 @@ $(CLUSTERCTL): go.mod ## Build clusterctl binary.
 $(ENVSUBST): ## Build envsubst from tools folder.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) github.com/a8m/envsubst/cmd/envsubst $(ENVSUBST_BIN) $(ENVSUBST_VER)
 
-$(GOLANGCI_LINT): ## Build golangci-lint from tools folder.
-	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) github.com/golangci/golangci-lint/cmd/golangci-lint $(GOLANGCI_LINT_BIN) $(GOLANGCI_LINT_VER)
-
 $(GOTESTSUM): go.mod # Build gotestsum from tools folder.
 	 GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) gotest.tools/gotestsum $(GOTESTSUM_BIN) $(GOTESTSUM_VER)
 
@@ -264,9 +256,6 @@ $(CONVERSION_GEN): ## Build conversion-gen.
 
 $(RELEASE_NOTES): ## Build release notes.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) k8s.io/release/cmd/release-notes $(RELEASE_NOTES_BIN) $(RELEASE_NOTES_VER)
-
-$(GO_APIDIFF): ## Build go-apidiff from tools folder.
-	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) github.com/joelanford/go-apidiff $(GO_APIDIFF_BIN) $(GO_APIDIFF_VER)
 
 $(CONVERSION_VERIFIER): go.mod
 	cd $(TOOLS_DIR); go build -tags=tools -o $@ sigs.k8s.io/cluster-api/hack/tools/conversion-verifier
@@ -287,9 +276,6 @@ $(KIND): ## Build kind into tools folder
 .PHONY: $(KUBECTL_BIN)
 $(KUBECTL_BIN): $(KUBECTL) ## Building kubectl from tools folder
 
-.PHONY: $(GO_APIDIFF_BIN)
-$(GO_APIDIFF_BIN): $(GO_APIDIFF)
-
 .PHONY: $(KIND_BIN)
 $(KIND_BIN): $(KIND) ## Building Kind from tools folder
 
@@ -299,15 +285,15 @@ $(KIND_BIN): $(KIND) ## Building Kind from tools folder
 ## --------------------------------------
 
 .PHONY: lint
-lint: $(GOLANGCI_LINT) ## Lint codebase
-	$(GOLANGCI_LINT) run -v $(GOLANGCI_LINT_EXTRA_ARGS)
+lint: ## Lint codebase
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VER} run -v $(GOLANGCI_LINT_EXTRA_ARGS)
 
 .PHONY: lint-fix
-lint-fix: $(GOLANGCI_LINT) ## Lint the codebase and run auto-fixers if supported by the linter
+lint-fix: ## Lint the codebase and run auto-fixers if supported by the linter
 	GOLANGCI_LINT_EXTRA_ARGS=--fix $(MAKE) lint
 
-lint-full: $(GOLANGCI_LINT) ## Run slower linters to detect possible issues
-	$(GOLANGCI_LINT) run -v --fast=false
+lint-full: ## Run slower linters to detect possible issues
+	go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@${GOLANGCI_LINT_VER} run -v --fast=false
 
 ## --------------------------------------
 ## Generate
@@ -329,6 +315,7 @@ generate-go: $(CONTROLLER_GEN) $(CONVERSION_GEN) ## Runs Go related generate tar
 		paths=./ \
 		paths=./... \
 		paths=./$(EXP_DIR)/api/... \
+		paths=./$(EXP_DIR)/bootstrap/gke/api/... \
 		object:headerFile=./hack/boilerplate/boilerplate.generatego.txt
 	go generate ./...
 
@@ -338,6 +325,7 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 		paths=./ \
 		paths=./api/... \
 		paths=./$(EXP_DIR)/api/... \
+		paths=./$(EXP_DIR)/bootstrap/gke/api/... \
 		crd:crdVersions=v1 \
 		rbac:roleName=manager-role \
 		output:crd:dir=$(CRD_ROOT) \
@@ -347,6 +335,7 @@ generate-manifests: $(CONTROLLER_GEN) ## Generate manifests e.g. CRD, RBAC etc.
 		paths=./ \
 		paths=./controllers/... \
 		paths=./$(EXP_DIR)/controllers/... \
+		paths=./$(EXP_DIR)/bootstrap/gke/controllers/... \
 		output:rbac:dir=$(RBAC_ROOT) \
 		rbac:roleName=manager-role
 
@@ -578,13 +567,10 @@ clean-release: ## Remove the release folder
 	rm -rf $(RELEASE_DIR)
 
 .PHONY: apidiff
-apidiff: $(GO_APIDIFF) ## Check for API differences.
+apidiff: APIDIFF_OLD_COMMIT ?= $(shell git rev-parse origin/main)
+apidiff: $(GO_APIDIFF) ## Check for API differences
 	@$(call checkdiff) > /dev/null
-	@if ($(call checkdiff) | grep "api/"); then \
-		$(GO_APIDIFF) $(shell git rev-parse origin/main) --print-compatible; \
-	else \
-		echo "No changes to 'api/'. Nothing to do."; \
-	fi
+	APIDIFF_OLD_COMMIT="$(APIDIFF_OLD_COMMIT)" hack/verify-apidiff
 
 define checkdiff
 	git --no-pager diff --name-only FETCH_HEAD
@@ -595,7 +581,7 @@ format-tiltfile: ## Format the Tiltfile.
 	./hack/verify-starlark.sh fix
 
 .PHONY: verify
-verify: verify-boilerplate verify-modules verify-gen verify-shellcheck verify-tiltfile verify-conversions
+verify: verify-boilerplate verify-modules verify-gen verify-shellcheck verify-tiltfile verify-conversions verify-go-directive
 
 .PHONY: verify-boilerplate
 verify-boilerplate:
@@ -622,5 +608,13 @@ verify-modules: modules
 .PHONY: verify-gen
 verify-gen: generate
 	@if !(git diff --quiet HEAD); then \
-		echo "generated files are out of date, run make generate"; exit 1; \
+		echo "generated files are out of date, run make generate"; \
+		git diff HEAD; \
+		exit 1; \
 	fi
+
+.PHONY: verify-go-directive
+verify-go-directive:
+	# use the core Cluster API script directly to verify the go directive matches the desired one.
+	# ref: https://github.com/kubernetes-sigs/cluster-api/blob/v1.10.7/hack/verify-go-directive.sh
+	curl --retry $(CURL_RETRIES) -fsL https://raw.githubusercontent.com/kubernetes-sigs/cluster-api/refs/tags/v1.11.0/hack/verify-go-directive.sh | bash -s -- -g $(GOLANG_DIRECTIVE_VERSION)

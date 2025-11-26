@@ -13,9 +13,10 @@ import (
 
 // Releases the specified address range that you provisioned for use with your
 // Amazon Web Services resources through bring your own IP addresses (BYOIP) and
-// deletes the corresponding address pool. Before you can release an address range,
-// you must stop advertising it using WithdrawByoipCidr and you must not have any
-// IP addresses allocated from its address range.
+// deletes the corresponding address pool.
+//
+// Before you can release an address range, you must stop advertising it using WithdrawByoipCidr
+// and you must not have any IP addresses allocated from its address range.
 func (c *Client) DeprovisionByoipCidr(ctx context.Context, params *DeprovisionByoipCidrInput, optFns ...func(*Options)) (*DeprovisionByoipCidrOutput, error) {
 	if params == nil {
 		params = &DeprovisionByoipCidrInput{}
@@ -102,6 +103,9 @@ func (c *Client) addOperationDeprovisionByoipCidrMiddlewares(stack *middleware.S
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -112,6 +116,15 @@ func (c *Client) addOperationDeprovisionByoipCidrMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeprovisionByoipCidrValidationMiddleware(stack); err != nil {
@@ -133,6 +146,18 @@ func (c *Client) addOperationDeprovisionByoipCidrMiddlewares(stack *middleware.S
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

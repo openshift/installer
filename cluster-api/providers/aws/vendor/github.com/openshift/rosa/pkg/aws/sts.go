@@ -31,7 +31,7 @@ import (
 
 	awscbRoles "github.com/openshift/rosa/pkg/aws/commandbuilder/helper/roles"
 	"github.com/openshift/rosa/pkg/aws/tags"
-	rprtr "github.com/openshift/rosa/pkg/reporter"
+	"github.com/openshift/rosa/pkg/reporter"
 )
 
 func (c *awsClient) DeleteUserRole(roleName string) error {
@@ -148,7 +148,7 @@ func SortRolesByLinkedRole(roles []Role) {
 	})
 }
 
-func UpgradeOperatorPolicies(reporter *rprtr.Object, awsClient Client, partition string, accountID string,
+func UpgradeOperatorPolicies(reporter reporter.Logger, awsClient Client, partition string, accountID string,
 	prefix string, policies map[string]string, defaultPolicyVersion string,
 	credRequests map[string]*cmv1.STSOperator, path string) error {
 	for credrequest, operator := range credRequests {

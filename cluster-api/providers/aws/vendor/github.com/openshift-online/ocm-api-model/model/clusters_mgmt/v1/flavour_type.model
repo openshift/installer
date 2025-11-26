@@ -1,0 +1,42 @@
+/*
+Copyright (c) 2019 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Set of predefined properties of a cluster. For example, a _huge_ flavour can be a cluster
+// with 10 infra nodes and 1000 compute nodes.
+class Flavour {
+	// Default _Amazon Web Services_ settings of the cluster.
+	AWS AWSFlavour
+
+	// Default _Google Cloud Platform_ settings of the cluster.
+	GCP GCPFlavour
+
+	// Number of nodes that will be used by default when creating a cluster that uses
+	// this flavour.
+	//
+	// These can be overridden specifying in the cluster itself a different number of nodes.
+	Nodes FlavourNodes
+
+	// Human friendly identifier of the cluster, for example `4`.
+	//
+	// NOTE: Currently for all flavours the `id` and `name` attributes have exactly the
+	// same values.
+	Name String
+
+	// Default network settings of the cluster.
+	//
+	// These can be overridden specifying in the cluster itself a different set of settings.
+	Network Network
+}

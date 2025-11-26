@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.102.0-615ec964-20250307-203034
+ * IBM OpenAPI SDK Code Generator Version: 3.106.0-09823488-20250707-071701
  */
 
 // Package globalcatalogv1 : Operations and models for the GlobalCatalogV1 service
@@ -201,12 +201,12 @@ func (globalCatalog *GlobalCatalogV1) ListCatalogEntriesWithContext(ctx context.
 		return
 	}
 
-	for headerName, headerValue := range listCatalogEntriesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "ListCatalogEntries")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "ListCatalogEntries")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listCatalogEntriesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -299,12 +299,12 @@ func (globalCatalog *GlobalCatalogV1) CreateCatalogEntryWithContext(ctx context.
 		return
 	}
 
-	for headerName, headerValue := range createCatalogEntryOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "CreateCatalogEntry")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "CreateCatalogEntry")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createCatalogEntryOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -421,12 +421,12 @@ func (globalCatalog *GlobalCatalogV1) GetCatalogEntryWithContext(ctx context.Con
 		return
 	}
 
-	for headerName, headerValue := range getCatalogEntryOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetCatalogEntry")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetCatalogEntry")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getCatalogEntryOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -507,12 +507,12 @@ func (globalCatalog *GlobalCatalogV1) UpdateCatalogEntryWithContext(ctx context.
 		return
 	}
 
-	for headerName, headerValue := range updateCatalogEntryOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "UpdateCatalogEntry")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "UpdateCatalogEntry")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateCatalogEntryOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -629,12 +629,12 @@ func (globalCatalog *GlobalCatalogV1) DeleteCatalogEntryWithContext(ctx context.
 		return
 	}
 
-	for headerName, headerValue := range deleteCatalogEntryOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "DeleteCatalogEntry")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "DeleteCatalogEntry")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteCatalogEntryOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -697,12 +697,12 @@ func (globalCatalog *GlobalCatalogV1) GetChildObjectsWithContext(ctx context.Con
 		return
 	}
 
-	for headerName, headerValue := range getChildObjectsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetChildObjects")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetChildObjects")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getChildObjectsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -794,12 +794,12 @@ func (globalCatalog *GlobalCatalogV1) RestoreCatalogEntryWithContext(ctx context
 		return
 	}
 
-	for headerName, headerValue := range restoreCatalogEntryOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "RestoreCatalogEntry")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "RestoreCatalogEntry")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range restoreCatalogEntryOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -859,12 +859,12 @@ func (globalCatalog *GlobalCatalogV1) GetVisibilityWithContext(ctx context.Conte
 		return
 	}
 
-	for headerName, headerValue := range getVisibilityOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetVisibility")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetVisibility")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getVisibilityOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -933,12 +933,12 @@ func (globalCatalog *GlobalCatalogV1) UpdateVisibilityWithContext(ctx context.Co
 		return
 	}
 
-	for headerName, headerValue := range updateVisibilityOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "UpdateVisibility")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "UpdateVisibility")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateVisibilityOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Content-Type", "application/json")
@@ -948,6 +948,9 @@ func (globalCatalog *GlobalCatalogV1) UpdateVisibilityWithContext(ctx context.Co
 	}
 
 	body := make(map[string]interface{})
+	if updateVisibilityOptions.Restrictions != nil {
+		body["restrictions"] = updateVisibilityOptions.Restrictions
+	}
 	if updateVisibilityOptions.Extendable != nil {
 		body["extendable"] = updateVisibilityOptions.Extendable
 	}
@@ -1014,12 +1017,12 @@ func (globalCatalog *GlobalCatalogV1) GetPricingWithContext(ctx context.Context,
 		return
 	}
 
-	for headerName, headerValue := range getPricingOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetPricing")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetPricing")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getPricingOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1092,12 +1095,12 @@ func (globalCatalog *GlobalCatalogV1) GetPricingDeploymentsWithContext(ctx conte
 		return
 	}
 
-	for headerName, headerValue := range getPricingDeploymentsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetPricingDeployments")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetPricingDeployments")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getPricingDeploymentsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1165,12 +1168,12 @@ func (globalCatalog *GlobalCatalogV1) GetAuditLogsWithContext(ctx context.Contex
 		return
 	}
 
-	for headerName, headerValue := range getAuditLogsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetAuditLogs")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetAuditLogs")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getAuditLogsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1250,12 +1253,12 @@ func (globalCatalog *GlobalCatalogV1) ListArtifactsWithContext(ctx context.Conte
 		return
 	}
 
-	for headerName, headerValue := range listArtifactsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "ListArtifacts")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "ListArtifacts")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listArtifactsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1324,12 +1327,12 @@ func (globalCatalog *GlobalCatalogV1) GetArtifactWithContext(ctx context.Context
 		return
 	}
 
-	for headerName, headerValue := range getArtifactOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetArtifact")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "GetArtifact")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getArtifactOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "*/*")
@@ -1392,12 +1395,12 @@ func (globalCatalog *GlobalCatalogV1) UploadArtifactWithContext(ctx context.Cont
 		return
 	}
 
-	for headerName, headerValue := range uploadArtifactOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "UploadArtifact")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "UploadArtifact")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range uploadArtifactOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	if uploadArtifactOptions.ContentType != nil {
@@ -1465,12 +1468,12 @@ func (globalCatalog *GlobalCatalogV1) DeleteArtifactWithContext(ctx context.Cont
 		return
 	}
 
-	for headerName, headerValue := range deleteArtifactOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "DeleteArtifact")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("global_catalog", "V1", "DeleteArtifact")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteArtifactOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -1785,49 +1788,75 @@ func UnmarshalBullets(m map[string]json.RawMessage, result interface{}) (err err
 
 // CfMetaData : Service-related metadata.
 type CfMetaData struct {
-	// Type of service.
+	// The type of service (public, cfaas, personal_catalog, kms, toolchain, etc.).
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	Type *string `json:"type,omitempty"`
 
-	// Boolean value that describes whether the service is compatible with Identity and Access Management.
+	// Boolean value that describes whether the service is compatible with Identity and Access Management for
+	// authentication and authorization.
 	IamCompatible *bool `json:"iam_compatible,omitempty"`
 
-	// Boolean value that describes whether the service has a unique API key.
+	// Boolean value that describes whether the service has a unique API key. Only settable on services, should be set via
+	// partnercenter.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	UniqueAPIKey *bool `json:"unique_api_key,omitempty"`
 
-	// Boolean value that describes whether the service is provisionable or not. You may need sales or support to create
-	// this service.
+	// Boolean value that, if true, the service is provisionable via resource controller (RC) or, if false, via a service
+	// control point API. If false, you may need sales or support to create this service.
 	Provisionable *bool `json:"provisionable,omitempty"`
 
-	// Boolean value that describes whether you can create bindings for this service.
+	// Boolean value that describes whether the service can be bound to an application. If true then this will create and
+	// use resource keys.
 	Bindable *bool `json:"bindable,omitempty"`
 
-	// Boolean value that describes whether the service supports asynchronous provisioning.
+	// Boolean value that describes whether the service supports asynchronous provisioning. Now handled by a 202 response
+	// indicating support from the broker on provisioning.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	AsyncProvisioningSupported *bool `json:"async_provisioning_supported,omitempty"`
 
-	// Boolean value that describes whether the service supports asynchronous unprovisioning.
+	// Boolean value that describes whether the service supports asynchronous unprovisioning. Now handled by a 202 response
+	// indicating support from the broker on unprovisioning.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	AsyncUnprovisioningSupported *bool `json:"async_unprovisioning_supported,omitempty"`
 
-	// Service dependencies.
+	// Dependencies needed to use this service.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	Requires []string `json:"requires,omitempty"`
 
-	// Boolean value that describes whether the service supports upgrade or downgrade for some plans.
+	// Boolean value that describes whether the service supports changing plans within the service. Only settable on
+	// services, read only on plans and deployments.
 	PlanUpdateable *bool `json:"plan_updateable,omitempty"`
 
 	// String that describes whether the service is active or inactive.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	State *string `json:"state,omitempty"`
 
-	// Boolean value that describes whether the service check is enabled.
+	// Boolean value that describes whether the Estado testing service will perform uptime tests for this service.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	ServiceCheckEnabled *bool `json:"service_check_enabled,omitempty"`
 
-	// Test check interval.
+	// A unit of time that determines the time in between uptime checks performed by Estado.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TestCheckInterval *int64 `json:"test_check_interval,omitempty"`
 
-	// Boolean value that describes whether the service supports service keys.
+	// Boolean value that describes whether the service supports the creation of service credentials. Without service key
+	// support, a service cannot be bound to a cluster.
 	ServiceKeySupported *bool `json:"service_key_supported,omitempty"`
 
 	// If the field is imported from Cloud Foundry, the Cloud Foundry region's GUID. This is a required field. For example,
 	// `us-south=123`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	CfGUID map[string]string `json:"cf_guid,omitempty"`
+
+	// Cloud resource name identifying the environment containing this service.
+	CRNMask *string `json:"crn_mask,omitempty"`
+
+	// Boolean flag indicating if this service only offers paid pricing plans rather than the default paygo.
+	// Deprecated: this field is deprecated and may be removed in a future release.
+	PaidOnly *bool `json:"paid_only,omitempty"`
+
+	// Boolean flag that determines if the hybrid page is accessible from the main catalog provisioning page.
+	CustomCreatePageHybridEnabled *bool `json:"custom_create_page_hybrid_enabled,omitempty"`
 }
 
 // UnmarshalCfMetaData unmarshals an instance of CfMetaData from the specified map of raw messages.
@@ -1903,6 +1932,21 @@ func UnmarshalCfMetaData(m map[string]json.RawMessage, result interface{}) (err 
 		err = core.SDKErrorf(err, "", "cf_guid-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "crn_mask", &obj.CRNMask)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn_mask-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "paid_only", &obj.PaidOnly)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "paid_only-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "custom_create_page_hybrid_enabled", &obj.CustomCreatePageHybridEnabled)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "custom_create_page_hybrid_enabled-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -1916,6 +1960,7 @@ type Callbacks struct {
 	BrokerURL *string `json:"broker_url,omitempty"`
 
 	// The URL of the deployment broker SC proxy.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	BrokerProxyURL *string `json:"broker_proxy_url,omitempty"`
 
 	// The URL of dashboard callback.
@@ -2003,8 +2048,8 @@ type CatalogEntry struct {
 	// OverviewUI for a user-readable name.
 	Name *string `json:"name" validate:"required"`
 
-	// The type of catalog entry, **service**, **template**, **dashboard**, which determines the type and shape of the
-	// object.
+	// The type of catalog entry which determines the type and shape of the object. Valid GC types are buildpack, cname,
+	// dataset, geography, iaas, platform_service, runtime, service, template, ui-dashboard.
 	Kind *string `json:"kind" validate:"required"`
 
 	// Overview is nested in the top level. The key value pair is `[_language_]overview_ui`.
@@ -2020,7 +2065,8 @@ type CatalogEntry struct {
 	// all plans are disabled.
 	Disabled *bool `json:"disabled" validate:"required"`
 
-	// A list of tags. For example, IBM, 3rd Party, Beta, GA, and Single Tenant.
+	// A searchable list of tags. For example, IBM, 3rd Party, Beta, GA, and Single Tenant. Valid values found at
+	// https://globalcatalog.test.cloud.ibm.com/search.
 	Tags []string `json:"tags" validate:"required"`
 
 	// Boolean value that determines whether the catalog entry is a group.
@@ -2050,7 +2096,8 @@ type CatalogEntry struct {
 	// tags to indicate the locations this service is deployable to.
 	GeoTags []string `json:"geo_tags,omitempty"`
 
-	// tags to indicate the type of pricing plans this service supports.
+	// tags to indicate the type of pricing plans this service supports. Plans tagged with paid_only will not be shown for
+	// trial accounts.
 	PricingTags []string `json:"pricing_tags,omitempty"`
 
 	// Date created.
@@ -2061,8 +2108,8 @@ type CatalogEntry struct {
 }
 
 // Constants associated with the CatalogEntry.Kind property.
-// The type of catalog entry, **service**, **template**, **dashboard**, which determines the type and shape of the
-// object.
+// The type of catalog entry which determines the type and shape of the object. Valid GC types are buildpack, cname,
+// dataset, geography, iaas, platform_service, runtime, service, template, ui-dashboard.
 const (
 	CatalogEntryKindDashboardConst = "dashboard"
 	CatalogEntryKindServiceConst   = "service"
@@ -2173,7 +2220,8 @@ func UnmarshalCatalogEntry(m map[string]json.RawMessage, result interface{}) (er
 
 // CatalogEntryMetadata : Model used to describe metadata object returned.
 type CatalogEntryMetadata struct {
-	// Boolean value that describes whether the service is compatible with the Resource Controller.
+	// Boolean value that describes whether the service is compatible with the Resource Controller. Only settable for
+	// deployments, propogated upward.
 	RcCompatible *bool `json:"rc_compatible,omitempty"`
 
 	// Service-related metadata.
@@ -2203,7 +2251,8 @@ type CatalogEntryMetadata struct {
 	// The original name of the object.
 	OriginalName *string `json:"original_name,omitempty"`
 
-	// Optional version of the object.
+	// Optional version of the object. Only valid for templates.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	Version *string `json:"version,omitempty"`
 
 	// Additional information.
@@ -2301,25 +2350,28 @@ type CatalogEntryMetadataDeployment struct {
 	// Pointer to the location resource in the catalog.
 	LocationURL *string `json:"location_url,omitempty"`
 
-	// Original service location.
+	// The original region in which this deployment existed.
 	OriginalLocation *string `json:"original_location,omitempty"`
 
 	// A CRN that describes the deployment. crn:v1:[cname]:[ctype]:[location]:[scope]::[resource-type]:[resource].
 	TargetCRN *string `json:"target_crn,omitempty"`
 
-	// CRN for the service.
+	// Cloud resource name for this deployment.
 	ServiceCRN *string `json:"service_crn,omitempty"`
 
-	// ID for MCCP.
+	// ID of the multi cloud connectivity platform.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	MccpID *string `json:"mccp_id,omitempty"`
 
 	// The broker associated with a catalog entry.
 	Broker *Broker `json:"broker,omitempty"`
 
 	// This deployment not only supports RC but is ready to migrate and support the RC broker for a location.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	SupportsRcMigration *bool `json:"supports_rc_migration,omitempty"`
 
-	// network to use during deployment.
+	// When using the service_endpoint_supported tag for a deployment, this optional field can be set on a deployment to
+	// denote the supported service endpoint type (cse_private, public, or cse_private+public).
 	TargetNetwork *string `json:"target_network,omitempty"`
 }
 
@@ -2377,7 +2429,7 @@ func UnmarshalCatalogEntryMetadataDeployment(m map[string]json.RawMessage, resul
 
 // CatalogEntryMetadataPricing : Pricing-related information.
 type CatalogEntryMetadataPricing struct {
-	// Type of plan. Valid values are `free`, `trial`, `paygo`, `bluemix-subscription`, and `ibm-subscription`.
+	// Type of plan. Valid values are `free`, `trial`, `paygo`, `paid`, `subscription`.
 	Type *string `json:"type,omitempty"`
 
 	// Defines where the pricing originates.
@@ -2392,6 +2444,10 @@ type CatalogEntryMetadataPricing struct {
 	// The deployment location this pricing is from. Only set if object kind is deployment.
 	DeploymentLocation *string `json:"deployment_location,omitempty"`
 
+	// If price is for a deployment object then the region in the pricing catalog of the deployment object will be here. To
+	// be valid, this value must be contained within deployment_regions.
+	DeploymentRegion *string `json:"deployment_region,omitempty"`
+
 	// Is the location price not available. Only set in api /pricing/deployment and only set if true. This means for the
 	// given deployment object there was no pricing set in pricing catalog.
 	DeploymentLocationNoPriceAvailable *bool `json:"deployment_location_no_price_available,omitempty"`
@@ -2401,6 +2457,22 @@ type CatalogEntryMetadataPricing struct {
 
 	// List of regions where region pricing is available. Only set on global deployments if enabled by owner.
 	DeploymentRegions []string `json:"deployment_regions,omitempty"`
+
+	// The start date-time indicating when this pricing plan takes effect.
+	EffectiveFrom *strfmt.DateTime `json:"effective_from,omitempty"`
+
+	// The end date-time indicating when this pricing plan is no longer in effect.
+	EffectiveUntil *strfmt.DateTime `json:"effective_until,omitempty"`
+
+	// Boolean value indicating whether or not this pricing plan requires login to get pricing data.
+	RequireLogin *bool `json:"require_login,omitempty"`
+
+	// URL to the entry for this plan on the pricing catalog.
+	PricingCatalogURL *string `json:"pricing_catalog_url,omitempty"`
+
+	// Tags describing how this plan was purchased (catalog [default], seller, private offer). Currently only settable on
+	// MCSP subscription plans.
+	SalesAvenue []string `json:"sales_avenue,omitempty"`
 }
 
 // UnmarshalCatalogEntryMetadataPricing unmarshals an instance of CatalogEntryMetadataPricing from the specified map of raw messages.
@@ -2431,6 +2503,11 @@ func UnmarshalCatalogEntryMetadataPricing(m map[string]json.RawMessage, result i
 		err = core.SDKErrorf(err, "", "deployment_location-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "deployment_region", &obj.DeploymentRegion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_region-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "deployment_location_no_price_available", &obj.DeploymentLocationNoPriceAvailable)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deployment_location_no_price_available-error", common.GetComponentInfo())
@@ -2446,6 +2523,31 @@ func UnmarshalCatalogEntryMetadataPricing(m map[string]json.RawMessage, result i
 		err = core.SDKErrorf(err, "", "deployment_regions-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "effective_from", &obj.EffectiveFrom)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_from-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "effective_until", &obj.EffectiveUntil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_until-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "require_login", &obj.RequireLogin)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "require_login-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pricing_catalog_url", &obj.PricingCatalogURL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_catalog_url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "sales_avenue", &obj.SalesAvenue)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "sales_avenue-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -2456,8 +2558,8 @@ type CreateCatalogEntryOptions struct {
 	// OverviewUI for a user-readable name.
 	Name *string `json:"name" validate:"required"`
 
-	// The type of catalog entry, **service**, **template**, **dashboard**, which determines the type and shape of the
-	// object.
+	// The type of catalog entry which determines the type and shape of the object. Valid GC types are buildpack, cname,
+	// dataset, geography, iaas, platform_service, runtime, service, template, ui-dashboard.
 	Kind *string `json:"kind" validate:"required"`
 
 	// Overview is nested in the top level. The key value pair is `[_language_]overview_ui`.
@@ -2470,7 +2572,8 @@ type CreateCatalogEntryOptions struct {
 	// all plans are disabled.
 	Disabled *bool `json:"disabled" validate:"required"`
 
-	// A list of tags. For example, IBM, 3rd Party, Beta, GA, and Single Tenant.
+	// A searchable list of tags. For example, IBM, 3rd Party, Beta, GA, and Single Tenant. Valid values found at
+	// https://globalcatalog.test.cloud.ibm.com/search.
 	Tags []string `json:"tags" validate:"required"`
 
 	// Information related to the provider associated with a catalog entry.
@@ -2504,8 +2607,8 @@ type CreateCatalogEntryOptions struct {
 }
 
 // Constants associated with the CreateCatalogEntryOptions.Kind property.
-// The type of catalog entry, **service**, **template**, **dashboard**, which determines the type and shape of the
-// object.
+// The type of catalog entry which determines the type and shape of the object. Valid GC types are buildpack, cname,
+// dataset, geography, iaas, platform_service, runtime, service, template, ui-dashboard.
 const (
 	CreateCatalogEntryOptionsKindDashboardConst = "dashboard"
 	CreateCatalogEntryOptionsKindServiceConst   = "service"
@@ -2748,25 +2851,28 @@ type DeploymentBase struct {
 	// URL of deployment.
 	LocationURL *string `json:"location_url,omitempty"`
 
-	// Original service location.
+	// The original region in which this deployment existed.
 	OriginalLocation *string `json:"original_location,omitempty"`
 
 	// A CRN that describes the deployment. crn:v1:[cname]:[ctype]:[location]:[scope]::[resource-type]:[resource].
 	TargetCRN *string `json:"target_crn,omitempty"`
 
-	// CRN for the service.
+	// Cloud resource name for this deployment.
 	ServiceCRN *string `json:"service_crn,omitempty"`
 
-	// ID for MCCP.
+	// ID of the multi cloud connectivity platform.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	MccpID *string `json:"mccp_id,omitempty"`
 
 	// The broker associated with a catalog entry.
 	Broker *Broker `json:"broker,omitempty"`
 
 	// This deployment not only supports RC but is ready to migrate and support the RC broker for a location.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	SupportsRcMigration *bool `json:"supports_rc_migration,omitempty"`
 
-	// network to use during deployment.
+	// When using the service_endpoint_supported tag for a deployment, this optional field can be set on a deployment to
+	// denote the supported service endpoint type (cse_private, public, or cse_private+public).
 	TargetNetwork *string `json:"target_network,omitempty"`
 }
 
@@ -3692,44 +3798,47 @@ func UnmarshalMessage(m map[string]json.RawMessage, result interface{}) (err err
 
 // Metrics : Plan-specific cost metrics information.
 type Metrics struct {
-	// The part reference.
+	// The reference guid for the part.
 	PartRef *string `json:"part_ref,omitempty"`
 
 	// The metric ID or part number.
 	MetricID *string `json:"metric_id,omitempty"`
 
-	// The tier model.
+	// The pricing tier type used to calculate the marginal unit price. Follows simple, graduated or block tier styles.
 	TierModel *string `json:"tier_model,omitempty"`
 
-	// The unit to charge.
+	// The unit to be charged under this metric.
 	ChargeUnit *string `json:"charge_unit,omitempty"`
 
-	// The charge unit name.
+	// The name associated with a charge unit to provide context.
 	ChargeUnitName *string `json:"charge_unit_name,omitempty"`
 
-	// The charge unit quantity.
+	// The quantity associated with the charge unit to determine price change intervals.
 	ChargeUnitQuantity *int64 `json:"charge_unit_quantity,omitempty"`
 
-	// Display name of the resource.
+	// The display name of the resource tied to the charge unit of this metric.
 	ResourceDisplayName *string `json:"resource_display_name,omitempty"`
 
-	// Display name of the charge unit.
+	// Display name of the charge unit to be rendered human readable by the UI.
 	ChargeUnitDisplayName *string `json:"charge_unit_display_name,omitempty"`
 
-	// Usage limit for the metric.
+	// Upper bound for the usage under the parent metric.
 	UsageCapQty *int64 `json:"usage_cap_qty,omitempty"`
 
-	// Display capacity.
+	// The display capacity for the UI.
 	DisplayCap *int64 `json:"display_cap,omitempty"`
 
-	// Effective from time.
+	// The end date-time indicating when this metric is no longer in effect.
 	EffectiveFrom *strfmt.DateTime `json:"effective_from,omitempty"`
 
-	// Effective until time.
+	// The start date-time indicating when this metric takes effect.
 	EffectiveUntil *strfmt.DateTime `json:"effective_until,omitempty"`
 
 	// The pricing per metric by country and currency.
 	Amounts []Amount `json:"amounts,omitempty"`
+
+	// A property-bag like extension to metric metadata.
+	AdditionalProperties map[string]interface{} `json:"additional_properties,omitempty"`
 }
 
 // UnmarshalMetrics unmarshals an instance of Metrics from the specified map of raw messages.
@@ -3800,13 +3909,19 @@ func UnmarshalMetrics(m map[string]json.RawMessage, result interface{}) (err err
 		err = core.SDKErrorf(err, "", "amounts-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "additional_properties", &obj.AdditionalProperties)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "additional_properties-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
 
 // ObjectMetadataSet : Model used to describe metadata object that can be set.
 type ObjectMetadataSet struct {
-	// Boolean value that describes whether the service is compatible with the Resource Controller.
+	// Boolean value that describes whether the service is compatible with the Resource Controller. Only settable for
+	// deployments, propogated upward.
 	RcCompatible *bool `json:"rc_compatible,omitempty"`
 
 	// Service-related metadata.
@@ -3836,7 +3951,8 @@ type ObjectMetadataSet struct {
 	// The original name of the object.
 	OriginalName *string `json:"original_name,omitempty"`
 
-	// Optional version of the object.
+	// Optional version of the object. Only valid for templates.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	Version *string `json:"version,omitempty"`
 
 	// Additional information.
@@ -3984,32 +4100,45 @@ func UnmarshalOverview(m map[string]json.RawMessage, result interface{}) (err er
 
 // PlanMetaData : Plan-related metadata.
 type PlanMetaData struct {
-	// Boolean value that describes whether the service can be bound to an application.
+	// Boolean value that describes whether the service can be bound to an application. If true then this will create and
+	// use resource keys.
 	Bindable *bool `json:"bindable,omitempty"`
 
-	// Boolean value that describes whether the service can be reserved.
+	// Boolean value that describes whether the service can be reserved for pricing subscriptions.
 	Reservable *bool `json:"reservable,omitempty"`
 
-	// Boolean value that describes whether the service can be used internally.
+	// Boolean value that describes whether the service can be used on IBM accounts. If false this cannot be onboarded by
+	// an IBM account.
 	AllowInternalUsers *bool `json:"allow_internal_users,omitempty"`
 
-	// Boolean value that describes whether the service can be provisioned asynchronously.
+	// Boolean value that describes whether the service supports asynchronous provisioning. Now handled by a 202 response
+	// indicating support from the broker on provisioning.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	AsyncProvisioningSupported *bool `json:"async_provisioning_supported,omitempty"`
 
-	// Boolean value that describes whether the service can be unprovisioned asynchronously.
+	// Boolean value that describes whether the service supports asynchronous unprovisioning. Now handled by a 202 response
+	// indicating support from the broker on unprovisioning.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	AsyncUnprovisioningSupported *bool `json:"async_unprovisioning_supported,omitempty"`
 
-	// Test check interval.
+	// How the subscription is provisioned (managed cloud service provider (mcsp), IBM_cloud, legacy).
+	ProvisionType *string `json:"provision_type,omitempty"`
+
+	// A unit of time that determines the time in between uptime checks to be performed by the Estado testing service.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	TestCheckInterval *int64 `json:"test_check_interval,omitempty"`
 
-	// Single scope instance.
+	// String denoting if a single instance is shared among a group of users. E.g. org.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	SingleScopeInstance *string `json:"single_scope_instance,omitempty"`
 
-	// Boolean value that describes whether the service check is enabled.
+	// Boolean value that describes whether the Estado testing service will perform uptime tests for this service.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	ServiceCheckEnabled *bool `json:"service_check_enabled,omitempty"`
 
 	// If the field is imported from Cloud Foundry, the Cloud Foundry region's GUID. This is a required field. For example,
 	// `us-south=123`.
+	// Deprecated: this field is deprecated and may be removed in a future release.
 	CfGUID map[string]string `json:"cf_guid,omitempty"`
 }
 
@@ -4041,6 +4170,11 @@ func UnmarshalPlanMetaData(m map[string]json.RawMessage, result interface{}) (er
 		err = core.SDKErrorf(err, "", "async_unprovisioning_supported-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "provision_type", &obj.ProvisionType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "provision_type-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "test_check_interval", &obj.TestCheckInterval)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "test_check_interval-error", common.GetComponentInfo())
@@ -4067,7 +4201,7 @@ func UnmarshalPlanMetaData(m map[string]json.RawMessage, result interface{}) (er
 
 // Price : Pricing-related information.
 type Price struct {
-	// Pricing tier.
+	// The quantity of _metric_ associated with the current price point.
 	QuantityTier *int64 `json:"quantity_tier,omitempty"`
 
 	// Price in the selected currency.
@@ -4099,11 +4233,15 @@ type PricingGet struct {
 	// The deployment location this pricing is from. Only set if object kind is deployment.
 	DeploymentLocation *string `json:"deployment_location,omitempty"`
 
+	// If price is for a deployment object then the region in the pricing catalog of the deployment object will be here. To
+	// be valid, this value must be contained within deployment_regions.
+	DeploymentRegion *string `json:"deployment_region,omitempty"`
+
 	// Is the location price not available. Only set in api /pricing/deployment and only set if true. This means for the
 	// given deployment object there was no pricing set in pricing catalog.
 	DeploymentLocationNoPriceAvailable *bool `json:"deployment_location_no_price_available,omitempty"`
 
-	// Type of plan. Valid values are `free`, `trial`, `paygo`, `bluemix-subscription`, and `ibm-subscription`.
+	// Type of plan. Valid values are `free`, `trial`, `paygo`, `paid`, `subscription`.
 	Type *string `json:"type,omitempty"`
 
 	// Defines where the pricing originates.
@@ -4117,6 +4255,22 @@ type PricingGet struct {
 
 	// List of regions where region pricing is available. Only set on global deployments if enabled by owner.
 	DeploymentRegions []string `json:"deployment_regions,omitempty"`
+
+	// The start date-time indicating when this pricing plan takes effect.
+	EffectiveFrom *strfmt.DateTime `json:"effective_from,omitempty"`
+
+	// The end date-time indicating when this pricing plan is no longer in effect.
+	EffectiveUntil *strfmt.DateTime `json:"effective_until,omitempty"`
+
+	// Boolean value indicating whether or not this pricing plan requires login to get pricing data.
+	RequireLogin *bool `json:"require_login,omitempty"`
+
+	// URL to the entry for this plan on the pricing catalog.
+	PricingCatalogURL *string `json:"pricing_catalog_url,omitempty"`
+
+	// Tags describing how this plan was purchased (catalog [default], seller, private offer). Currently only settable on
+	// MCSP subscription plans.
+	SalesAvenue []string `json:"sales_avenue,omitempty"`
 }
 
 // UnmarshalPricingGet unmarshals an instance of PricingGet from the specified map of raw messages.
@@ -4130,6 +4284,11 @@ func UnmarshalPricingGet(m map[string]json.RawMessage, result interface{}) (err 
 	err = core.UnmarshalPrimitive(m, "deployment_location", &obj.DeploymentLocation)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deployment_location-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "deployment_region", &obj.DeploymentRegion)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "deployment_region-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "deployment_location_no_price_available", &obj.DeploymentLocationNoPriceAvailable)
@@ -4160,6 +4319,31 @@ func UnmarshalPricingGet(m map[string]json.RawMessage, result interface{}) (err 
 	err = core.UnmarshalPrimitive(m, "deployment_regions", &obj.DeploymentRegions)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "deployment_regions-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "effective_from", &obj.EffectiveFrom)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_from-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "effective_until", &obj.EffectiveUntil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "effective_until-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "require_login", &obj.RequireLogin)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "require_login-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "pricing_catalog_url", &obj.PricingCatalogURL)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "pricing_catalog_url-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "sales_avenue", &obj.SalesAvenue)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "sales_avenue-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -4250,10 +4434,10 @@ func UnmarshalPricingSearchResult(m map[string]json.RawMessage, result interface
 
 // PricingSet : Pricing-related information.
 type PricingSet struct {
-	// Type of plan. Valid values are `free`, `trial`, `paygo`, `bluemix-subscription`, and `ibm-subscription`.
+	// Type of plan. Valid values are `free`, `trial`, `paygo`, `paid`, `subscription`.
 	Type *string `json:"type,omitempty"`
 
-	// Defines where the pricing originates.
+	// Defines where the pricing originates, either the pricing catalog or the global catalog.
 	Origin *string `json:"origin,omitempty"`
 
 	// Plan-specific starting price information.
@@ -4585,7 +4769,7 @@ type TemplateMetaData struct {
 	// Cloud Foundry instance memory value.
 	DefaultMemory *int64 `json:"default_memory,omitempty"`
 
-	// Start Command.
+	// Command used to start a service.
 	StartCmd *string `json:"start_cmd,omitempty"`
 
 	// Location of your applications source files.
@@ -4725,7 +4909,7 @@ type UIMetaData struct {
 	// Date and time the service will no longer be available.
 	EndOfServiceTime *strfmt.DateTime `json:"end_of_service_time,omitempty"`
 
-	// Denotes visibility.
+	// Denotes visibility. Can be set on a service/plan/deployment only by an account with bluemix admin privileges.
 	Hidden *bool `json:"hidden,omitempty"`
 
 	// Denotes lite metering visibility.
@@ -4877,10 +5061,10 @@ type Urls struct {
 	// URL to the terms of use for your service.
 	TermsURL *string `json:"terms_url,omitempty"`
 
-	// URL to the custom create page for your serivce.
+	// URL to the custom create page for your service.
 	CustomCreatePageURL *string `json:"custom_create_page_url,omitempty"`
 
-	// URL to the catalog details page for your serivce.
+	// URL to the catalog details page for your service.
 	CatalogDetailsURL *string `json:"catalog_details_url,omitempty"`
 
 	// URL for deprecation documentation.
@@ -4972,8 +5156,8 @@ type UpdateCatalogEntryOptions struct {
 	// OverviewUI for a user-readable name.
 	Name *string `json:"name" validate:"required"`
 
-	// The type of catalog entry, **service**, **template**, **dashboard**, which determines the type and shape of the
-	// object.
+	// The type of catalog entry which determines the type and shape of the object. Valid GC types are buildpack, cname,
+	// dataset, geography, iaas, platform_service, runtime, service, template, ui-dashboard.
 	Kind *string `json:"kind" validate:"required"`
 
 	// Overview is nested in the top level. The key value pair is `[_language_]overview_ui`.
@@ -4986,7 +5170,8 @@ type UpdateCatalogEntryOptions struct {
 	// all plans are disabled.
 	Disabled *bool `json:"disabled" validate:"required"`
 
-	// A list of tags. For example, IBM, 3rd Party, Beta, GA, and Single Tenant.
+	// A searchable list of tags. For example, IBM, 3rd Party, Beta, GA, and Single Tenant. Valid values found at
+	// https://globalcatalog.test.cloud.ibm.com/search.
 	Tags []string `json:"tags" validate:"required"`
 
 	// Information related to the provider associated with a catalog entry.
@@ -5023,8 +5208,8 @@ type UpdateCatalogEntryOptions struct {
 }
 
 // Constants associated with the UpdateCatalogEntryOptions.Kind property.
-// The type of catalog entry, **service**, **template**, **dashboard**, which determines the type and shape of the
-// object.
+// The type of catalog entry which determines the type and shape of the object. Valid GC types are buildpack, cname,
+// dataset, geography, iaas, platform_service, runtime, service, template, ui-dashboard.
 const (
 	UpdateCatalogEntryOptionsKindDashboardConst = "dashboard"
 	UpdateCatalogEntryOptionsKindServiceConst   = "service"
@@ -5146,7 +5331,13 @@ type UpdateVisibilityOptions struct {
 	// The object's unique ID.
 	ID *string `json:"id" validate:"required,ne="`
 
-	// Allows the visibility to be extenable.
+	// This controls the overall visibility. It is an enum of *public*, *nonibm_only*, *ibm_only*, and *private*. public
+	// means it is visible to all. nonibm_only means it is visible to all except IBM unless their account is explicitly
+	// included, ibm_only means it is visible to all IBM unless their account is explicitly excluded. private means it is
+	// visible only to the included accounts.
+	Restrictions *string `json:"restrictions,omitempty"`
+
+	// Allows the visibility to be extendable.
 	Extendable *bool `json:"extendable,omitempty"`
 
 	// Visibility details related to a catalog entry.
@@ -5174,6 +5365,12 @@ func (*GlobalCatalogV1) NewUpdateVisibilityOptions(id string) *UpdateVisibilityO
 // SetID : Allow user to set ID
 func (_options *UpdateVisibilityOptions) SetID(id string) *UpdateVisibilityOptions {
 	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetRestrictions : Allow user to set Restrictions
+func (_options *UpdateVisibilityOptions) SetRestrictions(restrictions string) *UpdateVisibilityOptions {
+	_options.Restrictions = core.StringPtr(restrictions)
 	return _options
 }
 
@@ -5275,15 +5472,16 @@ func (options *UploadArtifactOptions) SetHeaders(param map[string]string) *Uploa
 
 // Visibility : Information related to the visibility of a catalog entry.
 type Visibility struct {
-	// This controls the overall visibility. It is an enum of *public*, *ibm_only*, and *private*. public means it is
-	// visible to all. ibm_only means it is visible to all IBM unless their account is explicitly excluded. private means
-	// it is visible only to the included accounts.
+	// This controls the overall visibility. It is an enum of *public*, *nonibm_only*, *ibm_only*, and *private*. public
+	// means it is visible to all. nonibm_only means it is visible to all except IBM unless their account is explicitly
+	// included, ibm_only means it is visible to all IBM unless their account is explicitly excluded. private means it is
+	// visible only to the included accounts.
 	Restrictions *string `json:"restrictions,omitempty"`
 
 	// IAM Scope-related information associated with a catalog entry.
 	Owner *string `json:"owner,omitempty"`
 
-	// Allows the visibility to be extenable.
+	// Allows the visibility to be extendable.
 	Extendable *bool `json:"extendable,omitempty"`
 
 	// Visibility details related to a catalog entry.
@@ -5293,7 +5491,7 @@ type Visibility struct {
 	Exclude *VisibilityDetail `json:"exclude,omitempty"`
 
 	// Determines whether the owning account has full control over the visibility of the entry such as adding non-IBM
-	// accounts to the whitelist and making entries `private`, `ibm_only` or `public`.
+	// accounts to the whitelist and making entries `private`, `nonibm_only`, `ibm_only` or `public`.
 	Approved *bool `json:"approved,omitempty"`
 }
 

@@ -13,7 +13,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -138,6 +138,10 @@ func (address *PublicIPAddress) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (address *PublicIPAddress) Owner() *genruntime.ResourceReference {
+	if address.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(address.Spec)
 	return address.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -154,7 +158,7 @@ func (address *PublicIPAddress) SetStatus(status genruntime.ConvertibleStatus) e
 	var st PublicIPAddress_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	address.Status = st
@@ -171,7 +175,7 @@ func (address *PublicIPAddress) AssignProperties_From_PublicIPAddress(source *v2
 	var spec PublicIPAddress_Spec
 	err := spec.AssignProperties_From_PublicIPAddress_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddress_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddress_Spec() to populate field Spec")
 	}
 	address.Spec = spec
 
@@ -179,7 +183,7 @@ func (address *PublicIPAddress) AssignProperties_From_PublicIPAddress(source *v2
 	var status PublicIPAddress_STATUS
 	err = status.AssignProperties_From_PublicIPAddress_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddress_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddress_STATUS() to populate field Status")
 	}
 	address.Status = status
 
@@ -188,7 +192,7 @@ func (address *PublicIPAddress) AssignProperties_From_PublicIPAddress(source *v2
 	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress); ok {
 		err := augmentedAddress.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -206,7 +210,7 @@ func (address *PublicIPAddress) AssignProperties_To_PublicIPAddress(destination 
 	var spec v20240301s.PublicIPAddress_Spec
 	err := address.Spec.AssignProperties_To_PublicIPAddress_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddress_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddress_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -214,7 +218,7 @@ func (address *PublicIPAddress) AssignProperties_To_PublicIPAddress(destination 
 	var status v20240301s.PublicIPAddress_STATUS
 	err = address.Status.AssignProperties_To_PublicIPAddress_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddress_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddress_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -223,7 +227,7 @@ func (address *PublicIPAddress) AssignProperties_To_PublicIPAddress(destination 
 	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress); ok {
 		err := augmentedAddress.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -302,13 +306,13 @@ func (address *PublicIPAddress_Spec) ConvertSpecFrom(source genruntime.Convertib
 	src = &v20240301s.PublicIPAddress_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = address.AssignProperties_From_PublicIPAddress_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -326,13 +330,13 @@ func (address *PublicIPAddress_Spec) ConvertSpecTo(destination genruntime.Conver
 	dst = &v20240301s.PublicIPAddress_Spec{}
 	err := address.AssignProperties_To_PublicIPAddress_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -351,7 +355,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var ddosSetting DdosSettings
 		err := ddosSetting.AssignProperties_From_DdosSettings(source.DdosSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DdosSettings() to populate field DdosSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_DdosSettings() to populate field DdosSettings")
 		}
 		address.DdosSettings = &ddosSetting
 	} else {
@@ -370,7 +374,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var dnsSetting PublicIPAddressDnsSettings
 		err := dnsSetting.AssignProperties_From_PublicIPAddressDnsSettings(source.DnsSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressDnsSettings() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressDnsSettings() to populate field DnsSettings")
 		}
 		address.DnsSettings = &dnsSetting
 	} else {
@@ -382,12 +386,12 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var extendedLocationStash v20220701s.ExtendedLocation
 		err := extendedLocationStash.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocationStash from ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocationStash from ExtendedLocation")
 		}
 		var extendedLocation ExtendedLocation
 		err = extendedLocation.AssignProperties_From_ExtendedLocation(&extendedLocationStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation from ExtendedLocationStash")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation from ExtendedLocationStash")
 		}
 		address.ExtendedLocation = &extendedLocation
 	} else {
@@ -409,12 +413,12 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 			var ipTagStash v20220701s.IpTag
 			err := ipTagStash.AssignProperties_From_IpTag(&ipTagItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IpTag() to populate field IpTagStash from IpTags")
+				return eris.Wrap(err, "calling AssignProperties_From_IpTag() to populate field IpTagStash from IpTags")
 			}
 			var ipTag IpTag
 			err = ipTag.AssignProperties_From_IpTag(&ipTagStash)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IpTag() to populate field IpTags from IpTagStash")
+				return eris.Wrap(err, "calling AssignProperties_From_IpTag() to populate field IpTags from IpTagStash")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -428,7 +432,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var linkedPublicIPAddress PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
 		err := linkedPublicIPAddress.AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(source.LinkedPublicIPAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field LinkedPublicIPAddress")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field LinkedPublicIPAddress")
 		}
 		address.LinkedPublicIPAddress = &linkedPublicIPAddress
 	} else {
@@ -443,7 +447,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var natGateway NatGatewaySpec_PublicIPAddress_SubResourceEmbedded
 		err := natGateway.AssignProperties_From_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded(source.NatGateway)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
+			return eris.Wrap(err, "calling AssignProperties_From_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
 		}
 		address.NatGateway = &natGateway
 	} else {
@@ -455,7 +459,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var operatorSpec PublicIPAddressOperatorSpec
 		err := operatorSpec.AssignProperties_From_PublicIPAddressOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressOperatorSpec() to populate field OperatorSpec")
 		}
 		address.OperatorSpec = &operatorSpec
 	} else {
@@ -484,12 +488,12 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var subResourceStash v20220701s.SubResource
 		err := subResourceStash.AssignProperties_From_SubResource(source.PublicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from PublicIPPrefix")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from PublicIPPrefix")
 		}
 		var publicIPPrefix SubResource
 		err = publicIPPrefix.AssignProperties_From_SubResource(&subResourceStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPPrefix from SubResourceStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field PublicIPPrefix from SubResourceStash")
 		}
 		address.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -501,7 +505,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var servicePublicIPAddress PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
 		err := servicePublicIPAddress.AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(source.ServicePublicIPAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field ServicePublicIPAddress")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field ServicePublicIPAddress")
 		}
 		address.ServicePublicIPAddress = &servicePublicIPAddress
 	} else {
@@ -513,7 +517,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 		var sku PublicIPAddressSku
 		err := sku.AssignProperties_From_PublicIPAddressSku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku() to populate field Sku")
 		}
 		address.Sku = &sku
 	} else {
@@ -538,7 +542,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_From_PublicIPAddress_Spec(
 	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress_Spec); ok {
 		err := augmentedAddress.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -559,7 +563,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var ddosSetting v20240301s.DdosSettings
 		err := address.DdosSettings.AssignProperties_To_DdosSettings(&ddosSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DdosSettings() to populate field DdosSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_DdosSettings() to populate field DdosSettings")
 		}
 		destination.DdosSettings = &ddosSetting
 	} else {
@@ -571,7 +575,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var deleteOption string
 		err := propertyBag.Pull("DeleteOption", &deleteOption)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DeleteOption' from propertyBag")
+			return eris.Wrap(err, "pulling 'DeleteOption' from propertyBag")
 		}
 
 		destination.DeleteOption = &deleteOption
@@ -584,7 +588,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var dnsSetting v20240301s.PublicIPAddressDnsSettings
 		err := address.DnsSettings.AssignProperties_To_PublicIPAddressDnsSettings(&dnsSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressDnsSettings() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressDnsSettings() to populate field DnsSettings")
 		}
 		destination.DnsSettings = &dnsSetting
 	} else {
@@ -596,12 +600,12 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var extendedLocationStash v20220701s.ExtendedLocation
 		err := address.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocationStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocationStash from ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocationStash from ExtendedLocation")
 		}
 		var extendedLocation v20240301s.ExtendedLocation
 		err = extendedLocationStash.AssignProperties_To_ExtendedLocation(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation from ExtendedLocationStash")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation from ExtendedLocationStash")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -623,12 +627,12 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 			var ipTagStash v20220701s.IpTag
 			err := ipTagItem.AssignProperties_To_IpTag(&ipTagStash)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IpTag() to populate field IpTagStash from IpTags")
+				return eris.Wrap(err, "calling AssignProperties_To_IpTag() to populate field IpTagStash from IpTags")
 			}
 			var ipTag v20240301s.IpTag
 			err = ipTagStash.AssignProperties_To_IpTag(&ipTag)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IpTag() to populate field IpTags from IpTagStash")
+				return eris.Wrap(err, "calling AssignProperties_To_IpTag() to populate field IpTags from IpTagStash")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -642,7 +646,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var linkedPublicIPAddress v20240301s.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
 		err := address.LinkedPublicIPAddress.AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(&linkedPublicIPAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field LinkedPublicIPAddress")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field LinkedPublicIPAddress")
 		}
 		destination.LinkedPublicIPAddress = &linkedPublicIPAddress
 	} else {
@@ -657,7 +661,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var natGateway v20240301s.NatGatewaySpec_PublicIPAddress_SubResourceEmbedded
 		err := address.NatGateway.AssignProperties_To_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded(&natGateway)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
+			return eris.Wrap(err, "calling AssignProperties_To_NatGatewaySpec_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
 		}
 		destination.NatGateway = &natGateway
 	} else {
@@ -669,7 +673,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var operatorSpec v20240301s.PublicIPAddressOperatorSpec
 		err := address.OperatorSpec.AssignProperties_To_PublicIPAddressOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -698,12 +702,12 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var subResourceStash v20220701s.SubResource
 		err := address.PublicIPPrefix.AssignProperties_To_SubResource(&subResourceStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from PublicIPPrefix")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from PublicIPPrefix")
 		}
 		var publicIPPrefix v20240301s.SubResource
 		err = subResourceStash.AssignProperties_To_SubResource(&publicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPPrefix from SubResourceStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field PublicIPPrefix from SubResourceStash")
 		}
 		destination.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -715,7 +719,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var servicePublicIPAddress v20240301s.PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded
 		err := address.ServicePublicIPAddress.AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded(&servicePublicIPAddress)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field ServicePublicIPAddress")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded() to populate field ServicePublicIPAddress")
 		}
 		destination.ServicePublicIPAddress = &servicePublicIPAddress
 	} else {
@@ -727,7 +731,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 		var sku v20240301s.PublicIPAddressSku
 		err := address.Sku.AssignProperties_To_PublicIPAddressSku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -752,7 +756,7 @@ func (address *PublicIPAddress_Spec) AssignProperties_To_PublicIPAddress_Spec(de
 	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress_Spec); ok {
 		err := augmentedAddress.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -803,13 +807,13 @@ func (address *PublicIPAddress_STATUS) ConvertStatusFrom(source genruntime.Conve
 	src = &v20240301s.PublicIPAddress_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = address.AssignProperties_From_PublicIPAddress_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -827,13 +831,13 @@ func (address *PublicIPAddress_STATUS) ConvertStatusTo(destination genruntime.Co
 	dst = &v20240301s.PublicIPAddress_STATUS{}
 	err := address.AssignProperties_To_PublicIPAddress_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -852,7 +856,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 		var ddosSetting DdosSettings_STATUS
 		err := ddosSetting.AssignProperties_From_DdosSettings_STATUS(source.DdosSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DdosSettings_STATUS() to populate field DdosSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_DdosSettings_STATUS() to populate field DdosSettings")
 		}
 		address.DdosSettings = &ddosSetting
 	} else {
@@ -871,7 +875,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 		var dnsSetting PublicIPAddressDnsSettings_STATUS
 		err := dnsSetting.AssignProperties_From_PublicIPAddressDnsSettings_STATUS(source.DnsSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressDnsSettings_STATUS() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressDnsSettings_STATUS() to populate field DnsSettings")
 		}
 		address.DnsSettings = &dnsSetting
 	} else {
@@ -886,12 +890,12 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 		var extendedLocationSTATUSStash v20220701s.ExtendedLocation_STATUS
 		err := extendedLocationSTATUSStash.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation_STATUSStash from ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation_STATUSStash from ExtendedLocation")
 		}
 		var extendedLocation ExtendedLocation_STATUS
 		err = extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(&extendedLocationSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation from ExtendedLocation_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation from ExtendedLocation_STATUSStash")
 		}
 		address.ExtendedLocation = &extendedLocation
 	} else {
@@ -912,7 +916,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 		var ipConfiguration IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded
 		err := ipConfiguration.AssignProperties_From_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded(source.IpConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field IpConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field IpConfiguration")
 		}
 		address.IpConfiguration = &ipConfiguration
 	} else {
@@ -928,12 +932,12 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 			var ipTagSTATUSStash v20220701s.IpTag_STATUS
 			err := ipTagSTATUSStash.AssignProperties_From_IpTag_STATUS(&ipTagItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IpTag_STATUS() to populate field IpTag_STATUSStash from IpTags")
+				return eris.Wrap(err, "calling AssignProperties_From_IpTag_STATUS() to populate field IpTag_STATUSStash from IpTags")
 			}
 			var ipTag IpTag_STATUS
 			err = ipTag.AssignProperties_From_IpTag_STATUS(&ipTagSTATUSStash)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IpTag_STATUS() to populate field IpTags from IpTag_STATUSStash")
+				return eris.Wrap(err, "calling AssignProperties_From_IpTag_STATUS() to populate field IpTags from IpTag_STATUSStash")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -956,7 +960,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 		var natGateway NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded
 		err := natGateway.AssignProperties_From_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded(source.NatGateway)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
+			return eris.Wrap(err, "calling AssignProperties_From_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
 		}
 		address.NatGateway = &natGateway
 	} else {
@@ -977,17 +981,17 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 		var subResourceSTATUSStash v20240101s.SubResource_STATUS
 		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.PublicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIPPrefix")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIPPrefix")
 		}
 		var subResourceSTATUSStashLocal v20220701s.SubResource_STATUS
 		err = subResourceSTATUSStashLocal.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash")
 		}
 		var publicIPPrefix SubResource_STATUS
 		err = publicIPPrefix.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStashLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIPPrefix from SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field PublicIPPrefix from SubResource_STATUSStash")
 		}
 		address.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -1002,7 +1006,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 		var sku PublicIPAddressSku_STATUS
 		err := sku.AssignProperties_From_PublicIPAddressSku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_PublicIPAddressSku_STATUS() to populate field Sku")
 		}
 		address.Sku = &sku
 	} else {
@@ -1030,7 +1034,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_From_PublicIPAddress_STA
 	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress_STATUS); ok {
 		err := augmentedAddress.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1051,7 +1055,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 		var ddosSetting v20240301s.DdosSettings_STATUS
 		err := address.DdosSettings.AssignProperties_To_DdosSettings_STATUS(&ddosSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DdosSettings_STATUS() to populate field DdosSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_DdosSettings_STATUS() to populate field DdosSettings")
 		}
 		destination.DdosSettings = &ddosSetting
 	} else {
@@ -1063,7 +1067,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 		var deleteOption string
 		err := propertyBag.Pull("DeleteOption", &deleteOption)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DeleteOption' from propertyBag")
+			return eris.Wrap(err, "pulling 'DeleteOption' from propertyBag")
 		}
 
 		destination.DeleteOption = &deleteOption
@@ -1076,7 +1080,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 		var dnsSetting v20240301s.PublicIPAddressDnsSettings_STATUS
 		err := address.DnsSettings.AssignProperties_To_PublicIPAddressDnsSettings_STATUS(&dnsSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressDnsSettings_STATUS() to populate field DnsSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressDnsSettings_STATUS() to populate field DnsSettings")
 		}
 		destination.DnsSettings = &dnsSetting
 	} else {
@@ -1091,12 +1095,12 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 		var extendedLocationSTATUSStash v20220701s.ExtendedLocation_STATUS
 		err := address.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocationSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation_STATUSStash from ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation_STATUSStash from ExtendedLocation")
 		}
 		var extendedLocation v20240301s.ExtendedLocation_STATUS
 		err = extendedLocationSTATUSStash.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation from ExtendedLocation_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation from ExtendedLocation_STATUSStash")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -1117,7 +1121,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 		var ipConfiguration v20240301s.IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded
 		err := address.IpConfiguration.AssignProperties_To_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded(&ipConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field IpConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field IpConfiguration")
 		}
 		destination.IpConfiguration = &ipConfiguration
 	} else {
@@ -1133,12 +1137,12 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 			var ipTagSTATUSStash v20220701s.IpTag_STATUS
 			err := ipTagItem.AssignProperties_To_IpTag_STATUS(&ipTagSTATUSStash)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IpTag_STATUS() to populate field IpTag_STATUSStash from IpTags")
+				return eris.Wrap(err, "calling AssignProperties_To_IpTag_STATUS() to populate field IpTag_STATUSStash from IpTags")
 			}
 			var ipTag v20240301s.IpTag_STATUS
 			err = ipTagSTATUSStash.AssignProperties_To_IpTag_STATUS(&ipTag)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IpTag_STATUS() to populate field IpTags from IpTag_STATUSStash")
+				return eris.Wrap(err, "calling AssignProperties_To_IpTag_STATUS() to populate field IpTags from IpTag_STATUSStash")
 			}
 			ipTagList[ipTagIndex] = ipTag
 		}
@@ -1161,7 +1165,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 		var natGateway v20240301s.NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded
 		err := address.NatGateway.AssignProperties_To_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded(&natGateway)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
+			return eris.Wrap(err, "calling AssignProperties_To_NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded() to populate field NatGateway")
 		}
 		destination.NatGateway = &natGateway
 	} else {
@@ -1182,17 +1186,17 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 		var subResourceSTATUSStash v20220701s.SubResource_STATUS
 		err := address.PublicIPPrefix.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIPPrefix")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from PublicIPPrefix")
 		}
 		var subResourceSTATUSStashLocal v20240101s.SubResource_STATUS
 		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStashLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash")
 		}
 		var publicIPPrefix v20240301s.SubResource_STATUS
 		err = subResourceSTATUSStashLocal.AssignProperties_To_SubResource_STATUS(&publicIPPrefix)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIPPrefix from SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field PublicIPPrefix from SubResource_STATUSStash")
 		}
 		destination.PublicIPPrefix = &publicIPPrefix
 	} else {
@@ -1207,7 +1211,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 		var sku v20240301s.PublicIPAddressSku_STATUS
 		err := address.Sku.AssignProperties_To_PublicIPAddressSku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_PublicIPAddressSku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1235,7 +1239,7 @@ func (address *PublicIPAddress_STATUS) AssignProperties_To_PublicIPAddress_STATU
 	if augmentedAddress, ok := addressAsAny.(augmentConversionForPublicIPAddress_STATUS); ok {
 		err := augmentedAddress.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1272,7 +1276,7 @@ func (settings *DdosSettings) AssignProperties_From_DdosSettings(source *v202403
 		var ddosCustomPolicy SubResource
 		err := propertyBag.Pull("DdosCustomPolicy", &ddosCustomPolicy)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DdosCustomPolicy' from propertyBag")
+			return eris.Wrap(err, "pulling 'DdosCustomPolicy' from propertyBag")
 		}
 
 		settings.DdosCustomPolicy = &ddosCustomPolicy
@@ -1292,7 +1296,7 @@ func (settings *DdosSettings) AssignProperties_From_DdosSettings(source *v202403
 		var protectedIP bool
 		err := propertyBag.Pull("ProtectedIP", &protectedIP)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ProtectedIP' from propertyBag")
+			return eris.Wrap(err, "pulling 'ProtectedIP' from propertyBag")
 		}
 
 		settings.ProtectedIP = &protectedIP
@@ -1305,7 +1309,7 @@ func (settings *DdosSettings) AssignProperties_From_DdosSettings(source *v202403
 		var protectionCoverage string
 		err := propertyBag.Pull("ProtectionCoverage", &protectionCoverage)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ProtectionCoverage' from propertyBag")
+			return eris.Wrap(err, "pulling 'ProtectionCoverage' from propertyBag")
 		}
 
 		settings.ProtectionCoverage = &protectionCoverage
@@ -1332,7 +1336,7 @@ func (settings *DdosSettings) AssignProperties_From_DdosSettings(source *v202403
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForDdosSettings); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1357,7 +1361,7 @@ func (settings *DdosSettings) AssignProperties_To_DdosSettings(destination *v202
 		var ddosProtectionPlan v20240301s.SubResource
 		err := propertyBag.Pull("DdosProtectionPlan", &ddosProtectionPlan)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DdosProtectionPlan' from propertyBag")
+			return eris.Wrap(err, "pulling 'DdosProtectionPlan' from propertyBag")
 		}
 
 		destination.DdosProtectionPlan = &ddosProtectionPlan
@@ -1384,7 +1388,7 @@ func (settings *DdosSettings) AssignProperties_To_DdosSettings(destination *v202
 		var protectionMode string
 		err := propertyBag.Pull("ProtectionMode", &protectionMode)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ProtectionMode' from propertyBag")
+			return eris.Wrap(err, "pulling 'ProtectionMode' from propertyBag")
 		}
 
 		destination.ProtectionMode = &protectionMode
@@ -1404,7 +1408,7 @@ func (settings *DdosSettings) AssignProperties_To_DdosSettings(destination *v202
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForDdosSettings); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1431,7 +1435,7 @@ func (settings *DdosSettings_STATUS) AssignProperties_From_DdosSettings_STATUS(s
 		var ddosCustomPolicy SubResource_STATUS
 		err := propertyBag.Pull("DdosCustomPolicy", &ddosCustomPolicy)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DdosCustomPolicy' from propertyBag")
+			return eris.Wrap(err, "pulling 'DdosCustomPolicy' from propertyBag")
 		}
 
 		settings.DdosCustomPolicy = &ddosCustomPolicy
@@ -1451,7 +1455,7 @@ func (settings *DdosSettings_STATUS) AssignProperties_From_DdosSettings_STATUS(s
 		var protectedIP bool
 		err := propertyBag.Pull("ProtectedIP", &protectedIP)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ProtectedIP' from propertyBag")
+			return eris.Wrap(err, "pulling 'ProtectedIP' from propertyBag")
 		}
 
 		settings.ProtectedIP = &protectedIP
@@ -1464,7 +1468,7 @@ func (settings *DdosSettings_STATUS) AssignProperties_From_DdosSettings_STATUS(s
 		var protectionCoverage string
 		err := propertyBag.Pull("ProtectionCoverage", &protectionCoverage)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ProtectionCoverage' from propertyBag")
+			return eris.Wrap(err, "pulling 'ProtectionCoverage' from propertyBag")
 		}
 
 		settings.ProtectionCoverage = &protectionCoverage
@@ -1491,7 +1495,7 @@ func (settings *DdosSettings_STATUS) AssignProperties_From_DdosSettings_STATUS(s
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForDdosSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1516,7 +1520,7 @@ func (settings *DdosSettings_STATUS) AssignProperties_To_DdosSettings_STATUS(des
 		var ddosProtectionPlan v20240301s.SubResource_STATUS
 		err := propertyBag.Pull("DdosProtectionPlan", &ddosProtectionPlan)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DdosProtectionPlan' from propertyBag")
+			return eris.Wrap(err, "pulling 'DdosProtectionPlan' from propertyBag")
 		}
 
 		destination.DdosProtectionPlan = &ddosProtectionPlan
@@ -1543,7 +1547,7 @@ func (settings *DdosSettings_STATUS) AssignProperties_To_DdosSettings_STATUS(des
 		var protectionMode string
 		err := propertyBag.Pull("ProtectionMode", &protectionMode)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ProtectionMode' from propertyBag")
+			return eris.Wrap(err, "pulling 'ProtectionMode' from propertyBag")
 		}
 
 		destination.ProtectionMode = &protectionMode
@@ -1563,7 +1567,7 @@ func (settings *DdosSettings_STATUS) AssignProperties_To_DdosSettings_STATUS(des
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForDdosSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1598,7 +1602,7 @@ func (embedded *IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded) Assi
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForIPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1626,7 +1630,7 @@ func (embedded *IPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded) Assi
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForIPConfiguration_STATUS_PublicIPAddress_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1665,7 +1669,7 @@ func (ipTag *IpTag) AssignProperties_From_IpTag(source *v20220701s.IpTag) error 
 	if augmentedIpTag, ok := ipTagAsAny.(augmentConversionForIpTag); ok {
 		err := augmentedIpTag.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1696,7 +1700,7 @@ func (ipTag *IpTag) AssignProperties_To_IpTag(destination *v20220701s.IpTag) err
 	if augmentedIpTag, ok := ipTagAsAny.(augmentConversionForIpTag); ok {
 		err := augmentedIpTag.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1735,7 +1739,7 @@ func (ipTag *IpTag_STATUS) AssignProperties_From_IpTag_STATUS(source *v20220701s
 	if augmentedIpTag, ok := ipTagAsAny.(augmentConversionForIpTag_STATUS); ok {
 		err := augmentedIpTag.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1766,7 +1770,7 @@ func (ipTag *IpTag_STATUS) AssignProperties_To_IpTag_STATUS(destination *v202207
 	if augmentedIpTag, ok := ipTagAsAny.(augmentConversionForIpTag_STATUS); ok {
 		err := augmentedIpTag.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1801,7 +1805,7 @@ func (embedded *NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded) AssignPro
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNatGateway_STATUS_PublicIPAddress_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1829,7 +1833,7 @@ func (embedded *NatGateway_STATUS_PublicIPAddress_SubResourceEmbedded) AssignPro
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNatGateway_STATUS_PublicIPAddress_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1871,7 +1875,7 @@ func (embedded *NatGatewaySpec_PublicIPAddress_SubResourceEmbedded) AssignProper
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNatGatewaySpec_PublicIPAddress_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1904,7 +1908,7 @@ func (embedded *NatGatewaySpec_PublicIPAddress_SubResourceEmbedded) AssignProper
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForNatGatewaySpec_PublicIPAddress_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1954,7 +1958,7 @@ func (settings *PublicIPAddressDnsSettings) AssignProperties_From_PublicIPAddres
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPublicIPAddressDnsSettings); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1975,7 +1979,7 @@ func (settings *PublicIPAddressDnsSettings) AssignProperties_To_PublicIPAddressD
 		var domainNameLabelScope string
 		err := propertyBag.Pull("DomainNameLabelScope", &domainNameLabelScope)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DomainNameLabelScope' from propertyBag")
+			return eris.Wrap(err, "pulling 'DomainNameLabelScope' from propertyBag")
 		}
 
 		destination.DomainNameLabelScope = &domainNameLabelScope
@@ -2001,7 +2005,7 @@ func (settings *PublicIPAddressDnsSettings) AssignProperties_To_PublicIPAddressD
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPublicIPAddressDnsSettings); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2051,7 +2055,7 @@ func (settings *PublicIPAddressDnsSettings_STATUS) AssignProperties_From_PublicI
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPublicIPAddressDnsSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2072,7 +2076,7 @@ func (settings *PublicIPAddressDnsSettings_STATUS) AssignProperties_To_PublicIPA
 		var domainNameLabelScope string
 		err := propertyBag.Pull("DomainNameLabelScope", &domainNameLabelScope)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DomainNameLabelScope' from propertyBag")
+			return eris.Wrap(err, "pulling 'DomainNameLabelScope' from propertyBag")
 		}
 
 		destination.DomainNameLabelScope = &domainNameLabelScope
@@ -2098,7 +2102,7 @@ func (settings *PublicIPAddressDnsSettings_STATUS) AssignProperties_To_PublicIPA
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPublicIPAddressDnsSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2167,7 +2171,7 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_From_PublicIPAddre
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPublicIPAddressOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2228,7 +2232,7 @@ func (operator *PublicIPAddressOperatorSpec) AssignProperties_To_PublicIPAddress
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPublicIPAddressOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2267,7 +2271,7 @@ func (addressSku *PublicIPAddressSku) AssignProperties_From_PublicIPAddressSku(s
 	if augmentedAddressSku, ok := addressSkuAsAny.(augmentConversionForPublicIPAddressSku); ok {
 		err := augmentedAddressSku.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2298,7 +2302,7 @@ func (addressSku *PublicIPAddressSku) AssignProperties_To_PublicIPAddressSku(des
 	if augmentedAddressSku, ok := addressSkuAsAny.(augmentConversionForPublicIPAddressSku); ok {
 		err := augmentedAddressSku.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2337,7 +2341,7 @@ func (addressSku *PublicIPAddressSku_STATUS) AssignProperties_From_PublicIPAddre
 	if augmentedAddressSku, ok := addressSkuAsAny.(augmentConversionForPublicIPAddressSku_STATUS); ok {
 		err := augmentedAddressSku.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2368,7 +2372,7 @@ func (addressSku *PublicIPAddressSku_STATUS) AssignProperties_To_PublicIPAddress
 	if augmentedAddressSku, ok := addressSkuAsAny.(augmentConversionForPublicIPAddressSku_STATUS); ok {
 		err := augmentedAddressSku.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2410,7 +2414,7 @@ func (embedded *PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded) AssignP
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2443,7 +2447,7 @@ func (embedded *PublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded) AssignP
 	if augmentedEmbedded, ok := embeddedAsAny.(augmentConversionForPublicIPAddressSpec_PublicIPAddress_SubResourceEmbedded); ok {
 		err := augmentedEmbedded.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

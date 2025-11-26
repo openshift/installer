@@ -19,14 +19,14 @@ package scope
 import (
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 // ClusterBlueprint holds all the objects required for computing the desired state of a managed Cluster topology,
 // including the ClusterClass and all the referenced templates.
 type ClusterBlueprint struct {
 	// Topology holds the topology info from Cluster.Spec.
-	Topology *clusterv1.Topology
+	Topology clusterv1.Topology
 
 	// ClusterClass holds the ClusterClass object referenced from Cluster.Spec.Topology.
 	ClusterClass *clusterv1.ClusterClass
@@ -52,9 +52,9 @@ type ControlPlaneBlueprint struct {
 	// InfrastructureMachineTemplate holds the infrastructure machine template for the control plane, if defined in the ClusterClass.
 	InfrastructureMachineTemplate *unstructured.Unstructured
 
-	// MachineHealthCheck holds the MachineHealthCheckClass for this ControlPlane.
+	// HealthCheck holds the MachineHealthCheckClass for this ControlPlane.
 	// +optional
-	MachineHealthCheck *clusterv1.MachineHealthCheckClass
+	HealthCheck clusterv1.ControlPlaneClassHealthCheck
 }
 
 // MachineDeploymentBlueprint holds the templates required for computing the desired state of a managed MachineDeployment;
@@ -71,9 +71,9 @@ type MachineDeploymentBlueprint struct {
 	// InfrastructureMachineTemplate holds the infrastructure machine template for a MachineDeployment referenced from ClusterClass.
 	InfrastructureMachineTemplate *unstructured.Unstructured
 
-	// MachineHealthCheck holds the MachineHealthCheckClass for this MachineDeployment.
+	// HealthCheck holds the MachineHealthCheckClass for this MachineDeployment.
 	// +optional
-	MachineHealthCheck *clusterv1.MachineHealthCheckClass
+	HealthCheck clusterv1.MachineDeploymentClassHealthCheck
 }
 
 // MachinePoolBlueprint holds the templates required for computing the desired state of a managed MachinePool;
@@ -93,7 +93,7 @@ type MachinePoolBlueprint struct {
 
 // HasControlPlaneInfrastructureMachine checks whether the clusterClass mandates the controlPlane has infrastructureMachines.
 func (b *ClusterBlueprint) HasControlPlaneInfrastructureMachine() bool {
-	return b.ClusterClass.Spec.ControlPlane.MachineInfrastructure != nil && b.ClusterClass.Spec.ControlPlane.MachineInfrastructure.Ref != nil
+	return b.ClusterClass.Spec.ControlPlane.MachineInfrastructure.TemplateRef.IsDefined()
 }
 
 // IsControlPlaneMachineHealthCheckEnabled returns true if a MachineHealthCheck should be created for the control plane.
@@ -103,60 +103,97 @@ func (b *ClusterBlueprint) IsControlPlaneMachineHealthCheckEnabled() bool {
 		return false
 	}
 	// If no MachineHealthCheck is defined in the ClusterClass or in the Cluster Topology then return false.
-	if b.ClusterClass.Spec.ControlPlane.MachineHealthCheck == nil &&
-		(b.Topology.ControlPlane.MachineHealthCheck == nil || b.Topology.ControlPlane.MachineHealthCheck.MachineHealthCheckClass.IsZero()) {
+	if !b.ClusterClass.Spec.ControlPlane.HealthCheck.IsDefined() && !b.Topology.ControlPlane.HealthCheck.IsDefined() {
 		return false
 	}
 	// If `enable` is not set then consider it as true. A MachineHealthCheck will be created from either ClusterClass or Cluster Topology.
-	if b.Topology.ControlPlane.MachineHealthCheck == nil || b.Topology.ControlPlane.MachineHealthCheck.Enable == nil {
+	if b.Topology.ControlPlane.HealthCheck.Enabled == nil {
 		return true
 	}
 	// If `enable` is explicitly set, use the value.
-	return *b.Topology.ControlPlane.MachineHealthCheck.Enable
+	return *b.Topology.ControlPlane.HealthCheck.Enabled
 }
 
 // ControlPlaneMachineHealthCheckClass returns the MachineHealthCheckClass that should be used to create the MachineHealthCheck object.
-func (b *ClusterBlueprint) ControlPlaneMachineHealthCheckClass() *clusterv1.MachineHealthCheckClass {
-	if b.Topology.ControlPlane.MachineHealthCheck != nil && !b.Topology.ControlPlane.MachineHealthCheck.MachineHealthCheckClass.IsZero() {
-		return &b.Topology.ControlPlane.MachineHealthCheck.MachineHealthCheckClass
+func (b *ClusterBlueprint) ControlPlaneMachineHealthCheckClass() (clusterv1.MachineHealthCheckChecks, clusterv1.MachineHealthCheckRemediation) {
+	if b.Topology.ControlPlane.HealthCheck.IsDefined() {
+		return clusterv1.MachineHealthCheckChecks{
+				NodeStartupTimeoutSeconds: b.Topology.ControlPlane.HealthCheck.Checks.NodeStartupTimeoutSeconds,
+				UnhealthyNodeConditions:   b.Topology.ControlPlane.HealthCheck.Checks.UnhealthyNodeConditions,
+			}, clusterv1.MachineHealthCheckRemediation{
+				TriggerIf: clusterv1.MachineHealthCheckRemediationTriggerIf{
+					UnhealthyLessThanOrEqualTo: b.Topology.ControlPlane.HealthCheck.Remediation.TriggerIf.UnhealthyLessThanOrEqualTo,
+					UnhealthyInRange:           b.Topology.ControlPlane.HealthCheck.Remediation.TriggerIf.UnhealthyInRange,
+				},
+				TemplateRef: b.Topology.ControlPlane.HealthCheck.Remediation.TemplateRef,
+			}
 	}
-	return b.ControlPlane.MachineHealthCheck
+
+	return clusterv1.MachineHealthCheckChecks{
+			NodeStartupTimeoutSeconds: b.ControlPlane.HealthCheck.Checks.NodeStartupTimeoutSeconds,
+			UnhealthyNodeConditions:   b.ControlPlane.HealthCheck.Checks.UnhealthyNodeConditions,
+		}, clusterv1.MachineHealthCheckRemediation{
+			TriggerIf: clusterv1.MachineHealthCheckRemediationTriggerIf{
+				UnhealthyLessThanOrEqualTo: b.ControlPlane.HealthCheck.Remediation.TriggerIf.UnhealthyLessThanOrEqualTo,
+				UnhealthyInRange:           b.ControlPlane.HealthCheck.Remediation.TriggerIf.UnhealthyInRange,
+			},
+			TemplateRef: b.ControlPlane.HealthCheck.Remediation.TemplateRef,
+		}
 }
 
 // HasControlPlaneMachineHealthCheck returns true if the ControlPlaneClass has both MachineInfrastructure and a MachineHealthCheck defined.
 func (b *ClusterBlueprint) HasControlPlaneMachineHealthCheck() bool {
-	return b.HasControlPlaneInfrastructureMachine() && b.ClusterClass.Spec.ControlPlane.MachineHealthCheck != nil
+	return b.HasControlPlaneInfrastructureMachine() && b.ClusterClass.Spec.ControlPlane.HealthCheck.IsDefined()
 }
 
 // IsMachineDeploymentMachineHealthCheckEnabled returns true if a MachineHealthCheck should be created for the MachineDeployment.
 // Returns false otherwise.
 func (b *ClusterBlueprint) IsMachineDeploymentMachineHealthCheckEnabled(md *clusterv1.MachineDeploymentTopology) bool {
 	// If no MachineHealthCheck is defined in the ClusterClass or in the Cluster Topology then return false.
-	if b.MachineDeployments[md.Class].MachineHealthCheck == nil && (md.MachineHealthCheck == nil || md.MachineHealthCheck.MachineHealthCheckClass.IsZero()) {
+	if !b.MachineDeployments[md.Class].HealthCheck.IsDefined() && !md.HealthCheck.IsDefined() {
 		return false
 	}
 	// If `enable` is not set then consider it as true. A MachineHealthCheck will be created from either ClusterClass or Cluster Topology.
-	if md.MachineHealthCheck == nil || md.MachineHealthCheck.Enable == nil {
+	if md.HealthCheck.Enabled == nil {
 		return true
 	}
 	// If `enable` is explicitly set, use the value.
-	return *md.MachineHealthCheck.Enable
+	return *md.HealthCheck.Enabled
 }
 
 // MachineDeploymentMachineHealthCheckClass return the MachineHealthCheckClass that should be used to create the MachineHealthCheck object.
-func (b *ClusterBlueprint) MachineDeploymentMachineHealthCheckClass(md *clusterv1.MachineDeploymentTopology) *clusterv1.MachineHealthCheckClass {
-	if md.MachineHealthCheck != nil && !md.MachineHealthCheck.MachineHealthCheckClass.IsZero() {
-		return &md.MachineHealthCheck.MachineHealthCheckClass
+func (b *ClusterBlueprint) MachineDeploymentMachineHealthCheckClass(md *clusterv1.MachineDeploymentTopology) (clusterv1.MachineHealthCheckChecks, clusterv1.MachineHealthCheckRemediation) {
+	if md.HealthCheck.IsDefined() {
+		return clusterv1.MachineHealthCheckChecks{
+				NodeStartupTimeoutSeconds: md.HealthCheck.Checks.NodeStartupTimeoutSeconds,
+				UnhealthyNodeConditions:   md.HealthCheck.Checks.UnhealthyNodeConditions,
+			}, clusterv1.MachineHealthCheckRemediation{
+				TriggerIf: clusterv1.MachineHealthCheckRemediationTriggerIf{
+					UnhealthyLessThanOrEqualTo: md.HealthCheck.Remediation.TriggerIf.UnhealthyLessThanOrEqualTo,
+					UnhealthyInRange:           md.HealthCheck.Remediation.TriggerIf.UnhealthyInRange,
+				},
+				TemplateRef: md.HealthCheck.Remediation.TemplateRef,
+			}
 	}
-	return b.MachineDeployments[md.Class].MachineHealthCheck
+
+	return clusterv1.MachineHealthCheckChecks{
+			NodeStartupTimeoutSeconds: b.MachineDeployments[md.Class].HealthCheck.Checks.NodeStartupTimeoutSeconds,
+			UnhealthyNodeConditions:   b.MachineDeployments[md.Class].HealthCheck.Checks.UnhealthyNodeConditions,
+		}, clusterv1.MachineHealthCheckRemediation{
+			TriggerIf: clusterv1.MachineHealthCheckRemediationTriggerIf{
+				UnhealthyLessThanOrEqualTo: b.MachineDeployments[md.Class].HealthCheck.Remediation.TriggerIf.UnhealthyLessThanOrEqualTo,
+				UnhealthyInRange:           b.MachineDeployments[md.Class].HealthCheck.Remediation.TriggerIf.UnhealthyInRange,
+			},
+			TemplateRef: b.MachineDeployments[md.Class].HealthCheck.Remediation.TemplateRef,
+		}
 }
 
 // HasMachineDeployments checks whether the topology has MachineDeployments.
 func (b *ClusterBlueprint) HasMachineDeployments() bool {
-	return b.Topology.Workers != nil && len(b.Topology.Workers.MachineDeployments) > 0
+	return len(b.Topology.Workers.MachineDeployments) > 0
 }
 
 // HasMachinePools checks whether the topology has MachinePools.
 func (b *ClusterBlueprint) HasMachinePools() bool {
-	return b.Topology.Workers != nil && len(b.Topology.Workers.MachinePools) > 0
+	return len(b.Topology.Workers.MachinePools) > 0
 }

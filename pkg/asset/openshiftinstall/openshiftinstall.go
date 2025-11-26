@@ -3,7 +3,7 @@ package openshiftinstall
 import (
 	"context"
 	"os"
-	"path/filepath"
+	"path"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	configPath = filepath.Join("openshift", "openshift-install-manifests.yaml")
+	configPath = path.Join("openshift", "openshift-install-manifests.yaml")
 )
 
 // Config generates the openshift-install ConfigMap.

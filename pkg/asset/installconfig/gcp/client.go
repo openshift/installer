@@ -20,7 +20,6 @@ import (
 	serviceusage "google.golang.org/api/serviceusage/v1beta1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
-	configv1 "github.com/openshift/api/config/v1"
 	gcpconsts "github.com/openshift/installer/pkg/constants/gcp"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 )
@@ -60,32 +59,40 @@ type API interface {
 	GetNamespacedTagValue(ctx context.Context, tagNamespacedName string) (*cloudresourcemanager.TagValue, error)
 	GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyReference) (*kmspb.KeyRing, error)
 	UpdateDNSPrivateZoneLabels(ctx context.Context, baseDomain, project, zoneName string, labels map[string]string) error
+	GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error)
 }
 
 // Client makes calls to the GCP API.
 type Client struct {
-	ssn       *Session
-	endpoints []configv1.GCPServiceEndpoint
+	ssn          *Session
+	endpointName string
 }
 
 // NewClient initializes a client with a session.
-func NewClient(ctx context.Context, endpoints []configv1.GCPServiceEndpoint) (*Client, error) {
+func NewClient(ctx context.Context, endpoint *gcptypes.PSCEndpoint) (*Client, error) {
 	ssn, err := GetSession(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get session")
 	}
 
-	modifiedEndpoints := FormatGCPEndpointList(endpoints, FormatGCPEndpointInput{SkipPath: false})
+	endpointName := ""
+	if gcptypes.ShouldUseEndpointForInstaller(endpoint) {
+		endpointName = endpoint.Name
+	}
 
 	client := &Client{
-		ssn:       ssn,
-		endpoints: modifiedEndpoints,
+		ssn:          ssn,
+		endpointName: endpointName,
 	}
 	return client, nil
 }
 
 func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error) {
-	svc, err := GetComputeService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPCompute))
+	}
+	svc, err := GetComputeService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("client failed to create compute service: %w", err)
 	}
@@ -93,7 +100,11 @@ func (c *Client) getComputeService(ctx context.Context) (*compute.Service, error
 }
 
 func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
-	svc, err := GetDNSService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPDNS))
+	}
+	svc, err := GetDNSService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("client failed to create dns service: %w", err)
 	}
@@ -101,7 +112,11 @@ func (c *Client) getDNSService(ctx context.Context) (*dns.Service, error) {
 }
 
 func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourcemanager.Service, error) {
-	svc, err := GetCloudResourceService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPCloudResource))
+	}
+	svc, err := GetCloudResourceService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("client failed to create cloud resource service: %w", err)
 	}
@@ -109,7 +124,11 @@ func (c *Client) getCloudResourceService(ctx context.Context) (*cloudresourceman
 }
 
 func (c *Client) getServiceUsageService(ctx context.Context) (*serviceusage.APIService, error) {
-	svc, err := GetServiceUsageService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPServiceUsage))
+	}
+	svc, err := GetServiceUsageService(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("client failed to create service usage service: %w", err)
 	}
@@ -576,7 +595,11 @@ func (c *Client) GetEnabledServices(ctx context.Context, project string) ([]stri
 
 // GetServiceAccount retrieves a service account from a project if it exists.
 func (c *Client) GetServiceAccount(ctx context.Context, project, serviceAccount string) (string, error) {
-	svc, err := GetIAMService(ctx, c.endpoints)
+	opts := []option.ClientOption{}
+	if c.endpointName != "" {
+		opts = append(opts, CreateEndpointOption(c.endpointName, ServiceNameGCPIAM))
+	}
+	svc, err := GetIAMService(ctx, opts...)
 	if err != nil {
 		return "", errors.Wrapf(err, "failed create IAM service")
 	}
@@ -739,4 +762,41 @@ func (c *Client) GetKeyRing(ctx context.Context, kmsKeyRef *gcptypes.KMSKeyRefer
 		}
 	}
 	return nil, fmt.Errorf("failed to find kms key ring with name %s", keyRingName)
+}
+
+// GetPrivateServiceConnectEndpoint finds the GCP compute forwarding rule that is associated with the endpoint.
+func GetPrivateServiceConnectEndpoint(client *compute.Service, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error) {
+	if endpoint == nil {
+		return nil, nil
+	}
+
+	var forwardingRules *compute.ForwardingRuleList
+	var forwardingRuleErr error
+	if endpoint.Region != "" {
+		forwardingRules, forwardingRuleErr = client.ForwardingRules.List(project, endpoint.Region).Do()
+	} else {
+		forwardingRules, forwardingRuleErr = client.GlobalForwardingRules.List(project).Do()
+	}
+	if forwardingRuleErr != nil {
+		return nil, fmt.Errorf("failed to list forwarding rules: %w", forwardingRuleErr)
+	}
+
+	if forwardingRules != nil {
+		// Iterate through forwarding rules to find the PSC endpoint
+		for _, rule := range forwardingRules.Items {
+			if rule.Name == endpoint.Name {
+				return rule, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("failed to find forwarding rule for private service connect endpoint %s", endpoint.Name)
+}
+
+// GetPrivateServiceConnectEndpoint will get the forwarding rule associated with a private service connect endpoint.
+func (c *Client) GetPrivateServiceConnectEndpoint(ctx context.Context, project string, endpoint *gcptypes.PSCEndpoint) (*compute.ForwardingRule, error) {
+	svc, err := c.getComputeService(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Compute service: %w", err)
+	}
+	return GetPrivateServiceConnectEndpoint(svc, project, endpoint)
 }

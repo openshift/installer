@@ -15,7 +15,7 @@
  */
 
 /*
- * IBM OpenAPI SDK Code Generator Version: 3.98.0-8be2046a-20241205-162752
+ * IBM OpenAPI SDK Code Generator Version: 3.106.0-09823488-20250707-071701
  */
 
 // Package iamidentityv1 : Operations and models for the IamIdentityV1 service
@@ -171,6 +171,918 @@ func (iamIdentity *IamIdentityV1) DisableRetries() {
 	iamIdentity.Service.DisableRetries()
 }
 
+// ListServiceIds : List service IDs
+// Returns a list of service IDs. Users can manage user API keys for themself, or service ID API keys for service IDs
+// they have access to. Note: apikey details are only included in the response when creating a Service ID with an api
+// key.
+func (iamIdentity *IamIdentityV1) ListServiceIds(listServiceIdsOptions *ListServiceIdsOptions) (result *ServiceIDList, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.ListServiceIdsWithContext(context.Background(), listServiceIdsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListServiceIdsWithContext is an alternate form of the ListServiceIds method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) ListServiceIdsWithContext(ctx context.Context, listServiceIdsOptions *ListServiceIdsOptions) (result *ServiceIDList, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listServiceIdsOptions, "listServiceIdsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListServiceIds")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listServiceIdsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listServiceIdsOptions.AccountID != nil {
+		builder.AddQuery("account_id", fmt.Sprint(*listServiceIdsOptions.AccountID))
+	}
+	if listServiceIdsOptions.GroupID != nil {
+		builder.AddQuery("group_id", fmt.Sprint(*listServiceIdsOptions.GroupID))
+	}
+	if listServiceIdsOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*listServiceIdsOptions.Name))
+	}
+	if listServiceIdsOptions.Pagesize != nil {
+		builder.AddQuery("pagesize", fmt.Sprint(*listServiceIdsOptions.Pagesize))
+	}
+	if listServiceIdsOptions.Pagetoken != nil {
+		builder.AddQuery("pagetoken", fmt.Sprint(*listServiceIdsOptions.Pagetoken))
+	}
+	if listServiceIdsOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listServiceIdsOptions.Sort))
+	}
+	if listServiceIdsOptions.Order != nil {
+		builder.AddQuery("order", fmt.Sprint(*listServiceIdsOptions.Order))
+	}
+	if listServiceIdsOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*listServiceIdsOptions.IncludeHistory))
+	}
+	if listServiceIdsOptions.Filter != nil {
+		builder.AddQuery("filter", fmt.Sprint(*listServiceIdsOptions.Filter))
+	}
+	if listServiceIdsOptions.ShowGroupID != nil {
+		builder.AddQuery("show_group_id", fmt.Sprint(*listServiceIdsOptions.ShowGroupID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_service_ids", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceIDList)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateServiceID : Create a service ID
+// Creates a service ID for an IBM Cloud account. Users can manage user API keys for themself, or service ID API keys
+// for service IDs they have access to.
+func (iamIdentity *IamIdentityV1) CreateServiceID(createServiceIDOptions *CreateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.CreateServiceIDWithContext(context.Background(), createServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateServiceIDWithContext is an alternate form of the CreateServiceID method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CreateServiceIDWithContext(ctx context.Context, createServiceIDOptions *CreateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createServiceIDOptions, "createServiceIDOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createServiceIDOptions, "createServiceIDOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateServiceID")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createServiceIDOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if createServiceIDOptions.EntityLock != nil {
+		builder.AddHeader("Entity-Lock", fmt.Sprint(*createServiceIDOptions.EntityLock))
+	}
+
+	if createServiceIDOptions.ShowGroupID != nil {
+		builder.AddQuery("show_group_id", fmt.Sprint(*createServiceIDOptions.ShowGroupID))
+	}
+
+	body := make(map[string]interface{})
+	if createServiceIDOptions.AccountID != nil {
+		body["account_id"] = createServiceIDOptions.AccountID
+	}
+	if createServiceIDOptions.Name != nil {
+		body["name"] = createServiceIDOptions.Name
+	}
+	if createServiceIDOptions.GroupID != nil {
+		body["group_id"] = createServiceIDOptions.GroupID
+	}
+	if createServiceIDOptions.Description != nil {
+		body["description"] = createServiceIDOptions.Description
+	}
+	if createServiceIDOptions.UniqueInstanceCrns != nil {
+		body["unique_instance_crns"] = createServiceIDOptions.UniqueInstanceCrns
+	}
+	if createServiceIDOptions.Apikey != nil {
+		body["apikey"] = createServiceIDOptions.Apikey
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetServiceID : Get details of a service ID
+// Returns the details of a service ID. Users can manage user API keys for themself, or service ID API keys for service
+// IDs they have access to. Note: apikey details are only included in the response when creating a Service ID with an
+// api key.
+func (iamIdentity *IamIdentityV1) GetServiceID(getServiceIDOptions *GetServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetServiceIDWithContext(context.Background(), getServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetServiceIDWithContext is an alternate form of the GetServiceID method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetServiceIDWithContext(ctx context.Context, getServiceIDOptions *GetServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getServiceIDOptions, "getServiceIDOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getServiceIDOptions, "getServiceIDOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *getServiceIDOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetServiceID")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getServiceIDOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getServiceIDOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getServiceIDOptions.IncludeHistory))
+	}
+	if getServiceIDOptions.IncludeActivity != nil {
+		builder.AddQuery("include_activity", fmt.Sprint(*getServiceIDOptions.IncludeActivity))
+	}
+	if getServiceIDOptions.ShowGroupID != nil {
+		builder.AddQuery("show_group_id", fmt.Sprint(*getServiceIDOptions.ShowGroupID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateServiceID : Update service ID
+// Updates properties of a service ID. This does NOT affect existing access tokens. Their token content will stay
+// unchanged until the access token is refreshed. To update a service ID, pass the property to be modified. To delete
+// one property's value, pass the property with an empty value "".Users can manage user API keys for themself, or
+// service ID API keys for service IDs they have access to. Note: apikey details are only included in the response when
+// creating a Service ID with an apikey.
+func (iamIdentity *IamIdentityV1) UpdateServiceID(updateServiceIDOptions *UpdateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.UpdateServiceIDWithContext(context.Background(), updateServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateServiceIDWithContext is an alternate form of the UpdateServiceID method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UpdateServiceIDWithContext(ctx context.Context, updateServiceIDOptions *UpdateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateServiceIDOptions, "updateServiceIDOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateServiceIDOptions, "updateServiceIDOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *updateServiceIDOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateServiceID")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range updateServiceIDOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if updateServiceIDOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateServiceIDOptions.IfMatch))
+	}
+
+	if updateServiceIDOptions.ShowGroupID != nil {
+		builder.AddQuery("show_group_id", fmt.Sprint(*updateServiceIDOptions.ShowGroupID))
+	}
+
+	body := make(map[string]interface{})
+	if updateServiceIDOptions.Name != nil {
+		body["name"] = updateServiceIDOptions.Name
+	}
+	if updateServiceIDOptions.Description != nil {
+		body["description"] = updateServiceIDOptions.Description
+	}
+	if updateServiceIDOptions.UniqueInstanceCrns != nil {
+		body["unique_instance_crns"] = updateServiceIDOptions.UniqueInstanceCrns
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteServiceID : Deletes a service ID and associated API keys
+// Deletes a service ID and all API keys associated to it. Before deleting the service ID, all associated API keys are
+// deleted. In case a Delete Conflict (status code 409) a retry of the request may help as the service ID is only
+// deleted if the associated API keys were successfully deleted before. Users can manage user API keys for themself, or
+// service ID API keys for service IDs they have access to.
+func (iamIdentity *IamIdentityV1) DeleteServiceID(deleteServiceIDOptions *DeleteServiceIDOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeleteServiceIDWithContext(context.Background(), deleteServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteServiceIDWithContext is an alternate form of the DeleteServiceID method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeleteServiceIDWithContext(ctx context.Context, deleteServiceIDOptions *DeleteServiceIDOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteServiceIDOptions, "deleteServiceIDOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteServiceIDOptions, "deleteServiceIDOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *deleteServiceIDOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteServiceID")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteServiceIDOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// LockServiceID : Lock the service ID
+// Locks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
+// have access to.
+func (iamIdentity *IamIdentityV1) LockServiceID(lockServiceIDOptions *LockServiceIDOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.LockServiceIDWithContext(context.Background(), lockServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// LockServiceIDWithContext is an alternate form of the LockServiceID method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) LockServiceIDWithContext(ctx context.Context, lockServiceIDOptions *LockServiceIDOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(lockServiceIDOptions, "lockServiceIDOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(lockServiceIDOptions, "lockServiceIDOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *lockServiceIDOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}/lock`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "LockServiceID")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range lockServiceIDOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "lock_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// UnlockServiceID : Unlock the service ID
+// Unlocks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
+// have access to.
+func (iamIdentity *IamIdentityV1) UnlockServiceID(unlockServiceIDOptions *UnlockServiceIDOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.UnlockServiceIDWithContext(context.Background(), unlockServiceIDOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UnlockServiceIDWithContext is an alternate form of the UnlockServiceID method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UnlockServiceIDWithContext(ctx context.Context, unlockServiceIDOptions *UnlockServiceIDOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(unlockServiceIDOptions, "unlockServiceIDOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(unlockServiceIDOptions, "unlockServiceIDOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *unlockServiceIDOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}/lock`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UnlockServiceID")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range unlockServiceIDOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "unlock_service_id", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// ListServiceIDGroup : List service ID groups
+// Returns a list of all service ID groups for the given account ID.
+func (iamIdentity *IamIdentityV1) ListServiceIDGroup(listServiceIDGroupOptions *ListServiceIDGroupOptions) (result *ServiceIDGroupList, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.ListServiceIDGroupWithContext(context.Background(), listServiceIDGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListServiceIDGroupWithContext is an alternate form of the ListServiceIDGroup method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) ListServiceIDGroupWithContext(ctx context.Context, listServiceIDGroupOptions *ListServiceIDGroupOptions) (result *ServiceIDGroupList, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listServiceIDGroupOptions, "listServiceIDGroupOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceid_groups`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListServiceIDGroup")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listServiceIDGroupOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listServiceIDGroupOptions.AccountID != nil {
+		builder.AddQuery("account_id", fmt.Sprint(*listServiceIDGroupOptions.AccountID))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_service_id_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceIDGroupList)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateServiceIDGroup : Create a service ID group
+// Creates a service ID group for the given account ID.
+func (iamIdentity *IamIdentityV1) CreateServiceIDGroup(createServiceIDGroupOptions *CreateServiceIDGroupOptions) (result *ServiceIDGroup, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.CreateServiceIDGroupWithContext(context.Background(), createServiceIDGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateServiceIDGroupWithContext is an alternate form of the CreateServiceIDGroup method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CreateServiceIDGroupWithContext(ctx context.Context, createServiceIDGroupOptions *CreateServiceIDGroupOptions) (result *ServiceIDGroup, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createServiceIDGroupOptions, "createServiceIDGroupOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createServiceIDGroupOptions, "createServiceIDGroupOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceid_groups`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateServiceIDGroup")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createServiceIDGroupOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createServiceIDGroupOptions.AccountID != nil {
+		body["account_id"] = createServiceIDGroupOptions.AccountID
+	}
+	if createServiceIDGroupOptions.Name != nil {
+		body["name"] = createServiceIDGroupOptions.Name
+	}
+	if createServiceIDGroupOptions.Description != nil {
+		body["description"] = createServiceIDGroupOptions.Description
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_service_id_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceIDGroup)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetServiceIDGroup : Get details of a service ID group
+// Returns the details of a service ID group.
+func (iamIdentity *IamIdentityV1) GetServiceIDGroup(getServiceIDGroupOptions *GetServiceIDGroupOptions) (result *ServiceIDGroup, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetServiceIDGroupWithContext(context.Background(), getServiceIDGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetServiceIDGroupWithContext is an alternate form of the GetServiceIDGroup method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetServiceIDGroupWithContext(ctx context.Context, getServiceIDGroupOptions *GetServiceIDGroupOptions) (result *ServiceIDGroup, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getServiceIDGroupOptions, "getServiceIDGroupOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getServiceIDGroupOptions, "getServiceIDGroupOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *getServiceIDGroupOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceid_groups/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetServiceIDGroup")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getServiceIDGroupOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_service_id_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceIDGroup)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateServiceIDGroup : Update a service ID group
+// Update a service ID group.
+func (iamIdentity *IamIdentityV1) UpdateServiceIDGroup(updateServiceIDGroupOptions *UpdateServiceIDGroupOptions) (result *ServiceIDGroup, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.UpdateServiceIDGroupWithContext(context.Background(), updateServiceIDGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateServiceIDGroupWithContext is an alternate form of the UpdateServiceIDGroup method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UpdateServiceIDGroupWithContext(ctx context.Context, updateServiceIDGroupOptions *UpdateServiceIDGroupOptions) (result *ServiceIDGroup, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateServiceIDGroupOptions, "updateServiceIDGroupOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateServiceIDGroupOptions, "updateServiceIDGroupOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *updateServiceIDGroupOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceid_groups/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateServiceIDGroup")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range updateServiceIDGroupOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if updateServiceIDGroupOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateServiceIDGroupOptions.IfMatch))
+	}
+
+	body := make(map[string]interface{})
+	if updateServiceIDGroupOptions.Name != nil {
+		body["name"] = updateServiceIDGroupOptions.Name
+	}
+	if updateServiceIDGroupOptions.Description != nil {
+		body["description"] = updateServiceIDGroupOptions.Description
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_service_id_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceIDGroup)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteServiceIDGroup : Delete a service ID group
+// Delete a service ID group.
+func (iamIdentity *IamIdentityV1) DeleteServiceIDGroup(deleteServiceIDGroupOptions *DeleteServiceIDGroupOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeleteServiceIDGroupWithContext(context.Background(), deleteServiceIDGroupOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteServiceIDGroupWithContext is an alternate form of the DeleteServiceIDGroup method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeleteServiceIDGroupWithContext(ctx context.Context, deleteServiceIDGroupOptions *DeleteServiceIDGroupOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteServiceIDGroupOptions, "deleteServiceIDGroupOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteServiceIDGroupOptions, "deleteServiceIDGroupOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"id": *deleteServiceIDGroupOptions.ID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceid_groups/{id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteServiceIDGroup")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteServiceIDGroupOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_service_id_group", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
 // ListAPIKeys : Get API keys for a given service or user IAM ID and account ID
 // Returns the list of API key details for a given service or user IAM ID and account ID. Users can manage user API keys
 // for themself, or service ID API keys for service IDs they have access to.
@@ -197,12 +1109,12 @@ func (iamIdentity *IamIdentityV1) ListAPIKeysWithContext(ctx context.Context, li
 		return
 	}
 
-	for headerName, headerValue := range listAPIKeysOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListAPIKeys")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListAPIKeys")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listAPIKeysOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -233,6 +1145,12 @@ func (iamIdentity *IamIdentityV1) ListAPIKeysWithContext(ctx context.Context, li
 	}
 	if listAPIKeysOptions.IncludeHistory != nil {
 		builder.AddQuery("include_history", fmt.Sprint(*listAPIKeysOptions.IncludeHistory))
+	}
+	if listAPIKeysOptions.Filter != nil {
+		builder.AddQuery("filter", fmt.Sprint(*listAPIKeysOptions.Filter))
+	}
+	if listAPIKeysOptions.GroupID != nil {
+		builder.AddQuery("group_id", fmt.Sprint(*listAPIKeysOptions.GroupID))
 	}
 
 	request, err := builder.Build()
@@ -291,12 +1209,12 @@ func (iamIdentity *IamIdentityV1) CreateAPIKeyWithContext(ctx context.Context, c
 		return
 	}
 
-	for headerName, headerValue := range createAPIKeyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateAPIKey")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateAPIKey")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createAPIKeyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -390,12 +1308,12 @@ func (iamIdentity *IamIdentityV1) GetAPIKeysDetailsWithContext(ctx context.Conte
 		return
 	}
 
-	for headerName, headerValue := range getAPIKeysDetailsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAPIKeysDetails")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAPIKeysDetails")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getAPIKeysDetailsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -467,12 +1385,12 @@ func (iamIdentity *IamIdentityV1) GetAPIKeyWithContext(ctx context.Context, getA
 		return
 	}
 
-	for headerName, headerValue := range getAPIKeyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAPIKey")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAPIKey")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getAPIKeyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -546,12 +1464,12 @@ func (iamIdentity *IamIdentityV1) UpdateAPIKeyWithContext(ctx context.Context, u
 		return
 	}
 
-	for headerName, headerValue := range updateAPIKeyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateAPIKey")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateAPIKey")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateAPIKeyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -639,12 +1557,12 @@ func (iamIdentity *IamIdentityV1) DeleteAPIKeyWithContext(ctx context.Context, d
 		return
 	}
 
-	for headerName, headerValue := range deleteAPIKeyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAPIKey")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAPIKey")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteAPIKeyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -699,12 +1617,12 @@ func (iamIdentity *IamIdentityV1) LockAPIKeyWithContext(ctx context.Context, loc
 		return
 	}
 
-	for headerName, headerValue := range lockAPIKeyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "LockAPIKey")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "LockAPIKey")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range lockAPIKeyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -759,12 +1677,12 @@ func (iamIdentity *IamIdentityV1) UnlockAPIKeyWithContext(ctx context.Context, u
 		return
 	}
 
-	for headerName, headerValue := range unlockAPIKeyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UnlockAPIKey")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UnlockAPIKey")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range unlockAPIKeyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -819,12 +1737,12 @@ func (iamIdentity *IamIdentityV1) DisableAPIKeyWithContext(ctx context.Context, 
 		return
 	}
 
-	for headerName, headerValue := range disableAPIKeyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DisableAPIKey")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DisableAPIKey")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range disableAPIKeyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -879,12 +1797,12 @@ func (iamIdentity *IamIdentityV1) EnableAPIKeyWithContext(ctx context.Context, e
 		return
 	}
 
-	for headerName, headerValue := range enableAPIKeyOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "EnableAPIKey")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "EnableAPIKey")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range enableAPIKeyOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -897,535 +1815,6 @@ func (iamIdentity *IamIdentityV1) EnableAPIKeyWithContext(ctx context.Context, e
 	response, err = iamIdentity.Service.Request(request, nil)
 	if err != nil {
 		core.EnrichHTTPProblem(err, "enable_api_key", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-
-	return
-}
-
-// ListServiceIds : List service IDs
-// Returns a list of service IDs. Users can manage user API keys for themself, or service ID API keys for service IDs
-// they have access to. Note: apikey details are only included in the response when creating a Service ID with an api
-// key.
-func (iamIdentity *IamIdentityV1) ListServiceIds(listServiceIdsOptions *ListServiceIdsOptions) (result *ServiceIDList, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.ListServiceIdsWithContext(context.Background(), listServiceIdsOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// ListServiceIdsWithContext is an alternate form of the ListServiceIds method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) ListServiceIdsWithContext(ctx context.Context, listServiceIdsOptions *ListServiceIdsOptions) (result *ServiceIDList, response *core.DetailedResponse, err error) {
-	err = core.ValidateStruct(listServiceIdsOptions, "listServiceIdsOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/`, nil)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range listServiceIdsOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListServiceIds")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if listServiceIdsOptions.AccountID != nil {
-		builder.AddQuery("account_id", fmt.Sprint(*listServiceIdsOptions.AccountID))
-	}
-	if listServiceIdsOptions.Name != nil {
-		builder.AddQuery("name", fmt.Sprint(*listServiceIdsOptions.Name))
-	}
-	if listServiceIdsOptions.Pagesize != nil {
-		builder.AddQuery("pagesize", fmt.Sprint(*listServiceIdsOptions.Pagesize))
-	}
-	if listServiceIdsOptions.Pagetoken != nil {
-		builder.AddQuery("pagetoken", fmt.Sprint(*listServiceIdsOptions.Pagetoken))
-	}
-	if listServiceIdsOptions.Sort != nil {
-		builder.AddQuery("sort", fmt.Sprint(*listServiceIdsOptions.Sort))
-	}
-	if listServiceIdsOptions.Order != nil {
-		builder.AddQuery("order", fmt.Sprint(*listServiceIdsOptions.Order))
-	}
-	if listServiceIdsOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*listServiceIdsOptions.IncludeHistory))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "list_service_ids", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceIDList)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// CreateServiceID : Create a service ID
-// Creates a service ID for an IBM Cloud account. Users can manage user API keys for themself, or service ID API keys
-// for service IDs they have access to.
-func (iamIdentity *IamIdentityV1) CreateServiceID(createServiceIDOptions *CreateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.CreateServiceIDWithContext(context.Background(), createServiceIDOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// CreateServiceIDWithContext is an alternate form of the CreateServiceID method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CreateServiceIDWithContext(ctx context.Context, createServiceIDOptions *CreateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createServiceIDOptions, "createServiceIDOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(createServiceIDOptions, "createServiceIDOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/`, nil)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range createServiceIDOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateServiceID")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-	if createServiceIDOptions.EntityLock != nil {
-		builder.AddHeader("Entity-Lock", fmt.Sprint(*createServiceIDOptions.EntityLock))
-	}
-
-	body := make(map[string]interface{})
-	if createServiceIDOptions.AccountID != nil {
-		body["account_id"] = createServiceIDOptions.AccountID
-	}
-	if createServiceIDOptions.Name != nil {
-		body["name"] = createServiceIDOptions.Name
-	}
-	if createServiceIDOptions.Description != nil {
-		body["description"] = createServiceIDOptions.Description
-	}
-	if createServiceIDOptions.UniqueInstanceCrns != nil {
-		body["unique_instance_crns"] = createServiceIDOptions.UniqueInstanceCrns
-	}
-	if createServiceIDOptions.Apikey != nil {
-		body["apikey"] = createServiceIDOptions.Apikey
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "create_service_id", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetServiceID : Get details of a service ID
-// Returns the details of a service ID. Users can manage user API keys for themself, or service ID API keys for service
-// IDs they have access to. Note: apikey details are only included in the response when creating a Service ID with an
-// api key.
-func (iamIdentity *IamIdentityV1) GetServiceID(getServiceIDOptions *GetServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.GetServiceIDWithContext(context.Background(), getServiceIDOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// GetServiceIDWithContext is an alternate form of the GetServiceID method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) GetServiceIDWithContext(ctx context.Context, getServiceIDOptions *GetServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getServiceIDOptions, "getServiceIDOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(getServiceIDOptions, "getServiceIDOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"id": *getServiceIDOptions.ID,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range getServiceIDOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetServiceID")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if getServiceIDOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*getServiceIDOptions.IncludeHistory))
-	}
-	if getServiceIDOptions.IncludeActivity != nil {
-		builder.AddQuery("include_activity", fmt.Sprint(*getServiceIDOptions.IncludeActivity))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "get_service_id", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// UpdateServiceID : Update service ID
-// Updates properties of a service ID. This does NOT affect existing access tokens. Their token content will stay
-// unchanged until the access token is refreshed. To update a service ID, pass the property to be modified. To delete
-// one property's value, pass the property with an empty value "".Users can manage user API keys for themself, or
-// service ID API keys for service IDs they have access to. Note: apikey details are only included in the response when
-// creating a Service ID with an apikey.
-func (iamIdentity *IamIdentityV1) UpdateServiceID(updateServiceIDOptions *UpdateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.UpdateServiceIDWithContext(context.Background(), updateServiceIDOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// UpdateServiceIDWithContext is an alternate form of the UpdateServiceID method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) UpdateServiceIDWithContext(ctx context.Context, updateServiceIDOptions *UpdateServiceIDOptions) (result *ServiceID, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(updateServiceIDOptions, "updateServiceIDOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(updateServiceIDOptions, "updateServiceIDOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"id": *updateServiceIDOptions.ID,
-	}
-
-	builder := core.NewRequestBuilder(core.PUT)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range updateServiceIDOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateServiceID")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-	if updateServiceIDOptions.IfMatch != nil {
-		builder.AddHeader("If-Match", fmt.Sprint(*updateServiceIDOptions.IfMatch))
-	}
-
-	body := make(map[string]interface{})
-	if updateServiceIDOptions.Name != nil {
-		body["name"] = updateServiceIDOptions.Name
-	}
-	if updateServiceIDOptions.Description != nil {
-		body["description"] = updateServiceIDOptions.Description
-	}
-	if updateServiceIDOptions.UniqueInstanceCrns != nil {
-		body["unique_instance_crns"] = updateServiceIDOptions.UniqueInstanceCrns
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "update_service_id", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalServiceID)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// DeleteServiceID : Deletes a service ID and associated API keys
-// Deletes a service ID and all API keys associated to it. Before deleting the service ID, all associated API keys are
-// deleted. In case a Delete Conflict (status code 409) a retry of the request may help as the service ID is only
-// deleted if the associated API keys were successfully deleted before. Users can manage user API keys for themself, or
-// service ID API keys for service IDs they have access to.
-func (iamIdentity *IamIdentityV1) DeleteServiceID(deleteServiceIDOptions *DeleteServiceIDOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.DeleteServiceIDWithContext(context.Background(), deleteServiceIDOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// DeleteServiceIDWithContext is an alternate form of the DeleteServiceID method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) DeleteServiceIDWithContext(ctx context.Context, deleteServiceIDOptions *DeleteServiceIDOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(deleteServiceIDOptions, "deleteServiceIDOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(deleteServiceIDOptions, "deleteServiceIDOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"id": *deleteServiceIDOptions.ID,
-	}
-
-	builder := core.NewRequestBuilder(core.DELETE)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range deleteServiceIDOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteServiceID")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	response, err = iamIdentity.Service.Request(request, nil)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "delete_service_id", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-
-	return
-}
-
-// LockServiceID : Lock the service ID
-// Locks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
-// have access to.
-func (iamIdentity *IamIdentityV1) LockServiceID(lockServiceIDOptions *LockServiceIDOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.LockServiceIDWithContext(context.Background(), lockServiceIDOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// LockServiceIDWithContext is an alternate form of the LockServiceID method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) LockServiceIDWithContext(ctx context.Context, lockServiceIDOptions *LockServiceIDOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(lockServiceIDOptions, "lockServiceIDOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(lockServiceIDOptions, "lockServiceIDOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"id": *lockServiceIDOptions.ID,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}/lock`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range lockServiceIDOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "LockServiceID")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	response, err = iamIdentity.Service.Request(request, nil)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "lock_service_id", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-
-	return
-}
-
-// UnlockServiceID : Unlock the service ID
-// Unlocks a service ID by ID. Users can manage user API keys for themself, or service ID API keys for service IDs they
-// have access to.
-func (iamIdentity *IamIdentityV1) UnlockServiceID(unlockServiceIDOptions *UnlockServiceIDOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.UnlockServiceIDWithContext(context.Background(), unlockServiceIDOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// UnlockServiceIDWithContext is an alternate form of the UnlockServiceID method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) UnlockServiceIDWithContext(ctx context.Context, unlockServiceIDOptions *UnlockServiceIDOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(unlockServiceIDOptions, "unlockServiceIDOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(unlockServiceIDOptions, "unlockServiceIDOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"id": *unlockServiceIDOptions.ID,
-	}
-
-	builder := core.NewRequestBuilder(core.DELETE)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/serviceids/{id}/lock`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range unlockServiceIDOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UnlockServiceID")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	response, err = iamIdentity.Service.Request(request, nil)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "unlock_service_id", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
@@ -1463,12 +1852,12 @@ func (iamIdentity *IamIdentityV1) CreateProfileWithContext(ctx context.Context, 
 		return
 	}
 
-	for headerName, headerValue := range createProfileOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateProfile")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateProfile")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createProfileOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1483,6 +1872,9 @@ func (iamIdentity *IamIdentityV1) CreateProfileWithContext(ctx context.Context, 
 	}
 	if createProfileOptions.Description != nil {
 		body["description"] = createProfileOptions.Description
+	}
+	if createProfileOptions.Email != nil {
+		body["email"] = createProfileOptions.Email
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1546,12 +1938,12 @@ func (iamIdentity *IamIdentityV1) ListProfilesWithContext(ctx context.Context, l
 		return
 	}
 
-	for headerName, headerValue := range listProfilesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListProfiles")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListProfiles")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listProfilesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1574,6 +1966,9 @@ func (iamIdentity *IamIdentityV1) ListProfilesWithContext(ctx context.Context, l
 	}
 	if listProfilesOptions.Pagetoken != nil {
 		builder.AddQuery("pagetoken", fmt.Sprint(*listProfilesOptions.Pagetoken))
+	}
+	if listProfilesOptions.Filter != nil {
+		builder.AddQuery("filter", fmt.Sprint(*listProfilesOptions.Filter))
 	}
 
 	request, err := builder.Build()
@@ -1636,12 +2031,12 @@ func (iamIdentity *IamIdentityV1) GetProfileWithContext(ctx context.Context, get
 		return
 	}
 
-	for headerName, headerValue := range getProfileOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetProfile")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetProfile")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getProfileOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1709,12 +2104,12 @@ func (iamIdentity *IamIdentityV1) UpdateProfileWithContext(ctx context.Context, 
 		return
 	}
 
-	for headerName, headerValue := range updateProfileOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateProfile")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateProfile")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateProfileOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1729,6 +2124,9 @@ func (iamIdentity *IamIdentityV1) UpdateProfileWithContext(ctx context.Context, 
 	}
 	if updateProfileOptions.Description != nil {
 		body["description"] = updateProfileOptions.Description
+	}
+	if updateProfileOptions.Email != nil {
+		body["email"] = updateProfileOptions.Email
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -1796,12 +2194,12 @@ func (iamIdentity *IamIdentityV1) DeleteProfileWithContext(ctx context.Context, 
 		return
 	}
 
-	for headerName, headerValue := range deleteProfileOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteProfile")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteProfile")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteProfileOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -1855,12 +2253,12 @@ func (iamIdentity *IamIdentityV1) CreateClaimRuleWithContext(ctx context.Context
 		return
 	}
 
-	for headerName, headerValue := range createClaimRuleOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateClaimRule")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateClaimRule")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createClaimRuleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -1954,12 +2352,12 @@ func (iamIdentity *IamIdentityV1) ListClaimRulesWithContext(ctx context.Context,
 		return
 	}
 
-	for headerName, headerValue := range listClaimRulesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListClaimRules")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListClaimRules")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listClaimRulesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2012,7 +2410,7 @@ func (iamIdentity *IamIdentityV1) GetClaimRuleWithContext(ctx context.Context, g
 
 	pathParamsMap := map[string]string{
 		"profile-id": *getClaimRuleOptions.ProfileID,
-		"rule-id":    *getClaimRuleOptions.RuleID,
+		"rule-id": *getClaimRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2024,12 +2422,12 @@ func (iamIdentity *IamIdentityV1) GetClaimRuleWithContext(ctx context.Context, g
 		return
 	}
 
-	for headerName, headerValue := range getClaimRuleOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetClaimRule")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetClaimRule")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getClaimRuleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2082,7 +2480,7 @@ func (iamIdentity *IamIdentityV1) UpdateClaimRuleWithContext(ctx context.Context
 
 	pathParamsMap := map[string]string{
 		"profile-id": *updateClaimRuleOptions.ProfileID,
-		"rule-id":    *updateClaimRuleOptions.RuleID,
+		"rule-id": *updateClaimRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
@@ -2094,12 +2492,12 @@ func (iamIdentity *IamIdentityV1) UpdateClaimRuleWithContext(ctx context.Context
 		return
 	}
 
-	for headerName, headerValue := range updateClaimRuleOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateClaimRule")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateClaimRule")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateClaimRuleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2185,7 +2583,7 @@ func (iamIdentity *IamIdentityV1) DeleteClaimRuleWithContext(ctx context.Context
 
 	pathParamsMap := map[string]string{
 		"profile-id": *deleteClaimRuleOptions.ProfileID,
-		"rule-id":    *deleteClaimRuleOptions.RuleID,
+		"rule-id": *deleteClaimRuleOptions.RuleID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2197,12 +2595,12 @@ func (iamIdentity *IamIdentityV1) DeleteClaimRuleWithContext(ctx context.Context
 		return
 	}
 
-	for headerName, headerValue := range deleteClaimRuleOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteClaimRule")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteClaimRule")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteClaimRuleOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -2257,12 +2655,12 @@ func (iamIdentity *IamIdentityV1) CreateLinkWithContext(ctx context.Context, cre
 		return
 	}
 
-	for headerName, headerValue := range createLinkOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateLink")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateLink")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createLinkOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2343,12 +2741,12 @@ func (iamIdentity *IamIdentityV1) ListLinksWithContext(ctx context.Context, list
 		return
 	}
 
-	for headerName, headerValue := range listLinksOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListLinks")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListLinks")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listLinksOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2378,6 +2776,82 @@ func (iamIdentity *IamIdentityV1) ListLinksWithContext(ctx context.Context, list
 	return
 }
 
+// DeleteLinkByParameters : Delete compute resource link to profile by given parameters
+// Deletes compute resource link of a Trusted Profile matching the given parameters.
+func (iamIdentity *IamIdentityV1) DeleteLinkByParameters(deleteLinkByParametersOptions *DeleteLinkByParametersOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeleteLinkByParametersWithContext(context.Background(), deleteLinkByParametersOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteLinkByParametersWithContext is an alternate form of the DeleteLinkByParameters method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeleteLinkByParametersWithContext(ctx context.Context, deleteLinkByParametersOptions *DeleteLinkByParametersOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteLinkByParametersOptions, "deleteLinkByParametersOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteLinkByParametersOptions, "deleteLinkByParametersOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"profile-id": *deleteLinkByParametersOptions.ProfileID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profiles/{profile-id}/links`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteLinkByParameters")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteLinkByParametersOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	builder.AddQuery("type", fmt.Sprint(*deleteLinkByParametersOptions.Type))
+	if deleteLinkByParametersOptions.CRN != nil {
+		builder.AddQuery("crn", fmt.Sprint(*deleteLinkByParametersOptions.CRN))
+	}
+	if deleteLinkByParametersOptions.Namespace != nil {
+		builder.AddQuery("namespace", fmt.Sprint(*deleteLinkByParametersOptions.Namespace))
+	}
+	if deleteLinkByParametersOptions.Name != nil {
+		builder.AddQuery("name", fmt.Sprint(*deleteLinkByParametersOptions.Name))
+	}
+	if deleteLinkByParametersOptions.ComponentType != nil {
+		builder.AddQuery("component_type", fmt.Sprint(*deleteLinkByParametersOptions.ComponentType))
+	}
+	if deleteLinkByParametersOptions.ComponentName != nil {
+		builder.AddQuery("component_name", fmt.Sprint(*deleteLinkByParametersOptions.ComponentName))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_link_by_parameters", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
 // GetLink : Get link to a trusted profile
 // Get a specific link to a trusted profile by `link_id`.
 func (iamIdentity *IamIdentityV1) GetLink(getLinkOptions *GetLinkOptions) (result *ProfileLink, response *core.DetailedResponse, err error) {
@@ -2401,7 +2875,7 @@ func (iamIdentity *IamIdentityV1) GetLinkWithContext(ctx context.Context, getLin
 
 	pathParamsMap := map[string]string{
 		"profile-id": *getLinkOptions.ProfileID,
-		"link-id":    *getLinkOptions.LinkID,
+		"link-id": *getLinkOptions.LinkID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -2413,12 +2887,12 @@ func (iamIdentity *IamIdentityV1) GetLinkWithContext(ctx context.Context, getLin
 		return
 	}
 
-	for headerName, headerValue := range getLinkOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetLink")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetLink")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getLinkOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2471,7 +2945,7 @@ func (iamIdentity *IamIdentityV1) DeleteLinkWithContext(ctx context.Context, del
 
 	pathParamsMap := map[string]string{
 		"profile-id": *deleteLinkOptions.ProfileID,
-		"link-id":    *deleteLinkOptions.LinkID,
+		"link-id": *deleteLinkOptions.LinkID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
@@ -2483,12 +2957,12 @@ func (iamIdentity *IamIdentityV1) DeleteLinkWithContext(ctx context.Context, del
 		return
 	}
 
-	for headerName, headerValue := range deleteLinkOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteLink")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteLink")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteLinkOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -2542,12 +3016,12 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentitiesWithContext(ctx context.Co
 		return
 	}
 
-	for headerName, headerValue := range getProfileIdentitiesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetProfileIdentities")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetProfileIdentities")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getProfileIdentitiesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2611,12 +3085,12 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentitiesWithContext(ctx context.Co
 		return
 	}
 
-	for headerName, headerValue := range setProfileIdentitiesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "SetProfileIdentities")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "SetProfileIdentities")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range setProfileIdentitiesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2662,6 +3136,10 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentitiesWithContext(ctx context.Co
 
 // SetProfileIdentity : Add a specific identity that can assume the trusted profile
 // Add a specific identity that can assume the trusted profile.
+//
+// **Note:** This API will update the trusted profile itself,  thus calling it repeatedly for the same profile can lead
+// to  conflicts responded with HTTP code 409. Make sure to call this  API only once in a few seconds for the same
+// trusted profile.
 func (iamIdentity *IamIdentityV1) SetProfileIdentity(setProfileIdentityOptions *SetProfileIdentityOptions) (result *ProfileIdentityResponse, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.SetProfileIdentityWithContext(context.Background(), setProfileIdentityOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -2682,7 +3160,7 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentityWithContext(ctx context.Cont
 	}
 
 	pathParamsMap := map[string]string{
-		"profile-id":    *setProfileIdentityOptions.ProfileID,
+		"profile-id": *setProfileIdentityOptions.ProfileID,
 		"identity-type": *setProfileIdentityOptions.IdentityType,
 	}
 
@@ -2695,12 +3173,12 @@ func (iamIdentity *IamIdentityV1) SetProfileIdentityWithContext(ctx context.Cont
 		return
 	}
 
-	for headerName, headerValue := range setProfileIdentityOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "SetProfileIdentity")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "SetProfileIdentity")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range setProfileIdentityOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2772,7 +3250,7 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentityWithContext(ctx context.Cont
 	}
 
 	pathParamsMap := map[string]string{
-		"profile-id":    *getProfileIdentityOptions.ProfileID,
+		"profile-id": *getProfileIdentityOptions.ProfileID,
 		"identity-type": *getProfileIdentityOptions.IdentityType,
 		"identifier-id": *getProfileIdentityOptions.IdentifierID,
 	}
@@ -2786,12 +3264,12 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentityWithContext(ctx context.Cont
 		return
 	}
 
-	for headerName, headerValue := range getProfileIdentityOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetProfileIdentity")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetProfileIdentity")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getProfileIdentityOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2823,6 +3301,10 @@ func (iamIdentity *IamIdentityV1) GetProfileIdentityWithContext(ctx context.Cont
 
 // DeleteProfileIdentity : Delete the identity that can assume the trusted profile
 // Delete the identity that can assume the trusted profile.
+//
+// **Note:** This API will update the trusted profile itself,  thus calling it repeatedly for the same profile can lead
+// to  conflicts responded with HTTP code 409. Make sure to call this  API only once in a few seconds for the same
+// trusted profile.
 func (iamIdentity *IamIdentityV1) DeleteProfileIdentity(deleteProfileIdentityOptions *DeleteProfileIdentityOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.DeleteProfileIdentityWithContext(context.Background(), deleteProfileIdentityOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -2843,7 +3325,7 @@ func (iamIdentity *IamIdentityV1) DeleteProfileIdentityWithContext(ctx context.C
 	}
 
 	pathParamsMap := map[string]string{
-		"profile-id":    *deleteProfileIdentityOptions.ProfileID,
+		"profile-id": *deleteProfileIdentityOptions.ProfileID,
 		"identity-type": *deleteProfileIdentityOptions.IdentityType,
 		"identifier-id": *deleteProfileIdentityOptions.IdentifierID,
 	}
@@ -2857,12 +3339,12 @@ func (iamIdentity *IamIdentityV1) DeleteProfileIdentityWithContext(ctx context.C
 		return
 	}
 
-	for headerName, headerValue := range deleteProfileIdentityOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteProfileIdentity")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteProfileIdentity")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteProfileIdentityOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -2877,6 +3359,154 @@ func (iamIdentity *IamIdentityV1) DeleteProfileIdentityWithContext(ctx context.C
 		core.EnrichHTTPProblem(err, "delete_profile_identity", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
+	}
+
+	return
+}
+
+// CreateReport : Trigger activity report for the account
+// Trigger activity report for the account by specifying the account ID. It can take a few minutes to generate the
+// report for retrieval.
+func (iamIdentity *IamIdentityV1) CreateReport(createReportOptions *CreateReportOptions) (result *ReportReference, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.CreateReportWithContext(context.Background(), createReportOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateReportWithContext is an alternate form of the CreateReport method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CreateReportWithContext(ctx context.Context, createReportOptions *CreateReportOptions) (result *ReportReference, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createReportOptions, "createReportOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createReportOptions, "createReportOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *createReportOptions.AccountID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/activity/accounts/{account_id}/report`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateReport")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createReportOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if createReportOptions.Type != nil {
+		builder.AddQuery("type", fmt.Sprint(*createReportOptions.Type))
+	}
+	if createReportOptions.Duration != nil {
+		builder.AddQuery("duration", fmt.Sprint(*createReportOptions.Duration))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_report", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReportReference)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetReport : Get activity report for the account
+// Get activity report for the account by specifying the account ID and the reference that is generated by triggering
+// the report. Reports older than a day are deleted when generating a new report.
+func (iamIdentity *IamIdentityV1) GetReport(getReportOptions *GetReportOptions) (result *Report, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetReportWithContext(context.Background(), getReportOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetReportWithContext is an alternate form of the GetReport method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetReportWithContext(ctx context.Context, getReportOptions *GetReportOptions) (result *Report, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getReportOptions, "getReportOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getReportOptions, "getReportOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *getReportOptions.AccountID,
+		"reference": *getReportOptions.Reference,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/activity/accounts/{account_id}/report/{reference}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetReport")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getReportOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_report", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReport)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
 	}
 
 	return
@@ -2916,12 +3546,12 @@ func (iamIdentity *IamIdentityV1) GetAccountSettingsWithContext(ctx context.Cont
 		return
 	}
 
-	for headerName, headerValue := range getAccountSettingsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAccountSettings")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAccountSettings")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getAccountSettingsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -2990,12 +3620,12 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsWithContext(ctx context.C
 		return
 	}
 
-	for headerName, headerValue := range updateAccountSettingsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateAccountSettings")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateAccountSettings")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateAccountSettingsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -3066,6 +3696,82 @@ func (iamIdentity *IamIdentityV1) UpdateAccountSettingsWithContext(ctx context.C
 	return
 }
 
+// GetEffectiveAccountSettings : Get effective account settings configuration
+// Returns effective account settings for given account ID.
+func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettings(getEffectiveAccountSettingsOptions *GetEffectiveAccountSettingsOptions) (result *EffectiveAccountSettingsResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetEffectiveAccountSettingsWithContext(context.Background(), getEffectiveAccountSettingsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetEffectiveAccountSettingsWithContext is an alternate form of the GetEffectiveAccountSettings method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettingsWithContext(ctx context.Context, getEffectiveAccountSettingsOptions *GetEffectiveAccountSettingsOptions) (result *EffectiveAccountSettingsResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getEffectiveAccountSettingsOptions, "getEffectiveAccountSettingsOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getEffectiveAccountSettingsOptions, "getEffectiveAccountSettingsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"account_id": *getEffectiveAccountSettingsOptions.AccountID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/accounts/{account_id}/effective_settings/identity`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetEffectiveAccountSettings")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getEffectiveAccountSettingsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getEffectiveAccountSettingsOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getEffectiveAccountSettingsOptions.IncludeHistory))
+	}
+	if getEffectiveAccountSettingsOptions.ResolveUserMfa != nil {
+		builder.AddQuery("resolve_user_mfa", fmt.Sprint(*getEffectiveAccountSettingsOptions.ResolveUserMfa))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_effective_account_settings", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEffectiveAccountSettingsResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
 // GetMfaStatus : Get MFA enrollment status for a single user in the account
 // Get MFA enrollment status for a single user in the account.
 func (iamIdentity *IamIdentityV1) GetMfaStatus(getMfaStatusOptions *GetMfaStatusOptions) (result *UserMfaEnrollments, response *core.DetailedResponse, err error) {
@@ -3100,12 +3806,12 @@ func (iamIdentity *IamIdentityV1) GetMfaStatusWithContext(ctx context.Context, g
 		return
 	}
 
-	for headerName, headerValue := range getMfaStatusOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetMfaStatus")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetMfaStatus")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getMfaStatusOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -3172,12 +3878,12 @@ func (iamIdentity *IamIdentityV1) CreateMfaReportWithContext(ctx context.Context
 		return
 	}
 
-	for headerName, headerValue := range createMfaReportOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateMfaReport")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateMfaReport")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createMfaReportOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -3235,7 +3941,7 @@ func (iamIdentity *IamIdentityV1) GetMfaReportWithContext(ctx context.Context, g
 
 	pathParamsMap := map[string]string{
 		"account_id": *getMfaReportOptions.AccountID,
-		"reference":  *getMfaReportOptions.Reference,
+		"reference": *getMfaReportOptions.Reference,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -3247,12 +3953,12 @@ func (iamIdentity *IamIdentityV1) GetMfaReportWithContext(ctx context.Context, g
 		return
 	}
 
-	for headerName, headerValue := range getMfaReportOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetMfaReport")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetMfaReport")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getMfaReportOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -3282,1412 +3988,52 @@ func (iamIdentity *IamIdentityV1) GetMfaReportWithContext(ctx context.Context, g
 	return
 }
 
-// ListAccountSettingsAssignments : List assignments
-// List account settings assignments.
-func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignments(listAccountSettingsAssignmentsOptions *ListAccountSettingsAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.ListAccountSettingsAssignmentsWithContext(context.Background(), listAccountSettingsAssignmentsOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// ListAccountSettingsAssignmentsWithContext is an alternate form of the ListAccountSettingsAssignments method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignmentsWithContext(ctx context.Context, listAccountSettingsAssignmentsOptions *ListAccountSettingsAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateStruct(listAccountSettingsAssignmentsOptions, "listAccountSettingsAssignmentsOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/`, nil)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range listAccountSettingsAssignmentsOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListAccountSettingsAssignments")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if listAccountSettingsAssignmentsOptions.AccountID != nil {
-		builder.AddQuery("account_id", fmt.Sprint(*listAccountSettingsAssignmentsOptions.AccountID))
-	}
-	if listAccountSettingsAssignmentsOptions.TemplateID != nil {
-		builder.AddQuery("template_id", fmt.Sprint(*listAccountSettingsAssignmentsOptions.TemplateID))
-	}
-	if listAccountSettingsAssignmentsOptions.TemplateVersion != nil {
-		builder.AddQuery("template_version", fmt.Sprint(*listAccountSettingsAssignmentsOptions.TemplateVersion))
-	}
-	if listAccountSettingsAssignmentsOptions.Target != nil {
-		builder.AddQuery("target", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Target))
-	}
-	if listAccountSettingsAssignmentsOptions.TargetType != nil {
-		builder.AddQuery("target_type", fmt.Sprint(*listAccountSettingsAssignmentsOptions.TargetType))
-	}
-	if listAccountSettingsAssignmentsOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Limit))
-	}
-	if listAccountSettingsAssignmentsOptions.Pagetoken != nil {
-		builder.AddQuery("pagetoken", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Pagetoken))
-	}
-	if listAccountSettingsAssignmentsOptions.Sort != nil {
-		builder.AddQuery("sort", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Sort))
-	}
-	if listAccountSettingsAssignmentsOptions.Order != nil {
-		builder.AddQuery("order", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Order))
-	}
-	if listAccountSettingsAssignmentsOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*listAccountSettingsAssignmentsOptions.IncludeHistory))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "list_account_settings_assignments", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentListResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// CreateAccountSettingsAssignment : Create assignment
-// Create an assigment for an account settings template.
-func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignment(createAccountSettingsAssignmentOptions *CreateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.CreateAccountSettingsAssignmentWithContext(context.Background(), createAccountSettingsAssignmentOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// CreateAccountSettingsAssignmentWithContext is an alternate form of the CreateAccountSettingsAssignment method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignmentWithContext(ctx context.Context, createAccountSettingsAssignmentOptions *CreateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createAccountSettingsAssignmentOptions, "createAccountSettingsAssignmentOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(createAccountSettingsAssignmentOptions, "createAccountSettingsAssignmentOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/`, nil)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range createAccountSettingsAssignmentOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateAccountSettingsAssignment")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-
-	body := make(map[string]interface{})
-	if createAccountSettingsAssignmentOptions.TemplateID != nil {
-		body["template_id"] = createAccountSettingsAssignmentOptions.TemplateID
-	}
-	if createAccountSettingsAssignmentOptions.TemplateVersion != nil {
-		body["template_version"] = createAccountSettingsAssignmentOptions.TemplateVersion
-	}
-	if createAccountSettingsAssignmentOptions.TargetType != nil {
-		body["target_type"] = createAccountSettingsAssignmentOptions.TargetType
-	}
-	if createAccountSettingsAssignmentOptions.Target != nil {
-		body["target"] = createAccountSettingsAssignmentOptions.Target
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "create_account_settings_assignment", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetAccountSettingsAssignment : Get assignment
-// Get an assigment for an account settings template.
-func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignment(getAccountSettingsAssignmentOptions *GetAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.GetAccountSettingsAssignmentWithContext(context.Background(), getAccountSettingsAssignmentOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// GetAccountSettingsAssignmentWithContext is an alternate form of the GetAccountSettingsAssignment method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignmentWithContext(ctx context.Context, getAccountSettingsAssignmentOptions *GetAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getAccountSettingsAssignmentOptions, "getAccountSettingsAssignmentOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(getAccountSettingsAssignmentOptions, "getAccountSettingsAssignmentOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"assignment_id": *getAccountSettingsAssignmentOptions.AssignmentID,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range getAccountSettingsAssignmentOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAccountSettingsAssignment")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if getAccountSettingsAssignmentOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*getAccountSettingsAssignmentOptions.IncludeHistory))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "get_account_settings_assignment", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// DeleteAccountSettingsAssignment : Delete assignment
-// Delete an account settings template assignment. This removes any IAM resources created by this assignment in child
-// accounts.
-func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignment(deleteAccountSettingsAssignmentOptions *DeleteAccountSettingsAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.DeleteAccountSettingsAssignmentWithContext(context.Background(), deleteAccountSettingsAssignmentOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// DeleteAccountSettingsAssignmentWithContext is an alternate form of the DeleteAccountSettingsAssignment method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignmentWithContext(ctx context.Context, deleteAccountSettingsAssignmentOptions *DeleteAccountSettingsAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(deleteAccountSettingsAssignmentOptions, "deleteAccountSettingsAssignmentOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(deleteAccountSettingsAssignmentOptions, "deleteAccountSettingsAssignmentOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"assignment_id": *deleteAccountSettingsAssignmentOptions.AssignmentID,
-	}
-
-	builder := core.NewRequestBuilder(core.DELETE)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range deleteAccountSettingsAssignmentOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAccountSettingsAssignment")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "delete_account_settings_assignment", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalExceptionResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// UpdateAccountSettingsAssignment : Update assignment
-// Update an account settings assignment. Call this method to retry failed assignments or migrate the settings in child
-// accounts to a new version.
-func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignment(updateAccountSettingsAssignmentOptions *UpdateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.UpdateAccountSettingsAssignmentWithContext(context.Background(), updateAccountSettingsAssignmentOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// UpdateAccountSettingsAssignmentWithContext is an alternate form of the UpdateAccountSettingsAssignment method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignmentWithContext(ctx context.Context, updateAccountSettingsAssignmentOptions *UpdateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(updateAccountSettingsAssignmentOptions, "updateAccountSettingsAssignmentOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(updateAccountSettingsAssignmentOptions, "updateAccountSettingsAssignmentOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"assignment_id": *updateAccountSettingsAssignmentOptions.AssignmentID,
-	}
-
-	builder := core.NewRequestBuilder(core.PATCH)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range updateAccountSettingsAssignmentOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateAccountSettingsAssignment")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-	if updateAccountSettingsAssignmentOptions.IfMatch != nil {
-		builder.AddHeader("If-Match", fmt.Sprint(*updateAccountSettingsAssignmentOptions.IfMatch))
-	}
-
-	body := make(map[string]interface{})
-	if updateAccountSettingsAssignmentOptions.TemplateVersion != nil {
-		body["template_version"] = updateAccountSettingsAssignmentOptions.TemplateVersion
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "update_account_settings_assignment", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// ListAccountSettingsTemplates : List account settings templates
-// List account settings templates in an enterprise account.
-func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplates(listAccountSettingsTemplatesOptions *ListAccountSettingsTemplatesOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.ListAccountSettingsTemplatesWithContext(context.Background(), listAccountSettingsTemplatesOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// ListAccountSettingsTemplatesWithContext is an alternate form of the ListAccountSettingsTemplates method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplatesWithContext(ctx context.Context, listAccountSettingsTemplatesOptions *ListAccountSettingsTemplatesOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
-	err = core.ValidateStruct(listAccountSettingsTemplatesOptions, "listAccountSettingsTemplatesOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates`, nil)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range listAccountSettingsTemplatesOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListAccountSettingsTemplates")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if listAccountSettingsTemplatesOptions.AccountID != nil {
-		builder.AddQuery("account_id", fmt.Sprint(*listAccountSettingsTemplatesOptions.AccountID))
-	}
-	if listAccountSettingsTemplatesOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*listAccountSettingsTemplatesOptions.Limit))
-	}
-	if listAccountSettingsTemplatesOptions.Pagetoken != nil {
-		builder.AddQuery("pagetoken", fmt.Sprint(*listAccountSettingsTemplatesOptions.Pagetoken))
-	}
-	if listAccountSettingsTemplatesOptions.Sort != nil {
-		builder.AddQuery("sort", fmt.Sprint(*listAccountSettingsTemplatesOptions.Sort))
-	}
-	if listAccountSettingsTemplatesOptions.Order != nil {
-		builder.AddQuery("order", fmt.Sprint(*listAccountSettingsTemplatesOptions.Order))
-	}
-	if listAccountSettingsTemplatesOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*listAccountSettingsTemplatesOptions.IncludeHistory))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "list_account_settings_templates", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateList)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// CreateAccountSettingsTemplate : Create an account settings template
-// Create a new account settings template in an enterprise account.
-func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplate(createAccountSettingsTemplateOptions *CreateAccountSettingsTemplateOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.CreateAccountSettingsTemplateWithContext(context.Background(), createAccountSettingsTemplateOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// CreateAccountSettingsTemplateWithContext is an alternate form of the CreateAccountSettingsTemplate method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateWithContext(ctx context.Context, createAccountSettingsTemplateOptions *CreateAccountSettingsTemplateOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createAccountSettingsTemplateOptions, "createAccountSettingsTemplateOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(createAccountSettingsTemplateOptions, "createAccountSettingsTemplateOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates`, nil)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range createAccountSettingsTemplateOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateAccountSettingsTemplate")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-
-	body := make(map[string]interface{})
-	if createAccountSettingsTemplateOptions.AccountID != nil {
-		body["account_id"] = createAccountSettingsTemplateOptions.AccountID
-	}
-	if createAccountSettingsTemplateOptions.Name != nil {
-		body["name"] = createAccountSettingsTemplateOptions.Name
-	}
-	if createAccountSettingsTemplateOptions.Description != nil {
-		body["description"] = createAccountSettingsTemplateOptions.Description
-	}
-	if createAccountSettingsTemplateOptions.AccountSettings != nil {
-		body["account_settings"] = createAccountSettingsTemplateOptions.AccountSettings
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "create_account_settings_template", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetLatestAccountSettingsTemplateVersion : Get latest version of an account settings template
-// Get the latest version of a specific account settings template in an enterprise account.
-func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersion(getLatestAccountSettingsTemplateVersionOptions *GetLatestAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.GetLatestAccountSettingsTemplateVersionWithContext(context.Background(), getLatestAccountSettingsTemplateVersionOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// GetLatestAccountSettingsTemplateVersionWithContext is an alternate form of the GetLatestAccountSettingsTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersionWithContext(ctx context.Context, getLatestAccountSettingsTemplateVersionOptions *GetLatestAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getLatestAccountSettingsTemplateVersionOptions, "getLatestAccountSettingsTemplateVersionOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(getLatestAccountSettingsTemplateVersionOptions, "getLatestAccountSettingsTemplateVersionOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"template_id": *getLatestAccountSettingsTemplateVersionOptions.TemplateID,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range getLatestAccountSettingsTemplateVersionOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetLatestAccountSettingsTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if getLatestAccountSettingsTemplateVersionOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*getLatestAccountSettingsTemplateVersionOptions.IncludeHistory))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "get_latest_account_settings_template_version", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// DeleteAllVersionsOfAccountSettingsTemplate : Delete all versions of an account settings template
-// Delete all versions of an account settings template in an enterprise account. If any version is assigned to child
-// accounts, you must first delete the assignment.
-func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplate(deleteAllVersionsOfAccountSettingsTemplateOptions *DeleteAllVersionsOfAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.DeleteAllVersionsOfAccountSettingsTemplateWithContext(context.Background(), deleteAllVersionsOfAccountSettingsTemplateOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// DeleteAllVersionsOfAccountSettingsTemplateWithContext is an alternate form of the DeleteAllVersionsOfAccountSettingsTemplate method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplateWithContext(ctx context.Context, deleteAllVersionsOfAccountSettingsTemplateOptions *DeleteAllVersionsOfAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(deleteAllVersionsOfAccountSettingsTemplateOptions, "deleteAllVersionsOfAccountSettingsTemplateOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(deleteAllVersionsOfAccountSettingsTemplateOptions, "deleteAllVersionsOfAccountSettingsTemplateOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"template_id": *deleteAllVersionsOfAccountSettingsTemplateOptions.TemplateID,
-	}
-
-	builder := core.NewRequestBuilder(core.DELETE)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range deleteAllVersionsOfAccountSettingsTemplateOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAllVersionsOfAccountSettingsTemplate")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	response, err = iamIdentity.Service.Request(request, nil)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "delete_all_versions_of_account_settings_template", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-
-	return
-}
-
-// ListVersionsOfAccountSettingsTemplate : List account settings template versions
-// List the versions of a specific account settings template in an enterprise account.
-func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplate(listVersionsOfAccountSettingsTemplateOptions *ListVersionsOfAccountSettingsTemplateOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.ListVersionsOfAccountSettingsTemplateWithContext(context.Background(), listVersionsOfAccountSettingsTemplateOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// ListVersionsOfAccountSettingsTemplateWithContext is an alternate form of the ListVersionsOfAccountSettingsTemplate method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplateWithContext(ctx context.Context, listVersionsOfAccountSettingsTemplateOptions *ListVersionsOfAccountSettingsTemplateOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(listVersionsOfAccountSettingsTemplateOptions, "listVersionsOfAccountSettingsTemplateOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(listVersionsOfAccountSettingsTemplateOptions, "listVersionsOfAccountSettingsTemplateOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"template_id": *listVersionsOfAccountSettingsTemplateOptions.TemplateID,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range listVersionsOfAccountSettingsTemplateOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListVersionsOfAccountSettingsTemplate")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if listVersionsOfAccountSettingsTemplateOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.Limit))
-	}
-	if listVersionsOfAccountSettingsTemplateOptions.Pagetoken != nil {
-		builder.AddQuery("pagetoken", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.Pagetoken))
-	}
-	if listVersionsOfAccountSettingsTemplateOptions.Sort != nil {
-		builder.AddQuery("sort", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.Sort))
-	}
-	if listVersionsOfAccountSettingsTemplateOptions.Order != nil {
-		builder.AddQuery("order", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.Order))
-	}
-	if listVersionsOfAccountSettingsTemplateOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.IncludeHistory))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "list_versions_of_account_settings_template", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateList)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// CreateAccountSettingsTemplateVersion : Create a new version of an account settings template
-// Create a new version of an account settings template in an Enterprise Account.
-func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersion(createAccountSettingsTemplateVersionOptions *CreateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.CreateAccountSettingsTemplateVersionWithContext(context.Background(), createAccountSettingsTemplateVersionOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// CreateAccountSettingsTemplateVersionWithContext is an alternate form of the CreateAccountSettingsTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersionWithContext(ctx context.Context, createAccountSettingsTemplateVersionOptions *CreateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createAccountSettingsTemplateVersionOptions, "createAccountSettingsTemplateVersionOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(createAccountSettingsTemplateVersionOptions, "createAccountSettingsTemplateVersionOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"template_id": *createAccountSettingsTemplateVersionOptions.TemplateID,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range createAccountSettingsTemplateVersionOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateAccountSettingsTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-
-	body := make(map[string]interface{})
-	if createAccountSettingsTemplateVersionOptions.AccountID != nil {
-		body["account_id"] = createAccountSettingsTemplateVersionOptions.AccountID
-	}
-	if createAccountSettingsTemplateVersionOptions.Name != nil {
-		body["name"] = createAccountSettingsTemplateVersionOptions.Name
-	}
-	if createAccountSettingsTemplateVersionOptions.Description != nil {
-		body["description"] = createAccountSettingsTemplateVersionOptions.Description
-	}
-	if createAccountSettingsTemplateVersionOptions.AccountSettings != nil {
-		body["account_settings"] = createAccountSettingsTemplateVersionOptions.AccountSettings
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "create_account_settings_template_version", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetAccountSettingsTemplateVersion : Get version of an account settings template
-// Get a specific version of an account settings template in an Enterprise Account.
-func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersion(getAccountSettingsTemplateVersionOptions *GetAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.GetAccountSettingsTemplateVersionWithContext(context.Background(), getAccountSettingsTemplateVersionOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// GetAccountSettingsTemplateVersionWithContext is an alternate form of the GetAccountSettingsTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersionWithContext(ctx context.Context, getAccountSettingsTemplateVersionOptions *GetAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getAccountSettingsTemplateVersionOptions, "getAccountSettingsTemplateVersionOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(getAccountSettingsTemplateVersionOptions, "getAccountSettingsTemplateVersionOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"template_id": *getAccountSettingsTemplateVersionOptions.TemplateID,
-		"version":     *getAccountSettingsTemplateVersionOptions.Version,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range getAccountSettingsTemplateVersionOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAccountSettingsTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if getAccountSettingsTemplateVersionOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*getAccountSettingsTemplateVersionOptions.IncludeHistory))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "get_account_settings_template_version", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// UpdateAccountSettingsTemplateVersion : Update version of an account settings template
-// Update a specific version of an account settings template in an Enterprise Account.
-func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersion(updateAccountSettingsTemplateVersionOptions *UpdateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.UpdateAccountSettingsTemplateVersionWithContext(context.Background(), updateAccountSettingsTemplateVersionOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// UpdateAccountSettingsTemplateVersionWithContext is an alternate form of the UpdateAccountSettingsTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersionWithContext(ctx context.Context, updateAccountSettingsTemplateVersionOptions *UpdateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(updateAccountSettingsTemplateVersionOptions, "updateAccountSettingsTemplateVersionOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(updateAccountSettingsTemplateVersionOptions, "updateAccountSettingsTemplateVersionOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"template_id": *updateAccountSettingsTemplateVersionOptions.TemplateID,
-		"version":     *updateAccountSettingsTemplateVersionOptions.Version,
-	}
-
-	builder := core.NewRequestBuilder(core.PUT)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range updateAccountSettingsTemplateVersionOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateAccountSettingsTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-	builder.AddHeader("Content-Type", "application/json")
-	if updateAccountSettingsTemplateVersionOptions.IfMatch != nil {
-		builder.AddHeader("If-Match", fmt.Sprint(*updateAccountSettingsTemplateVersionOptions.IfMatch))
-	}
-
-	body := make(map[string]interface{})
-	if updateAccountSettingsTemplateVersionOptions.AccountID != nil {
-		body["account_id"] = updateAccountSettingsTemplateVersionOptions.AccountID
-	}
-	if updateAccountSettingsTemplateVersionOptions.Name != nil {
-		body["name"] = updateAccountSettingsTemplateVersionOptions.Name
-	}
-	if updateAccountSettingsTemplateVersionOptions.Description != nil {
-		body["description"] = updateAccountSettingsTemplateVersionOptions.Description
-	}
-	if updateAccountSettingsTemplateVersionOptions.AccountSettings != nil {
-		body["account_settings"] = updateAccountSettingsTemplateVersionOptions.AccountSettings
-	}
-	_, err = builder.SetBodyContentJSON(body)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
-		return
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "update_account_settings_template_version", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// DeleteAccountSettingsTemplateVersion : Delete version of an account settings template
-// Delete a specific version of an account settings template in an Enterprise Account.
-func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersion(deleteAccountSettingsTemplateVersionOptions *DeleteAccountSettingsTemplateVersionOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.DeleteAccountSettingsTemplateVersionWithContext(context.Background(), deleteAccountSettingsTemplateVersionOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// DeleteAccountSettingsTemplateVersionWithContext is an alternate form of the DeleteAccountSettingsTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersionWithContext(ctx context.Context, deleteAccountSettingsTemplateVersionOptions *DeleteAccountSettingsTemplateVersionOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(deleteAccountSettingsTemplateVersionOptions, "deleteAccountSettingsTemplateVersionOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(deleteAccountSettingsTemplateVersionOptions, "deleteAccountSettingsTemplateVersionOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"template_id": *deleteAccountSettingsTemplateVersionOptions.TemplateID,
-		"version":     *deleteAccountSettingsTemplateVersionOptions.Version,
-	}
-
-	builder := core.NewRequestBuilder(core.DELETE)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range deleteAccountSettingsTemplateVersionOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAccountSettingsTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	response, err = iamIdentity.Service.Request(request, nil)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "delete_account_settings_template_version", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-
-	return
-}
-
-// CommitAccountSettingsTemplate : Commit a template version
-// Commit a specific version of an account settings template in an Enterprise Account. A Template must be committed
-// before being assigned, and once committed, can no longer be modified.
-func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplate(commitAccountSettingsTemplateOptions *CommitAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.CommitAccountSettingsTemplateWithContext(context.Background(), commitAccountSettingsTemplateOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// CommitAccountSettingsTemplateWithContext is an alternate form of the CommitAccountSettingsTemplate method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplateWithContext(ctx context.Context, commitAccountSettingsTemplateOptions *CommitAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(commitAccountSettingsTemplateOptions, "commitAccountSettingsTemplateOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(commitAccountSettingsTemplateOptions, "commitAccountSettingsTemplateOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"template_id": *commitAccountSettingsTemplateOptions.TemplateID,
-		"version":     *commitAccountSettingsTemplateOptions.Version,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}/commit`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range commitAccountSettingsTemplateOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CommitAccountSettingsTemplate")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	response, err = iamIdentity.Service.Request(request, nil)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "commit_account_settings_template", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-
-	return
-}
-
-// CreateReport : Trigger activity report for the account
-// Trigger activity report for the account by specifying the account ID. It can take a few minutes to generate the
-// report for retrieval.
-func (iamIdentity *IamIdentityV1) CreateReport(createReportOptions *CreateReportOptions) (result *ReportReference, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.CreateReportWithContext(context.Background(), createReportOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// CreateReportWithContext is an alternate form of the CreateReport method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CreateReportWithContext(ctx context.Context, createReportOptions *CreateReportOptions) (result *ReportReference, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createReportOptions, "createReportOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(createReportOptions, "createReportOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"account_id": *createReportOptions.AccountID,
-	}
-
-	builder := core.NewRequestBuilder(core.POST)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/activity/accounts/{account_id}/report`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range createReportOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateReport")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if createReportOptions.Type != nil {
-		builder.AddQuery("type", fmt.Sprint(*createReportOptions.Type))
-	}
-	if createReportOptions.Duration != nil {
-		builder.AddQuery("duration", fmt.Sprint(*createReportOptions.Duration))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "create_report", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReportReference)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetReport : Get activity report for the account
-// Get activity report for the account by specifying the account ID and the reference that is generated by triggering
-// the report. Reports older than a day are deleted when generating a new report.
-func (iamIdentity *IamIdentityV1) GetReport(getReportOptions *GetReportOptions) (result *Report, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.GetReportWithContext(context.Background(), getReportOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// GetReportWithContext is an alternate form of the GetReport method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) GetReportWithContext(ctx context.Context, getReportOptions *GetReportOptions) (result *Report, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getReportOptions, "getReportOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(getReportOptions, "getReportOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"account_id": *getReportOptions.AccountID,
-		"reference":  *getReportOptions.Reference,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/activity/accounts/{account_id}/report/{reference}`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range getReportOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetReport")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "get_report", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalReport)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
-// GetEffectiveAccountSettings : Get effective account settings configuration
-// Returns effective account settings for given account ID.
-func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettings(getEffectiveAccountSettingsOptions *GetEffectiveAccountSettingsOptions) (result *EffectiveAccountSettingsResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.GetEffectiveAccountSettingsWithContext(context.Background(), getEffectiveAccountSettingsOptions)
-	err = core.RepurposeSDKProblem(err, "")
-	return
-}
-
-// GetEffectiveAccountSettingsWithContext is an alternate form of the GetEffectiveAccountSettings method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) GetEffectiveAccountSettingsWithContext(ctx context.Context, getEffectiveAccountSettingsOptions *GetEffectiveAccountSettingsOptions) (result *EffectiveAccountSettingsResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getEffectiveAccountSettingsOptions, "getEffectiveAccountSettingsOptions cannot be nil")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
-		return
-	}
-	err = core.ValidateStruct(getEffectiveAccountSettingsOptions, "getEffectiveAccountSettingsOptions")
-	if err != nil {
-		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
-		return
-	}
-
-	pathParamsMap := map[string]string{
-		"account_id": *getEffectiveAccountSettingsOptions.AccountID,
-	}
-
-	builder := core.NewRequestBuilder(core.GET)
-	builder = builder.WithContext(ctx)
-	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/accounts/{account_id}/effective_settings/identity`, pathParamsMap)
-	if err != nil {
-		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
-		return
-	}
-
-	for headerName, headerValue := range getEffectiveAccountSettingsOptions.Headers {
-		builder.AddHeader(headerName, headerValue)
-	}
-
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetEffectiveAccountSettings")
-	for headerName, headerValue := range sdkHeaders {
-		builder.AddHeader(headerName, headerValue)
-	}
-	builder.AddHeader("Accept", "application/json")
-
-	if getEffectiveAccountSettingsOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*getEffectiveAccountSettingsOptions.IncludeHistory))
-	}
-	if getEffectiveAccountSettingsOptions.ResolveUserMfa != nil {
-		builder.AddQuery("resolve_user_mfa", fmt.Sprint(*getEffectiveAccountSettingsOptions.ResolveUserMfa))
-	}
-
-	request, err := builder.Build()
-	if err != nil {
-		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
-		return
-	}
-
-	var rawResponse map[string]json.RawMessage
-	response, err = iamIdentity.Service.Request(request, &rawResponse)
-	if err != nil {
-		core.EnrichHTTPProblem(err, "get_effective_account_settings", getServiceComponentInfo())
-		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
-		return
-	}
-	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalEffectiveAccountSettingsResponse)
-		if err != nil {
-			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
-			return
-		}
-		response.Result = result
-	}
-
-	return
-}
-
 // UpdatePreferenceOnScopeAccount : Update Identity Preference on scope account
-// Update one Identity Preference on scope 'account'. supported preferences:
+// Update one Identity Preference on scope `account`.
 //
-//	The following preferences are storing values for identities inside an account,
-//	i.e. for each account that an identity is member of, the value stored might be different.
-//	This means, users who might be member of multiple accounts can have multiple preferences, one per account.
-//	Identities like Service Ids or Trusted Profiles can only exist in one account,
-//	therefore they can only have one preference inside their related account.
-//	preference: console/landing_page
-//	  service: console
-//	  preferenceId: landing_page
-//	  supportedIdentityType: Trusted Profiles, Users
-//	  type: string
-//	  validation: valid URL (without host part), e.g. /billing or /iam
-//	preference: console/global_left_navigation
-//	  service: console
-//	  preferenceId: global_left_navigation
-//	  supportedIdentityType: Trusted Profiles, Users
-//	  type: list of strings
-//	  validation: each entry in the list of strings must match the identifier of one navigation entry in the console.
+// The following preferences are storing values for identities inside an account,  i.e. for each account that an
+// identity is member of, the value stored might be different. This means, **users** who might be member of multiple
+// accounts can have multiple preferences, one per account.  Identities like **Service Ids** or **Trusted Profiles** can
+// only exist in one account,  therefore they can only have one preference inside their related account.
+//
+// ### Preferences
+//
+// - **console/landing_page**
+//
+//   service: `console`
+//
+//   preference_id: `landing_page`
+//
+//   supported identity types: `Trusted Profile`
+//
+//   type: `string`
+//
+//   validation: valid path for the IBM Cloud Console (without host part), e.g. `/billing` or `/iam`
+//
+// - **console/global_left_navigation**
+//
+//   service: `console`
+//
+//   preference_id: `global_left_navigation`
+//
+//   supported identity types: `Trusted Profile`
+//
+//   type: `list of strings`
+//
+//   validation: each entry in the list of strings must match the identifier of one navigation entry in the console;
+//   these identifiers are defined and interpreted by the IBM Cloud Console; currently the following entries are
+// supported:
+//
+// `slash,projects,rex,containers,databases,is,logmet,automation,complianceAndSecurity,apis,cp4d,partner-center,sap,satellite,vmWare,watsonx`
+//
+// ### Authorization
+//
+// To call this method for the identity type `Trusted Profile`, you must be assigned one or more IAM access roles that
+// include the following action on the target resource `account` and resource type `preferences`:
+//
+// - iam-identity.preferences.update
+//
+// By default, the `Administrator` role on service `iam-identity` contains this action.
 func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccount(updatePreferenceOnScopeAccountOptions *UpdatePreferenceOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.UpdatePreferenceOnScopeAccountWithContext(context.Background(), updatePreferenceOnScopeAccountOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -4708,9 +4054,9 @@ func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccountWithContext(ctx 
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":    *updatePreferenceOnScopeAccountOptions.AccountID,
-		"iam_id":        *updatePreferenceOnScopeAccountOptions.IamID,
-		"service":       *updatePreferenceOnScopeAccountOptions.Service,
+		"account_id": *updatePreferenceOnScopeAccountOptions.AccountID,
+		"iam_id": *updatePreferenceOnScopeAccountOptions.IamID,
+		"service": *updatePreferenceOnScopeAccountOptions.Service,
 		"preference_id": *updatePreferenceOnScopeAccountOptions.PreferenceID,
 	}
 
@@ -4723,12 +4069,12 @@ func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccountWithContext(ctx 
 		return
 	}
 
-	for headerName, headerValue := range updatePreferenceOnScopeAccountOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdatePreferenceOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdatePreferenceOnScopeAccount")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updatePreferenceOnScopeAccountOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -4773,7 +4119,9 @@ func (iamIdentity *IamIdentityV1) UpdatePreferenceOnScopeAccountWithContext(ctx 
 }
 
 // DeletePreferencesOnScopeAccount : Delete Identity Preference on scope account
-// Delete one Identity Preference on scope 'account'.
+// Delete one Identity Preference on scope `account`. For details about the preferences supported  and how the method
+// request is authorized, refer to the description of operation
+// `Update Identity Preference on scope account`.
 func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccount(deletePreferencesOnScopeAccountOptions *DeletePreferencesOnScopeAccountOptions) (response *core.DetailedResponse, err error) {
 	response, err = iamIdentity.DeletePreferencesOnScopeAccountWithContext(context.Background(), deletePreferencesOnScopeAccountOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -4794,9 +4142,9 @@ func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccountWithContext(ctx
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":    *deletePreferencesOnScopeAccountOptions.AccountID,
-		"iam_id":        *deletePreferencesOnScopeAccountOptions.IamID,
-		"service":       *deletePreferencesOnScopeAccountOptions.Service,
+		"account_id": *deletePreferencesOnScopeAccountOptions.AccountID,
+		"iam_id": *deletePreferencesOnScopeAccountOptions.IamID,
+		"service": *deletePreferencesOnScopeAccountOptions.Service,
 		"preference_id": *deletePreferencesOnScopeAccountOptions.PreferenceID,
 	}
 
@@ -4809,12 +4157,12 @@ func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccountWithContext(ctx
 		return
 	}
 
-	for headerName, headerValue := range deletePreferencesOnScopeAccountOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeletePreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeletePreferencesOnScopeAccount")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deletePreferencesOnScopeAccountOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -4835,7 +4183,23 @@ func (iamIdentity *IamIdentityV1) DeletePreferencesOnScopeAccountWithContext(ctx
 }
 
 // GetPreferencesOnScopeAccount : Get Identity Preference on scope account
-// Get one Identity Preference on scope 'account'.
+// Get one Identity Preference on scope `account`. For details about the preferences supported,  refer to the
+// description of operation `Update Identity Preference on scope account`.
+//
+// ### Authorization
+//
+// To call this method for the identity type `Trusted Profile`, one of the following conditions must be true:
+//
+// - the Authorization token represents the trusted profile which is addressed by this request
+//
+// - you must be assigned one or more IAM access roles that include the following action on the target resource
+// `account` and resource type `preferences`:
+//
+//   - iam-identity.preferences.update
+//
+//   By default, the `Administrator` role on service `iam-identity` contains this action.
+//
+// - Services inside the IBM Cloud Console can call this method.
 func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccount(getPreferencesOnScopeAccountOptions *GetPreferencesOnScopeAccountOptions) (result *IdentityPreferenceResponse, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.GetPreferencesOnScopeAccountWithContext(context.Background(), getPreferencesOnScopeAccountOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -4856,9 +4220,9 @@ func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccountWithContext(ctx co
 	}
 
 	pathParamsMap := map[string]string{
-		"account_id":    *getPreferencesOnScopeAccountOptions.AccountID,
-		"iam_id":        *getPreferencesOnScopeAccountOptions.IamID,
-		"service":       *getPreferencesOnScopeAccountOptions.Service,
+		"account_id": *getPreferencesOnScopeAccountOptions.AccountID,
+		"iam_id": *getPreferencesOnScopeAccountOptions.IamID,
+		"service": *getPreferencesOnScopeAccountOptions.Service,
 		"preference_id": *getPreferencesOnScopeAccountOptions.PreferenceID,
 	}
 
@@ -4871,12 +4235,12 @@ func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccountWithContext(ctx co
 		return
 	}
 
-	for headerName, headerValue := range getPreferencesOnScopeAccountOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetPreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetPreferencesOnScopeAccount")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getPreferencesOnScopeAccountOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -4906,8 +4270,13 @@ func (iamIdentity *IamIdentityV1) GetPreferencesOnScopeAccountWithContext(ctx co
 	return
 }
 
-// GetAllPreferencesOnScopeAccount : Get all Identity Preferences for one account
-// Get all Identity Preferences for one account / user combination.
+// GetAllPreferencesOnScopeAccount : Get all Identity Preferences on scope account
+// Get all Identity Preferences for one account / identity combination. For details about the preferences  supported and
+// how the method request is authorized, refer to the description of operation
+// `Get Identity Preference on scope account`.
+//
+// If you are not allowed to read a preference, the call will not fail. Instead, this preference is/ these preferences
+// are not returned in the list call.
 func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccount(getAllPreferencesOnScopeAccountOptions *GetAllPreferencesOnScopeAccountOptions) (result *IdentityPreferencesResponse, response *core.DetailedResponse, err error) {
 	result, response, err = iamIdentity.GetAllPreferencesOnScopeAccountWithContext(context.Background(), getAllPreferencesOnScopeAccountOptions)
 	err = core.RepurposeSDKProblem(err, "")
@@ -4929,7 +4298,7 @@ func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccountWithContext(ctx
 
 	pathParamsMap := map[string]string{
 		"account_id": *getAllPreferencesOnScopeAccountOptions.AccountID,
-		"iam_id":     *getAllPreferencesOnScopeAccountOptions.IamID,
+		"iam_id": *getAllPreferencesOnScopeAccountOptions.IamID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
@@ -4941,12 +4310,12 @@ func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccountWithContext(ctx
 		return
 	}
 
-	for headerName, headerValue := range getAllPreferencesOnScopeAccountOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAllPreferencesOnScopeAccount")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAllPreferencesOnScopeAccount")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getAllPreferencesOnScopeAccountOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -4971,6 +4340,784 @@ func (iamIdentity *IamIdentityV1) GetAllPreferencesOnScopeAccountWithContext(ctx
 			return
 		}
 		response.Result = result
+	}
+
+	return
+}
+
+// ListProfileTemplates : List trusted profile templates
+// List the trusted profile templates in an enterprise account.
+func (iamIdentity *IamIdentityV1) ListProfileTemplates(listProfileTemplatesOptions *ListProfileTemplatesOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.ListProfileTemplatesWithContext(context.Background(), listProfileTemplatesOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListProfileTemplatesWithContext is an alternate form of the ListProfileTemplates method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Context, listProfileTemplatesOptions *ListProfileTemplatesOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listProfileTemplatesOptions, "listProfileTemplatesOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListProfileTemplates")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listProfileTemplatesOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listProfileTemplatesOptions.AccountID != nil {
+		builder.AddQuery("account_id", fmt.Sprint(*listProfileTemplatesOptions.AccountID))
+	}
+	if listProfileTemplatesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listProfileTemplatesOptions.Limit))
+	}
+	if listProfileTemplatesOptions.Pagetoken != nil {
+		builder.AddQuery("pagetoken", fmt.Sprint(*listProfileTemplatesOptions.Pagetoken))
+	}
+	if listProfileTemplatesOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listProfileTemplatesOptions.Sort))
+	}
+	if listProfileTemplatesOptions.Order != nil {
+		builder.AddQuery("order", fmt.Sprint(*listProfileTemplatesOptions.Order))
+	}
+	if listProfileTemplatesOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*listProfileTemplatesOptions.IncludeHistory))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_profile_templates", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateList)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateProfileTemplate : Create a trusted profile template
+// Create a new trusted profile template in an enterprise account.
+func (iamIdentity *IamIdentityV1) CreateProfileTemplate(createProfileTemplateOptions *CreateProfileTemplateOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.CreateProfileTemplateWithContext(context.Background(), createProfileTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateProfileTemplateWithContext is an alternate form of the CreateProfileTemplate method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.Context, createProfileTemplateOptions *CreateProfileTemplateOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createProfileTemplateOptions, "createProfileTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createProfileTemplateOptions, "createProfileTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateProfileTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createProfileTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createProfileTemplateOptions.AccountID != nil {
+		body["account_id"] = createProfileTemplateOptions.AccountID
+	}
+	if createProfileTemplateOptions.Name != nil {
+		body["name"] = createProfileTemplateOptions.Name
+	}
+	if createProfileTemplateOptions.Description != nil {
+		body["description"] = createProfileTemplateOptions.Description
+	}
+	if createProfileTemplateOptions.Profile != nil {
+		body["profile"] = createProfileTemplateOptions.Profile
+	}
+	if createProfileTemplateOptions.PolicyTemplateReferences != nil {
+		body["policy_template_references"] = createProfileTemplateOptions.PolicyTemplateReferences
+	}
+	if createProfileTemplateOptions.ActionControls != nil {
+		body["action_controls"] = createProfileTemplateOptions.ActionControls
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_profile_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetLatestProfileTemplateVersion : Get latest version of a trusted profile template
+// Get the latest version of a trusted profile template in an enterprise account.
+func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersion(getLatestProfileTemplateVersionOptions *GetLatestProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetLatestProfileTemplateVersionWithContext(context.Background(), getLatestProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetLatestProfileTemplateVersionWithContext is an alternate form of the GetLatestProfileTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx context.Context, getLatestProfileTemplateVersionOptions *GetLatestProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getLatestProfileTemplateVersionOptions, "getLatestProfileTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getLatestProfileTemplateVersionOptions, "getLatestProfileTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"template_id": *getLatestProfileTemplateVersionOptions.TemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetLatestProfileTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getLatestProfileTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getLatestProfileTemplateVersionOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getLatestProfileTemplateVersionOptions.IncludeHistory))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_latest_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteAllVersionsOfProfileTemplate : Delete all versions of a trusted profile template
+// Delete all versions of a trusted profile template in an enterprise account. If any version is assigned to child
+// accounts, you must first delete the assignment.
+func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplate(deleteAllVersionsOfProfileTemplateOptions *DeleteAllVersionsOfProfileTemplateOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeleteAllVersionsOfProfileTemplateWithContext(context.Background(), deleteAllVersionsOfProfileTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteAllVersionsOfProfileTemplateWithContext is an alternate form of the DeleteAllVersionsOfProfileTemplate method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(ctx context.Context, deleteAllVersionsOfProfileTemplateOptions *DeleteAllVersionsOfProfileTemplateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteAllVersionsOfProfileTemplateOptions, "deleteAllVersionsOfProfileTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteAllVersionsOfProfileTemplateOptions, "deleteAllVersionsOfProfileTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"template_id": *deleteAllVersionsOfProfileTemplateOptions.TemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAllVersionsOfProfileTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteAllVersionsOfProfileTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_all_versions_of_profile_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// ListVersionsOfProfileTemplate : List trusted profile template versions
+// List the versions of a trusted profile template in an enterprise account.
+func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplate(listVersionsOfProfileTemplateOptions *ListVersionsOfProfileTemplateOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.ListVersionsOfProfileTemplateWithContext(context.Background(), listVersionsOfProfileTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListVersionsOfProfileTemplateWithContext is an alternate form of the ListVersionsOfProfileTemplate method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx context.Context, listVersionsOfProfileTemplateOptions *ListVersionsOfProfileTemplateOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listVersionsOfProfileTemplateOptions, "listVersionsOfProfileTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(listVersionsOfProfileTemplateOptions, "listVersionsOfProfileTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"template_id": *listVersionsOfProfileTemplateOptions.TemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListVersionsOfProfileTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listVersionsOfProfileTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listVersionsOfProfileTemplateOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listVersionsOfProfileTemplateOptions.Limit))
+	}
+	if listVersionsOfProfileTemplateOptions.Pagetoken != nil {
+		builder.AddQuery("pagetoken", fmt.Sprint(*listVersionsOfProfileTemplateOptions.Pagetoken))
+	}
+	if listVersionsOfProfileTemplateOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listVersionsOfProfileTemplateOptions.Sort))
+	}
+	if listVersionsOfProfileTemplateOptions.Order != nil {
+		builder.AddQuery("order", fmt.Sprint(*listVersionsOfProfileTemplateOptions.Order))
+	}
+	if listVersionsOfProfileTemplateOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*listVersionsOfProfileTemplateOptions.IncludeHistory))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_versions_of_profile_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateList)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateProfileTemplateVersion : Create new version of a trusted profile template
+// Create a new version of a trusted profile template in an enterprise account.
+func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersion(createProfileTemplateVersionOptions *CreateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.CreateProfileTemplateVersionWithContext(context.Background(), createProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateProfileTemplateVersionWithContext is an alternate form of the CreateProfileTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx context.Context, createProfileTemplateVersionOptions *CreateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createProfileTemplateVersionOptions, "createProfileTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createProfileTemplateVersionOptions, "createProfileTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"template_id": *createProfileTemplateVersionOptions.TemplateID,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateProfileTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createProfileTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createProfileTemplateVersionOptions.AccountID != nil {
+		body["account_id"] = createProfileTemplateVersionOptions.AccountID
+	}
+	if createProfileTemplateVersionOptions.Name != nil {
+		body["name"] = createProfileTemplateVersionOptions.Name
+	}
+	if createProfileTemplateVersionOptions.Description != nil {
+		body["description"] = createProfileTemplateVersionOptions.Description
+	}
+	if createProfileTemplateVersionOptions.Profile != nil {
+		body["profile"] = createProfileTemplateVersionOptions.Profile
+	}
+	if createProfileTemplateVersionOptions.PolicyTemplateReferences != nil {
+		body["policy_template_references"] = createProfileTemplateVersionOptions.PolicyTemplateReferences
+	}
+	if createProfileTemplateVersionOptions.ActionControls != nil {
+		body["action_controls"] = createProfileTemplateVersionOptions.ActionControls
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetProfileTemplateVersion : Get version of trusted profile template
+// Get a specific version of a trusted profile template in an enterprise account.
+func (iamIdentity *IamIdentityV1) GetProfileTemplateVersion(getProfileTemplateVersionOptions *GetProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetProfileTemplateVersionWithContext(context.Background(), getProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetProfileTemplateVersionWithContext is an alternate form of the GetProfileTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx context.Context, getProfileTemplateVersionOptions *GetProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getProfileTemplateVersionOptions, "getProfileTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getProfileTemplateVersionOptions, "getProfileTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"template_id": *getProfileTemplateVersionOptions.TemplateID,
+		"version": *getProfileTemplateVersionOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetProfileTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getProfileTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getProfileTemplateVersionOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getProfileTemplateVersionOptions.IncludeHistory))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateProfileTemplateVersion : Update version of trusted profile template
+// Update a specific version of a trusted profile template in an enterprise account.
+func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersion(updateProfileTemplateVersionOptions *UpdateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.UpdateProfileTemplateVersionWithContext(context.Background(), updateProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateProfileTemplateVersionWithContext is an alternate form of the UpdateProfileTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx context.Context, updateProfileTemplateVersionOptions *UpdateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateProfileTemplateVersionOptions, "updateProfileTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateProfileTemplateVersionOptions, "updateProfileTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"template_id": *updateProfileTemplateVersionOptions.TemplateID,
+		"version": *updateProfileTemplateVersionOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.PUT)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateProfileTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range updateProfileTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if updateProfileTemplateVersionOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateProfileTemplateVersionOptions.IfMatch))
+	}
+
+	body := make(map[string]interface{})
+	if updateProfileTemplateVersionOptions.AccountID != nil {
+		body["account_id"] = updateProfileTemplateVersionOptions.AccountID
+	}
+	if updateProfileTemplateVersionOptions.Name != nil {
+		body["name"] = updateProfileTemplateVersionOptions.Name
+	}
+	if updateProfileTemplateVersionOptions.Description != nil {
+		body["description"] = updateProfileTemplateVersionOptions.Description
+	}
+	if updateProfileTemplateVersionOptions.Profile != nil {
+		body["profile"] = updateProfileTemplateVersionOptions.Profile
+	}
+	if updateProfileTemplateVersionOptions.PolicyTemplateReferences != nil {
+		body["policy_template_references"] = updateProfileTemplateVersionOptions.PolicyTemplateReferences
+	}
+	if updateProfileTemplateVersionOptions.ActionControls != nil {
+		body["action_controls"] = updateProfileTemplateVersionOptions.ActionControls
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteProfileTemplateVersion : Delete version of trusted profile template
+// Delete a specific version of a trusted profile template in an enterprise account. If the version is assigned to child
+// accounts, you must first delete the assignment.
+func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersion(deleteProfileTemplateVersionOptions *DeleteProfileTemplateVersionOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeleteProfileTemplateVersionWithContext(context.Background(), deleteProfileTemplateVersionOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteProfileTemplateVersionWithContext is an alternate form of the DeleteProfileTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx context.Context, deleteProfileTemplateVersionOptions *DeleteProfileTemplateVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteProfileTemplateVersionOptions, "deleteProfileTemplateVersionOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteProfileTemplateVersionOptions, "deleteProfileTemplateVersionOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"template_id": *deleteProfileTemplateVersionOptions.TemplateID,
+		"version": *deleteProfileTemplateVersionOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteProfileTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteProfileTemplateVersionOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_profile_template_version", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+
+	return
+}
+
+// CommitProfileTemplate : Commit a template version
+// Commit a specific version of a trusted profile template in an enterprise account. You must commit a template before
+// you can assign it to child accounts. Once a template is committed, you can no longer modify the template.
+func (iamIdentity *IamIdentityV1) CommitProfileTemplate(commitProfileTemplateOptions *CommitProfileTemplateOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.CommitProfileTemplateWithContext(context.Background(), commitProfileTemplateOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CommitProfileTemplateWithContext is an alternate form of the CommitProfileTemplate method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CommitProfileTemplateWithContext(ctx context.Context, commitProfileTemplateOptions *CommitProfileTemplateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(commitProfileTemplateOptions, "commitProfileTemplateOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(commitProfileTemplateOptions, "commitProfileTemplateOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"template_id": *commitProfileTemplateOptions.TemplateID,
+		"version": *commitProfileTemplateOptions.Version,
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}/commit`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CommitProfileTemplate")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range commitProfileTemplateOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	response, err = iamIdentity.Service.Request(request, nil)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "commit_profile_template", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
 	}
 
 	return
@@ -5001,12 +5148,12 @@ func (iamIdentity *IamIdentityV1) ListTrustedProfileAssignmentsWithContext(ctx c
 		return
 	}
 
-	for headerName, headerValue := range listTrustedProfileAssignmentsOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListTrustedProfileAssignments")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListTrustedProfileAssignments")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listTrustedProfileAssignmentsOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -5097,12 +5244,12 @@ func (iamIdentity *IamIdentityV1) CreateTrustedProfileAssignmentWithContext(ctx 
 		return
 	}
 
-	for headerName, headerValue := range createTrustedProfileAssignmentOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateTrustedProfileAssignment")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateTrustedProfileAssignment")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createTrustedProfileAssignmentOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -5186,12 +5333,12 @@ func (iamIdentity *IamIdentityV1) GetTrustedProfileAssignmentWithContext(ctx con
 		return
 	}
 
-	for headerName, headerValue := range getTrustedProfileAssignmentOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetTrustedProfileAssignment")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetTrustedProfileAssignment")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getTrustedProfileAssignmentOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -5259,12 +5406,12 @@ func (iamIdentity *IamIdentityV1) DeleteTrustedProfileAssignmentWithContext(ctx 
 		return
 	}
 
-	for headerName, headerValue := range deleteTrustedProfileAssignmentOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteTrustedProfileAssignment")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteTrustedProfileAssignment")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteTrustedProfileAssignmentOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -5329,12 +5476,12 @@ func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignmentWithContext(ctx 
 		return
 	}
 
-	for headerName, headerValue := range updateTrustedProfileAssignmentOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateTrustedProfileAssignment")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateTrustedProfileAssignment")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateTrustedProfileAssignmentOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
@@ -5378,17 +5525,17 @@ func (iamIdentity *IamIdentityV1) UpdateTrustedProfileAssignmentWithContext(ctx 
 	return
 }
 
-// ListProfileTemplates : List trusted profile templates
-// List the trusted profile templates in an enterprise account.
-func (iamIdentity *IamIdentityV1) ListProfileTemplates(listProfileTemplatesOptions *ListProfileTemplatesOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.ListProfileTemplatesWithContext(context.Background(), listProfileTemplatesOptions)
+// ListAccountSettingsTemplates : List account settings templates
+// List account settings templates in an enterprise account.
+func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplates(listAccountSettingsTemplatesOptions *ListAccountSettingsTemplatesOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.ListAccountSettingsTemplatesWithContext(context.Background(), listAccountSettingsTemplatesOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// ListProfileTemplatesWithContext is an alternate form of the ListProfileTemplates method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Context, listProfileTemplatesOptions *ListProfileTemplatesOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
-	err = core.ValidateStruct(listProfileTemplatesOptions, "listProfileTemplatesOptions")
+// ListAccountSettingsTemplatesWithContext is an alternate form of the ListAccountSettingsTemplates method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) ListAccountSettingsTemplatesWithContext(ctx context.Context, listAccountSettingsTemplatesOptions *ListAccountSettingsTemplatesOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listAccountSettingsTemplatesOptions, "listAccountSettingsTemplatesOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
@@ -5397,39 +5544,39 @@ func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Co
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates`, nil)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates`, nil)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range listProfileTemplatesOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListAccountSettingsTemplates")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListProfileTemplates")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listAccountSettingsTemplatesOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	if listProfileTemplatesOptions.AccountID != nil {
-		builder.AddQuery("account_id", fmt.Sprint(*listProfileTemplatesOptions.AccountID))
+	if listAccountSettingsTemplatesOptions.AccountID != nil {
+		builder.AddQuery("account_id", fmt.Sprint(*listAccountSettingsTemplatesOptions.AccountID))
 	}
-	if listProfileTemplatesOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*listProfileTemplatesOptions.Limit))
+	if listAccountSettingsTemplatesOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listAccountSettingsTemplatesOptions.Limit))
 	}
-	if listProfileTemplatesOptions.Pagetoken != nil {
-		builder.AddQuery("pagetoken", fmt.Sprint(*listProfileTemplatesOptions.Pagetoken))
+	if listAccountSettingsTemplatesOptions.Pagetoken != nil {
+		builder.AddQuery("pagetoken", fmt.Sprint(*listAccountSettingsTemplatesOptions.Pagetoken))
 	}
-	if listProfileTemplatesOptions.Sort != nil {
-		builder.AddQuery("sort", fmt.Sprint(*listProfileTemplatesOptions.Sort))
+	if listAccountSettingsTemplatesOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listAccountSettingsTemplatesOptions.Sort))
 	}
-	if listProfileTemplatesOptions.Order != nil {
-		builder.AddQuery("order", fmt.Sprint(*listProfileTemplatesOptions.Order))
+	if listAccountSettingsTemplatesOptions.Order != nil {
+		builder.AddQuery("order", fmt.Sprint(*listAccountSettingsTemplatesOptions.Order))
 	}
-	if listProfileTemplatesOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*listProfileTemplatesOptions.IncludeHistory))
+	if listAccountSettingsTemplatesOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*listAccountSettingsTemplatesOptions.IncludeHistory))
 	}
 
 	request, err := builder.Build()
@@ -5441,12 +5588,12 @@ func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Co
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "list_profile_templates", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "list_account_settings_templates", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateList)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateList)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -5457,22 +5604,22 @@ func (iamIdentity *IamIdentityV1) ListProfileTemplatesWithContext(ctx context.Co
 	return
 }
 
-// CreateProfileTemplate : Create a trusted profile template
-// Create a new trusted profile template in an enterprise account.
-func (iamIdentity *IamIdentityV1) CreateProfileTemplate(createProfileTemplateOptions *CreateProfileTemplateOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.CreateProfileTemplateWithContext(context.Background(), createProfileTemplateOptions)
+// CreateAccountSettingsTemplate : Create an account settings template
+// Create a new account settings template in an enterprise account.
+func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplate(createAccountSettingsTemplateOptions *CreateAccountSettingsTemplateOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.CreateAccountSettingsTemplateWithContext(context.Background(), createAccountSettingsTemplateOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// CreateProfileTemplateWithContext is an alternate form of the CreateProfileTemplate method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.Context, createProfileTemplateOptions *CreateProfileTemplateOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createProfileTemplateOptions, "createProfileTemplateOptions cannot be nil")
+// CreateAccountSettingsTemplateWithContext is an alternate form of the CreateAccountSettingsTemplate method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateWithContext(ctx context.Context, createAccountSettingsTemplateOptions *CreateAccountSettingsTemplateOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createAccountSettingsTemplateOptions, "createAccountSettingsTemplateOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(createProfileTemplateOptions, "createProfileTemplateOptions")
+	err = core.ValidateStruct(createAccountSettingsTemplateOptions, "createAccountSettingsTemplateOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
@@ -5481,41 +5628,35 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.C
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates`, nil)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates`, nil)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range createProfileTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateAccountSettingsTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateProfileTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createAccountSettingsTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if createProfileTemplateOptions.AccountID != nil {
-		body["account_id"] = createProfileTemplateOptions.AccountID
+	if createAccountSettingsTemplateOptions.AccountID != nil {
+		body["account_id"] = createAccountSettingsTemplateOptions.AccountID
 	}
-	if createProfileTemplateOptions.Name != nil {
-		body["name"] = createProfileTemplateOptions.Name
+	if createAccountSettingsTemplateOptions.Name != nil {
+		body["name"] = createAccountSettingsTemplateOptions.Name
 	}
-	if createProfileTemplateOptions.Description != nil {
-		body["description"] = createProfileTemplateOptions.Description
+	if createAccountSettingsTemplateOptions.Description != nil {
+		body["description"] = createAccountSettingsTemplateOptions.Description
 	}
-	if createProfileTemplateOptions.Profile != nil {
-		body["profile"] = createProfileTemplateOptions.Profile
-	}
-	if createProfileTemplateOptions.PolicyTemplateReferences != nil {
-		body["policy_template_references"] = createProfileTemplateOptions.PolicyTemplateReferences
-	}
-	if createProfileTemplateOptions.ActionControls != nil {
-		body["action_controls"] = createProfileTemplateOptions.ActionControls
+	if createAccountSettingsTemplateOptions.AccountSettings != nil {
+		body["account_settings"] = createAccountSettingsTemplateOptions.AccountSettings
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -5532,12 +5673,12 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.C
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "create_profile_template", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "create_account_settings_template", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -5548,52 +5689,52 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateWithContext(ctx context.C
 	return
 }
 
-// GetLatestProfileTemplateVersion : Get latest version of a trusted profile template
-// Get the latest version of a trusted profile template in an enterprise account.
-func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersion(getLatestProfileTemplateVersionOptions *GetLatestProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.GetLatestProfileTemplateVersionWithContext(context.Background(), getLatestProfileTemplateVersionOptions)
+// GetLatestAccountSettingsTemplateVersion : Get latest version of an account settings template
+// Get the latest version of a specific account settings template in an enterprise account.
+func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersion(getLatestAccountSettingsTemplateVersionOptions *GetLatestAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetLatestAccountSettingsTemplateVersionWithContext(context.Background(), getLatestAccountSettingsTemplateVersionOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// GetLatestProfileTemplateVersionWithContext is an alternate form of the GetLatestProfileTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx context.Context, getLatestProfileTemplateVersionOptions *GetLatestProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getLatestProfileTemplateVersionOptions, "getLatestProfileTemplateVersionOptions cannot be nil")
+// GetLatestAccountSettingsTemplateVersionWithContext is an alternate form of the GetLatestAccountSettingsTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetLatestAccountSettingsTemplateVersionWithContext(ctx context.Context, getLatestAccountSettingsTemplateVersionOptions *GetLatestAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getLatestAccountSettingsTemplateVersionOptions, "getLatestAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(getLatestProfileTemplateVersionOptions, "getLatestProfileTemplateVersionOptions")
+	err = core.ValidateStruct(getLatestAccountSettingsTemplateVersionOptions, "getLatestAccountSettingsTemplateVersionOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"template_id": *getLatestProfileTemplateVersionOptions.TemplateID,
+		"template_id": *getLatestAccountSettingsTemplateVersionOptions.TemplateID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range getLatestProfileTemplateVersionOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetLatestAccountSettingsTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetLatestProfileTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getLatestAccountSettingsTemplateVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	if getLatestProfileTemplateVersionOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*getLatestProfileTemplateVersionOptions.IncludeHistory))
+	if getLatestAccountSettingsTemplateVersionOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getLatestAccountSettingsTemplateVersionOptions.IncludeHistory))
 	}
 
 	request, err := builder.Build()
@@ -5605,12 +5746,12 @@ func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "get_latest_profile_template_version", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "get_latest_account_settings_template_version", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -5621,47 +5762,47 @@ func (iamIdentity *IamIdentityV1) GetLatestProfileTemplateVersionWithContext(ctx
 	return
 }
 
-// DeleteAllVersionsOfProfileTemplate : Delete all versions of a trusted profile template
-// Delete all versions of a trusted profile template in an enterprise account. If any version is assigned to child
+// DeleteAllVersionsOfAccountSettingsTemplate : Delete all versions of an account settings template
+// Delete all versions of an account settings template in an enterprise account. If any version is assigned to child
 // accounts, you must first delete the assignment.
-func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplate(deleteAllVersionsOfProfileTemplateOptions *DeleteAllVersionsOfProfileTemplateOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.DeleteAllVersionsOfProfileTemplateWithContext(context.Background(), deleteAllVersionsOfProfileTemplateOptions)
+func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplate(deleteAllVersionsOfAccountSettingsTemplateOptions *DeleteAllVersionsOfAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeleteAllVersionsOfAccountSettingsTemplateWithContext(context.Background(), deleteAllVersionsOfAccountSettingsTemplateOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// DeleteAllVersionsOfProfileTemplateWithContext is an alternate form of the DeleteAllVersionsOfProfileTemplate method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(ctx context.Context, deleteAllVersionsOfProfileTemplateOptions *DeleteAllVersionsOfProfileTemplateOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(deleteAllVersionsOfProfileTemplateOptions, "deleteAllVersionsOfProfileTemplateOptions cannot be nil")
+// DeleteAllVersionsOfAccountSettingsTemplateWithContext is an alternate form of the DeleteAllVersionsOfAccountSettingsTemplate method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfAccountSettingsTemplateWithContext(ctx context.Context, deleteAllVersionsOfAccountSettingsTemplateOptions *DeleteAllVersionsOfAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteAllVersionsOfAccountSettingsTemplateOptions, "deleteAllVersionsOfAccountSettingsTemplateOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(deleteAllVersionsOfProfileTemplateOptions, "deleteAllVersionsOfProfileTemplateOptions")
+	err = core.ValidateStruct(deleteAllVersionsOfAccountSettingsTemplateOptions, "deleteAllVersionsOfAccountSettingsTemplateOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"template_id": *deleteAllVersionsOfProfileTemplateOptions.TemplateID,
+		"template_id": *deleteAllVersionsOfAccountSettingsTemplateOptions.TemplateID,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range deleteAllVersionsOfProfileTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAllVersionsOfAccountSettingsTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAllVersionsOfProfileTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteAllVersionsOfAccountSettingsTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -5673,7 +5814,7 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(
 
 	response, err = iamIdentity.Service.Request(request, nil)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "delete_all_versions_of_profile_template", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "delete_all_versions_of_account_settings_template", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
@@ -5681,64 +5822,64 @@ func (iamIdentity *IamIdentityV1) DeleteAllVersionsOfProfileTemplateWithContext(
 	return
 }
 
-// ListVersionsOfProfileTemplate : List trusted profile template versions
-// List the versions of a trusted profile template in an enterprise account.
-func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplate(listVersionsOfProfileTemplateOptions *ListVersionsOfProfileTemplateOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.ListVersionsOfProfileTemplateWithContext(context.Background(), listVersionsOfProfileTemplateOptions)
+// ListVersionsOfAccountSettingsTemplate : List account settings template versions
+// List the versions of a specific account settings template in an enterprise account.
+func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplate(listVersionsOfAccountSettingsTemplateOptions *ListVersionsOfAccountSettingsTemplateOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.ListVersionsOfAccountSettingsTemplateWithContext(context.Background(), listVersionsOfAccountSettingsTemplateOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// ListVersionsOfProfileTemplateWithContext is an alternate form of the ListVersionsOfProfileTemplate method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx context.Context, listVersionsOfProfileTemplateOptions *ListVersionsOfProfileTemplateOptions) (result *TrustedProfileTemplateList, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(listVersionsOfProfileTemplateOptions, "listVersionsOfProfileTemplateOptions cannot be nil")
+// ListVersionsOfAccountSettingsTemplateWithContext is an alternate form of the ListVersionsOfAccountSettingsTemplate method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) ListVersionsOfAccountSettingsTemplateWithContext(ctx context.Context, listVersionsOfAccountSettingsTemplateOptions *ListVersionsOfAccountSettingsTemplateOptions) (result *AccountSettingsTemplateList, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(listVersionsOfAccountSettingsTemplateOptions, "listVersionsOfAccountSettingsTemplateOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(listVersionsOfProfileTemplateOptions, "listVersionsOfProfileTemplateOptions")
+	err = core.ValidateStruct(listVersionsOfAccountSettingsTemplateOptions, "listVersionsOfAccountSettingsTemplateOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"template_id": *listVersionsOfProfileTemplateOptions.TemplateID,
+		"template_id": *listVersionsOfAccountSettingsTemplateOptions.TemplateID,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range listVersionsOfProfileTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListVersionsOfAccountSettingsTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListVersionsOfProfileTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range listVersionsOfAccountSettingsTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	if listVersionsOfProfileTemplateOptions.Limit != nil {
-		builder.AddQuery("limit", fmt.Sprint(*listVersionsOfProfileTemplateOptions.Limit))
+	if listVersionsOfAccountSettingsTemplateOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.Limit))
 	}
-	if listVersionsOfProfileTemplateOptions.Pagetoken != nil {
-		builder.AddQuery("pagetoken", fmt.Sprint(*listVersionsOfProfileTemplateOptions.Pagetoken))
+	if listVersionsOfAccountSettingsTemplateOptions.Pagetoken != nil {
+		builder.AddQuery("pagetoken", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.Pagetoken))
 	}
-	if listVersionsOfProfileTemplateOptions.Sort != nil {
-		builder.AddQuery("sort", fmt.Sprint(*listVersionsOfProfileTemplateOptions.Sort))
+	if listVersionsOfAccountSettingsTemplateOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.Sort))
 	}
-	if listVersionsOfProfileTemplateOptions.Order != nil {
-		builder.AddQuery("order", fmt.Sprint(*listVersionsOfProfileTemplateOptions.Order))
+	if listVersionsOfAccountSettingsTemplateOptions.Order != nil {
+		builder.AddQuery("order", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.Order))
 	}
-	if listVersionsOfProfileTemplateOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*listVersionsOfProfileTemplateOptions.IncludeHistory))
+	if listVersionsOfAccountSettingsTemplateOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*listVersionsOfAccountSettingsTemplateOptions.IncludeHistory))
 	}
 
 	request, err := builder.Build()
@@ -5750,12 +5891,12 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx c
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "list_versions_of_profile_template", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "list_versions_of_account_settings_template", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateList)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateList)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -5766,69 +5907,63 @@ func (iamIdentity *IamIdentityV1) ListVersionsOfProfileTemplateWithContext(ctx c
 	return
 }
 
-// CreateProfileTemplateVersion : Create new version of a trusted profile template
-// Create a new version of a trusted profile template in an enterprise account.
-func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersion(createProfileTemplateVersionOptions *CreateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.CreateProfileTemplateVersionWithContext(context.Background(), createProfileTemplateVersionOptions)
+// CreateAccountSettingsTemplateVersion : Create a new version of an account settings template
+// Create a new version of an account settings template in an Enterprise Account.
+func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersion(createAccountSettingsTemplateVersionOptions *CreateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.CreateAccountSettingsTemplateVersionWithContext(context.Background(), createAccountSettingsTemplateVersionOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// CreateProfileTemplateVersionWithContext is an alternate form of the CreateProfileTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx context.Context, createProfileTemplateVersionOptions *CreateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(createProfileTemplateVersionOptions, "createProfileTemplateVersionOptions cannot be nil")
+// CreateAccountSettingsTemplateVersionWithContext is an alternate form of the CreateAccountSettingsTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CreateAccountSettingsTemplateVersionWithContext(ctx context.Context, createAccountSettingsTemplateVersionOptions *CreateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createAccountSettingsTemplateVersionOptions, "createAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(createProfileTemplateVersionOptions, "createProfileTemplateVersionOptions")
+	err = core.ValidateStruct(createAccountSettingsTemplateVersionOptions, "createAccountSettingsTemplateVersionOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"template_id": *createProfileTemplateVersionOptions.TemplateID,
+		"template_id": *createAccountSettingsTemplateVersionOptions.TemplateID,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range createProfileTemplateVersionOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateAccountSettingsTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateProfileTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range createAccountSettingsTemplateVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
 
 	body := make(map[string]interface{})
-	if createProfileTemplateVersionOptions.AccountID != nil {
-		body["account_id"] = createProfileTemplateVersionOptions.AccountID
+	if createAccountSettingsTemplateVersionOptions.AccountID != nil {
+		body["account_id"] = createAccountSettingsTemplateVersionOptions.AccountID
 	}
-	if createProfileTemplateVersionOptions.Name != nil {
-		body["name"] = createProfileTemplateVersionOptions.Name
+	if createAccountSettingsTemplateVersionOptions.Name != nil {
+		body["name"] = createAccountSettingsTemplateVersionOptions.Name
 	}
-	if createProfileTemplateVersionOptions.Description != nil {
-		body["description"] = createProfileTemplateVersionOptions.Description
+	if createAccountSettingsTemplateVersionOptions.Description != nil {
+		body["description"] = createAccountSettingsTemplateVersionOptions.Description
 	}
-	if createProfileTemplateVersionOptions.Profile != nil {
-		body["profile"] = createProfileTemplateVersionOptions.Profile
-	}
-	if createProfileTemplateVersionOptions.PolicyTemplateReferences != nil {
-		body["policy_template_references"] = createProfileTemplateVersionOptions.PolicyTemplateReferences
-	}
-	if createProfileTemplateVersionOptions.ActionControls != nil {
-		body["action_controls"] = createProfileTemplateVersionOptions.ActionControls
+	if createAccountSettingsTemplateVersionOptions.AccountSettings != nil {
+		body["account_settings"] = createAccountSettingsTemplateVersionOptions.AccountSettings
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -5845,12 +5980,12 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx co
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "create_profile_template_version", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "create_account_settings_template_version", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -5861,53 +5996,53 @@ func (iamIdentity *IamIdentityV1) CreateProfileTemplateVersionWithContext(ctx co
 	return
 }
 
-// GetProfileTemplateVersion : Get version of trusted profile template
-// Get a specific version of a trusted profile template in an enterprise account.
-func (iamIdentity *IamIdentityV1) GetProfileTemplateVersion(getProfileTemplateVersionOptions *GetProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.GetProfileTemplateVersionWithContext(context.Background(), getProfileTemplateVersionOptions)
+// GetAccountSettingsTemplateVersion : Get version of an account settings template
+// Get a specific version of an account settings template in an Enterprise Account.
+func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersion(getAccountSettingsTemplateVersionOptions *GetAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetAccountSettingsTemplateVersionWithContext(context.Background(), getAccountSettingsTemplateVersionOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// GetProfileTemplateVersionWithContext is an alternate form of the GetProfileTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx context.Context, getProfileTemplateVersionOptions *GetProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(getProfileTemplateVersionOptions, "getProfileTemplateVersionOptions cannot be nil")
+// GetAccountSettingsTemplateVersionWithContext is an alternate form of the GetAccountSettingsTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetAccountSettingsTemplateVersionWithContext(ctx context.Context, getAccountSettingsTemplateVersionOptions *GetAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getAccountSettingsTemplateVersionOptions, "getAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(getProfileTemplateVersionOptions, "getProfileTemplateVersionOptions")
+	err = core.ValidateStruct(getAccountSettingsTemplateVersionOptions, "getAccountSettingsTemplateVersionOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"template_id": *getProfileTemplateVersionOptions.TemplateID,
-		"version":     *getProfileTemplateVersionOptions.Version,
+		"template_id": *getAccountSettingsTemplateVersionOptions.TemplateID,
+		"version": *getAccountSettingsTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.GET)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range getProfileTemplateVersionOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAccountSettingsTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetProfileTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range getAccountSettingsTemplateVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 
-	if getProfileTemplateVersionOptions.IncludeHistory != nil {
-		builder.AddQuery("include_history", fmt.Sprint(*getProfileTemplateVersionOptions.IncludeHistory))
+	if getAccountSettingsTemplateVersionOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getAccountSettingsTemplateVersionOptions.IncludeHistory))
 	}
 
 	request, err := builder.Build()
@@ -5919,12 +6054,12 @@ func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx conte
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "get_profile_template_version", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "get_account_settings_template_version", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -5935,73 +6070,67 @@ func (iamIdentity *IamIdentityV1) GetProfileTemplateVersionWithContext(ctx conte
 	return
 }
 
-// UpdateProfileTemplateVersion : Update version of trusted profile template
-// Update a specific version of a trusted profile template in an enterprise account.
-func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersion(updateProfileTemplateVersionOptions *UpdateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	result, response, err = iamIdentity.UpdateProfileTemplateVersionWithContext(context.Background(), updateProfileTemplateVersionOptions)
+// UpdateAccountSettingsTemplateVersion : Update version of an account settings template
+// Update a specific version of an account settings template in an Enterprise Account.
+func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersion(updateAccountSettingsTemplateVersionOptions *UpdateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.UpdateAccountSettingsTemplateVersionWithContext(context.Background(), updateAccountSettingsTemplateVersionOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// UpdateProfileTemplateVersionWithContext is an alternate form of the UpdateProfileTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx context.Context, updateProfileTemplateVersionOptions *UpdateProfileTemplateVersionOptions) (result *TrustedProfileTemplateResponse, response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(updateProfileTemplateVersionOptions, "updateProfileTemplateVersionOptions cannot be nil")
+// UpdateAccountSettingsTemplateVersionWithContext is an alternate form of the UpdateAccountSettingsTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UpdateAccountSettingsTemplateVersionWithContext(ctx context.Context, updateAccountSettingsTemplateVersionOptions *UpdateAccountSettingsTemplateVersionOptions) (result *AccountSettingsTemplateResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateAccountSettingsTemplateVersionOptions, "updateAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(updateProfileTemplateVersionOptions, "updateProfileTemplateVersionOptions")
+	err = core.ValidateStruct(updateAccountSettingsTemplateVersionOptions, "updateAccountSettingsTemplateVersionOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"template_id": *updateProfileTemplateVersionOptions.TemplateID,
-		"version":     *updateProfileTemplateVersionOptions.Version,
+		"template_id": *updateAccountSettingsTemplateVersionOptions.TemplateID,
+		"version": *updateAccountSettingsTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.PUT)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range updateProfileTemplateVersionOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateAccountSettingsTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateProfileTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range updateAccountSettingsTemplateVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 	builder.AddHeader("Accept", "application/json")
 	builder.AddHeader("Content-Type", "application/json")
-	if updateProfileTemplateVersionOptions.IfMatch != nil {
-		builder.AddHeader("If-Match", fmt.Sprint(*updateProfileTemplateVersionOptions.IfMatch))
+	if updateAccountSettingsTemplateVersionOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateAccountSettingsTemplateVersionOptions.IfMatch))
 	}
 
 	body := make(map[string]interface{})
-	if updateProfileTemplateVersionOptions.AccountID != nil {
-		body["account_id"] = updateProfileTemplateVersionOptions.AccountID
+	if updateAccountSettingsTemplateVersionOptions.AccountID != nil {
+		body["account_id"] = updateAccountSettingsTemplateVersionOptions.AccountID
 	}
-	if updateProfileTemplateVersionOptions.Name != nil {
-		body["name"] = updateProfileTemplateVersionOptions.Name
+	if updateAccountSettingsTemplateVersionOptions.Name != nil {
+		body["name"] = updateAccountSettingsTemplateVersionOptions.Name
 	}
-	if updateProfileTemplateVersionOptions.Description != nil {
-		body["description"] = updateProfileTemplateVersionOptions.Description
+	if updateAccountSettingsTemplateVersionOptions.Description != nil {
+		body["description"] = updateAccountSettingsTemplateVersionOptions.Description
 	}
-	if updateProfileTemplateVersionOptions.Profile != nil {
-		body["profile"] = updateProfileTemplateVersionOptions.Profile
-	}
-	if updateProfileTemplateVersionOptions.PolicyTemplateReferences != nil {
-		body["policy_template_references"] = updateProfileTemplateVersionOptions.PolicyTemplateReferences
-	}
-	if updateProfileTemplateVersionOptions.ActionControls != nil {
-		body["action_controls"] = updateProfileTemplateVersionOptions.ActionControls
+	if updateAccountSettingsTemplateVersionOptions.AccountSettings != nil {
+		body["account_settings"] = updateAccountSettingsTemplateVersionOptions.AccountSettings
 	}
 	_, err = builder.SetBodyContentJSON(body)
 	if err != nil {
@@ -6018,12 +6147,12 @@ func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx co
 	var rawResponse map[string]json.RawMessage
 	response, err = iamIdentity.Service.Request(request, &rawResponse)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "update_profile_template_version", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "update_account_settings_template_version", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
 	if rawResponse != nil {
-		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTrustedProfileTemplateResponse)
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalAccountSettingsTemplateResponse)
 		if err != nil {
 			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
 			return
@@ -6034,48 +6163,47 @@ func (iamIdentity *IamIdentityV1) UpdateProfileTemplateVersionWithContext(ctx co
 	return
 }
 
-// DeleteProfileTemplateVersion : Delete version of trusted profile template
-// Delete a specific version of a trusted profile template in an enterprise account. If the version is assigned to child
-// accounts, you must first delete the assignment.
-func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersion(deleteProfileTemplateVersionOptions *DeleteProfileTemplateVersionOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.DeleteProfileTemplateVersionWithContext(context.Background(), deleteProfileTemplateVersionOptions)
+// DeleteAccountSettingsTemplateVersion : Delete version of an account settings template
+// Delete a specific version of an account settings template in an Enterprise Account.
+func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersion(deleteAccountSettingsTemplateVersionOptions *DeleteAccountSettingsTemplateVersionOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.DeleteAccountSettingsTemplateVersionWithContext(context.Background(), deleteAccountSettingsTemplateVersionOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// DeleteProfileTemplateVersionWithContext is an alternate form of the DeleteProfileTemplateVersion method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx context.Context, deleteProfileTemplateVersionOptions *DeleteProfileTemplateVersionOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(deleteProfileTemplateVersionOptions, "deleteProfileTemplateVersionOptions cannot be nil")
+// DeleteAccountSettingsTemplateVersionWithContext is an alternate form of the DeleteAccountSettingsTemplateVersion method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeleteAccountSettingsTemplateVersionWithContext(ctx context.Context, deleteAccountSettingsTemplateVersionOptions *DeleteAccountSettingsTemplateVersionOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteAccountSettingsTemplateVersionOptions, "deleteAccountSettingsTemplateVersionOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(deleteProfileTemplateVersionOptions, "deleteProfileTemplateVersionOptions")
+	err = core.ValidateStruct(deleteAccountSettingsTemplateVersionOptions, "deleteAccountSettingsTemplateVersionOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"template_id": *deleteProfileTemplateVersionOptions.TemplateID,
-		"version":     *deleteProfileTemplateVersionOptions.Version,
+		"template_id": *deleteAccountSettingsTemplateVersionOptions.TemplateID,
+		"version": *deleteAccountSettingsTemplateVersionOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.DELETE)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range deleteProfileTemplateVersionOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAccountSettingsTemplateVersion")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteProfileTemplateVersion")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range deleteAccountSettingsTemplateVersionOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -6087,7 +6215,7 @@ func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx co
 
 	response, err = iamIdentity.Service.Request(request, nil)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "delete_profile_template_version", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "delete_account_settings_template_version", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
 	}
@@ -6095,48 +6223,48 @@ func (iamIdentity *IamIdentityV1) DeleteProfileTemplateVersionWithContext(ctx co
 	return
 }
 
-// CommitProfileTemplate : Commit a template version
-// Commit a specific version of a trusted profile template in an enterprise account. You must commit a template before
-// you can assign it to child accounts. Once a template is committed, you can no longer modify the template.
-func (iamIdentity *IamIdentityV1) CommitProfileTemplate(commitProfileTemplateOptions *CommitProfileTemplateOptions) (response *core.DetailedResponse, err error) {
-	response, err = iamIdentity.CommitProfileTemplateWithContext(context.Background(), commitProfileTemplateOptions)
+// CommitAccountSettingsTemplate : Commit a template version
+// Commit a specific version of an account settings template in an Enterprise Account. A Template must be committed
+// before being assigned, and once committed, can no longer be modified.
+func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplate(commitAccountSettingsTemplateOptions *CommitAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
+	response, err = iamIdentity.CommitAccountSettingsTemplateWithContext(context.Background(), commitAccountSettingsTemplateOptions)
 	err = core.RepurposeSDKProblem(err, "")
 	return
 }
 
-// CommitProfileTemplateWithContext is an alternate form of the CommitProfileTemplate method which supports a Context parameter
-func (iamIdentity *IamIdentityV1) CommitProfileTemplateWithContext(ctx context.Context, commitProfileTemplateOptions *CommitProfileTemplateOptions) (response *core.DetailedResponse, err error) {
-	err = core.ValidateNotNil(commitProfileTemplateOptions, "commitProfileTemplateOptions cannot be nil")
+// CommitAccountSettingsTemplateWithContext is an alternate form of the CommitAccountSettingsTemplate method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CommitAccountSettingsTemplateWithContext(ctx context.Context, commitAccountSettingsTemplateOptions *CommitAccountSettingsTemplateOptions) (response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(commitAccountSettingsTemplateOptions, "commitAccountSettingsTemplateOptions cannot be nil")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
 		return
 	}
-	err = core.ValidateStruct(commitProfileTemplateOptions, "commitProfileTemplateOptions")
+	err = core.ValidateStruct(commitAccountSettingsTemplateOptions, "commitAccountSettingsTemplateOptions")
 	if err != nil {
 		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
 		return
 	}
 
 	pathParamsMap := map[string]string{
-		"template_id": *commitProfileTemplateOptions.TemplateID,
-		"version":     *commitProfileTemplateOptions.Version,
+		"template_id": *commitAccountSettingsTemplateOptions.TemplateID,
+		"version": *commitAccountSettingsTemplateOptions.Version,
 	}
 
 	builder := core.NewRequestBuilder(core.POST)
 	builder = builder.WithContext(ctx)
 	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
-	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/profile_templates/{template_id}/versions/{version}/commit`, pathParamsMap)
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_templates/{template_id}/versions/{version}/commit`, pathParamsMap)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
 		return
 	}
 
-	for headerName, headerValue := range commitProfileTemplateOptions.Headers {
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CommitAccountSettingsTemplate")
+	for headerName, headerValue := range sdkHeaders {
 		builder.AddHeader(headerName, headerValue)
 	}
 
-	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CommitProfileTemplate")
-	for headerName, headerValue := range sdkHeaders {
+	for headerName, headerValue := range commitAccountSettingsTemplateOptions.Headers {
 		builder.AddHeader(headerName, headerValue)
 	}
 
@@ -6148,9 +6276,412 @@ func (iamIdentity *IamIdentityV1) CommitProfileTemplateWithContext(ctx context.C
 
 	response, err = iamIdentity.Service.Request(request, nil)
 	if err != nil {
-		core.EnrichHTTPProblem(err, "commit_profile_template", getServiceComponentInfo())
+		core.EnrichHTTPProblem(err, "commit_account_settings_template", getServiceComponentInfo())
 		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
 		return
+	}
+
+	return
+}
+
+// ListAccountSettingsAssignments : List assignments
+// List account settings assignments.
+func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignments(listAccountSettingsAssignmentsOptions *ListAccountSettingsAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.ListAccountSettingsAssignmentsWithContext(context.Background(), listAccountSettingsAssignmentsOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// ListAccountSettingsAssignmentsWithContext is an alternate form of the ListAccountSettingsAssignments method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) ListAccountSettingsAssignmentsWithContext(ctx context.Context, listAccountSettingsAssignmentsOptions *ListAccountSettingsAssignmentsOptions) (result *TemplateAssignmentListResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateStruct(listAccountSettingsAssignmentsOptions, "listAccountSettingsAssignmentsOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "ListAccountSettingsAssignments")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range listAccountSettingsAssignmentsOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if listAccountSettingsAssignmentsOptions.AccountID != nil {
+		builder.AddQuery("account_id", fmt.Sprint(*listAccountSettingsAssignmentsOptions.AccountID))
+	}
+	if listAccountSettingsAssignmentsOptions.TemplateID != nil {
+		builder.AddQuery("template_id", fmt.Sprint(*listAccountSettingsAssignmentsOptions.TemplateID))
+	}
+	if listAccountSettingsAssignmentsOptions.TemplateVersion != nil {
+		builder.AddQuery("template_version", fmt.Sprint(*listAccountSettingsAssignmentsOptions.TemplateVersion))
+	}
+	if listAccountSettingsAssignmentsOptions.Target != nil {
+		builder.AddQuery("target", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Target))
+	}
+	if listAccountSettingsAssignmentsOptions.TargetType != nil {
+		builder.AddQuery("target_type", fmt.Sprint(*listAccountSettingsAssignmentsOptions.TargetType))
+	}
+	if listAccountSettingsAssignmentsOptions.Limit != nil {
+		builder.AddQuery("limit", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Limit))
+	}
+	if listAccountSettingsAssignmentsOptions.Pagetoken != nil {
+		builder.AddQuery("pagetoken", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Pagetoken))
+	}
+	if listAccountSettingsAssignmentsOptions.Sort != nil {
+		builder.AddQuery("sort", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Sort))
+	}
+	if listAccountSettingsAssignmentsOptions.Order != nil {
+		builder.AddQuery("order", fmt.Sprint(*listAccountSettingsAssignmentsOptions.Order))
+	}
+	if listAccountSettingsAssignmentsOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*listAccountSettingsAssignmentsOptions.IncludeHistory))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "list_account_settings_assignments", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentListResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// CreateAccountSettingsAssignment : Create assignment
+// Create an assigment for an account settings template.
+func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignment(createAccountSettingsAssignmentOptions *CreateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.CreateAccountSettingsAssignmentWithContext(context.Background(), createAccountSettingsAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// CreateAccountSettingsAssignmentWithContext is an alternate form of the CreateAccountSettingsAssignment method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) CreateAccountSettingsAssignmentWithContext(ctx context.Context, createAccountSettingsAssignmentOptions *CreateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(createAccountSettingsAssignmentOptions, "createAccountSettingsAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(createAccountSettingsAssignmentOptions, "createAccountSettingsAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	builder := core.NewRequestBuilder(core.POST)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/`, nil)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "CreateAccountSettingsAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range createAccountSettingsAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+
+	body := make(map[string]interface{})
+	if createAccountSettingsAssignmentOptions.TemplateID != nil {
+		body["template_id"] = createAccountSettingsAssignmentOptions.TemplateID
+	}
+	if createAccountSettingsAssignmentOptions.TemplateVersion != nil {
+		body["template_version"] = createAccountSettingsAssignmentOptions.TemplateVersion
+	}
+	if createAccountSettingsAssignmentOptions.TargetType != nil {
+		body["target_type"] = createAccountSettingsAssignmentOptions.TargetType
+	}
+	if createAccountSettingsAssignmentOptions.Target != nil {
+		body["target"] = createAccountSettingsAssignmentOptions.Target
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "create_account_settings_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// GetAccountSettingsAssignment : Get assignment
+// Get an assigment for an account settings template.
+func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignment(getAccountSettingsAssignmentOptions *GetAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.GetAccountSettingsAssignmentWithContext(context.Background(), getAccountSettingsAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// GetAccountSettingsAssignmentWithContext is an alternate form of the GetAccountSettingsAssignment method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) GetAccountSettingsAssignmentWithContext(ctx context.Context, getAccountSettingsAssignmentOptions *GetAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(getAccountSettingsAssignmentOptions, "getAccountSettingsAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(getAccountSettingsAssignmentOptions, "getAccountSettingsAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *getAccountSettingsAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.GET)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "GetAccountSettingsAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range getAccountSettingsAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	if getAccountSettingsAssignmentOptions.IncludeHistory != nil {
+		builder.AddQuery("include_history", fmt.Sprint(*getAccountSettingsAssignmentOptions.IncludeHistory))
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "get_account_settings_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// DeleteAccountSettingsAssignment : Delete assignment
+// Delete an account settings template assignment. This removes any IAM resources created by this assignment in child
+// accounts.
+func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignment(deleteAccountSettingsAssignmentOptions *DeleteAccountSettingsAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.DeleteAccountSettingsAssignmentWithContext(context.Background(), deleteAccountSettingsAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// DeleteAccountSettingsAssignmentWithContext is an alternate form of the DeleteAccountSettingsAssignment method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) DeleteAccountSettingsAssignmentWithContext(ctx context.Context, deleteAccountSettingsAssignmentOptions *DeleteAccountSettingsAssignmentOptions) (result *ExceptionResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(deleteAccountSettingsAssignmentOptions, "deleteAccountSettingsAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(deleteAccountSettingsAssignmentOptions, "deleteAccountSettingsAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *deleteAccountSettingsAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.DELETE)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "DeleteAccountSettingsAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range deleteAccountSettingsAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "delete_account_settings_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalExceptionResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
+	}
+
+	return
+}
+
+// UpdateAccountSettingsAssignment : Update assignment
+// Update an account settings assignment. Call this method to retry failed assignments or migrate the settings in child
+// accounts to a new version.
+func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignment(updateAccountSettingsAssignmentOptions *UpdateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
+	result, response, err = iamIdentity.UpdateAccountSettingsAssignmentWithContext(context.Background(), updateAccountSettingsAssignmentOptions)
+	err = core.RepurposeSDKProblem(err, "")
+	return
+}
+
+// UpdateAccountSettingsAssignmentWithContext is an alternate form of the UpdateAccountSettingsAssignment method which supports a Context parameter
+func (iamIdentity *IamIdentityV1) UpdateAccountSettingsAssignmentWithContext(ctx context.Context, updateAccountSettingsAssignmentOptions *UpdateAccountSettingsAssignmentOptions) (result *TemplateAssignmentResponse, response *core.DetailedResponse, err error) {
+	err = core.ValidateNotNil(updateAccountSettingsAssignmentOptions, "updateAccountSettingsAssignmentOptions cannot be nil")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "unexpected-nil-param", common.GetComponentInfo())
+		return
+	}
+	err = core.ValidateStruct(updateAccountSettingsAssignmentOptions, "updateAccountSettingsAssignmentOptions")
+	if err != nil {
+		err = core.SDKErrorf(err, "", "struct-validation-error", common.GetComponentInfo())
+		return
+	}
+
+	pathParamsMap := map[string]string{
+		"assignment_id": *updateAccountSettingsAssignmentOptions.AssignmentID,
+	}
+
+	builder := core.NewRequestBuilder(core.PATCH)
+	builder = builder.WithContext(ctx)
+	builder.EnableGzipCompression = iamIdentity.GetEnableGzipCompression()
+	_, err = builder.ResolveRequestURL(iamIdentity.Service.Options.URL, `/v1/account_settings_assignments/{assignment_id}`, pathParamsMap)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "url-resolve-error", common.GetComponentInfo())
+		return
+	}
+
+	sdkHeaders := common.GetSdkHeaders("iam_identity", "V1", "UpdateAccountSettingsAssignment")
+	for headerName, headerValue := range sdkHeaders {
+		builder.AddHeader(headerName, headerValue)
+	}
+
+	for headerName, headerValue := range updateAccountSettingsAssignmentOptions.Headers {
+		builder.AddHeader(headerName, headerValue)
+	}
+	builder.AddHeader("Accept", "application/json")
+	builder.AddHeader("Content-Type", "application/json")
+	if updateAccountSettingsAssignmentOptions.IfMatch != nil {
+		builder.AddHeader("If-Match", fmt.Sprint(*updateAccountSettingsAssignmentOptions.IfMatch))
+	}
+
+	body := make(map[string]interface{})
+	if updateAccountSettingsAssignmentOptions.TemplateVersion != nil {
+		body["template_version"] = updateAccountSettingsAssignmentOptions.TemplateVersion
+	}
+	_, err = builder.SetBodyContentJSON(body)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "set-json-body-error", common.GetComponentInfo())
+		return
+	}
+
+	request, err := builder.Build()
+	if err != nil {
+		err = core.SDKErrorf(err, "", "build-error", common.GetComponentInfo())
+		return
+	}
+
+	var rawResponse map[string]json.RawMessage
+	response, err = iamIdentity.Service.Request(request, &rawResponse)
+	if err != nil {
+		core.EnrichHTTPProblem(err, "update_account_settings_assignment", getServiceComponentInfo())
+		err = core.SDKErrorf(err, "", "http-request-err", common.GetComponentInfo())
+		return
+	}
+	if rawResponse != nil {
+		err = core.UnmarshalModel(rawResponse, "", &result, UnmarshalTemplateAssignmentResponse)
+		if err != nil {
+			err = core.SDKErrorf(err, "", "unmarshal-resp-error", common.GetComponentInfo())
+			return
+		}
+		response.Result = result
 	}
 
 	return
@@ -6263,45 +6794,44 @@ type AccountSettingsAccountSection struct {
 
 // Constants associated with the AccountSettingsAccountSection.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-//
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
-//   - NOT_RESTRICTED - all members of an account can create service IDs
-//   - NOT_SET - to 'unset' a previous set value.
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsAccountSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsAccountSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
-	AccountSettingsAccountSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+	AccountSettingsAccountSectionRestrictCreateServiceIDNotSetConst = "NOT_SET"
+	AccountSettingsAccountSectionRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsAccountSection.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   - RESTRICTED - to apply access control
-//   - NOT_RESTRICTED - to remove access control
-//   - NOT_SET - to 'unset' a previous set value.
+//   * RESTRICTED - to apply access control
+//   * NOT_RESTRICTED - to remove access control
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
-	AccountSettingsAccountSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+	AccountSettingsAccountSectionRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
+	AccountSettingsAccountSectionRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsAccountSection.Mfa property.
 // Defines the MFA requirement for the user. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsAccountSectionMfaLevel1Const     = "LEVEL1"
-	AccountSettingsAccountSectionMfaLevel2Const     = "LEVEL2"
-	AccountSettingsAccountSectionMfaLevel3Const     = "LEVEL3"
-	AccountSettingsAccountSectionMfaNoneConst       = "NONE"
+	AccountSettingsAccountSectionMfaLevel1Const = "LEVEL1"
+	AccountSettingsAccountSectionMfaLevel2Const = "LEVEL2"
+	AccountSettingsAccountSectionMfaLevel3Const = "LEVEL3"
+	AccountSettingsAccountSectionMfaNoneConst = "NONE"
 	AccountSettingsAccountSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsAccountSectionMfaTotpConst       = "TOTP"
-	AccountSettingsAccountSectionMfaTotp4allConst   = "TOTP4ALL"
+	AccountSettingsAccountSectionMfaTotpConst = "TOTP"
+	AccountSettingsAccountSectionMfaTotp4allConst = "TOTP4ALL"
 )
 
 // UnmarshalAccountSettingsAccountSection unmarshals an instance of AccountSettingsAccountSection from the specified map of raw messages.
@@ -6439,45 +6969,44 @@ type AccountSettingsAssignedTemplatesSection struct {
 
 // Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-//
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
-//   - NOT_RESTRICTED - all members of an account can create service IDs
-//   - NOT_SET - to 'unset' a previous set value.
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
-	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDNotSetConst = "NOT_SET"
+	AccountSettingsAssignedTemplatesSectionRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsAssignedTemplatesSection.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   - RESTRICTED - to apply access control
-//   - NOT_RESTRICTED - to remove access control
-//   - NOT_SET - to 'unset' a previous set value.
+//   * RESTRICTED - to apply access control
+//   * NOT_RESTRICTED - to remove access control
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
-	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
+	AccountSettingsAssignedTemplatesSectionRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsAssignedTemplatesSection.Mfa property.
 // Defines the MFA requirement for the user. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsAssignedTemplatesSectionMfaLevel1Const     = "LEVEL1"
-	AccountSettingsAssignedTemplatesSectionMfaLevel2Const     = "LEVEL2"
-	AccountSettingsAssignedTemplatesSectionMfaLevel3Const     = "LEVEL3"
-	AccountSettingsAssignedTemplatesSectionMfaNoneConst       = "NONE"
+	AccountSettingsAssignedTemplatesSectionMfaLevel1Const = "LEVEL1"
+	AccountSettingsAssignedTemplatesSectionMfaLevel2Const = "LEVEL2"
+	AccountSettingsAssignedTemplatesSectionMfaLevel3Const = "LEVEL3"
+	AccountSettingsAssignedTemplatesSectionMfaNoneConst = "NONE"
 	AccountSettingsAssignedTemplatesSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsAssignedTemplatesSectionMfaTotpConst       = "TOTP"
-	AccountSettingsAssignedTemplatesSectionMfaTotp4allConst   = "TOTP4ALL"
+	AccountSettingsAssignedTemplatesSectionMfaTotpConst = "TOTP"
+	AccountSettingsAssignedTemplatesSectionMfaTotp4allConst = "TOTP4ALL"
 )
 
 // UnmarshalAccountSettingsAssignedTemplatesSection unmarshals an instance of AccountSettingsAssignedTemplatesSection from the specified map of raw messages.
@@ -6611,45 +7140,44 @@ type AccountSettingsComponent struct {
 
 // Constants associated with the AccountSettingsComponent.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-//
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
-//   - NOT_RESTRICTED - all members of an account can create service IDs
-//   - NOT_SET - to 'unset' a previous set value.
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsComponentRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsComponentRestrictCreateServiceIDNotSetConst        = "NOT_SET"
-	AccountSettingsComponentRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+	AccountSettingsComponentRestrictCreateServiceIDNotSetConst = "NOT_SET"
+	AccountSettingsComponentRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsComponent.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   - RESTRICTED - to apply access control
-//   - NOT_RESTRICTED - to remove access control
-//   - NOT_SET - to 'unset' a previous set value.
+//   * RESTRICTED - to apply access control
+//   * NOT_RESTRICTED - to remove access control
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsComponentRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsComponentRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
-	AccountSettingsComponentRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+	AccountSettingsComponentRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
+	AccountSettingsComponentRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsComponent.Mfa property.
 // Defines the MFA trait for the account. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsComponentMfaLevel1Const     = "LEVEL1"
-	AccountSettingsComponentMfaLevel2Const     = "LEVEL2"
-	AccountSettingsComponentMfaLevel3Const     = "LEVEL3"
-	AccountSettingsComponentMfaNoneConst       = "NONE"
+	AccountSettingsComponentMfaLevel1Const = "LEVEL1"
+	AccountSettingsComponentMfaLevel2Const = "LEVEL2"
+	AccountSettingsComponentMfaLevel3Const = "LEVEL3"
+	AccountSettingsComponentMfaNoneConst = "NONE"
 	AccountSettingsComponentMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsComponentMfaTotpConst       = "TOTP"
-	AccountSettingsComponentMfaTotp4allConst   = "TOTP4ALL"
+	AccountSettingsComponentMfaTotpConst = "TOTP"
+	AccountSettingsComponentMfaTotp4allConst = "TOTP4ALL"
 )
 
 // UnmarshalAccountSettingsComponent unmarshals an instance of AccountSettingsComponent from the specified map of raw messages.
@@ -6768,45 +7296,44 @@ type AccountSettingsEffectiveSection struct {
 
 // Constants associated with the AccountSettingsEffectiveSection.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-//
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
-//   - NOT_RESTRICTED - all members of an account can create service IDs
-//   - NOT_SET - to 'unset' a previous set value.
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsEffectiveSectionRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsEffectiveSectionRestrictCreateServiceIDNotSetConst        = "NOT_SET"
-	AccountSettingsEffectiveSectionRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+	AccountSettingsEffectiveSectionRestrictCreateServiceIDNotSetConst = "NOT_SET"
+	AccountSettingsEffectiveSectionRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsEffectiveSection.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   - RESTRICTED - to apply access control
-//   - NOT_RESTRICTED - to remove access control
-//   - NOT_SET - to 'unset' a previous set value.
+//   * RESTRICTED - to apply access control
+//   * NOT_RESTRICTED - to remove access control
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
-	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
+	AccountSettingsEffectiveSectionRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsEffectiveSection.Mfa property.
 // Defines the MFA requirement for the user. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsEffectiveSectionMfaLevel1Const     = "LEVEL1"
-	AccountSettingsEffectiveSectionMfaLevel2Const     = "LEVEL2"
-	AccountSettingsEffectiveSectionMfaLevel3Const     = "LEVEL3"
-	AccountSettingsEffectiveSectionMfaNoneConst       = "NONE"
+	AccountSettingsEffectiveSectionMfaLevel1Const = "LEVEL1"
+	AccountSettingsEffectiveSectionMfaLevel2Const = "LEVEL2"
+	AccountSettingsEffectiveSectionMfaLevel3Const = "LEVEL3"
+	AccountSettingsEffectiveSectionMfaNoneConst = "NONE"
 	AccountSettingsEffectiveSectionMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsEffectiveSectionMfaTotpConst       = "TOTP"
-	AccountSettingsEffectiveSectionMfaTotp4allConst   = "TOTP4ALL"
+	AccountSettingsEffectiveSectionMfaTotpConst = "TOTP"
+	AccountSettingsEffectiveSectionMfaTotp4allConst = "TOTP4ALL"
 )
 
 // UnmarshalAccountSettingsEffectiveSection unmarshals an instance of AccountSettingsEffectiveSection from the specified map of raw messages.
@@ -6937,45 +7464,44 @@ type AccountSettingsResponse struct {
 
 // Constants associated with the AccountSettingsResponse.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-//
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
-//   - NOT_RESTRICTED - all members of an account can create service IDs
-//   - NOT_SET - to 'unset' a previous set value.
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsResponseRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsResponseRestrictCreateServiceIDNotSetConst        = "NOT_SET"
-	AccountSettingsResponseRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+	AccountSettingsResponseRestrictCreateServiceIDNotSetConst = "NOT_SET"
+	AccountSettingsResponseRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsResponse.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   - RESTRICTED - to apply access control
-//   - NOT_RESTRICTED - to remove access control
-//   - NOT_SET - to 'unset' a previous set value.
+//   * RESTRICTED - to apply access control
+//   * NOT_RESTRICTED - to remove access control
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	AccountSettingsResponseRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	AccountSettingsResponseRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
-	AccountSettingsResponseRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+	AccountSettingsResponseRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
+	AccountSettingsResponseRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the AccountSettingsResponse.Mfa property.
 // Defines the MFA trait for the account. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsResponseMfaLevel1Const     = "LEVEL1"
-	AccountSettingsResponseMfaLevel2Const     = "LEVEL2"
-	AccountSettingsResponseMfaLevel3Const     = "LEVEL3"
-	AccountSettingsResponseMfaNoneConst       = "NONE"
+	AccountSettingsResponseMfaLevel1Const = "LEVEL1"
+	AccountSettingsResponseMfaLevel2Const = "LEVEL2"
+	AccountSettingsResponseMfaLevel3Const = "LEVEL3"
+	AccountSettingsResponseMfaNoneConst = "NONE"
 	AccountSettingsResponseMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsResponseMfaTotpConst       = "TOTP"
-	AccountSettingsResponseMfaTotp4allConst   = "TOTP4ALL"
+	AccountSettingsResponseMfaTotpConst = "TOTP"
+	AccountSettingsResponseMfaTotp4allConst = "TOTP4ALL"
 )
 
 // UnmarshalAccountSettingsResponse unmarshals an instance of AccountSettingsResponse from the specified map of raw messages.
@@ -7262,28 +7788,28 @@ type AccountSettingsUserMfa struct {
 
 // Constants associated with the AccountSettingsUserMfa.Mfa property.
 // Defines the MFA requirement for the user. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	AccountSettingsUserMfaMfaLevel1Const     = "LEVEL1"
-	AccountSettingsUserMfaMfaLevel2Const     = "LEVEL2"
-	AccountSettingsUserMfaMfaLevel3Const     = "LEVEL3"
-	AccountSettingsUserMfaMfaNoneConst       = "NONE"
+	AccountSettingsUserMfaMfaLevel1Const = "LEVEL1"
+	AccountSettingsUserMfaMfaLevel2Const = "LEVEL2"
+	AccountSettingsUserMfaMfaLevel3Const = "LEVEL3"
+	AccountSettingsUserMfaMfaNoneConst = "NONE"
 	AccountSettingsUserMfaMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	AccountSettingsUserMfaMfaTotpConst       = "TOTP"
-	AccountSettingsUserMfaMfaTotp4allConst   = "TOTP4ALL"
+	AccountSettingsUserMfaMfaTotpConst = "TOTP"
+	AccountSettingsUserMfaMfaTotp4allConst = "TOTP4ALL"
 )
 
 // NewAccountSettingsUserMfa : Instantiate AccountSettingsUserMfa (Generic Model Constructor)
 func (*IamIdentityV1) NewAccountSettingsUserMfa(iamID string, mfa string) (_model *AccountSettingsUserMfa, err error) {
 	_model = &AccountSettingsUserMfa{
 		IamID: core.StringPtr(iamID),
-		Mfa:   core.StringPtr(mfa),
+		Mfa: core.StringPtr(mfa),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -7321,7 +7847,7 @@ type ActionControls struct {
 // NewActionControls : Instantiate ActionControls (Generic Model Constructor)
 func (*IamIdentityV1) NewActionControls(rules *ActionControlsRules, policies *ActionControlsPolicies) (_model *ActionControls, err error) {
 	_model = &ActionControls{
-		Rules:    rules,
+		Rules: rules,
 		Policies: policies,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -7363,7 +7889,7 @@ type ActionControlsIdentities struct {
 // NewActionControlsIdentities : Instantiate ActionControlsIdentities (Generic Model Constructor)
 func (*IamIdentityV1) NewActionControlsIdentities(add bool, remove bool) (_model *ActionControlsIdentities, err error) {
 	_model = &ActionControlsIdentities{
-		Add:    core.BoolPtr(add),
+		Add: core.BoolPtr(add),
 		Remove: core.BoolPtr(remove),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -7400,7 +7926,7 @@ type ActionControlsPolicies struct {
 // NewActionControlsPolicies : Instantiate ActionControlsPolicies (Generic Model Constructor)
 func (*IamIdentityV1) NewActionControlsPolicies(add bool, remove bool) (_model *ActionControlsPolicies, err error) {
 	_model = &ActionControlsPolicies{
-		Add:    core.BoolPtr(add),
+		Add: core.BoolPtr(add),
 		Remove: core.BoolPtr(remove),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -7437,7 +7963,7 @@ type ActionControlsRules struct {
 // NewActionControlsRules : Instantiate ActionControlsRules (Generic Model Constructor)
 func (*IamIdentityV1) NewActionControlsRules(add bool, remove bool) (_model *ActionControlsRules, err error) {
 	_model = &ActionControlsRules{
-		Add:    core.BoolPtr(add),
+		Add: core.BoolPtr(add),
 		Remove: core.BoolPtr(remove),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -7924,7 +8450,7 @@ type CommitAccountSettingsTemplateOptions struct {
 func (*IamIdentityV1) NewCommitAccountSettingsTemplateOptions(templateID string, version string) *CommitAccountSettingsTemplateOptions {
 	return &CommitAccountSettingsTemplateOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version:    core.StringPtr(version),
+		Version: core.StringPtr(version),
 	}
 }
 
@@ -7962,7 +8488,7 @@ type CommitProfileTemplateOptions struct {
 func (*IamIdentityV1) NewCommitProfileTemplateOptions(templateID string, version string) *CommitProfileTemplateOptions {
 	return &CommitProfileTemplateOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version:    core.StringPtr(version),
+		Version: core.StringPtr(version),
 	}
 }
 
@@ -8005,17 +8531,17 @@ type CreateAccountSettingsAssignmentOptions struct {
 // Constants associated with the CreateAccountSettingsAssignmentOptions.TargetType property.
 // Type of target to deploy to.
 const (
-	CreateAccountSettingsAssignmentOptionsTargetTypeAccountConst      = "Account"
+	CreateAccountSettingsAssignmentOptionsTargetTypeAccountConst = "Account"
 	CreateAccountSettingsAssignmentOptionsTargetTypeAccountgroupConst = "AccountGroup"
 )
 
 // NewCreateAccountSettingsAssignmentOptions : Instantiate CreateAccountSettingsAssignmentOptions
 func (*IamIdentityV1) NewCreateAccountSettingsAssignmentOptions(templateID string, templateVersion int64, targetType string, target string) *CreateAccountSettingsAssignmentOptions {
 	return &CreateAccountSettingsAssignmentOptions{
-		TemplateID:      core.StringPtr(templateID),
+		TemplateID: core.StringPtr(templateID),
 		TemplateVersion: core.Int64Ptr(templateVersion),
-		TargetType:      core.StringPtr(targetType),
-		Target:          core.StringPtr(target),
+		TargetType: core.StringPtr(targetType),
+		Target: core.StringPtr(target),
 	}
 }
 
@@ -8213,7 +8739,7 @@ type CreateAPIKeyOptions struct {
 // NewCreateAPIKeyOptions : Instantiate CreateAPIKeyOptions
 func (*IamIdentityV1) NewCreateAPIKeyOptions(name string, iamID string) *CreateAPIKeyOptions {
 	return &CreateAPIKeyOptions{
-		Name:  core.StringPtr(name),
+		Name: core.StringPtr(name),
 		IamID: core.StringPtr(iamID),
 	}
 }
@@ -8319,8 +8845,8 @@ type CreateClaimRuleOptions struct {
 // NewCreateClaimRuleOptions : Instantiate CreateClaimRuleOptions
 func (*IamIdentityV1) NewCreateClaimRuleOptions(profileID string, typeVar string, conditions []ProfileClaimRuleConditions) *CreateClaimRuleOptions {
 	return &CreateClaimRuleOptions{
-		ProfileID:  core.StringPtr(profileID),
-		Type:       core.StringPtr(typeVar),
+		ProfileID: core.StringPtr(profileID),
+		Type: core.StringPtr(typeVar),
 		Conditions: conditions,
 	}
 }
@@ -8401,8 +8927,8 @@ type CreateLinkOptions struct {
 func (*IamIdentityV1) NewCreateLinkOptions(profileID string, crType string, link *CreateProfileLinkRequestLink) *CreateLinkOptions {
 	return &CreateLinkOptions{
 		ProfileID: core.StringPtr(profileID),
-		CrType:    core.StringPtr(crType),
-		Link:      link,
+		CrType: core.StringPtr(crType),
+		Link: link,
 	}
 }
 
@@ -8479,17 +9005,22 @@ type CreateProfileLinkRequestLink struct {
 	CRN *string `json:"crn" validate:"required"`
 
 	// The compute resource namespace, only required if cr_type is IKS_SA or ROKS_SA.
-	Namespace *string `json:"namespace" validate:"required"`
+	Namespace *string `json:"namespace,omitempty"`
 
 	// Name of the compute resource, only required if cr_type is IKS_SA or ROKS_SA.
 	Name *string `json:"name,omitempty"`
+
+	// Component type of the compute resource, only required if cr_type is CE.
+	ComponentType *string `json:"component_type,omitempty"`
+
+	// Component name of the compute resource, only required if cr_type is CE.
+	ComponentName *string `json:"component_name,omitempty"`
 }
 
 // NewCreateProfileLinkRequestLink : Instantiate CreateProfileLinkRequestLink (Generic Model Constructor)
-func (*IamIdentityV1) NewCreateProfileLinkRequestLink(crn string, namespace string) (_model *CreateProfileLinkRequestLink, err error) {
+func (*IamIdentityV1) NewCreateProfileLinkRequestLink(crn string) (_model *CreateProfileLinkRequestLink, err error) {
 	_model = &CreateProfileLinkRequestLink{
-		CRN:       core.StringPtr(crn),
-		Namespace: core.StringPtr(namespace),
+		CRN: core.StringPtr(crn),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -8516,6 +9047,16 @@ func UnmarshalCreateProfileLinkRequestLink(m map[string]json.RawMessage, result 
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "component_type", &obj.ComponentType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "component_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "component_name", &obj.ComponentName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "component_name-error", common.GetComponentInfo())
+		return
+	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
 	return
 }
@@ -8533,6 +9074,9 @@ type CreateProfileOptions struct {
 	// provided during creation of trusted profile.
 	Description *string `json:"description,omitempty"`
 
+	// The email of the trusted profile.
+	Email *string `json:"email,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -8540,7 +9084,7 @@ type CreateProfileOptions struct {
 // NewCreateProfileOptions : Instantiate CreateProfileOptions
 func (*IamIdentityV1) NewCreateProfileOptions(name string, accountID string) *CreateProfileOptions {
 	return &CreateProfileOptions{
-		Name:      core.StringPtr(name),
+		Name: core.StringPtr(name),
 		AccountID: core.StringPtr(accountID),
 	}
 }
@@ -8560,6 +9104,12 @@ func (_options *CreateProfileOptions) SetAccountID(accountID string) *CreateProf
 // SetDescription : Allow user to set Description
 func (_options *CreateProfileOptions) SetDescription(description string) *CreateProfileOptions {
 	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetEmail : Allow user to set Email
+func (_options *CreateProfileOptions) SetEmail(email string) *CreateProfileOptions {
+	_options.Email = core.StringPtr(email)
 	return _options
 }
 
@@ -8771,6 +9321,53 @@ func (options *CreateReportOptions) SetHeaders(param map[string]string) *CreateR
 	return options
 }
 
+// CreateServiceIDGroupOptions : The CreateServiceIDGroup options.
+type CreateServiceIDGroupOptions struct {
+	// ID of the account the service ID group belongs to.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Name of the service ID group. Unique in the account.
+	Name *string `json:"name" validate:"required"`
+
+	// Description of the service ID group.
+	Description *string `json:"description,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewCreateServiceIDGroupOptions : Instantiate CreateServiceIDGroupOptions
+func (*IamIdentityV1) NewCreateServiceIDGroupOptions(accountID string, name string) *CreateServiceIDGroupOptions {
+	return &CreateServiceIDGroupOptions{
+		AccountID: core.StringPtr(accountID),
+		Name: core.StringPtr(name),
+	}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *CreateServiceIDGroupOptions) SetAccountID(accountID string) *CreateServiceIDGroupOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *CreateServiceIDGroupOptions) SetName(name string) *CreateServiceIDGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *CreateServiceIDGroupOptions) SetDescription(description string) *CreateServiceIDGroupOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *CreateServiceIDGroupOptions) SetHeaders(param map[string]string) *CreateServiceIDGroupOptions {
+	options.Headers = param
+	return options
+}
+
 // CreateServiceIDOptions : The CreateServiceID options.
 type CreateServiceIDOptions struct {
 	// ID of the account the service ID belongs to.
@@ -8779,6 +9376,10 @@ type CreateServiceIDOptions struct {
 	// Name of the Service Id. The name is not checked for uniqueness. Therefore multiple names with the same value can
 	// exist. Access is done via the UUID of the Service Id.
 	Name *string `json:"name" validate:"required"`
+
+	// ID of the group to which the service ID belongs to. If the value is not set, the service ID is bound to the default
+	// group.
+	GroupID *string `json:"group_id,omitempty"`
 
 	// The optional description of the Service Id. The 'description' property is only available if a description was
 	// provided during a create of a Service Id.
@@ -8789,6 +9390,9 @@ type CreateServiceIDOptions struct {
 
 	// Parameters for the API key in the Create service Id V1 REST request.
 	Apikey *APIKeyInsideCreateServiceIDRequest `json:"apikey,omitempty"`
+
+	// Defines if the service ID group ID is included in the response.
+	ShowGroupID *string `json:"show_group_id,omitempty"`
 
 	// Indicates if the service ID is locked for further write operations. False by default.
 	EntityLock *string `json:"Entity-Lock,omitempty"`
@@ -8801,7 +9405,7 @@ type CreateServiceIDOptions struct {
 func (*IamIdentityV1) NewCreateServiceIDOptions(accountID string, name string) *CreateServiceIDOptions {
 	return &CreateServiceIDOptions{
 		AccountID: core.StringPtr(accountID),
-		Name:      core.StringPtr(name),
+		Name: core.StringPtr(name),
 	}
 }
 
@@ -8814,6 +9418,12 @@ func (_options *CreateServiceIDOptions) SetAccountID(accountID string) *CreateSe
 // SetName : Allow user to set Name
 func (_options *CreateServiceIDOptions) SetName(name string) *CreateServiceIDOptions {
 	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetGroupID : Allow user to set GroupID
+func (_options *CreateServiceIDOptions) SetGroupID(groupID string) *CreateServiceIDOptions {
+	_options.GroupID = core.StringPtr(groupID)
 	return _options
 }
 
@@ -8832,6 +9442,12 @@ func (_options *CreateServiceIDOptions) SetUniqueInstanceCrns(uniqueInstanceCrns
 // SetApikey : Allow user to set Apikey
 func (_options *CreateServiceIDOptions) SetApikey(apikey *APIKeyInsideCreateServiceIDRequest) *CreateServiceIDOptions {
 	_options.Apikey = apikey
+	return _options
+}
+
+// SetShowGroupID : Allow user to set ShowGroupID
+func (_options *CreateServiceIDOptions) SetShowGroupID(showGroupID string) *CreateServiceIDOptions {
+	_options.ShowGroupID = core.StringPtr(showGroupID)
 	return _options
 }
 
@@ -8868,17 +9484,17 @@ type CreateTrustedProfileAssignmentOptions struct {
 // Constants associated with the CreateTrustedProfileAssignmentOptions.TargetType property.
 // Type of target to deploy to.
 const (
-	CreateTrustedProfileAssignmentOptionsTargetTypeAccountConst      = "Account"
+	CreateTrustedProfileAssignmentOptionsTargetTypeAccountConst = "Account"
 	CreateTrustedProfileAssignmentOptionsTargetTypeAccountgroupConst = "AccountGroup"
 )
 
 // NewCreateTrustedProfileAssignmentOptions : Instantiate CreateTrustedProfileAssignmentOptions
 func (*IamIdentityV1) NewCreateTrustedProfileAssignmentOptions(templateID string, templateVersion int64, targetType string, target string) *CreateTrustedProfileAssignmentOptions {
 	return &CreateTrustedProfileAssignmentOptions{
-		TemplateID:      core.StringPtr(templateID),
+		TemplateID: core.StringPtr(templateID),
 		TemplateVersion: core.Int64Ptr(templateVersion),
-		TargetType:      core.StringPtr(targetType),
-		Target:          core.StringPtr(target),
+		TargetType: core.StringPtr(targetType),
+		Target: core.StringPtr(target),
 	}
 }
 
@@ -8956,7 +9572,7 @@ type DeleteAccountSettingsTemplateVersionOptions struct {
 func (*IamIdentityV1) NewDeleteAccountSettingsTemplateVersionOptions(templateID string, version string) *DeleteAccountSettingsTemplateVersionOptions {
 	return &DeleteAccountSettingsTemplateVersionOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version:    core.StringPtr(version),
+		Version: core.StringPtr(version),
 	}
 }
 
@@ -9078,7 +9694,7 @@ type DeleteClaimRuleOptions struct {
 func (*IamIdentityV1) NewDeleteClaimRuleOptions(profileID string, ruleID string) *DeleteClaimRuleOptions {
 	return &DeleteClaimRuleOptions{
 		ProfileID: core.StringPtr(profileID),
-		RuleID:    core.StringPtr(ruleID),
+		RuleID: core.StringPtr(ruleID),
 	}
 }
 
@@ -9100,6 +9716,89 @@ func (options *DeleteClaimRuleOptions) SetHeaders(param map[string]string) *Dele
 	return options
 }
 
+// DeleteLinkByParametersOptions : The DeleteLinkByParameters options.
+type DeleteLinkByParametersOptions struct {
+	// The unique ID of the Trusted Profile.
+	ProfileID *string `json:"profile-id" validate:"required,ne="`
+
+	// The compute resource type. Valid values are VSI, BMS, IKS_SA, ROKS_SA, CE.
+	Type *string `json:"type" validate:"required"`
+
+	// CRN of the compute resource (IKS/ROKS/VSI/BMS).
+	CRN *string `json:"crn,omitempty"`
+
+	// Namespace of the compute resource (IKS/ROKS).
+	Namespace *string `json:"namespace,omitempty"`
+
+	// Name of the compute resource (IKS/ROKS).
+	Name *string `json:"name,omitempty"`
+
+	// Component type of the compute resource, only required if type is CE.
+	ComponentType *string `json:"component_type,omitempty"`
+
+	// Component name of the compute resource, only required if type is CE.
+	ComponentName *string `json:"component_name,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteLinkByParametersOptions : Instantiate DeleteLinkByParametersOptions
+func (*IamIdentityV1) NewDeleteLinkByParametersOptions(profileID string, typeVar string) *DeleteLinkByParametersOptions {
+	return &DeleteLinkByParametersOptions{
+		ProfileID: core.StringPtr(profileID),
+		Type: core.StringPtr(typeVar),
+	}
+}
+
+// SetProfileID : Allow user to set ProfileID
+func (_options *DeleteLinkByParametersOptions) SetProfileID(profileID string) *DeleteLinkByParametersOptions {
+	_options.ProfileID = core.StringPtr(profileID)
+	return _options
+}
+
+// SetType : Allow user to set Type
+func (_options *DeleteLinkByParametersOptions) SetType(typeVar string) *DeleteLinkByParametersOptions {
+	_options.Type = core.StringPtr(typeVar)
+	return _options
+}
+
+// SetCRN : Allow user to set CRN
+func (_options *DeleteLinkByParametersOptions) SetCRN(crn string) *DeleteLinkByParametersOptions {
+	_options.CRN = core.StringPtr(crn)
+	return _options
+}
+
+// SetNamespace : Allow user to set Namespace
+func (_options *DeleteLinkByParametersOptions) SetNamespace(namespace string) *DeleteLinkByParametersOptions {
+	_options.Namespace = core.StringPtr(namespace)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *DeleteLinkByParametersOptions) SetName(name string) *DeleteLinkByParametersOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetComponentType : Allow user to set ComponentType
+func (_options *DeleteLinkByParametersOptions) SetComponentType(componentType string) *DeleteLinkByParametersOptions {
+	_options.ComponentType = core.StringPtr(componentType)
+	return _options
+}
+
+// SetComponentName : Allow user to set ComponentName
+func (_options *DeleteLinkByParametersOptions) SetComponentName(componentName string) *DeleteLinkByParametersOptions {
+	_options.ComponentName = core.StringPtr(componentName)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteLinkByParametersOptions) SetHeaders(param map[string]string) *DeleteLinkByParametersOptions {
+	options.Headers = param
+	return options
+}
+
 // DeleteLinkOptions : The DeleteLink options.
 type DeleteLinkOptions struct {
 	// ID of the trusted profile.
@@ -9116,7 +9815,7 @@ type DeleteLinkOptions struct {
 func (*IamIdentityV1) NewDeleteLinkOptions(profileID string, linkID string) *DeleteLinkOptions {
 	return &DeleteLinkOptions{
 		ProfileID: core.StringPtr(profileID),
-		LinkID:    core.StringPtr(linkID),
+		LinkID: core.StringPtr(linkID),
 	}
 }
 
@@ -9159,9 +9858,9 @@ type DeletePreferencesOnScopeAccountOptions struct {
 // NewDeletePreferencesOnScopeAccountOptions : Instantiate DeletePreferencesOnScopeAccountOptions
 func (*IamIdentityV1) NewDeletePreferencesOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string) *DeletePreferencesOnScopeAccountOptions {
 	return &DeletePreferencesOnScopeAccountOptions{
-		AccountID:    core.StringPtr(accountID),
-		IamID:        core.StringPtr(iamID),
-		Service:      core.StringPtr(service),
+		AccountID: core.StringPtr(accountID),
+		IamID: core.StringPtr(iamID),
+		Service: core.StringPtr(service),
 		PreferenceID: core.StringPtr(preferenceID),
 	}
 }
@@ -9214,15 +9913,15 @@ type DeleteProfileIdentityOptions struct {
 // Constants associated with the DeleteProfileIdentityOptions.IdentityType property.
 // Type of the identity.
 const (
-	DeleteProfileIdentityOptionsIdentityTypeCRNConst       = "crn"
+	DeleteProfileIdentityOptionsIdentityTypeCRNConst = "crn"
 	DeleteProfileIdentityOptionsIdentityTypeServiceidConst = "serviceid"
-	DeleteProfileIdentityOptionsIdentityTypeUserConst      = "user"
+	DeleteProfileIdentityOptionsIdentityTypeUserConst = "user"
 )
 
 // NewDeleteProfileIdentityOptions : Instantiate DeleteProfileIdentityOptions
 func (*IamIdentityV1) NewDeleteProfileIdentityOptions(profileID string, identityType string, identifierID string) *DeleteProfileIdentityOptions {
 	return &DeleteProfileIdentityOptions{
-		ProfileID:    core.StringPtr(profileID),
+		ProfileID: core.StringPtr(profileID),
 		IdentityType: core.StringPtr(identityType),
 		IdentifierID: core.StringPtr(identifierID),
 	}
@@ -9296,7 +9995,7 @@ type DeleteProfileTemplateVersionOptions struct {
 func (*IamIdentityV1) NewDeleteProfileTemplateVersionOptions(templateID string, version string) *DeleteProfileTemplateVersionOptions {
 	return &DeleteProfileTemplateVersionOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version:    core.StringPtr(version),
+		Version: core.StringPtr(version),
 	}
 }
 
@@ -9314,6 +10013,34 @@ func (_options *DeleteProfileTemplateVersionOptions) SetVersion(version string) 
 
 // SetHeaders : Allow user to set Headers
 func (options *DeleteProfileTemplateVersionOptions) SetHeaders(param map[string]string) *DeleteProfileTemplateVersionOptions {
+	options.Headers = param
+	return options
+}
+
+// DeleteServiceIDGroupOptions : The DeleteServiceIDGroup options.
+type DeleteServiceIDGroupOptions struct {
+	// Unique ID of the service ID group.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewDeleteServiceIDGroupOptions : Instantiate DeleteServiceIDGroupOptions
+func (*IamIdentityV1) NewDeleteServiceIDGroupOptions(id string) *DeleteServiceIDGroupOptions {
+	return &DeleteServiceIDGroupOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *DeleteServiceIDGroupOptions) SetID(id string) *DeleteServiceIDGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *DeleteServiceIDGroupOptions) SetHeaders(param map[string]string) *DeleteServiceIDGroupOptions {
 	options.Headers = param
 	return options
 }
@@ -9480,21 +10207,21 @@ type EffectiveAccountSettingsUserMfa struct {
 
 // Constants associated with the EffectiveAccountSettingsUserMfa.Mfa property.
 // Defines the MFA requirement for the user. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	EffectiveAccountSettingsUserMfaMfaLevel1Const     = "LEVEL1"
-	EffectiveAccountSettingsUserMfaMfaLevel2Const     = "LEVEL2"
-	EffectiveAccountSettingsUserMfaMfaLevel3Const     = "LEVEL3"
-	EffectiveAccountSettingsUserMfaMfaNoneConst       = "NONE"
+	EffectiveAccountSettingsUserMfaMfaLevel1Const = "LEVEL1"
+	EffectiveAccountSettingsUserMfaMfaLevel2Const = "LEVEL2"
+	EffectiveAccountSettingsUserMfaMfaLevel3Const = "LEVEL3"
+	EffectiveAccountSettingsUserMfaMfaNoneConst = "NONE"
 	EffectiveAccountSettingsUserMfaMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	EffectiveAccountSettingsUserMfaMfaTotpConst       = "TOTP"
-	EffectiveAccountSettingsUserMfaMfaTotp4allConst   = "TOTP4ALL"
+	EffectiveAccountSettingsUserMfaMfaTotpConst = "TOTP"
+	EffectiveAccountSettingsUserMfaMfaTotp4allConst = "TOTP4ALL"
 )
 
 // UnmarshalEffectiveAccountSettingsUserMfa unmarshals an instance of EffectiveAccountSettingsUserMfa from the specified map of raw messages.
@@ -9833,7 +10560,7 @@ type GetAccountSettingsTemplateVersionOptions struct {
 func (*IamIdentityV1) NewGetAccountSettingsTemplateVersionOptions(templateID string, version string) *GetAccountSettingsTemplateVersionOptions {
 	return &GetAccountSettingsTemplateVersionOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version:    core.StringPtr(version),
+		Version: core.StringPtr(version),
 	}
 }
 
@@ -9877,7 +10604,7 @@ type GetAllPreferencesOnScopeAccountOptions struct {
 func (*IamIdentityV1) NewGetAllPreferencesOnScopeAccountOptions(accountID string, iamID string) *GetAllPreferencesOnScopeAccountOptions {
 	return &GetAllPreferencesOnScopeAccountOptions{
 		AccountID: core.StringPtr(accountID),
-		IamID:     core.StringPtr(iamID),
+		IamID: core.StringPtr(iamID),
 	}
 }
 
@@ -9997,7 +10724,7 @@ type GetClaimRuleOptions struct {
 func (*IamIdentityV1) NewGetClaimRuleOptions(profileID string, ruleID string) *GetClaimRuleOptions {
 	return &GetClaimRuleOptions{
 		ProfileID: core.StringPtr(profileID),
-		RuleID:    core.StringPtr(ruleID),
+		RuleID: core.StringPtr(ruleID),
 	}
 }
 
@@ -10155,7 +10882,7 @@ type GetLinkOptions struct {
 func (*IamIdentityV1) NewGetLinkOptions(profileID string, linkID string) *GetLinkOptions {
 	return &GetLinkOptions{
 		ProfileID: core.StringPtr(profileID),
-		LinkID:    core.StringPtr(linkID),
+		LinkID: core.StringPtr(linkID),
 	}
 }
 
@@ -10231,7 +10958,7 @@ type GetMfaStatusOptions struct {
 func (*IamIdentityV1) NewGetMfaStatusOptions(accountID string, iamID string) *GetMfaStatusOptions {
 	return &GetMfaStatusOptions{
 		AccountID: core.StringPtr(accountID),
-		IamID:     core.StringPtr(iamID),
+		IamID: core.StringPtr(iamID),
 	}
 }
 
@@ -10274,9 +11001,9 @@ type GetPreferencesOnScopeAccountOptions struct {
 // NewGetPreferencesOnScopeAccountOptions : Instantiate GetPreferencesOnScopeAccountOptions
 func (*IamIdentityV1) NewGetPreferencesOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string) *GetPreferencesOnScopeAccountOptions {
 	return &GetPreferencesOnScopeAccountOptions{
-		AccountID:    core.StringPtr(accountID),
-		IamID:        core.StringPtr(iamID),
-		Service:      core.StringPtr(service),
+		AccountID: core.StringPtr(accountID),
+		IamID: core.StringPtr(iamID),
+		Service: core.StringPtr(service),
 		PreferenceID: core.StringPtr(preferenceID),
 	}
 }
@@ -10357,15 +11084,15 @@ type GetProfileIdentityOptions struct {
 // Constants associated with the GetProfileIdentityOptions.IdentityType property.
 // Type of the identity.
 const (
-	GetProfileIdentityOptionsIdentityTypeCRNConst       = "crn"
+	GetProfileIdentityOptionsIdentityTypeCRNConst = "crn"
 	GetProfileIdentityOptionsIdentityTypeServiceidConst = "serviceid"
-	GetProfileIdentityOptionsIdentityTypeUserConst      = "user"
+	GetProfileIdentityOptionsIdentityTypeUserConst = "user"
 )
 
 // NewGetProfileIdentityOptions : Instantiate GetProfileIdentityOptions
 func (*IamIdentityV1) NewGetProfileIdentityOptions(profileID string, identityType string, identifierID string) *GetProfileIdentityOptions {
 	return &GetProfileIdentityOptions{
-		ProfileID:    core.StringPtr(profileID),
+		ProfileID: core.StringPtr(profileID),
 		IdentityType: core.StringPtr(identityType),
 		IdentifierID: core.StringPtr(identifierID),
 	}
@@ -10452,7 +11179,7 @@ type GetProfileTemplateVersionOptions struct {
 func (*IamIdentityV1) NewGetProfileTemplateVersionOptions(templateID string, version string) *GetProfileTemplateVersionOptions {
 	return &GetProfileTemplateVersionOptions{
 		TemplateID: core.StringPtr(templateID),
-		Version:    core.StringPtr(version),
+		Version: core.StringPtr(version),
 	}
 }
 
@@ -10518,6 +11245,34 @@ func (options *GetReportOptions) SetHeaders(param map[string]string) *GetReportO
 	return options
 }
 
+// GetServiceIDGroupOptions : The GetServiceIDGroup options.
+type GetServiceIDGroupOptions struct {
+	// Unique ID of the service ID group.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewGetServiceIDGroupOptions : Instantiate GetServiceIDGroupOptions
+func (*IamIdentityV1) NewGetServiceIDGroupOptions(id string) *GetServiceIDGroupOptions {
+	return &GetServiceIDGroupOptions{
+		ID: core.StringPtr(id),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *GetServiceIDGroupOptions) SetID(id string) *GetServiceIDGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *GetServiceIDGroupOptions) SetHeaders(param map[string]string) *GetServiceIDGroupOptions {
+	options.Headers = param
+	return options
+}
+
 // GetServiceIDOptions : The GetServiceID options.
 type GetServiceIDOptions struct {
 	// Unique ID of the service ID.
@@ -10529,6 +11284,9 @@ type GetServiceIDOptions struct {
 	// Defines if the entity's activity is included in the response. Retrieving activity data is an expensive operation, so
 	// only request this when needed.
 	IncludeActivity *bool `json:"include_activity,omitempty"`
+
+	// Defines if the service ID group ID is included in the response.
+	ShowGroupID *string `json:"show_group_id,omitempty"`
 
 	// Allows users to set headers on API requests.
 	Headers map[string]string
@@ -10556,6 +11314,12 @@ func (_options *GetServiceIDOptions) SetIncludeHistory(includeHistory bool) *Get
 // SetIncludeActivity : Allow user to set IncludeActivity
 func (_options *GetServiceIDOptions) SetIncludeActivity(includeActivity bool) *GetServiceIDOptions {
 	_options.IncludeActivity = core.BoolPtr(includeActivity)
+	return _options
+}
+
+// SetShowGroupID : Allow user to set ShowGroupID
+func (_options *GetServiceIDOptions) SetShowGroupID(showGroupID string) *GetServiceIDOptions {
+	_options.ShowGroupID = core.StringPtr(showGroupID)
 	return _options
 }
 
@@ -10647,72 +11411,71 @@ type IDBasedMfaEnrollment struct {
 
 // Constants associated with the IDBasedMfaEnrollment.TraitAccountDefault property.
 // Defines the MFA trait for the account. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	IDBasedMfaEnrollmentTraitAccountDefaultLevel1Const     = "LEVEL1"
-	IDBasedMfaEnrollmentTraitAccountDefaultLevel2Const     = "LEVEL2"
-	IDBasedMfaEnrollmentTraitAccountDefaultLevel3Const     = "LEVEL3"
-	IDBasedMfaEnrollmentTraitAccountDefaultNoneConst       = "NONE"
+	IDBasedMfaEnrollmentTraitAccountDefaultLevel1Const = "LEVEL1"
+	IDBasedMfaEnrollmentTraitAccountDefaultLevel2Const = "LEVEL2"
+	IDBasedMfaEnrollmentTraitAccountDefaultLevel3Const = "LEVEL3"
+	IDBasedMfaEnrollmentTraitAccountDefaultNoneConst = "NONE"
 	IDBasedMfaEnrollmentTraitAccountDefaultNoneNoRopcConst = "NONE_NO_ROPC"
-	IDBasedMfaEnrollmentTraitAccountDefaultTotpConst       = "TOTP"
-	IDBasedMfaEnrollmentTraitAccountDefaultTotp4allConst   = "TOTP4ALL"
+	IDBasedMfaEnrollmentTraitAccountDefaultTotpConst = "TOTP"
+	IDBasedMfaEnrollmentTraitAccountDefaultTotp4allConst = "TOTP4ALL"
 )
 
 // Constants associated with the IDBasedMfaEnrollment.TraitUserSpecific property.
 // Defines the MFA trait for the account. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	IDBasedMfaEnrollmentTraitUserSpecificLevel1Const     = "LEVEL1"
-	IDBasedMfaEnrollmentTraitUserSpecificLevel2Const     = "LEVEL2"
-	IDBasedMfaEnrollmentTraitUserSpecificLevel3Const     = "LEVEL3"
-	IDBasedMfaEnrollmentTraitUserSpecificNoneConst       = "NONE"
+	IDBasedMfaEnrollmentTraitUserSpecificLevel1Const = "LEVEL1"
+	IDBasedMfaEnrollmentTraitUserSpecificLevel2Const = "LEVEL2"
+	IDBasedMfaEnrollmentTraitUserSpecificLevel3Const = "LEVEL3"
+	IDBasedMfaEnrollmentTraitUserSpecificNoneConst = "NONE"
 	IDBasedMfaEnrollmentTraitUserSpecificNoneNoRopcConst = "NONE_NO_ROPC"
-	IDBasedMfaEnrollmentTraitUserSpecificTotpConst       = "TOTP"
-	IDBasedMfaEnrollmentTraitUserSpecificTotp4allConst   = "TOTP4ALL"
+	IDBasedMfaEnrollmentTraitUserSpecificTotpConst = "TOTP"
+	IDBasedMfaEnrollmentTraitUserSpecificTotp4allConst = "TOTP4ALL"
 )
 
 // Constants associated with the IDBasedMfaEnrollment.TraitEffective property.
 // Defines the MFA trait for the account. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	IDBasedMfaEnrollmentTraitEffectiveLevel1Const     = "LEVEL1"
-	IDBasedMfaEnrollmentTraitEffectiveLevel2Const     = "LEVEL2"
-	IDBasedMfaEnrollmentTraitEffectiveLevel3Const     = "LEVEL3"
-	IDBasedMfaEnrollmentTraitEffectiveNoneConst       = "NONE"
+	IDBasedMfaEnrollmentTraitEffectiveLevel1Const = "LEVEL1"
+	IDBasedMfaEnrollmentTraitEffectiveLevel2Const = "LEVEL2"
+	IDBasedMfaEnrollmentTraitEffectiveLevel3Const = "LEVEL3"
+	IDBasedMfaEnrollmentTraitEffectiveNoneConst = "NONE"
 	IDBasedMfaEnrollmentTraitEffectiveNoneNoRopcConst = "NONE_NO_ROPC"
-	IDBasedMfaEnrollmentTraitEffectiveTotpConst       = "TOTP"
-	IDBasedMfaEnrollmentTraitEffectiveTotp4allConst   = "TOTP4ALL"
+	IDBasedMfaEnrollmentTraitEffectiveTotpConst = "TOTP"
+	IDBasedMfaEnrollmentTraitEffectiveTotp4allConst = "TOTP4ALL"
 )
 
 // Constants associated with the IDBasedMfaEnrollment.ComplyState property.
 // Defines comply state for the account. Valid values:
-//   - NO - User does not comply in the given account.
-//   - ACCOUNT- User complies in the given account, but does not comply in at least one of the other account
-//
+//   * NO - User does not comply in the given account.
+//   * ACCOUNT- User complies in the given account, but does not comply in at least one of the other account
 // memberships.
-//   - CROSS_ACCOUNT - User complies in the given account and across all other account memberships.
+//   * CROSS_ACCOUNT - User complies in the given account and across all other account memberships.
 const (
-	IDBasedMfaEnrollmentComplyStateAccountConst      = "ACCOUNT"
+	IDBasedMfaEnrollmentComplyStateAccountConst = "ACCOUNT"
 	IDBasedMfaEnrollmentComplyStateCrossAccountConst = "CROSS_ACCOUNT"
-	IDBasedMfaEnrollmentComplyStateNoConst           = "NO"
+	IDBasedMfaEnrollmentComplyStateNoConst = "NO"
 )
 
 // UnmarshalIDBasedMfaEnrollment unmarshals an instance of IDBasedMfaEnrollment from the specified map of raw messages.
@@ -10864,22 +11627,22 @@ type ListAccountSettingsAssignmentsOptions struct {
 // Constants associated with the ListAccountSettingsAssignmentsOptions.TargetType property.
 // Filter results by the assignment's target type.
 const (
-	ListAccountSettingsAssignmentsOptionsTargetTypeAccountConst      = "Account"
+	ListAccountSettingsAssignmentsOptionsTargetTypeAccountConst = "Account"
 	ListAccountSettingsAssignmentsOptionsTargetTypeAccountgroupConst = "AccountGroup"
 )
 
 // Constants associated with the ListAccountSettingsAssignmentsOptions.Sort property.
 // If specified, the items are sorted by the value of this property.
 const (
-	ListAccountSettingsAssignmentsOptionsSortCreatedAtConst      = "created_at"
+	ListAccountSettingsAssignmentsOptionsSortCreatedAtConst = "created_at"
 	ListAccountSettingsAssignmentsOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListAccountSettingsAssignmentsOptionsSortTemplateIDConst     = "template_id"
+	ListAccountSettingsAssignmentsOptionsSortTemplateIDConst = "template_id"
 )
 
 // Constants associated with the ListAccountSettingsAssignmentsOptions.Order property.
 // Sort order.
 const (
-	ListAccountSettingsAssignmentsOptionsOrderAscConst  = "asc"
+	ListAccountSettingsAssignmentsOptionsOrderAscConst = "asc"
 	ListAccountSettingsAssignmentsOptionsOrderDescConst = "desc"
 )
 
@@ -10981,15 +11744,15 @@ type ListAccountSettingsTemplatesOptions struct {
 // Constants associated with the ListAccountSettingsTemplatesOptions.Sort property.
 // Optional sort property. If specified, the returned templated are sorted according to this property.
 const (
-	ListAccountSettingsTemplatesOptionsSortCreatedAtConst      = "created_at"
+	ListAccountSettingsTemplatesOptionsSortCreatedAtConst = "created_at"
 	ListAccountSettingsTemplatesOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListAccountSettingsTemplatesOptionsSortNameConst           = "name"
+	ListAccountSettingsTemplatesOptionsSortNameConst = "name"
 )
 
 // Constants associated with the ListAccountSettingsTemplatesOptions.Order property.
 // Optional sort order.
 const (
-	ListAccountSettingsTemplatesOptionsOrderAscConst  = "asc"
+	ListAccountSettingsTemplatesOptionsOrderAscConst = "asc"
 	ListAccountSettingsTemplatesOptionsOrderDescConst = "desc"
 )
 
@@ -11073,6 +11836,15 @@ type ListAPIKeysOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
+	// An optional filter query parameter used to refine the results of the search operation. For more information see
+	// [Filtering list results](#filter-list-results) section.
+	Filter *string `json:"filter,omitempty"`
+
+	// Optional group ID of the service ID(s) to which the searched API keys are bound. If this parameter is not provided
+	// the default group is applied on service ID API keys. For user API keys this parameter is ignored as they always
+	// belong to the default group.
+	GroupID *string `json:"group_id,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -11081,20 +11853,20 @@ type ListAPIKeysOptions struct {
 // Optional parameter to define the scope of the queried API keys. Can be 'entity' (default) or 'account'.
 const (
 	ListAPIKeysOptionsScopeAccountConst = "account"
-	ListAPIKeysOptionsScopeEntityConst  = "entity"
+	ListAPIKeysOptionsScopeEntityConst = "entity"
 )
 
 // Constants associated with the ListAPIKeysOptions.Type property.
 // Optional parameter to filter the type of the queried API keys. Can be 'user' or 'serviceid'.
 const (
 	ListAPIKeysOptionsTypeServiceidConst = "serviceid"
-	ListAPIKeysOptionsTypeUserConst      = "user"
+	ListAPIKeysOptionsTypeUserConst = "user"
 )
 
 // Constants associated with the ListAPIKeysOptions.Order property.
 // Optional sort order, valid values are asc and desc. Default: asc.
 const (
-	ListAPIKeysOptionsOrderAscConst  = "asc"
+	ListAPIKeysOptionsOrderAscConst = "asc"
 	ListAPIKeysOptionsOrderDescConst = "desc"
 )
 
@@ -11154,6 +11926,18 @@ func (_options *ListAPIKeysOptions) SetOrder(order string) *ListAPIKeysOptions {
 // SetIncludeHistory : Allow user to set IncludeHistory
 func (_options *ListAPIKeysOptions) SetIncludeHistory(includeHistory bool) *ListAPIKeysOptions {
 	_options.IncludeHistory = core.BoolPtr(includeHistory)
+	return _options
+}
+
+// SetFilter : Allow user to set Filter
+func (_options *ListAPIKeysOptions) SetFilter(filter string) *ListAPIKeysOptions {
+	_options.Filter = core.StringPtr(filter)
+	return _options
+}
+
+// SetGroupID : Allow user to set GroupID
+func (_options *ListAPIKeysOptions) SetGroupID(groupID string) *ListAPIKeysOptions {
+	_options.GroupID = core.StringPtr(groupID)
 	return _options
 }
 
@@ -11246,15 +12030,15 @@ type ListProfileTemplatesOptions struct {
 // Constants associated with the ListProfileTemplatesOptions.Sort property.
 // Optional sort property. If specified, the returned templates are sorted according to this property.
 const (
-	ListProfileTemplatesOptionsSortCreatedAtConst      = "created_at"
+	ListProfileTemplatesOptionsSortCreatedAtConst = "created_at"
 	ListProfileTemplatesOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListProfileTemplatesOptionsSortNameConst           = "name"
+	ListProfileTemplatesOptionsSortNameConst = "name"
 )
 
 // Constants associated with the ListProfileTemplatesOptions.Order property.
 // Optional sort order.
 const (
-	ListProfileTemplatesOptionsOrderAscConst  = "asc"
+	ListProfileTemplatesOptionsOrderAscConst = "asc"
 	ListProfileTemplatesOptionsOrderDescConst = "desc"
 )
 
@@ -11329,6 +12113,10 @@ type ListProfilesOptions struct {
 	// Optional Prev or Next page token returned from a previous query execution. Default is start with first page.
 	Pagetoken *string `json:"pagetoken,omitempty"`
 
+	// An optional filter query parameter used to refine the results of the search operation. For more information see
+	// [Filtering list results](#filter-list-results) section.
+	Filter *string `json:"filter,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -11336,7 +12124,7 @@ type ListProfilesOptions struct {
 // Constants associated with the ListProfilesOptions.Order property.
 // Optional sort order, valid values are asc and desc. Default: asc.
 const (
-	ListProfilesOptionsOrderAscConst  = "asc"
+	ListProfilesOptionsOrderAscConst = "asc"
 	ListProfilesOptionsOrderDescConst = "desc"
 )
 
@@ -11389,8 +12177,40 @@ func (_options *ListProfilesOptions) SetPagetoken(pagetoken string) *ListProfile
 	return _options
 }
 
+// SetFilter : Allow user to set Filter
+func (_options *ListProfilesOptions) SetFilter(filter string) *ListProfilesOptions {
+	_options.Filter = core.StringPtr(filter)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *ListProfilesOptions) SetHeaders(param map[string]string) *ListProfilesOptions {
+	options.Headers = param
+	return options
+}
+
+// ListServiceIDGroupOptions : The ListServiceIDGroup options.
+type ListServiceIDGroupOptions struct {
+	// Account ID of the service ID groups to query.
+	AccountID *string `json:"account_id,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewListServiceIDGroupOptions : Instantiate ListServiceIDGroupOptions
+func (*IamIdentityV1) NewListServiceIDGroupOptions() *ListServiceIDGroupOptions {
+	return &ListServiceIDGroupOptions{}
+}
+
+// SetAccountID : Allow user to set AccountID
+func (_options *ListServiceIDGroupOptions) SetAccountID(accountID string) *ListServiceIDGroupOptions {
+	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *ListServiceIDGroupOptions) SetHeaders(param map[string]string) *ListServiceIDGroupOptions {
 	options.Headers = param
 	return options
 }
@@ -11399,6 +12219,9 @@ func (options *ListProfilesOptions) SetHeaders(param map[string]string) *ListPro
 type ListServiceIdsOptions struct {
 	// Account ID of the service ID(s) to query. This parameter is required (unless using a pagetoken).
 	AccountID *string `json:"account_id,omitempty"`
+
+	// Group ID of the service ID(s) to query. If this parameter is not provided the default group is applied.
+	GroupID *string `json:"group_id,omitempty"`
 
 	// Name of the service ID(s) to query. Optional.20 items per page. Valid range is 1 to 100.
 	Name *string `json:"name,omitempty"`
@@ -11419,6 +12242,13 @@ type ListServiceIdsOptions struct {
 	// Defines if the entity history is included in the response.
 	IncludeHistory *bool `json:"include_history,omitempty"`
 
+	// An optional filter query parameter used to refine the results of the search operation. For more information see
+	// [Filtering list results](#filter-list-results) section.
+	Filter *string `json:"filter,omitempty"`
+
+	// Defines if the service ID group ID is included in the response.
+	ShowGroupID *string `json:"show_group_id,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -11426,7 +12256,7 @@ type ListServiceIdsOptions struct {
 // Constants associated with the ListServiceIdsOptions.Order property.
 // Optional sort order, valid values are asc and desc. Default: asc.
 const (
-	ListServiceIdsOptionsOrderAscConst  = "asc"
+	ListServiceIdsOptionsOrderAscConst = "asc"
 	ListServiceIdsOptionsOrderDescConst = "desc"
 )
 
@@ -11438,6 +12268,12 @@ func (*IamIdentityV1) NewListServiceIdsOptions() *ListServiceIdsOptions {
 // SetAccountID : Allow user to set AccountID
 func (_options *ListServiceIdsOptions) SetAccountID(accountID string) *ListServiceIdsOptions {
 	_options.AccountID = core.StringPtr(accountID)
+	return _options
+}
+
+// SetGroupID : Allow user to set GroupID
+func (_options *ListServiceIdsOptions) SetGroupID(groupID string) *ListServiceIdsOptions {
+	_options.GroupID = core.StringPtr(groupID)
 	return _options
 }
 
@@ -11474,6 +12310,18 @@ func (_options *ListServiceIdsOptions) SetOrder(order string) *ListServiceIdsOpt
 // SetIncludeHistory : Allow user to set IncludeHistory
 func (_options *ListServiceIdsOptions) SetIncludeHistory(includeHistory bool) *ListServiceIdsOptions {
 	_options.IncludeHistory = core.BoolPtr(includeHistory)
+	return _options
+}
+
+// SetFilter : Allow user to set Filter
+func (_options *ListServiceIdsOptions) SetFilter(filter string) *ListServiceIdsOptions {
+	_options.Filter = core.StringPtr(filter)
+	return _options
+}
+
+// SetShowGroupID : Allow user to set ShowGroupID
+func (_options *ListServiceIdsOptions) SetShowGroupID(showGroupID string) *ListServiceIdsOptions {
+	_options.ShowGroupID = core.StringPtr(showGroupID)
 	return _options
 }
 
@@ -11522,22 +12370,22 @@ type ListTrustedProfileAssignmentsOptions struct {
 // Constants associated with the ListTrustedProfileAssignmentsOptions.TargetType property.
 // Filter results by the assignment's target type.
 const (
-	ListTrustedProfileAssignmentsOptionsTargetTypeAccountConst      = "Account"
+	ListTrustedProfileAssignmentsOptionsTargetTypeAccountConst = "Account"
 	ListTrustedProfileAssignmentsOptionsTargetTypeAccountgroupConst = "AccountGroup"
 )
 
 // Constants associated with the ListTrustedProfileAssignmentsOptions.Sort property.
 // If specified, the items are sorted by the value of this property.
 const (
-	ListTrustedProfileAssignmentsOptionsSortCreatedAtConst      = "created_at"
+	ListTrustedProfileAssignmentsOptionsSortCreatedAtConst = "created_at"
 	ListTrustedProfileAssignmentsOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListTrustedProfileAssignmentsOptionsSortTemplateIDConst     = "template_id"
+	ListTrustedProfileAssignmentsOptionsSortTemplateIDConst = "template_id"
 )
 
 // Constants associated with the ListTrustedProfileAssignmentsOptions.Order property.
 // Sort order.
 const (
-	ListTrustedProfileAssignmentsOptionsOrderAscConst  = "asc"
+	ListTrustedProfileAssignmentsOptionsOrderAscConst = "asc"
 	ListTrustedProfileAssignmentsOptionsOrderDescConst = "desc"
 )
 
@@ -11639,15 +12487,15 @@ type ListVersionsOfAccountSettingsTemplateOptions struct {
 // Constants associated with the ListVersionsOfAccountSettingsTemplateOptions.Sort property.
 // Optional sort property. If specified, the returned templated are sorted according to this property.
 const (
-	ListVersionsOfAccountSettingsTemplateOptionsSortCreatedAtConst      = "created_at"
+	ListVersionsOfAccountSettingsTemplateOptionsSortCreatedAtConst = "created_at"
 	ListVersionsOfAccountSettingsTemplateOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListVersionsOfAccountSettingsTemplateOptionsSortNameConst           = "name"
+	ListVersionsOfAccountSettingsTemplateOptionsSortNameConst = "name"
 )
 
 // Constants associated with the ListVersionsOfAccountSettingsTemplateOptions.Order property.
 // Optional sort order.
 const (
-	ListVersionsOfAccountSettingsTemplateOptionsOrderAscConst  = "asc"
+	ListVersionsOfAccountSettingsTemplateOptionsOrderAscConst = "asc"
 	ListVersionsOfAccountSettingsTemplateOptionsOrderDescConst = "desc"
 )
 
@@ -11727,15 +12575,15 @@ type ListVersionsOfProfileTemplateOptions struct {
 // Constants associated with the ListVersionsOfProfileTemplateOptions.Sort property.
 // Optional sort property. If specified, the returned templated are sorted according to this property.
 const (
-	ListVersionsOfProfileTemplateOptionsSortCreatedAtConst      = "created_at"
+	ListVersionsOfProfileTemplateOptionsSortCreatedAtConst = "created_at"
 	ListVersionsOfProfileTemplateOptionsSortLastModifiedAtConst = "last_modified_at"
-	ListVersionsOfProfileTemplateOptionsSortNameConst           = "name"
+	ListVersionsOfProfileTemplateOptionsSortNameConst = "name"
 )
 
 // Constants associated with the ListVersionsOfProfileTemplateOptions.Order property.
 // Optional sort order.
 const (
-	ListVersionsOfProfileTemplateOptionsOrderAscConst  = "asc"
+	ListVersionsOfProfileTemplateOptionsOrderAscConst = "asc"
 	ListVersionsOfProfileTemplateOptionsOrderDescConst = "desc"
 )
 
@@ -11914,7 +12762,7 @@ type PolicyTemplateReference struct {
 // NewPolicyTemplateReference : Instantiate PolicyTemplateReference (Generic Model Constructor)
 func (*IamIdentityV1) NewPolicyTemplateReference(id string, version string) (_model *PolicyTemplateReference, err error) {
 	_model = &PolicyTemplateReference{
-		ID:      core.StringPtr(id),
+		ID: core.StringPtr(id),
 		Version: core.StringPtr(version),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -12048,9 +12896,9 @@ type ProfileClaimRuleConditions struct {
 // NewProfileClaimRuleConditions : Instantiate ProfileClaimRuleConditions (Generic Model Constructor)
 func (*IamIdentityV1) NewProfileClaimRuleConditions(claim string, operator string, value string) (_model *ProfileClaimRuleConditions, err error) {
 	_model = &ProfileClaimRuleConditions{
-		Claim:    core.StringPtr(claim),
+		Claim: core.StringPtr(claim),
 		Operator: core.StringPtr(operator),
-		Value:    core.StringPtr(value),
+		Value: core.StringPtr(value),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -12155,16 +13003,16 @@ type ProfileIdentityRequest struct {
 // Constants associated with the ProfileIdentityRequest.Type property.
 // Type of the identity.
 const (
-	ProfileIdentityRequestTypeCRNConst       = "crn"
+	ProfileIdentityRequestTypeCRNConst = "crn"
 	ProfileIdentityRequestTypeServiceidConst = "serviceid"
-	ProfileIdentityRequestTypeUserConst      = "user"
+	ProfileIdentityRequestTypeUserConst = "user"
 )
 
 // NewProfileIdentityRequest : Instantiate ProfileIdentityRequest (Generic Model Constructor)
 func (*IamIdentityV1) NewProfileIdentityRequest(identifier string, typeVar string) (_model *ProfileIdentityRequest, err error) {
 	_model = &ProfileIdentityRequest{
 		Identifier: core.StringPtr(identifier),
-		Type:       core.StringPtr(typeVar),
+		Type: core.StringPtr(typeVar),
 	}
 	err = core.ValidateStruct(_model, "required parameters")
 	if err != nil {
@@ -12225,9 +13073,9 @@ type ProfileIdentityResponse struct {
 // Constants associated with the ProfileIdentityResponse.Type property.
 // Type of the identity.
 const (
-	ProfileIdentityResponseTypeCRNConst       = "crn"
+	ProfileIdentityResponseTypeCRNConst = "crn"
 	ProfileIdentityResponseTypeServiceidConst = "serviceid"
-	ProfileIdentityResponseTypeUserConst      = "user"
+	ProfileIdentityResponseTypeUserConst = "user"
 )
 
 // UnmarshalProfileIdentityResponse unmarshals an instance of ProfileIdentityResponse from the specified map of raw messages.
@@ -12279,7 +13127,7 @@ type ProfileLink struct {
 	// Optional name of the Link.
 	Name *string `json:"name,omitempty"`
 
-	// The compute resource type. Valid values are VSI, IKS_SA, ROKS_SA.
+	// The compute resource type. Valid values are VSI, BMS, IKS_SA, ROKS_SA, CE.
 	CrType *string `json:"cr_type" validate:"required"`
 
 	Link *ProfileLinkLink `json:"link" validate:"required"`
@@ -12337,6 +13185,12 @@ type ProfileLinkLink struct {
 
 	// Name of the compute resource, only required if cr_type is IKS_SA or ROKS_SA.
 	Name *string `json:"name,omitempty"`
+
+	// Component type of the compute resource, only required if cr_type is CE.
+	ComponentType *string `json:"component_type,omitempty"`
+
+	// Component name of the compute resource, only required if cr_type is CE.
+	ComponentName *string `json:"component_name,omitempty"`
 }
 
 // UnmarshalProfileLinkLink unmarshals an instance of ProfileLinkLink from the specified map of raw messages.
@@ -12355,6 +13209,16 @@ func UnmarshalProfileLinkLink(m map[string]json.RawMessage, result interface{}) 
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "component_type", &obj.ComponentType)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "component_type-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "component_name", &obj.ComponentName)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "component_name-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12666,6 +13530,9 @@ type ServiceID struct {
 	// ID of the account the service ID belongs to.
 	AccountID *string `json:"account_id" validate:"required"`
 
+	// ID of the group to which the service ID belongs to. Only set if requested via parameter `show_group_id`.
+	GroupID *string `json:"group_id,omitempty"`
+
 	// Name of the Service Id. The name is not checked for uniqueness. Therefore multiple names with the same value can
 	// exist. Access is done via the UUID of the Service Id.
 	Name *string `json:"name" validate:"required"`
@@ -12734,6 +13601,11 @@ func UnmarshalServiceID(m map[string]json.RawMessage, result interface{}) (err e
 		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "group_id", &obj.GroupID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "group_id-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
@@ -12762,6 +13634,107 @@ func UnmarshalServiceID(m map[string]json.RawMessage, result interface{}) (err e
 	err = core.UnmarshalModel(m, "activity", &obj.Activity, UnmarshalActivity)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "activity-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ServiceIDGroup : ServiceIDGroup struct
+type ServiceIDGroup struct {
+	// ID of the the service ID group.
+	ID *string `json:"id" validate:"required"`
+
+	// Version of the service ID group details object. You need to specify this value when updating the service ID group to
+	// avoid stale updates.
+	EntityTag *string `json:"entity_tag,omitempty"`
+
+	// ID of the account the service ID group belongs to.
+	AccountID *string `json:"account_id" validate:"required"`
+
+	// Cloud Resource Name of the item.
+	CRN *string `json:"crn" validate:"required"`
+
+	// Name of the service ID group. Unique in the account.
+	Name *string `json:"name" validate:"required"`
+
+	// Description of the service ID group.
+	Description *string `json:"description,omitempty"`
+
+	// Timestamp of when the service ID group was created.
+	CreatedAt *string `json:"created_at,omitempty"`
+
+	// IAM ID of the user or service which created the Service Id group.
+	CreatedBy *string `json:"created_by" validate:"required"`
+
+	// Timestamp of when the service ID group was modified.
+	ModifiedAt *string `json:"modified_at,omitempty"`
+}
+
+// UnmarshalServiceIDGroup unmarshals an instance of ServiceIDGroup from the specified map of raw messages.
+func UnmarshalServiceIDGroup(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ServiceIDGroup)
+	err = core.UnmarshalPrimitive(m, "id", &obj.ID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "entity_tag", &obj.EntityTag)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "entity_tag-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "account_id", &obj.AccountID)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "account_id-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "crn", &obj.CRN)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "crn-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "name", &obj.Name)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "name-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_at-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "created_by", &obj.CreatedBy)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "created_by-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "modified_at", &obj.ModifiedAt)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "modified_at-error", common.GetComponentInfo())
+		return
+	}
+	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
+	return
+}
+
+// ServiceIDGroupList : ServiceIDGroupList struct
+type ServiceIDGroupList struct {
+	// List of Service ID groups based on the query parameter.
+	ServiceidGroups []ServiceIDGroup `json:"serviceid_groups" validate:"required"`
+}
+
+// UnmarshalServiceIDGroupList unmarshals an instance of ServiceIDGroupList from the specified map of raw messages.
+func UnmarshalServiceIDGroupList(m map[string]json.RawMessage, result interface{}) (err error) {
+	obj := new(ServiceIDGroupList)
+	err = core.UnmarshalModel(m, "serviceid_groups", &obj.ServiceidGroups, UnmarshalServiceIDGroup)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "serviceid_groups-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -12857,7 +13830,7 @@ type SetProfileIdentitiesOptions struct {
 func (*IamIdentityV1) NewSetProfileIdentitiesOptions(profileID string, ifMatch string) *SetProfileIdentitiesOptions {
 	return &SetProfileIdentitiesOptions{
 		ProfileID: core.StringPtr(profileID),
-		IfMatch:   core.StringPtr(ifMatch),
+		IfMatch: core.StringPtr(ifMatch),
 	}
 }
 
@@ -12916,26 +13889,26 @@ type SetProfileIdentityOptions struct {
 // Constants associated with the SetProfileIdentityOptions.IdentityType property.
 // Type of the identity.
 const (
-	SetProfileIdentityOptionsIdentityTypeCRNConst       = "crn"
+	SetProfileIdentityOptionsIdentityTypeCRNConst = "crn"
 	SetProfileIdentityOptionsIdentityTypeServiceidConst = "serviceid"
-	SetProfileIdentityOptionsIdentityTypeUserConst      = "user"
+	SetProfileIdentityOptionsIdentityTypeUserConst = "user"
 )
 
 // Constants associated with the SetProfileIdentityOptions.Type property.
 // Type of the identity.
 const (
-	SetProfileIdentityOptionsTypeCRNConst       = "crn"
+	SetProfileIdentityOptionsTypeCRNConst = "crn"
 	SetProfileIdentityOptionsTypeServiceidConst = "serviceid"
-	SetProfileIdentityOptionsTypeUserConst      = "user"
+	SetProfileIdentityOptionsTypeUserConst = "user"
 )
 
 // NewSetProfileIdentityOptions : Instantiate SetProfileIdentityOptions
 func (*IamIdentityV1) NewSetProfileIdentityOptions(profileID string, identityType string, identifier string, typeVar string) *SetProfileIdentityOptions {
 	return &SetProfileIdentityOptions{
-		ProfileID:    core.StringPtr(profileID),
+		ProfileID: core.StringPtr(profileID),
 		IdentityType: core.StringPtr(identityType),
-		Identifier:   core.StringPtr(identifier),
-		Type:         core.StringPtr(typeVar),
+		Identifier: core.StringPtr(identifier),
+		Type: core.StringPtr(typeVar),
 	}
 }
 
@@ -13259,7 +14232,7 @@ type TemplateAssignmentResponseResource struct {
 	AccountSettings *TemplateAssignmentResponseResourceDetail `json:"account_settings,omitempty"`
 
 	// Policy resource(s) included only for trusted profile assignments with policy references.
-	PolicyTemplateRefs []TemplateAssignmentResponseResourceDetail `json:"policy_template_refs,omitempty"`
+	PolicyTemplateReferences []TemplateAssignmentResponseResourceDetail `json:"policy_template_references,omitempty"`
 }
 
 // UnmarshalTemplateAssignmentResponseResource unmarshals an instance of TemplateAssignmentResponseResource from the specified map of raw messages.
@@ -13280,9 +14253,9 @@ func UnmarshalTemplateAssignmentResponseResource(m map[string]json.RawMessage, r
 		err = core.SDKErrorf(err, "", "account_settings-error", common.GetComponentInfo())
 		return
 	}
-	err = core.UnmarshalModel(m, "policy_template_refs", &obj.PolicyTemplateRefs, UnmarshalTemplateAssignmentResponseResourceDetail)
+	err = core.UnmarshalModel(m, "policy_template_references", &obj.PolicyTemplateReferences, UnmarshalTemplateAssignmentResponseResourceDetail)
 	if err != nil {
-		err = core.SDKErrorf(err, "", "policy_template_refs-error", common.GetComponentInfo())
+		err = core.SDKErrorf(err, "", "policy_template_references-error", common.GetComponentInfo())
 		return
 	}
 	reflect.ValueOf(result).Elem().Set(reflect.ValueOf(obj))
@@ -13342,10 +14315,31 @@ func UnmarshalTemplateAssignmentResponseResourceDetail(m map[string]json.RawMess
 // TemplateProfileComponentRequest : Input body parameters for the TemplateProfileComponent.
 type TemplateProfileComponentRequest struct {
 	// Name of the Profile.
+	//
+	// You can use replacement variables in the profile name to adjust the name per account.
+	//
+	// The following variables are supported:
+	//
+	// - `${template_id}` will be replaced by a unique identifier representing the trusted profile template
+	//
+	// - `${template_name}` will be replaced by the current name of the trusted profile template
+	//
+	// - `${template_version}` will be replaced by the current version of the trusted profile template
+	//
+	// - `${account_id}` will be replaced by the account identifier to which this trusted profile template is assigned to
+	//
+	// - `${account_name}` will be replaced by the account name to which this trusted profile template is assigned to
+	//
+	// Changes to e.g. the name of the account will NOT cause an update of the trusted profile name. The profile name is
+	// processed during account assignment and any template version upgrade, i.e. during that operation, the updated
+	// account name would be used.
 	Name *string `json:"name" validate:"required"`
 
 	// Description of the Profile.
 	Description *string `json:"description,omitempty"`
+
+	// Email of the trusted profile.
+	Email *string `json:"email,omitempty"`
 
 	// Rules for the Profile.
 	Rules []TrustedProfileTemplateClaimRule `json:"rules,omitempty"`
@@ -13379,6 +14373,11 @@ func UnmarshalTemplateProfileComponentRequest(m map[string]json.RawMessage, resu
 		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
 		return
 	}
+	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
+		return
+	}
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalTrustedProfileTemplateClaimRule)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
@@ -13404,6 +14403,9 @@ type TemplateProfileComponentResponse struct {
 	// Rules for the Profile.
 	Rules []TrustedProfileTemplateClaimRule `json:"rules,omitempty"`
 
+	// Email of the trusted profile.
+	Email *string `json:"email,omitempty"`
+
 	// Identities for the Profile.
 	Identities []ProfileIdentityResponse `json:"identities,omitempty"`
 }
@@ -13424,6 +14426,11 @@ func UnmarshalTemplateProfileComponentResponse(m map[string]json.RawMessage, res
 	err = core.UnmarshalModel(m, "rules", &obj.Rules, UnmarshalTrustedProfileTemplateClaimRule)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "rules-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalModel(m, "identities", &obj.Identities, UnmarshalProfileIdentityResponse)
@@ -13458,6 +14465,10 @@ type TrustedProfile struct {
 	// The optional description of the trusted profile. The 'description' property is only available if a description was
 	// provided during a create of a trusted profile.
 	Description *string `json:"description,omitempty"`
+
+	// The optional email of the trusted profile. The 'email' property is only available if an email was provided during a
+	// create of a trusted profile.
+	Email *string `json:"email,omitempty"`
 
 	// If set contains a date time string of the creation date in ISO format.
 	CreatedAt *strfmt.DateTime `json:"created_at,omitempty"`
@@ -13522,6 +14533,11 @@ func UnmarshalTrustedProfile(m map[string]json.RawMessage, result interface{}) (
 	err = core.UnmarshalPrimitive(m, "description", &obj.Description)
 	if err != nil {
 		err = core.SDKErrorf(err, "", "description-error", common.GetComponentInfo())
+		return
+	}
+	err = core.UnmarshalPrimitive(m, "email", &obj.Email)
+	if err != nil {
+		err = core.SDKErrorf(err, "", "email-error", common.GetComponentInfo())
 		return
 	}
 	err = core.UnmarshalPrimitive(m, "created_at", &obj.CreatedAt)
@@ -13606,7 +14622,7 @@ const (
 // NewTrustedProfileTemplateClaimRule : Instantiate TrustedProfileTemplateClaimRule (Generic Model Constructor)
 func (*IamIdentityV1) NewTrustedProfileTemplateClaimRule(typeVar string, conditions []ProfileClaimRuleConditions) (_model *TrustedProfileTemplateClaimRule, err error) {
 	_model = &TrustedProfileTemplateClaimRule{
-		Type:       core.StringPtr(typeVar),
+		Type: core.StringPtr(typeVar),
 		Conditions: conditions,
 	}
 	err = core.ValidateStruct(_model, "required parameters")
@@ -13997,8 +15013,8 @@ type UpdateAccountSettingsAssignmentOptions struct {
 // NewUpdateAccountSettingsAssignmentOptions : Instantiate UpdateAccountSettingsAssignmentOptions
 func (*IamIdentityV1) NewUpdateAccountSettingsAssignmentOptions(assignmentID string, ifMatch string, templateVersion int64) *UpdateAccountSettingsAssignmentOptions {
 	return &UpdateAccountSettingsAssignmentOptions{
-		AssignmentID:    core.StringPtr(assignmentID),
-		IfMatch:         core.StringPtr(ifMatch),
+		AssignmentID: core.StringPtr(assignmentID),
+		IfMatch: core.StringPtr(ifMatch),
 		TemplateVersion: core.Int64Ptr(templateVersion),
 	}
 }
@@ -14098,53 +15114,51 @@ type UpdateAccountSettingsOptions struct {
 
 // Constants associated with the UpdateAccountSettingsOptions.RestrictCreateServiceID property.
 // Defines whether or not creating a service ID is access controlled. Valid values:
-//   - RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
-//
+//   * RESTRICTED - only users assigned the 'Service ID creator' role on the IAM Identity Service can create service
 // IDs, including the account owner
-//   - NOT_RESTRICTED - all members of an account can create service IDs
-//   - NOT_SET - to 'unset' a previous set value.
+//   * NOT_RESTRICTED - all members of an account can create service IDs
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	UpdateAccountSettingsOptionsRestrictCreateServiceIDNotRestrictedConst = "NOT_RESTRICTED"
-	UpdateAccountSettingsOptionsRestrictCreateServiceIDNotSetConst        = "NOT_SET"
-	UpdateAccountSettingsOptionsRestrictCreateServiceIDRestrictedConst    = "RESTRICTED"
+	UpdateAccountSettingsOptionsRestrictCreateServiceIDNotSetConst = "NOT_SET"
+	UpdateAccountSettingsOptionsRestrictCreateServiceIDRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the UpdateAccountSettingsOptions.RestrictCreatePlatformApikey property.
 // Defines whether or not creating platform API keys is access controlled. Valid values:
-//   - RESTRICTED - only users assigned the 'User API key creator' role on the IAM Identity Service can create API keys,
-//
+//   * RESTRICTED - only users assigned the 'User API key creator' role on the IAM Identity Service can create API keys,
 // including the account owner
-//   - NOT_RESTRICTED - all members of an account can create platform API keys
-//   - NOT_SET - to 'unset' a previous set value.
+//   * NOT_RESTRICTED - all members of an account can create platform API keys
+//   * NOT_SET - to 'unset' a previous set value.
 const (
 	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyNotRestrictedConst = "NOT_RESTRICTED"
-	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyNotSetConst        = "NOT_SET"
-	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyRestrictedConst    = "RESTRICTED"
+	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyNotSetConst = "NOT_SET"
+	UpdateAccountSettingsOptionsRestrictCreatePlatformApikeyRestrictedConst = "RESTRICTED"
 )
 
 // Constants associated with the UpdateAccountSettingsOptions.Mfa property.
 // Defines the MFA trait for the account. Valid values:
-//   - NONE - No MFA trait set
-//   - NONE_NO_ROPC- No MFA, disable CLI logins with only a password
-//   - TOTP - For all non-federated IBMId users
-//   - TOTP4ALL - For all users
-//   - LEVEL1 - Email-based MFA for all users
-//   - LEVEL2 - TOTP-based MFA for all users
-//   - LEVEL3 - U2F MFA for all users.
+//   * NONE - No MFA trait set
+//   * NONE_NO_ROPC- No MFA, disable CLI logins with only a password
+//   * TOTP - For all non-federated IBMId users
+//   * TOTP4ALL - For all users
+//   * LEVEL1 - Email-based MFA for all users
+//   * LEVEL2 - TOTP-based MFA for all users
+//   * LEVEL3 - U2F MFA for all users.
 const (
-	UpdateAccountSettingsOptionsMfaLevel1Const     = "LEVEL1"
-	UpdateAccountSettingsOptionsMfaLevel2Const     = "LEVEL2"
-	UpdateAccountSettingsOptionsMfaLevel3Const     = "LEVEL3"
-	UpdateAccountSettingsOptionsMfaNoneConst       = "NONE"
+	UpdateAccountSettingsOptionsMfaLevel1Const = "LEVEL1"
+	UpdateAccountSettingsOptionsMfaLevel2Const = "LEVEL2"
+	UpdateAccountSettingsOptionsMfaLevel3Const = "LEVEL3"
+	UpdateAccountSettingsOptionsMfaNoneConst = "NONE"
 	UpdateAccountSettingsOptionsMfaNoneNoRopcConst = "NONE_NO_ROPC"
-	UpdateAccountSettingsOptionsMfaTotpConst       = "TOTP"
-	UpdateAccountSettingsOptionsMfaTotp4allConst   = "TOTP4ALL"
+	UpdateAccountSettingsOptionsMfaTotpConst = "TOTP"
+	UpdateAccountSettingsOptionsMfaTotp4allConst = "TOTP4ALL"
 )
 
 // NewUpdateAccountSettingsOptions : Instantiate UpdateAccountSettingsOptions
 func (*IamIdentityV1) NewUpdateAccountSettingsOptions(ifMatch string, accountID string) *UpdateAccountSettingsOptions {
 	return &UpdateAccountSettingsOptions{
-		IfMatch:   core.StringPtr(ifMatch),
+		IfMatch: core.StringPtr(ifMatch),
 		AccountID: core.StringPtr(accountID),
 	}
 }
@@ -14258,9 +15272,9 @@ type UpdateAccountSettingsTemplateVersionOptions struct {
 // NewUpdateAccountSettingsTemplateVersionOptions : Instantiate UpdateAccountSettingsTemplateVersionOptions
 func (*IamIdentityV1) NewUpdateAccountSettingsTemplateVersionOptions(ifMatch string, templateID string, version string) *UpdateAccountSettingsTemplateVersionOptions {
 	return &UpdateAccountSettingsTemplateVersionOptions{
-		IfMatch:    core.StringPtr(ifMatch),
+		IfMatch: core.StringPtr(ifMatch),
 		TemplateID: core.StringPtr(templateID),
-		Version:    core.StringPtr(version),
+		Version: core.StringPtr(version),
 	}
 }
 
@@ -14345,7 +15359,7 @@ type UpdateAPIKeyOptions struct {
 // NewUpdateAPIKeyOptions : Instantiate UpdateAPIKeyOptions
 func (*IamIdentityV1) NewUpdateAPIKeyOptions(id string, ifMatch string) *UpdateAPIKeyOptions {
 	return &UpdateAPIKeyOptions{
-		ID:      core.StringPtr(id),
+		ID: core.StringPtr(id),
 		IfMatch: core.StringPtr(ifMatch),
 	}
 }
@@ -14435,10 +15449,10 @@ type UpdateClaimRuleOptions struct {
 // NewUpdateClaimRuleOptions : Instantiate UpdateClaimRuleOptions
 func (*IamIdentityV1) NewUpdateClaimRuleOptions(profileID string, ruleID string, ifMatch string, typeVar string, conditions []ProfileClaimRuleConditions) *UpdateClaimRuleOptions {
 	return &UpdateClaimRuleOptions{
-		ProfileID:  core.StringPtr(profileID),
-		RuleID:     core.StringPtr(ruleID),
-		IfMatch:    core.StringPtr(ifMatch),
-		Type:       core.StringPtr(typeVar),
+		ProfileID: core.StringPtr(profileID),
+		RuleID: core.StringPtr(ruleID),
+		IfMatch: core.StringPtr(ifMatch),
+		Type: core.StringPtr(typeVar),
 		Conditions: conditions,
 	}
 }
@@ -14538,11 +15552,11 @@ type UpdatePreferenceOnScopeAccountOptions struct {
 // NewUpdatePreferenceOnScopeAccountOptions : Instantiate UpdatePreferenceOnScopeAccountOptions
 func (*IamIdentityV1) NewUpdatePreferenceOnScopeAccountOptions(accountID string, iamID string, service string, preferenceID string, valueString string) *UpdatePreferenceOnScopeAccountOptions {
 	return &UpdatePreferenceOnScopeAccountOptions{
-		AccountID:    core.StringPtr(accountID),
-		IamID:        core.StringPtr(iamID),
-		Service:      core.StringPtr(service),
+		AccountID: core.StringPtr(accountID),
+		IamID: core.StringPtr(iamID),
+		Service: core.StringPtr(service),
 		PreferenceID: core.StringPtr(preferenceID),
-		ValueString:  core.StringPtr(valueString),
+		ValueString: core.StringPtr(valueString),
 	}
 }
 
@@ -14606,6 +15620,10 @@ type UpdateProfileOptions struct {
 	// the trusted profile. If a non empty value is provided the trusted profile will be updated.
 	Description *string `json:"description,omitempty"`
 
+	// The email of the profile to update. If specified an empty email will clear the email of the profile. If an non empty
+	// value is provided the trusted profile will be updated.
+	Email *string `json:"email,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -14614,7 +15632,7 @@ type UpdateProfileOptions struct {
 func (*IamIdentityV1) NewUpdateProfileOptions(profileID string, ifMatch string) *UpdateProfileOptions {
 	return &UpdateProfileOptions{
 		ProfileID: core.StringPtr(profileID),
-		IfMatch:   core.StringPtr(ifMatch),
+		IfMatch: core.StringPtr(ifMatch),
 	}
 }
 
@@ -14639,6 +15657,12 @@ func (_options *UpdateProfileOptions) SetName(name string) *UpdateProfileOptions
 // SetDescription : Allow user to set Description
 func (_options *UpdateProfileOptions) SetDescription(description string) *UpdateProfileOptions {
 	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetEmail : Allow user to set Email
+func (_options *UpdateProfileOptions) SetEmail(email string) *UpdateProfileOptions {
+	_options.Email = core.StringPtr(email)
 	return _options
 }
 
@@ -14687,9 +15711,9 @@ type UpdateProfileTemplateVersionOptions struct {
 // NewUpdateProfileTemplateVersionOptions : Instantiate UpdateProfileTemplateVersionOptions
 func (*IamIdentityV1) NewUpdateProfileTemplateVersionOptions(ifMatch string, templateID string, version string) *UpdateProfileTemplateVersionOptions {
 	return &UpdateProfileTemplateVersionOptions{
-		IfMatch:    core.StringPtr(ifMatch),
+		IfMatch: core.StringPtr(ifMatch),
 		TemplateID: core.StringPtr(templateID),
-		Version:    core.StringPtr(version),
+		Version: core.StringPtr(version),
 	}
 }
 
@@ -14753,6 +15777,65 @@ func (options *UpdateProfileTemplateVersionOptions) SetHeaders(param map[string]
 	return options
 }
 
+// UpdateServiceIDGroupOptions : The UpdateServiceIDGroup options.
+type UpdateServiceIDGroupOptions struct {
+	// Unique ID of the service ID group to be updated.
+	ID *string `json:"id" validate:"required,ne="`
+
+	// Version of the service ID gorup to be updated. Specify the version that you retrieved when reading service ID group.
+	// This value helps identifying parallel usage of this API. Pass * to indicate to update any version available. This
+	// might result in stale updates.
+	IfMatch *string `json:"If-Match" validate:"required"`
+
+	// Name of the service ID group. Unique in the account.
+	Name *string `json:"name" validate:"required"`
+
+	// Description of the service ID group.
+	Description *string `json:"description,omitempty"`
+
+	// Allows users to set headers on API requests.
+	Headers map[string]string
+}
+
+// NewUpdateServiceIDGroupOptions : Instantiate UpdateServiceIDGroupOptions
+func (*IamIdentityV1) NewUpdateServiceIDGroupOptions(id string, ifMatch string, name string) *UpdateServiceIDGroupOptions {
+	return &UpdateServiceIDGroupOptions{
+		ID: core.StringPtr(id),
+		IfMatch: core.StringPtr(ifMatch),
+		Name: core.StringPtr(name),
+	}
+}
+
+// SetID : Allow user to set ID
+func (_options *UpdateServiceIDGroupOptions) SetID(id string) *UpdateServiceIDGroupOptions {
+	_options.ID = core.StringPtr(id)
+	return _options
+}
+
+// SetIfMatch : Allow user to set IfMatch
+func (_options *UpdateServiceIDGroupOptions) SetIfMatch(ifMatch string) *UpdateServiceIDGroupOptions {
+	_options.IfMatch = core.StringPtr(ifMatch)
+	return _options
+}
+
+// SetName : Allow user to set Name
+func (_options *UpdateServiceIDGroupOptions) SetName(name string) *UpdateServiceIDGroupOptions {
+	_options.Name = core.StringPtr(name)
+	return _options
+}
+
+// SetDescription : Allow user to set Description
+func (_options *UpdateServiceIDGroupOptions) SetDescription(description string) *UpdateServiceIDGroupOptions {
+	_options.Description = core.StringPtr(description)
+	return _options
+}
+
+// SetHeaders : Allow user to set Headers
+func (options *UpdateServiceIDGroupOptions) SetHeaders(param map[string]string) *UpdateServiceIDGroupOptions {
+	options.Headers = param
+	return options
+}
+
 // UpdateServiceIDOptions : The UpdateServiceID options.
 type UpdateServiceIDOptions struct {
 	// Unique ID of the service ID to be updated.
@@ -14775,6 +15858,9 @@ type UpdateServiceIDOptions struct {
 	// existing unique instance crns of the service ID.
 	UniqueInstanceCrns []string `json:"unique_instance_crns,omitempty"`
 
+	// Defines if the service ID group ID is included in the response.
+	ShowGroupID *string `json:"show_group_id,omitempty"`
+
 	// Allows users to set headers on API requests.
 	Headers map[string]string
 }
@@ -14782,7 +15868,7 @@ type UpdateServiceIDOptions struct {
 // NewUpdateServiceIDOptions : Instantiate UpdateServiceIDOptions
 func (*IamIdentityV1) NewUpdateServiceIDOptions(id string, ifMatch string) *UpdateServiceIDOptions {
 	return &UpdateServiceIDOptions{
-		ID:      core.StringPtr(id),
+		ID: core.StringPtr(id),
 		IfMatch: core.StringPtr(ifMatch),
 	}
 }
@@ -14817,6 +15903,12 @@ func (_options *UpdateServiceIDOptions) SetUniqueInstanceCrns(uniqueInstanceCrns
 	return _options
 }
 
+// SetShowGroupID : Allow user to set ShowGroupID
+func (_options *UpdateServiceIDOptions) SetShowGroupID(showGroupID string) *UpdateServiceIDOptions {
+	_options.ShowGroupID = core.StringPtr(showGroupID)
+	return _options
+}
+
 // SetHeaders : Allow user to set Headers
 func (options *UpdateServiceIDOptions) SetHeaders(param map[string]string) *UpdateServiceIDOptions {
 	options.Headers = param
@@ -14844,8 +15936,8 @@ type UpdateTrustedProfileAssignmentOptions struct {
 // NewUpdateTrustedProfileAssignmentOptions : Instantiate UpdateTrustedProfileAssignmentOptions
 func (*IamIdentityV1) NewUpdateTrustedProfileAssignmentOptions(assignmentID string, ifMatch string, templateVersion int64) *UpdateTrustedProfileAssignmentOptions {
 	return &UpdateTrustedProfileAssignmentOptions{
-		AssignmentID:    core.StringPtr(assignmentID),
-		IfMatch:         core.StringPtr(ifMatch),
+		AssignmentID: core.StringPtr(assignmentID),
+		IfMatch: core.StringPtr(ifMatch),
 		TemplateVersion: core.Int64Ptr(templateVersion),
 	}
 }

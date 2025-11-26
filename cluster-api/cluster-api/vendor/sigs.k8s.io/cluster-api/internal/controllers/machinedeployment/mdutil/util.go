@@ -38,7 +38,7 @@ import (
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/conversion"
 )
 
@@ -149,7 +149,7 @@ func Revision(obj runtime.Object) (int64, error) {
 var annotationsToSkip = map[string]bool{
 	corev1.LastAppliedConfigAnnotation:  true,
 	clusterv1.RevisionAnnotation:        true,
-	clusterv1.RevisionHistoryAnnotation: true,
+	revisionHistoryAnnotation:           true,
 	clusterv1.DesiredReplicasAnnotation: true,
 	clusterv1.MaxReplicasAnnotation:     true,
 
@@ -188,6 +188,11 @@ func getIntFromAnnotation(ms *clusterv1.MachineSet, annotationKey string, logger
 	return int32(intValue), true
 }
 
+// revisionHistoryAnnotation maintains the history of all old revisions that a machine set has served for a machine deployment.
+//
+// Deprecated: This annotation is deprecated and is going to be removed in the next release.
+const revisionHistoryAnnotation = "machinedeployment.clusters.x-k8s.io/revision-history"
+
 // ComputeMachineSetAnnotations computes the annotations that should be set on the MachineSet.
 // Note: The passed in newMS is nil if the new MachineSet doesn't exist in the apiserver yet.
 func ComputeMachineSetAnnotations(ctx context.Context, deployment *clusterv1.MachineDeployment, oldMSs []*clusterv1.MachineSet, newMS *clusterv1.MachineSet) (map[string]string, error) {
@@ -221,18 +226,18 @@ func ComputeMachineSetAnnotations(ctx context.Context, deployment *clusterv1.Mac
 
 		// Ensure we preserve the revision history annotation in any case if it already exists.
 		// Note: With Server-Side-Apply not setting the annotation would drop it.
-		revisionHistory, revisionHistoryExists := newMS.Annotations[clusterv1.RevisionHistoryAnnotation]
+		revisionHistory, revisionHistoryExists := newMS.Annotations[revisionHistoryAnnotation]
 		if revisionHistoryExists {
-			annotations[clusterv1.RevisionHistoryAnnotation] = revisionHistory
+			annotations[revisionHistoryAnnotation] = revisionHistory
 		}
 
 		// If the revision changes then add the old revision to the revision history annotation
 		if currentRevisionExists && currentRevision != newRevision {
 			oldRevisions := strings.Split(revisionHistory, ",")
 			if oldRevisions[0] == "" {
-				annotations[clusterv1.RevisionHistoryAnnotation] = currentRevision
+				annotations[revisionHistoryAnnotation] = currentRevision
 			} else {
-				annotations[clusterv1.RevisionHistoryAnnotation] = strings.Join(append(oldRevisions, currentRevision), ",")
+				annotations[revisionHistoryAnnotation] = strings.Join(append(oldRevisions, currentRevision), ",")
 			}
 		}
 	}
@@ -307,7 +312,7 @@ func MaxUnavailable(deployment clusterv1.MachineDeployment) int32 {
 		return int32(0)
 	}
 	// Error caught by validation
-	_, maxUnavailable, _ := ResolveFenceposts(deployment.Spec.Strategy.RollingUpdate.MaxSurge, deployment.Spec.Strategy.RollingUpdate.MaxUnavailable, *(deployment.Spec.Replicas))
+	_, maxUnavailable, _ := ResolveFenceposts(deployment.Spec.Rollout.Strategy.RollingUpdate.MaxSurge, deployment.Spec.Rollout.Strategy.RollingUpdate.MaxUnavailable, *(deployment.Spec.Replicas))
 	if maxUnavailable > *deployment.Spec.Replicas {
 		return *deployment.Spec.Replicas
 	}
@@ -320,7 +325,7 @@ func MaxSurge(deployment clusterv1.MachineDeployment) int32 {
 		return int32(0)
 	}
 	// Error caught by validation
-	maxSurge, _, _ := ResolveFenceposts(deployment.Spec.Strategy.RollingUpdate.MaxSurge, deployment.Spec.Strategy.RollingUpdate.MaxUnavailable, *(deployment.Spec.Replicas))
+	maxSurge, _, _ := ResolveFenceposts(deployment.Spec.Rollout.Strategy.RollingUpdate.MaxSurge, deployment.Spec.Rollout.Strategy.RollingUpdate.MaxUnavailable, *(deployment.Spec.Replicas))
 	return maxSurge
 }
 
@@ -362,7 +367,7 @@ func getMachineSetFraction(ms clusterv1.MachineSet, md clusterv1.MachineDeployme
 		// will not be an accurate proportion estimation in case other machine sets have different values
 		// which means that the deployment was scaled at some point but we at least will stay in limits
 		// due to the min-max comparisons in getProportion.
-		annotatedReplicas = md.Status.Replicas
+		annotatedReplicas = ptr.Deref(md.Status.Replicas, 0)
 	}
 
 	// We should never proportionally scale up from zero which means ms.spec.replicas and annotatedReplicas
@@ -377,19 +382,19 @@ func MachineTemplateUpToDate(current, desired *clusterv1.MachineTemplateSpec) (u
 	currentCopy := MachineTemplateDeepCopyRolloutFields(current)
 	desiredCopy := MachineTemplateDeepCopyRolloutFields(desired)
 
-	if !reflect.DeepEqual(currentCopy.Spec.Version, desiredCopy.Spec.Version) {
-		logMessages = append(logMessages, fmt.Sprintf("spec.version %s, %s required", ptr.Deref(currentCopy.Spec.Version, "nil"), ptr.Deref(desiredCopy.Spec.Version, "nil")))
+	if currentCopy.Spec.Version != desiredCopy.Spec.Version {
+		logMessages = append(logMessages, fmt.Sprintf("spec.version %s, %s required", currentCopy.Spec.Version, desiredCopy.Spec.Version))
 		// Note: the code computing the message for MachineDeployment's RolloutOut condition is making assumptions on the format/content of this message.
-		conditionMessages = append(conditionMessages, fmt.Sprintf("Version %s, %s required", ptr.Deref(currentCopy.Spec.Version, "nil"), ptr.Deref(desiredCopy.Spec.Version, "nil")))
+		conditionMessages = append(conditionMessages, fmt.Sprintf("Version %s, %s required", currentCopy.Spec.Version, desiredCopy.Spec.Version))
 	}
 
 	// Note: we return a message based on desired.bootstrap.ConfigRef != nil, but we always compare the entire bootstrap
 	// struct to catch cases when either configRef or dataSecretName is set in current vs desired (usually MachineTemplates
 	// have ConfigRef != nil, might be in some edge case dataSecret are used, but switching from one to another is not a
 	// common operation so it is acceptable to handle it in this way).
-	if currentCopy.Spec.Bootstrap.ConfigRef != nil {
+	if currentCopy.Spec.Bootstrap.ConfigRef.IsDefined() {
 		if !reflect.DeepEqual(currentCopy.Spec.Bootstrap, desiredCopy.Spec.Bootstrap) {
-			logMessages = append(logMessages, fmt.Sprintf("spec.bootstrap.configRef %s %s, %s %s required", currentCopy.Spec.Bootstrap.ConfigRef.Kind, currentCopy.Spec.Bootstrap.ConfigRef.Name, ptr.Deref(desiredCopy.Spec.Bootstrap.ConfigRef, corev1.ObjectReference{}).Kind, ptr.Deref(desiredCopy.Spec.Bootstrap.ConfigRef, corev1.ObjectReference{}).Name))
+			logMessages = append(logMessages, fmt.Sprintf("spec.bootstrap.configRef %s %s, %s %s required", currentCopy.Spec.Bootstrap.ConfigRef.Kind, currentCopy.Spec.Bootstrap.ConfigRef.Name, desiredCopy.Spec.Bootstrap.ConfigRef.Kind, desiredCopy.Spec.Bootstrap.ConfigRef.Name))
 			// Note: dropping "Template" suffix because conditions message will surface on machine.
 			conditionMessages = append(conditionMessages, fmt.Sprintf("%s is not up-to-date", strings.TrimSuffix(currentCopy.Spec.Bootstrap.ConfigRef.Kind, clusterv1.TemplateSuffix)))
 		}
@@ -406,9 +411,9 @@ func MachineTemplateUpToDate(current, desired *clusterv1.MachineTemplateSpec) (u
 		conditionMessages = append(conditionMessages, fmt.Sprintf("%s is not up-to-date", strings.TrimSuffix(currentCopy.Spec.InfrastructureRef.Kind, clusterv1.TemplateSuffix)))
 	}
 
-	if !reflect.DeepEqual(currentCopy.Spec.FailureDomain, desiredCopy.Spec.FailureDomain) {
-		logMessages = append(logMessages, fmt.Sprintf("spec.failureDomain %s, %s required", ptr.Deref(currentCopy.Spec.FailureDomain, "nil"), ptr.Deref(desiredCopy.Spec.FailureDomain, "nil")))
-		conditionMessages = append(conditionMessages, fmt.Sprintf("Failure domain %s, %s required", ptr.Deref(currentCopy.Spec.FailureDomain, "nil"), ptr.Deref(desiredCopy.Spec.FailureDomain, "nil")))
+	if currentCopy.Spec.FailureDomain != desiredCopy.Spec.FailureDomain {
+		logMessages = append(logMessages, fmt.Sprintf("spec.failureDomain %s, %s required", currentCopy.Spec.FailureDomain, desiredCopy.Spec.FailureDomain))
+		conditionMessages = append(conditionMessages, fmt.Sprintf("Failure domain %s, %s required", currentCopy.Spec.FailureDomain, desiredCopy.Spec.FailureDomain))
 	}
 
 	if len(logMessages) > 0 || len(conditionMessages) > 0 {
@@ -432,20 +437,11 @@ func MachineTemplateDeepCopyRolloutFields(template *clusterv1.MachineTemplateSpe
 	templateCopy.Annotations = nil
 
 	// Drop node timeout values
+	templateCopy.Spec.MinReadySeconds = nil
 	templateCopy.Spec.ReadinessGates = nil
-	templateCopy.Spec.NodeDrainTimeout = nil
-	templateCopy.Spec.NodeDeletionTimeout = nil
-	templateCopy.Spec.NodeVolumeDetachTimeout = nil
-
-	// Remove the version part from the references APIVersion field,
-	// for more details see issue #2183 and #2140.
-	// Remove namespace part of the ref, as it always correllates with current MD namespace
-	templateCopy.Spec.InfrastructureRef.APIVersion = templateCopy.Spec.InfrastructureRef.GroupVersionKind().Group
-	templateCopy.Spec.InfrastructureRef.Namespace = ""
-	if templateCopy.Spec.Bootstrap.ConfigRef != nil {
-		templateCopy.Spec.Bootstrap.ConfigRef.APIVersion = templateCopy.Spec.Bootstrap.ConfigRef.GroupVersionKind().Group
-		templateCopy.Spec.Bootstrap.ConfigRef.Namespace = ""
-	}
+	templateCopy.Spec.Deletion.NodeDrainTimeoutSeconds = nil
+	templateCopy.Spec.Deletion.NodeDeletionTimeoutSeconds = nil
+	templateCopy.Spec.Deletion.NodeVolumeDetachTimeoutSeconds = nil
 
 	return templateCopy
 }
@@ -489,24 +485,24 @@ func FindNewMachineSet(deployment *clusterv1.MachineDeployment, msList []*cluste
 	}
 
 	// If RolloutAfter is not set, pick the first matching MachineSet.
-	if deployment.Spec.RolloutAfter == nil {
+	if deployment.Spec.Rollout.After.IsZero() {
 		return matchingMachineSets[0], "", nil
 	}
 
 	// If reconciliation time is before RolloutAfter, pick the first matching MachineSet.
-	if reconciliationTime.Before(deployment.Spec.RolloutAfter) {
+	if reconciliationTime.Before(&deployment.Spec.Rollout.After) {
 		return matchingMachineSets[0], "", nil
 	}
 
-	// Pick the first matching MachineSet that has been created after RolloutAfter.
+	// Pick the first matching MachineSet that has been created at RolloutAfter or later.
 	for _, ms := range matchingMachineSets {
-		if ms.CreationTimestamp.After(deployment.Spec.RolloutAfter.Time) {
+		if ms.CreationTimestamp.Sub(deployment.Spec.Rollout.After.Time) >= 0 {
 			return ms, "", nil
 		}
 	}
 
 	// If no matching MachineSet was created after RolloutAfter, trigger creation of a new MachineSet.
-	return nil, fmt.Sprintf("RolloutAfter on MachineDeployment set to %s, no MachineSet has been created afterwards", deployment.Spec.RolloutAfter.Format(time.RFC3339)), nil
+	return nil, fmt.Sprintf("spec.rollout.after on MachineDeployment set to %s, no MachineSet has been created afterwards", deployment.Spec.Rollout.After.Format(time.RFC3339)), nil
 }
 
 // FindOldMachineSets returns the old machine sets targeted by the given Deployment, within the given slice of MSes.
@@ -539,11 +535,11 @@ func GetReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) int32 {
 }
 
 // GetActualReplicaCountForMachineSets returns the sum of actual replicas of the given machine sets.
-func GetActualReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) int32 {
-	totalActualReplicas := int32(0)
+func GetActualReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) *int32 {
+	var totalActualReplicas *int32
 	for _, ms := range machineSets {
-		if ms != nil {
-			totalActualReplicas += ms.Status.Replicas
+		if ms != nil && ms.Status.Replicas != nil {
+			totalActualReplicas = ptr.To(ptr.Deref(totalActualReplicas, 0) + *ms.Status.Replicas)
 		}
 	}
 	return totalActualReplicas
@@ -559,65 +555,73 @@ func TotalMachineSetsReplicaSum(machineSets []*clusterv1.MachineSet) int32 {
 	totalReplicas := int32(0)
 	for _, ms := range machineSets {
 		if ms != nil {
-			totalReplicas += max(*(ms.Spec.Replicas), ms.Status.Replicas)
+			totalReplicas += max(ptr.Deref(ms.Spec.Replicas, 0), ptr.Deref(ms.Status.Replicas, 0))
 		}
 	}
 	return totalReplicas
 }
 
-// GetReadyReplicaCountForMachineSets returns the number of ready machines corresponding to the given machine sets.
-func GetReadyReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) int32 {
+// GetV1Beta1ReadyReplicaCountForMachineSets returns the number of ready machines corresponding to the given machine sets.
+func GetV1Beta1ReadyReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) int32 {
 	totalReadyReplicas := int32(0)
 	for _, ms := range machineSets {
 		if ms != nil {
-			totalReadyReplicas += ms.Status.ReadyReplicas
+			readyReplicas := int32(0)
+			if ms.Status.Deprecated != nil && ms.Status.Deprecated.V1Beta1 != nil {
+				readyReplicas = ms.Status.Deprecated.V1Beta1.ReadyReplicas
+			}
+			totalReadyReplicas += readyReplicas
+		}
+	}
+	return totalReadyReplicas
+}
+
+// GetV1Beta1AvailableReplicaCountForMachineSets returns the number of available machines corresponding to the given machine sets.
+func GetV1Beta1AvailableReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) int32 {
+	totalAvailableReplicas := int32(0)
+	for _, ms := range machineSets {
+		if ms != nil {
+			availableReplicas := int32(0)
+			if ms.Status.Deprecated != nil && ms.Status.Deprecated.V1Beta1 != nil {
+				availableReplicas = ms.Status.Deprecated.V1Beta1.AvailableReplicas
+			}
+			totalAvailableReplicas += availableReplicas
+		}
+	}
+	return totalAvailableReplicas
+}
+
+// GetReadyReplicaCountForMachineSets returns the number of ready machines corresponding to the given machine sets.
+// Note: When none of the ms.Status.V1Beta2.ReadyReplicas are set, the func returns nil.
+func GetReadyReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) *int32 {
+	var totalReadyReplicas *int32
+	for _, ms := range machineSets {
+		if ms != nil && ms.Status.ReadyReplicas != nil {
+			totalReadyReplicas = ptr.To(ptr.Deref(totalReadyReplicas, 0) + *ms.Status.ReadyReplicas)
 		}
 	}
 	return totalReadyReplicas
 }
 
 // GetAvailableReplicaCountForMachineSets returns the number of available machines corresponding to the given machine sets.
-func GetAvailableReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) int32 {
-	totalAvailableReplicas := int32(0)
-	for _, ms := range machineSets {
-		if ms != nil {
-			totalAvailableReplicas += ms.Status.AvailableReplicas
-		}
-	}
-	return totalAvailableReplicas
-}
-
-// GetV1Beta2ReadyReplicaCountForMachineSets returns the number of ready machines corresponding to the given machine sets.
-// Note: When none of the ms.Status.V1Beta2.ReadyReplicas are set, the func returns nil.
-func GetV1Beta2ReadyReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) *int32 {
-	var totalReadyReplicas *int32
-	for _, ms := range machineSets {
-		if ms != nil && ms.Status.V1Beta2 != nil && ms.Status.V1Beta2.ReadyReplicas != nil {
-			totalReadyReplicas = ptr.To(ptr.Deref(totalReadyReplicas, 0) + *ms.Status.V1Beta2.ReadyReplicas)
-		}
-	}
-	return totalReadyReplicas
-}
-
-// GetV1Beta2AvailableReplicaCountForMachineSets returns the number of available machines corresponding to the given machine sets.
 // Note: When none of the ms.Status.V1Beta2.AvailableReplicas are set, the func returns nil.
-func GetV1Beta2AvailableReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) *int32 {
+func GetAvailableReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) *int32 {
 	var totalAvailableReplicas *int32
 	for _, ms := range machineSets {
-		if ms != nil && ms.Status.V1Beta2 != nil && ms.Status.V1Beta2.AvailableReplicas != nil {
-			totalAvailableReplicas = ptr.To(ptr.Deref(totalAvailableReplicas, 0) + *ms.Status.V1Beta2.AvailableReplicas)
+		if ms != nil && ms.Status.AvailableReplicas != nil {
+			totalAvailableReplicas = ptr.To(ptr.Deref(totalAvailableReplicas, 0) + *ms.Status.AvailableReplicas)
 		}
 	}
 	return totalAvailableReplicas
 }
 
-// GetV1Beta2UptoDateReplicaCountForMachineSets returns the number of up to date machines corresponding to the given machine sets.
+// GetUptoDateReplicaCountForMachineSets returns the number of up to date machines corresponding to the given machine sets.
 // Note: When none of the ms.Status.V1Beta2.UpToDateReplicas are set, the func returns nil.
-func GetV1Beta2UptoDateReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) *int32 {
+func GetUptoDateReplicaCountForMachineSets(machineSets []*clusterv1.MachineSet) *int32 {
 	var totalUpToDateReplicas *int32
 	for _, ms := range machineSets {
-		if ms != nil && ms.Status.V1Beta2 != nil && ms.Status.V1Beta2.UpToDateReplicas != nil {
-			totalUpToDateReplicas = ptr.To(ptr.Deref(totalUpToDateReplicas, 0) + *ms.Status.V1Beta2.UpToDateReplicas)
+		if ms != nil && ms.Status.UpToDateReplicas != nil {
+			totalUpToDateReplicas = ptr.To(ptr.Deref(totalUpToDateReplicas, 0) + *ms.Status.UpToDateReplicas)
 		}
 	}
 	return totalUpToDateReplicas
@@ -625,15 +629,18 @@ func GetV1Beta2UptoDateReplicaCountForMachineSets(machineSets []*clusterv1.Machi
 
 // IsRollingUpdate returns true if the strategy type is a rolling update.
 func IsRollingUpdate(deployment *clusterv1.MachineDeployment) bool {
-	return deployment.Spec.Strategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType
+	return deployment.Spec.Rollout.Strategy.Type == clusterv1.RollingUpdateMachineDeploymentStrategyType
 }
 
 // DeploymentComplete considers a deployment to be complete once all of its desired replicas
 // are updated and available, and no old machines are running.
 func DeploymentComplete(deployment *clusterv1.MachineDeployment, newStatus *clusterv1.MachineDeploymentStatus) bool {
-	return newStatus.UpdatedReplicas == *(deployment.Spec.Replicas) &&
-		newStatus.Replicas == *(deployment.Spec.Replicas) &&
-		newStatus.AvailableReplicas == *(deployment.Spec.Replicas) &&
+	currentReplicas := ptr.Deref(newStatus.Replicas, 0)
+	updatedReplicas := ptr.Deref(newStatus.UpToDateReplicas, 0)
+	availableReplicas := ptr.Deref(newStatus.AvailableReplicas, 0)
+	return updatedReplicas == *(deployment.Spec.Replicas) &&
+		currentReplicas == *(deployment.Spec.Replicas) &&
+		availableReplicas == *(deployment.Spec.Replicas) &&
 		newStatus.ObservedGeneration >= deployment.Generation
 }
 
@@ -643,10 +650,10 @@ func DeploymentComplete(deployment *clusterv1.MachineDeployment, newStatus *clus
 // 2) For RollingUpdateStrategy: Max number of machines allowed is reached: deployment's replicas + maxSurge == all MSs' replicas.
 // 3) For OnDeleteStrategy: Max number of machines allowed is reached: deployment's replicas == all MSs' replicas.
 func NewMSNewReplicas(deployment *clusterv1.MachineDeployment, allMSs []*clusterv1.MachineSet, newMSReplicas int32) (int32, error) {
-	switch deployment.Spec.Strategy.Type {
+	switch deployment.Spec.Rollout.Strategy.Type {
 	case clusterv1.RollingUpdateMachineDeploymentStrategyType:
 		// Check if we can scale up.
-		maxSurge, err := intstrutil.GetScaledValueFromIntOrPercent(deployment.Spec.Strategy.RollingUpdate.MaxSurge, int(*(deployment.Spec.Replicas)), true)
+		maxSurge, err := intstrutil.GetScaledValueFromIntOrPercent(deployment.Spec.Rollout.Strategy.RollingUpdate.MaxSurge, int(*(deployment.Spec.Replicas)), true)
 		if err != nil {
 			return 0, err
 		}
@@ -674,7 +681,7 @@ func NewMSNewReplicas(deployment *clusterv1.MachineDeployment, allMSs []*cluster
 		scaleUpCount := *(deployment.Spec.Replicas) - currentMachineCount
 		return newMSReplicas + scaleUpCount, nil
 	default:
-		return 0, fmt.Errorf("failed to compute replicas: deployment strategy %v isn't supported", deployment.Spec.Strategy.Type)
+		return 0, fmt.Errorf("failed to compute replicas: deployment strategy %v isn't supported", deployment.Spec.Rollout.Strategy.Type)
 	}
 }
 
@@ -691,9 +698,10 @@ func IsSaturated(deployment *clusterv1.MachineDeployment, ms *clusterv1.MachineS
 	if err != nil {
 		return false
 	}
+	availableReplicas := ptr.Deref(ms.Status.AvailableReplicas, 0)
 	return *(ms.Spec.Replicas) == *(deployment.Spec.Replicas) &&
 		int32(desired) == *(deployment.Spec.Replicas) &&
-		ms.Status.AvailableReplicas == *(deployment.Spec.Replicas)
+		availableReplicas == *(deployment.Spec.Replicas)
 }
 
 // ResolveFenceposts resolves both maxSurge and maxUnavailable. This needs to happen in one

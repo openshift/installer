@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (endpoint *DnsResolversInboundEndpoint) ConvertTo(hub conversion.Hub) error
 
 	return endpoint.AssignProperties_To_DnsResolversInboundEndpoint(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20220701-dnsresolversinboundendpoint,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=dnsresolversinboundendpoints,verbs=create;update,versions=v1api20220701,name=default.v1api20220701.dnsresolversinboundendpoints.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &DnsResolversInboundEndpoint{}
-
-// Default applies defaults to the DnsResolversInboundEndpoint resource
-func (endpoint *DnsResolversInboundEndpoint) Default() {
-	endpoint.defaultImpl()
-	var temp any = endpoint
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (endpoint *DnsResolversInboundEndpoint) defaultAzureName() {
-	if endpoint.Spec.AzureName == "" {
-		endpoint.Spec.AzureName = endpoint.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the DnsResolversInboundEndpoint resource
-func (endpoint *DnsResolversInboundEndpoint) defaultImpl() { endpoint.defaultAzureName() }
 
 var _ configmaps.Exporter = &DnsResolversInboundEndpoint{}
 
@@ -173,6 +147,10 @@ func (endpoint *DnsResolversInboundEndpoint) NewEmptyStatus() genruntime.Convert
 
 // Owner returns the ResourceReference of the owner
 func (endpoint *DnsResolversInboundEndpoint) Owner() *genruntime.ResourceReference {
+	if endpoint.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(endpoint.Spec)
 	return endpoint.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (endpoint *DnsResolversInboundEndpoint) SetStatus(status genruntime.Convert
 	var st DnsResolversInboundEndpoint_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	endpoint.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20220701-dnsresolversinboundendpoint,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=dnsresolversinboundendpoints,verbs=create;update,versions=v1api20220701,name=validate.v1api20220701.dnsresolversinboundendpoints.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &DnsResolversInboundEndpoint{}
-
-// ValidateCreate validates the creation of the resource
-func (endpoint *DnsResolversInboundEndpoint) ValidateCreate() (admission.Warnings, error) {
-	validations := endpoint.createValidations()
-	var temp any = endpoint
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (endpoint *DnsResolversInboundEndpoint) ValidateDelete() (admission.Warnings, error) {
-	validations := endpoint.deleteValidations()
-	var temp any = endpoint
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (endpoint *DnsResolversInboundEndpoint) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := endpoint.updateValidations()
-	var temp any = endpoint
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (endpoint *DnsResolversInboundEndpoint) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){endpoint.validateResourceReferences, endpoint.validateOwnerReference, endpoint.validateSecretDestinations, endpoint.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (endpoint *DnsResolversInboundEndpoint) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (endpoint *DnsResolversInboundEndpoint) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return endpoint.validateResourceReferences()
-		},
-		endpoint.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return endpoint.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return endpoint.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return endpoint.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (endpoint *DnsResolversInboundEndpoint) validateConfigMapDestinations() (admission.Warnings, error) {
-	if endpoint.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(endpoint, nil, endpoint.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (endpoint *DnsResolversInboundEndpoint) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(endpoint)
-}
-
-// validateResourceReferences validates all resource references
-func (endpoint *DnsResolversInboundEndpoint) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&endpoint.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (endpoint *DnsResolversInboundEndpoint) validateSecretDestinations() (admission.Warnings, error) {
-	if endpoint.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(endpoint, nil, endpoint.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (endpoint *DnsResolversInboundEndpoint) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*DnsResolversInboundEndpoint)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, endpoint)
 }
 
 // AssignProperties_From_DnsResolversInboundEndpoint populates our DnsResolversInboundEndpoint from the provided source DnsResolversInboundEndpoint
@@ -309,7 +184,7 @@ func (endpoint *DnsResolversInboundEndpoint) AssignProperties_From_DnsResolversI
 	var spec DnsResolversInboundEndpoint_Spec
 	err := spec.AssignProperties_From_DnsResolversInboundEndpoint_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpoint_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpoint_Spec() to populate field Spec")
 	}
 	endpoint.Spec = spec
 
@@ -317,7 +192,7 @@ func (endpoint *DnsResolversInboundEndpoint) AssignProperties_From_DnsResolversI
 	var status DnsResolversInboundEndpoint_STATUS
 	err = status.AssignProperties_From_DnsResolversInboundEndpoint_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpoint_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpoint_STATUS() to populate field Status")
 	}
 	endpoint.Status = status
 
@@ -335,7 +210,7 @@ func (endpoint *DnsResolversInboundEndpoint) AssignProperties_To_DnsResolversInb
 	var spec storage.DnsResolversInboundEndpoint_Spec
 	err := endpoint.Spec.AssignProperties_To_DnsResolversInboundEndpoint_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpoint_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpoint_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (endpoint *DnsResolversInboundEndpoint) AssignProperties_To_DnsResolversInb
 	var status storage.DnsResolversInboundEndpoint_STATUS
 	err = endpoint.Status.AssignProperties_To_DnsResolversInboundEndpoint_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpoint_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpoint_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -505,13 +380,13 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) ConvertSpecFrom(source genrunt
 	src = &storage.DnsResolversInboundEndpoint_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = endpoint.AssignProperties_From_DnsResolversInboundEndpoint_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -529,13 +404,13 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) ConvertSpecTo(destination genr
 	dst = &storage.DnsResolversInboundEndpoint_Spec{}
 	err := endpoint.AssignProperties_To_DnsResolversInboundEndpoint_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -556,7 +431,7 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) AssignProperties_From_DnsResol
 			var ipConfiguration IpConfiguration
 			err := ipConfiguration.AssignProperties_From_IpConfiguration(&ipConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IpConfiguration() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_IpConfiguration() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -573,7 +448,7 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) AssignProperties_From_DnsResol
 		var operatorSpec DnsResolversInboundEndpointOperatorSpec
 		err := operatorSpec.AssignProperties_From_DnsResolversInboundEndpointOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpointOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_DnsResolversInboundEndpointOperatorSpec() to populate field OperatorSpec")
 		}
 		endpoint.OperatorSpec = &operatorSpec
 	} else {
@@ -612,7 +487,7 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) AssignProperties_To_DnsResolve
 			var ipConfiguration storage.IpConfiguration
 			err := ipConfigurationItem.AssignProperties_To_IpConfiguration(&ipConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IpConfiguration() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_IpConfiguration() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -629,7 +504,7 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) AssignProperties_To_DnsResolve
 		var operatorSpec storage.DnsResolversInboundEndpointOperatorSpec
 		err := endpoint.OperatorSpec.AssignProperties_To_DnsResolversInboundEndpointOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpointOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_DnsResolversInboundEndpointOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -673,7 +548,7 @@ func (endpoint *DnsResolversInboundEndpoint_Spec) Initialize_From_DnsResolversIn
 			var ipConfiguration IpConfiguration
 			err := ipConfiguration.Initialize_From_IpConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_IpConfiguration_STATUS() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling Initialize_From_IpConfiguration_STATUS() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -753,13 +628,13 @@ func (endpoint *DnsResolversInboundEndpoint_STATUS) ConvertStatusFrom(source gen
 	src = &storage.DnsResolversInboundEndpoint_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = endpoint.AssignProperties_From_DnsResolversInboundEndpoint_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -777,13 +652,13 @@ func (endpoint *DnsResolversInboundEndpoint_STATUS) ConvertStatusTo(destination 
 	dst = &storage.DnsResolversInboundEndpoint_STATUS{}
 	err := endpoint.AssignProperties_To_DnsResolversInboundEndpoint_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -912,7 +787,7 @@ func (endpoint *DnsResolversInboundEndpoint_STATUS) AssignProperties_From_DnsRes
 			var ipConfiguration IpConfiguration_STATUS
 			err := ipConfiguration.AssignProperties_From_IpConfiguration_STATUS(&ipConfigurationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IpConfiguration_STATUS() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_From_IpConfiguration_STATUS() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -944,7 +819,7 @@ func (endpoint *DnsResolversInboundEndpoint_STATUS) AssignProperties_From_DnsRes
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		endpoint.SystemData = &systemDatum
 	} else {
@@ -984,7 +859,7 @@ func (endpoint *DnsResolversInboundEndpoint_STATUS) AssignProperties_To_DnsResol
 			var ipConfiguration storage.IpConfiguration_STATUS
 			err := ipConfigurationItem.AssignProperties_To_IpConfiguration_STATUS(&ipConfiguration)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IpConfiguration_STATUS() to populate field IpConfigurations")
+				return eris.Wrap(err, "calling AssignProperties_To_IpConfiguration_STATUS() to populate field IpConfigurations")
 			}
 			ipConfigurationList[ipConfigurationIndex] = ipConfiguration
 		}
@@ -1015,7 +890,7 @@ func (endpoint *DnsResolversInboundEndpoint_STATUS) AssignProperties_To_DnsResol
 		var systemDatum storage.SystemData_STATUS
 		err := endpoint.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1252,7 +1127,7 @@ func (configuration *IpConfiguration) AssignProperties_From_IpConfiguration(sour
 		var subnet SubResource
 		err := subnet.AssignProperties_From_SubResource(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -1284,7 +1159,7 @@ func (configuration *IpConfiguration) AssignProperties_To_IpConfiguration(destin
 		var subnet storage.SubResource
 		err := configuration.Subnet.AssignProperties_To_SubResource(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -1321,7 +1196,7 @@ func (configuration *IpConfiguration) Initialize_From_IpConfiguration_STATUS(sou
 		var subnet SubResource
 		err := subnet.Initialize_From_SubResource_STATUS(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -1407,7 +1282,7 @@ func (configuration *IpConfiguration_STATUS) AssignProperties_From_IpConfigurati
 		var subnet SubResource_STATUS
 		err := subnet.AssignProperties_From_SubResource_STATUS(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field Subnet")
 		}
 		configuration.Subnet = &subnet
 	} else {
@@ -1439,7 +1314,7 @@ func (configuration *IpConfiguration_STATUS) AssignProperties_To_IpConfiguration
 		var subnet storage.SubResource_STATUS
 		err := configuration.Subnet.AssignProperties_To_SubResource_STATUS(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {

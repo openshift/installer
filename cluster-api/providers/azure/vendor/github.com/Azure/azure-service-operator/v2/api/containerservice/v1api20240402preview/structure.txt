@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240402pre
 ------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2024-04-02-preview"
+
 ManagedCluster: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (49 properties)
@@ -1163,6 +1164,7 @@ ManagedCluster: Resource
             │   ├── "Disabled"
             │   └── "Enabled"
             └── Enabled: *bool
+
 ManagedClustersAgentPool: Resource
 ├── Owner: ManagedCluster
 ├── Spec: Object (54 properties)
@@ -1538,6 +1540,7 @@ ManagedClustersAgentPool: Resource
         ├── "KataMshvVmIsolation"
         ├── "OCIContainer"
         └── "WasmWasi"
+
 TrustedAccessRoleBinding: Resource
 ├── Owner: ManagedCluster
 ├── Spec: Object (5 properties)
@@ -1579,3 +1582,4 @@ TrustedAccessRoleBinding: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+

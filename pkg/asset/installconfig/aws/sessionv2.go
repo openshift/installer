@@ -6,10 +6,13 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
+	"github.com/aws/aws-sdk-go-v2/aws/ratelimit"
+	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/smithy-go/middleware"
@@ -29,6 +32,9 @@ const (
 
 	// RetryMaxAttempts is the total number of times an API request is retried.
 	RetryMaxAttempts = 25
+
+	// RetryBackoffDuration is max duration between retried attempts.
+	RetryBackoffDuration = 300 * time.Second
 )
 
 var (
@@ -40,12 +46,36 @@ type ConfigOptions []func(*config.LoadOptions) error
 
 // getDefaultConfigOptions returns the default settings for config.LoadOptions.
 func getDefaultConfigOptions() ConfigOptions {
-	return ConfigOptions{
-		config.WithRetryMaxAttempts(RetryMaxAttempts),
+	opts := ConfigOptions{
+		config.WithRetryer(func() aws.Retryer {
+			return retry.NewStandard(func(so *retry.StandardOptions) {
+				so.MaxAttempts = RetryMaxAttempts
+
+				// The SDK v2 implements exponential backoff and jitter by default, but with 20s max backoff duration,
+				// which can cause the installer to aggressively retry.
+				// Thus, setting this to a higher value to allow more rest time and ease AWS API load.
+				// In SDK v1, this value was also 300s: https://github.com/hashicorp/terraform-provider-aws/issues/36837
+				so.Backoff = retry.NewExponentialJitterBackoff(RetryBackoffDuration)
+
+				// The SDK v2 introduces a new client-side rate-limiting mechanism in the standard retry.
+				// The default settings are not a good fit for the installer, especially the destroy code.
+				// Until we figure out a good settings, we disable it to align with SDK v1 behavior.
+				// Reference: https://docs.aws.amazon.com/sdk-for-go/v2/developer-guide/configure-retries-timeouts.html
+				so.RateLimiter = ratelimit.None
+			})
+		}),
 		config.WithAPIOptions([]func(*middleware.Stack) error{
 			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerUserAgent, version.Raw),
 		}),
 	}
+
+	// Enable logging the HTTP request sent to the AWS service
+	// including headers and body (if applicable).
+	if _, ok := os.LookupEnv("OPENSHIFT_INSTALL_AWS_ENABLE_SDK_LOG"); ok {
+		opts = append(opts, config.WithClientLogMode(aws.LogRequestWithBody|aws.LogResponseWithBody))
+	}
+
+	return opts
 }
 
 // GetConfig returns an AWS config by checking credentials

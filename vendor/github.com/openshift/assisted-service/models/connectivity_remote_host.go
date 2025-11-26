@@ -29,6 +29,9 @@ type ConnectivityRemoteHost struct {
 
 	// l3 connectivity
 	L3Connectivity []*L3Connectivity `json:"l3_connectivity"`
+
+	// mtu report
+	MtuReport []*MtuReport `json:"mtu_report"`
 }
 
 // Validate validates this connectivity remote host
@@ -44,6 +47,10 @@ func (m *ConnectivityRemoteHost) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateL3Connectivity(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateMtuReport(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -117,6 +124,32 @@ func (m *ConnectivityRemoteHost) validateL3Connectivity(formats strfmt.Registry)
 	return nil
 }
 
+func (m *ConnectivityRemoteHost) validateMtuReport(formats strfmt.Registry) error {
+	if swag.IsZero(m.MtuReport) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.MtuReport); i++ {
+		if swag.IsZero(m.MtuReport[i]) { // not required
+			continue
+		}
+
+		if m.MtuReport[i] != nil {
+			if err := m.MtuReport[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("mtu_report" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("mtu_report" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 // ContextValidate validate this connectivity remote host based on the context it is used
 func (m *ConnectivityRemoteHost) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
@@ -126,6 +159,10 @@ func (m *ConnectivityRemoteHost) ContextValidate(ctx context.Context, formats st
 	}
 
 	if err := m.contextValidateL3Connectivity(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateMtuReport(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -165,6 +202,26 @@ func (m *ConnectivityRemoteHost) contextValidateL3Connectivity(ctx context.Conte
 					return ve.ValidateName("l3_connectivity" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
 					return ce.ValidateName("l3_connectivity" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ConnectivityRemoteHost) contextValidateMtuReport(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.MtuReport); i++ {
+
+		if m.MtuReport[i] != nil {
+			if err := m.MtuReport[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("mtu_report" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("mtu_report" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

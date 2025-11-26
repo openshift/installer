@@ -57,17 +57,6 @@ func TestGenerateInfrastructure(t *testing.T) {
 		),
 		expectedFilesGenerated: 1,
 	}, {
-		name: "gcp service endpoints",
-		installConfig: icBuild.build(
-			icBuild.forGCP(),
-			icBuild.withGCPServiceEndpoint(configv1.GCPServiceEndpointNameCompute, "https://compute-endpoint.p.googleapis.com"),
-		),
-		expectedInfrastructure: infraBuild.build(
-			infraBuild.forPlatform(configv1.GCPPlatformType),
-			infraBuild.withGCPServiceEndpoint(configv1.GCPServiceEndpointNameCompute, "https://compute-endpoint.p.googleapis.com"),
-		),
-		expectedFilesGenerated: 2,
-	}, {
 		name: "azure resource tags",
 		installConfig: icBuild.build(
 			icBuild.forAzure(),
@@ -353,13 +342,6 @@ func (b icBuildNamespace) withAWSServiceEndpoint(name, url string) icOption {
 	}
 }
 
-func (b icBuildNamespace) withGCPServiceEndpoint(name configv1.GCPServiceEndpointName, url string) icOption {
-	return func(ic *types.InstallConfig) {
-		b.forGCP()(ic)
-		ic.Platform.GCP.ServiceEndpoints = append(ic.Platform.GCP.ServiceEndpoints, configv1.GCPServiceEndpoint{Name: name, URL: url})
-	}
-}
-
 func (b icBuildNamespace) withLBType(lbType configv1.AWSLBType) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forAWS()(ic)
@@ -495,16 +477,6 @@ func (b infraBuildNamespace) withAWSServiceEndpoint(name, url string) infraOptio
 		endpoint := configv1.AWSServiceEndpoint{Name: name, URL: url}
 		infra.Spec.PlatformSpec.AWS.ServiceEndpoints = append(infra.Spec.PlatformSpec.AWS.ServiceEndpoints, endpoint)
 		infra.Status.PlatformStatus.AWS.ServiceEndpoints = append(infra.Status.PlatformStatus.AWS.ServiceEndpoints, endpoint)
-	}
-}
-
-func (b infraBuildNamespace) withGCPServiceEndpoint(name configv1.GCPServiceEndpointName, url string) infraOption {
-	return func(infra *configv1.Infrastructure) {
-		b.withGCPPlatformStatus()(infra)
-		endpoint := configv1.GCPServiceEndpoint{Name: name, URL: url}
-		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{}
-		infra.Status.PlatformStatus.GCP.CloudLoadBalancerConfig.DNSType = configv1.PlatformDefaultDNSType
-		infra.Status.PlatformStatus.GCP.ServiceEndpoints = append(infra.Status.PlatformStatus.GCP.ServiceEndpoints, endpoint)
 	}
 }
 

@@ -25,15 +25,14 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/pkg/errors"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	bootstrapv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
 	"sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/internal/contract"
@@ -45,8 +44,6 @@ type preflightCheckErrorMessage *string
 // the preflight checks fail.
 const preflightFailedRequeueAfter = 15 * time.Second
 
-var minVerKubernetesKubeletVersionSkewThree = semver.MustParse("1.28.0")
-
 func (r *Reconciler) runPreflightChecks(ctx context.Context, cluster *clusterv1.Cluster, ms *clusterv1.MachineSet, action string) ([]string, error) {
 	log := ctrl.LoggerFrom(ctx)
 	// If the MachineSetPreflightChecks feature gate is disabled return early.
@@ -56,19 +53,19 @@ func (r *Reconciler) runPreflightChecks(ctx context.Context, cluster *clusterv1.
 
 	skipped := skippedPreflightChecks(ms)
 	// If all the preflight checks are skipped then return early.
-	if skipped.Has(clusterv1.MachineSetPreflightCheckAll) {
+	if len(r.PreflightChecks) == 0 || skipped.Has(clusterv1.MachineSetPreflightCheckAll) {
 		return nil, nil
 	}
 
 	// If the cluster does not have a control plane reference then there is nothing to do. Return early.
-	if cluster.Spec.ControlPlaneRef == nil {
+	if !cluster.Spec.ControlPlaneRef.IsDefined() {
 		return nil, nil
 	}
 
 	// Get the control plane object.
-	controlPlane, err := external.Get(ctx, r.Client, cluster.Spec.ControlPlaneRef)
+	controlPlane, err := external.GetObjectFromContractVersionedRef(ctx, r.Client, cluster.Spec.ControlPlaneRef, cluster.Namespace)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to perform %q: failed to perform preflight checks: failed to get ControlPlane %s", action, klog.KRef(cluster.Spec.ControlPlaneRef.Namespace, cluster.Spec.ControlPlaneRef.Name))
+		return nil, errors.Wrapf(err, "failed to perform %q: failed to perform preflight checks: failed to get ControlPlane %s", action, klog.KRef(cluster.Namespace, cluster.Spec.ControlPlaneRef.Name))
 	}
 	cpKlogRef := klog.KRef(controlPlane.GetNamespace(), controlPlane.GetName())
 
@@ -90,8 +87,8 @@ func (r *Reconciler) runPreflightChecks(ctx context.Context, cluster *clusterv1.
 	errList := []error{}
 	preflightCheckErrs := []preflightCheckErrorMessage{}
 	// Run the control-plane-stable preflight check.
-	if !skipped.Has(clusterv1.MachineSetPreflightCheckControlPlaneIsStable) {
-		preflightCheckErr, err := r.controlPlaneStablePreflightCheck(controlPlane)
+	if shouldRun(r.PreflightChecks, skipped, clusterv1.MachineSetPreflightCheckControlPlaneIsStable) {
+		preflightCheckErr, err := r.controlPlaneStablePreflightCheck(controlPlane, cluster, *cpVersion)
 		if err != nil {
 			errList = append(errList, err)
 		}
@@ -101,28 +98,30 @@ func (r *Reconciler) runPreflightChecks(ctx context.Context, cluster *clusterv1.
 	}
 
 	// Check the version skew policies only if version is defined in the MachineSet.
-	if ms.Spec.Template.Spec.Version != nil {
-		msVersion := *ms.Spec.Template.Spec.Version
+	if ms.Spec.Template.Spec.Version != "" {
+		msVersion := ms.Spec.Template.Spec.Version
 		msSemver, err := semver.ParseTolerant(msVersion)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to perform %q: failed to perform preflight checks: failed to parse version %q of MachineSet %s", action, msVersion, klog.KObj(ms))
 		}
 
 		// Run the kubernetes-version skew preflight check.
-		if !skipped.Has(clusterv1.MachineSetPreflightCheckKubernetesVersionSkew) {
-			preflightCheckErr := r.kubernetesVersionPreflightCheck(cpSemver, msSemver)
-			if preflightCheckErr != nil {
+		if shouldRun(r.PreflightChecks, skipped, clusterv1.MachineSetPreflightCheckKubernetesVersionSkew) {
+			if preflightCheckErr := r.kubernetesVersionPreflightCheck(cpSemver, msSemver); preflightCheckErr != nil {
 				preflightCheckErrs = append(preflightCheckErrs, preflightCheckErr)
 			}
 		}
 
 		// Run the kubeadm-version skew preflight check.
-		if !skipped.Has(clusterv1.MachineSetPreflightCheckKubeadmVersionSkew) {
-			preflightCheckErr, err := r.kubeadmVersionPreflightCheck(cpSemver, msSemver, ms)
-			if err != nil {
-				errList = append(errList, err)
+		if shouldRun(r.PreflightChecks, skipped, clusterv1.MachineSetPreflightCheckKubeadmVersionSkew) {
+			if preflightCheckErr := r.kubeadmVersionPreflightCheck(cpSemver, msSemver, ms); preflightCheckErr != nil {
+				preflightCheckErrs = append(preflightCheckErrs, preflightCheckErr)
 			}
-			if preflightCheckErr != nil {
+		}
+
+		// Run the control plane version skew preflight check.
+		if shouldRun(r.PreflightChecks, skipped, clusterv1.MachineSetPreflightCheckControlPlaneVersionSkew) {
+			if preflightCheckErr := r.controlPlaneVersionPreflightCheck(cluster, *cpVersion, msVersion); preflightCheckErr != nil {
 				preflightCheckErrs = append(preflightCheckErrs, preflightCheckErr)
 			}
 		}
@@ -142,8 +141,19 @@ func (r *Reconciler) runPreflightChecks(ctx context.Context, cluster *clusterv1.
 	return nil, nil
 }
 
-func (r *Reconciler) controlPlaneStablePreflightCheck(controlPlane *unstructured.Unstructured) (preflightCheckErrorMessage, error) {
+func shouldRun(preflightChecks, skippedPreflightChecks sets.Set[clusterv1.MachineSetPreflightCheck], preflightCheck clusterv1.MachineSetPreflightCheck) bool {
+	return (preflightChecks.Has(clusterv1.MachineSetPreflightCheckAll) || preflightChecks.Has(preflightCheck)) &&
+		(!skippedPreflightChecks.Has(clusterv1.MachineSetPreflightCheckAll) && !skippedPreflightChecks.Has(preflightCheck))
+}
+
+func (r *Reconciler) controlPlaneStablePreflightCheck(controlPlane *unstructured.Unstructured, cluster *clusterv1.Cluster, controlPlaneVersion string) (preflightCheckErrorMessage, error) {
 	cpKlogRef := klog.KRef(controlPlane.GetNamespace(), controlPlane.GetName())
+
+	if feature.Gates.Enabled(feature.ClusterTopology) {
+		if cluster.Spec.Topology.IsDefined() && cluster.Spec.Topology.Version != controlPlaneVersion {
+			return ptr.To(fmt.Sprintf("%s %s has a pending version upgrade to %s (%q preflight check failed)", controlPlane.GetKind(), cpKlogRef, cluster.Spec.Topology.Version, clusterv1.MachineSetPreflightCheckControlPlaneIsStable)), nil
+		}
+	}
 
 	// Check that the control plane is not provisioning.
 	isProvisioning, err := contract.ControlPlane().IsProvisioning(controlPlane)
@@ -175,10 +185,6 @@ func (r *Reconciler) kubernetesVersionPreflightCheck(cpSemver, msSemver semver.V
 		return ptr.To(fmt.Sprintf("MachineSet version (%s) and ControlPlane version (%s) do not conform to the kubernetes version skew policy as MachineSet version is higher than ControlPlane version (%q preflight check failed)", msSemver.String(), cpSemver.String(), clusterv1.MachineSetPreflightCheckKubernetesVersionSkew))
 	}
 	minorSkew := uint64(3)
-	// For Control Planes running Kubernetes < v1.28, the version skew policy for kubelets is two.
-	if cpSemver.LT(minVerKubernetesKubeletVersionSkewThree) {
-		minorSkew = 2
-	}
 	if msSemver.Minor < cpSemver.Minor-minorSkew {
 		return ptr.To(fmt.Sprintf("MachineSet version (%s) and ControlPlane version (%s) do not conform to the kubernetes version skew policy as MachineSet version is more than %d minor versions older than the ControlPlane version (%q preflight check failed)", msSemver.String(), cpSemver.String(), minorSkew, clusterv1.MachineSetPreflightCheckKubernetesVersionSkew))
 	}
@@ -186,28 +192,34 @@ func (r *Reconciler) kubernetesVersionPreflightCheck(cpSemver, msSemver semver.V
 	return nil
 }
 
-func (r *Reconciler) kubeadmVersionPreflightCheck(cpSemver, msSemver semver.Version, ms *clusterv1.MachineSet) (preflightCheckErrorMessage, error) {
+func (r *Reconciler) kubeadmVersionPreflightCheck(cpSemver, msSemver semver.Version, ms *clusterv1.MachineSet) preflightCheckErrorMessage {
 	// If the bootstrap.configRef is nil return early.
-	if ms.Spec.Template.Spec.Bootstrap.ConfigRef == nil {
-		return nil, nil
+	if !ms.Spec.Template.Spec.Bootstrap.ConfigRef.IsDefined() {
+		return nil
 	}
 
 	// If using kubeadm bootstrap provider, check the kubeadm version skew policy.
 	// => MS version should match (major+minor) the Control Plane version.
 	// kubeadm skew policy: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/#kubeadm-s-skew-against-kubeadm
 	bootstrapConfigRef := ms.Spec.Template.Spec.Bootstrap.ConfigRef
-	groupVersion, err := schema.ParseGroupVersion(bootstrapConfigRef.APIVersion)
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to perform %q preflight check: failed to parse bootstrap configRef APIVersion %s", clusterv1.MachineSetPreflightCheckKubeadmVersionSkew, bootstrapConfigRef.APIVersion)
-	}
 	kubeadmBootstrapProviderUsed := bootstrapConfigRef.Kind == "KubeadmConfigTemplate" &&
-		groupVersion.Group == bootstrapv1.GroupVersion.Group
+		bootstrapConfigRef.APIGroup == bootstrapv1.GroupVersion.Group
 	if kubeadmBootstrapProviderUsed {
 		if cpSemver.Minor != msSemver.Minor {
-			return ptr.To(fmt.Sprintf("MachineSet version (%s) and ControlPlane version (%s) do not conform to kubeadm version skew policy as kubeadm only supports joining with the same major+minor version as the control plane (%q preflight check failed)", msSemver.String(), cpSemver.String(), clusterv1.MachineSetPreflightCheckKubeadmVersionSkew)), nil
+			return ptr.To(fmt.Sprintf("MachineSet version (%s) and ControlPlane version (%s) do not conform to kubeadm version skew policy as kubeadm only supports joining with the same major+minor version as the control plane (%q preflight check failed)", msSemver.String(), cpSemver.String(), clusterv1.MachineSetPreflightCheckKubeadmVersionSkew))
 		}
 	}
-	return nil, nil
+	return nil
+}
+
+func (r *Reconciler) controlPlaneVersionPreflightCheck(cluster *clusterv1.Cluster, cpVersion, msVersion string) preflightCheckErrorMessage {
+	if feature.Gates.Enabled(feature.ClusterTopology) && cluster.Spec.Topology.IsDefined() {
+		if cpVersion != msVersion {
+			return ptr.To(fmt.Sprintf("MachineSet version (%s) is not yet the same as the ControlPlane version (%s), waiting for version to be propagated to the MachineSet (%q preflight check failed)", msVersion, cpVersion, clusterv1.MachineSetPreflightCheckControlPlaneVersionSkew))
+		}
+	}
+
+	return nil
 }
 
 func skippedPreflightChecks(ms *clusterv1.MachineSet) sets.Set[clusterv1.MachineSetPreflightCheck] {

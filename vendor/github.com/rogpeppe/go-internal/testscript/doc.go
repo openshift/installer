@@ -24,14 +24,14 @@ To run a specific script foo.txtar or foo.txt, run
 where TestName is the name of the test that Run is called from.
 
 To define an executable command (or several) that can be run as part of the script,
-call RunMain with the functions that implement the command's functionality.
+call Main with the functions that implement the command's functionality.
 The command functions will be called in a separate process, so are
 free to mutate global variables without polluting the top level test binary.
 
 	func TestMain(m *testing.M) {
-		os.Exit(testscript.RunMain(m, map[string] func() int{
+		testscript.Main(m, map[string] func() {
 			"testscript": testscriptMain,
-		}))
+		})
 	}
 
 In general script files should have short names: a few words, not whole sentences.

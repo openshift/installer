@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"google.golang.org/api/option"
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -36,7 +37,12 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 		return nil, fmt.Errorf("failed to get GCP cluster: %w", err)
 	}
 
-	svc, err := gcpconfig.GetComputeService(ctx, in.InstallConfig.Config.GCP.ServiceEndpoints)
+	opts := []option.ClientOption{}
+	pscEndpoint := in.InstallConfig.Config.GCP.Endpoint
+	if gcp.ShouldUseEndpointForInstaller(pscEndpoint) {
+		opts = append(opts, gcpconfig.CreateEndpointOption(pscEndpoint.Name, gcpconfig.ServiceNameGCPCompute))
+	}
+	svc, err := gcpconfig.GetComputeService(ctx, opts...)
 	if err != nil {
 		return nil, err
 	}

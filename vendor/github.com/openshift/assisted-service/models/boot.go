@@ -7,9 +7,12 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // Boot boot
@@ -23,17 +26,119 @@ type Boot struct {
 	// current boot mode
 	CurrentBootMode string `json:"current_boot_mode,omitempty"`
 
+	// device type
+	// Enum: [persistent ephemeral]
+	DeviceType string `json:"device_type,omitempty"`
+
 	// pxe interface
 	PxeInterface string `json:"pxe_interface,omitempty"`
+
+	// secure boot state
+	SecureBootState SecureBootState `json:"secure_boot_state,omitempty"`
 }
 
 // Validate validates this boot
 func (m *Boot) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateDeviceType(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSecureBootState(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }
 
-// ContextValidate validates this boot based on context it is used
+var bootTypeDeviceTypePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["persistent","ephemeral"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		bootTypeDeviceTypePropEnum = append(bootTypeDeviceTypePropEnum, v)
+	}
+}
+
+const (
+
+	// BootDeviceTypePersistent captures enum value "persistent"
+	BootDeviceTypePersistent string = "persistent"
+
+	// BootDeviceTypeEphemeral captures enum value "ephemeral"
+	BootDeviceTypeEphemeral string = "ephemeral"
+)
+
+// prop value enum
+func (m *Boot) validateDeviceTypeEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, bootTypeDeviceTypePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *Boot) validateDeviceType(formats strfmt.Registry) error {
+	if swag.IsZero(m.DeviceType) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateDeviceTypeEnum("device_type", "body", m.DeviceType); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Boot) validateSecureBootState(formats strfmt.Registry) error {
+	if swag.IsZero(m.SecureBootState) { // not required
+		return nil
+	}
+
+	if err := m.SecureBootState.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("secure_boot_state")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("secure_boot_state")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this boot based on the context it is used
 func (m *Boot) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateSecureBootState(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Boot) contextValidateSecureBootState(ctx context.Context, formats strfmt.Registry) error {
+
+	if err := m.SecureBootState.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("secure_boot_state")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("secure_boot_state")
+		}
+		return err
+	}
+
 	return nil
 }
 

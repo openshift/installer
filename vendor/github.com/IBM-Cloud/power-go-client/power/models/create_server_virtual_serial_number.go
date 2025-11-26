@@ -25,6 +25,9 @@ type CreateServerVirtualSerialNumber struct {
 	// Provide an existing reserved Virtual Serial Number or specify 'auto-assign' for auto generated Virtual Serial Number.
 	// Required: true
 	Serial *string `json:"serial"`
+
+	// software tier
+	SoftwareTier SoftwareTier `json:"softwareTier,omitempty"`
 }
 
 // Validate validates this create server virtual serial number
@@ -32,6 +35,10 @@ func (m *CreateServerVirtualSerialNumber) Validate(formats strfmt.Registry) erro
 	var res []error
 
 	if err := m.validateSerial(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSoftwareTier(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -50,8 +57,52 @@ func (m *CreateServerVirtualSerialNumber) validateSerial(formats strfmt.Registry
 	return nil
 }
 
-// ContextValidate validates this create server virtual serial number based on context it is used
+func (m *CreateServerVirtualSerialNumber) validateSoftwareTier(formats strfmt.Registry) error {
+	if swag.IsZero(m.SoftwareTier) { // not required
+		return nil
+	}
+
+	if err := m.SoftwareTier.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("softwareTier")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("softwareTier")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this create server virtual serial number based on the context it is used
 func (m *CreateServerVirtualSerialNumber) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateSoftwareTier(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *CreateServerVirtualSerialNumber) contextValidateSoftwareTier(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.SoftwareTier) { // not required
+		return nil
+	}
+
+	if err := m.SoftwareTier.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("softwareTier")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("softwareTier")
+		}
+		return err
+	}
+
 	return nil
 }
 

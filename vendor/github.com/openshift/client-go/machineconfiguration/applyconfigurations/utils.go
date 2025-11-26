@@ -10,7 +10,7 @@ import (
 	machineconfigurationv1alpha1 "github.com/openshift/client-go/machineconfiguration/applyconfigurations/machineconfiguration/v1alpha1"
 	runtime "k8s.io/apimachinery/pkg/runtime"
 	schema "k8s.io/apimachinery/pkg/runtime/schema"
-	testing "k8s.io/client-go/testing"
+	managedfields "k8s.io/apimachinery/pkg/util/managedfields"
 )
 
 // ForKind returns an apply configuration type for the given GroupVersionKind, or nil if no
@@ -42,6 +42,10 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &machineconfigurationv1.ControllerConfigStatusConditionApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("ImageRegistryBundle"):
 		return &machineconfigurationv1.ImageRegistryBundleApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ImageSecretObjectReference"):
+		return &machineconfigurationv1.ImageSecretObjectReferenceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("IrreconcilableChangeDiff"):
+		return &machineconfigurationv1.IrreconcilableChangeDiffApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("KubeletConfig"):
 		return &machineconfigurationv1.KubeletConfigApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("KubeletConfigCondition"):
@@ -52,72 +56,90 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &machineconfigurationv1.KubeletConfigStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("MachineConfig"):
 		return &machineconfigurationv1.MachineConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigNode"):
+		return &machineconfigurationv1.MachineConfigNodeApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigNodeSpec"):
+		return &machineconfigurationv1.MachineConfigNodeSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigNodeSpecConfigImage"):
+		return &machineconfigurationv1.MachineConfigNodeSpecConfigImageApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigNodeSpecMachineConfigVersion"):
+		return &machineconfigurationv1.MachineConfigNodeSpecMachineConfigVersionApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigNodeStatus"):
+		return &machineconfigurationv1.MachineConfigNodeStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigNodeStatusConfigImage"):
+		return &machineconfigurationv1.MachineConfigNodeStatusConfigImageApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigNodeStatusMachineConfigVersion"):
+		return &machineconfigurationv1.MachineConfigNodeStatusMachineConfigVersionApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigNodeStatusPinnedImageSet"):
+		return &machineconfigurationv1.MachineConfigNodeStatusPinnedImageSetApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("MachineConfigPool"):
 		return &machineconfigurationv1.MachineConfigPoolApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("MachineConfigPoolCondition"):
 		return &machineconfigurationv1.MachineConfigPoolConditionApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigPoolReference"):
+		return &machineconfigurationv1.MachineConfigPoolReferenceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("MachineConfigPoolSpec"):
 		return &machineconfigurationv1.MachineConfigPoolSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("MachineConfigPoolStatus"):
 		return &machineconfigurationv1.MachineConfigPoolStatusApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("MachineConfigPoolStatusConfiguration"):
 		return &machineconfigurationv1.MachineConfigPoolStatusConfigurationApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineConfigReference"):
+		return &machineconfigurationv1.MachineConfigReferenceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("MachineConfigSpec"):
 		return &machineconfigurationv1.MachineConfigSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSBuild"):
+		return &machineconfigurationv1.MachineOSBuildApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSBuilderReference"):
+		return &machineconfigurationv1.MachineOSBuilderReferenceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSBuildSpec"):
+		return &machineconfigurationv1.MachineOSBuildSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSBuildStatus"):
+		return &machineconfigurationv1.MachineOSBuildStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSConfig"):
+		return &machineconfigurationv1.MachineOSConfigApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSConfigReference"):
+		return &machineconfigurationv1.MachineOSConfigReferenceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSConfigSpec"):
+		return &machineconfigurationv1.MachineOSConfigSpecApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSConfigStatus"):
+		return &machineconfigurationv1.MachineOSConfigStatusApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSContainerfile"):
+		return &machineconfigurationv1.MachineOSContainerfileApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MachineOSImageBuilder"):
+		return &machineconfigurationv1.MachineOSImageBuilderApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("MCOObjectReference"):
+		return &machineconfigurationv1.MCOObjectReferenceApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("NetworkInfo"):
 		return &machineconfigurationv1.NetworkInfoApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("ObjectReference"):
+		return &machineconfigurationv1.ObjectReferenceApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("PinnedImageRef"):
+		return &machineconfigurationv1.PinnedImageRefApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("PinnedImageSet"):
+		return &machineconfigurationv1.PinnedImageSetApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("PinnedImageSetRef"):
 		return &machineconfigurationv1.PinnedImageSetRefApplyConfiguration{}
+	case v1.SchemeGroupVersion.WithKind("PinnedImageSetSpec"):
+		return &machineconfigurationv1.PinnedImageSetSpecApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("PoolSynchronizerStatus"):
 		return &machineconfigurationv1.PoolSynchronizerStatusApplyConfiguration{}
 
 		// Group=machineconfiguration.openshift.io, Version=v1alpha1
-	case v1alpha1.SchemeGroupVersion.WithKind("BuildInputs"):
-		return &machineconfigurationv1alpha1.BuildInputsApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("BuildOutputs"):
-		return &machineconfigurationv1alpha1.BuildOutputsApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("ImageSecretObjectReference"):
-		return &machineconfigurationv1alpha1.ImageSecretObjectReferenceApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MachineConfigNode"):
 		return &machineconfigurationv1alpha1.MachineConfigNodeApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MachineConfigNodeSpec"):
 		return &machineconfigurationv1alpha1.MachineConfigNodeSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MachineConfigNodeSpecMachineConfigVersion"):
 		return &machineconfigurationv1alpha1.MachineConfigNodeSpecMachineConfigVersionApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineConfigNodeSpecPinnedImageSet"):
-		return &machineconfigurationv1alpha1.MachineConfigNodeSpecPinnedImageSetApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MachineConfigNodeStatus"):
 		return &machineconfigurationv1alpha1.MachineConfigNodeStatusApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MachineConfigNodeStatusMachineConfigVersion"):
 		return &machineconfigurationv1alpha1.MachineConfigNodeStatusMachineConfigVersionApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MachineConfigNodeStatusPinnedImageSet"):
 		return &machineconfigurationv1alpha1.MachineConfigNodeStatusPinnedImageSetApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineConfigPoolReference"):
-		return &machineconfigurationv1alpha1.MachineConfigPoolReferenceApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSBuild"):
-		return &machineconfigurationv1alpha1.MachineOSBuildApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSBuilderReference"):
-		return &machineconfigurationv1alpha1.MachineOSBuilderReferenceApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSBuildSpec"):
-		return &machineconfigurationv1alpha1.MachineOSBuildSpecApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSBuildStatus"):
-		return &machineconfigurationv1alpha1.MachineOSBuildStatusApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSConfig"):
-		return &machineconfigurationv1alpha1.MachineOSConfigApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSConfigReference"):
-		return &machineconfigurationv1alpha1.MachineOSConfigReferenceApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSConfigSpec"):
-		return &machineconfigurationv1alpha1.MachineOSConfigSpecApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSConfigStatus"):
-		return &machineconfigurationv1alpha1.MachineOSConfigStatusApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSContainerfile"):
-		return &machineconfigurationv1alpha1.MachineOSContainerfileApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("MachineOSImageBuilder"):
-		return &machineconfigurationv1alpha1.MachineOSImageBuilderApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("MCOObjectReference"):
 		return &machineconfigurationv1alpha1.MCOObjectReferenceApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("ObjectReference"):
-		return &machineconfigurationv1alpha1.ObjectReferenceApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("PinnedImageRef"):
 		return &machineconfigurationv1alpha1.PinnedImageRefApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("PinnedImageSet"):
@@ -126,13 +148,11 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &machineconfigurationv1alpha1.PinnedImageSetSpecApplyConfiguration{}
 	case v1alpha1.SchemeGroupVersion.WithKind("PinnedImageSetStatus"):
 		return &machineconfigurationv1alpha1.PinnedImageSetStatusApplyConfiguration{}
-	case v1alpha1.SchemeGroupVersion.WithKind("RenderedMachineConfigReference"):
-		return &machineconfigurationv1alpha1.RenderedMachineConfigReferenceApplyConfiguration{}
 
 	}
 	return nil
 }
 
-func NewTypeConverter(scheme *runtime.Scheme) *testing.TypeConverter {
-	return &testing.TypeConverter{Scheme: scheme, TypeResolver: internal.Parser()}
+func NewTypeConverter(scheme *runtime.Scheme) managedfields.TypeConverter {
+	return managedfields.NewSchemeTypeConverter(scheme, internal.Parser())
 }

@@ -1,4 +1,4 @@
-// Package misspell impements utilities for basic spelling correction.
+// Package misspell implements utilities for basic spelling correction.
 package misspell
 
 import (

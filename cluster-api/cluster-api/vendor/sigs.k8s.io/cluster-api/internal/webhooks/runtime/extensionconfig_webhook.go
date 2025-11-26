@@ -32,7 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
-	runtimev1 "sigs.k8s.io/cluster-api/exp/runtime/api/v1alpha1"
+	runtimev1 "sigs.k8s.io/cluster-api/api/runtime/v1beta2"
 	"sigs.k8s.io/cluster-api/feature"
 )
 
@@ -47,8 +47,8 @@ func (webhook *ExtensionConfig) SetupWebhookWithManager(mgr ctrl.Manager) error 
 		Complete()
 }
 
-// +kubebuilder:webhook:verbs=create;update,path=/validate-runtime-cluster-x-k8s-io-v1alpha1-extensionconfig,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=runtime.cluster.x-k8s.io,resources=extensionconfigs,versions=v1alpha1,name=validation.extensionconfig.runtime.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
-// +kubebuilder:webhook:verbs=create;update,path=/mutate-runtime-cluster-x-k8s-io-v1alpha1-extensionconfig,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=runtime.cluster.x-k8s.io,resources=extensionconfigs,versions=v1alpha1,name=default.extensionconfig.runtime.addons.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/validate-runtime-cluster-x-k8s-io-v1beta2-extensionconfig,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=runtime.cluster.x-k8s.io,resources=extensionconfigs,versions=v1beta2,name=validation.extensionconfig.runtime.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
+// +kubebuilder:webhook:verbs=create;update,path=/mutate-runtime-cluster-x-k8s-io-v1beta2-extensionconfig,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=runtime.cluster.x-k8s.io,resources=extensionconfigs,versions=v1beta2,name=default.extensionconfig.runtime.addons.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1;v1beta1
 
 var _ webhook.CustomValidator = &ExtensionConfig{}
 var _ webhook.CustomDefaulter = &ExtensionConfig{}
@@ -63,7 +63,7 @@ func (webhook *ExtensionConfig) Default(_ context.Context, obj runtime.Object) e
 	if extensionConfig.Spec.NamespaceSelector == nil {
 		extensionConfig.Spec.NamespaceSelector = &metav1.LabelSelector{}
 	}
-	if extensionConfig.Spec.ClientConfig.Service != nil {
+	if extensionConfig.Spec.ClientConfig.Service.IsDefined() {
 		if extensionConfig.Spec.ClientConfig.Service.Port == nil {
 			extensionConfig.Spec.ClientConfig.Service.Port = ptr.To[int32](443)
 		}
@@ -131,13 +131,13 @@ func validateExtensionConfigSpec(e *runtimev1.ExtensionConfig) field.ErrorList {
 
 	specPath := field.NewPath("spec")
 
-	if e.Spec.ClientConfig.URL == nil && e.Spec.ClientConfig.Service == nil {
+	if e.Spec.ClientConfig.URL == "" && !e.Spec.ClientConfig.Service.IsDefined() {
 		allErrs = append(allErrs, field.Required(
 			specPath.Child("clientConfig"),
 			"either url or service must be defined",
 		))
 	}
-	if e.Spec.ClientConfig.URL != nil && e.Spec.ClientConfig.Service != nil {
+	if e.Spec.ClientConfig.URL != "" && e.Spec.ClientConfig.Service.IsDefined() {
 		allErrs = append(allErrs, field.Forbidden(
 			specPath.Child("clientConfig"),
 			"only one of url or service can be defined",
@@ -145,24 +145,24 @@ func validateExtensionConfigSpec(e *runtimev1.ExtensionConfig) field.ErrorList {
 	}
 
 	// Validate URL
-	if e.Spec.ClientConfig.URL != nil {
-		if uri, err := url.ParseRequestURI(*e.Spec.ClientConfig.URL); err != nil {
+	if e.Spec.ClientConfig.URL != "" {
+		if uri, err := url.ParseRequestURI(e.Spec.ClientConfig.URL); err != nil {
 			allErrs = append(allErrs, field.Invalid(
 				specPath.Child("clientConfig", "url"),
-				*e.Spec.ClientConfig.URL,
+				e.Spec.ClientConfig.URL,
 				fmt.Sprintf("must be a valid URL, e.g. https://example.com: %v", err),
 			))
 		} else if uri.Scheme != "https" {
 			allErrs = append(allErrs, field.Invalid(
 				specPath.Child("clientConfig", "url"),
-				*e.Spec.ClientConfig.URL,
+				e.Spec.ClientConfig.URL,
 				"'https' is the only allowed URL scheme, e.g. https://example.com",
 			))
 		}
 	}
 
 	// Validate Service if defined
-	if e.Spec.ClientConfig.Service != nil {
+	if e.Spec.ClientConfig.Service.IsDefined() {
 		// Validate that the name is not empty and is a Valid RFC1123 name.
 		if e.Spec.ClientConfig.Service.Name == "" {
 			allErrs = append(allErrs, field.Required(
@@ -194,8 +194,8 @@ func validateExtensionConfigSpec(e *runtimev1.ExtensionConfig) field.ErrorList {
 			))
 		}
 
-		if e.Spec.ClientConfig.Service.Path != nil {
-			path := *e.Spec.ClientConfig.Service.Path
+		if e.Spec.ClientConfig.Service.Path != "" {
+			path := e.Spec.ClientConfig.Service.Path
 			if _, err := url.ParseRequestURI(path); err != nil {
 				allErrs = append(allErrs, field.Invalid(
 					specPath.Child("clientConfig", "service", "path"),

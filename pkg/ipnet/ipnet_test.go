@@ -56,3 +56,36 @@ func TestUnmarshal(t *testing.T) {
 		})
 	}
 }
+
+func TestDeepCopy(t *testing.T) {
+	for _, ipNetIn := range []*IPNet{
+		{},
+		{IPNet: net.IPNet{
+			IP:   net.IP{192, 168, 0, 10},
+			Mask: net.IPv4Mask(255, 255, 255, 0),
+		}},
+	} {
+		t.Run(ipNetIn.String(), func(t *testing.T) {
+			t.Run("DeepCopyInto", func(t *testing.T) {
+				ipNetOut := &IPNet{}
+				ipNetIn.DeepCopyInto(ipNetOut)
+				if ipNetOut.String() != ipNetIn.String() {
+					t.Fatalf("%v != %v", ipNetOut, ipNetIn)
+				}
+				if ipNetOut == ipNetIn {
+					t.Fatalf("DeepCopyInto did not deep copy (pointers are equal)")
+				}
+			})
+
+			t.Run("DeepCopy", func(t *testing.T) {
+				ipNetOut := ipNetIn.DeepCopy()
+				if ipNetOut.String() != ipNetIn.String() {
+					t.Fatalf("%v != %v", ipNetOut, ipNetIn)
+				}
+				if ipNetOut == ipNetIn {
+					t.Fatalf("DeepCopy did not deep copy (pointers are equal)")
+				}
+			})
+		})
+	}
+}

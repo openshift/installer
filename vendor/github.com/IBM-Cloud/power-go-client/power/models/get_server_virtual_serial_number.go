@@ -26,6 +26,9 @@ type GetServerVirtualSerialNumber struct {
 	// Virtual Serial Number
 	// Required: true
 	Serial *string `json:"serial"`
+
+	// software tier
+	SoftwareTier SoftwareTier `json:"softwareTier,omitempty"`
 }
 
 // Validate validates this get server virtual serial number
@@ -37,6 +40,10 @@ func (m *GetServerVirtualSerialNumber) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateSerial(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSoftwareTier(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -64,8 +71,52 @@ func (m *GetServerVirtualSerialNumber) validateSerial(formats strfmt.Registry) e
 	return nil
 }
 
-// ContextValidate validates this get server virtual serial number based on context it is used
+func (m *GetServerVirtualSerialNumber) validateSoftwareTier(formats strfmt.Registry) error {
+	if swag.IsZero(m.SoftwareTier) { // not required
+		return nil
+	}
+
+	if err := m.SoftwareTier.Validate(formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("softwareTier")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("softwareTier")
+		}
+		return err
+	}
+
+	return nil
+}
+
+// ContextValidate validate this get server virtual serial number based on the context it is used
 func (m *GetServerVirtualSerialNumber) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateSoftwareTier(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *GetServerVirtualSerialNumber) contextValidateSoftwareTier(ctx context.Context, formats strfmt.Registry) error {
+
+	if swag.IsZero(m.SoftwareTier) { // not required
+		return nil
+	}
+
+	if err := m.SoftwareTier.ContextValidate(ctx, formats); err != nil {
+		if ve, ok := err.(*errors.Validation); ok {
+			return ve.ValidateName("softwareTier")
+		} else if ce, ok := err.(*errors.CompositeError); ok {
+			return ce.ValidateName("softwareTier")
+		}
+		return err
+	}
+
 	return nil
 }
 

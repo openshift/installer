@@ -14,11 +14,14 @@ import (
 // IPAM pool locale. The locale is the Amazon Web Services Region where this IPAM
 // pool is available for allocations. You can only use this action to release
 // manual allocations. To remove an allocation for a resource without deleting the
-// resource, set its monitored state to false using ModifyIpamResourceCidr (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyIpamResourceCidr.html)
-// . For more information, see Release an allocation (https://docs.aws.amazon.com/vpc/latest/ipam/release-alloc-ipam.html)
-// in the Amazon VPC IPAM User Guide. All EC2 API actions follow an eventual
-// consistency (https://docs.aws.amazon.com/AWSEC2/latest/APIReference/query-api-troubleshooting.html#eventual-consistency)
-// model.
+// resource, set its monitored state to false using [ModifyIpamResourceCidr]. For more information, see [Release an allocation]
+// in the Amazon VPC IPAM User Guide.
+//
+// All EC2 API actions follow an [eventual consistency] model.
+//
+// [Release an allocation]: https://docs.aws.amazon.com/vpc/latest/ipam/release-alloc-ipam.html
+// [eventual consistency]: https://docs.aws.amazon.com/ec2/latest/devguide/eventual-consistency.html
+// [ModifyIpamResourceCidr]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_ModifyIpamResourceCidr.html
 func (c *Client) ReleaseIpamPoolAllocation(ctx context.Context, params *ReleaseIpamPoolAllocationInput, optFns ...func(*Options)) (*ReleaseIpamPoolAllocationOutput, error) {
 	if params == nil {
 		params = &ReleaseIpamPoolAllocationInput{}
@@ -114,6 +117,9 @@ func (c *Client) addOperationReleaseIpamPoolAllocationMiddlewares(stack *middlew
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -124,6 +130,15 @@ func (c *Client) addOperationReleaseIpamPoolAllocationMiddlewares(stack *middlew
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpReleaseIpamPoolAllocationValidationMiddleware(stack); err != nil {
@@ -145,6 +160,18 @@ func (c *Client) addOperationReleaseIpamPoolAllocationMiddlewares(stack *middlew
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
 		return err
 	}
 	return nil

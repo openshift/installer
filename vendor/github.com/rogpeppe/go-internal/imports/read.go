@@ -123,7 +123,7 @@ func (r *importReader) nextByte(skipSpace bool) byte {
 // If the keyword is not present, readKeyword records a syntax error.
 func (r *importReader) readKeyword(kw string) {
 	r.peekByte(true)
-	for i := 0; i < len(kw); i++ {
+	for i := range len(kw) {
 		if r.nextByte(false) != kw[i] {
 			r.syntaxError()
 			return

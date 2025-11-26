@@ -53,7 +53,6 @@ logdir /var/log/chrony
 apiVersion: agent-install.openshift.io/v1beta1
 kind: InfraEnv
 metadata:
-  creationTimestamp: null
   name: ostest
   namespace: cluster0
 spec:

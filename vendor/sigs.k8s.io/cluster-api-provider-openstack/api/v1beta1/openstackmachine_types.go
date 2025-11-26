@@ -20,9 +20,9 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/errors"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
+	capoerrors "sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/errors"
 	"sigs.k8s.io/cluster-api-provider-openstack/pkg/utils/optional"
 )
 
@@ -199,6 +199,8 @@ type OpenStackMachineStatus struct {
 	Addresses []corev1.NodeAddress `json:"addresses,omitempty"`
 
 	// InstanceState is the state of the OpenStack instance for this machine.
+	// This field is not set anymore by the OpenStackMachine controller.
+	// Instead, it's set by the OpenStackServer controller.
 	// +optional
 	InstanceState *InstanceState `json:"instanceState,omitempty"`
 
@@ -211,7 +213,7 @@ type OpenStackMachineStatus struct {
 	// +optional
 	Resources *MachineResources `json:"resources,omitempty"`
 
-	FailureReason *errors.MachineStatusError `json:"failureReason,omitempty"`
+	FailureReason *capoerrors.DeprecatedCAPIMachineStatusError `json:"failureReason,omitempty"`
 
 	// FailureMessage will be set in the event that there is a terminal problem
 	// reconciling the Machine and will contain a more verbose string suitable
@@ -232,7 +234,7 @@ type OpenStackMachineStatus struct {
 	// +optional
 	FailureMessage *string `json:"failureMessage,omitempty"`
 
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // +genclient
@@ -241,7 +243,6 @@ type OpenStackMachineStatus struct {
 // +kubebuilder:resource:path=openstackmachines,scope=Namespaced,categories=cluster-api,shortName=osm
 // +kubebuilder:subresource:status
 // +kubebuilder:printcolumn:name="Cluster",type="string",JSONPath=".metadata.labels.cluster\\.x-k8s\\.io/cluster-name",description="Cluster to which this OpenStackMachine belongs"
-// +kubebuilder:printcolumn:name="InstanceState",type="string",JSONPath=".status.instanceState",description="OpenStack instance state"
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Machine ready status"
 // +kubebuilder:printcolumn:name="ProviderID",type="string",JSONPath=".spec.providerID",description="OpenStack instance ID"
 // +kubebuilder:printcolumn:name="Machine",type="string",JSONPath=".metadata.ownerReferences[?(@.kind==\"Machine\")].name",description="Machine object which owns with this OpenStackMachine"
@@ -266,17 +267,17 @@ type OpenStackMachineList struct {
 }
 
 // GetConditions returns the observations of the operational state of the OpenStackMachine resource.
-func (r *OpenStackMachine) GetConditions() clusterv1.Conditions {
+func (r *OpenStackMachine) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
 // SetConditions sets the underlying service state of the OpenStackMachine to the predescribed clusterv1.Conditions.
-func (r *OpenStackMachine) SetConditions(conditions clusterv1.Conditions) {
+func (r *OpenStackMachine) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 
 // SetFailure sets the OpenStackMachine status failure reason and failure message.
-func (r *OpenStackMachine) SetFailure(failureReason errors.MachineStatusError, failureMessage error) {
+func (r *OpenStackMachine) SetFailure(failureReason capoerrors.DeprecatedCAPIMachineStatusError, failureMessage error) {
 	r.Status.FailureReason = &failureReason
 	r.Status.FailureMessage = ptr.To(failureMessage.Error())
 }

@@ -36,12 +36,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	runtimev1 "sigs.k8s.io/cluster-api/exp/runtime/api/v1alpha1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	runtimev1 "sigs.k8s.io/cluster-api/api/runtime/v1beta2"
 	runtimeclient "sigs.k8s.io/cluster-api/exp/runtime/client"
-	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/conditions/deprecated/v1beta1"
 	"sigs.k8s.io/cluster-api/util/patch"
+	"sigs.k8s.io/cluster-api/util/paused"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
@@ -84,7 +85,7 @@ func (r *Reconciler) SetupWithManager(ctx context.Context, mgr ctrl.Manager, opt
 			predicates.TypedResourceIsChanged[*metav1.PartialObjectMetadata](mgr.GetScheme(), predicateLog),
 		)).
 		WithOptions(options).
-		WithEventFilter(predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), predicateLog, r.WatchFilterValue)).
+		WithEventFilter(predicates.ResourceHasFilterLabel(mgr.GetScheme(), predicateLog, r.WatchFilterValue)).
 		Complete(r)
 	if err != nil {
 		return errors.Wrap(err, "failed setting up with a controller manager")
@@ -131,19 +132,17 @@ func (r *Reconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Resu
 		return ctrl.Result{}, err
 	}
 
-	// Return early if the ExtensionConfig is paused.
-	if annotations.HasPaused(extensionConfig) {
-		log.Info("Reconciliation is paused for this object")
-		return ctrl.Result{}, nil
+	// Copy to avoid modifying the original extensionConfig.
+	original := extensionConfig.DeepCopy()
+
+	if isPaused, requeue, err := paused.EnsurePausedCondition(ctx, r.Client, nil, extensionConfig); err != nil || isPaused || requeue {
+		return ctrl.Result{}, err
 	}
 
 	// Handle deletion reconciliation loop.
-	if !extensionConfig.ObjectMeta.DeletionTimestamp.IsZero() {
+	if !extensionConfig.DeletionTimestamp.IsZero() {
 		return r.reconcileDelete(ctx, extensionConfig)
 	}
-
-	// Copy to avoid modifying the original extensionConfig.
-	original := extensionConfig.DeepCopy()
 
 	// Inject CABundle from secret if annotation is set. Otherwise https calls may fail.
 	if err := reconcileCABundle(ctx, r.Client, extensionConfig); err != nil {
@@ -179,9 +178,15 @@ func patchExtensionConfig(ctx context.Context, client client.Client, original, m
 		return err
 	}
 
-	options = append(options, patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
-		runtimev1.RuntimeExtensionDiscoveredCondition,
-	}})
+	options = append(options,
+		patch.WithOwnedV1Beta1Conditions{Conditions: []clusterv1.ConditionType{
+			runtimev1.RuntimeExtensionDiscoveredV1Beta1Condition,
+		}},
+		patch.WithOwnedConditions{Conditions: []string{
+			clusterv1.PausedCondition,
+			runtimev1.ExtensionConfigDiscoveredCondition,
+		}},
+	)
 	return patchHelper.Patch(ctx, modified, options...)
 }
 
@@ -226,11 +231,22 @@ func discoverExtensionConfig(ctx context.Context, runtimeClient runtimeclient.Cl
 	discoveredExtension, err := runtimeClient.Discover(ctx, extensionConfig.DeepCopy())
 	if err != nil {
 		modifiedExtensionConfig := extensionConfig.DeepCopy()
-		conditions.MarkFalse(modifiedExtensionConfig, runtimev1.RuntimeExtensionDiscoveredCondition, runtimev1.DiscoveryFailedReason, clusterv1.ConditionSeverityError, "error in discovery: %v", err)
+		v1beta1conditions.MarkFalse(modifiedExtensionConfig, runtimev1.RuntimeExtensionDiscoveredV1Beta1Condition, runtimev1.DiscoveryFailedV1Beta1Reason, clusterv1.ConditionSeverityError, "Error in discovery: %v", err)
+		conditions.Set(modifiedExtensionConfig, metav1.Condition{
+			Type:    runtimev1.ExtensionConfigDiscoveredCondition,
+			Status:  metav1.ConditionFalse,
+			Reason:  runtimev1.ExtensionConfigNotDiscoveredReason,
+			Message: fmt.Sprintf("Error in discovery: %v", err),
+		})
 		return modifiedExtensionConfig, errors.Wrapf(err, "failed to discover ExtensionConfig %s", klog.KObj(extensionConfig))
 	}
 
-	conditions.MarkTrue(discoveredExtension, runtimev1.RuntimeExtensionDiscoveredCondition)
+	v1beta1conditions.MarkTrue(discoveredExtension, runtimev1.RuntimeExtensionDiscoveredV1Beta1Condition)
+	conditions.Set(discoveredExtension, metav1.Condition{
+		Type:   runtimev1.ExtensionConfigDiscoveredCondition,
+		Status: metav1.ConditionTrue,
+		Reason: runtimev1.ExtensionConfigDiscoveredReason,
+	})
 	return discoveredExtension, nil
 }
 

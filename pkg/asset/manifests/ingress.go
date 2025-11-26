@@ -3,7 +3,7 @@ package manifests
 import (
 	"context"
 	"fmt"
-	"path/filepath"
+	"path"
 
 	"github.com/pkg/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -18,8 +18,8 @@ import (
 )
 
 var (
-	clusterIngressConfigFile     = filepath.Join(manifestDir, "cluster-ingress-02-config.yml")
-	defaultIngressControllerFile = filepath.Join(manifestDir, "cluster-ingress-default-ingresscontroller.yaml")
+	clusterIngressConfigFile     = path.Join(manifestDir, "cluster-ingress-02-config.yml")
+	defaultIngressControllerFile = path.Join(manifestDir, "cluster-ingress-default-ingresscontroller.yaml")
 )
 
 // Ingress generates the cluster-ingress-*.yml files.

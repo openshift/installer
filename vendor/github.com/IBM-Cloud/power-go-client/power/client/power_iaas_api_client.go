@@ -64,9 +64,11 @@ import (
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volume_onboarding"
 	"github.com/IBM-Cloud/power-go-client/power/client/p_cloud_volumes"
 	"github.com/IBM-Cloud/power-go-client/power/client/power_edge_router"
+	"github.com/IBM-Cloud/power-go-client/power/client/routes"
 	"github.com/IBM-Cloud/power-go-client/power/client/service_bindings"
 	"github.com/IBM-Cloud/power-go-client/power/client/service_instances"
 	"github.com/IBM-Cloud/power-go-client/power/client/snapshots"
+	"github.com/IBM-Cloud/power-go-client/power/client/ssh_keys"
 	"github.com/IBM-Cloud/power-go-client/power/client/storage_types"
 	"github.com/IBM-Cloud/power-go-client/power/client/swagger_spec"
 	"github.com/IBM-Cloud/power-go-client/power/client/workspaces"
@@ -168,9 +170,11 @@ func New(transport runtime.ClientTransport, formats strfmt.Registry) *PowerIaasA
 	cli.PCloudVolumeOnboarding = p_cloud_volume_onboarding.New(transport, formats)
 	cli.PCloudVolumes = p_cloud_volumes.New(transport, formats)
 	cli.PowerEdgeRouter = power_edge_router.New(transport, formats)
+	cli.Routes = routes.New(transport, formats)
 	cli.ServiceBindings = service_bindings.New(transport, formats)
 	cli.ServiceInstances = service_instances.New(transport, formats)
 	cli.Snapshots = snapshots.New(transport, formats)
+	cli.SSHKeys = ssh_keys.New(transport, formats)
 	cli.StorageTypes = storage_types.New(transport, formats)
 	cli.SwaggerSpec = swagger_spec.New(transport, formats)
 	cli.Workspaces = workspaces.New(transport, formats)
@@ -326,11 +330,15 @@ type PowerIaasAPI struct {
 
 	PowerEdgeRouter power_edge_router.ClientService
 
+	Routes routes.ClientService
+
 	ServiceBindings service_bindings.ClientService
 
 	ServiceInstances service_instances.ClientService
 
 	Snapshots snapshots.ClientService
+
+	SSHKeys ssh_keys.ClientService
 
 	StorageTypes storage_types.ClientService
 
@@ -398,9 +406,11 @@ func (c *PowerIaasAPI) SetTransport(transport runtime.ClientTransport) {
 	c.PCloudVolumeOnboarding.SetTransport(transport)
 	c.PCloudVolumes.SetTransport(transport)
 	c.PowerEdgeRouter.SetTransport(transport)
+	c.Routes.SetTransport(transport)
 	c.ServiceBindings.SetTransport(transport)
 	c.ServiceInstances.SetTransport(transport)
 	c.Snapshots.SetTransport(transport)
+	c.SSHKeys.SetTransport(transport)
 	c.StorageTypes.SetTransport(transport)
 	c.SwaggerSpec.SetTransport(transport)
 	c.Workspaces.SetTransport(transport)

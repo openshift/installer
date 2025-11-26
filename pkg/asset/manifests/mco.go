@@ -1,6 +1,7 @@
 package manifests
 
 import (
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -24,7 +25,7 @@ func generateMCOManifest(installConfig *types.InstallConfig, template []*asset.F
 	mcoCfg := applyTemplateData(template[0].Data, tmplData)
 	return []*asset.File{
 		{
-			Filename: filepath.Join(manifestDir, strings.TrimSuffix(filepath.Base(template[0].Filename), ".template")),
+			Filename: path.Join(manifestDir, strings.TrimSuffix(filepath.Base(template[0].Filename), ".template")),
 			Data:     mcoCfg,
 		},
 	}

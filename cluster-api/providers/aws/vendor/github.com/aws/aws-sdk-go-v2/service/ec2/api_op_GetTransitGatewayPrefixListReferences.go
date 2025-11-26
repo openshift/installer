@@ -42,14 +42,21 @@ type GetTransitGatewayPrefixListReferencesInput struct {
 	DryRun *bool
 
 	// One or more filters. The possible values are:
+	//
 	//   - attachment.resource-id - The ID of the resource for the attachment.
+	//
 	//   - attachment.resource-type - The type of resource for the attachment. Valid
 	//   values are vpc | vpn | direct-connect-gateway | peering .
+	//
 	//   - attachment.transit-gateway-attachment-id - The ID of the attachment.
+	//
 	//   - is-blackhole - Whether traffic matching the route is blocked ( true | false
 	//   ).
+	//
 	//   - prefix-list-id - The ID of the prefix list.
+	//
 	//   - prefix-list-owner-id - The ID of the owner of the prefix list.
+	//
 	//   - state - The state of the prefix list reference ( pending | available |
 	//   modifying | deleting ).
 	Filters []types.Filter
@@ -122,6 +129,9 @@ func (c *Client) addOperationGetTransitGatewayPrefixListReferencesMiddlewares(st
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -132,6 +142,15 @@ func (c *Client) addOperationGetTransitGatewayPrefixListReferencesMiddlewares(st
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetTransitGatewayPrefixListReferencesValidationMiddleware(stack); err != nil {
@@ -155,16 +174,20 @@ func (c *Client) addOperationGetTransitGatewayPrefixListReferencesMiddlewares(st
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// GetTransitGatewayPrefixListReferencesAPIClient is a client that implements the
-// GetTransitGatewayPrefixListReferences operation.
-type GetTransitGatewayPrefixListReferencesAPIClient interface {
-	GetTransitGatewayPrefixListReferences(context.Context, *GetTransitGatewayPrefixListReferencesInput, ...func(*Options)) (*GetTransitGatewayPrefixListReferencesOutput, error)
-}
-
-var _ GetTransitGatewayPrefixListReferencesAPIClient = (*Client)(nil)
 
 // GetTransitGatewayPrefixListReferencesPaginatorOptions is the paginator options
 // for GetTransitGatewayPrefixListReferences
@@ -233,6 +256,9 @@ func (p *GetTransitGatewayPrefixListReferencesPaginator) NextPage(ctx context.Co
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.GetTransitGatewayPrefixListReferences(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -251,6 +277,14 @@ func (p *GetTransitGatewayPrefixListReferencesPaginator) NextPage(ctx context.Co
 
 	return result, nil
 }
+
+// GetTransitGatewayPrefixListReferencesAPIClient is a client that implements the
+// GetTransitGatewayPrefixListReferences operation.
+type GetTransitGatewayPrefixListReferencesAPIClient interface {
+	GetTransitGatewayPrefixListReferences(context.Context, *GetTransitGatewayPrefixListReferencesInput, ...func(*Options)) (*GetTransitGatewayPrefixListReferencesOutput, error)
+}
+
+var _ GetTransitGatewayPrefixListReferencesAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opGetTransitGatewayPrefixListReferences(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

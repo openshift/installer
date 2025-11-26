@@ -36,10 +36,12 @@ type DescribeIpv6PoolsInput struct {
 	DryRun *bool
 
 	// One or more filters.
+	//
 	//   - tag : - The key/value combination of a tag assigned to the resource. Use the
 	//   tag key in the filter name and the tag value as the filter value. For example,
 	//   to find all resources that have a tag with the key Owner and the value TeamA ,
 	//   specify tag:Owner for the filter name and TeamA for the filter value.
+	//
 	//   - tag-key - The key of a tag assigned to the resource. Use this filter to find
 	//   all resources assigned a tag with a specific key, regardless of the tag value.
 	Filters []types.Filter
@@ -115,6 +117,9 @@ func (c *Client) addOperationDescribeIpv6PoolsMiddlewares(stack *middleware.Stac
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -125,6 +130,15 @@ func (c *Client) addOperationDescribeIpv6PoolsMiddlewares(stack *middleware.Stac
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opDescribeIpv6Pools(options.Region), middleware.Before); err != nil {
@@ -145,16 +159,20 @@ func (c *Client) addOperationDescribeIpv6PoolsMiddlewares(stack *middleware.Stac
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
+	if err = addSpanInitializeStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanInitializeEnd(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestStart(stack); err != nil {
+		return err
+	}
+	if err = addSpanBuildRequestEnd(stack); err != nil {
+		return err
+	}
 	return nil
 }
-
-// DescribeIpv6PoolsAPIClient is a client that implements the DescribeIpv6Pools
-// operation.
-type DescribeIpv6PoolsAPIClient interface {
-	DescribeIpv6Pools(context.Context, *DescribeIpv6PoolsInput, ...func(*Options)) (*DescribeIpv6PoolsOutput, error)
-}
-
-var _ DescribeIpv6PoolsAPIClient = (*Client)(nil)
 
 // DescribeIpv6PoolsPaginatorOptions is the paginator options for DescribeIpv6Pools
 type DescribeIpv6PoolsPaginatorOptions struct {
@@ -220,6 +238,9 @@ func (p *DescribeIpv6PoolsPaginator) NextPage(ctx context.Context, optFns ...fun
 	}
 	params.MaxResults = limit
 
+	optFns = append([]func(*Options){
+		addIsPaginatorUserAgent,
+	}, optFns...)
 	result, err := p.client.DescribeIpv6Pools(ctx, &params, optFns...)
 	if err != nil {
 		return nil, err
@@ -238,6 +259,14 @@ func (p *DescribeIpv6PoolsPaginator) NextPage(ctx context.Context, optFns ...fun
 
 	return result, nil
 }
+
+// DescribeIpv6PoolsAPIClient is a client that implements the DescribeIpv6Pools
+// operation.
+type DescribeIpv6PoolsAPIClient interface {
+	DescribeIpv6Pools(context.Context, *DescribeIpv6PoolsInput, ...func(*Options)) (*DescribeIpv6PoolsOutput, error)
+}
+
+var _ DescribeIpv6PoolsAPIClient = (*Client)(nil)
 
 func newServiceMetadataMiddleware_opDescribeIpv6Pools(region string) *awsmiddleware.RegisterServiceMetadata {
 	return &awsmiddleware.RegisterServiceMetadata{

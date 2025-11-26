@@ -3,7 +3,6 @@ package tls
 import (
 	"context"
 	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
@@ -43,7 +42,7 @@ func (sk *BoundSASigningKey) Files() []*asset.File {
 // Load reads the private key from the disk.
 // It ensures that the key provided is a valid RSA key.
 func (sk *BoundSASigningKey) Load(f asset.FileFetcher) (bool, error) {
-	keyFile, err := f.FetchByName(filepath.Join(tlsDir, "bound-service-account-signing-key.key"))
+	keyFile, err := f.FetchByName(assetFilePath("bound-service-account-signing-key.key"))
 	if err != nil {
 		if os.IsNotExist(err) {
 			return false, nil
@@ -60,6 +59,6 @@ func (sk *BoundSASigningKey) Load(f asset.FileFetcher) (bool, error) {
 	if err != nil {
 		return false, errors.Wrap(err, "failed to extract public key from the key")
 	}
-	sk.FileList = []*asset.File{keyFile, {Filename: filepath.Join(tlsDir, "bound-service-account-signing-key.pub"), Data: pubData}}
+	sk.FileList = []*asset.File{keyFile, {Filename: assetFilePath("bound-service-account-signing-key.pub"), Data: pubData}}
 	return true, nil
 }

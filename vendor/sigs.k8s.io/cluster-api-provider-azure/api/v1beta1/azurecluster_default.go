@@ -94,21 +94,27 @@ func (c *AzureCluster) setVnetDefaults() {
 	c.Spec.NetworkSpec.Vnet.VnetClassSpec.setDefaults()
 }
 
+// setSubnetDefaults ensures a fully populated, default subnet configuration
+// and in certain scenarios creates new, default subnet configurations.
 func (c *AzureCluster) setSubnetDefaults() {
 	clusterSubnet, err := c.Spec.NetworkSpec.GetSubnet(SubnetCluster)
 	clusterSubnetExists := err == nil
+	// If we already have a cluster subnet defined, ensure it has sensible defaults
+	// for all properties.
 	if clusterSubnetExists {
 		clusterSubnet.setClusterSubnetDefaults(c.ObjectMeta.Name)
 		c.Spec.NetworkSpec.UpdateSubnet(clusterSubnet, SubnetCluster)
 	}
 
 	if c.Spec.ControlPlaneEnabled {
-		/* if there is a cp subnet set defaults
-		   if no cp subnet and cluster subnet create a default cp subnet */
 		cpSubnet, errcp := c.Spec.NetworkSpec.GetSubnet(SubnetControlPlane)
+		// If we already have a control plane subnet defined, ensure it has sensible defaults
+		// for all properties.
 		if errcp == nil {
 			cpSubnet.setControlPlaneSubnetDefaults(c.ObjectMeta.Name)
 			c.Spec.NetworkSpec.UpdateSubnet(cpSubnet, SubnetControlPlane)
+			// If we don't have either a control plane subnet or a cluster subnet,
+			// create a new control plane subnet from scratch and populate with sensible defaults.
 		} else if !clusterSubnetExists {
 			cpSubnet = SubnetSpec{SubnetClassSpec: SubnetClassSpec{Role: SubnetControlPlane}}
 			cpSubnet.setControlPlaneSubnetDefaults(c.ObjectMeta.Name)
@@ -116,19 +122,28 @@ func (c *AzureCluster) setSubnetDefaults() {
 		}
 	}
 
-	var nodeSubnetFound bool
+	// anyNodeSubnetFound tracks whether or not we have one or more node subnets defined.
+	var anyNodeSubnetFound bool
+	// nodeSubnetCounter tracks all node subnets to aid automatic CIDR configuration.
 	var nodeSubnetCounter int
 	for i, subnet := range c.Spec.NetworkSpec.Subnets {
+		// Skip all non-node subnets
 		if subnet.Role != SubnetNode {
 			continue
 		}
 		nodeSubnetCounter++
-		nodeSubnetFound = true
+		anyNodeSubnetFound = true
+		// Set has sensible defaults for this existing node subnet.
 		subnet.setNodeSubnetDefaults(c.ObjectMeta.Name, nodeSubnetCounter)
+		// Because there can be multiple node subnets, we have to update any changes
+		// after applying defaults to the explicit item at the current index.
 		c.Spec.NetworkSpec.Subnets[i] = subnet
 	}
 
-	if !nodeSubnetFound && !clusterSubnetExists {
+	// We need at least one subnet for nodes.
+	// If no node subnets are defined, and there is no cluster subnet defined,
+	// create a default 10.1.0.0/16 node subnet.
+	if !anyNodeSubnetFound && !clusterSubnetExists {
 		nodeSubnet := SubnetSpec{
 			SubnetClassSpec: SubnetClassSpec{
 				Role:       SubnetNode,
@@ -200,13 +215,15 @@ func (s *SubnetSpec) setClusterSubnetDefaults(clusterName string) {
 		s.SecurityGroup.Name = generateClusterSecurityGroupName(clusterName)
 	}
 	if s.RouteTable.Name == "" {
-		s.RouteTable.Name = generateClustereRouteTableName(clusterName)
+		s.RouteTable.Name = generateClusterRouteTableName(clusterName)
 	}
-	if s.NatGateway.Name == "" {
-		s.NatGateway.Name = generateClusterNatGatewayName(clusterName)
-	}
-	if !s.IsIPv6Enabled() && s.ID == "" && s.NatGateway.NatGatewayIP.Name == "" {
-		s.NatGateway.NatGatewayIP.Name = generateNatGatewayIPName(s.NatGateway.Name)
+	if s.ID == "" {
+		if s.NatGateway.Name == "" {
+			s.NatGateway.Name = generateClusterNatGatewayName(clusterName)
+		}
+		if !s.IsIPv6Enabled() && s.NatGateway.NatGatewayIP.Name == "" {
+			s.NatGateway.NatGatewayIP.Name = generateNatGatewayIPName(s.NatGateway.Name)
+		}
 	}
 	s.setDefaults(DefaultClusterSubnetCIDR)
 	s.SecurityGroup.SecurityGroupClass.setDefaults()
@@ -456,25 +473,6 @@ func (lb *LoadBalancerClassSpec) setOutboundLBDefaults() {
 	}
 }
 
-func setControlPlaneOutboundLBDefaults(lb *LoadBalancerClassSpec, apiserverLBType LBType) {
-	// public clusters don't need control plane outbound lb
-	if apiserverLBType == Public {
-		return
-	}
-
-	// private clusters can disable control plane outbound lb by setting it to nil.
-	if lb == nil {
-		return
-	}
-
-	lb.Type = Public
-	lb.SKU = SKUStandard
-
-	if lb.IdleTimeoutInMinutes == nil {
-		lb.IdleTimeoutInMinutes = ptr.To[int32](DefaultOutboundRuleIdleTimeoutInMinutes)
-	}
-}
-
 // generateVnetName generates a virtual network name, based on the cluster name.
 func generateVnetName(clusterName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, "vnet")
@@ -520,8 +518,8 @@ func generateNodeSecurityGroupName(clusterName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, "node-nsg")
 }
 
-// generateClustereRouteTableName generates a route table name, based on the cluster name.
-func generateClustereRouteTableName(clusterName string) string {
+// generateClusterRouteTableName generates a route table name, based on the cluster name.
+func generateClusterRouteTableName(clusterName string) string {
 	return fmt.Sprintf("%s-%s", clusterName, "routetable")
 }
 
@@ -555,7 +553,7 @@ func generateFrontendIPConfigName(lbName string) string {
 	return fmt.Sprintf("%s-%s", lbName, "frontEnd")
 }
 
-// generateFrontendIPConfigName generates a load balancer frontend IP config name.
+// generatePrivateIPConfigName generates a load balancer frontend private IP config name.
 func generatePrivateIPConfigName(lbName string) string {
 	return fmt.Sprintf("%s-%s", lbName, "frontEnd-internal-ip")
 }

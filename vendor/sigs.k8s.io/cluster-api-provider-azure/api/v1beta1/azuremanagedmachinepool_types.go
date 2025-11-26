@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -473,7 +473,7 @@ type AzureManagedMachinePoolStatus struct {
 
 	// Conditions defines current service state of the AzureManagedControlPlane.
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// LongRunningOperationStates saves the states for Azure long-running operations so they can be continued on the
 	// next reconciliation loop.
@@ -492,6 +492,7 @@ type AzureManagedMachinePoolStatus struct {
 // +kubebuilder:resource:path=azuremanagedmachinepools,scope=Namespaced,categories=cluster-api,shortName=ammp
 // +kubebuilder:storageversion
 // +kubebuilder:subresource:status
+// +kubebuilder:deprecatedversion:warning="AzureManagedMachinePool and the AzureManaged API are deprecated. Please migrate to infrastructure.cluster.x-k8s.io/v1beta1 AzureASOManagedMachinePool and related AzureASOManaged resources instead."
 
 // AzureManagedMachinePool is the Schema for the azuremanagedmachinepools API.
 type AzureManagedMachinePool struct {
@@ -512,12 +513,12 @@ type AzureManagedMachinePoolList struct {
 }
 
 // GetConditions returns the list of conditions for an AzureManagedMachinePool API object.
-func (m *AzureManagedMachinePool) GetConditions() clusterv1.Conditions {
+func (m *AzureManagedMachinePool) GetConditions() clusterv1beta1.Conditions {
 	return m.Status.Conditions
 }
 
 // SetConditions will set the given conditions on an AzureManagedMachinePool object.
-func (m *AzureManagedMachinePool) SetConditions(conditions clusterv1.Conditions) {
+func (m *AzureManagedMachinePool) SetConditions(conditions clusterv1beta1.Conditions) {
 	m.Status.Conditions = conditions
 }
 

@@ -1,4 +1,4 @@
-// Copyright 2024 Google LLC
+// Copyright 2025 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,12 +43,14 @@ var newInstancesClientHook clientHook
 // InstancesCallOptions contains the retry settings for each method of InstancesClient.
 type InstancesCallOptions struct {
 	AddAccessConfig                    []gax.CallOption
+	AddNetworkInterface                []gax.CallOption
 	AddResourcePolicies                []gax.CallOption
 	AggregatedList                     []gax.CallOption
 	AttachDisk                         []gax.CallOption
 	BulkInsert                         []gax.CallOption
 	Delete                             []gax.CallOption
 	DeleteAccessConfig                 []gax.CallOption
+	DeleteNetworkInterface             []gax.CallOption
 	DetachDisk                         []gax.CallOption
 	Get                                []gax.CallOption
 	GetEffectiveFirewalls              []gax.CallOption
@@ -62,6 +64,7 @@ type InstancesCallOptions struct {
 	ListReferrers                      []gax.CallOption
 	PerformMaintenance                 []gax.CallOption
 	RemoveResourcePolicies             []gax.CallOption
+	ReportHostAsFaulty                 []gax.CallOption
 	Reset                              []gax.CallOption
 	Resume                             []gax.CallOption
 	SendDiagnosticInterrupt            []gax.CallOption
@@ -97,6 +100,9 @@ func defaultInstancesRESTCallOptions() *InstancesCallOptions {
 		AddAccessConfig: []gax.CallOption{
 			gax.WithTimeout(600000 * time.Millisecond),
 		},
+		AddNetworkInterface: []gax.CallOption{
+			gax.WithTimeout(600000 * time.Millisecond),
+		},
 		AddResourcePolicies: []gax.CallOption{
 			gax.WithTimeout(600000 * time.Millisecond),
 		},
@@ -122,6 +128,9 @@ func defaultInstancesRESTCallOptions() *InstancesCallOptions {
 			gax.WithTimeout(600000 * time.Millisecond),
 		},
 		DeleteAccessConfig: []gax.CallOption{
+			gax.WithTimeout(600000 * time.Millisecond),
+		},
+		DeleteNetworkInterface: []gax.CallOption{
 			gax.WithTimeout(600000 * time.Millisecond),
 		},
 		DetachDisk: []gax.CallOption{
@@ -244,6 +253,9 @@ func defaultInstancesRESTCallOptions() *InstancesCallOptions {
 		RemoveResourcePolicies: []gax.CallOption{
 			gax.WithTimeout(600000 * time.Millisecond),
 		},
+		ReportHostAsFaulty: []gax.CallOption{
+			gax.WithTimeout(600000 * time.Millisecond),
+		},
 		Reset: []gax.CallOption{
 			gax.WithTimeout(600000 * time.Millisecond),
 		},
@@ -337,12 +349,14 @@ type internalInstancesClient interface {
 	setGoogleClientInfo(...string)
 	Connection() *grpc.ClientConn
 	AddAccessConfig(context.Context, *computepb.AddAccessConfigInstanceRequest, ...gax.CallOption) (*Operation, error)
+	AddNetworkInterface(context.Context, *computepb.AddNetworkInterfaceInstanceRequest, ...gax.CallOption) (*Operation, error)
 	AddResourcePolicies(context.Context, *computepb.AddResourcePoliciesInstanceRequest, ...gax.CallOption) (*Operation, error)
 	AggregatedList(context.Context, *computepb.AggregatedListInstancesRequest, ...gax.CallOption) *InstancesScopedListPairIterator
 	AttachDisk(context.Context, *computepb.AttachDiskInstanceRequest, ...gax.CallOption) (*Operation, error)
 	BulkInsert(context.Context, *computepb.BulkInsertInstanceRequest, ...gax.CallOption) (*Operation, error)
 	Delete(context.Context, *computepb.DeleteInstanceRequest, ...gax.CallOption) (*Operation, error)
 	DeleteAccessConfig(context.Context, *computepb.DeleteAccessConfigInstanceRequest, ...gax.CallOption) (*Operation, error)
+	DeleteNetworkInterface(context.Context, *computepb.DeleteNetworkInterfaceInstanceRequest, ...gax.CallOption) (*Operation, error)
 	DetachDisk(context.Context, *computepb.DetachDiskInstanceRequest, ...gax.CallOption) (*Operation, error)
 	Get(context.Context, *computepb.GetInstanceRequest, ...gax.CallOption) (*computepb.Instance, error)
 	GetEffectiveFirewalls(context.Context, *computepb.GetEffectiveFirewallsInstanceRequest, ...gax.CallOption) (*computepb.InstancesGetEffectiveFirewallsResponse, error)
@@ -356,6 +370,7 @@ type internalInstancesClient interface {
 	ListReferrers(context.Context, *computepb.ListReferrersInstancesRequest, ...gax.CallOption) *ReferenceIterator
 	PerformMaintenance(context.Context, *computepb.PerformMaintenanceInstanceRequest, ...gax.CallOption) (*Operation, error)
 	RemoveResourcePolicies(context.Context, *computepb.RemoveResourcePoliciesInstanceRequest, ...gax.CallOption) (*Operation, error)
+	ReportHostAsFaulty(context.Context, *computepb.ReportHostAsFaultyInstanceRequest, ...gax.CallOption) (*Operation, error)
 	Reset(context.Context, *computepb.ResetInstanceRequest, ...gax.CallOption) (*Operation, error)
 	Resume(context.Context, *computepb.ResumeInstanceRequest, ...gax.CallOption) (*Operation, error)
 	SendDiagnosticInterrupt(context.Context, *computepb.SendDiagnosticInterruptInstanceRequest, ...gax.CallOption) (*computepb.SendDiagnosticInterruptInstanceResponse, error)
@@ -426,6 +441,11 @@ func (c *InstancesClient) AddAccessConfig(ctx context.Context, req *computepb.Ad
 	return c.internalClient.AddAccessConfig(ctx, req, opts...)
 }
 
+// AddNetworkInterface adds one dynamic network interface to an active instance.
+func (c *InstancesClient) AddNetworkInterface(ctx context.Context, req *computepb.AddNetworkInterfaceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
+	return c.internalClient.AddNetworkInterface(ctx, req, opts...)
+}
+
 // AddResourcePolicies adds existing resource policies to an instance. You can only add one policy right now which will be applied to this instance for scheduling live migrations.
 func (c *InstancesClient) AddResourcePolicies(ctx context.Context, req *computepb.AddResourcePoliciesInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.AddResourcePolicies(ctx, req, opts...)
@@ -454,6 +474,11 @@ func (c *InstancesClient) Delete(ctx context.Context, req *computepb.DeleteInsta
 // DeleteAccessConfig deletes an access config from an instance’s network interface.
 func (c *InstancesClient) DeleteAccessConfig(ctx context.Context, req *computepb.DeleteAccessConfigInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.DeleteAccessConfig(ctx, req, opts...)
+}
+
+// DeleteNetworkInterface deletes one dynamic network interface from an active instance. InstancesDeleteNetworkInterfaceRequest indicates: - instance from which to delete, using project+zone+resource_id fields; - dynamic network interface to be deleted, using network_interface_name field;
+func (c *InstancesClient) DeleteNetworkInterface(ctx context.Context, req *computepb.DeleteNetworkInterfaceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
+	return c.internalClient.DeleteNetworkInterface(ctx, req, opts...)
 }
 
 // DetachDisk detaches a disk from an instance.
@@ -519,6 +544,11 @@ func (c *InstancesClient) PerformMaintenance(ctx context.Context, req *computepb
 // RemoveResourcePolicies removes resource policies from an instance.
 func (c *InstancesClient) RemoveResourcePolicies(ctx context.Context, req *computepb.RemoveResourcePoliciesInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
 	return c.internalClient.RemoveResourcePolicies(ctx, req, opts...)
+}
+
+// ReportHostAsFaulty mark the host as faulty and try to restart the instance on a new host.
+func (c *InstancesClient) ReportHostAsFaulty(ctx context.Context, req *computepb.ReportHostAsFaultyInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
+	return c.internalClient.ReportHostAsFaulty(ctx, req, opts...)
 }
 
 // Reset performs a reset on the instance. This is a hard reset. The VM does not do a graceful shutdown. For more information, see Resetting an instance.
@@ -730,7 +760,7 @@ func defaultInstancesRESTClientOptions() []option.ClientOption {
 // use by Google-written clients.
 func (c *instancesRESTClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", gax.GoVersion}, keyval...)
-	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "rest", "UNKNOWN")
+	kv = append(kv, "gapic", getVersionClient(), "gax", gax.Version, "rest", "UNKNOWN", "pb", protoVersion)
 	c.xGoogHeaders = []string{
 		"x-goog-api-client", gax.XGoogHeader(kv...),
 	}
@@ -798,6 +828,73 @@ func (c *instancesRESTClient) AddAccessConfig(ctx context.Context, req *computep
 		httpReq.Header = headers
 
 		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, jsonReq, "AddAccessConfig")
+		if err != nil {
+			return err
+		}
+
+		if err := unm.Unmarshal(buf, resp); err != nil {
+			return err
+		}
+
+		return nil
+	}, opts...)
+	if e != nil {
+		return nil, e
+	}
+	op := &Operation{
+		&zoneOperationsHandle{
+			c:       c.operationClient,
+			proto:   resp,
+			project: req.GetProject(),
+			zone:    req.GetZone(),
+		},
+	}
+	return op, nil
+}
+
+// AddNetworkInterface adds one dynamic network interface to an active instance.
+func (c *instancesRESTClient) AddNetworkInterface(ctx context.Context, req *computepb.AddNetworkInterfaceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
+	m := protojson.MarshalOptions{AllowPartial: true}
+	body := req.GetNetworkInterfaceResource()
+	jsonReq, err := m.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	baseUrl, err := url.Parse(c.endpoint)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/zones/%v/instances/%v/addNetworkInterface", req.GetProject(), req.GetZone(), req.GetInstance())
+
+	params := url.Values{}
+	if req != nil && req.RequestId != nil {
+		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
+	}
+
+	baseUrl.RawQuery = params.Encode()
+
+	// Build HTTP headers from client and context metadata.
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "zone", url.QueryEscape(req.GetZone()), "instance", url.QueryEscape(req.GetInstance()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	hds = append(hds, "Content-Type", "application/json")
+	headers := gax.BuildHeaders(ctx, hds...)
+	opts = append((*c.CallOptions).AddNetworkInterface[0:len((*c.CallOptions).AddNetworkInterface):len((*c.CallOptions).AddNetworkInterface)], opts...)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	resp := &computepb.Operation{}
+	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		if settings.Path != "" {
+			baseUrl.Path = settings.Path
+		}
+		httpReq, err := http.NewRequest("POST", baseUrl.String(), bytes.NewReader(jsonReq))
+		if err != nil {
+			return err
+		}
+		httpReq = httpReq.WithContext(ctx)
+		httpReq.Header = headers
+
+		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, jsonReq, "AddNetworkInterface")
 		if err != nil {
 			return err
 		}
@@ -1223,6 +1320,67 @@ func (c *instancesRESTClient) DeleteAccessConfig(ctx context.Context, req *compu
 		httpReq.Header = headers
 
 		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, nil, "DeleteAccessConfig")
+		if err != nil {
+			return err
+		}
+
+		if err := unm.Unmarshal(buf, resp); err != nil {
+			return err
+		}
+
+		return nil
+	}, opts...)
+	if e != nil {
+		return nil, e
+	}
+	op := &Operation{
+		&zoneOperationsHandle{
+			c:       c.operationClient,
+			proto:   resp,
+			project: req.GetProject(),
+			zone:    req.GetZone(),
+		},
+	}
+	return op, nil
+}
+
+// DeleteNetworkInterface deletes one dynamic network interface from an active instance. InstancesDeleteNetworkInterfaceRequest indicates: - instance from which to delete, using project+zone+resource_id fields; - dynamic network interface to be deleted, using network_interface_name field;
+func (c *instancesRESTClient) DeleteNetworkInterface(ctx context.Context, req *computepb.DeleteNetworkInterfaceInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
+	baseUrl, err := url.Parse(c.endpoint)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/zones/%v/instances/%v/deleteNetworkInterface", req.GetProject(), req.GetZone(), req.GetInstance())
+
+	params := url.Values{}
+	params.Add("networkInterfaceName", fmt.Sprintf("%v", req.GetNetworkInterfaceName()))
+	if req != nil && req.RequestId != nil {
+		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
+	}
+
+	baseUrl.RawQuery = params.Encode()
+
+	// Build HTTP headers from client and context metadata.
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "zone", url.QueryEscape(req.GetZone()), "instance", url.QueryEscape(req.GetInstance()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	hds = append(hds, "Content-Type", "application/json")
+	headers := gax.BuildHeaders(ctx, hds...)
+	opts = append((*c.CallOptions).DeleteNetworkInterface[0:len((*c.CallOptions).DeleteNetworkInterface):len((*c.CallOptions).DeleteNetworkInterface)], opts...)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	resp := &computepb.Operation{}
+	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		if settings.Path != "" {
+			baseUrl.Path = settings.Path
+		}
+		httpReq, err := http.NewRequest("POST", baseUrl.String(), nil)
+		if err != nil {
+			return err
+		}
+		httpReq = httpReq.WithContext(ctx)
+		httpReq.Header = headers
+
+		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, nil, "DeleteNetworkInterface")
 		if err != nil {
 			return err
 		}
@@ -2003,6 +2161,73 @@ func (c *instancesRESTClient) RemoveResourcePolicies(ctx context.Context, req *c
 		httpReq.Header = headers
 
 		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, jsonReq, "RemoveResourcePolicies")
+		if err != nil {
+			return err
+		}
+
+		if err := unm.Unmarshal(buf, resp); err != nil {
+			return err
+		}
+
+		return nil
+	}, opts...)
+	if e != nil {
+		return nil, e
+	}
+	op := &Operation{
+		&zoneOperationsHandle{
+			c:       c.operationClient,
+			proto:   resp,
+			project: req.GetProject(),
+			zone:    req.GetZone(),
+		},
+	}
+	return op, nil
+}
+
+// ReportHostAsFaulty mark the host as faulty and try to restart the instance on a new host.
+func (c *instancesRESTClient) ReportHostAsFaulty(ctx context.Context, req *computepb.ReportHostAsFaultyInstanceRequest, opts ...gax.CallOption) (*Operation, error) {
+	m := protojson.MarshalOptions{AllowPartial: true}
+	body := req.GetInstancesReportHostAsFaultyRequestResource()
+	jsonReq, err := m.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	baseUrl, err := url.Parse(c.endpoint)
+	if err != nil {
+		return nil, err
+	}
+	baseUrl.Path += fmt.Sprintf("/compute/v1/projects/%v/zones/%v/instances/%v/reportHostAsFaulty", req.GetProject(), req.GetZone(), req.GetInstance())
+
+	params := url.Values{}
+	if req != nil && req.RequestId != nil {
+		params.Add("requestId", fmt.Sprintf("%v", req.GetRequestId()))
+	}
+
+	baseUrl.RawQuery = params.Encode()
+
+	// Build HTTP headers from client and context metadata.
+	hds := []string{"x-goog-request-params", fmt.Sprintf("%s=%v&%s=%v&%s=%v", "project", url.QueryEscape(req.GetProject()), "zone", url.QueryEscape(req.GetZone()), "instance", url.QueryEscape(req.GetInstance()))}
+
+	hds = append(c.xGoogHeaders, hds...)
+	hds = append(hds, "Content-Type", "application/json")
+	headers := gax.BuildHeaders(ctx, hds...)
+	opts = append((*c.CallOptions).ReportHostAsFaulty[0:len((*c.CallOptions).ReportHostAsFaulty):len((*c.CallOptions).ReportHostAsFaulty)], opts...)
+	unm := protojson.UnmarshalOptions{AllowPartial: true, DiscardUnknown: true}
+	resp := &computepb.Operation{}
+	e := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
+		if settings.Path != "" {
+			baseUrl.Path = settings.Path
+		}
+		httpReq, err := http.NewRequest("POST", baseUrl.String(), bytes.NewReader(jsonReq))
+		if err != nil {
+			return err
+		}
+		httpReq = httpReq.WithContext(ctx)
+		httpReq.Header = headers
+
+		buf, err := executeHTTPRequest(ctx, c.httpClient, httpReq, c.logger, jsonReq, "ReportHostAsFaulty")
 		if err != nil {
 			return err
 		}

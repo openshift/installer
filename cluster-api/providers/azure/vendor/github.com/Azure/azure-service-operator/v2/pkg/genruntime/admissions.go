@@ -6,7 +6,9 @@
 package genruntime
 
 import (
-	"github.com/pkg/errors"
+	"context"
+
+	"github.com/rotisserie/eris"
 	"k8s.io/apimachinery/pkg/runtime"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
@@ -14,20 +16,20 @@ import (
 
 // Validator is similar to controller-runtime/pkg/webhook/admission Validator. Implementing this interface
 // allows you to hook into the code generated validations and add custom handcrafted validations.
-type Validator interface {
+type Validator[T runtime.Object] interface {
 	// CreateValidations returns validation functions that should be run on create.
-	CreateValidations() []func() (admission.Warnings, error)
+	CreateValidations() []func(ctx context.Context, obj T) (admission.Warnings, error)
 	// UpdateValidations returns validation functions that should be run on update.
-	UpdateValidations() []func(old runtime.Object) (admission.Warnings, error)
+	UpdateValidations() []func(ctx context.Context, oldObj T, newObj T) (admission.Warnings, error)
 	// DeleteValidations returns validation functions that should be run on delete.
-	DeleteValidations() []func() (admission.Warnings, error)
+	DeleteValidations() []func(ctx context.Context, obj T) (admission.Warnings, error)
 }
 
 // Defaulter is similar to controller-runtime/pkg/webhook/admission Defaulter. Implementing this interface
 // allows you to hook into the code generated defaults and add custom handcrafted defaults.
 type Defaulter interface {
 	// CustomDefault performs custom defaults that are run in addition to the code generated defaults.
-	CustomDefault()
+	CustomDefault(ctx context.Context, obj runtime.Object) error
 }
 
 // ValidateWriteOnceProperties function validates the update on WriteOnce properties.
@@ -38,8 +40,17 @@ func ValidateWriteOnceProperties(oldObj ARMMetaObject, newObj ARMMetaObject) (ad
 		return nil, nil
 	}
 
-	if oldObj.AzureName() != newObj.AzureName() {
-		errs = append(errs, errors.Errorf("updating 'spec.azureName' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+	// Prohibit changing the AzureName,
+	// but allow it to be set if it's empty.
+	//
+	// https://github.com/Azure/azure-service-operator/issues/4306
+	oldName := oldObj.AzureName()
+	if oldName != "" && oldName != newObj.AzureName() {
+		err := eris.Errorf(
+			"updating 'spec.azureName' is not allowed for '%s : %s",
+			oldObj.GetObjectKind().GroupVersionKind(),
+			oldObj.GetName())
+		errs = append(errs, err)
 	}
 
 	// Ensure that owner has not been changed
@@ -57,23 +68,23 @@ func ValidateWriteOnceProperties(oldObj ARMMetaObject, newObj ARMMetaObject) (ad
 		// This error may not be possible to trigger in practice, as it requires an Azure resource that supports existing without an owner
 		// or with an owner. There aren't any resources that meet those criteria that we know of, so this check is primarily us being
 		// defensive.
-		errs = append(errs, errors.Errorf("adding an owner to an already created resource is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+		errs = append(errs, eris.Errorf("adding an owner to an already created resource is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
 	} else if ownerNameChanged {
-		errs = append(errs, errors.Errorf("updating 'spec.owner.name' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+		errs = append(errs, eris.Errorf("updating 'spec.owner.name' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
 	} else if ownerARMIDChanged {
-		errs = append(errs, errors.Errorf("updating 'spec.owner.armId' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+		errs = append(errs, eris.Errorf("updating 'spec.owner.armId' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
 	} else if ownerRemoved {
-		errs = append(errs, errors.Errorf("removing 'spec.owner' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
+		errs = append(errs, eris.Errorf("removing 'spec.owner' is not allowed for '%s : %s", oldObj.GetObjectKind().GroupVersionKind(), oldObj.GetName()))
 	}
 
 	return nil, kerrors.NewAggregate(errs)
 }
 
-func ValidateCreate(validations []func() (admission.Warnings, error)) (admission.Warnings, error) {
+func ValidateCreate[T runtime.Object](ctx context.Context, resource T, validations []func(ctx context.Context, resource T) (admission.Warnings, error)) (admission.Warnings, error) {
 	var errs []error
 	var warnings admission.Warnings
 	for _, validation := range validations {
-		warning, err := validation()
+		warning, err := validation(ctx, resource)
 		if warning != nil {
 			warnings = append(warnings, warning...)
 		}
@@ -84,11 +95,11 @@ func ValidateCreate(validations []func() (admission.Warnings, error)) (admission
 	return warnings, kerrors.NewAggregate(errs)
 }
 
-func ValidateDelete(validations []func() (admission.Warnings, error)) (admission.Warnings, error) {
+func ValidateDelete[T runtime.Object](ctx context.Context, resource T, validations []func(ctx context.Context, resource T) (admission.Warnings, error)) (admission.Warnings, error) {
 	var errs []error
 	var warnings admission.Warnings
 	for _, validation := range validations {
-		warning, err := validation()
+		warning, err := validation(ctx, resource)
 		if warning != nil {
 			warnings = append(warnings, warning...)
 		}
@@ -99,11 +110,11 @@ func ValidateDelete(validations []func() (admission.Warnings, error)) (admission
 	return warnings, kerrors.NewAggregate(errs)
 }
 
-func ValidateUpdate(old runtime.Object, validations []func(old runtime.Object) (admission.Warnings, error)) (admission.Warnings, error) {
+func ValidateUpdate[T runtime.Object](ctx context.Context, old T, new T, validations []func(ctx context.Context, old T, new T) (admission.Warnings, error)) (admission.Warnings, error) {
 	var errs []error
 	var warnings admission.Warnings
 	for _, validation := range validations {
-		warning, err := validation(old)
+		warning, err := validation(ctx, old, new)
 		if warning != nil {
 			warnings = append(warnings, warning...)
 		}
