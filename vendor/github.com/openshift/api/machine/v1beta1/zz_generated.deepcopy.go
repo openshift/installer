@@ -581,11 +581,6 @@ func (in *EBSBlockDeviceSpec) DeepCopyInto(out *EBSBlockDeviceSpec) {
 		*out = new(int64)
 		**out = **in
 	}
-	if in.ThroughputMib != nil {
-		in, out := &in.ThroughputMib, &out.ThroughputMib
-		*out = new(int32)
-		**out = **in
-	}
 	if in.VolumeSize != nil {
 		in, out := &in.VolumeSize, &out.VolumeSize
 		*out = new(int64)

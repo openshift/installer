@@ -18,8 +18,6 @@ Beyond the [platform-agnostic `install-config.yaml` properties](../customization
 * `rootVolume` (optional object): Defines the root volume for EC2 instances in the machine pool.
     * `iops` (optional integer): The amount of provisioned [IOPS][volume-iops].
         This is only valid for `type` `io1`.
-    * `throughput` (optional integer): The amount of throughput in MiB/s [Throughput Performance][volume-throughput].
-        This is only valid for `type` `gp3`.
     * `size` (optional integer): Size of the root volume in gibibytes (GiB).
     * `type` (optional string):  The [type of volume][volume-type].
     * `kmsKeyARN` (optional string): The [ARN of KMS key][kms-key] that should be used to encrypt the EBS volume.
@@ -121,5 +119,4 @@ sshKey: ssh-ed25519 AAAA...
 [kms-key-default]: https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_GetEbsDefaultKmsKeyId.html
 [kms-key]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html
 [volume-iops]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ebs-io-characteristics.html
-[volume-throughput]: https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html#gp3-ebs-volume-type
 [volume-type]: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSVolumeTypes.html

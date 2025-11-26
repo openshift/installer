@@ -79,9 +79,6 @@ func (a *MachinePool) Set(required *MachinePool) {
 	if required.EC2RootVolume.IOPS != 0 {
 		a.EC2RootVolume.IOPS = required.EC2RootVolume.IOPS
 	}
-	if required.EC2RootVolume.Throughput != 0 {
-		a.EC2RootVolume.Throughput = required.EC2RootVolume.Throughput
-	}
 	if required.EC2RootVolume.Size != 0 {
 		a.EC2RootVolume.Size = required.EC2RootVolume.Size
 	}
@@ -121,13 +118,6 @@ type EC2RootVolume struct {
 	// +kubebuilder:validation:Minimum=0
 	// +optional
 	IOPS int `json:"iops"`
-
-	// Throughput to provision in MiB/s supported for the volume type. This
-	// is currently only applicable to volumes of type gp3.
-	//
-	// +kubebuilder:validation:Minimum=0
-	// +optional
-	Throughput int64 `json:"throughput"`
 
 	// Size defines the size of the volume in gibibytes (GiB).
 	//

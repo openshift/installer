@@ -115,8 +115,7 @@ func TestGenerateMachines(t *testing.T) {
 							},
 							SSHKeyName: ptr.To(""),
 							RootVolume: &capa.Volume{
-								Encrypted:  ptr.To(true),
-								Throughput: ptr.To(int64(0)),
+								Encrypted: ptr.To(true),
 							},
 							UncompressedUserData: ptr.To(true),
 							Ignition: &capa.Ignition{
@@ -172,8 +171,7 @@ func TestGenerateMachines(t *testing.T) {
 							},
 							SSHKeyName: ptr.To(""),
 							RootVolume: &capa.Volume{
-								Encrypted:  ptr.To(true),
-								Throughput: ptr.To(int64(0)),
+								Encrypted: ptr.To(true),
 							},
 							UncompressedUserData: ptr.To(true),
 							Ignition: &capa.Ignition{
@@ -229,11 +227,8 @@ func TestGenerateMachines(t *testing.T) {
 									fmt.Sprintf("%s-subnet-public-%s", stubClusterID, machineZone),
 								}}},
 							},
-							SSHKeyName: ptr.To(""),
-							RootVolume: &capa.Volume{
-								Encrypted:  ptr.To(true),
-								Throughput: ptr.To(int64(0)),
-							},
+							SSHKeyName:           ptr.To(""),
+							RootVolume:           &capa.Volume{Encrypted: ptr.To(true)},
 							UncompressedUserData: ptr.To(true),
 							Ignition: &capa.Ignition{
 								StorageType: capa.IgnitionStorageTypeOptionUnencryptedUserData,

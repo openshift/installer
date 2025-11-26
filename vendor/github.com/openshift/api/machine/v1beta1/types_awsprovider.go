@@ -213,19 +213,6 @@ type EBSBlockDeviceSpec struct {
 	// it is not used in requests to create gp2, st1, sc1, or standard volumes.
 	// +optional
 	Iops *int64 `json:"iops,omitempty"`
-	// throughputMib to provision in MiB/s supported for the volume type. Not applicable to all types.
-	//
-	// This parameter is valid only for gp3 volumes.
-	// Valid Range: Minimum value of 125. Maximum value of 2000.
-	//
-	// When omitted, this means no opinion, and the platform is left to
-	// choose a reasonable default, which is subject to change over time.
-	// The current default is 125.
-	//
-	// +kubebuilder:validation:Minimum:=125
-	// +kubebuilder:validation:Maximum:=2000
-	// +optional
-	ThroughputMib *int32 `json:"throughputMib,omitempty"`
 	// The size of the volume, in GiB.
 	//
 	// Constraints: 1-16384 for General Purpose SSD (gp2), 4-16384 for Provisioned
@@ -238,7 +225,7 @@ type EBSBlockDeviceSpec struct {
 	// a volume size, the default is the snapshot size.
 	// +optional
 	VolumeSize *int64 `json:"volumeSize,omitempty"`
-	// volumeType can be of type gp2, gp3, io1, st1, sc1, or standard.
+	// The volume type: gp2, io1, st1, sc1, or standard.
 	// Default: standard
 	// +optional
 	VolumeType *string `json:"volumeType,omitempty"`
