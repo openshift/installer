@@ -893,12 +893,14 @@ func TestIgnition_getPublicContainerRegistries(t *testing.T) {
 
 func TestIgnition_addFencingCredentials(t *testing.T) {
 	cases := []struct {
-		name          string
-		installConfig *agentcommon.OptionalInstallConfig
-		expectFile    bool
-		expectedPath  string
-		expectedYAML  string
-		expectError   bool
+		name           string
+		installConfig  *agentcommon.OptionalInstallConfig
+		existingFiles  []igntypes.File
+		expectFile     bool
+		expectedPath   string
+		expectedYAML   string
+		expectedOwner  string
+		expectNumFiles int
 	}{
 		{
 			name:          "nil install config",
@@ -984,8 +986,10 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 					},
 				},
 			},
-			expectFile:   true,
-			expectedPath: "/etc/assisted/hostconfig/fencing-credentials.yaml",
+			expectFile:     true,
+			expectedPath:   "/etc/assisted/hostconfig/fencing-credentials.yaml",
+			expectedOwner:  "root",
+			expectNumFiles: 1,
 			expectedYAML: `credentials:
 - hostname: master-0
   username: admin
@@ -1000,7 +1004,7 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 `,
 		},
 		{
-			name: "fencing credentials without certificate verification",
+			name: "fencing credentials with omitted certificate verification uses omitempty",
 			installConfig: &agentcommon.OptionalInstallConfig{
 				AssetBase: installconfig.AssetBase{
 					Config: &types.InstallConfig{
@@ -1013,6 +1017,14 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 										Username: "root",
 										Password: "secret",
 										Address:  "redfish://10.0.0.1:443/redfish/v1/Systems/1",
+										// CertificateVerification intentionally omitted to test omitempty
+									},
+									{
+										HostName: "node-1",
+										Username: "root",
+										Password: "secret2",
+										Address:  "redfish://10.0.0.2:443/redfish/v1/Systems/1",
+										// CertificateVerification intentionally omitted to test omitempty
 									},
 								},
 							},
@@ -1020,13 +1032,77 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 					},
 				},
 			},
-			expectFile:   true,
-			expectedPath: "/etc/assisted/hostconfig/fencing-credentials.yaml",
+			expectFile:     true,
+			expectedPath:   "/etc/assisted/hostconfig/fencing-credentials.yaml",
+			expectedOwner:  "root",
+			expectNumFiles: 1,
 			expectedYAML: `credentials:
 - hostname: node-0
   username: root
   password: secret
   address: redfish://10.0.0.1:443/redfish/v1/Systems/1
+- hostname: node-1
+  username: root
+  password: secret2
+  address: redfish://10.0.0.2:443/redfish/v1/Systems/1
+`,
+		},
+		{
+			name: "appends to existing files without overwriting",
+			installConfig: &agentcommon.OptionalInstallConfig{
+				AssetBase: installconfig.AssetBase{
+					Config: &types.InstallConfig{
+						ControlPlane: &types.MachinePool{
+							Replicas: pointer.Int64(2),
+							Fencing: &types.Fencing{
+								Credentials: []*types.Credential{
+									{
+										HostName:                "master-0",
+										Username:                "admin",
+										Password:                "pass1",
+										Address:                 "redfish+https://192.168.1.1:8000/redfish/v1/Systems/1",
+										CertificateVerification: types.CertificateVerificationDisabled,
+									},
+									{
+										HostName:                "master-1",
+										Username:                "admin",
+										Password:                "pass2",
+										Address:                 "redfish+https://192.168.1.2:8000/redfish/v1/Systems/1",
+										CertificateVerification: types.CertificateVerificationDisabled,
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			existingFiles: []igntypes.File{
+				{
+					Node: igntypes.Node{
+						Path: "/etc/existing/file.txt",
+					},
+				},
+				{
+					Node: igntypes.Node{
+						Path: "/etc/another/config.yaml",
+					},
+				},
+			},
+			expectFile:     true,
+			expectedPath:   "/etc/assisted/hostconfig/fencing-credentials.yaml",
+			expectedOwner:  "root",
+			expectNumFiles: 3, // 2 existing + 1 new
+			expectedYAML: `credentials:
+- hostname: master-0
+  username: admin
+  password: pass1
+  address: redfish+https://192.168.1.1:8000/redfish/v1/Systems/1
+  certificateVerification: Disabled
+- hostname: master-1
+  username: admin
+  password: pass2
+  address: redfish+https://192.168.1.2:8000/redfish/v1/Systems/1
+  certificateVerification: Disabled
 `,
 		},
 	}
@@ -1034,19 +1110,24 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			config := &igntypes.Config{}
+			// Initialize with existing files if provided
+			if tc.existingFiles != nil {
+				config.Storage.Files = append(config.Storage.Files, tc.existingFiles...)
+			}
 
 			err := addFencingCredentials(config, tc.installConfig)
-
-			if tc.expectError {
-				assert.Error(t, err)
-				return
-			}
 
 			assert.NoError(t, err)
 
 			if !tc.expectFile {
-				assert.Empty(t, config.Storage.Files, "Expected no files to be added")
+				// Verify no new files were added (only existing files remain)
+				assert.Equal(t, len(tc.existingFiles), len(config.Storage.Files), "Expected no new files to be added")
 				return
+			}
+
+			// Verify total file count if specified
+			if tc.expectNumFiles > 0 {
+				assert.Equal(t, tc.expectNumFiles, len(config.Storage.Files), "Unexpected number of files")
 			}
 
 			// Find the fencing credentials file
@@ -1069,6 +1150,26 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 
 			// Verify file permissions (0600 = read/write for owner only)
 			assert.Equal(t, 0600, *foundFile.Mode)
+
+			// Verify file owner
+			if tc.expectedOwner != "" {
+				assert.NotNil(t, foundFile.Node.User.Name, "Expected file owner to be set")
+				assert.Equal(t, tc.expectedOwner, *foundFile.Node.User.Name, "Unexpected file owner")
+			}
+
+			// Verify existing files are preserved in append test
+			if tc.existingFiles != nil {
+				for _, existingFile := range tc.existingFiles {
+					found := false
+					for _, f := range config.Storage.Files {
+						if f.Path == existingFile.Path {
+							found = true
+							break
+						}
+					}
+					assert.True(t, found, "Existing file %s was not preserved", existingFile.Path)
+				}
+			}
 		})
 	}
 }
