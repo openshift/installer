@@ -20,13 +20,16 @@ import (
 	"regexp"
 
 	"github.com/google/cel-go/common/ast"
+	"github.com/google/cel-go/common/env"
 	"github.com/google/cel-go/common/overloads"
-
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 )
 
 const (
-	homogeneousValidatorName = "cel.lib.std.validate.types.homogeneous"
+	durationValidatorName     = "cel.validator.duration"
+	regexValidatorName        = "cel.validator.matches"
+	timestampValidatorName    = "cel.validator.timestamp"
+	homogeneousValidatorName  = "cel.validator.homogeneous_literals"
+	nestingLimitValidatorName = "cel.validator.comprehension_nesting_limit"
 
 	// HomogeneousAggregateLiteralExemptFunctions is the ValidatorConfig key used to configure
 	// the set of function names which are exempt from homogeneous type checks. The expected type
@@ -37,6 +40,43 @@ const (
 	// clauses; however, all other uses of a mixed element type list, would be unexpected.
 	HomogeneousAggregateLiteralExemptFunctions = homogeneousValidatorName + ".exempt"
 )
+
+var (
+	astValidatorFactories = map[string]ASTValidatorFactory{
+		nestingLimitValidatorName: func(val *env.Validator) (ASTValidator, error) {
+			if limit, found := val.ConfigValue("limit"); found {
+				// In case of protos, config value is of type by google.protobuf.Value, which numeric values are always a double.
+				if val, isDouble := limit.(float64); isDouble {
+					if val != float64(int64(val)) {
+						return nil, fmt.Errorf("invalid validator: %s, limit value is not a whole number: %v", nestingLimitValidatorName, limit)
+					}
+					return ValidateComprehensionNestingLimit(int(val)), nil
+				}
+
+				if val, isInt := limit.(int); isInt {
+					return ValidateComprehensionNestingLimit(val), nil
+				}
+				return nil, fmt.Errorf("invalid validator: %s unsupported limit type: %v", nestingLimitValidatorName, limit)
+			}
+			return nil, fmt.Errorf("invalid validator: %s missing limit", nestingLimitValidatorName)
+		},
+		durationValidatorName: func(*env.Validator) (ASTValidator, error) {
+			return ValidateDurationLiterals(), nil
+		},
+		regexValidatorName: func(*env.Validator) (ASTValidator, error) {
+			return ValidateRegexLiterals(), nil
+		},
+		timestampValidatorName: func(*env.Validator) (ASTValidator, error) {
+			return ValidateTimestampLiterals(), nil
+		},
+		homogeneousValidatorName: func(*env.Validator) (ASTValidator, error) {
+			return ValidateHomogeneousAggregateLiterals(), nil
+		},
+	}
+)
+
+// ASTValidatorFactory creates an ASTValidator as configured by the input map
+type ASTValidatorFactory func(*env.Validator) (ASTValidator, error)
 
 // ASTValidators configures a set of ASTValidator instances into the target environment.
 //
@@ -69,7 +109,19 @@ type ASTValidator interface {
 	//
 	// See individual validators for more information on their configuration keys and configuration
 	// properties.
-	Validate(*Env, ValidatorConfig, *ast.CheckedAST, *Issues)
+	Validate(*Env, ValidatorConfig, *ast.AST, *Issues)
+}
+
+// ConfigurableASTValidator supports conversion of an object to an `env.Validator` instance used for
+// YAML serialization.
+type ConfigurableASTValidator interface {
+	// ToConfig converts the internal configuration of an ASTValidator into an env.Validator instance
+	// which minimally must include the validator name, but may also include a map[string]any config
+	// object to be serialized to YAML. The string keys represent the configuration parameter name,
+	// and the any value must mirror the internally supported type associated with the config key.
+	//
+	// Note: only primitive CEL types are supported by CEL validators at this time.
+	ToConfig() *env.Validator
 }
 
 // ValidatorConfig provides an accessor method for querying validator configuration state.
@@ -180,7 +232,7 @@ func ValidateComprehensionNestingLimit(limit int) ASTValidator {
 	return nestingLimitValidator{limit: limit}
 }
 
-type argChecker func(env *Env, call, arg ast.NavigableExpr) error
+type argChecker func(env *Env, call, arg ast.Expr) error
 
 func newFormatValidator(funcName string, argNum int, check argChecker) formatValidator {
 	return formatValidator{
@@ -198,13 +250,18 @@ type formatValidator struct {
 
 // Name returns the unique name of this function format validator.
 func (v formatValidator) Name() string {
-	return fmt.Sprintf("cel.lib.std.validate.functions.%s", v.funcName)
+	return fmt.Sprintf("cel.validator.%s", v.funcName)
+}
+
+// ToConfig converts the ASTValidator to an env.Validator specifying the validator name.
+func (v formatValidator) ToConfig() *env.Validator {
+	return env.NewValidator(v.Name())
 }
 
 // Validate searches the AST for uses of a given function name with a constant argument and performs a check
 // on whether the argument is a valid literal value.
-func (v formatValidator) Validate(e *Env, _ ValidatorConfig, a *ast.CheckedAST, iss *Issues) {
-	root := ast.NavigateCheckedAST(a)
+func (v formatValidator) Validate(e *Env, _ ValidatorConfig, a *ast.AST, iss *Issues) {
+	root := ast.NavigateAST(a)
 	funcCalls := ast.MatchDescendants(root, ast.FunctionMatcher(v.funcName))
 	for _, call := range funcCalls {
 		callArgs := call.AsCall().Args()
@@ -221,8 +278,8 @@ func (v formatValidator) Validate(e *Env, _ ValidatorConfig, a *ast.CheckedAST, 
 	}
 }
 
-func evalCall(env *Env, call, arg ast.NavigableExpr) error {
-	ast := ParsedExprToAst(&exprpb.ParsedExpr{Expr: call.ToExpr()})
+func evalCall(env *Env, call, arg ast.Expr) error {
+	ast := &Ast{impl: ast.NewAST(call, ast.NewSourceInfo(nil))}
 	prg, err := env.Program(ast)
 	if err != nil {
 		return err
@@ -231,7 +288,7 @@ func evalCall(env *Env, call, arg ast.NavigableExpr) error {
 	return err
 }
 
-func compileRegex(_ *Env, _, arg ast.NavigableExpr) error {
+func compileRegex(_ *Env, _, arg ast.Expr) error {
 	pattern := arg.AsLiteral().Value().(string)
 	_, err := regexp.Compile(pattern)
 	return err
@@ -244,25 +301,19 @@ func (homogeneousAggregateLiteralValidator) Name() string {
 	return homogeneousValidatorName
 }
 
-// Configure implements the ASTValidatorConfigurer interface and currently sets the list of standard
-// and exempt functions from homogeneous aggregate literal checks.
-//
-// TODO: Move this call into the string.format() ASTValidator once ported.
-func (homogeneousAggregateLiteralValidator) Configure(c MutableValidatorConfig) error {
-	emptyList := []string{}
-	exemptFunctions := c.GetOrDefault(HomogeneousAggregateLiteralExemptFunctions, emptyList).([]string)
-	exemptFunctions = append(exemptFunctions, "format")
-	return c.Set(HomogeneousAggregateLiteralExemptFunctions, exemptFunctions)
+// ToConfig converts the ASTValidator to an env.Validator specifying the validator name.
+func (v homogeneousAggregateLiteralValidator) ToConfig() *env.Validator {
+	return env.NewValidator(v.Name())
 }
 
 // Validate validates that all lists and map literals have homogeneous types, i.e. don't contain dyn types.
 //
 // This validator makes an exception for list and map literals which occur at any level of nesting within
 // string format calls.
-func (v homogeneousAggregateLiteralValidator) Validate(_ *Env, c ValidatorConfig, a *ast.CheckedAST, iss *Issues) {
+func (v homogeneousAggregateLiteralValidator) Validate(_ *Env, c ValidatorConfig, a *ast.AST, iss *Issues) {
 	var exemptedFunctions []string
 	exemptedFunctions = c.GetOrDefault(HomogeneousAggregateLiteralExemptFunctions, exemptedFunctions).([]string)
-	root := ast.NavigateCheckedAST(a)
+	root := ast.NavigateAST(a)
 	listExprs := ast.MatchDescendants(root, ast.KindMatcher(ast.ListKind))
 	for _, listExpr := range listExprs {
 		if inExemptFunction(listExpr, exemptedFunctions) {
@@ -273,7 +324,7 @@ func (v homogeneousAggregateLiteralValidator) Validate(_ *Env, c ValidatorConfig
 		optIndices := l.OptionalIndices()
 		var elemType *Type
 		for i, e := range elements {
-			et := e.Type()
+			et := a.GetType(e.ID())
 			if isOptionalIndex(i, optIndices) {
 				et = et.Parameters()[0]
 			}
@@ -296,9 +347,10 @@ func (v homogeneousAggregateLiteralValidator) Validate(_ *Env, c ValidatorConfig
 		entries := m.Entries()
 		var keyType, valType *Type
 		for _, e := range entries {
-			key, val := e.Key(), e.Value()
-			kt, vt := key.Type(), val.Type()
-			if e.IsOptional() {
+			mapEntry := e.AsMapEntry()
+			key, val := mapEntry.Key(), mapEntry.Value()
+			kt, vt := a.GetType(key.ID()), a.GetType(val.ID())
+			if mapEntry.IsOptional() {
 				vt = vt.Parameters()[0]
 			}
 			if keyType == nil && valType == nil {
@@ -316,7 +368,8 @@ func (v homogeneousAggregateLiteralValidator) Validate(_ *Env, c ValidatorConfig
 }
 
 func inExemptFunction(e ast.NavigableExpr, exemptFunctions []string) bool {
-	if parent, found := e.Parent(); found {
+	parent, found := e.Parent()
+	for found {
 		if parent.Kind() == ast.CallKind {
 			fnName := parent.AsCall().FunctionName()
 			for _, exempt := range exemptFunctions {
@@ -325,9 +378,7 @@ func inExemptFunction(e ast.NavigableExpr, exemptFunctions []string) bool {
 				}
 			}
 		}
-		if parent.Kind() == ast.ListKind || parent.Kind() == ast.MapKind {
-			return inExemptFunction(parent, exemptFunctions)
-		}
+		parent, found = parent.Parent()
 	}
 	return false
 }
@@ -349,12 +400,20 @@ type nestingLimitValidator struct {
 	limit int
 }
 
+// Name returns the name of the nesting limit validator.
 func (v nestingLimitValidator) Name() string {
-	return "cel.lib.std.validate.comprehension_nesting_limit"
+	return nestingLimitValidatorName
 }
 
-func (v nestingLimitValidator) Validate(e *Env, _ ValidatorConfig, a *ast.CheckedAST, iss *Issues) {
-	root := ast.NavigateCheckedAST(a)
+// ToConfig converts the ASTValidator to an env.Validator specifying the validator name and the nesting limit
+// as an integer value: {"limit": int}
+func (v nestingLimitValidator) ToConfig() *env.Validator {
+	return env.NewValidator(v.Name()).SetConfig(map[string]any{"limit": v.limit})
+}
+
+// Validate implements the ASTValidator interface method.
+func (v nestingLimitValidator) Validate(e *Env, _ ValidatorConfig, a *ast.AST, iss *Issues) {
+	root := ast.NavigateAST(a)
 	comprehensions := ast.MatchDescendants(root, ast.KindMatcher(ast.ComprehensionKind))
 	if len(comprehensions) <= v.limit {
 		return

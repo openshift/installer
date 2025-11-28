@@ -124,7 +124,61 @@ func (s *Service) GetPortForExternalNetwork(instanceID string, externalNetworkID
 	return nil, nil
 }
 
-func (s *Service) CreatePort(eventObject runtime.Object, portSpec *infrav1.ResolvedPortSpec) (*ports.Port, error) {
+// ensurePortTagsAndTrunk ensures that the provided port has the tags and trunk defined in portSpec.
+func (s *Service) ensurePortTagsAndTrunk(port *ports.Port, eventObject runtime.Object, portSpec *infrav1.ResolvedPortSpec) error {
+	wantedTags := uniqueSortedTags(portSpec.Tags)
+	actualTags := uniqueSortedTags(port.Tags)
+	// Only replace tags if there is a difference
+	if !slices.Equal(wantedTags, actualTags) && len(wantedTags) > 0 {
+		if err := s.replaceAllAttributesTags(eventObject, portResource, port.ID, wantedTags); err != nil {
+			record.Warnf(eventObject, "FailedReplaceTags", "Failed to replace port tags %s: %v", port.Name, err)
+			return err
+		}
+	}
+	if ptr.Deref(portSpec.Trunk, false) {
+		trunk, err := s.getOrCreateTrunkForPort(eventObject, port)
+		if err != nil {
+			record.Warnf(eventObject, "FailedCreateTrunk", "Failed to create trunk for port %s: %v", port.Name, err)
+			return err
+		}
+
+		if !slices.Equal(wantedTags, trunk.Tags) {
+			if err = s.replaceAllAttributesTags(eventObject, trunkResource, trunk.ID, wantedTags); err != nil {
+				record.Warnf(eventObject, "FailedReplaceTags", "Failed to replace trunk tags %s: %v", port.Name, err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// EnsurePort ensure that a port defined with portSpec Name and NetworkID exists,
+// and that the port has suitable tags and trunk. If the PortStatus is already known,
+// use the ID when filtering for existing ports.
+func (s *Service) EnsurePort(eventObject runtime.Object, portSpec *infrav1.ResolvedPortSpec, portStatus infrav1.PortStatus) (*ports.Port, error) {
+	opts := ports.ListOpts{}
+	if portStatus.ID != "" {
+		opts.ID = portStatus.ID
+	} else {
+		opts.Name = portSpec.Name
+		opts.NetworkID = portSpec.NetworkID
+	}
+
+	existingPorts, err := s.client.ListPort(opts)
+	if err != nil {
+		return nil, fmt.Errorf("searching for existing port for server: %v", err)
+	}
+	if len(existingPorts) > 1 {
+		return nil, fmt.Errorf("multiple ports found with name \"%s\"", portSpec.Name)
+	}
+
+	if len(existingPorts) == 1 {
+		port := &existingPorts[0]
+		if err = s.ensurePortTagsAndTrunk(port, eventObject, portSpec); err != nil {
+			return nil, err
+		}
+		return port, nil
+	}
 	var addressPairs []ports.AddressPair
 	if !ptr.Deref(portSpec.DisablePortSecurity, false) {
 		for _, ap := range portSpec.AllowedAddressPairs {
@@ -200,24 +254,10 @@ func (s *Service) CreatePort(eventObject runtime.Object, portSpec *infrav1.Resol
 		return nil, err
 	}
 
-	if len(portSpec.Tags) > 0 {
-		if err = s.replaceAllAttributesTags(eventObject, portResource, port.ID, portSpec.Tags); err != nil {
-			record.Warnf(eventObject, "FailedReplaceTags", "Failed to replace port tags %s: %v", portSpec.Name, err)
-			return nil, err
-		}
+	if err = s.ensurePortTagsAndTrunk(port, eventObject, portSpec); err != nil {
+		return nil, err
 	}
 	record.Eventf(eventObject, "SuccessfulCreatePort", "Created port %s with id %s", port.Name, port.ID)
-	if ptr.Deref(portSpec.Trunk, false) {
-		trunk, err := s.getOrCreateTrunkForPort(eventObject, port)
-		if err != nil {
-			record.Warnf(eventObject, "FailedCreateTrunk", "Failed to create trunk for port %s: %v", port.Name, err)
-			return nil, err
-		}
-		if err = s.replaceAllAttributesTags(eventObject, trunkResource, trunk.ID, portSpec.Tags); err != nil {
-			record.Warnf(eventObject, "FailedReplaceTags", "Failed to replace trunk tags %s: %v", port.Name, err)
-			return nil, err
-		}
-	}
 
 	return port, nil
 }
@@ -310,7 +350,10 @@ func (s *Service) DeleteClusterPorts(openStackCluster *infrav1.OpenStackCluster)
 	}
 
 	for _, port := range portList {
-		if strings.HasPrefix(port.Name, openStackCluster.Name) {
+		// The bastion port in 0.10 was prefixed with the namespace and then the current port name
+		// so in order to cleanup the old bastion port we need to check for the old format.
+		bastionLegacyPortPrefix := fmt.Sprintf("%s-%s", openStackCluster.Namespace, openStackCluster.Name)
+		if strings.HasPrefix(port.Name, openStackCluster.Name) || strings.HasPrefix(port.Name, bastionLegacyPortPrefix) {
 			if err := s.DeletePort(openStackCluster, port.ID); err != nil {
 				return fmt.Errorf("error deleting port %s: %v", port.ID, err)
 			}
@@ -328,23 +371,30 @@ func getPortName(baseName string, portSpec *infrav1.PortOpts, netIndex int) stri
 	return fmt.Sprintf("%s-%d", baseName, netIndex)
 }
 
-func (s *Service) CreatePorts(eventObject runtime.Object, desiredPorts []infrav1.ResolvedPortSpec, resources *infrav1alpha1.ServerResources) error {
+// EnsurePorts ensures that every one of desiredPorts is created and has
+// expected trunk and tags.
+func (s *Service) EnsurePorts(eventObject runtime.Object, desiredPorts []infrav1.ResolvedPortSpec, resources *infrav1alpha1.ServerResources) error {
 	for i := range desiredPorts {
-		// Skip creation of ports which already exist
+		// If we already created the port, make use of the status
+		portStatus := infrav1.PortStatus{}
 		if i < len(resources.Ports) {
-			continue
+			portStatus = resources.Ports[i]
 		}
-
-		portSpec := &desiredPorts[i]
-		// Events are recorded in CreatePort
-		port, err := s.CreatePort(eventObject, portSpec)
+		// Events are recorded in EnsurePort
+		port, err := s.EnsurePort(eventObject, &desiredPorts[i], portStatus)
 		if err != nil {
 			return err
 		}
 
-		resources.Ports = append(resources.Ports, infrav1.PortStatus{
-			ID: port.ID,
-		})
+		// If we already have the status, replace it,
+		// otherwise append it.
+		if i < len(resources.Ports) {
+			resources.Ports[i] = portStatus
+		} else {
+			resources.Ports = append(resources.Ports, infrav1.PortStatus{
+				ID: port.ID,
+			})
+		}
 	}
 
 	return nil
@@ -603,4 +653,20 @@ func (s *Service) AdoptPortsServer(scope *scope.WithLogger, desiredPorts []infra
 	}
 
 	return nil
+}
+
+// uniqueSortedTags returns a new, sorted slice where any duplicates have been removed.
+func uniqueSortedTags(tags []string) []string {
+	// remove duplicate values from tags
+	tagsMap := make(map[string]string)
+	for _, t := range tags {
+		tagsMap[t] = t
+	}
+
+	uniqueTags := []string{}
+	for k := range tagsMap {
+		uniqueTags = append(uniqueTags, k)
+	}
+	slices.Sort(uniqueTags)
+	return uniqueTags
 }

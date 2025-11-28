@@ -54,6 +54,7 @@ type LbClient interface {
 	DeletePoolMember(poolID string, lbMemberID string) error
 	CreateMonitor(opts monitors.CreateOptsBuilder) (*monitors.Monitor, error)
 	ListMonitors(opts monitors.ListOptsBuilder) ([]monitors.Monitor, error)
+	UpdateMonitor(id string, opts monitors.UpdateOptsBuilder) (*monitors.Monitor, error)
 	DeleteMonitor(id string) error
 	ListLoadBalancerProviders() ([]providers.Provider, error)
 	ListOctaviaVersions() ([]apiversions.APIVersion, error)
@@ -237,6 +238,15 @@ func (l lbClient) ListMonitors(opts monitors.ListOptsBuilder) ([]monitors.Monito
 		return nil, err
 	}
 	return monitors.ExtractMonitors(allPages)
+}
+
+func (l lbClient) UpdateMonitor(id string, opts monitors.UpdateOptsBuilder) (*monitors.Monitor, error) {
+	mc := metrics.NewMetricPrometheusContext("loadbalancer_healthmonitor", "update")
+	monitor, err := monitors.Update(context.TODO(), l.serviceClient, id, opts).Extract()
+	if mc.ObserveRequest(err) != nil {
+		return nil, err
+	}
+	return monitor, nil
 }
 
 func (l lbClient) DeleteMonitor(id string) error {

@@ -168,7 +168,7 @@ func (r *Region) UnmarshalJSON(data []byte) error {
 
 // UnmarshalYAML handles either a plain string acting as the Name property or
 // a struct, mimicking the Python-based openstacksdk.
-func (r *Region) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (r *Region) UnmarshalYAML(unmarshal func(any) error) error {
 	var name string
 	if err := unmarshal(&name); err == nil {
 		r.Name = name

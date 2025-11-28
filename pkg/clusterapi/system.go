@@ -385,6 +385,14 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 					"EXP_KUBEADM_BOOTSTRAP_FORMAT_IGNITION": "true",
 				},
 			),
+			c.getInfrastructureController(
+				&OpenStackORC,
+				[]string{
+					"-zap-log-level=error",
+					"-metrics-bind-address=0",
+					"-health-probe-bind-address={{suggestHealthHostPort}}",
+				}, map[string]string{},
+			),
 		)
 	case vsphere.Name:
 		controllers = append(controllers,
