@@ -1576,10 +1576,8 @@ func TestValidate(t *testing.T) {
 			err := Validate(context.TODO(), meta, test.installConfig)
 			if test.expectErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectErr, err.Error())
 			}
 		})
 	}
@@ -1707,10 +1705,8 @@ func TestValidateForProvisioning(t *testing.T) {
 			err := ValidateForProvisioning(route53Client, ic, meta)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectedErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectedErr, err.Error())
 			}
 		})
 	}
@@ -1750,7 +1746,6 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 	route53Client := mock.NewMockAPI(mockCtrl)
 
 	for _, test := range cases {
-
 		t.Run(test.name, func(t *testing.T) {
 			ic := icBuild.build(icBuild.withBaseDomain(test.baseDomain))
 			if test.expectedErr != "" {
@@ -1775,10 +1770,8 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 			_, err := route53Client.GetSubDomainDNSRecords(&validDomainOutput, ic, nil)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectedErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectedErr, err.Error())
 			}
 		})
 	}
