@@ -81,10 +81,7 @@ func CreateStorageAccount(ctx context.Context, in *CreateStorageAccountInput) (*
 			//APIVersion: "2019-06-01",
 		},
 	}
-	allowSharedKeyAccess := true
-	if in.AuthType == azic.ManagedIdentityAuth {
-		allowSharedKeyAccess = false
-	}
+	allowSharedKeyAccess := in.AuthType != azic.ManagedIdentityAuth
 
 	storageClientFactory, err := armstorage.NewClientFactory(in.SubscriptionID, in.TokenCredential, opts)
 	if err != nil {
