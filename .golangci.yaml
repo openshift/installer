@@ -1,129 +1,171 @@
-version: "2"
 run:
-  go: "1.24"
+  timeout: 20m
+  go: '1.24'
   modules-download-mode: vendor
   allow-parallel-runners: true
+output:
+  print-linter-name: true
+  sort-results: true
 linters:
   enable:
-    - asciicheck
-    - containedctx
-    - copyloopvar
-    - decorder
-    - dogsled
-    - errorlint
-    - goconst
-    - gocritic
-    - gocyclo
-    - godot
-    - gosec
-    - importas
-    - misspell
-    - nakedret
-    - prealloc
-    - predeclared
-    - revive
-    - staticcheck
-    - thelper
-    - unconvert
-    - whitespace
-  settings:
-    errcheck:
-      disable-default-exclusions: true
-      check-type-assertions: false
-      check-blank: true
-      exclude-functions:
-        - io/ioutil.ReadFile
-        - io.Copy(*bytes.Buffer)
-        - io.Copy(os.Stdout)
-    errorlint:
-      errorf: true
-      asserts: true
-      comparison: true
-    gosec:
-      excludes:
-        - G115
-    revive:
-      rules:
-        - name: blank-imports
-        - name: context-as-argument
-        - name: context-keys-type
-        - name: dot-imports
-        - name: error-return
-        - name: error-strings
-        - name: error-naming
-        - name: exported
-        - name: if-return
-        - name: increment-decrement
-        - name: var-naming
-        - name: var-declaration
-        - name: range
-        - name: receiver-naming
-        - name: time-naming
-        - name: unexported-return
-        - name: indent-error-flow
-        - name: errorf
-        - name: superfluous-else
-        - name: unreachable-code
-        - name: redefines-builtin-id
-        - name: bool-literal-in-expr
-        - name: constant-logical-expr
-  exclusions:
-    generated: lax
-    presets:
-      - common-false-positives
-      - legacy
-      - std-error-handling
+  - asciicheck
+  - containedctx
+  - decorder
+  - dogsled
+  - errcheck
+  - errorlint
+  - copyloopvar
+  - goconst
+  - gocritic
+  - gocyclo
+  - godot
+  - gofmt
+  - goimports
+  - gosec
+  - gosimple
+  - govet
+  - importas
+  - ineffassign
+  - misspell
+  - nakedret
+  - prealloc
+  - predeclared
+  - revive
+  - staticcheck
+  - stylecheck
+  - thelper
+  - typecheck
+  - unconvert
+  - unused
+  - whitespace
+linters-settings:
+  gosec:
+    excludes:
+      # Potential integer overflow when converting between integer types
+    - G115
+  errcheck:
+    # Report about not checking of errors in type assertions: `a := b.(MyStruct)`.
+    # Such cases aren't reported by default.
+    # Default: false
+    check-type-assertions: false
+    # report about assignment of errors to blank identifier: `num, _ := strconv.Atoi(numStr)`.
+    # Such cases aren't reported by default.
+    # Default: false
+    check-blank: true
+    # DEPRECATED comma-separated list of pairs of the form pkg:regex
+    #
+    # the regex is used to ignore names within pkg. (default "fmt:.*").
+    # see https://github.com/kisielk/errcheck#the-deprecated-method for details
+    # ignore: fmt:.*,io/ioutil:^Read.*
+    # To disable the errcheck built-in exclude list.
+    # See `-excludeonly` option in https://github.com/kisielk/errcheck#excluding-functions for details.
+    # Default: false
+    disable-default-exclusions: true
+    # DEPRECATED use exclude-functions instead.
+    #
+    # Path to a file containing a list of functions to exclude from checking.
+    # See https://github.com/kisielk/errcheck#excluding-functions for details.
+    # exclude: /path/to/file.txt
+    # List of functions to exclude from checking, where each entry is a single function to exclude.
+    # See https://github.com/kisielk/errcheck#excluding-functions for details.
+    exclude-functions:
+    - io/ioutil.ReadFile
+    - io.Copy(*bytes.Buffer)
+    - io.Copy(os.Stdout)
+  errorlint:
+    # Check whether fmt.Errorf uses the %w verb for formatting errors.
+    # See the https://github.com/polyfloyd/go-errorlint for caveats.
+    # Default: true
+    errorf: true
+    # Check for plain type assertions and type switches.
+    # Default: true
+    asserts: true
+    # Check for plain error comparisons.
+    # Default: true
+    comparison: true
+  gci:
+    # DEPRECATED: use `sections` and `prefix(github.com/org/project)` instead.
+    # local-prefixes: github.com/org/project
+    #
+    # Section configuration to compare against.
+    # Section names are case-insensitive and may contain parameters in ().
+    # The default order of sections is `standard > default > custom > blank > dot`,
+    # If `custom-order` is `true`, it follows the order of `sections` option.
+    # Default: ["standard", "default"]
+    sections:
+    - standard # Standard section: captures all standard packages.
+    - default # Default section: contains all imports that could not be matched to another section type.
+    - prefix(github.com/openshift) # Custom section: groups all imports with the specified Prefix.
+    - blank # Blank section: contains all blank imports. This section is not present unless explicitly enabled.
+    # - dot # Dot section: contains all dot imports. This section is not present unless explicitly enabled.
+    # Skip generated files.
+    # Default: true
+    skip-generated: true
+    # Enable custom order of sections.
+    # If `true`, make the section order the same as the order of `sections`.
+    # Default: false
+    custom-order: true
+  gofumpt:
+    # Select the Go version to target.
+    # Default: "1.15"
+    # Deprecated: use the global `run.go` instead.
+    # lang-version: "1.17"
+    # Module path which contains the source code being formatted.
+    # Default: ""
+    module-path: github.com/openshift/installer
+    # Choose whether to use the extra rules.
+    # Default: false
+    extra-rules: true
+  goimports:
+    # Put imports beginning with prefix after 3rd-party packages.
+    # It's a comma-separated list of prefixes.
+    # Default: ""
+    local-prefixes: github.com/openshift
+  revive:
     rules:
-      - linters:
-          - goconst
-        path: _test\.go
-    paths:
-      - ^bin
-      - ^cluster-api
-      - ^data/data
-      - ^docs
-      - ^hack
-      - ^images
-      - ^scripts
-      - ^terraform
-      - ^upi
-      - ^pkg/asset/manifests/azure/stack/v1beta1
-      - third_party$
-      - builtin$
-      - examples$
+    # The following rules are recommended https://github.com/mgechev/revive#recommended-configuration
+    - name: blank-imports
+    - name: context-as-argument
+    - name: context-keys-type
+    - name: dot-imports
+    - name: error-return
+    - name: error-strings
+    - name: error-naming
+    - name: exported
+    - name: if-return
+    - name: increment-decrement
+    - name: var-naming
+    - name: var-declaration
+    - name: range
+    - name: receiver-naming
+    - name: time-naming
+    - name: unexported-return
+    - name: indent-error-flow
+    - name: errorf
+    - name: superfluous-else
+    - name: unreachable-code
+    - name: redefines-builtin-id
+    - name: bool-literal-in-expr
+    - name: constant-logical-expr
+  gocyclo:
+    min-complexity: 45
 issues:
+  include:
+  - EXC0012 # EXC0012 revive: issue about not having a comment on exported.
+  - EXC0014 # EXC0014 revive: issue about not having a comment in the right format.
+  exclude-rules:
+  - linters:
+    - goconst
+    path: _test\.go
+  exclude-dirs:
+  - ^bin
+  - ^cluster-api
+  - ^data/data
+  - ^docs
+  - ^hack
+  - ^images
+  - ^scripts
+  - ^terraform
+  - ^upi
+  - ^pkg/asset/manifests/azure/stack/v1beta1 # local copy of capi azurestack provider fork api
   uniq-by-line: false
-formatters:
-  enable:
-    - gofmt
-    - goimports
-  settings:
-    gci:
-      sections:
-        - standard
-        - default
-        - prefix(github.com/openshift)
-        - blank
-      custom-order: true
-    gofumpt:
-      module-path: github.com/openshift/installer
-      extra-rules: true
-    goimports:
-      local-prefixes:
-        - github.com/openshift
-  exclusions:
-    generated: lax
-    paths:
-      - ^bin
-      - ^cluster-api
-      - ^data/data
-      - ^docs
-      - ^hack
-      - ^images
-      - ^scripts
-      - ^terraform
-      - ^upi
-      - ^pkg/asset/manifests/azure/stack/v1beta1
-      - third_party$
-      - builtin$
-      - examples$

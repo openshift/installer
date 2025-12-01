@@ -1,0 +1,138 @@
+version: "2"
+run:
+  go: "1.24"
+  modules-download-mode: vendor
+  allow-parallel-runners: true
+linters:
+  enable:
+  - asciicheck
+  - containedctx
+  - copyloopvar
+  - decorder
+  - dogsled
+  - errorlint
+  - goconst
+  - gocritic
+  - gocyclo
+  - godot
+  - gosec
+  - importas
+  - misspell
+  - nakedret
+  - prealloc
+  - predeclared
+  - revive
+  - staticcheck
+  - thelper
+  - unconvert
+  - whitespace
+  settings:
+    errcheck:
+      disable-default-exclusions: true
+      check-type-assertions: false
+      check-blank: true
+      exclude-functions:
+      - io/ioutil.ReadFile
+      - io.Copy(*bytes.Buffer)
+      - io.Copy(os.Stdout)
+    errorlint:
+      errorf: true
+      asserts: true
+      comparison: true
+    gosec:
+      excludes:
+      - G115
+    staticcheck:
+      checks:
+      # Default
+      - all
+      # Disable check for one at least one comment in a package
+      - -ST1000
+      # Disable quickfix checks
+      - -QF1001
+      - -QF1008
+    revive:
+      rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: superfluous-else
+      - name: unreachable-code
+      - name: redefines-builtin-id
+      - name: bool-literal-in-expr
+      - name: constant-logical-expr
+  exclusions:
+    generated: lax
+    presets:
+    - common-false-positives
+    - legacy
+    - std-error-handling
+    rules:
+    - linters:
+      - goconst
+      path: _test\.go
+    paths:
+    - ^bin
+    - ^cluster-api
+    - ^data/data
+    - ^docs
+    - ^hack
+    - ^images
+    - ^scripts
+    - ^terraform
+    - ^upi
+    - ^pkg/asset/manifests/azure/stack/v1beta1
+    - third_party$
+    - builtin$
+    - examples$
+issues:
+  uniq-by-line: false
+formatters:
+  enable:
+  - gofmt
+  - goimports
+  settings:
+    gci:
+      sections:
+      - standard
+      - default
+      - prefix(github.com/openshift)
+      - blank
+      custom-order: true
+    gofumpt:
+      module-path: github.com/openshift/installer
+      extra-rules: true
+    goimports:
+      local-prefixes:
+      - github.com/openshift
+  exclusions:
+    generated: lax
+    paths:
+    - ^bin
+    - ^cluster-api
+    - ^data/data
+    - ^docs
+    - ^hack
+    - ^images
+    - ^scripts
+    - ^terraform
+    - ^upi
+    - ^pkg/asset/manifests/azure/stack/v1beta1
+    - third_party$
+    - builtin$
+    - examples$
