@@ -47,6 +47,7 @@ func (src *VSphereVM) ConvertTo(dstRaw conversion.Hub) error {
 		dst.Spec.Network.Devices[i].SkipIPAllocation = restored.Spec.Network.Devices[i].SkipIPAllocation
 	}
 	dst.Spec.DataDisks = restored.Spec.DataDisks
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
 
 	return nil
 }

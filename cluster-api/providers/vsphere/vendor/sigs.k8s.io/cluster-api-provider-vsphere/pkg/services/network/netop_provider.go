@@ -25,7 +25,8 @@ import (
 	vmoprv1common "github.com/vmware-tanzu/vm-operator/api/v1alpha2/common"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta2conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -56,7 +57,13 @@ func (np *netopNetworkProvider) SupportsVMReadinessProbe() bool {
 
 // ProvisionClusterNetwork marks the ClusterNetworkReadyCondition true.
 func (np *netopNetworkProvider) ProvisionClusterNetwork(_ context.Context, clusterCtx *vmware.ClusterContext) error {
-	conditions.MarkTrue(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition)
+	v1beta1conditions.MarkTrue(clusterCtx.VSphereCluster, vmwarev1.ClusterNetworkReadyCondition)
+	v1beta2conditions.Set(clusterCtx.VSphereCluster, metav1.Condition{
+		Type:   vmwarev1.VSphereClusterNetworkReadyV1Beta2Condition,
+		Status: metav1.ConditionTrue,
+		Reason: vmwarev1.VSphereClusterNetworkReadyV1Beta2Reason,
+	})
+
 	return nil
 }
 
@@ -118,24 +125,17 @@ func (np *netopNetworkProvider) GetVMServiceAnnotations(ctx context.Context, clu
 }
 
 // ConfigureVirtualMachine configures the NetworkInterfaces on a VM Operator virtual machine.
-func (np *netopNetworkProvider) ConfigureVirtualMachine(ctx context.Context, clusterCtx *vmware.ClusterContext, vm *vmoprv1.VirtualMachine) error {
+func (np *netopNetworkProvider) ConfigureVirtualMachine(ctx context.Context, clusterCtx *vmware.ClusterContext, machine *vmwarev1.VSphereMachine, vm *vmoprv1.VirtualMachine) error {
 	network, err := np.getClusterNetwork(ctx, clusterCtx)
 	if err != nil {
 		return err
 	}
 
-	if vm.Spec.Network == nil {
-		vm.Spec.Network = &vmoprv1.VirtualMachineNetworkSpec{}
-	}
-	for _, vnif := range vm.Spec.Network.Interfaces {
-		if vnif.Network.TypeMeta.GroupVersionKind() == NetworkGVKNetOperator && vnif.Network.Name == network.Name {
-			// Expected network interface already exists.
-			return nil
-		}
-	}
+	vm.Spec.Network = &vmoprv1.VirtualMachineNetworkSpec{}
 
+	// Set the VM primary interface
 	vm.Spec.Network.Interfaces = append(vm.Spec.Network.Interfaces, vmoprv1.VirtualMachineNetworkInterfaceSpec{
-		Name: fmt.Sprintf("eth%d", len(vm.Spec.Network.Interfaces)),
+		Name: PrimaryInterfaceName,
 		Network: vmoprv1common.PartialObjectRef{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       NetworkGVKNetOperator.Kind,
@@ -144,6 +144,9 @@ func (np *netopNetworkProvider) ConfigureVirtualMachine(ctx context.Context, clu
 			Name: network.Name,
 		},
 	})
+
+	// Set the VM secondary interfaces
+	setVMSecondaryInterfaces(machine, vm)
 
 	return nil
 }

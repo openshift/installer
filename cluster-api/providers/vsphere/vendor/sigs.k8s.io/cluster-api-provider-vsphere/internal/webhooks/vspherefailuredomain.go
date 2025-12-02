@@ -35,13 +35,13 @@ import (
 // +kubebuilder:webhook:verbs=create;update,path=/validate-infrastructure-cluster-x-k8s-io-v1beta1-vspherefailuredomain,mutating=false,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspherefailuredomains,versions=v1beta1,name=validation.vspherefailuredomain.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 // +kubebuilder:webhook:path=/mutate-infrastructure-cluster-x-k8s-io-v1beta1-vspherefailuredomain,mutating=true,failurePolicy=fail,matchPolicy=Equivalent,groups=infrastructure.cluster.x-k8s.io,resources=vspherefailuredomains,verbs=create;update,versions=v1beta1,name=default.vspherefailuredomain.infrastructure.cluster.x-k8s.io,sideEffects=None,admissionReviewVersions=v1beta1
 
-// VSphereFailureDomainWebhook implements a validation and defaulting webhook for VSphereFailureDomain.
-type VSphereFailureDomainWebhook struct{}
+// VSphereFailureDomain implements a validation and defaulting webhook for VSphereFailureDomain.
+type VSphereFailureDomain struct{}
 
-var _ webhook.CustomValidator = &VSphereFailureDomainWebhook{}
-var _ webhook.CustomDefaulter = &VSphereFailureDomainWebhook{}
+var _ webhook.CustomValidator = &VSphereFailureDomain{}
+var _ webhook.CustomDefaulter = &VSphereFailureDomain{}
 
-func (webhook *VSphereFailureDomainWebhook) SetupWebhookWithManager(mgr ctrl.Manager) error {
+func (webhook *VSphereFailureDomain) SetupWebhookWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewWebhookManagedBy(mgr).
 		For(&infrav1.VSphereFailureDomain{}).
 		WithValidator(webhook).
@@ -50,7 +50,7 @@ func (webhook *VSphereFailureDomainWebhook) SetupWebhookWithManager(mgr ctrl.Man
 }
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereFailureDomainWebhook) ValidateCreate(_ context.Context, raw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereFailureDomain) ValidateCreate(_ context.Context, raw runtime.Object) (admission.Warnings, error) {
 	var allErrs field.ErrorList
 
 	obj, ok := raw.(*infrav1.VSphereFailureDomain)
@@ -91,7 +91,7 @@ func (webhook *VSphereFailureDomainWebhook) ValidateCreate(_ context.Context, ra
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereFailureDomainWebhook) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereFailureDomain) ValidateUpdate(_ context.Context, oldRaw runtime.Object, newRaw runtime.Object) (admission.Warnings, error) {
 	oldTyped, ok := oldRaw.(*infrav1.VSphereFailureDomain)
 	if !ok {
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereFailureDomain but got a %T", oldRaw))
@@ -107,12 +107,12 @@ func (webhook *VSphereFailureDomainWebhook) ValidateUpdate(_ context.Context, ol
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type.
-func (webhook *VSphereFailureDomainWebhook) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
+func (webhook *VSphereFailureDomain) ValidateDelete(_ context.Context, _ runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type.
-func (webhook *VSphereFailureDomainWebhook) Default(_ context.Context, obj runtime.Object) error {
+func (webhook *VSphereFailureDomain) Default(_ context.Context, obj runtime.Object) error {
 	typedObj, ok := obj.(*infrav1.VSphereFailureDomain)
 	if !ok {
 		return apierrors.NewBadRequest(fmt.Sprintf("expected a VSphereFailureDomain but got a %T", obj))

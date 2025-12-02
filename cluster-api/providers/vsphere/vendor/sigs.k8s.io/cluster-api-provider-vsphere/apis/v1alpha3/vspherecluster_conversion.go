@@ -39,6 +39,8 @@ func (src *VSphereCluster) ConvertTo(dstRaw conversion.Hub) error {
 	if restored.Spec.IdentityRef != nil {
 		dst.Spec.IdentityRef = restored.Spec.IdentityRef
 	}
+	dst.Status.V1Beta2 = restored.Status.V1Beta2
+
 	return nil
 }
 

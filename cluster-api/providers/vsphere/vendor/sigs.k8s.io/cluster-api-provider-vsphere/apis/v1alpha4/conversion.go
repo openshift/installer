@@ -28,10 +28,12 @@ func Convert_v1beta1_VirtualMachineCloneSpec_To_v1alpha4_VirtualMachineCloneSpec
 }
 
 func Convert_v1beta1_VSphereVMStatus_To_v1alpha4_VSphereVMStatus(in *infrav1.VSphereVMStatus, out *VSphereVMStatus, s conversion.Scope) error {
+	// V1Beta2 was added in v1beta1
 	return autoConvert_v1beta1_VSphereVMStatus_To_v1alpha4_VSphereVMStatus(in, out, s)
 }
 
 func Convert_v1beta1_VSphereClusterStatus_To_v1alpha4_VSphereClusterStatus(in *infrav1.VSphereClusterStatus, out *VSphereClusterStatus, s conversion.Scope) error {
+	// V1Beta2 was added in v1beta1
 	return autoConvert_v1beta1_VSphereClusterStatus_To_v1alpha4_VSphereClusterStatus(in, out, s)
 }
 
@@ -45,4 +47,19 @@ func Convert_v1beta1_VSphereMachineSpec_To_v1alpha4_VSphereMachineSpec(in *infra
 
 func Convert_v1beta1_VSphereVMSpec_To_v1alpha4_VSphereVMSpec(in *infrav1.VSphereVMSpec, out *VSphereVMSpec, s conversion.Scope) error {
 	return autoConvert_v1beta1_VSphereVMSpec_To_v1alpha4_VSphereVMSpec(in, out, s)
+}
+
+func Convert_v1beta1_VSphereMachineStatus_To_v1alpha4_VSphereMachineStatus(in *infrav1.VSphereMachineStatus, out *VSphereMachineStatus, s conversion.Scope) error {
+	// V1Beta2 was added in v1beta1
+	return autoConvert_v1beta1_VSphereMachineStatus_To_v1alpha4_VSphereMachineStatus(in, out, s)
+}
+
+func Convert_v1beta1_VSphereDeploymentZoneStatus_To_v1alpha4_VSphereDeploymentZoneStatus(in *infrav1.VSphereDeploymentZoneStatus, out *VSphereDeploymentZoneStatus, s conversion.Scope) error {
+	// V1Beta2 was added in v1beta1
+	return autoConvert_v1beta1_VSphereDeploymentZoneStatus_To_v1alpha4_VSphereDeploymentZoneStatus(in, out, s)
+}
+
+func Convert_v1beta1_VSphereClusterIdentityStatus_To_v1alpha4_VSphereClusterIdentityStatus(in *infrav1.VSphereClusterIdentityStatus, out *VSphereClusterIdentityStatus, s conversion.Scope) error {
+	// V1Beta2 was added in v1beta1
+	return autoConvert_v1beta1_VSphereClusterIdentityStatus_To_v1alpha4_VSphereClusterIdentityStatus(in, out, s)
 }
