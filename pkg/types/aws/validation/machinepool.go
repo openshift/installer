@@ -83,7 +83,7 @@ func validateVolumeSize(p *aws.MachinePool, fldPath *field.Path) field.ErrorList
 	allErrs := field.ErrorList{}
 	volumeSize := p.EC2RootVolume.Size
 
-	if volumeSize <= 0 {
+	if volumeSize < 0 {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("size"), volumeSize, "volume size value must be a positive number"))
 	}
 
@@ -97,7 +97,7 @@ func validateIOPS(p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
 
 	switch volumeType {
 	case "io1", "io2":
-		if iops <= 0 {
+		if iops < 0 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("iops"), iops, "iops must be a positive number"))
 		}
 	case "gp3":

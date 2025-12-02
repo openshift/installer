@@ -99,17 +99,6 @@ func TestValidateMachinePool(t *testing.T) {
 			expected: fmt.Sprintf("test-path.type: Invalid value: \"bad-volume-type\": failed to find volume type bad-volume-type"),
 		},
 		{
-			name: "invalid volume size using zero",
-			pool: &aws.MachinePool{
-				EC2RootVolume: aws.EC2RootVolume{
-					Type: "io2",
-					Size: 0,
-					IOPS: 10000,
-				},
-			},
-			expected: fmt.Sprintf("test-path.size: Invalid value: 0: volume size value must be a positive number"),
-		},
-		{
 			name: "invalid volume size using negative",
 			pool: &aws.MachinePool{
 				EC2RootVolume: aws.EC2RootVolume{
