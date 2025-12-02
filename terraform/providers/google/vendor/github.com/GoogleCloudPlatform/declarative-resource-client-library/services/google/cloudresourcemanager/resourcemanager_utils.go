@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,11 +23,6 @@ import (
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
 )
-
-// The project is already effectively deleted if it's in DELETE_REQUESTED state.
-func projectDeletePrecondition(r *Project) bool {
-	return *r.LifecycleState == *ProjectLifecycleStateEnumRef("DELETE_REQUESTED")
-}
 
 func (r *Folder) createURL(userBasePath string) (string, error) {
 	nr := r.urlNormalized()
@@ -125,9 +120,32 @@ func (op *updateFolderMoveFolderOperation) do(ctx context.Context, r *Folder, c 
 	return nil
 }
 
+// The project is already effectively deleted if it's in DELETE_REQUESTED state.
+func projectDeletePrecondition(r *Project) bool {
+	return *r.LifecycleState == *ProjectLifecycleStateEnumRef("DELETE_REQUESTED")
+}
+
+// Project's list endpoint has a custom url method to use the filter query parameters.
+func (r *Project) listURL(userBasePath string) (string, error) {
+	parentParts := strings.Split(dcl.ValueOrEmptyString(r.Parent), "/")
+	var parentType, parentID string
+	if len(parentParts) == 2 {
+		parentType = strings.TrimSuffix(parentParts[0], "s")
+		parentID = parentParts[1]
+		u, err := dcl.AddQueryParams("https://cloudresourcemanager.googleapis.com/v1/projects", map[string]string{
+			"filter": fmt.Sprintf("parent.type=%s parent.id=%s", parentType, parentID),
+		})
+		if err != nil {
+			return "", err
+		}
+		return u, nil
+	}
+	return "https://cloudresourcemanager.googleapis.com/v1/projects", nil
+}
+
 // expandProjectParent expands an instance of ProjectParent into a JSON
 // request object.
-func expandProjectParent(f *Project, fval *string) (map[string]interface{}, error) {
+func expandProjectParent(_ *Client, fval *string, _ *Project) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(fval) {
 		return nil, nil
 	}
@@ -146,7 +164,7 @@ func expandProjectParent(f *Project, fval *string) (map[string]interface{}, erro
 
 // flattenProjectParent flattens an instance of ProjectParent from a JSON
 // response object.
-func flattenProjectParent(c *Client, i interface{}) *string {
+func flattenProjectParent(c *Client, i interface{}, _ *Project) *string {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -186,4 +204,33 @@ func (r *TagKey) deleteURL(userBasePath string) (string, error) {
 		"name": dcl.ValueOrEmptyString(nr.Name),
 	}
 	return dcl.URL("tagKeys/{{name}}", "https://cloudresourcemanager.googleapis.com/v3", userBasePath, params), nil
+}
+
+func (r *TagValue) createURL(userBasePath string) (string, error) {
+	params := make(map[string]any)
+	return dcl.URL("tagValues", "https://cloudresourcemanager.googleapis.com/v3", userBasePath, params), nil
+}
+
+func (r *TagValue) getURL(userBasePath string) (string, error) {
+	nr := r.urlNormalized()
+	params := map[string]any{
+		"name": dcl.ValueOrEmptyString(nr.Name),
+	}
+	return dcl.URL("tagValues/{{name}}", "https://cloudresourcemanager.googleapis.com/v3", userBasePath, params), nil
+}
+
+func (r *TagValue) updateURL(userBasePath, updateName string) (string, error) {
+	nr := r.urlNormalized()
+	fields := map[string]any{
+		"name": dcl.ValueOrEmptyString(nr.Name),
+	}
+	return dcl.URL("tagValues/{{name}}?updateMask=displayName", "https://cloudresourcemanager.googleapis.com/v3", userBasePath, fields), nil
+}
+
+func (r *TagValue) deleteURL(userBasePath string) (string, error) {
+	nr := r.urlNormalized()
+	params := map[string]any{
+		"name": dcl.ValueOrEmptyString(nr.Name),
+	}
+	return dcl.URL("tagValues/{{name}}", "https://cloudresourcemanager.googleapis.com/v3", userBasePath, params), nil
 }

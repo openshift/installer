@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -146,12 +146,6 @@ func (r *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages) validate()
 	return nil
 }
 func (r *CertificateConfigX509ConfigCaOptions) validate() error {
-	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"IsCa"}, r.IsCa); err != nil {
-		return err
-	}
-	if err := dcl.ValidateAtMostOneOfFieldsSet([]string{"MaxIssuerPathLength"}, r.MaxIssuerPathLength); err != nil {
-		return err
-	}
 	return nil
 }
 func (r *CertificateConfigX509ConfigPolicyIds) validate() error {
@@ -288,9 +282,6 @@ func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsag
 	return nil
 }
 func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages) validate() error {
-	if err := dcl.Required(r, "objectIdPath"); err != nil {
-		return err
-	}
 	return nil
 }
 func (r *CertificateCertificateDescriptionX509DescriptionCaOptions) validate() error {
@@ -303,18 +294,9 @@ func (r *CertificateCertificateDescriptionX509DescriptionCaOptions) validate() e
 	return nil
 }
 func (r *CertificateCertificateDescriptionX509DescriptionPolicyIds) validate() error {
-	if err := dcl.Required(r, "objectIdPath"); err != nil {
-		return err
-	}
 	return nil
 }
 func (r *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions) validate() error {
-	if err := dcl.Required(r, "objectId"); err != nil {
-		return err
-	}
-	if err := dcl.Required(r, "value"); err != nil {
-		return err
-	}
 	if !dcl.IsEmptyValueIndirect(r.ObjectId) {
 		if err := r.ObjectId.validate(); err != nil {
 			return err
@@ -323,18 +305,9 @@ func (r *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions) v
 	return nil
 }
 func (r *CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId) validate() error {
-	if err := dcl.Required(r, "objectIdPath"); err != nil {
-		return err
-	}
 	return nil
 }
 func (r *CertificateCertificateDescriptionPublicKey) validate() error {
-	if err := dcl.Required(r, "key"); err != nil {
-		return err
-	}
-	if err := dcl.Required(r, "format"); err != nil {
-		return err
-	}
 	return nil
 }
 func (r *CertificateCertificateDescriptionSubjectKeyId) validate() error {
@@ -395,6 +368,8 @@ type certificateApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateCertificateUpdateCertificateRequest(ctx context.Context, f *Certificate, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Labels; !dcl.IsEmptyValueIndirect(v) {
 		req["labels"] = v
@@ -500,7 +475,7 @@ func (c *Client) listCertificate(ctx context.Context, r *Certificate, pageToken 
 
 	var l []*Certificate
 	for _, v := range m.Certificates {
-		res, err := unmarshalMapCertificate(v, c)
+		res, err := unmarshalMapCertificate(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -591,13 +566,6 @@ func (op *createCertificateOperation) do(ctx context.Context, r *Certificate, c 
 	}
 	op.response = o
 
-	// Include Name in URL substitution for initial GET request.
-	name, ok := op.response["name"].(string)
-	if !ok {
-		return fmt.Errorf("expected name to be a string in %v, was %T", op.response, op.response["name"])
-	}
-	r.Name = &name
-
 	if _, err := c.GetCertificate(ctx, r); err != nil {
 		c.Config.Logger.WarningWithContextf(ctx, "get returned error: %v", err)
 		return err
@@ -640,12 +608,6 @@ func (c *Client) certificateDiffsForRawDesired(ctx context.Context, rawDesired *
 		fetchState = rawDesired
 	}
 
-	if fetchState.Name == nil {
-		// We cannot perform a get because of lack of information. We have to assume
-		// that this is being created for the first time.
-		desired, err := canonicalizeCertificateDesiredState(rawDesired, nil)
-		return nil, desired, nil, err
-	}
 	// 1.2: Retrieval of raw initial state from API
 	rawInitial, err := c.GetCertificate(ctx, fetchState)
 	if rawInitial == nil {
@@ -660,6 +622,11 @@ func (c *Client) certificateDiffsForRawDesired(ctx context.Context, rawDesired *
 	}
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for Certificate: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for Certificate: %v", rawDesired)
+
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractCertificateFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
 
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeCertificateInitialState(rawInitial, rawDesired)
@@ -718,25 +685,8 @@ func canonicalizeCertificateDesiredState(rawDesired, rawInitial *Certificate, op
 
 		return rawDesired, nil
 	}
-
-	if rawDesired.PemCsr != nil || rawInitial.PemCsr != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.Config) {
-			rawDesired.PemCsr = nil
-			rawInitial.PemCsr = nil
-		}
-	}
-
-	if rawDesired.Config != nil || rawInitial.Config != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.PemCsr) {
-			rawDesired.Config = nil
-			rawInitial.Config = nil
-		}
-	}
-
 	canonicalDesired := &Certificate{}
-	if dcl.IsZeroValue(rawDesired.Name) {
+	if dcl.PartialSelfLinkToSelfLink(rawDesired.Name, rawInitial.Name) {
 		canonicalDesired.Name = rawInitial.Name
 	} else {
 		canonicalDesired.Name = rawDesired.Name
@@ -757,12 +707,14 @@ func canonicalizeCertificateDesiredState(rawDesired, rawInitial *Certificate, op
 	} else {
 		canonicalDesired.CertificateTemplate = rawDesired.CertificateTemplate
 	}
-	if dcl.IsZeroValue(rawDesired.SubjectMode) {
+	if dcl.IsZeroValue(rawDesired.SubjectMode) || (dcl.IsEmptyValueIndirect(rawDesired.SubjectMode) && dcl.IsEmptyValueIndirect(rawInitial.SubjectMode)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.SubjectMode = rawInitial.SubjectMode
 	} else {
 		canonicalDesired.SubjectMode = rawDesired.SubjectMode
 	}
-	if dcl.IsZeroValue(rawDesired.Labels) {
+	if dcl.IsZeroValue(rawDesired.Labels) || (dcl.IsEmptyValueIndirect(rawDesired.Labels) && dcl.IsEmptyValueIndirect(rawInitial.Labels)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Labels = rawInitial.Labels
 	} else {
 		canonicalDesired.Labels = rawDesired.Labels
@@ -788,17 +740,34 @@ func canonicalizeCertificateDesiredState(rawDesired, rawInitial *Certificate, op
 		canonicalDesired.CertificateAuthority = rawDesired.CertificateAuthority
 	}
 
+	if canonicalDesired.PemCsr != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.Config) {
+			canonicalDesired.PemCsr = dcl.String("")
+		}
+	}
+
+	if canonicalDesired.Config != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.PemCsr) {
+			canonicalDesired.Config = EmptyCertificateConfig
+		}
+	}
+
 	return canonicalDesired, nil
 }
 
 func canonicalizeCertificateNewState(c *Client, rawNew, rawDesired *Certificate) (*Certificate, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
+		if dcl.PartialSelfLinkToSelfLink(rawDesired.Name, rawNew.Name) {
+			rawNew.Name = rawDesired.Name
+		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PemCsr) && dcl.IsNotReturnedByServer(rawDesired.PemCsr) {
+	if dcl.IsEmptyValueIndirect(rawNew.PemCsr) && dcl.IsEmptyValueIndirect(rawDesired.PemCsr) {
 		rawNew.PemCsr = rawDesired.PemCsr
 	} else {
 		if dcl.StringCanonicalize(rawDesired.PemCsr, rawNew.PemCsr) {
@@ -806,21 +775,18 @@ func canonicalizeCertificateNewState(c *Client, rawNew, rawDesired *Certificate)
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Config) && dcl.IsNotReturnedByServer(rawDesired.Config) {
+	if dcl.IsEmptyValueIndirect(rawNew.Config) && dcl.IsEmptyValueIndirect(rawDesired.Config) {
 		rawNew.Config = rawDesired.Config
 	} else {
 		rawNew.Config = canonicalizeNewCertificateConfig(c, rawDesired.Config, rawNew.Config)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.IssuerCertificateAuthority) && dcl.IsNotReturnedByServer(rawDesired.IssuerCertificateAuthority) {
+	if dcl.IsEmptyValueIndirect(rawNew.IssuerCertificateAuthority) && dcl.IsEmptyValueIndirect(rawDesired.IssuerCertificateAuthority) {
 		rawNew.IssuerCertificateAuthority = rawDesired.IssuerCertificateAuthority
 	} else {
-		if dcl.NameToSelfLink(rawDesired.IssuerCertificateAuthority, rawNew.IssuerCertificateAuthority) {
-			rawNew.IssuerCertificateAuthority = rawDesired.IssuerCertificateAuthority
-		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Lifetime) && dcl.IsNotReturnedByServer(rawDesired.Lifetime) {
+	if dcl.IsEmptyValueIndirect(rawNew.Lifetime) && dcl.IsEmptyValueIndirect(rawDesired.Lifetime) {
 		rawNew.Lifetime = rawDesired.Lifetime
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Lifetime, rawNew.Lifetime) {
@@ -828,7 +794,7 @@ func canonicalizeCertificateNewState(c *Client, rawNew, rawDesired *Certificate)
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CertificateTemplate) && dcl.IsNotReturnedByServer(rawDesired.CertificateTemplate) {
+	if dcl.IsEmptyValueIndirect(rawNew.CertificateTemplate) && dcl.IsEmptyValueIndirect(rawDesired.CertificateTemplate) {
 		rawNew.CertificateTemplate = rawDesired.CertificateTemplate
 	} else {
 		if dcl.PartialSelfLinkToSelfLink(rawDesired.CertificateTemplate, rawNew.CertificateTemplate) {
@@ -836,18 +802,18 @@ func canonicalizeCertificateNewState(c *Client, rawNew, rawDesired *Certificate)
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.SubjectMode) && dcl.IsNotReturnedByServer(rawDesired.SubjectMode) {
+	if dcl.IsEmptyValueIndirect(rawNew.SubjectMode) && dcl.IsEmptyValueIndirect(rawDesired.SubjectMode) {
 		rawNew.SubjectMode = rawDesired.SubjectMode
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.RevocationDetails) && dcl.IsNotReturnedByServer(rawDesired.RevocationDetails) {
+	if dcl.IsEmptyValueIndirect(rawNew.RevocationDetails) && dcl.IsEmptyValueIndirect(rawDesired.RevocationDetails) {
 		rawNew.RevocationDetails = rawDesired.RevocationDetails
 	} else {
 		rawNew.RevocationDetails = canonicalizeNewCertificateRevocationDetails(c, rawDesired.RevocationDetails, rawNew.RevocationDetails)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PemCertificate) && dcl.IsNotReturnedByServer(rawDesired.PemCertificate) {
+	if dcl.IsEmptyValueIndirect(rawNew.PemCertificate) && dcl.IsEmptyValueIndirect(rawDesired.PemCertificate) {
 		rawNew.PemCertificate = rawDesired.PemCertificate
 	} else {
 		if dcl.StringCanonicalize(rawDesired.PemCertificate, rawNew.PemCertificate) {
@@ -855,13 +821,13 @@ func canonicalizeCertificateNewState(c *Client, rawNew, rawDesired *Certificate)
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CertificateDescription) && dcl.IsNotReturnedByServer(rawDesired.CertificateDescription) {
+	if dcl.IsEmptyValueIndirect(rawNew.CertificateDescription) && dcl.IsEmptyValueIndirect(rawDesired.CertificateDescription) {
 		rawNew.CertificateDescription = rawDesired.CertificateDescription
 	} else {
 		rawNew.CertificateDescription = canonicalizeNewCertificateCertificateDescription(c, rawDesired.CertificateDescription, rawNew.CertificateDescription)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PemCertificateChain) && dcl.IsNotReturnedByServer(rawDesired.PemCertificateChain) {
+	if dcl.IsEmptyValueIndirect(rawNew.PemCertificateChain) && dcl.IsEmptyValueIndirect(rawDesired.PemCertificateChain) {
 		rawNew.PemCertificateChain = rawDesired.PemCertificateChain
 	} else {
 		if dcl.StringArrayCanonicalize(rawDesired.PemCertificateChain, rawNew.PemCertificateChain) {
@@ -869,17 +835,17 @@ func canonicalizeCertificateNewState(c *Client, rawNew, rawDesired *Certificate)
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CreateTime) && dcl.IsNotReturnedByServer(rawDesired.CreateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.CreateTime) && dcl.IsEmptyValueIndirect(rawDesired.CreateTime) {
 		rawNew.CreateTime = rawDesired.CreateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.UpdateTime) && dcl.IsNotReturnedByServer(rawDesired.UpdateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.UpdateTime) && dcl.IsEmptyValueIndirect(rawDesired.UpdateTime) {
 		rawNew.UpdateTime = rawDesired.UpdateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Labels) && dcl.IsNotReturnedByServer(rawDesired.Labels) {
+	if dcl.IsEmptyValueIndirect(rawNew.Labels) && dcl.IsEmptyValueIndirect(rawDesired.Labels) {
 		rawNew.Labels = rawDesired.Labels
 	} else {
 	}
@@ -917,7 +883,7 @@ func canonicalizeCertificateConfig(des, initial *CertificateConfig, opts ...dcl.
 }
 
 func canonicalizeCertificateConfigSlice(des, initial []CertificateConfig, opts ...dcl.ApplyOption) []CertificateConfig {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -951,7 +917,7 @@ func canonicalizeNewCertificateConfig(c *Client, des, nw *CertificateConfig) *Ce
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfig while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -969,23 +935,26 @@ func canonicalizeNewCertificateConfigSet(c *Client, des, nw []CertificateConfig)
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfig
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfig
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigSlice(c *Client, des, nw []CertificateConfig) []CertificateConfig {
@@ -1029,7 +998,7 @@ func canonicalizeCertificateConfigSubjectConfig(des, initial *CertificateConfigS
 }
 
 func canonicalizeCertificateConfigSubjectConfigSlice(des, initial []CertificateConfigSubjectConfig, opts ...dcl.ApplyOption) []CertificateConfigSubjectConfig {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1063,7 +1032,7 @@ func canonicalizeNewCertificateConfigSubjectConfig(c *Client, des, nw *Certifica
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigSubjectConfig while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1080,23 +1049,26 @@ func canonicalizeNewCertificateConfigSubjectConfigSet(c *Client, des, nw []Certi
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigSubjectConfig
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigSubjectConfig
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigSubjectConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigSubjectConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigSubjectConfigSlice(c *Client, des, nw []CertificateConfigSubjectConfig) []CertificateConfigSubjectConfig {
@@ -1178,7 +1150,7 @@ func canonicalizeCertificateConfigSubjectConfigSubject(des, initial *Certificate
 }
 
 func canonicalizeCertificateConfigSubjectConfigSubjectSlice(des, initial []CertificateConfigSubjectConfigSubject, opts ...dcl.ApplyOption) []CertificateConfigSubjectConfigSubject {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1212,7 +1184,7 @@ func canonicalizeNewCertificateConfigSubjectConfigSubject(c *Client, des, nw *Ce
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigSubjectConfigSubject while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1251,23 +1223,26 @@ func canonicalizeNewCertificateConfigSubjectConfigSubjectSet(c *Client, des, nw 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigSubjectConfigSubject
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigSubjectConfigSubject
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigSubjectConfigSubjectNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigSubjectConfigSubject(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigSubjectConfigSubjectSlice(c *Client, des, nw []CertificateConfigSubjectConfigSubject) []CertificateConfigSubjectConfigSubject {
@@ -1304,22 +1279,22 @@ func canonicalizeCertificateConfigSubjectConfigSubjectAltName(des, initial *Cert
 
 	cDes := &CertificateConfigSubjectConfigSubjectAltName{}
 
-	if dcl.StringArrayCanonicalize(des.DnsNames, initial.DnsNames) || dcl.IsZeroValue(des.DnsNames) {
+	if dcl.StringArrayCanonicalize(des.DnsNames, initial.DnsNames) {
 		cDes.DnsNames = initial.DnsNames
 	} else {
 		cDes.DnsNames = des.DnsNames
 	}
-	if dcl.StringArrayCanonicalize(des.Uris, initial.Uris) || dcl.IsZeroValue(des.Uris) {
+	if dcl.StringArrayCanonicalize(des.Uris, initial.Uris) {
 		cDes.Uris = initial.Uris
 	} else {
 		cDes.Uris = des.Uris
 	}
-	if dcl.StringArrayCanonicalize(des.EmailAddresses, initial.EmailAddresses) || dcl.IsZeroValue(des.EmailAddresses) {
+	if dcl.StringArrayCanonicalize(des.EmailAddresses, initial.EmailAddresses) {
 		cDes.EmailAddresses = initial.EmailAddresses
 	} else {
 		cDes.EmailAddresses = des.EmailAddresses
 	}
-	if dcl.StringArrayCanonicalize(des.IPAddresses, initial.IPAddresses) || dcl.IsZeroValue(des.IPAddresses) {
+	if dcl.StringArrayCanonicalize(des.IPAddresses, initial.IPAddresses) {
 		cDes.IPAddresses = initial.IPAddresses
 	} else {
 		cDes.IPAddresses = des.IPAddresses
@@ -1329,7 +1304,7 @@ func canonicalizeCertificateConfigSubjectConfigSubjectAltName(des, initial *Cert
 }
 
 func canonicalizeCertificateConfigSubjectConfigSubjectAltNameSlice(des, initial []CertificateConfigSubjectConfigSubjectAltName, opts ...dcl.ApplyOption) []CertificateConfigSubjectConfigSubjectAltName {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1363,7 +1338,7 @@ func canonicalizeNewCertificateConfigSubjectConfigSubjectAltName(c *Client, des,
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigSubjectConfigSubjectAltName while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1390,23 +1365,26 @@ func canonicalizeNewCertificateConfigSubjectConfigSubjectAltNameSet(c *Client, d
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigSubjectConfigSubjectAltName
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigSubjectConfigSubjectAltName
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigSubjectConfigSubjectAltNameNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigSubjectConfigSubjectAltName(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigSubjectConfigSubjectAltNameSlice(c *Client, des, nw []CertificateConfigSubjectConfigSubjectAltName) []CertificateConfigSubjectConfigSubjectAltName {
@@ -1446,7 +1424,7 @@ func canonicalizeCertificateConfigX509Config(des, initial *CertificateConfigX509
 	cDes.KeyUsage = canonicalizeCertificateConfigX509ConfigKeyUsage(des.KeyUsage, initial.KeyUsage, opts...)
 	cDes.CaOptions = canonicalizeCertificateConfigX509ConfigCaOptions(des.CaOptions, initial.CaOptions, opts...)
 	cDes.PolicyIds = canonicalizeCertificateConfigX509ConfigPolicyIdsSlice(des.PolicyIds, initial.PolicyIds, opts...)
-	if dcl.StringArrayCanonicalize(des.AiaOcspServers, initial.AiaOcspServers) || dcl.IsZeroValue(des.AiaOcspServers) {
+	if dcl.StringArrayCanonicalize(des.AiaOcspServers, initial.AiaOcspServers) {
 		cDes.AiaOcspServers = initial.AiaOcspServers
 	} else {
 		cDes.AiaOcspServers = des.AiaOcspServers
@@ -1457,7 +1435,7 @@ func canonicalizeCertificateConfigX509Config(des, initial *CertificateConfigX509
 }
 
 func canonicalizeCertificateConfigX509ConfigSlice(des, initial []CertificateConfigX509Config, opts ...dcl.ApplyOption) []CertificateConfigX509Config {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1491,7 +1469,7 @@ func canonicalizeNewCertificateConfigX509Config(c *Client, des, nw *CertificateC
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509Config while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1513,23 +1491,26 @@ func canonicalizeNewCertificateConfigX509ConfigSet(c *Client, des, nw []Certific
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509Config
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509Config
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509Config(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigSlice(c *Client, des, nw []CertificateConfigX509Config) []CertificateConfigX509Config {
@@ -1574,7 +1555,7 @@ func canonicalizeCertificateConfigX509ConfigKeyUsage(des, initial *CertificateCo
 }
 
 func canonicalizeCertificateConfigX509ConfigKeyUsageSlice(des, initial []CertificateConfigX509ConfigKeyUsage, opts ...dcl.ApplyOption) []CertificateConfigX509ConfigKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1608,7 +1589,7 @@ func canonicalizeNewCertificateConfigX509ConfigKeyUsage(c *Client, des, nw *Cert
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509ConfigKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1626,23 +1607,26 @@ func canonicalizeNewCertificateConfigX509ConfigKeyUsageSet(c *Client, des, nw []
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509ConfigKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509ConfigKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509ConfigKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigKeyUsageSlice(c *Client, des, nw []CertificateConfigX509ConfigKeyUsage) []CertificateConfigX509ConfigKeyUsage {
@@ -1729,7 +1713,7 @@ func canonicalizeCertificateConfigX509ConfigKeyUsageBaseKeyUsage(des, initial *C
 }
 
 func canonicalizeCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(des, initial []CertificateConfigX509ConfigKeyUsageBaseKeyUsage, opts ...dcl.ApplyOption) []CertificateConfigX509ConfigKeyUsageBaseKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1763,7 +1747,7 @@ func canonicalizeNewCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c *Client, d
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509ConfigKeyUsageBaseKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1805,23 +1789,26 @@ func canonicalizeNewCertificateConfigX509ConfigKeyUsageBaseKeyUsageSet(c *Client
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509ConfigKeyUsageBaseKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509ConfigKeyUsageBaseKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigKeyUsageBaseKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(c *Client, des, nw []CertificateConfigX509ConfigKeyUsageBaseKeyUsage) []CertificateConfigX509ConfigKeyUsageBaseKeyUsage {
@@ -1893,7 +1880,7 @@ func canonicalizeCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(des, initia
 }
 
 func canonicalizeCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(des, initial []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage, opts ...dcl.ApplyOption) []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1927,7 +1914,7 @@ func canonicalizeNewCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c *Clien
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509ConfigKeyUsageExtendedKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1960,23 +1947,26 @@ func canonicalizeNewCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSet(c *Cl
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigKeyUsageExtendedKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(c *Client, des, nw []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage) []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage {
@@ -2013,7 +2003,8 @@ func canonicalizeCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(des
 
 	cDes := &CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -2057,7 +2048,7 @@ func canonicalizeNewCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2071,23 +2062,26 @@ func canonicalizeNewCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesS
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, des, nw []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages) []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages {
@@ -2118,26 +2112,6 @@ func canonicalizeCertificateConfigX509ConfigCaOptions(des, initial *CertificateC
 		return des
 	}
 
-	if des.IsCa != nil || (initial != nil && initial.IsCa != nil) {
-		// Check if anything else is set.
-		if dcl.AnySet() {
-			des.IsCa = nil
-			if initial != nil {
-				initial.IsCa = nil
-			}
-		}
-	}
-
-	if des.MaxIssuerPathLength != nil || (initial != nil && initial.MaxIssuerPathLength != nil) {
-		// Check if anything else is set.
-		if dcl.AnySet() {
-			des.MaxIssuerPathLength = nil
-			if initial != nil {
-				initial.MaxIssuerPathLength = nil
-			}
-		}
-	}
-
 	if initial == nil {
 		return des
 	}
@@ -2149,17 +2123,28 @@ func canonicalizeCertificateConfigX509ConfigCaOptions(des, initial *CertificateC
 	} else {
 		cDes.IsCa = des.IsCa
 	}
-	if dcl.IsZeroValue(des.MaxIssuerPathLength) {
+	if dcl.BoolCanonicalize(des.NonCa, initial.NonCa) || dcl.IsZeroValue(des.NonCa) {
+		cDes.NonCa = initial.NonCa
+	} else {
+		cDes.NonCa = des.NonCa
+	}
+	if dcl.IsZeroValue(des.MaxIssuerPathLength) || (dcl.IsEmptyValueIndirect(des.MaxIssuerPathLength) && dcl.IsEmptyValueIndirect(initial.MaxIssuerPathLength)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.MaxIssuerPathLength = initial.MaxIssuerPathLength
 	} else {
 		cDes.MaxIssuerPathLength = des.MaxIssuerPathLength
+	}
+	if dcl.BoolCanonicalize(des.ZeroMaxIssuerPathLength, initial.ZeroMaxIssuerPathLength) || dcl.IsZeroValue(des.ZeroMaxIssuerPathLength) {
+		cDes.ZeroMaxIssuerPathLength = initial.ZeroMaxIssuerPathLength
+	} else {
+		cDes.ZeroMaxIssuerPathLength = des.ZeroMaxIssuerPathLength
 	}
 
 	return cDes
 }
 
 func canonicalizeCertificateConfigX509ConfigCaOptionsSlice(des, initial []CertificateConfigX509ConfigCaOptions, opts ...dcl.ApplyOption) []CertificateConfigX509ConfigCaOptions {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2193,7 +2178,7 @@ func canonicalizeNewCertificateConfigX509ConfigCaOptions(c *Client, des, nw *Cer
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509ConfigCaOptions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2203,6 +2188,12 @@ func canonicalizeNewCertificateConfigX509ConfigCaOptions(c *Client, des, nw *Cer
 	if dcl.BoolCanonicalize(des.IsCa, nw.IsCa) {
 		nw.IsCa = des.IsCa
 	}
+	if dcl.BoolCanonicalize(des.NonCa, nw.NonCa) {
+		nw.NonCa = des.NonCa
+	}
+	if dcl.BoolCanonicalize(des.ZeroMaxIssuerPathLength, nw.ZeroMaxIssuerPathLength) {
+		nw.ZeroMaxIssuerPathLength = des.ZeroMaxIssuerPathLength
+	}
 
 	return nw
 }
@@ -2211,23 +2202,26 @@ func canonicalizeNewCertificateConfigX509ConfigCaOptionsSet(c *Client, des, nw [
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509ConfigCaOptions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509ConfigCaOptions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigCaOptionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509ConfigCaOptions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigCaOptionsSlice(c *Client, des, nw []CertificateConfigX509ConfigCaOptions) []CertificateConfigX509ConfigCaOptions {
@@ -2264,7 +2258,8 @@ func canonicalizeCertificateConfigX509ConfigPolicyIds(des, initial *CertificateC
 
 	cDes := &CertificateConfigX509ConfigPolicyIds{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -2308,7 +2303,7 @@ func canonicalizeNewCertificateConfigX509ConfigPolicyIds(c *Client, des, nw *Cer
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509ConfigPolicyIds while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2322,23 +2317,26 @@ func canonicalizeNewCertificateConfigX509ConfigPolicyIdsSet(c *Client, des, nw [
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509ConfigPolicyIds
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509ConfigPolicyIds
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigPolicyIdsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509ConfigPolicyIds(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigPolicyIdsSlice(c *Client, des, nw []CertificateConfigX509ConfigPolicyIds) []CertificateConfigX509ConfigPolicyIds {
@@ -2425,7 +2423,7 @@ func canonicalizeNewCertificateConfigX509ConfigAdditionalExtensions(c *Client, d
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509ConfigAdditionalExtensions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2447,23 +2445,26 @@ func canonicalizeNewCertificateConfigX509ConfigAdditionalExtensionsSet(c *Client
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509ConfigAdditionalExtensions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509ConfigAdditionalExtensions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigAdditionalExtensionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509ConfigAdditionalExtensions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigAdditionalExtensionsSlice(c *Client, des, nw []CertificateConfigX509ConfigAdditionalExtensions) []CertificateConfigX509ConfigAdditionalExtensions {
@@ -2500,7 +2501,8 @@ func canonicalizeCertificateConfigX509ConfigAdditionalExtensionsObjectId(des, in
 
 	cDes := &CertificateConfigX509ConfigAdditionalExtensionsObjectId{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -2510,7 +2512,7 @@ func canonicalizeCertificateConfigX509ConfigAdditionalExtensionsObjectId(des, in
 }
 
 func canonicalizeCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(des, initial []CertificateConfigX509ConfigAdditionalExtensionsObjectId, opts ...dcl.ApplyOption) []CertificateConfigX509ConfigAdditionalExtensionsObjectId {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2544,7 +2546,7 @@ func canonicalizeNewCertificateConfigX509ConfigAdditionalExtensionsObjectId(c *C
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigX509ConfigAdditionalExtensionsObjectId while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2558,23 +2560,26 @@ func canonicalizeNewCertificateConfigX509ConfigAdditionalExtensionsObjectIdSet(c
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigX509ConfigAdditionalExtensionsObjectId
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigX509ConfigAdditionalExtensionsObjectId
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigX509ConfigAdditionalExtensionsObjectIdNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(c *Client, des, nw []CertificateConfigX509ConfigAdditionalExtensionsObjectId) []CertificateConfigX509ConfigAdditionalExtensionsObjectId {
@@ -2616,7 +2621,8 @@ func canonicalizeCertificateConfigPublicKey(des, initial *CertificateConfigPubli
 	} else {
 		cDes.Key = des.Key
 	}
-	if dcl.IsZeroValue(des.Format) {
+	if dcl.IsZeroValue(des.Format) || (dcl.IsEmptyValueIndirect(des.Format) && dcl.IsEmptyValueIndirect(initial.Format)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Format = initial.Format
 	} else {
 		cDes.Format = des.Format
@@ -2626,7 +2632,7 @@ func canonicalizeCertificateConfigPublicKey(des, initial *CertificateConfigPubli
 }
 
 func canonicalizeCertificateConfigPublicKeySlice(des, initial []CertificateConfigPublicKey, opts ...dcl.ApplyOption) []CertificateConfigPublicKey {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2660,7 +2666,7 @@ func canonicalizeNewCertificateConfigPublicKey(c *Client, des, nw *CertificateCo
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateConfigPublicKey while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2678,23 +2684,26 @@ func canonicalizeNewCertificateConfigPublicKeySet(c *Client, des, nw []Certifica
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateConfigPublicKey
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateConfigPublicKey
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateConfigPublicKeyNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateConfigPublicKey(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateConfigPublicKeySlice(c *Client, des, nw []CertificateConfigPublicKey) []CertificateConfigPublicKey {
@@ -2731,12 +2740,14 @@ func canonicalizeCertificateRevocationDetails(des, initial *CertificateRevocatio
 
 	cDes := &CertificateRevocationDetails{}
 
-	if dcl.IsZeroValue(des.RevocationState) {
+	if dcl.IsZeroValue(des.RevocationState) || (dcl.IsEmptyValueIndirect(des.RevocationState) && dcl.IsEmptyValueIndirect(initial.RevocationState)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.RevocationState = initial.RevocationState
 	} else {
 		cDes.RevocationState = des.RevocationState
 	}
-	if dcl.IsZeroValue(des.RevocationTime) {
+	if dcl.IsZeroValue(des.RevocationTime) || (dcl.IsEmptyValueIndirect(des.RevocationTime) && dcl.IsEmptyValueIndirect(initial.RevocationTime)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.RevocationTime = initial.RevocationTime
 	} else {
 		cDes.RevocationTime = des.RevocationTime
@@ -2746,7 +2757,7 @@ func canonicalizeCertificateRevocationDetails(des, initial *CertificateRevocatio
 }
 
 func canonicalizeCertificateRevocationDetailsSlice(des, initial []CertificateRevocationDetails, opts ...dcl.ApplyOption) []CertificateRevocationDetails {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2780,7 +2791,7 @@ func canonicalizeNewCertificateRevocationDetails(c *Client, des, nw *Certificate
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateRevocationDetails while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2794,23 +2805,26 @@ func canonicalizeNewCertificateRevocationDetailsSet(c *Client, des, nw []Certifi
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateRevocationDetails
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateRevocationDetails
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateRevocationDetailsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateRevocationDetails(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateRevocationDetailsSlice(c *Client, des, nw []CertificateRevocationDetails) []CertificateRevocationDetails {
@@ -2852,12 +2866,12 @@ func canonicalizeCertificateCertificateDescription(des, initial *CertificateCert
 	cDes.PublicKey = canonicalizeCertificateCertificateDescriptionPublicKey(des.PublicKey, initial.PublicKey, opts...)
 	cDes.SubjectKeyId = canonicalizeCertificateCertificateDescriptionSubjectKeyId(des.SubjectKeyId, initial.SubjectKeyId, opts...)
 	cDes.AuthorityKeyId = canonicalizeCertificateCertificateDescriptionAuthorityKeyId(des.AuthorityKeyId, initial.AuthorityKeyId, opts...)
-	if dcl.StringArrayCanonicalize(des.CrlDistributionPoints, initial.CrlDistributionPoints) || dcl.IsZeroValue(des.CrlDistributionPoints) {
+	if dcl.StringArrayCanonicalize(des.CrlDistributionPoints, initial.CrlDistributionPoints) {
 		cDes.CrlDistributionPoints = initial.CrlDistributionPoints
 	} else {
 		cDes.CrlDistributionPoints = des.CrlDistributionPoints
 	}
-	if dcl.StringArrayCanonicalize(des.AiaIssuingCertificateUrls, initial.AiaIssuingCertificateUrls) || dcl.IsZeroValue(des.AiaIssuingCertificateUrls) {
+	if dcl.StringArrayCanonicalize(des.AiaIssuingCertificateUrls, initial.AiaIssuingCertificateUrls) {
 		cDes.AiaIssuingCertificateUrls = initial.AiaIssuingCertificateUrls
 	} else {
 		cDes.AiaIssuingCertificateUrls = des.AiaIssuingCertificateUrls
@@ -2868,7 +2882,7 @@ func canonicalizeCertificateCertificateDescription(des, initial *CertificateCert
 }
 
 func canonicalizeCertificateCertificateDescriptionSlice(des, initial []CertificateCertificateDescription, opts ...dcl.ApplyOption) []CertificateCertificateDescription {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2902,7 +2916,7 @@ func canonicalizeNewCertificateCertificateDescription(c *Client, des, nw *Certif
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescription while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2929,23 +2943,26 @@ func canonicalizeNewCertificateCertificateDescriptionSet(c *Client, des, nw []Ce
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescription
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescription
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescription(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionSlice(c *Client, des, nw []CertificateCertificateDescription) []CertificateCertificateDescription {
@@ -2994,12 +3011,14 @@ func canonicalizeCertificateCertificateDescriptionSubjectDescription(des, initia
 	} else {
 		cDes.Lifetime = des.Lifetime
 	}
-	if dcl.IsZeroValue(des.NotBeforeTime) {
+	if dcl.IsZeroValue(des.NotBeforeTime) || (dcl.IsEmptyValueIndirect(des.NotBeforeTime) && dcl.IsEmptyValueIndirect(initial.NotBeforeTime)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.NotBeforeTime = initial.NotBeforeTime
 	} else {
 		cDes.NotBeforeTime = des.NotBeforeTime
 	}
-	if dcl.IsZeroValue(des.NotAfterTime) {
+	if dcl.IsZeroValue(des.NotAfterTime) || (dcl.IsEmptyValueIndirect(des.NotAfterTime) && dcl.IsEmptyValueIndirect(initial.NotAfterTime)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.NotAfterTime = initial.NotAfterTime
 	} else {
 		cDes.NotAfterTime = des.NotAfterTime
@@ -3009,7 +3028,7 @@ func canonicalizeCertificateCertificateDescriptionSubjectDescription(des, initia
 }
 
 func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSlice(des, initial []CertificateCertificateDescriptionSubjectDescription, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionSubjectDescription {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3043,7 +3062,7 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescription(c *Clien
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionSubjectDescription while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3066,23 +3085,26 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSet(c *Cl
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionSubjectDescription
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionSubjectDescription
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionSubjectDescriptionNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionSubjectDescription(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSlice(c *Client, des, nw []CertificateCertificateDescriptionSubjectDescription) []CertificateCertificateDescriptionSubjectDescription {
@@ -3164,7 +3186,7 @@ func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSubject(des,
 }
 
 func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(des, initial []CertificateCertificateDescriptionSubjectDescriptionSubject, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionSubjectDescriptionSubject {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3198,7 +3220,7 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubject(c
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionSubjectDescriptionSubject while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3237,23 +3259,26 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectSe
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionSubjectDescriptionSubject
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionSubjectDescriptionSubject
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionSubjectDescriptionSubjectNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubject(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(c *Client, des, nw []CertificateCertificateDescriptionSubjectDescriptionSubject) []CertificateCertificateDescriptionSubjectDescriptionSubject {
@@ -3290,22 +3315,22 @@ func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSubjectAltNa
 
 	cDes := &CertificateCertificateDescriptionSubjectDescriptionSubjectAltName{}
 
-	if dcl.StringArrayCanonicalize(des.DnsNames, initial.DnsNames) || dcl.IsZeroValue(des.DnsNames) {
+	if dcl.StringArrayCanonicalize(des.DnsNames, initial.DnsNames) {
 		cDes.DnsNames = initial.DnsNames
 	} else {
 		cDes.DnsNames = des.DnsNames
 	}
-	if dcl.StringArrayCanonicalize(des.Uris, initial.Uris) || dcl.IsZeroValue(des.Uris) {
+	if dcl.StringArrayCanonicalize(des.Uris, initial.Uris) {
 		cDes.Uris = initial.Uris
 	} else {
 		cDes.Uris = des.Uris
 	}
-	if dcl.StringArrayCanonicalize(des.EmailAddresses, initial.EmailAddresses) || dcl.IsZeroValue(des.EmailAddresses) {
+	if dcl.StringArrayCanonicalize(des.EmailAddresses, initial.EmailAddresses) {
 		cDes.EmailAddresses = initial.EmailAddresses
 	} else {
 		cDes.EmailAddresses = des.EmailAddresses
 	}
-	if dcl.StringArrayCanonicalize(des.IPAddresses, initial.IPAddresses) || dcl.IsZeroValue(des.IPAddresses) {
+	if dcl.StringArrayCanonicalize(des.IPAddresses, initial.IPAddresses) {
 		cDes.IPAddresses = initial.IPAddresses
 	} else {
 		cDes.IPAddresses = des.IPAddresses
@@ -3316,7 +3341,7 @@ func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSubjectAltNa
 }
 
 func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlice(des, initial []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3350,7 +3375,7 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAl
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionSubjectDescriptionSubjectAltName while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3378,23 +3403,26 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAl
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlice(c *Client, des, nw []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName {
@@ -3481,7 +3509,7 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAl
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3503,23 +3531,26 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAl
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c *Client, des, nw []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans {
@@ -3556,7 +3587,8 @@ func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSubjectAltNa
 
 	cDes := &CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -3566,7 +3598,7 @@ func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSubjectAltNa
 }
 
 func canonicalizeCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdSlice(des, initial []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3600,7 +3632,7 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAl
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3614,23 +3646,26 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAl
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdSlice(c *Client, des, nw []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId {
@@ -3670,7 +3705,7 @@ func canonicalizeCertificateCertificateDescriptionX509Description(des, initial *
 	cDes.KeyUsage = canonicalizeCertificateCertificateDescriptionX509DescriptionKeyUsage(des.KeyUsage, initial.KeyUsage, opts...)
 	cDes.CaOptions = canonicalizeCertificateCertificateDescriptionX509DescriptionCaOptions(des.CaOptions, initial.CaOptions, opts...)
 	cDes.PolicyIds = canonicalizeCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(des.PolicyIds, initial.PolicyIds, opts...)
-	if dcl.StringArrayCanonicalize(des.AiaOcspServers, initial.AiaOcspServers) || dcl.IsZeroValue(des.AiaOcspServers) {
+	if dcl.StringArrayCanonicalize(des.AiaOcspServers, initial.AiaOcspServers) {
 		cDes.AiaOcspServers = initial.AiaOcspServers
 	} else {
 		cDes.AiaOcspServers = des.AiaOcspServers
@@ -3681,7 +3716,7 @@ func canonicalizeCertificateCertificateDescriptionX509Description(des, initial *
 }
 
 func canonicalizeCertificateCertificateDescriptionX509DescriptionSlice(des, initial []CertificateCertificateDescriptionX509Description, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionX509Description {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3715,7 +3750,7 @@ func canonicalizeNewCertificateCertificateDescriptionX509Description(c *Client, 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509Description while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3737,23 +3772,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionSet(c *Clien
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509Description
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509Description
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509Description(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionSlice(c *Client, des, nw []CertificateCertificateDescriptionX509Description) []CertificateCertificateDescriptionX509Description {
@@ -3798,7 +3836,7 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionKeyUsage(des, i
 }
 
 func canonicalizeCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(des, initial []CertificateCertificateDescriptionX509DescriptionKeyUsage, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionX509DescriptionKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3832,7 +3870,7 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsage(c *
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509DescriptionKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -3850,23 +3888,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageSet(
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509DescriptionKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509DescriptionKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(c *Client, des, nw []CertificateCertificateDescriptionX509DescriptionKeyUsage) []CertificateCertificateDescriptionX509DescriptionKeyUsage {
@@ -3953,7 +3994,7 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKey
 }
 
 func canonicalizeCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageSlice(des, initial []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -3987,7 +4028,7 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageBase
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4029,23 +4070,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageBase
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageSlice(c *Client, des, nw []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage) []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage {
@@ -4117,7 +4161,7 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionKeyUsageExtende
 }
 
 func canonicalizeCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageSlice(des, initial []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -4151,7 +4195,7 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageExte
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4184,23 +4228,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageExte
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageSlice(c *Client, des, nw []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage) []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage {
@@ -4237,7 +4284,8 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionKeyUsageUnknown
 
 	cDes := &CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -4281,7 +4329,7 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageUnkn
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4295,23 +4343,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageUnkn
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, des, nw []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages) []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages {
@@ -4368,12 +4419,13 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionCaOptions(des, 
 
 	cDes := &CertificateCertificateDescriptionX509DescriptionCaOptions{}
 
-	if dcl.OptionalBoolCanonicalize(des.IsCa, initial.IsCa) || dcl.IsZeroValue(des.IsCa) {
+	if dcl.BoolCanonicalize(des.IsCa, initial.IsCa) || dcl.IsZeroValue(des.IsCa) {
 		cDes.IsCa = initial.IsCa
 	} else {
 		cDes.IsCa = des.IsCa
 	}
-	if dcl.IsZeroValue(des.MaxIssuerPathLength) {
+	if dcl.IsZeroValue(des.MaxIssuerPathLength) || (dcl.IsEmptyValueIndirect(des.MaxIssuerPathLength) && dcl.IsEmptyValueIndirect(initial.MaxIssuerPathLength)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.MaxIssuerPathLength = initial.MaxIssuerPathLength
 	} else {
 		cDes.MaxIssuerPathLength = des.MaxIssuerPathLength
@@ -4383,7 +4435,7 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionCaOptions(des, 
 }
 
 func canonicalizeCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(des, initial []CertificateCertificateDescriptionX509DescriptionCaOptions, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionX509DescriptionCaOptions {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -4417,14 +4469,14 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionCaOptions(c 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509DescriptionCaOptions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
 	}
 
-	if dcl.OptionalBoolCanonicalize(des.IsCa, nw.IsCa) {
+	if dcl.BoolCanonicalize(des.IsCa, nw.IsCa) {
 		nw.IsCa = des.IsCa
 	}
 
@@ -4435,23 +4487,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionCaOptionsSet
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509DescriptionCaOptions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509DescriptionCaOptions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionCaOptionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509DescriptionCaOptions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(c *Client, des, nw []CertificateCertificateDescriptionX509DescriptionCaOptions) []CertificateCertificateDescriptionX509DescriptionCaOptions {
@@ -4488,7 +4543,8 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionPolicyIds(des, 
 
 	cDes := &CertificateCertificateDescriptionX509DescriptionPolicyIds{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -4532,7 +4588,7 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionPolicyIds(c 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509DescriptionPolicyIds while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4546,23 +4602,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionPolicyIdsSet
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509DescriptionPolicyIds
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509DescriptionPolicyIds
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionPolicyIdsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509DescriptionPolicyIds(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c *Client, des, nw []CertificateCertificateDescriptionX509DescriptionPolicyIds) []CertificateCertificateDescriptionX509DescriptionPolicyIds {
@@ -4649,7 +4708,7 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionAdditionalEx
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509DescriptionAdditionalExtensions while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4671,23 +4730,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionAdditionalEx
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c *Client, des, nw []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions) []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions {
@@ -4724,7 +4786,8 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionAdditionalExten
 
 	cDes := &CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId{}
 
-	if dcl.IsZeroValue(des.ObjectIdPath) {
+	if dcl.IsZeroValue(des.ObjectIdPath) || (dcl.IsEmptyValueIndirect(des.ObjectIdPath) && dcl.IsEmptyValueIndirect(initial.ObjectIdPath)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ObjectIdPath = initial.ObjectIdPath
 	} else {
 		cDes.ObjectIdPath = des.ObjectIdPath
@@ -4734,7 +4797,7 @@ func canonicalizeCertificateCertificateDescriptionX509DescriptionAdditionalExten
 }
 
 func canonicalizeCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdSlice(des, initial []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -4768,7 +4831,7 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionAdditionalEx
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4782,23 +4845,26 @@ func canonicalizeNewCertificateCertificateDescriptionX509DescriptionAdditionalEx
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdSlice(c *Client, des, nw []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId) []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId {
@@ -4840,7 +4906,8 @@ func canonicalizeCertificateCertificateDescriptionPublicKey(des, initial *Certif
 	} else {
 		cDes.Key = des.Key
 	}
-	if dcl.IsZeroValue(des.Format) {
+	if dcl.IsZeroValue(des.Format) || (dcl.IsEmptyValueIndirect(des.Format) && dcl.IsEmptyValueIndirect(initial.Format)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Format = initial.Format
 	} else {
 		cDes.Format = des.Format
@@ -4850,7 +4917,7 @@ func canonicalizeCertificateCertificateDescriptionPublicKey(des, initial *Certif
 }
 
 func canonicalizeCertificateCertificateDescriptionPublicKeySlice(des, initial []CertificateCertificateDescriptionPublicKey, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionPublicKey {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -4884,7 +4951,7 @@ func canonicalizeNewCertificateCertificateDescriptionPublicKey(c *Client, des, n
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionPublicKey while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -4902,23 +4969,26 @@ func canonicalizeNewCertificateCertificateDescriptionPublicKeySet(c *Client, des
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionPublicKey
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionPublicKey
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionPublicKeyNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionPublicKey(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionPublicKeySlice(c *Client, des, nw []CertificateCertificateDescriptionPublicKey) []CertificateCertificateDescriptionPublicKey {
@@ -4965,7 +5035,7 @@ func canonicalizeCertificateCertificateDescriptionSubjectKeyId(des, initial *Cer
 }
 
 func canonicalizeCertificateCertificateDescriptionSubjectKeyIdSlice(des, initial []CertificateCertificateDescriptionSubjectKeyId, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionSubjectKeyId {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -4999,7 +5069,7 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectKeyId(c *Client, des
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionSubjectKeyId while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -5017,23 +5087,26 @@ func canonicalizeNewCertificateCertificateDescriptionSubjectKeyIdSet(c *Client, 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionSubjectKeyId
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionSubjectKeyId
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionSubjectKeyIdNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionSubjectKeyId(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionSubjectKeyIdSlice(c *Client, des, nw []CertificateCertificateDescriptionSubjectKeyId) []CertificateCertificateDescriptionSubjectKeyId {
@@ -5080,7 +5153,7 @@ func canonicalizeCertificateCertificateDescriptionAuthorityKeyId(des, initial *C
 }
 
 func canonicalizeCertificateCertificateDescriptionAuthorityKeyIdSlice(des, initial []CertificateCertificateDescriptionAuthorityKeyId, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionAuthorityKeyId {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -5114,7 +5187,7 @@ func canonicalizeNewCertificateCertificateDescriptionAuthorityKeyId(c *Client, d
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionAuthorityKeyId while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -5132,23 +5205,26 @@ func canonicalizeNewCertificateCertificateDescriptionAuthorityKeyIdSet(c *Client
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionAuthorityKeyId
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionAuthorityKeyId
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionAuthorityKeyIdNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionAuthorityKeyId(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionAuthorityKeyIdSlice(c *Client, des, nw []CertificateCertificateDescriptionAuthorityKeyId) []CertificateCertificateDescriptionAuthorityKeyId {
@@ -5195,7 +5271,7 @@ func canonicalizeCertificateCertificateDescriptionCertFingerprint(des, initial *
 }
 
 func canonicalizeCertificateCertificateDescriptionCertFingerprintSlice(des, initial []CertificateCertificateDescriptionCertFingerprint, opts ...dcl.ApplyOption) []CertificateCertificateDescriptionCertFingerprint {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -5229,7 +5305,7 @@ func canonicalizeNewCertificateCertificateDescriptionCertFingerprint(c *Client, 
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for CertificateCertificateDescriptionCertFingerprint while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -5247,23 +5323,26 @@ func canonicalizeNewCertificateCertificateDescriptionCertFingerprintSet(c *Clien
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []CertificateCertificateDescriptionCertFingerprint
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []CertificateCertificateDescriptionCertFingerprint
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareCertificateCertificateDescriptionCertFingerprintNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewCertificateCertificateDescriptionCertFingerprint(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewCertificateCertificateDescriptionCertFingerprintSlice(c *Client, des, nw []CertificateCertificateDescriptionCertFingerprint) []CertificateCertificateDescriptionCertFingerprint {
@@ -5304,132 +5383,135 @@ func diffCertificate(c *Client, desired, actual *Certificate, opts ...dcl.ApplyO
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PemCsr, actual.PemCsr, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PemCsr")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PemCsr, actual.PemCsr, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PemCsr")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Config, actual.Config, dcl.Info{ObjectFunction: compareCertificateConfigNewStyle, EmptyObject: EmptyCertificateConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Config")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Config, actual.Config, dcl.DiffInfo{ObjectFunction: compareCertificateConfigNewStyle, EmptyObject: EmptyCertificateConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Config")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IssuerCertificateAuthority, actual.IssuerCertificateAuthority, dcl.Info{OutputOnly: true, Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IssuerCertificateAuthority")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IssuerCertificateAuthority, actual.IssuerCertificateAuthority, dcl.DiffInfo{OutputOnly: true, Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IssuerCertificateAuthority")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Lifetime, actual.Lifetime, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Lifetime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Lifetime, actual.Lifetime, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Lifetime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CertificateTemplate, actual.CertificateTemplate, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertificateTemplate")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CertificateTemplate, actual.CertificateTemplate, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertificateTemplate")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SubjectMode, actual.SubjectMode, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectMode")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubjectMode, actual.SubjectMode, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectMode")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RevocationDetails, actual.RevocationDetails, dcl.Info{OutputOnly: true, ObjectFunction: compareCertificateRevocationDetailsNewStyle, EmptyObject: EmptyCertificateRevocationDetails, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevocationDetails")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RevocationDetails, actual.RevocationDetails, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareCertificateRevocationDetailsNewStyle, EmptyObject: EmptyCertificateRevocationDetails, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevocationDetails")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PemCertificate, actual.PemCertificate, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PemCertificate")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PemCertificate, actual.PemCertificate, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PemCertificate")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CertificateDescription, actual.CertificateDescription, dcl.Info{OutputOnly: true, ObjectFunction: compareCertificateCertificateDescriptionNewStyle, EmptyObject: EmptyCertificateCertificateDescription, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertificateDescription")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CertificateDescription, actual.CertificateDescription, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareCertificateCertificateDescriptionNewStyle, EmptyObject: EmptyCertificateCertificateDescription, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertificateDescription")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PemCertificateChain, actual.PemCertificateChain, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PemCertificateChain")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PemCertificateChain, actual.PemCertificateChain, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PemCertificateChain")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.UpdateTime, actual.UpdateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UpdateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.UpdateTime, actual.UpdateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UpdateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.Info{OperationSelector: dcl.TriggersOperation("updateCertificateUpdateCertificateOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateCertificateUpdateCertificateOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CaPool, actual.CaPool, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CaPool")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CaPool, actual.CaPool, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CaPool")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CertificateAuthority, actual.CertificateAuthority, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertificateAuthority")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CertificateAuthority, actual.CertificateAuthority, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertificateAuthority")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareCertificateConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -5452,21 +5534,21 @@ func compareCertificateConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dc
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.SubjectConfig, actual.SubjectConfig, dcl.Info{ObjectFunction: compareCertificateConfigSubjectConfigNewStyle, EmptyObject: EmptyCertificateConfigSubjectConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectConfig")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubjectConfig, actual.SubjectConfig, dcl.DiffInfo{ObjectFunction: compareCertificateConfigSubjectConfigNewStyle, EmptyObject: EmptyCertificateConfigSubjectConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectConfig")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.X509Config, actual.X509Config, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigNewStyle, EmptyObject: EmptyCertificateConfigX509Config, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("X509Config")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.X509Config, actual.X509Config, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigNewStyle, EmptyObject: EmptyCertificateConfigX509Config, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("X509Config")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PublicKey, actual.PublicKey, dcl.Info{ObjectFunction: compareCertificateConfigPublicKeyNewStyle, EmptyObject: EmptyCertificateConfigPublicKey, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PublicKey, actual.PublicKey, dcl.DiffInfo{ObjectFunction: compareCertificateConfigPublicKeyNewStyle, EmptyObject: EmptyCertificateConfigPublicKey, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5495,14 +5577,14 @@ func compareCertificateConfigSubjectConfigNewStyle(d, a interface{}, fn dcl.Fiel
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Subject, actual.Subject, dcl.Info{ObjectFunction: compareCertificateConfigSubjectConfigSubjectNewStyle, EmptyObject: EmptyCertificateConfigSubjectConfigSubject, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Subject")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Subject, actual.Subject, dcl.DiffInfo{ObjectFunction: compareCertificateConfigSubjectConfigSubjectNewStyle, EmptyObject: EmptyCertificateConfigSubjectConfigSubject, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Subject")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SubjectAltName, actual.SubjectAltName, dcl.Info{ObjectFunction: compareCertificateConfigSubjectConfigSubjectAltNameNewStyle, EmptyObject: EmptyCertificateConfigSubjectConfigSubjectAltName, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectAltName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubjectAltName, actual.SubjectAltName, dcl.DiffInfo{ObjectFunction: compareCertificateConfigSubjectConfigSubjectAltNameNewStyle, EmptyObject: EmptyCertificateConfigSubjectConfigSubjectAltName, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectAltName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5531,56 +5613,56 @@ func compareCertificateConfigSubjectConfigSubjectNewStyle(d, a interface{}, fn d
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.CommonName, actual.CommonName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CommonName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CommonName, actual.CommonName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CommonName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CountryCode, actual.CountryCode, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CountryCode")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CountryCode, actual.CountryCode, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CountryCode")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Organization, actual.Organization, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Organization")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Organization, actual.Organization, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Organization")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OrganizationalUnit, actual.OrganizationalUnit, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OrganizationalUnit")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OrganizationalUnit, actual.OrganizationalUnit, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OrganizationalUnit")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Locality, actual.Locality, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Locality")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Locality, actual.Locality, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Locality")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Province, actual.Province, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Province")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Province, actual.Province, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Province")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.StreetAddress, actual.StreetAddress, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("StreetAddress")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.StreetAddress, actual.StreetAddress, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("StreetAddress")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PostalCode, actual.PostalCode, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PostalCode")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PostalCode, actual.PostalCode, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PostalCode")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5609,28 +5691,28 @@ func compareCertificateConfigSubjectConfigSubjectAltNameNewStyle(d, a interface{
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.DnsNames, actual.DnsNames, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DnsNames")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DnsNames, actual.DnsNames, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DnsNames")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Uris, actual.Uris, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uris")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Uris, actual.Uris, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uris")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EmailAddresses, actual.EmailAddresses, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EmailAddresses")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EmailAddresses, actual.EmailAddresses, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EmailAddresses")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IPAddresses, actual.IPAddresses, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IpAddresses")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IPAddresses, actual.IPAddresses, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IpAddresses")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5659,35 +5741,35 @@ func compareCertificateConfigX509ConfigNewStyle(d, a interface{}, fn dcl.FieldNa
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.KeyUsage, actual.KeyUsage, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigKeyUsageNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyUsage, actual.KeyUsage, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigKeyUsageNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CaOptions, actual.CaOptions, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigCaOptionsNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigCaOptions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CaOptions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CaOptions, actual.CaOptions, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigCaOptionsNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigCaOptions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CaOptions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PolicyIds, actual.PolicyIds, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigPolicyIdsNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigPolicyIds, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PolicyIds")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PolicyIds, actual.PolicyIds, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigPolicyIdsNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigPolicyIds, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PolicyIds")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AiaOcspServers, actual.AiaOcspServers, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AiaOcspServers")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AiaOcspServers, actual.AiaOcspServers, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AiaOcspServers")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AdditionalExtensions, actual.AdditionalExtensions, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigAdditionalExtensionsNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigAdditionalExtensions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AdditionalExtensions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AdditionalExtensions, actual.AdditionalExtensions, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigAdditionalExtensionsNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigAdditionalExtensions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AdditionalExtensions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5716,21 +5798,21 @@ func compareCertificateConfigX509ConfigKeyUsageNewStyle(d, a interface{}, fn dcl
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.BaseKeyUsage, actual.BaseKeyUsage, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigKeyUsageBaseKeyUsageNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigKeyUsageBaseKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("BaseKeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.BaseKeyUsage, actual.BaseKeyUsage, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigKeyUsageBaseKeyUsageNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigKeyUsageBaseKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("BaseKeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ExtendedKeyUsage, actual.ExtendedKeyUsage, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigKeyUsageExtendedKeyUsageNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigKeyUsageExtendedKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExtendedKeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ExtendedKeyUsage, actual.ExtendedKeyUsage, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigKeyUsageExtendedKeyUsageNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigKeyUsageExtendedKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExtendedKeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.UnknownExtendedKeyUsages, actual.UnknownExtendedKeyUsages, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UnknownExtendedKeyUsages")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.UnknownExtendedKeyUsages, actual.UnknownExtendedKeyUsages, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UnknownExtendedKeyUsages")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5759,63 +5841,63 @@ func compareCertificateConfigX509ConfigKeyUsageBaseKeyUsageNewStyle(d, a interfa
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.DigitalSignature, actual.DigitalSignature, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DigitalSignature")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DigitalSignature, actual.DigitalSignature, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DigitalSignature")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ContentCommitment, actual.ContentCommitment, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ContentCommitment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ContentCommitment, actual.ContentCommitment, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ContentCommitment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.KeyEncipherment, actual.KeyEncipherment, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyEncipherment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyEncipherment, actual.KeyEncipherment, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyEncipherment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DataEncipherment, actual.DataEncipherment, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DataEncipherment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DataEncipherment, actual.DataEncipherment, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DataEncipherment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.KeyAgreement, actual.KeyAgreement, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyAgreement")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyAgreement, actual.KeyAgreement, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyAgreement")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CertSign, actual.CertSign, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertSign")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CertSign, actual.CertSign, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertSign")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CrlSign, actual.CrlSign, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CrlSign")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CrlSign, actual.CrlSign, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CrlSign")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EncipherOnly, actual.EncipherOnly, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EncipherOnly")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EncipherOnly, actual.EncipherOnly, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EncipherOnly")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DecipherOnly, actual.DecipherOnly, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DecipherOnly")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DecipherOnly, actual.DecipherOnly, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DecipherOnly")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5844,42 +5926,42 @@ func compareCertificateConfigX509ConfigKeyUsageExtendedKeyUsageNewStyle(d, a int
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ServerAuth, actual.ServerAuth, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServerAuth")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ServerAuth, actual.ServerAuth, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServerAuth")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ClientAuth, actual.ClientAuth, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ClientAuth")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ClientAuth, actual.ClientAuth, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ClientAuth")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CodeSigning, actual.CodeSigning, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CodeSigning")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CodeSigning, actual.CodeSigning, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CodeSigning")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EmailProtection, actual.EmailProtection, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EmailProtection")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EmailProtection, actual.EmailProtection, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EmailProtection")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.TimeStamping, actual.TimeStamping, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TimeStamping")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.TimeStamping, actual.TimeStamping, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TimeStamping")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OcspSigning, actual.OcspSigning, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OcspSigning")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OcspSigning, actual.OcspSigning, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OcspSigning")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5908,7 +5990,7 @@ func compareCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesNewStyle(
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5937,14 +6019,28 @@ func compareCertificateConfigX509ConfigCaOptionsNewStyle(d, a interface{}, fn dc
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.IsCa, actual.IsCa, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IsCa")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IsCa, actual.IsCa, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IsCa")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MaxIssuerPathLength, actual.MaxIssuerPathLength, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxIssuerPathLength")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NonCa, actual.NonCa, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NonCa")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.MaxIssuerPathLength, actual.MaxIssuerPathLength, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxIssuerPathLength")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.ZeroMaxIssuerPathLength, actual.ZeroMaxIssuerPathLength, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ZeroMaxIssuerPathLength")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -5973,7 +6069,7 @@ func compareCertificateConfigX509ConfigPolicyIdsNewStyle(d, a interface{}, fn dc
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6002,21 +6098,21 @@ func compareCertificateConfigX509ConfigAdditionalExtensionsNewStyle(d, a interfa
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectId, actual.ObjectId, dcl.Info{ObjectFunction: compareCertificateConfigX509ConfigAdditionalExtensionsObjectIdNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigAdditionalExtensionsObjectId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectId, actual.ObjectId, dcl.DiffInfo{ObjectFunction: compareCertificateConfigX509ConfigAdditionalExtensionsObjectIdNewStyle, EmptyObject: EmptyCertificateConfigX509ConfigAdditionalExtensionsObjectId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Critical, actual.Critical, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Critical")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Critical, actual.Critical, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Critical")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Value, actual.Value, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Value")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Value, actual.Value, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Value")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6045,7 +6141,7 @@ func compareCertificateConfigX509ConfigAdditionalExtensionsObjectIdNewStyle(d, a
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6074,14 +6170,14 @@ func compareCertificateConfigPublicKeyNewStyle(d, a interface{}, fn dcl.FieldNam
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Key, actual.Key, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Key")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Key, actual.Key, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Key")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Format, actual.Format, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Format")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Format, actual.Format, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Format")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6110,14 +6206,14 @@ func compareCertificateRevocationDetailsNewStyle(d, a interface{}, fn dcl.FieldN
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.RevocationState, actual.RevocationState, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevocationState")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RevocationState, actual.RevocationState, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevocationState")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RevocationTime, actual.RevocationTime, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevocationTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RevocationTime, actual.RevocationTime, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RevocationTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6146,56 +6242,56 @@ func compareCertificateCertificateDescriptionNewStyle(d, a interface{}, fn dcl.F
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.SubjectDescription, actual.SubjectDescription, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescription, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectDescription")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubjectDescription, actual.SubjectDescription, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescription, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectDescription")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.X509Description, actual.X509Description, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509Description, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("X509Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.X509Description, actual.X509Description, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509Description, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("X509Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PublicKey, actual.PublicKey, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionPublicKeyNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionPublicKey, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PublicKey, actual.PublicKey, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionPublicKeyNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionPublicKey, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PublicKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SubjectKeyId, actual.SubjectKeyId, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionSubjectKeyIdNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectKeyId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectKeyId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubjectKeyId, actual.SubjectKeyId, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionSubjectKeyIdNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectKeyId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectKeyId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AuthorityKeyId, actual.AuthorityKeyId, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionAuthorityKeyIdNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionAuthorityKeyId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AuthorityKeyId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AuthorityKeyId, actual.AuthorityKeyId, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionAuthorityKeyIdNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionAuthorityKeyId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AuthorityKeyId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CrlDistributionPoints, actual.CrlDistributionPoints, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CrlDistributionPoints")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CrlDistributionPoints, actual.CrlDistributionPoints, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CrlDistributionPoints")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AiaIssuingCertificateUrls, actual.AiaIssuingCertificateUrls, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AiaIssuingCertificateUrls")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AiaIssuingCertificateUrls, actual.AiaIssuingCertificateUrls, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AiaIssuingCertificateUrls")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CertFingerprint, actual.CertFingerprint, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionCertFingerprintNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionCertFingerprint, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertFingerprint")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CertFingerprint, actual.CertFingerprint, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionCertFingerprintNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionCertFingerprint, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertFingerprint")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6224,42 +6320,42 @@ func compareCertificateCertificateDescriptionSubjectDescriptionNewStyle(d, a int
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Subject, actual.Subject, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionSubjectNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescriptionSubject, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Subject")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Subject, actual.Subject, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionSubjectNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescriptionSubject, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Subject")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SubjectAltName, actual.SubjectAltName, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltName, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectAltName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubjectAltName, actual.SubjectAltName, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltName, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubjectAltName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.HexSerialNumber, actual.HexSerialNumber, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("HexSerialNumber")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.HexSerialNumber, actual.HexSerialNumber, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("HexSerialNumber")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Lifetime, actual.Lifetime, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Lifetime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Lifetime, actual.Lifetime, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Lifetime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NotBeforeTime, actual.NotBeforeTime, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NotBeforeTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NotBeforeTime, actual.NotBeforeTime, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NotBeforeTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NotAfterTime, actual.NotAfterTime, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NotAfterTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NotAfterTime, actual.NotAfterTime, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NotAfterTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6288,56 +6384,56 @@ func compareCertificateCertificateDescriptionSubjectDescriptionSubjectNewStyle(d
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.CommonName, actual.CommonName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CommonName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CommonName, actual.CommonName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CommonName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CountryCode, actual.CountryCode, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CountryCode")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CountryCode, actual.CountryCode, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CountryCode")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Organization, actual.Organization, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Organization")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Organization, actual.Organization, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Organization")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OrganizationalUnit, actual.OrganizationalUnit, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OrganizationalUnit")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OrganizationalUnit, actual.OrganizationalUnit, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OrganizationalUnit")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Locality, actual.Locality, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Locality")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Locality, actual.Locality, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Locality")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Province, actual.Province, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Province")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Province, actual.Province, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Province")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.StreetAddress, actual.StreetAddress, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("StreetAddress")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.StreetAddress, actual.StreetAddress, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("StreetAddress")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PostalCode, actual.PostalCode, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PostalCode")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PostalCode, actual.PostalCode, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PostalCode")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6366,35 +6462,35 @@ func compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameNew
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.DnsNames, actual.DnsNames, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DnsNames")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DnsNames, actual.DnsNames, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DnsNames")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Uris, actual.Uris, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uris")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Uris, actual.Uris, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uris")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EmailAddresses, actual.EmailAddresses, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EmailAddresses")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EmailAddresses, actual.EmailAddresses, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EmailAddresses")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IPAddresses, actual.IPAddresses, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IpAddresses")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IPAddresses, actual.IPAddresses, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IpAddresses")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CustomSans, actual.CustomSans, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CustomSans")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CustomSans, actual.CustomSans, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CustomSans")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6423,21 +6519,21 @@ func compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectId, actual.ObjectId, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectId, actual.ObjectId, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Critical, actual.Critical, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Critical")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Critical, actual.Critical, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Critical")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Value, actual.Value, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Value")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Value, actual.Value, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Value")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6466,7 +6562,7 @@ func compareCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6495,35 +6591,35 @@ func compareCertificateCertificateDescriptionX509DescriptionNewStyle(d, a interf
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.KeyUsage, actual.KeyUsage, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionKeyUsageNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyUsage, actual.KeyUsage, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionKeyUsageNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CaOptions, actual.CaOptions, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionCaOptionsNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionCaOptions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CaOptions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CaOptions, actual.CaOptions, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionCaOptionsNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionCaOptions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CaOptions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PolicyIds, actual.PolicyIds, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionPolicyIdsNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionPolicyIds, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PolicyIds")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PolicyIds, actual.PolicyIds, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionPolicyIdsNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionPolicyIds, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PolicyIds")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AiaOcspServers, actual.AiaOcspServers, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AiaOcspServers")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AiaOcspServers, actual.AiaOcspServers, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AiaOcspServers")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AdditionalExtensions, actual.AdditionalExtensions, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionAdditionalExtensions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AdditionalExtensions")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AdditionalExtensions, actual.AdditionalExtensions, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionAdditionalExtensions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AdditionalExtensions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6552,21 +6648,21 @@ func compareCertificateCertificateDescriptionX509DescriptionKeyUsageNewStyle(d, 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.BaseKeyUsage, actual.BaseKeyUsage, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("BaseKeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.BaseKeyUsage, actual.BaseKeyUsage, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("BaseKeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ExtendedKeyUsage, actual.ExtendedKeyUsage, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExtendedKeyUsage")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ExtendedKeyUsage, actual.ExtendedKeyUsage, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ExtendedKeyUsage")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.UnknownExtendedKeyUsages, actual.UnknownExtendedKeyUsages, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UnknownExtendedKeyUsages")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.UnknownExtendedKeyUsages, actual.UnknownExtendedKeyUsages, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UnknownExtendedKeyUsages")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6595,63 +6691,63 @@ func compareCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.DigitalSignature, actual.DigitalSignature, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DigitalSignature")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DigitalSignature, actual.DigitalSignature, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DigitalSignature")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ContentCommitment, actual.ContentCommitment, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ContentCommitment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ContentCommitment, actual.ContentCommitment, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ContentCommitment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.KeyEncipherment, actual.KeyEncipherment, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyEncipherment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyEncipherment, actual.KeyEncipherment, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyEncipherment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DataEncipherment, actual.DataEncipherment, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DataEncipherment")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DataEncipherment, actual.DataEncipherment, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DataEncipherment")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.KeyAgreement, actual.KeyAgreement, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyAgreement")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyAgreement, actual.KeyAgreement, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyAgreement")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CertSign, actual.CertSign, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertSign")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CertSign, actual.CertSign, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CertSign")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CrlSign, actual.CrlSign, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CrlSign")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CrlSign, actual.CrlSign, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CrlSign")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EncipherOnly, actual.EncipherOnly, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EncipherOnly")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EncipherOnly, actual.EncipherOnly, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EncipherOnly")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DecipherOnly, actual.DecipherOnly, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DecipherOnly")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DecipherOnly, actual.DecipherOnly, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DecipherOnly")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6680,42 +6776,42 @@ func compareCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyU
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ServerAuth, actual.ServerAuth, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServerAuth")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ServerAuth, actual.ServerAuth, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServerAuth")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ClientAuth, actual.ClientAuth, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ClientAuth")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ClientAuth, actual.ClientAuth, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ClientAuth")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CodeSigning, actual.CodeSigning, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CodeSigning")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CodeSigning, actual.CodeSigning, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CodeSigning")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EmailProtection, actual.EmailProtection, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EmailProtection")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EmailProtection, actual.EmailProtection, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EmailProtection")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.TimeStamping, actual.TimeStamping, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TimeStamping")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.TimeStamping, actual.TimeStamping, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TimeStamping")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OcspSigning, actual.OcspSigning, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OcspSigning")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OcspSigning, actual.OcspSigning, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OcspSigning")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6744,7 +6840,7 @@ func compareCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExten
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6773,14 +6869,14 @@ func compareCertificateCertificateDescriptionX509DescriptionCaOptionsNewStyle(d,
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.IsCa, actual.IsCa, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IsCa")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IsCa, actual.IsCa, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IsCa")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MaxIssuerPathLength, actual.MaxIssuerPathLength, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxIssuerPathLength")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MaxIssuerPathLength, actual.MaxIssuerPathLength, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxIssuerPathLength")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6809,7 +6905,7 @@ func compareCertificateCertificateDescriptionX509DescriptionPolicyIdsNewStyle(d,
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6838,21 +6934,21 @@ func compareCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectId, actual.ObjectId, dcl.Info{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectId, actual.ObjectId, dcl.DiffInfo{ObjectFunction: compareCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdNewStyle, EmptyObject: EmptyCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Critical, actual.Critical, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Critical")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Critical, actual.Critical, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Critical")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Value, actual.Value, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Value")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Value, actual.Value, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Value")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6881,7 +6977,7 @@ func compareCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ObjectIdPath, actual.ObjectIdPath, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ObjectIdPath")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6910,14 +7006,14 @@ func compareCertificateCertificateDescriptionPublicKeyNewStyle(d, a interface{},
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Key, actual.Key, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Key")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Key, actual.Key, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Key")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Format, actual.Format, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Format")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Format, actual.Format, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Format")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6946,7 +7042,7 @@ func compareCertificateCertificateDescriptionSubjectKeyIdNewStyle(d, a interface
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.KeyId, actual.KeyId, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyId, actual.KeyId, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6975,7 +7071,7 @@ func compareCertificateCertificateDescriptionAuthorityKeyIdNewStyle(d, a interfa
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.KeyId, actual.KeyId, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KeyId, actual.KeyId, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KeyId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -7004,7 +7100,7 @@ func compareCertificateCertificateDescriptionCertFingerprintNewStyle(d, a interf
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Sha256Hash, actual.Sha256Hash, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Sha256Hash")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Sha256Hash, actual.Sha256Hash, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Sha256Hash")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -7060,17 +7156,17 @@ func (r *Certificate) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalCertificate decodes JSON responses into the Certificate resource schema.
-func unmarshalCertificate(b []byte, c *Client) (*Certificate, error) {
+func unmarshalCertificate(b []byte, c *Client, res *Certificate) (*Certificate, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapCertificate(m, c)
+	return unmarshalMapCertificate(m, c, res)
 }
 
-func unmarshalMapCertificate(m map[string]interface{}, c *Client) (*Certificate, error) {
+func unmarshalMapCertificate(m map[string]interface{}, c *Client, res *Certificate) (*Certificate, error) {
 
-	flattened := flattenCertificate(c, m)
+	flattened := flattenCertificate(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -7080,17 +7176,19 @@ func unmarshalMapCertificate(m map[string]interface{}, c *Client) (*Certificate,
 // expandCertificate expands Certificate into a JSON request object.
 func expandCertificate(c *Client, f *Certificate) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v, err := dcl.DeriveField("projects/%s/locations/%s/caPools/%s/certificates/%s", f.Name, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.Location), dcl.SelfLinkToName(f.CaPool), dcl.SelfLinkToName(f.Name)); err != nil {
 		return nil, fmt.Errorf("error expanding Name into name: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["name"] = v
 	}
 	if v := f.PemCsr; dcl.ValueShouldBeSent(v) {
 		m["pemCsr"] = v
 	}
-	if v, err := expandCertificateConfig(c, f.Config); err != nil {
+	if v, err := expandCertificateConfig(c, f.Config, res); err != nil {
 		return nil, fmt.Errorf("error expanding Config into config: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["config"] = v
 	}
 	if v := f.Lifetime; dcl.ValueShouldBeSent(v) {
@@ -7098,7 +7196,7 @@ func expandCertificate(c *Client, f *Certificate) (map[string]interface{}, error
 	}
 	if v, err := dcl.DeriveField("projects/%s/locations/%s/certificateTemplates/%s", f.CertificateTemplate, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.Location), dcl.SelfLinkToName(f.CertificateTemplate)); err != nil {
 		return nil, fmt.Errorf("error expanding CertificateTemplate into certificateTemplate: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["certificateTemplate"] = v
 	}
 	if v := f.SubjectMode; dcl.ValueShouldBeSent(v) {
@@ -7109,22 +7207,22 @@ func expandCertificate(c *Client, f *Certificate) (map[string]interface{}, error
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Location into location: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["location"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding CaPool into caPool: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["caPool"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding CertificateAuthority into certificateAuthority: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["certificateAuthority"] = v
 	}
 
@@ -7133,7 +7231,7 @@ func expandCertificate(c *Client, f *Certificate) (map[string]interface{}, error
 
 // flattenCertificate flattens Certificate from a JSON request object into the
 // Certificate type.
-func flattenCertificate(c *Client, i interface{}) *Certificate {
+func flattenCertificate(c *Client, i interface{}, res *Certificate) *Certificate {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7142,39 +7240,39 @@ func flattenCertificate(c *Client, i interface{}) *Certificate {
 		return nil
 	}
 
-	res := &Certificate{}
-	res.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
-	res.PemCsr = dcl.FlattenString(m["pemCsr"])
-	res.Config = flattenCertificateConfig(c, m["config"])
-	res.IssuerCertificateAuthority = dcl.FlattenString(m["issuerCertificateAuthority"])
-	res.Lifetime = dcl.FlattenString(m["lifetime"])
-	res.CertificateTemplate = dcl.FlattenString(m["certificateTemplate"])
-	res.SubjectMode = flattenCertificateSubjectModeEnum(m["subjectMode"])
-	res.RevocationDetails = flattenCertificateRevocationDetails(c, m["revocationDetails"])
-	res.PemCertificate = dcl.FlattenString(m["pemCertificate"])
-	res.CertificateDescription = flattenCertificateCertificateDescription(c, m["certificateDescription"])
-	res.PemCertificateChain = dcl.FlattenStringSlice(m["pemCertificateChain"])
-	res.CreateTime = dcl.FlattenString(m["createTime"])
-	res.UpdateTime = dcl.FlattenString(m["updateTime"])
-	res.Labels = dcl.FlattenKeyValuePairs(m["labels"])
-	res.Project = dcl.FlattenString(m["project"])
-	res.Location = dcl.FlattenString(m["location"])
-	res.CaPool = dcl.FlattenString(m["caPool"])
-	res.CertificateAuthority = dcl.FlattenString(m["certificateAuthority"])
+	resultRes := &Certificate{}
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.PemCsr = dcl.FlattenString(m["pemCsr"])
+	resultRes.Config = flattenCertificateConfig(c, m["config"], res)
+	resultRes.IssuerCertificateAuthority = dcl.FlattenString(m["issuerCertificateAuthority"])
+	resultRes.Lifetime = dcl.FlattenString(m["lifetime"])
+	resultRes.CertificateTemplate = dcl.FlattenString(m["certificateTemplate"])
+	resultRes.SubjectMode = flattenCertificateSubjectModeEnum(m["subjectMode"])
+	resultRes.RevocationDetails = flattenCertificateRevocationDetails(c, m["revocationDetails"], res)
+	resultRes.PemCertificate = dcl.FlattenString(m["pemCertificate"])
+	resultRes.CertificateDescription = flattenCertificateCertificateDescription(c, m["certificateDescription"], res)
+	resultRes.PemCertificateChain = dcl.FlattenStringSlice(m["pemCertificateChain"])
+	resultRes.CreateTime = dcl.FlattenString(m["createTime"])
+	resultRes.UpdateTime = dcl.FlattenString(m["updateTime"])
+	resultRes.Labels = dcl.FlattenKeyValuePairs(m["labels"])
+	resultRes.Project = dcl.FlattenString(m["project"])
+	resultRes.Location = dcl.FlattenString(m["location"])
+	resultRes.CaPool = dcl.FlattenString(m["caPool"])
+	resultRes.CertificateAuthority = dcl.FlattenString(m["certificateAuthority"])
 
-	return res
+	return resultRes
 }
 
 // expandCertificateConfigMap expands the contents of CertificateConfig into a JSON
 // request object.
-func expandCertificateConfigMap(c *Client, f map[string]CertificateConfig) (map[string]interface{}, error) {
+func expandCertificateConfigMap(c *Client, f map[string]CertificateConfig, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfig(c, &item)
+		i, err := expandCertificateConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7188,14 +7286,14 @@ func expandCertificateConfigMap(c *Client, f map[string]CertificateConfig) (map[
 
 // expandCertificateConfigSlice expands the contents of CertificateConfig into a JSON
 // request object.
-func expandCertificateConfigSlice(c *Client, f []CertificateConfig) ([]map[string]interface{}, error) {
+func expandCertificateConfigSlice(c *Client, f []CertificateConfig, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfig(c, &item)
+		i, err := expandCertificateConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7208,7 +7306,7 @@ func expandCertificateConfigSlice(c *Client, f []CertificateConfig) ([]map[strin
 
 // flattenCertificateConfigMap flattens the contents of CertificateConfig from a JSON
 // response object.
-func flattenCertificateConfigMap(c *Client, i interface{}) map[string]CertificateConfig {
+func flattenCertificateConfigMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfig {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfig{}
@@ -7220,7 +7318,7 @@ func flattenCertificateConfigMap(c *Client, i interface{}) map[string]Certificat
 
 	items := make(map[string]CertificateConfig)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfig(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfig(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7228,7 +7326,7 @@ func flattenCertificateConfigMap(c *Client, i interface{}) map[string]Certificat
 
 // flattenCertificateConfigSlice flattens the contents of CertificateConfig from a JSON
 // response object.
-func flattenCertificateConfigSlice(c *Client, i interface{}) []CertificateConfig {
+func flattenCertificateConfigSlice(c *Client, i interface{}, res *Certificate) []CertificateConfig {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfig{}
@@ -7240,7 +7338,7 @@ func flattenCertificateConfigSlice(c *Client, i interface{}) []CertificateConfig
 
 	items := make([]CertificateConfig, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfig(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfig(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7248,23 +7346,23 @@ func flattenCertificateConfigSlice(c *Client, i interface{}) []CertificateConfig
 
 // expandCertificateConfig expands an instance of CertificateConfig into a JSON
 // request object.
-func expandCertificateConfig(c *Client, f *CertificateConfig) (map[string]interface{}, error) {
+func expandCertificateConfig(c *Client, f *CertificateConfig, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateConfigSubjectConfig(c, f.SubjectConfig); err != nil {
+	if v, err := expandCertificateConfigSubjectConfig(c, f.SubjectConfig, res); err != nil {
 		return nil, fmt.Errorf("error expanding SubjectConfig into subjectConfig: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["subjectConfig"] = v
 	}
-	if v, err := expandCertificateConfigX509Config(c, f.X509Config); err != nil {
+	if v, err := expandCertificateConfigX509Config(c, f.X509Config, res); err != nil {
 		return nil, fmt.Errorf("error expanding X509Config into x509Config: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["x509Config"] = v
 	}
-	if v, err := expandCertificateConfigPublicKey(c, f.PublicKey); err != nil {
+	if v, err := expandCertificateConfigPublicKey(c, f.PublicKey, res); err != nil {
 		return nil, fmt.Errorf("error expanding PublicKey into publicKey: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["publicKey"] = v
@@ -7275,7 +7373,7 @@ func expandCertificateConfig(c *Client, f *CertificateConfig) (map[string]interf
 
 // flattenCertificateConfig flattens an instance of CertificateConfig from a JSON
 // response object.
-func flattenCertificateConfig(c *Client, i interface{}) *CertificateConfig {
+func flattenCertificateConfig(c *Client, i interface{}, res *Certificate) *CertificateConfig {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7286,23 +7384,23 @@ func flattenCertificateConfig(c *Client, i interface{}) *CertificateConfig {
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateConfig
 	}
-	r.SubjectConfig = flattenCertificateConfigSubjectConfig(c, m["subjectConfig"])
-	r.X509Config = flattenCertificateConfigX509Config(c, m["x509Config"])
-	r.PublicKey = flattenCertificateConfigPublicKey(c, m["publicKey"])
+	r.SubjectConfig = flattenCertificateConfigSubjectConfig(c, m["subjectConfig"], res)
+	r.X509Config = flattenCertificateConfigX509Config(c, m["x509Config"], res)
+	r.PublicKey = flattenCertificateConfigPublicKey(c, m["publicKey"], res)
 
 	return r
 }
 
 // expandCertificateConfigSubjectConfigMap expands the contents of CertificateConfigSubjectConfig into a JSON
 // request object.
-func expandCertificateConfigSubjectConfigMap(c *Client, f map[string]CertificateConfigSubjectConfig) (map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfigMap(c *Client, f map[string]CertificateConfigSubjectConfig, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigSubjectConfig(c, &item)
+		i, err := expandCertificateConfigSubjectConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7316,14 +7414,14 @@ func expandCertificateConfigSubjectConfigMap(c *Client, f map[string]Certificate
 
 // expandCertificateConfigSubjectConfigSlice expands the contents of CertificateConfigSubjectConfig into a JSON
 // request object.
-func expandCertificateConfigSubjectConfigSlice(c *Client, f []CertificateConfigSubjectConfig) ([]map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfigSlice(c *Client, f []CertificateConfigSubjectConfig, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigSubjectConfig(c, &item)
+		i, err := expandCertificateConfigSubjectConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7336,7 +7434,7 @@ func expandCertificateConfigSubjectConfigSlice(c *Client, f []CertificateConfigS
 
 // flattenCertificateConfigSubjectConfigMap flattens the contents of CertificateConfigSubjectConfig from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfigMap(c *Client, i interface{}) map[string]CertificateConfigSubjectConfig {
+func flattenCertificateConfigSubjectConfigMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigSubjectConfig {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigSubjectConfig{}
@@ -7348,7 +7446,7 @@ func flattenCertificateConfigSubjectConfigMap(c *Client, i interface{}) map[stri
 
 	items := make(map[string]CertificateConfigSubjectConfig)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigSubjectConfig(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigSubjectConfig(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7356,7 +7454,7 @@ func flattenCertificateConfigSubjectConfigMap(c *Client, i interface{}) map[stri
 
 // flattenCertificateConfigSubjectConfigSlice flattens the contents of CertificateConfigSubjectConfig from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfigSlice(c *Client, i interface{}) []CertificateConfigSubjectConfig {
+func flattenCertificateConfigSubjectConfigSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigSubjectConfig {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigSubjectConfig{}
@@ -7368,7 +7466,7 @@ func flattenCertificateConfigSubjectConfigSlice(c *Client, i interface{}) []Cert
 
 	items := make([]CertificateConfigSubjectConfig, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigSubjectConfig(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigSubjectConfig(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7376,18 +7474,18 @@ func flattenCertificateConfigSubjectConfigSlice(c *Client, i interface{}) []Cert
 
 // expandCertificateConfigSubjectConfig expands an instance of CertificateConfigSubjectConfig into a JSON
 // request object.
-func expandCertificateConfigSubjectConfig(c *Client, f *CertificateConfigSubjectConfig) (map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfig(c *Client, f *CertificateConfigSubjectConfig, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateConfigSubjectConfigSubject(c, f.Subject); err != nil {
+	if v, err := expandCertificateConfigSubjectConfigSubject(c, f.Subject, res); err != nil {
 		return nil, fmt.Errorf("error expanding Subject into subject: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["subject"] = v
 	}
-	if v, err := expandCertificateConfigSubjectConfigSubjectAltName(c, f.SubjectAltName); err != nil {
+	if v, err := expandCertificateConfigSubjectConfigSubjectAltName(c, f.SubjectAltName, res); err != nil {
 		return nil, fmt.Errorf("error expanding SubjectAltName into subjectAltName: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["subjectAltName"] = v
@@ -7398,7 +7496,7 @@ func expandCertificateConfigSubjectConfig(c *Client, f *CertificateConfigSubject
 
 // flattenCertificateConfigSubjectConfig flattens an instance of CertificateConfigSubjectConfig from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfig(c *Client, i interface{}) *CertificateConfigSubjectConfig {
+func flattenCertificateConfigSubjectConfig(c *Client, i interface{}, res *Certificate) *CertificateConfigSubjectConfig {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7409,22 +7507,22 @@ func flattenCertificateConfigSubjectConfig(c *Client, i interface{}) *Certificat
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateConfigSubjectConfig
 	}
-	r.Subject = flattenCertificateConfigSubjectConfigSubject(c, m["subject"])
-	r.SubjectAltName = flattenCertificateConfigSubjectConfigSubjectAltName(c, m["subjectAltName"])
+	r.Subject = flattenCertificateConfigSubjectConfigSubject(c, m["subject"], res)
+	r.SubjectAltName = flattenCertificateConfigSubjectConfigSubjectAltName(c, m["subjectAltName"], res)
 
 	return r
 }
 
 // expandCertificateConfigSubjectConfigSubjectMap expands the contents of CertificateConfigSubjectConfigSubject into a JSON
 // request object.
-func expandCertificateConfigSubjectConfigSubjectMap(c *Client, f map[string]CertificateConfigSubjectConfigSubject) (map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfigSubjectMap(c *Client, f map[string]CertificateConfigSubjectConfigSubject, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigSubjectConfigSubject(c, &item)
+		i, err := expandCertificateConfigSubjectConfigSubject(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7438,14 +7536,14 @@ func expandCertificateConfigSubjectConfigSubjectMap(c *Client, f map[string]Cert
 
 // expandCertificateConfigSubjectConfigSubjectSlice expands the contents of CertificateConfigSubjectConfigSubject into a JSON
 // request object.
-func expandCertificateConfigSubjectConfigSubjectSlice(c *Client, f []CertificateConfigSubjectConfigSubject) ([]map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfigSubjectSlice(c *Client, f []CertificateConfigSubjectConfigSubject, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigSubjectConfigSubject(c, &item)
+		i, err := expandCertificateConfigSubjectConfigSubject(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7458,7 +7556,7 @@ func expandCertificateConfigSubjectConfigSubjectSlice(c *Client, f []Certificate
 
 // flattenCertificateConfigSubjectConfigSubjectMap flattens the contents of CertificateConfigSubjectConfigSubject from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfigSubjectMap(c *Client, i interface{}) map[string]CertificateConfigSubjectConfigSubject {
+func flattenCertificateConfigSubjectConfigSubjectMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigSubjectConfigSubject {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigSubjectConfigSubject{}
@@ -7470,7 +7568,7 @@ func flattenCertificateConfigSubjectConfigSubjectMap(c *Client, i interface{}) m
 
 	items := make(map[string]CertificateConfigSubjectConfigSubject)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigSubjectConfigSubject(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigSubjectConfigSubject(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7478,7 +7576,7 @@ func flattenCertificateConfigSubjectConfigSubjectMap(c *Client, i interface{}) m
 
 // flattenCertificateConfigSubjectConfigSubjectSlice flattens the contents of CertificateConfigSubjectConfigSubject from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfigSubjectSlice(c *Client, i interface{}) []CertificateConfigSubjectConfigSubject {
+func flattenCertificateConfigSubjectConfigSubjectSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigSubjectConfigSubject {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigSubjectConfigSubject{}
@@ -7490,7 +7588,7 @@ func flattenCertificateConfigSubjectConfigSubjectSlice(c *Client, i interface{})
 
 	items := make([]CertificateConfigSubjectConfigSubject, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigSubjectConfigSubject(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigSubjectConfigSubject(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7498,7 +7596,7 @@ func flattenCertificateConfigSubjectConfigSubjectSlice(c *Client, i interface{})
 
 // expandCertificateConfigSubjectConfigSubject expands an instance of CertificateConfigSubjectConfigSubject into a JSON
 // request object.
-func expandCertificateConfigSubjectConfigSubject(c *Client, f *CertificateConfigSubjectConfigSubject) (map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfigSubject(c *Client, f *CertificateConfigSubjectConfigSubject, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -7534,7 +7632,7 @@ func expandCertificateConfigSubjectConfigSubject(c *Client, f *CertificateConfig
 
 // flattenCertificateConfigSubjectConfigSubject flattens an instance of CertificateConfigSubjectConfigSubject from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfigSubject(c *Client, i interface{}) *CertificateConfigSubjectConfigSubject {
+func flattenCertificateConfigSubjectConfigSubject(c *Client, i interface{}, res *Certificate) *CertificateConfigSubjectConfigSubject {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7559,14 +7657,14 @@ func flattenCertificateConfigSubjectConfigSubject(c *Client, i interface{}) *Cer
 
 // expandCertificateConfigSubjectConfigSubjectAltNameMap expands the contents of CertificateConfigSubjectConfigSubjectAltName into a JSON
 // request object.
-func expandCertificateConfigSubjectConfigSubjectAltNameMap(c *Client, f map[string]CertificateConfigSubjectConfigSubjectAltName) (map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfigSubjectAltNameMap(c *Client, f map[string]CertificateConfigSubjectConfigSubjectAltName, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigSubjectConfigSubjectAltName(c, &item)
+		i, err := expandCertificateConfigSubjectConfigSubjectAltName(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7580,14 +7678,14 @@ func expandCertificateConfigSubjectConfigSubjectAltNameMap(c *Client, f map[stri
 
 // expandCertificateConfigSubjectConfigSubjectAltNameSlice expands the contents of CertificateConfigSubjectConfigSubjectAltName into a JSON
 // request object.
-func expandCertificateConfigSubjectConfigSubjectAltNameSlice(c *Client, f []CertificateConfigSubjectConfigSubjectAltName) ([]map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfigSubjectAltNameSlice(c *Client, f []CertificateConfigSubjectConfigSubjectAltName, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigSubjectConfigSubjectAltName(c, &item)
+		i, err := expandCertificateConfigSubjectConfigSubjectAltName(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7600,7 +7698,7 @@ func expandCertificateConfigSubjectConfigSubjectAltNameSlice(c *Client, f []Cert
 
 // flattenCertificateConfigSubjectConfigSubjectAltNameMap flattens the contents of CertificateConfigSubjectConfigSubjectAltName from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfigSubjectAltNameMap(c *Client, i interface{}) map[string]CertificateConfigSubjectConfigSubjectAltName {
+func flattenCertificateConfigSubjectConfigSubjectAltNameMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigSubjectConfigSubjectAltName {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigSubjectConfigSubjectAltName{}
@@ -7612,7 +7710,7 @@ func flattenCertificateConfigSubjectConfigSubjectAltNameMap(c *Client, i interfa
 
 	items := make(map[string]CertificateConfigSubjectConfigSubjectAltName)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigSubjectConfigSubjectAltName(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigSubjectConfigSubjectAltName(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7620,7 +7718,7 @@ func flattenCertificateConfigSubjectConfigSubjectAltNameMap(c *Client, i interfa
 
 // flattenCertificateConfigSubjectConfigSubjectAltNameSlice flattens the contents of CertificateConfigSubjectConfigSubjectAltName from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfigSubjectAltNameSlice(c *Client, i interface{}) []CertificateConfigSubjectConfigSubjectAltName {
+func flattenCertificateConfigSubjectConfigSubjectAltNameSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigSubjectConfigSubjectAltName {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigSubjectConfigSubjectAltName{}
@@ -7632,7 +7730,7 @@ func flattenCertificateConfigSubjectConfigSubjectAltNameSlice(c *Client, i inter
 
 	items := make([]CertificateConfigSubjectConfigSubjectAltName, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigSubjectConfigSubjectAltName(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigSubjectConfigSubjectAltName(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7640,7 +7738,7 @@ func flattenCertificateConfigSubjectConfigSubjectAltNameSlice(c *Client, i inter
 
 // expandCertificateConfigSubjectConfigSubjectAltName expands an instance of CertificateConfigSubjectConfigSubjectAltName into a JSON
 // request object.
-func expandCertificateConfigSubjectConfigSubjectAltName(c *Client, f *CertificateConfigSubjectConfigSubjectAltName) (map[string]interface{}, error) {
+func expandCertificateConfigSubjectConfigSubjectAltName(c *Client, f *CertificateConfigSubjectConfigSubjectAltName, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -7664,7 +7762,7 @@ func expandCertificateConfigSubjectConfigSubjectAltName(c *Client, f *Certificat
 
 // flattenCertificateConfigSubjectConfigSubjectAltName flattens an instance of CertificateConfigSubjectConfigSubjectAltName from a JSON
 // response object.
-func flattenCertificateConfigSubjectConfigSubjectAltName(c *Client, i interface{}) *CertificateConfigSubjectConfigSubjectAltName {
+func flattenCertificateConfigSubjectConfigSubjectAltName(c *Client, i interface{}, res *Certificate) *CertificateConfigSubjectConfigSubjectAltName {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7685,14 +7783,14 @@ func flattenCertificateConfigSubjectConfigSubjectAltName(c *Client, i interface{
 
 // expandCertificateConfigX509ConfigMap expands the contents of CertificateConfigX509Config into a JSON
 // request object.
-func expandCertificateConfigX509ConfigMap(c *Client, f map[string]CertificateConfigX509Config) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigMap(c *Client, f map[string]CertificateConfigX509Config, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509Config(c, &item)
+		i, err := expandCertificateConfigX509Config(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7706,14 +7804,14 @@ func expandCertificateConfigX509ConfigMap(c *Client, f map[string]CertificateCon
 
 // expandCertificateConfigX509ConfigSlice expands the contents of CertificateConfigX509Config into a JSON
 // request object.
-func expandCertificateConfigX509ConfigSlice(c *Client, f []CertificateConfigX509Config) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigSlice(c *Client, f []CertificateConfigX509Config, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509Config(c, &item)
+		i, err := expandCertificateConfigX509Config(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7726,7 +7824,7 @@ func expandCertificateConfigX509ConfigSlice(c *Client, f []CertificateConfigX509
 
 // flattenCertificateConfigX509ConfigMap flattens the contents of CertificateConfigX509Config from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigMap(c *Client, i interface{}) map[string]CertificateConfigX509Config {
+func flattenCertificateConfigX509ConfigMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509Config {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509Config{}
@@ -7738,7 +7836,7 @@ func flattenCertificateConfigX509ConfigMap(c *Client, i interface{}) map[string]
 
 	items := make(map[string]CertificateConfigX509Config)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509Config(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509Config(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7746,7 +7844,7 @@ func flattenCertificateConfigX509ConfigMap(c *Client, i interface{}) map[string]
 
 // flattenCertificateConfigX509ConfigSlice flattens the contents of CertificateConfigX509Config from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigSlice(c *Client, i interface{}) []CertificateConfigX509Config {
+func flattenCertificateConfigX509ConfigSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509Config {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509Config{}
@@ -7758,7 +7856,7 @@ func flattenCertificateConfigX509ConfigSlice(c *Client, i interface{}) []Certifi
 
 	items := make([]CertificateConfigX509Config, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509Config(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509Config(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7766,23 +7864,23 @@ func flattenCertificateConfigX509ConfigSlice(c *Client, i interface{}) []Certifi
 
 // expandCertificateConfigX509Config expands an instance of CertificateConfigX509Config into a JSON
 // request object.
-func expandCertificateConfigX509Config(c *Client, f *CertificateConfigX509Config) (map[string]interface{}, error) {
+func expandCertificateConfigX509Config(c *Client, f *CertificateConfigX509Config, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateConfigX509ConfigKeyUsage(c, f.KeyUsage); err != nil {
+	if v, err := expandCertificateConfigX509ConfigKeyUsage(c, f.KeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding KeyUsage into keyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["keyUsage"] = v
 	}
-	if v, err := expandCertificateConfigX509ConfigCaOptions(c, f.CaOptions); err != nil {
+	if v, err := expandCertificateConfigX509ConfigCAOptions(c, f.CaOptions, res); err != nil {
 		return nil, fmt.Errorf("error expanding CaOptions into caOptions: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["caOptions"] = v
 	}
-	if v, err := expandCertificateConfigX509ConfigPolicyIdsSlice(c, f.PolicyIds); err != nil {
+	if v, err := expandCertificateConfigX509ConfigPolicyIdsSlice(c, f.PolicyIds, res); err != nil {
 		return nil, fmt.Errorf("error expanding PolicyIds into policyIds: %w", err)
 	} else if v != nil {
 		m["policyIds"] = v
@@ -7790,7 +7888,7 @@ func expandCertificateConfigX509Config(c *Client, f *CertificateConfigX509Config
 	if v := f.AiaOcspServers; v != nil {
 		m["aiaOcspServers"] = v
 	}
-	if v, err := expandCertificateConfigX509ConfigAdditionalExtensionsSlice(c, f.AdditionalExtensions); err != nil {
+	if v, err := expandCertificateConfigX509ConfigAdditionalExtensionsSlice(c, f.AdditionalExtensions, res); err != nil {
 		return nil, fmt.Errorf("error expanding AdditionalExtensions into additionalExtensions: %w", err)
 	} else if v != nil {
 		m["additionalExtensions"] = v
@@ -7801,7 +7899,7 @@ func expandCertificateConfigX509Config(c *Client, f *CertificateConfigX509Config
 
 // flattenCertificateConfigX509Config flattens an instance of CertificateConfigX509Config from a JSON
 // response object.
-func flattenCertificateConfigX509Config(c *Client, i interface{}) *CertificateConfigX509Config {
+func flattenCertificateConfigX509Config(c *Client, i interface{}, res *Certificate) *CertificateConfigX509Config {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7812,25 +7910,25 @@ func flattenCertificateConfigX509Config(c *Client, i interface{}) *CertificateCo
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateConfigX509Config
 	}
-	r.KeyUsage = flattenCertificateConfigX509ConfigKeyUsage(c, m["keyUsage"])
-	r.CaOptions = flattenCertificateConfigX509ConfigCaOptions(c, m["caOptions"])
-	r.PolicyIds = flattenCertificateConfigX509ConfigPolicyIdsSlice(c, m["policyIds"])
+	r.KeyUsage = flattenCertificateConfigX509ConfigKeyUsage(c, m["keyUsage"], res)
+	r.CaOptions = flattenCertificateConfigX509ConfigCAOptions(c, m["caOptions"], res)
+	r.PolicyIds = flattenCertificateConfigX509ConfigPolicyIdsSlice(c, m["policyIds"], res)
 	r.AiaOcspServers = dcl.FlattenStringSlice(m["aiaOcspServers"])
-	r.AdditionalExtensions = flattenCertificateConfigX509ConfigAdditionalExtensionsSlice(c, m["additionalExtensions"])
+	r.AdditionalExtensions = flattenCertificateConfigX509ConfigAdditionalExtensionsSlice(c, m["additionalExtensions"], res)
 
 	return r
 }
 
 // expandCertificateConfigX509ConfigKeyUsageMap expands the contents of CertificateConfigX509ConfigKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageMap(c *Client, f map[string]CertificateConfigX509ConfigKeyUsage) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageMap(c *Client, f map[string]CertificateConfigX509ConfigKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509ConfigKeyUsage(c, &item)
+		i, err := expandCertificateConfigX509ConfigKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7844,14 +7942,14 @@ func expandCertificateConfigX509ConfigKeyUsageMap(c *Client, f map[string]Certif
 
 // expandCertificateConfigX509ConfigKeyUsageSlice expands the contents of CertificateConfigX509ConfigKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageSlice(c *Client, f []CertificateConfigX509ConfigKeyUsage) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageSlice(c *Client, f []CertificateConfigX509ConfigKeyUsage, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509ConfigKeyUsage(c, &item)
+		i, err := expandCertificateConfigX509ConfigKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7864,7 +7962,7 @@ func expandCertificateConfigX509ConfigKeyUsageSlice(c *Client, f []CertificateCo
 
 // flattenCertificateConfigX509ConfigKeyUsageMap flattens the contents of CertificateConfigX509ConfigKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageMap(c *Client, i interface{}) map[string]CertificateConfigX509ConfigKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsageMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509ConfigKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509ConfigKeyUsage{}
@@ -7876,7 +7974,7 @@ func flattenCertificateConfigX509ConfigKeyUsageMap(c *Client, i interface{}) map
 
 	items := make(map[string]CertificateConfigX509ConfigKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509ConfigKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509ConfigKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -7884,7 +7982,7 @@ func flattenCertificateConfigX509ConfigKeyUsageMap(c *Client, i interface{}) map
 
 // flattenCertificateConfigX509ConfigKeyUsageSlice flattens the contents of CertificateConfigX509ConfigKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageSlice(c *Client, i interface{}) []CertificateConfigX509ConfigKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsageSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509ConfigKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509ConfigKeyUsage{}
@@ -7896,7 +7994,7 @@ func flattenCertificateConfigX509ConfigKeyUsageSlice(c *Client, i interface{}) [
 
 	items := make([]CertificateConfigX509ConfigKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509ConfigKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509ConfigKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -7904,23 +8002,23 @@ func flattenCertificateConfigX509ConfigKeyUsageSlice(c *Client, i interface{}) [
 
 // expandCertificateConfigX509ConfigKeyUsage expands an instance of CertificateConfigX509ConfigKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsage(c *Client, f *CertificateConfigX509ConfigKeyUsage) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsage(c *Client, f *CertificateConfigX509ConfigKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, f.BaseKeyUsage); err != nil {
+	if v, err := expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, f.BaseKeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding BaseKeyUsage into baseKeyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["baseKeyUsage"] = v
 	}
-	if v, err := expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, f.ExtendedKeyUsage); err != nil {
+	if v, err := expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, f.ExtendedKeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding ExtendedKeyUsage into extendedKeyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["extendedKeyUsage"] = v
 	}
-	if v, err := expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c, f.UnknownExtendedKeyUsages); err != nil {
+	if v, err := expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c, f.UnknownExtendedKeyUsages, res); err != nil {
 		return nil, fmt.Errorf("error expanding UnknownExtendedKeyUsages into unknownExtendedKeyUsages: %w", err)
 	} else if v != nil {
 		m["unknownExtendedKeyUsages"] = v
@@ -7931,7 +8029,7 @@ func expandCertificateConfigX509ConfigKeyUsage(c *Client, f *CertificateConfigX5
 
 // flattenCertificateConfigX509ConfigKeyUsage flattens an instance of CertificateConfigX509ConfigKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsage(c *Client, i interface{}) *CertificateConfigX509ConfigKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsage(c *Client, i interface{}, res *Certificate) *CertificateConfigX509ConfigKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -7942,23 +8040,23 @@ func flattenCertificateConfigX509ConfigKeyUsage(c *Client, i interface{}) *Certi
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateConfigX509ConfigKeyUsage
 	}
-	r.BaseKeyUsage = flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, m["baseKeyUsage"])
-	r.ExtendedKeyUsage = flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, m["extendedKeyUsage"])
-	r.UnknownExtendedKeyUsages = flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c, m["unknownExtendedKeyUsages"])
+	r.BaseKeyUsage = flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, m["baseKeyUsage"], res)
+	r.ExtendedKeyUsage = flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, m["extendedKeyUsage"], res)
+	r.UnknownExtendedKeyUsages = flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c, m["unknownExtendedKeyUsages"], res)
 
 	return r
 }
 
 // expandCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap expands the contents of CertificateConfigX509ConfigKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap(c *Client, f map[string]CertificateConfigX509ConfigKeyUsageBaseKeyUsage) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap(c *Client, f map[string]CertificateConfigX509ConfigKeyUsageBaseKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, &item)
+		i, err := expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7972,14 +8070,14 @@ func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap(c *Client, f map[s
 
 // expandCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice expands the contents of CertificateConfigX509ConfigKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(c *Client, f []CertificateConfigX509ConfigKeyUsageBaseKeyUsage) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(c *Client, f []CertificateConfigX509ConfigKeyUsageBaseKeyUsage, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, &item)
+		i, err := expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -7992,7 +8090,7 @@ func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(c *Client, f []C
 
 // flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap flattens the contents of CertificateConfigX509ConfigKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap(c *Client, i interface{}) map[string]CertificateConfigX509ConfigKeyUsageBaseKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509ConfigKeyUsageBaseKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509ConfigKeyUsageBaseKeyUsage{}
@@ -8004,7 +8102,7 @@ func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap(c *Client, i inte
 
 	items := make(map[string]CertificateConfigX509ConfigKeyUsageBaseKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8012,7 +8110,7 @@ func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageMap(c *Client, i inte
 
 // flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice flattens the contents of CertificateConfigX509ConfigKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(c *Client, i interface{}) []CertificateConfigX509ConfigKeyUsageBaseKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509ConfigKeyUsageBaseKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509ConfigKeyUsageBaseKeyUsage{}
@@ -8024,7 +8122,7 @@ func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(c *Client, i in
 
 	items := make([]CertificateConfigX509ConfigKeyUsageBaseKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8032,7 +8130,7 @@ func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsageSlice(c *Client, i in
 
 // expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage expands an instance of CertificateConfigX509ConfigKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c *Client, f *CertificateConfigX509ConfigKeyUsageBaseKeyUsage) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c *Client, f *CertificateConfigX509ConfigKeyUsageBaseKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8071,7 +8169,7 @@ func expandCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c *Client, f *Certifi
 
 // flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage flattens an instance of CertificateConfigX509ConfigKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c *Client, i interface{}) *CertificateConfigX509ConfigKeyUsageBaseKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c *Client, i interface{}, res *Certificate) *CertificateConfigX509ConfigKeyUsageBaseKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8097,14 +8195,14 @@ func flattenCertificateConfigX509ConfigKeyUsageBaseKeyUsage(c *Client, i interfa
 
 // expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap expands the contents of CertificateConfigX509ConfigKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap(c *Client, f map[string]CertificateConfigX509ConfigKeyUsageExtendedKeyUsage) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap(c *Client, f map[string]CertificateConfigX509ConfigKeyUsageExtendedKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, &item)
+		i, err := expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8118,14 +8216,14 @@ func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap(c *Client, f m
 
 // expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice expands the contents of CertificateConfigX509ConfigKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(c *Client, f []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(c *Client, f []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, &item)
+		i, err := expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8138,7 +8236,7 @@ func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(c *Client, f
 
 // flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap flattens the contents of CertificateConfigX509ConfigKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap(c *Client, i interface{}) map[string]CertificateConfigX509ConfigKeyUsageExtendedKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509ConfigKeyUsageExtendedKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509ConfigKeyUsageExtendedKeyUsage{}
@@ -8150,7 +8248,7 @@ func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap(c *Client, i 
 
 	items := make(map[string]CertificateConfigX509ConfigKeyUsageExtendedKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8158,7 +8256,7 @@ func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageMap(c *Client, i 
 
 // flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice flattens the contents of CertificateConfigX509ConfigKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(c *Client, i interface{}) []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509ConfigKeyUsageExtendedKeyUsage{}
@@ -8170,7 +8268,7 @@ func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(c *Client, 
 
 	items := make([]CertificateConfigX509ConfigKeyUsageExtendedKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8178,7 +8276,7 @@ func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsageSlice(c *Client, 
 
 // expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage expands an instance of CertificateConfigX509ConfigKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c *Client, f *CertificateConfigX509ConfigKeyUsageExtendedKeyUsage) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c *Client, f *CertificateConfigX509ConfigKeyUsageExtendedKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8208,7 +8306,7 @@ func expandCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c *Client, f *Cer
 
 // flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage flattens an instance of CertificateConfigX509ConfigKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c *Client, i interface{}) *CertificateConfigX509ConfigKeyUsageExtendedKeyUsage {
+func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c *Client, i interface{}, res *Certificate) *CertificateConfigX509ConfigKeyUsageExtendedKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8231,14 +8329,14 @@ func flattenCertificateConfigX509ConfigKeyUsageExtendedKeyUsage(c *Client, i int
 
 // expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap expands the contents of CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap(c *Client, f map[string]CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap(c *Client, f map[string]CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, &item)
+		i, err := expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8252,14 +8350,14 @@ func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap(c *Cli
 
 // expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice expands the contents of CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, f []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, f []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, &item)
+		i, err := expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8272,7 +8370,7 @@ func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c *C
 
 // flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap flattens the contents of CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap(c *Client, i interface{}) map[string]CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages {
+func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages{}
@@ -8284,7 +8382,7 @@ func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap(c *Cl
 
 	items := make(map[string]CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8292,7 +8390,7 @@ func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesMap(c *Cl
 
 // flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice flattens the contents of CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, i interface{}) []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages {
+func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages{}
@@ -8304,7 +8402,7 @@ func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c *
 
 	items := make([]CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8312,8 +8410,8 @@ func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsagesSlice(c *
 
 // expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages expands an instance of CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c *Client, f *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c *Client, f *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages, res *Certificate) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -8327,7 +8425,7 @@ func expandCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c *Client
 
 // flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages flattens an instance of CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c *Client, i interface{}) *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages {
+func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c *Client, i interface{}, res *Certificate) *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8345,14 +8443,14 @@ func flattenCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages(c *Clien
 
 // expandCertificateConfigX509ConfigCaOptionsMap expands the contents of CertificateConfigX509ConfigCaOptions into a JSON
 // request object.
-func expandCertificateConfigX509ConfigCaOptionsMap(c *Client, f map[string]CertificateConfigX509ConfigCaOptions) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigCaOptionsMap(c *Client, f map[string]CertificateConfigX509ConfigCaOptions, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509ConfigCaOptions(c, &item)
+		i, err := expandCertificateConfigX509ConfigCaOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8366,14 +8464,14 @@ func expandCertificateConfigX509ConfigCaOptionsMap(c *Client, f map[string]Certi
 
 // expandCertificateConfigX509ConfigCaOptionsSlice expands the contents of CertificateConfigX509ConfigCaOptions into a JSON
 // request object.
-func expandCertificateConfigX509ConfigCaOptionsSlice(c *Client, f []CertificateConfigX509ConfigCaOptions) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigCaOptionsSlice(c *Client, f []CertificateConfigX509ConfigCaOptions, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509ConfigCaOptions(c, &item)
+		i, err := expandCertificateConfigX509ConfigCaOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8386,7 +8484,7 @@ func expandCertificateConfigX509ConfigCaOptionsSlice(c *Client, f []CertificateC
 
 // flattenCertificateConfigX509ConfigCaOptionsMap flattens the contents of CertificateConfigX509ConfigCaOptions from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigCaOptionsMap(c *Client, i interface{}) map[string]CertificateConfigX509ConfigCaOptions {
+func flattenCertificateConfigX509ConfigCaOptionsMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509ConfigCaOptions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509ConfigCaOptions{}
@@ -8398,7 +8496,7 @@ func flattenCertificateConfigX509ConfigCaOptionsMap(c *Client, i interface{}) ma
 
 	items := make(map[string]CertificateConfigX509ConfigCaOptions)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509ConfigCaOptions(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509ConfigCaOptions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8406,7 +8504,7 @@ func flattenCertificateConfigX509ConfigCaOptionsMap(c *Client, i interface{}) ma
 
 // flattenCertificateConfigX509ConfigCaOptionsSlice flattens the contents of CertificateConfigX509ConfigCaOptions from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigCaOptionsSlice(c *Client, i interface{}) []CertificateConfigX509ConfigCaOptions {
+func flattenCertificateConfigX509ConfigCaOptionsSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509ConfigCaOptions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509ConfigCaOptions{}
@@ -8418,7 +8516,7 @@ func flattenCertificateConfigX509ConfigCaOptionsSlice(c *Client, i interface{}) 
 
 	items := make([]CertificateConfigX509ConfigCaOptions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509ConfigCaOptions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509ConfigCaOptions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8426,7 +8524,7 @@ func flattenCertificateConfigX509ConfigCaOptionsSlice(c *Client, i interface{}) 
 
 // expandCertificateConfigX509ConfigCaOptions expands an instance of CertificateConfigX509ConfigCaOptions into a JSON
 // request object.
-func expandCertificateConfigX509ConfigCaOptions(c *Client, f *CertificateConfigX509ConfigCaOptions) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigCaOptions(c *Client, f *CertificateConfigX509ConfigCaOptions, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8435,8 +8533,14 @@ func expandCertificateConfigX509ConfigCaOptions(c *Client, f *CertificateConfigX
 	if v := f.IsCa; !dcl.IsEmptyValueIndirect(v) {
 		m["isCa"] = v
 	}
+	if v := f.NonCa; !dcl.IsEmptyValueIndirect(v) {
+		m["nonCa"] = v
+	}
 	if v := f.MaxIssuerPathLength; !dcl.IsEmptyValueIndirect(v) {
 		m["maxIssuerPathLength"] = v
+	}
+	if v := f.ZeroMaxIssuerPathLength; !dcl.IsEmptyValueIndirect(v) {
+		m["zeroMaxIssuerPathLength"] = v
 	}
 
 	return m, nil
@@ -8444,7 +8548,7 @@ func expandCertificateConfigX509ConfigCaOptions(c *Client, f *CertificateConfigX
 
 // flattenCertificateConfigX509ConfigCaOptions flattens an instance of CertificateConfigX509ConfigCaOptions from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigCaOptions(c *Client, i interface{}) *CertificateConfigX509ConfigCaOptions {
+func flattenCertificateConfigX509ConfigCaOptions(c *Client, i interface{}, res *Certificate) *CertificateConfigX509ConfigCaOptions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8456,21 +8560,23 @@ func flattenCertificateConfigX509ConfigCaOptions(c *Client, i interface{}) *Cert
 		return EmptyCertificateConfigX509ConfigCaOptions
 	}
 	r.IsCa = dcl.FlattenBool(m["isCa"])
+	r.NonCa = dcl.FlattenBool(m["nonCa"])
 	r.MaxIssuerPathLength = dcl.FlattenInteger(m["maxIssuerPathLength"])
+	r.ZeroMaxIssuerPathLength = dcl.FlattenBool(m["zeroMaxIssuerPathLength"])
 
 	return r
 }
 
 // expandCertificateConfigX509ConfigPolicyIdsMap expands the contents of CertificateConfigX509ConfigPolicyIds into a JSON
 // request object.
-func expandCertificateConfigX509ConfigPolicyIdsMap(c *Client, f map[string]CertificateConfigX509ConfigPolicyIds) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigPolicyIdsMap(c *Client, f map[string]CertificateConfigX509ConfigPolicyIds, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509ConfigPolicyIds(c, &item)
+		i, err := expandCertificateConfigX509ConfigPolicyIds(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8484,14 +8590,14 @@ func expandCertificateConfigX509ConfigPolicyIdsMap(c *Client, f map[string]Certi
 
 // expandCertificateConfigX509ConfigPolicyIdsSlice expands the contents of CertificateConfigX509ConfigPolicyIds into a JSON
 // request object.
-func expandCertificateConfigX509ConfigPolicyIdsSlice(c *Client, f []CertificateConfigX509ConfigPolicyIds) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigPolicyIdsSlice(c *Client, f []CertificateConfigX509ConfigPolicyIds, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509ConfigPolicyIds(c, &item)
+		i, err := expandCertificateConfigX509ConfigPolicyIds(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8504,7 +8610,7 @@ func expandCertificateConfigX509ConfigPolicyIdsSlice(c *Client, f []CertificateC
 
 // flattenCertificateConfigX509ConfigPolicyIdsMap flattens the contents of CertificateConfigX509ConfigPolicyIds from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigPolicyIdsMap(c *Client, i interface{}) map[string]CertificateConfigX509ConfigPolicyIds {
+func flattenCertificateConfigX509ConfigPolicyIdsMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509ConfigPolicyIds {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509ConfigPolicyIds{}
@@ -8516,7 +8622,7 @@ func flattenCertificateConfigX509ConfigPolicyIdsMap(c *Client, i interface{}) ma
 
 	items := make(map[string]CertificateConfigX509ConfigPolicyIds)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509ConfigPolicyIds(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509ConfigPolicyIds(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8524,7 +8630,7 @@ func flattenCertificateConfigX509ConfigPolicyIdsMap(c *Client, i interface{}) ma
 
 // flattenCertificateConfigX509ConfigPolicyIdsSlice flattens the contents of CertificateConfigX509ConfigPolicyIds from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigPolicyIdsSlice(c *Client, i interface{}) []CertificateConfigX509ConfigPolicyIds {
+func flattenCertificateConfigX509ConfigPolicyIdsSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509ConfigPolicyIds {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509ConfigPolicyIds{}
@@ -8536,7 +8642,7 @@ func flattenCertificateConfigX509ConfigPolicyIdsSlice(c *Client, i interface{}) 
 
 	items := make([]CertificateConfigX509ConfigPolicyIds, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509ConfigPolicyIds(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509ConfigPolicyIds(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8544,8 +8650,8 @@ func flattenCertificateConfigX509ConfigPolicyIdsSlice(c *Client, i interface{}) 
 
 // expandCertificateConfigX509ConfigPolicyIds expands an instance of CertificateConfigX509ConfigPolicyIds into a JSON
 // request object.
-func expandCertificateConfigX509ConfigPolicyIds(c *Client, f *CertificateConfigX509ConfigPolicyIds) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCertificateConfigX509ConfigPolicyIds(c *Client, f *CertificateConfigX509ConfigPolicyIds, res *Certificate) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -8559,7 +8665,7 @@ func expandCertificateConfigX509ConfigPolicyIds(c *Client, f *CertificateConfigX
 
 // flattenCertificateConfigX509ConfigPolicyIds flattens an instance of CertificateConfigX509ConfigPolicyIds from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigPolicyIds(c *Client, i interface{}) *CertificateConfigX509ConfigPolicyIds {
+func flattenCertificateConfigX509ConfigPolicyIds(c *Client, i interface{}, res *Certificate) *CertificateConfigX509ConfigPolicyIds {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8577,14 +8683,14 @@ func flattenCertificateConfigX509ConfigPolicyIds(c *Client, i interface{}) *Cert
 
 // expandCertificateConfigX509ConfigAdditionalExtensionsMap expands the contents of CertificateConfigX509ConfigAdditionalExtensions into a JSON
 // request object.
-func expandCertificateConfigX509ConfigAdditionalExtensionsMap(c *Client, f map[string]CertificateConfigX509ConfigAdditionalExtensions) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigAdditionalExtensionsMap(c *Client, f map[string]CertificateConfigX509ConfigAdditionalExtensions, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509ConfigAdditionalExtensions(c, &item)
+		i, err := expandCertificateConfigX509ConfigAdditionalExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8598,14 +8704,14 @@ func expandCertificateConfigX509ConfigAdditionalExtensionsMap(c *Client, f map[s
 
 // expandCertificateConfigX509ConfigAdditionalExtensionsSlice expands the contents of CertificateConfigX509ConfigAdditionalExtensions into a JSON
 // request object.
-func expandCertificateConfigX509ConfigAdditionalExtensionsSlice(c *Client, f []CertificateConfigX509ConfigAdditionalExtensions) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigAdditionalExtensionsSlice(c *Client, f []CertificateConfigX509ConfigAdditionalExtensions, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509ConfigAdditionalExtensions(c, &item)
+		i, err := expandCertificateConfigX509ConfigAdditionalExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8618,7 +8724,7 @@ func expandCertificateConfigX509ConfigAdditionalExtensionsSlice(c *Client, f []C
 
 // flattenCertificateConfigX509ConfigAdditionalExtensionsMap flattens the contents of CertificateConfigX509ConfigAdditionalExtensions from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigAdditionalExtensionsMap(c *Client, i interface{}) map[string]CertificateConfigX509ConfigAdditionalExtensions {
+func flattenCertificateConfigX509ConfigAdditionalExtensionsMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509ConfigAdditionalExtensions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509ConfigAdditionalExtensions{}
@@ -8630,7 +8736,7 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsMap(c *Client, i inte
 
 	items := make(map[string]CertificateConfigX509ConfigAdditionalExtensions)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509ConfigAdditionalExtensions(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509ConfigAdditionalExtensions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8638,7 +8744,7 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsMap(c *Client, i inte
 
 // flattenCertificateConfigX509ConfigAdditionalExtensionsSlice flattens the contents of CertificateConfigX509ConfigAdditionalExtensions from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigAdditionalExtensionsSlice(c *Client, i interface{}) []CertificateConfigX509ConfigAdditionalExtensions {
+func flattenCertificateConfigX509ConfigAdditionalExtensionsSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509ConfigAdditionalExtensions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509ConfigAdditionalExtensions{}
@@ -8650,7 +8756,7 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsSlice(c *Client, i in
 
 	items := make([]CertificateConfigX509ConfigAdditionalExtensions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509ConfigAdditionalExtensions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509ConfigAdditionalExtensions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8658,13 +8764,13 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsSlice(c *Client, i in
 
 // expandCertificateConfigX509ConfigAdditionalExtensions expands an instance of CertificateConfigX509ConfigAdditionalExtensions into a JSON
 // request object.
-func expandCertificateConfigX509ConfigAdditionalExtensions(c *Client, f *CertificateConfigX509ConfigAdditionalExtensions) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCertificateConfigX509ConfigAdditionalExtensions(c *Client, f *CertificateConfigX509ConfigAdditionalExtensions, res *Certificate) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, f.ObjectId); err != nil {
+	if v, err := expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, f.ObjectId, res); err != nil {
 		return nil, fmt.Errorf("error expanding ObjectId into objectId: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["objectId"] = v
@@ -8681,7 +8787,7 @@ func expandCertificateConfigX509ConfigAdditionalExtensions(c *Client, f *Certifi
 
 // flattenCertificateConfigX509ConfigAdditionalExtensions flattens an instance of CertificateConfigX509ConfigAdditionalExtensions from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigAdditionalExtensions(c *Client, i interface{}) *CertificateConfigX509ConfigAdditionalExtensions {
+func flattenCertificateConfigX509ConfigAdditionalExtensions(c *Client, i interface{}, res *Certificate) *CertificateConfigX509ConfigAdditionalExtensions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8692,7 +8798,7 @@ func flattenCertificateConfigX509ConfigAdditionalExtensions(c *Client, i interfa
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateConfigX509ConfigAdditionalExtensions
 	}
-	r.ObjectId = flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, m["objectId"])
+	r.ObjectId = flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, m["objectId"], res)
 	r.Critical = dcl.FlattenBool(m["critical"])
 	r.Value = dcl.FlattenString(m["value"])
 
@@ -8701,14 +8807,14 @@ func flattenCertificateConfigX509ConfigAdditionalExtensions(c *Client, i interfa
 
 // expandCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap expands the contents of CertificateConfigX509ConfigAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap(c *Client, f map[string]CertificateConfigX509ConfigAdditionalExtensionsObjectId) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap(c *Client, f map[string]CertificateConfigX509ConfigAdditionalExtensionsObjectId, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, &item)
+		i, err := expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8722,14 +8828,14 @@ func expandCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap(c *Client,
 
 // expandCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice expands the contents of CertificateConfigX509ConfigAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(c *Client, f []CertificateConfigX509ConfigAdditionalExtensionsObjectId) ([]map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(c *Client, f []CertificateConfigX509ConfigAdditionalExtensionsObjectId, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, &item)
+		i, err := expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8742,7 +8848,7 @@ func expandCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(c *Clien
 
 // flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap flattens the contents of CertificateConfigX509ConfigAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap(c *Client, i interface{}) map[string]CertificateConfigX509ConfigAdditionalExtensionsObjectId {
+func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigX509ConfigAdditionalExtensionsObjectId {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigX509ConfigAdditionalExtensionsObjectId{}
@@ -8754,7 +8860,7 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap(c *Client
 
 	items := make(map[string]CertificateConfigX509ConfigAdditionalExtensionsObjectId)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8762,7 +8868,7 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdMap(c *Client
 
 // flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice flattens the contents of CertificateConfigX509ConfigAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(c *Client, i interface{}) []CertificateConfigX509ConfigAdditionalExtensionsObjectId {
+func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigX509ConfigAdditionalExtensionsObjectId {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigX509ConfigAdditionalExtensionsObjectId{}
@@ -8774,7 +8880,7 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(c *Clie
 
 	items := make([]CertificateConfigX509ConfigAdditionalExtensionsObjectId, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8782,7 +8888,7 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectIdSlice(c *Clie
 
 // expandCertificateConfigX509ConfigAdditionalExtensionsObjectId expands an instance of CertificateConfigX509ConfigAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c *Client, f *CertificateConfigX509ConfigAdditionalExtensionsObjectId) (map[string]interface{}, error) {
+func expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c *Client, f *CertificateConfigX509ConfigAdditionalExtensionsObjectId, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8797,7 +8903,7 @@ func expandCertificateConfigX509ConfigAdditionalExtensionsObjectId(c *Client, f 
 
 // flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId flattens an instance of CertificateConfigX509ConfigAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c *Client, i interface{}) *CertificateConfigX509ConfigAdditionalExtensionsObjectId {
+func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c *Client, i interface{}, res *Certificate) *CertificateConfigX509ConfigAdditionalExtensionsObjectId {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8815,14 +8921,14 @@ func flattenCertificateConfigX509ConfigAdditionalExtensionsObjectId(c *Client, i
 
 // expandCertificateConfigPublicKeyMap expands the contents of CertificateConfigPublicKey into a JSON
 // request object.
-func expandCertificateConfigPublicKeyMap(c *Client, f map[string]CertificateConfigPublicKey) (map[string]interface{}, error) {
+func expandCertificateConfigPublicKeyMap(c *Client, f map[string]CertificateConfigPublicKey, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateConfigPublicKey(c, &item)
+		i, err := expandCertificateConfigPublicKey(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8836,14 +8942,14 @@ func expandCertificateConfigPublicKeyMap(c *Client, f map[string]CertificateConf
 
 // expandCertificateConfigPublicKeySlice expands the contents of CertificateConfigPublicKey into a JSON
 // request object.
-func expandCertificateConfigPublicKeySlice(c *Client, f []CertificateConfigPublicKey) ([]map[string]interface{}, error) {
+func expandCertificateConfigPublicKeySlice(c *Client, f []CertificateConfigPublicKey, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateConfigPublicKey(c, &item)
+		i, err := expandCertificateConfigPublicKey(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8856,7 +8962,7 @@ func expandCertificateConfigPublicKeySlice(c *Client, f []CertificateConfigPubli
 
 // flattenCertificateConfigPublicKeyMap flattens the contents of CertificateConfigPublicKey from a JSON
 // response object.
-func flattenCertificateConfigPublicKeyMap(c *Client, i interface{}) map[string]CertificateConfigPublicKey {
+func flattenCertificateConfigPublicKeyMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigPublicKey {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigPublicKey{}
@@ -8868,7 +8974,7 @@ func flattenCertificateConfigPublicKeyMap(c *Client, i interface{}) map[string]C
 
 	items := make(map[string]CertificateConfigPublicKey)
 	for k, item := range a {
-		items[k] = *flattenCertificateConfigPublicKey(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateConfigPublicKey(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8876,7 +8982,7 @@ func flattenCertificateConfigPublicKeyMap(c *Client, i interface{}) map[string]C
 
 // flattenCertificateConfigPublicKeySlice flattens the contents of CertificateConfigPublicKey from a JSON
 // response object.
-func flattenCertificateConfigPublicKeySlice(c *Client, i interface{}) []CertificateConfigPublicKey {
+func flattenCertificateConfigPublicKeySlice(c *Client, i interface{}, res *Certificate) []CertificateConfigPublicKey {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigPublicKey{}
@@ -8888,7 +8994,7 @@ func flattenCertificateConfigPublicKeySlice(c *Client, i interface{}) []Certific
 
 	items := make([]CertificateConfigPublicKey, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateConfigPublicKey(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateConfigPublicKey(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -8896,7 +9002,7 @@ func flattenCertificateConfigPublicKeySlice(c *Client, i interface{}) []Certific
 
 // expandCertificateConfigPublicKey expands an instance of CertificateConfigPublicKey into a JSON
 // request object.
-func expandCertificateConfigPublicKey(c *Client, f *CertificateConfigPublicKey) (map[string]interface{}, error) {
+func expandCertificateConfigPublicKey(c *Client, f *CertificateConfigPublicKey, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -8914,7 +9020,7 @@ func expandCertificateConfigPublicKey(c *Client, f *CertificateConfigPublicKey) 
 
 // flattenCertificateConfigPublicKey flattens an instance of CertificateConfigPublicKey from a JSON
 // response object.
-func flattenCertificateConfigPublicKey(c *Client, i interface{}) *CertificateConfigPublicKey {
+func flattenCertificateConfigPublicKey(c *Client, i interface{}, res *Certificate) *CertificateConfigPublicKey {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -8933,14 +9039,14 @@ func flattenCertificateConfigPublicKey(c *Client, i interface{}) *CertificateCon
 
 // expandCertificateRevocationDetailsMap expands the contents of CertificateRevocationDetails into a JSON
 // request object.
-func expandCertificateRevocationDetailsMap(c *Client, f map[string]CertificateRevocationDetails) (map[string]interface{}, error) {
+func expandCertificateRevocationDetailsMap(c *Client, f map[string]CertificateRevocationDetails, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateRevocationDetails(c, &item)
+		i, err := expandCertificateRevocationDetails(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8954,14 +9060,14 @@ func expandCertificateRevocationDetailsMap(c *Client, f map[string]CertificateRe
 
 // expandCertificateRevocationDetailsSlice expands the contents of CertificateRevocationDetails into a JSON
 // request object.
-func expandCertificateRevocationDetailsSlice(c *Client, f []CertificateRevocationDetails) ([]map[string]interface{}, error) {
+func expandCertificateRevocationDetailsSlice(c *Client, f []CertificateRevocationDetails, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateRevocationDetails(c, &item)
+		i, err := expandCertificateRevocationDetails(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -8974,7 +9080,7 @@ func expandCertificateRevocationDetailsSlice(c *Client, f []CertificateRevocatio
 
 // flattenCertificateRevocationDetailsMap flattens the contents of CertificateRevocationDetails from a JSON
 // response object.
-func flattenCertificateRevocationDetailsMap(c *Client, i interface{}) map[string]CertificateRevocationDetails {
+func flattenCertificateRevocationDetailsMap(c *Client, i interface{}, res *Certificate) map[string]CertificateRevocationDetails {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateRevocationDetails{}
@@ -8986,7 +9092,7 @@ func flattenCertificateRevocationDetailsMap(c *Client, i interface{}) map[string
 
 	items := make(map[string]CertificateRevocationDetails)
 	for k, item := range a {
-		items[k] = *flattenCertificateRevocationDetails(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateRevocationDetails(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -8994,7 +9100,7 @@ func flattenCertificateRevocationDetailsMap(c *Client, i interface{}) map[string
 
 // flattenCertificateRevocationDetailsSlice flattens the contents of CertificateRevocationDetails from a JSON
 // response object.
-func flattenCertificateRevocationDetailsSlice(c *Client, i interface{}) []CertificateRevocationDetails {
+func flattenCertificateRevocationDetailsSlice(c *Client, i interface{}, res *Certificate) []CertificateRevocationDetails {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateRevocationDetails{}
@@ -9006,7 +9112,7 @@ func flattenCertificateRevocationDetailsSlice(c *Client, i interface{}) []Certif
 
 	items := make([]CertificateRevocationDetails, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateRevocationDetails(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateRevocationDetails(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9014,7 +9120,7 @@ func flattenCertificateRevocationDetailsSlice(c *Client, i interface{}) []Certif
 
 // expandCertificateRevocationDetails expands an instance of CertificateRevocationDetails into a JSON
 // request object.
-func expandCertificateRevocationDetails(c *Client, f *CertificateRevocationDetails) (map[string]interface{}, error) {
+func expandCertificateRevocationDetails(c *Client, f *CertificateRevocationDetails, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -9032,7 +9138,7 @@ func expandCertificateRevocationDetails(c *Client, f *CertificateRevocationDetai
 
 // flattenCertificateRevocationDetails flattens an instance of CertificateRevocationDetails from a JSON
 // response object.
-func flattenCertificateRevocationDetails(c *Client, i interface{}) *CertificateRevocationDetails {
+func flattenCertificateRevocationDetails(c *Client, i interface{}, res *Certificate) *CertificateRevocationDetails {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9051,14 +9157,14 @@ func flattenCertificateRevocationDetails(c *Client, i interface{}) *CertificateR
 
 // expandCertificateCertificateDescriptionMap expands the contents of CertificateCertificateDescription into a JSON
 // request object.
-func expandCertificateCertificateDescriptionMap(c *Client, f map[string]CertificateCertificateDescription) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionMap(c *Client, f map[string]CertificateCertificateDescription, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescription(c, &item)
+		i, err := expandCertificateCertificateDescription(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9072,14 +9178,14 @@ func expandCertificateCertificateDescriptionMap(c *Client, f map[string]Certific
 
 // expandCertificateCertificateDescriptionSlice expands the contents of CertificateCertificateDescription into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSlice(c *Client, f []CertificateCertificateDescription) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSlice(c *Client, f []CertificateCertificateDescription, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescription(c, &item)
+		i, err := expandCertificateCertificateDescription(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9092,7 +9198,7 @@ func expandCertificateCertificateDescriptionSlice(c *Client, f []CertificateCert
 
 // flattenCertificateCertificateDescriptionMap flattens the contents of CertificateCertificateDescription from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionMap(c *Client, i interface{}) map[string]CertificateCertificateDescription {
+func flattenCertificateCertificateDescriptionMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescription {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescription{}
@@ -9104,7 +9210,7 @@ func flattenCertificateCertificateDescriptionMap(c *Client, i interface{}) map[s
 
 	items := make(map[string]CertificateCertificateDescription)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescription(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescription(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9112,7 +9218,7 @@ func flattenCertificateCertificateDescriptionMap(c *Client, i interface{}) map[s
 
 // flattenCertificateCertificateDescriptionSlice flattens the contents of CertificateCertificateDescription from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSlice(c *Client, i interface{}) []CertificateCertificateDescription {
+func flattenCertificateCertificateDescriptionSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescription {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescription{}
@@ -9124,7 +9230,7 @@ func flattenCertificateCertificateDescriptionSlice(c *Client, i interface{}) []C
 
 	items := make([]CertificateCertificateDescription, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescription(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescription(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9132,33 +9238,33 @@ func flattenCertificateCertificateDescriptionSlice(c *Client, i interface{}) []C
 
 // expandCertificateCertificateDescription expands an instance of CertificateCertificateDescription into a JSON
 // request object.
-func expandCertificateCertificateDescription(c *Client, f *CertificateCertificateDescription) (map[string]interface{}, error) {
+func expandCertificateCertificateDescription(c *Client, f *CertificateCertificateDescription, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateCertificateDescriptionSubjectDescription(c, f.SubjectDescription); err != nil {
+	if v, err := expandCertificateCertificateDescriptionSubjectDescription(c, f.SubjectDescription, res); err != nil {
 		return nil, fmt.Errorf("error expanding SubjectDescription into subjectDescription: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["subjectDescription"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionX509Description(c, f.X509Description); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509Description(c, f.X509Description, res); err != nil {
 		return nil, fmt.Errorf("error expanding X509Description into x509Description: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["x509Description"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionPublicKey(c, f.PublicKey); err != nil {
+	if v, err := expandCertificateCertificateDescriptionPublicKey(c, f.PublicKey, res); err != nil {
 		return nil, fmt.Errorf("error expanding PublicKey into publicKey: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["publicKey"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionSubjectKeyId(c, f.SubjectKeyId); err != nil {
+	if v, err := expandCertificateCertificateDescriptionSubjectKeyId(c, f.SubjectKeyId, res); err != nil {
 		return nil, fmt.Errorf("error expanding SubjectKeyId into subjectKeyId: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["subjectKeyId"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionAuthorityKeyId(c, f.AuthorityKeyId); err != nil {
+	if v, err := expandCertificateCertificateDescriptionAuthorityKeyId(c, f.AuthorityKeyId, res); err != nil {
 		return nil, fmt.Errorf("error expanding AuthorityKeyId into authorityKeyId: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["authorityKeyId"] = v
@@ -9169,7 +9275,7 @@ func expandCertificateCertificateDescription(c *Client, f *CertificateCertificat
 	if v := f.AiaIssuingCertificateUrls; v != nil {
 		m["aiaIssuingCertificateUrls"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionCertFingerprint(c, f.CertFingerprint); err != nil {
+	if v, err := expandCertificateCertificateDescriptionCertFingerprint(c, f.CertFingerprint, res); err != nil {
 		return nil, fmt.Errorf("error expanding CertFingerprint into certFingerprint: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["certFingerprint"] = v
@@ -9180,7 +9286,7 @@ func expandCertificateCertificateDescription(c *Client, f *CertificateCertificat
 
 // flattenCertificateCertificateDescription flattens an instance of CertificateCertificateDescription from a JSON
 // response object.
-func flattenCertificateCertificateDescription(c *Client, i interface{}) *CertificateCertificateDescription {
+func flattenCertificateCertificateDescription(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescription {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9191,28 +9297,28 @@ func flattenCertificateCertificateDescription(c *Client, i interface{}) *Certifi
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateCertificateDescription
 	}
-	r.SubjectDescription = flattenCertificateCertificateDescriptionSubjectDescription(c, m["subjectDescription"])
-	r.X509Description = flattenCertificateCertificateDescriptionX509Description(c, m["x509Description"])
-	r.PublicKey = flattenCertificateCertificateDescriptionPublicKey(c, m["publicKey"])
-	r.SubjectKeyId = flattenCertificateCertificateDescriptionSubjectKeyId(c, m["subjectKeyId"])
-	r.AuthorityKeyId = flattenCertificateCertificateDescriptionAuthorityKeyId(c, m["authorityKeyId"])
+	r.SubjectDescription = flattenCertificateCertificateDescriptionSubjectDescription(c, m["subjectDescription"], res)
+	r.X509Description = flattenCertificateCertificateDescriptionX509Description(c, m["x509Description"], res)
+	r.PublicKey = flattenCertificateCertificateDescriptionPublicKey(c, m["publicKey"], res)
+	r.SubjectKeyId = flattenCertificateCertificateDescriptionSubjectKeyId(c, m["subjectKeyId"], res)
+	r.AuthorityKeyId = flattenCertificateCertificateDescriptionAuthorityKeyId(c, m["authorityKeyId"], res)
 	r.CrlDistributionPoints = dcl.FlattenStringSlice(m["crlDistributionPoints"])
 	r.AiaIssuingCertificateUrls = dcl.FlattenStringSlice(m["aiaIssuingCertificateUrls"])
-	r.CertFingerprint = flattenCertificateCertificateDescriptionCertFingerprint(c, m["certFingerprint"])
+	r.CertFingerprint = flattenCertificateCertificateDescriptionCertFingerprint(c, m["certFingerprint"], res)
 
 	return r
 }
 
 // expandCertificateCertificateDescriptionSubjectDescriptionMap expands the contents of CertificateCertificateDescriptionSubjectDescription into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescription) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescription, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescription(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescription(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9226,14 +9332,14 @@ func expandCertificateCertificateDescriptionSubjectDescriptionMap(c *Client, f m
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSlice expands the contents of CertificateCertificateDescriptionSubjectDescription into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescription) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescription, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescription(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescription(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9246,7 +9352,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSlice(c *Client, f
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionMap flattens the contents of CertificateCertificateDescriptionSubjectDescription from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionSubjectDescription {
+func flattenCertificateCertificateDescriptionSubjectDescriptionMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionSubjectDescription {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionSubjectDescription{}
@@ -9258,7 +9364,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionMap(c *Client, i 
 
 	items := make(map[string]CertificateCertificateDescriptionSubjectDescription)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionSubjectDescription(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionSubjectDescription(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9266,7 +9372,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionMap(c *Client, i 
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSlice flattens the contents of CertificateCertificateDescriptionSubjectDescription from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSlice(c *Client, i interface{}) []CertificateCertificateDescriptionSubjectDescription {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionSubjectDescription {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionSubjectDescription{}
@@ -9278,7 +9384,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSlice(c *Client, 
 
 	items := make([]CertificateCertificateDescriptionSubjectDescription, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescription(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescription(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9286,18 +9392,18 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSlice(c *Client, 
 
 // expandCertificateCertificateDescriptionSubjectDescription expands an instance of CertificateCertificateDescriptionSubjectDescription into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescription(c *Client, f *CertificateCertificateDescriptionSubjectDescription) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescription(c *Client, f *CertificateCertificateDescriptionSubjectDescription, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateCertificateDescriptionSubjectDescriptionSubject(c, f.Subject); err != nil {
+	if v, err := expandCertificateCertificateDescriptionSubjectDescriptionSubject(c, f.Subject, res); err != nil {
 		return nil, fmt.Errorf("error expanding Subject into subject: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["subject"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, f.SubjectAltName); err != nil {
+	if v, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, f.SubjectAltName, res); err != nil {
 		return nil, fmt.Errorf("error expanding SubjectAltName into subjectAltName: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["subjectAltName"] = v
@@ -9320,7 +9426,7 @@ func expandCertificateCertificateDescriptionSubjectDescription(c *Client, f *Cer
 
 // flattenCertificateCertificateDescriptionSubjectDescription flattens an instance of CertificateCertificateDescriptionSubjectDescription from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescription(c *Client, i interface{}) *CertificateCertificateDescriptionSubjectDescription {
+func flattenCertificateCertificateDescriptionSubjectDescription(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionSubjectDescription {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9331,8 +9437,8 @@ func flattenCertificateCertificateDescriptionSubjectDescription(c *Client, i int
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateCertificateDescriptionSubjectDescription
 	}
-	r.Subject = flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c, m["subject"])
-	r.SubjectAltName = flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, m["subjectAltName"])
+	r.Subject = flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c, m["subject"], res)
+	r.SubjectAltName = flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, m["subjectAltName"], res)
 	r.HexSerialNumber = dcl.FlattenString(m["hexSerialNumber"])
 	r.Lifetime = dcl.FlattenString(m["lifetime"])
 	r.NotBeforeTime = dcl.FlattenString(m["notBeforeTime"])
@@ -9343,14 +9449,14 @@ func flattenCertificateCertificateDescriptionSubjectDescription(c *Client, i int
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectMap expands the contents of CertificateCertificateDescriptionSubjectDescriptionSubject into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescriptionSubject) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescriptionSubject, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubject(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubject(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9364,14 +9470,14 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectMap(c *Clie
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectSlice expands the contents of CertificateCertificateDescriptionSubjectDescriptionSubject into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescriptionSubject) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescriptionSubject, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubject(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubject(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9384,7 +9490,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(c *Cl
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectMap flattens the contents of CertificateCertificateDescriptionSubjectDescriptionSubject from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionSubjectDescriptionSubject {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionSubjectDescriptionSubject {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionSubjectDescriptionSubject{}
@@ -9396,7 +9502,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectMap(c *Cli
 
 	items := make(map[string]CertificateCertificateDescriptionSubjectDescriptionSubject)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9404,7 +9510,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectMap(c *Cli
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectSlice flattens the contents of CertificateCertificateDescriptionSubjectDescriptionSubject from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(c *Client, i interface{}) []CertificateCertificateDescriptionSubjectDescriptionSubject {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionSubjectDescriptionSubject {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionSubjectDescriptionSubject{}
@@ -9416,7 +9522,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(c *C
 
 	items := make([]CertificateCertificateDescriptionSubjectDescriptionSubject, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9424,7 +9530,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectSlice(c *C
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubject expands an instance of CertificateCertificateDescriptionSubjectDescriptionSubject into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubject(c *Client, f *CertificateCertificateDescriptionSubjectDescriptionSubject) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubject(c *Client, f *CertificateCertificateDescriptionSubjectDescriptionSubject, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -9460,7 +9566,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubject(c *Client,
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubject flattens an instance of CertificateCertificateDescriptionSubjectDescriptionSubject from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c *Client, i interface{}) *CertificateCertificateDescriptionSubjectDescriptionSubject {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionSubjectDescriptionSubject {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9485,14 +9591,14 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubject(c *Client
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap expands the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltName into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltName) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltName, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9506,14 +9612,14 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap(
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlice expands the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltName into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9526,7 +9632,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlic
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap flattens the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltName from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltName {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltName {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltName{}
@@ -9538,7 +9644,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap
 
 	items := make(map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltName)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9546,7 +9652,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameMap
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlice flattens the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltName from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlice(c *Client, i interface{}) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionSubjectDescriptionSubjectAltName{}
@@ -9558,7 +9664,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSli
 
 	items := make([]CertificateCertificateDescriptionSubjectDescriptionSubjectAltName, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9566,7 +9672,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameSli
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName expands an instance of CertificateCertificateDescriptionSubjectDescriptionSubjectAltName into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c *Client, f *CertificateCertificateDescriptionSubjectDescriptionSubjectAltName) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c *Client, f *CertificateCertificateDescriptionSubjectDescriptionSubjectAltName, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -9584,7 +9690,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c *
 	if v := f.IPAddresses; v != nil {
 		m["ipAddresses"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c, f.CustomSans); err != nil {
+	if v, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c, f.CustomSans, res); err != nil {
 		return nil, fmt.Errorf("error expanding CustomSans into customSans: %w", err)
 	} else if v != nil {
 		m["customSans"] = v
@@ -9595,7 +9701,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c *
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName flattens an instance of CertificateCertificateDescriptionSubjectDescriptionSubjectAltName from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c *Client, i interface{}) *CertificateCertificateDescriptionSubjectDescriptionSubjectAltName {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionSubjectDescriptionSubjectAltName {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9610,21 +9716,21 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltName(c 
 	r.Uris = dcl.FlattenStringSlice(m["uris"])
 	r.EmailAddresses = dcl.FlattenStringSlice(m["emailAddresses"])
 	r.IPAddresses = dcl.FlattenStringSlice(m["ipAddresses"])
-	r.CustomSans = flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c, m["customSans"])
+	r.CustomSans = flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c, m["customSans"], res)
 
 	return r
 }
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansMap expands the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9638,14 +9744,14 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCust
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice expands the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9658,7 +9764,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCust
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansMap flattens the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans{}
@@ -9670,7 +9776,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 	items := make(map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9678,7 +9784,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice flattens the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c *Client, i interface{}) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans{}
@@ -9690,7 +9796,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 	items := make([]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9698,13 +9804,13 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans expands an instance of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c *Client, f *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c *Client, f *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans, res *Certificate) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, f.ObjectId); err != nil {
+	if v, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, f.ObjectId, res); err != nil {
 		return nil, fmt.Errorf("error expanding ObjectId into objectId: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["objectId"] = v
@@ -9721,7 +9827,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCust
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans flattens an instance of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c *Client, i interface{}) *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9732,7 +9838,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans
 	}
-	r.ObjectId = flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, m["objectId"])
+	r.ObjectId = flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, m["objectId"], res)
 	r.Critical = dcl.FlattenBool(m["critical"])
 	r.Value = dcl.FlattenString(m["value"])
 
@@ -9741,14 +9847,14 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdMap expands the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9762,14 +9868,14 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCust
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdSlice expands the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdSlice(c *Client, f []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9782,7 +9888,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCust
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdMap flattens the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId{}
@@ -9794,7 +9900,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 	items := make(map[string]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9802,7 +9908,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdSlice flattens the contents of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdSlice(c *Client, i interface{}) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId{}
@@ -9814,7 +9920,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 	items := make([]CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9822,7 +9928,7 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 // expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId expands an instance of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c *Client, f *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c *Client, f *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -9837,7 +9943,7 @@ func expandCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCust
 
 // flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId flattens an instance of CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c *Client, i interface{}) *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId {
+func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9855,14 +9961,14 @@ func flattenCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 
 // expandCertificateCertificateDescriptionX509DescriptionMap expands the contents of CertificateCertificateDescriptionX509Description into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionMap(c *Client, f map[string]CertificateCertificateDescriptionX509Description) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionMap(c *Client, f map[string]CertificateCertificateDescriptionX509Description, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509Description(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509Description(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9876,14 +9982,14 @@ func expandCertificateCertificateDescriptionX509DescriptionMap(c *Client, f map[
 
 // expandCertificateCertificateDescriptionX509DescriptionSlice expands the contents of CertificateCertificateDescriptionX509Description into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionSlice(c *Client, f []CertificateCertificateDescriptionX509Description) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionSlice(c *Client, f []CertificateCertificateDescriptionX509Description, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509Description(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509Description(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -9896,7 +10002,7 @@ func expandCertificateCertificateDescriptionX509DescriptionSlice(c *Client, f []
 
 // flattenCertificateCertificateDescriptionX509DescriptionMap flattens the contents of CertificateCertificateDescriptionX509Description from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509Description {
+func flattenCertificateCertificateDescriptionX509DescriptionMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509Description {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509Description{}
@@ -9908,7 +10014,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionMap(c *Client, i int
 
 	items := make(map[string]CertificateCertificateDescriptionX509Description)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509Description(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509Description(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -9916,7 +10022,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionMap(c *Client, i int
 
 // flattenCertificateCertificateDescriptionX509DescriptionSlice flattens the contents of CertificateCertificateDescriptionX509Description from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509Description {
+func flattenCertificateCertificateDescriptionX509DescriptionSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509Description {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509Description{}
@@ -9928,7 +10034,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionSlice(c *Client, i i
 
 	items := make([]CertificateCertificateDescriptionX509Description, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509Description(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509Description(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -9936,23 +10042,23 @@ func flattenCertificateCertificateDescriptionX509DescriptionSlice(c *Client, i i
 
 // expandCertificateCertificateDescriptionX509Description expands an instance of CertificateCertificateDescriptionX509Description into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509Description(c *Client, f *CertificateCertificateDescriptionX509Description) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509Description(c *Client, f *CertificateCertificateDescriptionX509Description, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c, f.KeyUsage); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c, f.KeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding KeyUsage into keyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["keyUsage"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionX509DescriptionCaOptions(c, f.CaOptions); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509DescriptionCaOptions(c, f.CaOptions, res); err != nil {
 		return nil, fmt.Errorf("error expanding CaOptions into caOptions: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["caOptions"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c, f.PolicyIds); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c, f.PolicyIds, res); err != nil {
 		return nil, fmt.Errorf("error expanding PolicyIds into policyIds: %w", err)
 	} else if v != nil {
 		m["policyIds"] = v
@@ -9960,7 +10066,7 @@ func expandCertificateCertificateDescriptionX509Description(c *Client, f *Certif
 	if v := f.AiaOcspServers; v != nil {
 		m["aiaOcspServers"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c, f.AdditionalExtensions); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c, f.AdditionalExtensions, res); err != nil {
 		return nil, fmt.Errorf("error expanding AdditionalExtensions into additionalExtensions: %w", err)
 	} else if v != nil {
 		m["additionalExtensions"] = v
@@ -9971,7 +10077,7 @@ func expandCertificateCertificateDescriptionX509Description(c *Client, f *Certif
 
 // flattenCertificateCertificateDescriptionX509Description flattens an instance of CertificateCertificateDescriptionX509Description from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509Description(c *Client, i interface{}) *CertificateCertificateDescriptionX509Description {
+func flattenCertificateCertificateDescriptionX509Description(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509Description {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -9982,25 +10088,25 @@ func flattenCertificateCertificateDescriptionX509Description(c *Client, i interf
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateCertificateDescriptionX509Description
 	}
-	r.KeyUsage = flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c, m["keyUsage"])
-	r.CaOptions = flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c, m["caOptions"])
-	r.PolicyIds = flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c, m["policyIds"])
+	r.KeyUsage = flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c, m["keyUsage"], res)
+	r.CaOptions = flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c, m["caOptions"], res)
+	r.PolicyIds = flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c, m["policyIds"], res)
 	r.AiaOcspServers = dcl.FlattenStringSlice(m["aiaOcspServers"])
-	r.AdditionalExtensions = flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c, m["additionalExtensions"])
+	r.AdditionalExtensions = flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c, m["additionalExtensions"], res)
 
 	return r
 }
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageMap expands the contents of CertificateCertificateDescriptionX509DescriptionKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionKeyUsage) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10014,14 +10120,14 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageMap(c *Client
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageSlice expands the contents of CertificateCertificateDescriptionX509DescriptionKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionKeyUsage) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionKeyUsage, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10034,7 +10140,7 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(c *Clie
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageMap flattens the contents of CertificateCertificateDescriptionX509DescriptionKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509DescriptionKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509DescriptionKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509DescriptionKeyUsage{}
@@ -10046,7 +10152,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageMap(c *Clien
 
 	items := make(map[string]CertificateCertificateDescriptionX509DescriptionKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -10054,7 +10160,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageMap(c *Clien
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageSlice flattens the contents of CertificateCertificateDescriptionX509DescriptionKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509DescriptionKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509DescriptionKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509DescriptionKeyUsage{}
@@ -10066,7 +10172,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(c *Cli
 
 	items := make([]CertificateCertificateDescriptionX509DescriptionKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -10074,23 +10180,23 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageSlice(c *Cli
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsage expands an instance of CertificateCertificateDescriptionX509DescriptionKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c *Client, f *CertificateCertificateDescriptionX509DescriptionKeyUsage) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c *Client, f *CertificateCertificateDescriptionX509DescriptionKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, f.BaseKeyUsage); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, f.BaseKeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding BaseKeyUsage into baseKeyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["baseKeyUsage"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, f.ExtendedKeyUsage); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, f.ExtendedKeyUsage, res); err != nil {
 		return nil, fmt.Errorf("error expanding ExtendedKeyUsage into extendedKeyUsage: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["extendedKeyUsage"] = v
 	}
-	if v, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c, f.UnknownExtendedKeyUsages); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c, f.UnknownExtendedKeyUsages, res); err != nil {
 		return nil, fmt.Errorf("error expanding UnknownExtendedKeyUsages into unknownExtendedKeyUsages: %w", err)
 	} else if v != nil {
 		m["unknownExtendedKeyUsages"] = v
@@ -10101,7 +10207,7 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsage(c *Client, f
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsage flattens an instance of CertificateCertificateDescriptionX509DescriptionKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c *Client, i interface{}) *CertificateCertificateDescriptionX509DescriptionKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509DescriptionKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -10112,23 +10218,23 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsage(c *Client, 
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateCertificateDescriptionX509DescriptionKeyUsage
 	}
-	r.BaseKeyUsage = flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, m["baseKeyUsage"])
-	r.ExtendedKeyUsage = flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, m["extendedKeyUsage"])
-	r.UnknownExtendedKeyUsages = flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c, m["unknownExtendedKeyUsages"])
+	r.BaseKeyUsage = flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, m["baseKeyUsage"], res)
+	r.ExtendedKeyUsage = flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, m["extendedKeyUsage"], res)
+	r.UnknownExtendedKeyUsages = flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c, m["unknownExtendedKeyUsages"], res)
 
 	return r
 }
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageMap expands the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10142,14 +10248,14 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageM
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageSlice expands the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10162,7 +10268,7 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageS
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageMap flattens the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage{}
@@ -10174,7 +10280,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage
 
 	items := make(map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -10182,7 +10288,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageSlice flattens the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage{}
@@ -10194,7 +10300,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage
 
 	items := make([]CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -10202,7 +10308,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage expands an instance of CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c *Client, f *CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c *Client, f *CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -10241,7 +10347,7 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage flattens an instance of CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c *Client, i interface{}) *CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -10267,14 +10373,14 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageMap expands the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10288,14 +10394,14 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUs
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageSlice expands the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10308,7 +10414,7 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUs
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageMap flattens the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage{}
@@ -10320,7 +10426,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyU
 
 	items := make(map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -10328,7 +10434,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyU
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageSlice flattens the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage{}
@@ -10340,7 +10446,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyU
 
 	items := make([]CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -10348,7 +10454,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyU
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage expands an instance of CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c *Client, f *CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c *Client, f *CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -10378,7 +10484,7 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUs
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage flattens an instance of CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c *Client, i interface{}) *CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -10401,14 +10507,14 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyU
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesMap expands the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10422,14 +10528,14 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtend
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice expands the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10442,7 +10548,7 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtend
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesMap flattens the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages{}
@@ -10454,7 +10560,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExten
 
 	items := make(map[string]CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -10462,7 +10568,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExten
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice flattens the contents of CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsagesSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages{}
@@ -10474,7 +10580,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExten
 
 	items := make([]CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -10482,8 +10588,8 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExten
 
 // expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages expands an instance of CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c *Client, f *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c *Client, f *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages, res *Certificate) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -10497,7 +10603,7 @@ func expandCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtend
 
 // flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages flattens an instance of CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c *Client, i interface{}) *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages {
+func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -10515,14 +10621,14 @@ func flattenCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExten
 
 // expandCertificateCertificateDescriptionX509DescriptionCaOptionsMap expands the contents of CertificateCertificateDescriptionX509DescriptionCaOptions into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionCaOptionsMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionCaOptions) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionCaOptionsMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionCaOptions, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionCaOptions(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionCaOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10536,14 +10642,14 @@ func expandCertificateCertificateDescriptionX509DescriptionCaOptionsMap(c *Clien
 
 // expandCertificateCertificateDescriptionX509DescriptionCaOptionsSlice expands the contents of CertificateCertificateDescriptionX509DescriptionCaOptions into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionCaOptions) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionCaOptions, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionCaOptions(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionCaOptions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10556,7 +10662,7 @@ func expandCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(c *Cli
 
 // flattenCertificateCertificateDescriptionX509DescriptionCaOptionsMap flattens the contents of CertificateCertificateDescriptionX509DescriptionCaOptions from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionCaOptionsMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509DescriptionCaOptions {
+func flattenCertificateCertificateDescriptionX509DescriptionCaOptionsMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509DescriptionCaOptions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509DescriptionCaOptions{}
@@ -10568,7 +10674,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionCaOptionsMap(c *Clie
 
 	items := make(map[string]CertificateCertificateDescriptionX509DescriptionCaOptions)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -10576,7 +10682,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionCaOptionsMap(c *Clie
 
 // flattenCertificateCertificateDescriptionX509DescriptionCaOptionsSlice flattens the contents of CertificateCertificateDescriptionX509DescriptionCaOptions from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509DescriptionCaOptions {
+func flattenCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509DescriptionCaOptions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509DescriptionCaOptions{}
@@ -10588,7 +10694,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(c *Cl
 
 	items := make([]CertificateCertificateDescriptionX509DescriptionCaOptions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -10596,7 +10702,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionCaOptionsSlice(c *Cl
 
 // expandCertificateCertificateDescriptionX509DescriptionCaOptions expands an instance of CertificateCertificateDescriptionX509DescriptionCaOptions into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionCaOptions(c *Client, f *CertificateCertificateDescriptionX509DescriptionCaOptions) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionCaOptions(c *Client, f *CertificateCertificateDescriptionX509DescriptionCaOptions, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -10614,7 +10720,7 @@ func expandCertificateCertificateDescriptionX509DescriptionCaOptions(c *Client, 
 
 // flattenCertificateCertificateDescriptionX509DescriptionCaOptions flattens an instance of CertificateCertificateDescriptionX509DescriptionCaOptions from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c *Client, i interface{}) *CertificateCertificateDescriptionX509DescriptionCaOptions {
+func flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509DescriptionCaOptions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -10625,7 +10731,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c *Client,
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateCertificateDescriptionX509DescriptionCaOptions
 	}
-	r.IsCa = dcl.FlattenOptionalBool(m["isCa"])
+	r.IsCa = dcl.FlattenBool(m["isCa"])
 	r.MaxIssuerPathLength = dcl.FlattenInteger(m["maxIssuerPathLength"])
 
 	return r
@@ -10633,14 +10739,14 @@ func flattenCertificateCertificateDescriptionX509DescriptionCaOptions(c *Client,
 
 // expandCertificateCertificateDescriptionX509DescriptionPolicyIdsMap expands the contents of CertificateCertificateDescriptionX509DescriptionPolicyIds into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionPolicyIdsMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionPolicyIds) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionPolicyIdsMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionPolicyIds, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionPolicyIds(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionPolicyIds(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10654,14 +10760,14 @@ func expandCertificateCertificateDescriptionX509DescriptionPolicyIdsMap(c *Clien
 
 // expandCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice expands the contents of CertificateCertificateDescriptionX509DescriptionPolicyIds into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionPolicyIds) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionPolicyIds, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionPolicyIds(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionPolicyIds(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10674,7 +10780,7 @@ func expandCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c *Cli
 
 // flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsMap flattens the contents of CertificateCertificateDescriptionX509DescriptionPolicyIds from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509DescriptionPolicyIds {
+func flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509DescriptionPolicyIds {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509DescriptionPolicyIds{}
@@ -10686,7 +10792,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsMap(c *Clie
 
 	items := make(map[string]CertificateCertificateDescriptionX509DescriptionPolicyIds)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionPolicyIds(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionPolicyIds(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -10694,7 +10800,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsMap(c *Clie
 
 // flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice flattens the contents of CertificateCertificateDescriptionX509DescriptionPolicyIds from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509DescriptionPolicyIds {
+func flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509DescriptionPolicyIds {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509DescriptionPolicyIds{}
@@ -10706,7 +10812,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c *Cl
 
 	items := make([]CertificateCertificateDescriptionX509DescriptionPolicyIds, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionPolicyIds(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionPolicyIds(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -10714,8 +10820,8 @@ func flattenCertificateCertificateDescriptionX509DescriptionPolicyIdsSlice(c *Cl
 
 // expandCertificateCertificateDescriptionX509DescriptionPolicyIds expands an instance of CertificateCertificateDescriptionX509DescriptionPolicyIds into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionPolicyIds(c *Client, f *CertificateCertificateDescriptionX509DescriptionPolicyIds) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCertificateCertificateDescriptionX509DescriptionPolicyIds(c *Client, f *CertificateCertificateDescriptionX509DescriptionPolicyIds, res *Certificate) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -10729,7 +10835,7 @@ func expandCertificateCertificateDescriptionX509DescriptionPolicyIds(c *Client, 
 
 // flattenCertificateCertificateDescriptionX509DescriptionPolicyIds flattens an instance of CertificateCertificateDescriptionX509DescriptionPolicyIds from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionPolicyIds(c *Client, i interface{}) *CertificateCertificateDescriptionX509DescriptionPolicyIds {
+func flattenCertificateCertificateDescriptionX509DescriptionPolicyIds(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509DescriptionPolicyIds {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -10747,14 +10853,14 @@ func flattenCertificateCertificateDescriptionX509DescriptionPolicyIds(c *Client,
 
 // expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsMap expands the contents of CertificateCertificateDescriptionX509DescriptionAdditionalExtensions into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensions) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensions, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10768,14 +10874,14 @@ func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsM
 
 // expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice expands the contents of CertificateCertificateDescriptionX509DescriptionAdditionalExtensions into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10788,7 +10894,7 @@ func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsS
 
 // flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsMap flattens the contents of CertificateCertificateDescriptionX509DescriptionAdditionalExtensions from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensions {
+func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensions {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensions{}
@@ -10800,7 +10906,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 	items := make(map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensions)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -10808,7 +10914,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 // flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice flattens the contents of CertificateCertificateDescriptionX509DescriptionAdditionalExtensions from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions {
+func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509DescriptionAdditionalExtensions{}
@@ -10820,7 +10926,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 	items := make([]CertificateCertificateDescriptionX509DescriptionAdditionalExtensions, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -10828,13 +10934,13 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 // expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensions expands an instance of CertificateCertificateDescriptionX509DescriptionAdditionalExtensions into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c *Client, f *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c *Client, f *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions, res *Certificate) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, f.ObjectId); err != nil {
+	if v, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, f.ObjectId, res); err != nil {
 		return nil, fmt.Errorf("error expanding ObjectId into objectId: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["objectId"] = v
@@ -10851,7 +10957,7 @@ func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(
 
 // flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions flattens an instance of CertificateCertificateDescriptionX509DescriptionAdditionalExtensions from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c *Client, i interface{}) *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions {
+func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -10862,7 +10968,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 	}
-	r.ObjectId = flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, m["objectId"])
+	r.ObjectId = flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, m["objectId"], res)
 	r.Critical = dcl.FlattenBool(m["critical"])
 	r.Value = dcl.FlattenString(m["value"])
 
@@ -10871,14 +10977,14 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 // expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdMap expands the contents of CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdMap(c *Client, f map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10892,14 +10998,14 @@ func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsO
 
 // expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdSlice expands the contents of CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdSlice(c *Client, f []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, &item)
+		i, err := expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -10912,7 +11018,7 @@ func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsO
 
 // flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdMap flattens the contents of CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId {
+func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId{}
@@ -10924,7 +11030,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 	items := make(map[string]CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -10932,7 +11038,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 // flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdSlice flattens the contents of CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdSlice(c *Client, i interface{}) []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId {
+func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId{}
@@ -10944,7 +11050,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 	items := make([]CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -10952,7 +11058,7 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 // expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId expands an instance of CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c *Client, f *CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c *Client, f *CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -10967,7 +11073,7 @@ func expandCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsO
 
 // flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId flattens an instance of CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c *Client, i interface{}) *CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId {
+func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -10985,14 +11091,14 @@ func flattenCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 
 // expandCertificateCertificateDescriptionPublicKeyMap expands the contents of CertificateCertificateDescriptionPublicKey into a JSON
 // request object.
-func expandCertificateCertificateDescriptionPublicKeyMap(c *Client, f map[string]CertificateCertificateDescriptionPublicKey) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionPublicKeyMap(c *Client, f map[string]CertificateCertificateDescriptionPublicKey, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionPublicKey(c, &item)
+		i, err := expandCertificateCertificateDescriptionPublicKey(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -11006,14 +11112,14 @@ func expandCertificateCertificateDescriptionPublicKeyMap(c *Client, f map[string
 
 // expandCertificateCertificateDescriptionPublicKeySlice expands the contents of CertificateCertificateDescriptionPublicKey into a JSON
 // request object.
-func expandCertificateCertificateDescriptionPublicKeySlice(c *Client, f []CertificateCertificateDescriptionPublicKey) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionPublicKeySlice(c *Client, f []CertificateCertificateDescriptionPublicKey, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionPublicKey(c, &item)
+		i, err := expandCertificateCertificateDescriptionPublicKey(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -11026,7 +11132,7 @@ func expandCertificateCertificateDescriptionPublicKeySlice(c *Client, f []Certif
 
 // flattenCertificateCertificateDescriptionPublicKeyMap flattens the contents of CertificateCertificateDescriptionPublicKey from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionPublicKeyMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionPublicKey {
+func flattenCertificateCertificateDescriptionPublicKeyMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionPublicKey {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionPublicKey{}
@@ -11038,7 +11144,7 @@ func flattenCertificateCertificateDescriptionPublicKeyMap(c *Client, i interface
 
 	items := make(map[string]CertificateCertificateDescriptionPublicKey)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionPublicKey(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionPublicKey(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -11046,7 +11152,7 @@ func flattenCertificateCertificateDescriptionPublicKeyMap(c *Client, i interface
 
 // flattenCertificateCertificateDescriptionPublicKeySlice flattens the contents of CertificateCertificateDescriptionPublicKey from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionPublicKeySlice(c *Client, i interface{}) []CertificateCertificateDescriptionPublicKey {
+func flattenCertificateCertificateDescriptionPublicKeySlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionPublicKey {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionPublicKey{}
@@ -11058,7 +11164,7 @@ func flattenCertificateCertificateDescriptionPublicKeySlice(c *Client, i interfa
 
 	items := make([]CertificateCertificateDescriptionPublicKey, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionPublicKey(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionPublicKey(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -11066,7 +11172,7 @@ func flattenCertificateCertificateDescriptionPublicKeySlice(c *Client, i interfa
 
 // expandCertificateCertificateDescriptionPublicKey expands an instance of CertificateCertificateDescriptionPublicKey into a JSON
 // request object.
-func expandCertificateCertificateDescriptionPublicKey(c *Client, f *CertificateCertificateDescriptionPublicKey) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionPublicKey(c *Client, f *CertificateCertificateDescriptionPublicKey, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -11084,7 +11190,7 @@ func expandCertificateCertificateDescriptionPublicKey(c *Client, f *CertificateC
 
 // flattenCertificateCertificateDescriptionPublicKey flattens an instance of CertificateCertificateDescriptionPublicKey from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionPublicKey(c *Client, i interface{}) *CertificateCertificateDescriptionPublicKey {
+func flattenCertificateCertificateDescriptionPublicKey(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionPublicKey {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -11103,14 +11209,14 @@ func flattenCertificateCertificateDescriptionPublicKey(c *Client, i interface{})
 
 // expandCertificateCertificateDescriptionSubjectKeyIdMap expands the contents of CertificateCertificateDescriptionSubjectKeyId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectKeyIdMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectKeyId) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectKeyIdMap(c *Client, f map[string]CertificateCertificateDescriptionSubjectKeyId, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectKeyId(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectKeyId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -11124,14 +11230,14 @@ func expandCertificateCertificateDescriptionSubjectKeyIdMap(c *Client, f map[str
 
 // expandCertificateCertificateDescriptionSubjectKeyIdSlice expands the contents of CertificateCertificateDescriptionSubjectKeyId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectKeyIdSlice(c *Client, f []CertificateCertificateDescriptionSubjectKeyId) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectKeyIdSlice(c *Client, f []CertificateCertificateDescriptionSubjectKeyId, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionSubjectKeyId(c, &item)
+		i, err := expandCertificateCertificateDescriptionSubjectKeyId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -11144,7 +11250,7 @@ func expandCertificateCertificateDescriptionSubjectKeyIdSlice(c *Client, f []Cer
 
 // flattenCertificateCertificateDescriptionSubjectKeyIdMap flattens the contents of CertificateCertificateDescriptionSubjectKeyId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectKeyIdMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionSubjectKeyId {
+func flattenCertificateCertificateDescriptionSubjectKeyIdMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionSubjectKeyId {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionSubjectKeyId{}
@@ -11156,7 +11262,7 @@ func flattenCertificateCertificateDescriptionSubjectKeyIdMap(c *Client, i interf
 
 	items := make(map[string]CertificateCertificateDescriptionSubjectKeyId)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionSubjectKeyId(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionSubjectKeyId(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -11164,7 +11270,7 @@ func flattenCertificateCertificateDescriptionSubjectKeyIdMap(c *Client, i interf
 
 // flattenCertificateCertificateDescriptionSubjectKeyIdSlice flattens the contents of CertificateCertificateDescriptionSubjectKeyId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectKeyIdSlice(c *Client, i interface{}) []CertificateCertificateDescriptionSubjectKeyId {
+func flattenCertificateCertificateDescriptionSubjectKeyIdSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionSubjectKeyId {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionSubjectKeyId{}
@@ -11176,7 +11282,7 @@ func flattenCertificateCertificateDescriptionSubjectKeyIdSlice(c *Client, i inte
 
 	items := make([]CertificateCertificateDescriptionSubjectKeyId, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionSubjectKeyId(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionSubjectKeyId(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -11184,7 +11290,7 @@ func flattenCertificateCertificateDescriptionSubjectKeyIdSlice(c *Client, i inte
 
 // expandCertificateCertificateDescriptionSubjectKeyId expands an instance of CertificateCertificateDescriptionSubjectKeyId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionSubjectKeyId(c *Client, f *CertificateCertificateDescriptionSubjectKeyId) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionSubjectKeyId(c *Client, f *CertificateCertificateDescriptionSubjectKeyId, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -11199,7 +11305,7 @@ func expandCertificateCertificateDescriptionSubjectKeyId(c *Client, f *Certifica
 
 // flattenCertificateCertificateDescriptionSubjectKeyId flattens an instance of CertificateCertificateDescriptionSubjectKeyId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionSubjectKeyId(c *Client, i interface{}) *CertificateCertificateDescriptionSubjectKeyId {
+func flattenCertificateCertificateDescriptionSubjectKeyId(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionSubjectKeyId {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -11217,14 +11323,14 @@ func flattenCertificateCertificateDescriptionSubjectKeyId(c *Client, i interface
 
 // expandCertificateCertificateDescriptionAuthorityKeyIdMap expands the contents of CertificateCertificateDescriptionAuthorityKeyId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionAuthorityKeyIdMap(c *Client, f map[string]CertificateCertificateDescriptionAuthorityKeyId) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionAuthorityKeyIdMap(c *Client, f map[string]CertificateCertificateDescriptionAuthorityKeyId, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionAuthorityKeyId(c, &item)
+		i, err := expandCertificateCertificateDescriptionAuthorityKeyId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -11238,14 +11344,14 @@ func expandCertificateCertificateDescriptionAuthorityKeyIdMap(c *Client, f map[s
 
 // expandCertificateCertificateDescriptionAuthorityKeyIdSlice expands the contents of CertificateCertificateDescriptionAuthorityKeyId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionAuthorityKeyIdSlice(c *Client, f []CertificateCertificateDescriptionAuthorityKeyId) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionAuthorityKeyIdSlice(c *Client, f []CertificateCertificateDescriptionAuthorityKeyId, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionAuthorityKeyId(c, &item)
+		i, err := expandCertificateCertificateDescriptionAuthorityKeyId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -11258,7 +11364,7 @@ func expandCertificateCertificateDescriptionAuthorityKeyIdSlice(c *Client, f []C
 
 // flattenCertificateCertificateDescriptionAuthorityKeyIdMap flattens the contents of CertificateCertificateDescriptionAuthorityKeyId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionAuthorityKeyIdMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionAuthorityKeyId {
+func flattenCertificateCertificateDescriptionAuthorityKeyIdMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionAuthorityKeyId {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionAuthorityKeyId{}
@@ -11270,7 +11376,7 @@ func flattenCertificateCertificateDescriptionAuthorityKeyIdMap(c *Client, i inte
 
 	items := make(map[string]CertificateCertificateDescriptionAuthorityKeyId)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionAuthorityKeyId(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionAuthorityKeyId(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -11278,7 +11384,7 @@ func flattenCertificateCertificateDescriptionAuthorityKeyIdMap(c *Client, i inte
 
 // flattenCertificateCertificateDescriptionAuthorityKeyIdSlice flattens the contents of CertificateCertificateDescriptionAuthorityKeyId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionAuthorityKeyIdSlice(c *Client, i interface{}) []CertificateCertificateDescriptionAuthorityKeyId {
+func flattenCertificateCertificateDescriptionAuthorityKeyIdSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionAuthorityKeyId {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionAuthorityKeyId{}
@@ -11290,7 +11396,7 @@ func flattenCertificateCertificateDescriptionAuthorityKeyIdSlice(c *Client, i in
 
 	items := make([]CertificateCertificateDescriptionAuthorityKeyId, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionAuthorityKeyId(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionAuthorityKeyId(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -11298,7 +11404,7 @@ func flattenCertificateCertificateDescriptionAuthorityKeyIdSlice(c *Client, i in
 
 // expandCertificateCertificateDescriptionAuthorityKeyId expands an instance of CertificateCertificateDescriptionAuthorityKeyId into a JSON
 // request object.
-func expandCertificateCertificateDescriptionAuthorityKeyId(c *Client, f *CertificateCertificateDescriptionAuthorityKeyId) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionAuthorityKeyId(c *Client, f *CertificateCertificateDescriptionAuthorityKeyId, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -11313,7 +11419,7 @@ func expandCertificateCertificateDescriptionAuthorityKeyId(c *Client, f *Certifi
 
 // flattenCertificateCertificateDescriptionAuthorityKeyId flattens an instance of CertificateCertificateDescriptionAuthorityKeyId from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionAuthorityKeyId(c *Client, i interface{}) *CertificateCertificateDescriptionAuthorityKeyId {
+func flattenCertificateCertificateDescriptionAuthorityKeyId(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionAuthorityKeyId {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -11331,14 +11437,14 @@ func flattenCertificateCertificateDescriptionAuthorityKeyId(c *Client, i interfa
 
 // expandCertificateCertificateDescriptionCertFingerprintMap expands the contents of CertificateCertificateDescriptionCertFingerprint into a JSON
 // request object.
-func expandCertificateCertificateDescriptionCertFingerprintMap(c *Client, f map[string]CertificateCertificateDescriptionCertFingerprint) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionCertFingerprintMap(c *Client, f map[string]CertificateCertificateDescriptionCertFingerprint, res *Certificate) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandCertificateCertificateDescriptionCertFingerprint(c, &item)
+		i, err := expandCertificateCertificateDescriptionCertFingerprint(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -11352,14 +11458,14 @@ func expandCertificateCertificateDescriptionCertFingerprintMap(c *Client, f map[
 
 // expandCertificateCertificateDescriptionCertFingerprintSlice expands the contents of CertificateCertificateDescriptionCertFingerprint into a JSON
 // request object.
-func expandCertificateCertificateDescriptionCertFingerprintSlice(c *Client, f []CertificateCertificateDescriptionCertFingerprint) ([]map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionCertFingerprintSlice(c *Client, f []CertificateCertificateDescriptionCertFingerprint, res *Certificate) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandCertificateCertificateDescriptionCertFingerprint(c, &item)
+		i, err := expandCertificateCertificateDescriptionCertFingerprint(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -11372,7 +11478,7 @@ func expandCertificateCertificateDescriptionCertFingerprintSlice(c *Client, f []
 
 // flattenCertificateCertificateDescriptionCertFingerprintMap flattens the contents of CertificateCertificateDescriptionCertFingerprint from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionCertFingerprintMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionCertFingerprint {
+func flattenCertificateCertificateDescriptionCertFingerprintMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionCertFingerprint {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionCertFingerprint{}
@@ -11384,7 +11490,7 @@ func flattenCertificateCertificateDescriptionCertFingerprintMap(c *Client, i int
 
 	items := make(map[string]CertificateCertificateDescriptionCertFingerprint)
 	for k, item := range a {
-		items[k] = *flattenCertificateCertificateDescriptionCertFingerprint(c, item.(map[string]interface{}))
+		items[k] = *flattenCertificateCertificateDescriptionCertFingerprint(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -11392,7 +11498,7 @@ func flattenCertificateCertificateDescriptionCertFingerprintMap(c *Client, i int
 
 // flattenCertificateCertificateDescriptionCertFingerprintSlice flattens the contents of CertificateCertificateDescriptionCertFingerprint from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionCertFingerprintSlice(c *Client, i interface{}) []CertificateCertificateDescriptionCertFingerprint {
+func flattenCertificateCertificateDescriptionCertFingerprintSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionCertFingerprint {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionCertFingerprint{}
@@ -11404,7 +11510,7 @@ func flattenCertificateCertificateDescriptionCertFingerprintSlice(c *Client, i i
 
 	items := make([]CertificateCertificateDescriptionCertFingerprint, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenCertificateCertificateDescriptionCertFingerprint(c, item.(map[string]interface{})))
+		items = append(items, *flattenCertificateCertificateDescriptionCertFingerprint(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -11412,7 +11518,7 @@ func flattenCertificateCertificateDescriptionCertFingerprintSlice(c *Client, i i
 
 // expandCertificateCertificateDescriptionCertFingerprint expands an instance of CertificateCertificateDescriptionCertFingerprint into a JSON
 // request object.
-func expandCertificateCertificateDescriptionCertFingerprint(c *Client, f *CertificateCertificateDescriptionCertFingerprint) (map[string]interface{}, error) {
+func expandCertificateCertificateDescriptionCertFingerprint(c *Client, f *CertificateCertificateDescriptionCertFingerprint, res *Certificate) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -11427,7 +11533,7 @@ func expandCertificateCertificateDescriptionCertFingerprint(c *Client, f *Certif
 
 // flattenCertificateCertificateDescriptionCertFingerprint flattens an instance of CertificateCertificateDescriptionCertFingerprint from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionCertFingerprint(c *Client, i interface{}) *CertificateCertificateDescriptionCertFingerprint {
+func flattenCertificateCertificateDescriptionCertFingerprint(c *Client, i interface{}, res *Certificate) *CertificateCertificateDescriptionCertFingerprint {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -11445,7 +11551,7 @@ func flattenCertificateCertificateDescriptionCertFingerprint(c *Client, i interf
 
 // flattenCertificateConfigPublicKeyFormatEnumMap flattens the contents of CertificateConfigPublicKeyFormatEnum from a JSON
 // response object.
-func flattenCertificateConfigPublicKeyFormatEnumMap(c *Client, i interface{}) map[string]CertificateConfigPublicKeyFormatEnum {
+func flattenCertificateConfigPublicKeyFormatEnumMap(c *Client, i interface{}, res *Certificate) map[string]CertificateConfigPublicKeyFormatEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateConfigPublicKeyFormatEnum{}
@@ -11465,7 +11571,7 @@ func flattenCertificateConfigPublicKeyFormatEnumMap(c *Client, i interface{}) ma
 
 // flattenCertificateConfigPublicKeyFormatEnumSlice flattens the contents of CertificateConfigPublicKeyFormatEnum from a JSON
 // response object.
-func flattenCertificateConfigPublicKeyFormatEnumSlice(c *Client, i interface{}) []CertificateConfigPublicKeyFormatEnum {
+func flattenCertificateConfigPublicKeyFormatEnumSlice(c *Client, i interface{}, res *Certificate) []CertificateConfigPublicKeyFormatEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateConfigPublicKeyFormatEnum{}
@@ -11488,7 +11594,7 @@ func flattenCertificateConfigPublicKeyFormatEnumSlice(c *Client, i interface{}) 
 func flattenCertificateConfigPublicKeyFormatEnum(i interface{}) *CertificateConfigPublicKeyFormatEnum {
 	s, ok := i.(string)
 	if !ok {
-		return CertificateConfigPublicKeyFormatEnumRef("")
+		return nil
 	}
 
 	return CertificateConfigPublicKeyFormatEnumRef(s)
@@ -11496,7 +11602,7 @@ func flattenCertificateConfigPublicKeyFormatEnum(i interface{}) *CertificateConf
 
 // flattenCertificateSubjectModeEnumMap flattens the contents of CertificateSubjectModeEnum from a JSON
 // response object.
-func flattenCertificateSubjectModeEnumMap(c *Client, i interface{}) map[string]CertificateSubjectModeEnum {
+func flattenCertificateSubjectModeEnumMap(c *Client, i interface{}, res *Certificate) map[string]CertificateSubjectModeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateSubjectModeEnum{}
@@ -11516,7 +11622,7 @@ func flattenCertificateSubjectModeEnumMap(c *Client, i interface{}) map[string]C
 
 // flattenCertificateSubjectModeEnumSlice flattens the contents of CertificateSubjectModeEnum from a JSON
 // response object.
-func flattenCertificateSubjectModeEnumSlice(c *Client, i interface{}) []CertificateSubjectModeEnum {
+func flattenCertificateSubjectModeEnumSlice(c *Client, i interface{}, res *Certificate) []CertificateSubjectModeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateSubjectModeEnum{}
@@ -11539,7 +11645,7 @@ func flattenCertificateSubjectModeEnumSlice(c *Client, i interface{}) []Certific
 func flattenCertificateSubjectModeEnum(i interface{}) *CertificateSubjectModeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return CertificateSubjectModeEnumRef("")
+		return nil
 	}
 
 	return CertificateSubjectModeEnumRef(s)
@@ -11547,7 +11653,7 @@ func flattenCertificateSubjectModeEnum(i interface{}) *CertificateSubjectModeEnu
 
 // flattenCertificateRevocationDetailsRevocationStateEnumMap flattens the contents of CertificateRevocationDetailsRevocationStateEnum from a JSON
 // response object.
-func flattenCertificateRevocationDetailsRevocationStateEnumMap(c *Client, i interface{}) map[string]CertificateRevocationDetailsRevocationStateEnum {
+func flattenCertificateRevocationDetailsRevocationStateEnumMap(c *Client, i interface{}, res *Certificate) map[string]CertificateRevocationDetailsRevocationStateEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateRevocationDetailsRevocationStateEnum{}
@@ -11567,7 +11673,7 @@ func flattenCertificateRevocationDetailsRevocationStateEnumMap(c *Client, i inte
 
 // flattenCertificateRevocationDetailsRevocationStateEnumSlice flattens the contents of CertificateRevocationDetailsRevocationStateEnum from a JSON
 // response object.
-func flattenCertificateRevocationDetailsRevocationStateEnumSlice(c *Client, i interface{}) []CertificateRevocationDetailsRevocationStateEnum {
+func flattenCertificateRevocationDetailsRevocationStateEnumSlice(c *Client, i interface{}, res *Certificate) []CertificateRevocationDetailsRevocationStateEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateRevocationDetailsRevocationStateEnum{}
@@ -11590,7 +11696,7 @@ func flattenCertificateRevocationDetailsRevocationStateEnumSlice(c *Client, i in
 func flattenCertificateRevocationDetailsRevocationStateEnum(i interface{}) *CertificateRevocationDetailsRevocationStateEnum {
 	s, ok := i.(string)
 	if !ok {
-		return CertificateRevocationDetailsRevocationStateEnumRef("")
+		return nil
 	}
 
 	return CertificateRevocationDetailsRevocationStateEnumRef(s)
@@ -11598,7 +11704,7 @@ func flattenCertificateRevocationDetailsRevocationStateEnum(i interface{}) *Cert
 
 // flattenCertificateCertificateDescriptionPublicKeyFormatEnumMap flattens the contents of CertificateCertificateDescriptionPublicKeyFormatEnum from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionPublicKeyFormatEnumMap(c *Client, i interface{}) map[string]CertificateCertificateDescriptionPublicKeyFormatEnum {
+func flattenCertificateCertificateDescriptionPublicKeyFormatEnumMap(c *Client, i interface{}, res *Certificate) map[string]CertificateCertificateDescriptionPublicKeyFormatEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]CertificateCertificateDescriptionPublicKeyFormatEnum{}
@@ -11618,7 +11724,7 @@ func flattenCertificateCertificateDescriptionPublicKeyFormatEnumMap(c *Client, i
 
 // flattenCertificateCertificateDescriptionPublicKeyFormatEnumSlice flattens the contents of CertificateCertificateDescriptionPublicKeyFormatEnum from a JSON
 // response object.
-func flattenCertificateCertificateDescriptionPublicKeyFormatEnumSlice(c *Client, i interface{}) []CertificateCertificateDescriptionPublicKeyFormatEnum {
+func flattenCertificateCertificateDescriptionPublicKeyFormatEnumSlice(c *Client, i interface{}, res *Certificate) []CertificateCertificateDescriptionPublicKeyFormatEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []CertificateCertificateDescriptionPublicKeyFormatEnum{}
@@ -11641,7 +11747,7 @@ func flattenCertificateCertificateDescriptionPublicKeyFormatEnumSlice(c *Client,
 func flattenCertificateCertificateDescriptionPublicKeyFormatEnum(i interface{}) *CertificateCertificateDescriptionPublicKeyFormatEnum {
 	s, ok := i.(string)
 	if !ok {
-		return CertificateCertificateDescriptionPublicKeyFormatEnumRef("")
+		return nil
 	}
 
 	return CertificateCertificateDescriptionPublicKeyFormatEnumRef(s)
@@ -11652,7 +11758,7 @@ func flattenCertificateCertificateDescriptionPublicKeyFormatEnum(i interface{}) 
 // identity).  This is useful in extracting the element from a List call.
 func (r *Certificate) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalCertificate(b, c)
+		cr, err := unmarshalCertificate(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -11701,6 +11807,7 @@ type certificateDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         certificateApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToCertificateDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]certificateDiff, error) {
@@ -11720,7 +11827,8 @@ func convertFieldDiffsToCertificateDiffs(config *dcl.Config, fds []*dcl.FieldDif
 	var diffs []certificateDiff
 	// For each operation name, create a certificateDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := certificateDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := certificateDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -11755,7 +11863,7 @@ func extractCertificateFields(r *Certificate) error {
 	if err := extractCertificateConfigFields(r, vConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vConfig) {
+	if !dcl.IsEmptyValueIndirect(vConfig) {
 		r.Config = vConfig
 	}
 	vRevocationDetails := r.RevocationDetails
@@ -11766,7 +11874,7 @@ func extractCertificateFields(r *Certificate) error {
 	if err := extractCertificateRevocationDetailsFields(r, vRevocationDetails); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRevocationDetails) {
+	if !dcl.IsEmptyValueIndirect(vRevocationDetails) {
 		r.RevocationDetails = vRevocationDetails
 	}
 	vCertificateDescription := r.CertificateDescription
@@ -11777,7 +11885,7 @@ func extractCertificateFields(r *Certificate) error {
 	if err := extractCertificateCertificateDescriptionFields(r, vCertificateDescription); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCertificateDescription) {
+	if !dcl.IsEmptyValueIndirect(vCertificateDescription) {
 		r.CertificateDescription = vCertificateDescription
 	}
 	return nil
@@ -11791,7 +11899,7 @@ func extractCertificateConfigFields(r *Certificate, o *CertificateConfig) error 
 	if err := extractCertificateConfigSubjectConfigFields(r, vSubjectConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectConfig) {
+	if !dcl.IsEmptyValueIndirect(vSubjectConfig) {
 		o.SubjectConfig = vSubjectConfig
 	}
 	vX509Config := o.X509Config
@@ -11802,7 +11910,7 @@ func extractCertificateConfigFields(r *Certificate, o *CertificateConfig) error 
 	if err := extractCertificateConfigX509ConfigFields(r, vX509Config); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vX509Config) {
+	if !dcl.IsEmptyValueIndirect(vX509Config) {
 		o.X509Config = vX509Config
 	}
 	vPublicKey := o.PublicKey
@@ -11813,7 +11921,7 @@ func extractCertificateConfigFields(r *Certificate, o *CertificateConfig) error 
 	if err := extractCertificateConfigPublicKeyFields(r, vPublicKey); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPublicKey) {
+	if !dcl.IsEmptyValueIndirect(vPublicKey) {
 		o.PublicKey = vPublicKey
 	}
 	return nil
@@ -11827,7 +11935,7 @@ func extractCertificateConfigSubjectConfigFields(r *Certificate, o *CertificateC
 	if err := extractCertificateConfigSubjectConfigSubjectFields(r, vSubject); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubject) {
+	if !dcl.IsEmptyValueIndirect(vSubject) {
 		o.Subject = vSubject
 	}
 	vSubjectAltName := o.SubjectAltName
@@ -11838,7 +11946,7 @@ func extractCertificateConfigSubjectConfigFields(r *Certificate, o *CertificateC
 	if err := extractCertificateConfigSubjectConfigSubjectAltNameFields(r, vSubjectAltName); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectAltName) {
+	if !dcl.IsEmptyValueIndirect(vSubjectAltName) {
 		o.SubjectAltName = vSubjectAltName
 	}
 	return nil
@@ -11858,7 +11966,7 @@ func extractCertificateConfigX509ConfigFields(r *Certificate, o *CertificateConf
 	if err := extractCertificateConfigX509ConfigKeyUsageFields(r, vKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vKeyUsage) {
 		o.KeyUsage = vKeyUsage
 	}
 	vCaOptions := o.CaOptions
@@ -11869,7 +11977,7 @@ func extractCertificateConfigX509ConfigFields(r *Certificate, o *CertificateConf
 	if err := extractCertificateConfigX509ConfigCaOptionsFields(r, vCaOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCaOptions) {
+	if !dcl.IsEmptyValueIndirect(vCaOptions) {
 		o.CaOptions = vCaOptions
 	}
 	return nil
@@ -11883,7 +11991,7 @@ func extractCertificateConfigX509ConfigKeyUsageFields(r *Certificate, o *Certifi
 	if err := extractCertificateConfigX509ConfigKeyUsageBaseKeyUsageFields(r, vBaseKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vBaseKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vBaseKeyUsage) {
 		o.BaseKeyUsage = vBaseKeyUsage
 	}
 	vExtendedKeyUsage := o.ExtendedKeyUsage
@@ -11894,7 +12002,7 @@ func extractCertificateConfigX509ConfigKeyUsageFields(r *Certificate, o *Certifi
 	if err := extractCertificateConfigX509ConfigKeyUsageExtendedKeyUsageFields(r, vExtendedKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vExtendedKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vExtendedKeyUsage) {
 		o.ExtendedKeyUsage = vExtendedKeyUsage
 	}
 	return nil
@@ -11923,7 +12031,7 @@ func extractCertificateConfigX509ConfigAdditionalExtensionsFields(r *Certificate
 	if err := extractCertificateConfigX509ConfigAdditionalExtensionsObjectIdFields(r, vObjectId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vObjectId) {
+	if !dcl.IsEmptyValueIndirect(vObjectId) {
 		o.ObjectId = vObjectId
 	}
 	return nil
@@ -11946,7 +12054,7 @@ func extractCertificateCertificateDescriptionFields(r *Certificate, o *Certifica
 	if err := extractCertificateCertificateDescriptionSubjectDescriptionFields(r, vSubjectDescription); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectDescription) {
+	if !dcl.IsEmptyValueIndirect(vSubjectDescription) {
 		o.SubjectDescription = vSubjectDescription
 	}
 	vX509Description := o.X509Description
@@ -11957,7 +12065,7 @@ func extractCertificateCertificateDescriptionFields(r *Certificate, o *Certifica
 	if err := extractCertificateCertificateDescriptionX509DescriptionFields(r, vX509Description); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vX509Description) {
+	if !dcl.IsEmptyValueIndirect(vX509Description) {
 		o.X509Description = vX509Description
 	}
 	vPublicKey := o.PublicKey
@@ -11968,7 +12076,7 @@ func extractCertificateCertificateDescriptionFields(r *Certificate, o *Certifica
 	if err := extractCertificateCertificateDescriptionPublicKeyFields(r, vPublicKey); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPublicKey) {
+	if !dcl.IsEmptyValueIndirect(vPublicKey) {
 		o.PublicKey = vPublicKey
 	}
 	vSubjectKeyId := o.SubjectKeyId
@@ -11979,7 +12087,7 @@ func extractCertificateCertificateDescriptionFields(r *Certificate, o *Certifica
 	if err := extractCertificateCertificateDescriptionSubjectKeyIdFields(r, vSubjectKeyId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectKeyId) {
+	if !dcl.IsEmptyValueIndirect(vSubjectKeyId) {
 		o.SubjectKeyId = vSubjectKeyId
 	}
 	vAuthorityKeyId := o.AuthorityKeyId
@@ -11990,7 +12098,7 @@ func extractCertificateCertificateDescriptionFields(r *Certificate, o *Certifica
 	if err := extractCertificateCertificateDescriptionAuthorityKeyIdFields(r, vAuthorityKeyId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAuthorityKeyId) {
+	if !dcl.IsEmptyValueIndirect(vAuthorityKeyId) {
 		o.AuthorityKeyId = vAuthorityKeyId
 	}
 	vCertFingerprint := o.CertFingerprint
@@ -12001,7 +12109,7 @@ func extractCertificateCertificateDescriptionFields(r *Certificate, o *Certifica
 	if err := extractCertificateCertificateDescriptionCertFingerprintFields(r, vCertFingerprint); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCertFingerprint) {
+	if !dcl.IsEmptyValueIndirect(vCertFingerprint) {
 		o.CertFingerprint = vCertFingerprint
 	}
 	return nil
@@ -12015,7 +12123,7 @@ func extractCertificateCertificateDescriptionSubjectDescriptionFields(r *Certifi
 	if err := extractCertificateCertificateDescriptionSubjectDescriptionSubjectFields(r, vSubject); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubject) {
+	if !dcl.IsEmptyValueIndirect(vSubject) {
 		o.Subject = vSubject
 	}
 	vSubjectAltName := o.SubjectAltName
@@ -12026,7 +12134,7 @@ func extractCertificateCertificateDescriptionSubjectDescriptionFields(r *Certifi
 	if err := extractCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameFields(r, vSubjectAltName); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectAltName) {
+	if !dcl.IsEmptyValueIndirect(vSubjectAltName) {
 		o.SubjectAltName = vSubjectAltName
 	}
 	return nil
@@ -12046,7 +12154,7 @@ func extractCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCus
 	if err := extractCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdFields(r, vObjectId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vObjectId) {
+	if !dcl.IsEmptyValueIndirect(vObjectId) {
 		o.ObjectId = vObjectId
 	}
 	return nil
@@ -12063,7 +12171,7 @@ func extractCertificateCertificateDescriptionX509DescriptionFields(r *Certificat
 	if err := extractCertificateCertificateDescriptionX509DescriptionKeyUsageFields(r, vKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vKeyUsage) {
 		o.KeyUsage = vKeyUsage
 	}
 	vCaOptions := o.CaOptions
@@ -12074,7 +12182,7 @@ func extractCertificateCertificateDescriptionX509DescriptionFields(r *Certificat
 	if err := extractCertificateCertificateDescriptionX509DescriptionCaOptionsFields(r, vCaOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCaOptions) {
+	if !dcl.IsEmptyValueIndirect(vCaOptions) {
 		o.CaOptions = vCaOptions
 	}
 	return nil
@@ -12088,7 +12196,7 @@ func extractCertificateCertificateDescriptionX509DescriptionKeyUsageFields(r *Ce
 	if err := extractCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageFields(r, vBaseKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vBaseKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vBaseKeyUsage) {
 		o.BaseKeyUsage = vBaseKeyUsage
 	}
 	vExtendedKeyUsage := o.ExtendedKeyUsage
@@ -12099,7 +12207,7 @@ func extractCertificateCertificateDescriptionX509DescriptionKeyUsageFields(r *Ce
 	if err := extractCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageFields(r, vExtendedKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vExtendedKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vExtendedKeyUsage) {
 		o.ExtendedKeyUsage = vExtendedKeyUsage
 	}
 	return nil
@@ -12128,7 +12236,7 @@ func extractCertificateCertificateDescriptionX509DescriptionAdditionalExtensions
 	if err := extractCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdFields(r, vObjectId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vObjectId) {
+	if !dcl.IsEmptyValueIndirect(vObjectId) {
 		o.ObjectId = vObjectId
 	}
 	return nil
@@ -12158,7 +12266,7 @@ func postReadExtractCertificateFields(r *Certificate) error {
 	if err := postReadExtractCertificateConfigFields(r, vConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vConfig) {
+	if !dcl.IsEmptyValueIndirect(vConfig) {
 		r.Config = vConfig
 	}
 	vRevocationDetails := r.RevocationDetails
@@ -12169,7 +12277,7 @@ func postReadExtractCertificateFields(r *Certificate) error {
 	if err := postReadExtractCertificateRevocationDetailsFields(r, vRevocationDetails); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRevocationDetails) {
+	if !dcl.IsEmptyValueIndirect(vRevocationDetails) {
 		r.RevocationDetails = vRevocationDetails
 	}
 	vCertificateDescription := r.CertificateDescription
@@ -12180,7 +12288,7 @@ func postReadExtractCertificateFields(r *Certificate) error {
 	if err := postReadExtractCertificateCertificateDescriptionFields(r, vCertificateDescription); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCertificateDescription) {
+	if !dcl.IsEmptyValueIndirect(vCertificateDescription) {
 		r.CertificateDescription = vCertificateDescription
 	}
 	return nil
@@ -12194,7 +12302,7 @@ func postReadExtractCertificateConfigFields(r *Certificate, o *CertificateConfig
 	if err := extractCertificateConfigSubjectConfigFields(r, vSubjectConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectConfig) {
+	if !dcl.IsEmptyValueIndirect(vSubjectConfig) {
 		o.SubjectConfig = vSubjectConfig
 	}
 	vX509Config := o.X509Config
@@ -12205,7 +12313,7 @@ func postReadExtractCertificateConfigFields(r *Certificate, o *CertificateConfig
 	if err := extractCertificateConfigX509ConfigFields(r, vX509Config); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vX509Config) {
+	if !dcl.IsEmptyValueIndirect(vX509Config) {
 		o.X509Config = vX509Config
 	}
 	vPublicKey := o.PublicKey
@@ -12216,7 +12324,7 @@ func postReadExtractCertificateConfigFields(r *Certificate, o *CertificateConfig
 	if err := extractCertificateConfigPublicKeyFields(r, vPublicKey); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPublicKey) {
+	if !dcl.IsEmptyValueIndirect(vPublicKey) {
 		o.PublicKey = vPublicKey
 	}
 	return nil
@@ -12230,7 +12338,7 @@ func postReadExtractCertificateConfigSubjectConfigFields(r *Certificate, o *Cert
 	if err := extractCertificateConfigSubjectConfigSubjectFields(r, vSubject); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubject) {
+	if !dcl.IsEmptyValueIndirect(vSubject) {
 		o.Subject = vSubject
 	}
 	vSubjectAltName := o.SubjectAltName
@@ -12241,7 +12349,7 @@ func postReadExtractCertificateConfigSubjectConfigFields(r *Certificate, o *Cert
 	if err := extractCertificateConfigSubjectConfigSubjectAltNameFields(r, vSubjectAltName); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectAltName) {
+	if !dcl.IsEmptyValueIndirect(vSubjectAltName) {
 		o.SubjectAltName = vSubjectAltName
 	}
 	return nil
@@ -12261,7 +12369,7 @@ func postReadExtractCertificateConfigX509ConfigFields(r *Certificate, o *Certifi
 	if err := extractCertificateConfigX509ConfigKeyUsageFields(r, vKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vKeyUsage) {
 		o.KeyUsage = vKeyUsage
 	}
 	vCaOptions := o.CaOptions
@@ -12272,7 +12380,7 @@ func postReadExtractCertificateConfigX509ConfigFields(r *Certificate, o *Certifi
 	if err := extractCertificateConfigX509ConfigCaOptionsFields(r, vCaOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCaOptions) {
+	if !dcl.IsEmptyValueIndirect(vCaOptions) {
 		o.CaOptions = vCaOptions
 	}
 	return nil
@@ -12286,7 +12394,7 @@ func postReadExtractCertificateConfigX509ConfigKeyUsageFields(r *Certificate, o 
 	if err := extractCertificateConfigX509ConfigKeyUsageBaseKeyUsageFields(r, vBaseKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vBaseKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vBaseKeyUsage) {
 		o.BaseKeyUsage = vBaseKeyUsage
 	}
 	vExtendedKeyUsage := o.ExtendedKeyUsage
@@ -12297,7 +12405,7 @@ func postReadExtractCertificateConfigX509ConfigKeyUsageFields(r *Certificate, o 
 	if err := extractCertificateConfigX509ConfigKeyUsageExtendedKeyUsageFields(r, vExtendedKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vExtendedKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vExtendedKeyUsage) {
 		o.ExtendedKeyUsage = vExtendedKeyUsage
 	}
 	return nil
@@ -12326,7 +12434,7 @@ func postReadExtractCertificateConfigX509ConfigAdditionalExtensionsFields(r *Cer
 	if err := extractCertificateConfigX509ConfigAdditionalExtensionsObjectIdFields(r, vObjectId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vObjectId) {
+	if !dcl.IsEmptyValueIndirect(vObjectId) {
 		o.ObjectId = vObjectId
 	}
 	return nil
@@ -12349,7 +12457,7 @@ func postReadExtractCertificateCertificateDescriptionFields(r *Certificate, o *C
 	if err := extractCertificateCertificateDescriptionSubjectDescriptionFields(r, vSubjectDescription); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectDescription) {
+	if !dcl.IsEmptyValueIndirect(vSubjectDescription) {
 		o.SubjectDescription = vSubjectDescription
 	}
 	vX509Description := o.X509Description
@@ -12360,7 +12468,7 @@ func postReadExtractCertificateCertificateDescriptionFields(r *Certificate, o *C
 	if err := extractCertificateCertificateDescriptionX509DescriptionFields(r, vX509Description); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vX509Description) {
+	if !dcl.IsEmptyValueIndirect(vX509Description) {
 		o.X509Description = vX509Description
 	}
 	vPublicKey := o.PublicKey
@@ -12371,7 +12479,7 @@ func postReadExtractCertificateCertificateDescriptionFields(r *Certificate, o *C
 	if err := extractCertificateCertificateDescriptionPublicKeyFields(r, vPublicKey); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPublicKey) {
+	if !dcl.IsEmptyValueIndirect(vPublicKey) {
 		o.PublicKey = vPublicKey
 	}
 	vSubjectKeyId := o.SubjectKeyId
@@ -12382,7 +12490,7 @@ func postReadExtractCertificateCertificateDescriptionFields(r *Certificate, o *C
 	if err := extractCertificateCertificateDescriptionSubjectKeyIdFields(r, vSubjectKeyId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectKeyId) {
+	if !dcl.IsEmptyValueIndirect(vSubjectKeyId) {
 		o.SubjectKeyId = vSubjectKeyId
 	}
 	vAuthorityKeyId := o.AuthorityKeyId
@@ -12393,7 +12501,7 @@ func postReadExtractCertificateCertificateDescriptionFields(r *Certificate, o *C
 	if err := extractCertificateCertificateDescriptionAuthorityKeyIdFields(r, vAuthorityKeyId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAuthorityKeyId) {
+	if !dcl.IsEmptyValueIndirect(vAuthorityKeyId) {
 		o.AuthorityKeyId = vAuthorityKeyId
 	}
 	vCertFingerprint := o.CertFingerprint
@@ -12404,7 +12512,7 @@ func postReadExtractCertificateCertificateDescriptionFields(r *Certificate, o *C
 	if err := extractCertificateCertificateDescriptionCertFingerprintFields(r, vCertFingerprint); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCertFingerprint) {
+	if !dcl.IsEmptyValueIndirect(vCertFingerprint) {
 		o.CertFingerprint = vCertFingerprint
 	}
 	return nil
@@ -12418,7 +12526,7 @@ func postReadExtractCertificateCertificateDescriptionSubjectDescriptionFields(r 
 	if err := extractCertificateCertificateDescriptionSubjectDescriptionSubjectFields(r, vSubject); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubject) {
+	if !dcl.IsEmptyValueIndirect(vSubject) {
 		o.Subject = vSubject
 	}
 	vSubjectAltName := o.SubjectAltName
@@ -12429,7 +12537,7 @@ func postReadExtractCertificateCertificateDescriptionSubjectDescriptionFields(r 
 	if err := extractCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameFields(r, vSubjectAltName); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSubjectAltName) {
+	if !dcl.IsEmptyValueIndirect(vSubjectAltName) {
 		o.SubjectAltName = vSubjectAltName
 	}
 	return nil
@@ -12449,7 +12557,7 @@ func postReadExtractCertificateCertificateDescriptionSubjectDescriptionSubjectAl
 	if err := extractCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectIdFields(r, vObjectId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vObjectId) {
+	if !dcl.IsEmptyValueIndirect(vObjectId) {
 		o.ObjectId = vObjectId
 	}
 	return nil
@@ -12466,7 +12574,7 @@ func postReadExtractCertificateCertificateDescriptionX509DescriptionFields(r *Ce
 	if err := extractCertificateCertificateDescriptionX509DescriptionKeyUsageFields(r, vKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vKeyUsage) {
 		o.KeyUsage = vKeyUsage
 	}
 	vCaOptions := o.CaOptions
@@ -12477,7 +12585,7 @@ func postReadExtractCertificateCertificateDescriptionX509DescriptionFields(r *Ce
 	if err := extractCertificateCertificateDescriptionX509DescriptionCaOptionsFields(r, vCaOptions); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vCaOptions) {
+	if !dcl.IsEmptyValueIndirect(vCaOptions) {
 		o.CaOptions = vCaOptions
 	}
 	return nil
@@ -12491,7 +12599,7 @@ func postReadExtractCertificateCertificateDescriptionX509DescriptionKeyUsageFiel
 	if err := extractCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsageFields(r, vBaseKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vBaseKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vBaseKeyUsage) {
 		o.BaseKeyUsage = vBaseKeyUsage
 	}
 	vExtendedKeyUsage := o.ExtendedKeyUsage
@@ -12502,7 +12610,7 @@ func postReadExtractCertificateCertificateDescriptionX509DescriptionKeyUsageFiel
 	if err := extractCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsageFields(r, vExtendedKeyUsage); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vExtendedKeyUsage) {
+	if !dcl.IsEmptyValueIndirect(vExtendedKeyUsage) {
 		o.ExtendedKeyUsage = vExtendedKeyUsage
 	}
 	return nil
@@ -12531,7 +12639,7 @@ func postReadExtractCertificateCertificateDescriptionX509DescriptionAdditionalEx
 	if err := extractCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectIdFields(r, vObjectId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vObjectId) {
+	if !dcl.IsEmptyValueIndirect(vObjectId) {
 		o.ObjectId = vObjectId
 	}
 	return nil

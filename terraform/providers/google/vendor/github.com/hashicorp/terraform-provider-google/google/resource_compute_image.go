@@ -18,14 +18,13 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceComputeImage() *schema.Resource {
+func ResourceComputeImage() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeImageCreate,
 		Read:   resourceComputeImageRead,
@@ -37,9 +36,9 @@ func resourceComputeImage() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Update: schema.DefaultTimeout(6 * time.Minute),
-			Delete: schema.DefaultTimeout(6 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -89,6 +88,37 @@ Applicable only for bootable images.`,
 				Elem: computeImageGuestOsFeaturesSchema(),
 				// Default schema.HashSchema is used.
 			},
+			"image_encryption_key": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Description: `Encrypts the image using a customer-supplied encryption key.
+
+After you encrypt an image with a customer-supplied key, you must
+provide the same key if you use the image later (e.g. to create a
+disk from the image)`,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"kms_key_self_link": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							ForceNew:         true,
+							DiffSuppressFunc: compareSelfLinkRelativePaths,
+							Description: `The self link of the encryption key that is stored in Google Cloud
+KMS.`,
+						},
+						"kms_key_service_account": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Description: `The service account being used for the encryption request for the
+given KMS key. If absent, the Compute Engine default service
+account is used.`,
+						},
+					},
+				},
+			},
 			"labels": {
 				Type:        schema.TypeMap,
 				Optional:    true,
@@ -126,7 +156,7 @@ but not both.`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"TAR", ""}, false),
+							ValidateFunc: validateEnum([]string{"TAR", ""}),
 							Description: `The format used to encode and transmit the block device, which
 should be TAR. This is just a container and transmission format
 and not a runtime format. Provided by the client when the disk
@@ -219,8 +249,8 @@ func computeImageGuestOsFeaturesSchema() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"MULTI_IP_SUBNET", "SECURE_BOOT", "SEV_CAPABLE", "UEFI_COMPATIBLE", "VIRTIO_SCSI_MULTIQUEUE", "WINDOWS", "GVNIC"}, false),
-				Description:  `The type of supported feature. Read [Enabling guest operating system features](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images#guest-os-features) to see a list of available options. Possible values: ["MULTI_IP_SUBNET", "SECURE_BOOT", "SEV_CAPABLE", "UEFI_COMPATIBLE", "VIRTIO_SCSI_MULTIQUEUE", "WINDOWS", "GVNIC"]`,
+				ValidateFunc: validateEnum([]string{"MULTI_IP_SUBNET", "SECURE_BOOT", "SEV_CAPABLE", "UEFI_COMPATIBLE", "VIRTIO_SCSI_MULTIQUEUE", "WINDOWS", "GVNIC", "SEV_LIVE_MIGRATABLE"}),
+				Description:  `The type of supported feature. Read [Enabling guest operating system features](https://cloud.google.com/compute/docs/images/create-delete-deprecate-private-images#guest-os-features) to see a list of available options. Possible values: ["MULTI_IP_SUBNET", "SECURE_BOOT", "SEV_CAPABLE", "UEFI_COMPATIBLE", "VIRTIO_SCSI_MULTIQUEUE", "WINDOWS", "GVNIC", "SEV_LIVE_MIGRATABLE"]`,
 			},
 		},
 	}
@@ -228,7 +258,7 @@ func computeImageGuestOsFeaturesSchema() *schema.Resource {
 
 func resourceComputeImageCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -257,6 +287,12 @@ func resourceComputeImageCreate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	} else if v, ok := d.GetOkExists("guest_os_features"); !isEmptyValue(reflect.ValueOf(guestOsFeaturesProp)) && (ok || !reflect.DeepEqual(v, guestOsFeaturesProp)) {
 		obj["guestOsFeatures"] = guestOsFeaturesProp
+	}
+	imageEncryptionKeyProp, err := expandComputeImageImageEncryptionKey(d.Get("image_encryption_key"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("image_encryption_key"); !isEmptyValue(reflect.ValueOf(imageEncryptionKeyProp)) && (ok || !reflect.DeepEqual(v, imageEncryptionKeyProp)) {
+		obj["imageEncryptionKey"] = imageEncryptionKeyProp
 	}
 	labelsProp, err := expandComputeImageLabels(d.Get("labels"), d, config)
 	if err != nil {
@@ -326,7 +362,7 @@ func resourceComputeImageCreate(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Image: %s", err)
 	}
@@ -338,7 +374,7 @@ func resourceComputeImageCreate(d *schema.ResourceData, meta interface{}) error 
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating Image", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -355,7 +391,7 @@ func resourceComputeImageCreate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceComputeImageRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -378,7 +414,7 @@ func resourceComputeImageRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeImage %q", d.Id()))
 	}
@@ -403,6 +439,9 @@ func resourceComputeImageRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading Image: %s", err)
 	}
 	if err := d.Set("guest_os_features", flattenComputeImageGuestOsFeatures(res["guestOsFeatures"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Image: %s", err)
+	}
+	if err := d.Set("image_encryption_key", flattenComputeImageImageEncryptionKey(res["imageEncryptionKey"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Image: %s", err)
 	}
 	if err := d.Set("labels", flattenComputeImageLabels(res["labels"], d, config)); err != nil {
@@ -435,7 +474,7 @@ func resourceComputeImageRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceComputeImageUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -476,14 +515,14 @@ func resourceComputeImageUpdate(d *schema.ResourceData, meta interface{}) error 
 			billingProject = bp
 		}
 
-		res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error updating Image %q: %s", d.Id(), err)
 		} else {
 			log.Printf("[DEBUG] Finished updating Image %q: %#v", d.Id(), res)
 		}
 
-		err = computeOperationWaitTime(
+		err = ComputeOperationWaitTime(
 			config, res, project, "Updating Image", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
@@ -498,7 +537,7 @@ func resourceComputeImageUpdate(d *schema.ResourceData, meta interface{}) error 
 
 func resourceComputeImageDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -524,12 +563,12 @@ func resourceComputeImageDelete(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Image")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting Image", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -564,7 +603,7 @@ func resourceComputeImageImport(d *schema.ResourceData, meta interface{}) ([]*sc
 func flattenComputeImageArchiveSizeBytes(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -589,7 +628,7 @@ func flattenComputeImageDescription(v interface{}, d *schema.ResourceData, confi
 func flattenComputeImageDiskSizeGb(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -626,6 +665,33 @@ func flattenComputeImageGuestOsFeatures(v interface{}, d *schema.ResourceData, c
 	return transformed
 }
 func flattenComputeImageGuestOsFeaturesType(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeImageImageEncryptionKey(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["kms_key_self_link"] =
+		flattenComputeImageImageEncryptionKeyKmsKeySelfLink(original["kmsKeyName"], d, config)
+	transformed["kms_key_service_account"] =
+		flattenComputeImageImageEncryptionKeyKmsKeyServiceAccount(original["kmsKeyServiceAccount"], d, config)
+	return []interface{}{transformed}
+}
+func flattenComputeImageImageEncryptionKeyKmsKeySelfLink(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	vStr := v.(string)
+	return strings.Split(vStr, "/cryptoKeyVersions/")[0]
+}
+
+func flattenComputeImageImageEncryptionKeyKmsKeyServiceAccount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -705,6 +771,40 @@ func expandComputeImageGuestOsFeatures(v interface{}, d TerraformResourceData, c
 }
 
 func expandComputeImageGuestOsFeaturesType(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeImageImageEncryptionKey(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedKmsKeySelfLink, err := expandComputeImageImageEncryptionKeyKmsKeySelfLink(original["kms_key_self_link"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKmsKeySelfLink); val.IsValid() && !isEmptyValue(val) {
+		transformed["kmsKeyName"] = transformedKmsKeySelfLink
+	}
+
+	transformedKmsKeyServiceAccount, err := expandComputeImageImageEncryptionKeyKmsKeyServiceAccount(original["kms_key_service_account"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKmsKeyServiceAccount); val.IsValid() && !isEmptyValue(val) {
+		transformed["kmsKeyServiceAccount"] = transformedKmsKeyServiceAccount
+	}
+
+	return transformed, nil
+}
+
+func expandComputeImageImageEncryptionKeyKmsKeySelfLink(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeImageImageEncryptionKeyKmsKeyServiceAccount(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

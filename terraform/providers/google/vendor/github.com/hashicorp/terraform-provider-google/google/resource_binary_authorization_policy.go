@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func defaultBinaryAuthorizationPolicy(project string) map[string]interface{} {
@@ -41,7 +40,7 @@ func defaultBinaryAuthorizationPolicy(project string) map[string]interface{} {
 	}
 }
 
-func resourceBinaryAuthorizationPolicy() *schema.Resource {
+func ResourceBinaryAuthorizationPolicy() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBinaryAuthorizationPolicyCreate,
 		Read:   resourceBinaryAuthorizationPolicyRead,
@@ -53,9 +52,9 @@ func resourceBinaryAuthorizationPolicy() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -70,13 +69,13 @@ rule.`,
 						"enforcement_mode": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ENFORCED_BLOCK_AND_AUDIT_LOG", "DRYRUN_AUDIT_LOG_ONLY"}, false),
+							ValidateFunc: validateEnum([]string{"ENFORCED_BLOCK_AND_AUDIT_LOG", "DRYRUN_AUDIT_LOG_ONLY"}),
 							Description:  `The action when a pod creation is denied by the admission rule. Possible values: ["ENFORCED_BLOCK_AND_AUDIT_LOG", "DRYRUN_AUDIT_LOG_ONLY"]`,
 						},
 						"evaluation_mode": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ALWAYS_ALLOW", "REQUIRE_ATTESTATION", "ALWAYS_DENY"}, false),
+							ValidateFunc: validateEnum([]string{"ALWAYS_ALLOW", "REQUIRE_ATTESTATION", "ALWAYS_DENY"}),
 							Description:  `How this admission rule will be evaluated. Possible values: ["ALWAYS_ALLOW", "REQUIRE_ATTESTATION", "ALWAYS_DENY"]`,
 						},
 						"require_attestations_by": {
@@ -141,13 +140,13 @@ A location is either a compute zone (e.g. 'us-central1-a') or a region
 						"enforcement_mode": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ENFORCED_BLOCK_AND_AUDIT_LOG", "DRYRUN_AUDIT_LOG_ONLY"}, false),
+							ValidateFunc: validateEnum([]string{"ENFORCED_BLOCK_AND_AUDIT_LOG", "DRYRUN_AUDIT_LOG_ONLY"}),
 							Description:  `The action when a pod creation is denied by the admission rule. Possible values: ["ENFORCED_BLOCK_AND_AUDIT_LOG", "DRYRUN_AUDIT_LOG_ONLY"]`,
 						},
 						"evaluation_mode": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ALWAYS_ALLOW", "REQUIRE_ATTESTATION", "ALWAYS_DENY"}, false),
+							ValidateFunc: validateEnum([]string{"ALWAYS_ALLOW", "REQUIRE_ATTESTATION", "ALWAYS_DENY"}),
 							Description:  `How this admission rule will be evaluated. Possible values: ["ALWAYS_ALLOW", "REQUIRE_ATTESTATION", "ALWAYS_DENY"]`,
 						},
 						"require_attestations_by": {
@@ -190,7 +189,7 @@ specifies REQUIRE_ATTESTATION, otherwise it must be empty.`,
 						copy["require_attestations_by"] = schema.NewSet(selfLinkNameHash, convertStringArrToInterface(t))
 					}
 					var buf bytes.Buffer
-					schema.SerializeResourceForHash(&buf, copy, resourceBinaryAuthorizationPolicy().Schema["cluster_admission_rules"].Elem.(*schema.Resource))
+					schema.SerializeResourceForHash(&buf, copy, ResourceBinaryAuthorizationPolicy().Schema["cluster_admission_rules"].Elem.(*schema.Resource))
 					return hashcode(buf.String())
 				},
 			},
@@ -203,7 +202,7 @@ specifies REQUIRE_ATTESTATION, otherwise it must be empty.`,
 				Type:         schema.TypeString,
 				Computed:     true,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ENABLE", "DISABLE", ""}, false),
+				ValidateFunc: validateEnum([]string{"ENABLE", "DISABLE", ""}),
 				Description: `Controls the evaluation of a Google-maintained global admission policy
 for common system-level images. Images not covered by the global
 policy will be subject to the project admission policy. Possible values: ["ENABLE", "DISABLE"]`,
@@ -221,7 +220,7 @@ policy will be subject to the project admission policy. Possible values: ["ENABL
 
 func resourceBinaryAuthorizationPolicyCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -277,7 +276,7 @@ func resourceBinaryAuthorizationPolicyCreate(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Policy: %s", err)
 	}
@@ -296,7 +295,7 @@ func resourceBinaryAuthorizationPolicyCreate(d *schema.ResourceData, meta interf
 
 func resourceBinaryAuthorizationPolicyRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -319,7 +318,7 @@ func resourceBinaryAuthorizationPolicyRead(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("BinaryAuthorizationPolicy %q", d.Id()))
 	}
@@ -349,7 +348,7 @@ func resourceBinaryAuthorizationPolicyRead(d *schema.ResourceData, meta interfac
 
 func resourceBinaryAuthorizationPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -406,7 +405,7 @@ func resourceBinaryAuthorizationPolicyUpdate(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Policy %q: %s", d.Id(), err)
@@ -419,7 +418,7 @@ func resourceBinaryAuthorizationPolicyUpdate(d *schema.ResourceData, meta interf
 
 func resourceBinaryAuthorizationPolicyDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -446,7 +445,7 @@ func resourceBinaryAuthorizationPolicyDelete(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Policy")
 	}

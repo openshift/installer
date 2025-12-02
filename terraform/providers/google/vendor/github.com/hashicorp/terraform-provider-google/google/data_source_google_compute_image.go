@@ -10,7 +10,7 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-func dataSourceGoogleComputeImage() *schema.Resource {
+func DataSourceGoogleComputeImage() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleComputeImageRead,
 
@@ -113,7 +113,7 @@ func dataSourceGoogleComputeImage() *schema.Resource {
 
 func dataSourceGoogleComputeImageRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

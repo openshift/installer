@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +14,16 @@
 package dcl
 
 import (
-	"github.com/mohae/deepcopy"
+	"time"
+
+	"github.com/google/go-cpy/cpy"
 )
 
 // Copy makes a deep copy of an interface.
-// TODO: Remove once third_party/golang/cpy/cpy is open-sourced.
 func Copy(src interface{}) interface{} {
-	return deepcopy.Copy(src)
+	copier := cpy.New(
+		cpy.Shallow(time.Time{}),
+		cpy.IgnoreAllUnexported(),
+	)
+	return copier.Copy(src)
 }

@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 )
@@ -110,6 +109,8 @@ type interconnectAttachmentApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateInterconnectAttachmentPatchRequest(ctx context.Context, f *InterconnectAttachment, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Description; !dcl.IsEmptyValueIndirect(v) {
 		req["description"] = v
@@ -147,7 +148,7 @@ func newUpdateInterconnectAttachmentPatchRequest(ctx context.Context, f *Interco
 	if v := f.Bandwidth; !dcl.IsEmptyValueIndirect(v) {
 		req["bandwidth"] = v
 	}
-	if v, err := expandInterconnectAttachmentPartnerMetadata(c, f.PartnerMetadata); err != nil {
+	if v, err := expandInterconnectAttachmentPartnerMetadata(c, f.PartnerMetadata, res); err != nil {
 		return nil, fmt.Errorf("error expanding PartnerMetadata into partnerMetadata: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["partnerMetadata"] = v
@@ -260,7 +261,7 @@ func (c *Client) listInterconnectAttachment(ctx context.Context, r *Interconnect
 
 	var l []*InterconnectAttachment
 	for _, v := range m.Items {
-		res, err := unmarshalMapInterconnectAttachment(v, c)
+		res, err := unmarshalMapInterconnectAttachment(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -315,20 +316,20 @@ func (op *deleteInterconnectAttachmentOperation) do(ctx context.Context, r *Inte
 		return fmt.Errorf("failed to delete InterconnectAttachment: %w", err)
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetInterconnectAttachment(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetInterconnectAttachment(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -422,6 +423,11 @@ func (c *Client) interconnectAttachmentDiffsForRawDesired(ctx context.Context, r
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for InterconnectAttachment: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for InterconnectAttachment: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractInterconnectAttachmentFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeInterconnectAttachmentInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -484,12 +490,19 @@ func canonicalizeInterconnectAttachmentDesiredState(rawDesired, rawInitial *Inte
 	} else {
 		canonicalDesired.Router = rawDesired.Router
 	}
-	if dcl.IsZeroValue(rawDesired.Mtu) {
+	if dcl.StringCanonicalize(rawDesired.Region, rawInitial.Region) {
+		canonicalDesired.Region = rawInitial.Region
+	} else {
+		canonicalDesired.Region = rawDesired.Region
+	}
+	if dcl.IsZeroValue(rawDesired.Mtu) || (dcl.IsEmptyValueIndirect(rawDesired.Mtu) && dcl.IsEmptyValueIndirect(rawInitial.Mtu)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Mtu = rawInitial.Mtu
 	} else {
 		canonicalDesired.Mtu = rawDesired.Mtu
 	}
-	if dcl.IsZeroValue(rawDesired.Type) {
+	if dcl.IsZeroValue(rawDesired.Type) || (dcl.IsEmptyValueIndirect(rawDesired.Type) && dcl.IsEmptyValueIndirect(rawInitial.Type)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Type = rawInitial.Type
 	} else {
 		canonicalDesired.Type = rawDesired.Type
@@ -504,12 +517,14 @@ func canonicalizeInterconnectAttachmentDesiredState(rawDesired, rawInitial *Inte
 	} else {
 		canonicalDesired.AdminEnabled = rawDesired.AdminEnabled
 	}
-	if dcl.IsZeroValue(rawDesired.VlanTag8021q) {
+	if dcl.IsZeroValue(rawDesired.VlanTag8021q) || (dcl.IsEmptyValueIndirect(rawDesired.VlanTag8021q) && dcl.IsEmptyValueIndirect(rawInitial.VlanTag8021q)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.VlanTag8021q = rawInitial.VlanTag8021q
 	} else {
 		canonicalDesired.VlanTag8021q = rawDesired.VlanTag8021q
 	}
-	if dcl.IsZeroValue(rawDesired.EdgeAvailabilityDomain) {
+	if dcl.IsZeroValue(rawDesired.EdgeAvailabilityDomain) || (dcl.IsEmptyValueIndirect(rawDesired.EdgeAvailabilityDomain) && dcl.IsEmptyValueIndirect(rawInitial.EdgeAvailabilityDomain)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.EdgeAvailabilityDomain = rawInitial.EdgeAvailabilityDomain
 	} else {
 		canonicalDesired.EdgeAvailabilityDomain = rawDesired.EdgeAvailabilityDomain
@@ -519,18 +534,21 @@ func canonicalizeInterconnectAttachmentDesiredState(rawDesired, rawInitial *Inte
 	} else {
 		canonicalDesired.CandidateSubnets = rawDesired.CandidateSubnets
 	}
-	if dcl.IsZeroValue(rawDesired.Bandwidth) {
+	if dcl.IsZeroValue(rawDesired.Bandwidth) || (dcl.IsEmptyValueIndirect(rawDesired.Bandwidth) && dcl.IsEmptyValueIndirect(rawInitial.Bandwidth)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Bandwidth = rawInitial.Bandwidth
 	} else {
 		canonicalDesired.Bandwidth = rawDesired.Bandwidth
 	}
 	canonicalDesired.PartnerMetadata = canonicalizeInterconnectAttachmentPartnerMetadata(rawDesired.PartnerMetadata, rawInitial.PartnerMetadata, opts...)
-	if dcl.IsZeroValue(rawDesired.PartnerAsn) {
+	if dcl.IsZeroValue(rawDesired.PartnerAsn) || (dcl.IsEmptyValueIndirect(rawDesired.PartnerAsn) && dcl.IsEmptyValueIndirect(rawInitial.PartnerAsn)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.PartnerAsn = rawInitial.PartnerAsn
 	} else {
 		canonicalDesired.PartnerAsn = rawDesired.PartnerAsn
 	}
-	if dcl.IsZeroValue(rawDesired.Encryption) {
+	if dcl.IsZeroValue(rawDesired.Encryption) || (dcl.IsEmptyValueIndirect(rawDesired.Encryption) && dcl.IsEmptyValueIndirect(rawInitial.Encryption)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Encryption = rawInitial.Encryption
 	} else {
 		canonicalDesired.Encryption = rawDesired.Encryption
@@ -540,7 +558,8 @@ func canonicalizeInterconnectAttachmentDesiredState(rawDesired, rawInitial *Inte
 	} else {
 		canonicalDesired.IpsecInternalAddresses = rawDesired.IpsecInternalAddresses
 	}
-	if dcl.IsZeroValue(rawDesired.DataplaneVersion) {
+	if dcl.IsZeroValue(rawDesired.DataplaneVersion) || (dcl.IsEmptyValueIndirect(rawDesired.DataplaneVersion) && dcl.IsEmptyValueIndirect(rawInitial.DataplaneVersion)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.DataplaneVersion = rawInitial.DataplaneVersion
 	} else {
 		canonicalDesired.DataplaneVersion = rawDesired.DataplaneVersion
@@ -550,13 +569,12 @@ func canonicalizeInterconnectAttachmentDesiredState(rawDesired, rawInitial *Inte
 	} else {
 		canonicalDesired.Project = rawDesired.Project
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *InterconnectAttachment) (*InterconnectAttachment, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Description) && dcl.IsNotReturnedByServer(rawDesired.Description) {
+	if dcl.IsEmptyValueIndirect(rawNew.Description) && dcl.IsEmptyValueIndirect(rawDesired.Description) {
 		rawNew.Description = rawDesired.Description
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Description, rawNew.Description) {
@@ -564,7 +582,7 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.SelfLink) && dcl.IsNotReturnedByServer(rawDesired.SelfLink) {
+	if dcl.IsEmptyValueIndirect(rawNew.SelfLink) && dcl.IsEmptyValueIndirect(rawDesired.SelfLink) {
 		rawNew.SelfLink = rawDesired.SelfLink
 	} else {
 		if dcl.StringCanonicalize(rawDesired.SelfLink, rawNew.SelfLink) {
@@ -572,12 +590,12 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Id) && dcl.IsNotReturnedByServer(rawDesired.Id) {
+	if dcl.IsEmptyValueIndirect(rawNew.Id) && dcl.IsEmptyValueIndirect(rawDesired.Id) {
 		rawNew.Id = rawDesired.Id
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Name, rawNew.Name) {
@@ -585,7 +603,7 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Interconnect) && dcl.IsNotReturnedByServer(rawDesired.Interconnect) {
+	if dcl.IsEmptyValueIndirect(rawNew.Interconnect) && dcl.IsEmptyValueIndirect(rawDesired.Interconnect) {
 		rawNew.Interconnect = rawDesired.Interconnect
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Interconnect, rawNew.Interconnect) {
@@ -593,7 +611,7 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Router) && dcl.IsNotReturnedByServer(rawDesired.Router) {
+	if dcl.IsEmptyValueIndirect(rawNew.Router) && dcl.IsEmptyValueIndirect(rawDesired.Router) {
 		rawNew.Router = rawDesired.Router
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Router, rawNew.Router) {
@@ -601,7 +619,7 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Region) && dcl.IsNotReturnedByServer(rawDesired.Region) {
+	if dcl.IsEmptyValueIndirect(rawNew.Region) && dcl.IsEmptyValueIndirect(rawDesired.Region) {
 		rawNew.Region = rawDesired.Region
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Region, rawNew.Region) {
@@ -609,23 +627,23 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Mtu) && dcl.IsNotReturnedByServer(rawDesired.Mtu) {
+	if dcl.IsEmptyValueIndirect(rawNew.Mtu) && dcl.IsEmptyValueIndirect(rawDesired.Mtu) {
 		rawNew.Mtu = rawDesired.Mtu
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PrivateInterconnectInfo) && dcl.IsNotReturnedByServer(rawDesired.PrivateInterconnectInfo) {
+	if dcl.IsEmptyValueIndirect(rawNew.PrivateInterconnectInfo) && dcl.IsEmptyValueIndirect(rawDesired.PrivateInterconnectInfo) {
 		rawNew.PrivateInterconnectInfo = rawDesired.PrivateInterconnectInfo
 	} else {
 		rawNew.PrivateInterconnectInfo = canonicalizeNewInterconnectAttachmentPrivateInterconnectInfo(c, rawDesired.PrivateInterconnectInfo, rawNew.PrivateInterconnectInfo)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.OperationalStatus) && dcl.IsNotReturnedByServer(rawDesired.OperationalStatus) {
+	if dcl.IsEmptyValueIndirect(rawNew.OperationalStatus) && dcl.IsEmptyValueIndirect(rawDesired.OperationalStatus) {
 		rawNew.OperationalStatus = rawDesired.OperationalStatus
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CloudRouterIPAddress) && dcl.IsNotReturnedByServer(rawDesired.CloudRouterIPAddress) {
+	if dcl.IsEmptyValueIndirect(rawNew.CloudRouterIPAddress) && dcl.IsEmptyValueIndirect(rawDesired.CloudRouterIPAddress) {
 		rawNew.CloudRouterIPAddress = rawDesired.CloudRouterIPAddress
 	} else {
 		if dcl.StringCanonicalize(rawDesired.CloudRouterIPAddress, rawNew.CloudRouterIPAddress) {
@@ -633,7 +651,7 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CustomerRouterIPAddress) && dcl.IsNotReturnedByServer(rawDesired.CustomerRouterIPAddress) {
+	if dcl.IsEmptyValueIndirect(rawNew.CustomerRouterIPAddress) && dcl.IsEmptyValueIndirect(rawDesired.CustomerRouterIPAddress) {
 		rawNew.CustomerRouterIPAddress = rawDesired.CustomerRouterIPAddress
 	} else {
 		if dcl.StringCanonicalize(rawDesired.CustomerRouterIPAddress, rawNew.CustomerRouterIPAddress) {
@@ -641,12 +659,12 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Type) && dcl.IsNotReturnedByServer(rawDesired.Type) {
+	if dcl.IsEmptyValueIndirect(rawNew.Type) && dcl.IsEmptyValueIndirect(rawDesired.Type) {
 		rawNew.Type = rawDesired.Type
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PairingKey) && dcl.IsNotReturnedByServer(rawDesired.PairingKey) {
+	if dcl.IsEmptyValueIndirect(rawNew.PairingKey) && dcl.IsEmptyValueIndirect(rawDesired.PairingKey) {
 		rawNew.PairingKey = rawDesired.PairingKey
 	} else {
 		if dcl.StringCanonicalize(rawDesired.PairingKey, rawNew.PairingKey) {
@@ -654,7 +672,7 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.AdminEnabled) && dcl.IsNotReturnedByServer(rawDesired.AdminEnabled) {
+	if dcl.IsEmptyValueIndirect(rawNew.AdminEnabled) && dcl.IsEmptyValueIndirect(rawDesired.AdminEnabled) {
 		rawNew.AdminEnabled = rawDesired.AdminEnabled
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.AdminEnabled, rawNew.AdminEnabled) {
@@ -662,17 +680,17 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.VlanTag8021q) && dcl.IsNotReturnedByServer(rawDesired.VlanTag8021q) {
+	if dcl.IsEmptyValueIndirect(rawNew.VlanTag8021q) && dcl.IsEmptyValueIndirect(rawDesired.VlanTag8021q) {
 		rawNew.VlanTag8021q = rawDesired.VlanTag8021q
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.EdgeAvailabilityDomain) && dcl.IsNotReturnedByServer(rawDesired.EdgeAvailabilityDomain) {
+	if dcl.IsEmptyValueIndirect(rawNew.EdgeAvailabilityDomain) && dcl.IsEmptyValueIndirect(rawDesired.EdgeAvailabilityDomain) {
 		rawNew.EdgeAvailabilityDomain = rawDesired.EdgeAvailabilityDomain
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CandidateSubnets) && dcl.IsNotReturnedByServer(rawDesired.CandidateSubnets) {
+	if dcl.IsEmptyValueIndirect(rawNew.CandidateSubnets) && dcl.IsEmptyValueIndirect(rawDesired.CandidateSubnets) {
 		rawNew.CandidateSubnets = rawDesired.CandidateSubnets
 	} else {
 		if dcl.StringArrayCanonicalize(rawDesired.CandidateSubnets, rawNew.CandidateSubnets) {
@@ -680,33 +698,33 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Bandwidth) && dcl.IsNotReturnedByServer(rawDesired.Bandwidth) {
+	if dcl.IsEmptyValueIndirect(rawNew.Bandwidth) && dcl.IsEmptyValueIndirect(rawDesired.Bandwidth) {
 		rawNew.Bandwidth = rawDesired.Bandwidth
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PartnerMetadata) && dcl.IsNotReturnedByServer(rawDesired.PartnerMetadata) {
+	if dcl.IsEmptyValueIndirect(rawNew.PartnerMetadata) && dcl.IsEmptyValueIndirect(rawDesired.PartnerMetadata) {
 		rawNew.PartnerMetadata = rawDesired.PartnerMetadata
 	} else {
 		rawNew.PartnerMetadata = canonicalizeNewInterconnectAttachmentPartnerMetadata(c, rawDesired.PartnerMetadata, rawNew.PartnerMetadata)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.State) && dcl.IsNotReturnedByServer(rawDesired.State) {
+	if dcl.IsEmptyValueIndirect(rawNew.State) && dcl.IsEmptyValueIndirect(rawDesired.State) {
 		rawNew.State = rawDesired.State
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PartnerAsn) && dcl.IsNotReturnedByServer(rawDesired.PartnerAsn) {
+	if dcl.IsEmptyValueIndirect(rawNew.PartnerAsn) && dcl.IsEmptyValueIndirect(rawDesired.PartnerAsn) {
 		rawNew.PartnerAsn = rawDesired.PartnerAsn
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Encryption) && dcl.IsNotReturnedByServer(rawDesired.Encryption) {
+	if dcl.IsEmptyValueIndirect(rawNew.Encryption) && dcl.IsEmptyValueIndirect(rawDesired.Encryption) {
 		rawNew.Encryption = rawDesired.Encryption
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.IpsecInternalAddresses) && dcl.IsNotReturnedByServer(rawDesired.IpsecInternalAddresses) {
+	if dcl.IsEmptyValueIndirect(rawNew.IpsecInternalAddresses) && dcl.IsEmptyValueIndirect(rawDesired.IpsecInternalAddresses) {
 		rawNew.IpsecInternalAddresses = rawDesired.IpsecInternalAddresses
 	} else {
 		if dcl.StringArrayCanonicalize(rawDesired.IpsecInternalAddresses, rawNew.IpsecInternalAddresses) {
@@ -714,12 +732,12 @@ func canonicalizeInterconnectAttachmentNewState(c *Client, rawNew, rawDesired *I
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.DataplaneVersion) && dcl.IsNotReturnedByServer(rawDesired.DataplaneVersion) {
+	if dcl.IsEmptyValueIndirect(rawNew.DataplaneVersion) && dcl.IsEmptyValueIndirect(rawDesired.DataplaneVersion) {
 		rawNew.DataplaneVersion = rawDesired.DataplaneVersion
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.SatisfiesPzs) && dcl.IsNotReturnedByServer(rawDesired.SatisfiesPzs) {
+	if dcl.IsEmptyValueIndirect(rawNew.SatisfiesPzs) && dcl.IsEmptyValueIndirect(rawDesired.SatisfiesPzs) {
 		rawNew.SatisfiesPzs = rawDesired.SatisfiesPzs
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.SatisfiesPzs, rawNew.SatisfiesPzs) {
@@ -750,7 +768,7 @@ func canonicalizeInterconnectAttachmentPrivateInterconnectInfo(des, initial *Int
 }
 
 func canonicalizeInterconnectAttachmentPrivateInterconnectInfoSlice(des, initial []InterconnectAttachmentPrivateInterconnectInfo, opts ...dcl.ApplyOption) []InterconnectAttachmentPrivateInterconnectInfo {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -784,7 +802,7 @@ func canonicalizeNewInterconnectAttachmentPrivateInterconnectInfo(c *Client, des
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InterconnectAttachmentPrivateInterconnectInfo while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -798,23 +816,26 @@ func canonicalizeNewInterconnectAttachmentPrivateInterconnectInfoSet(c *Client, 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InterconnectAttachmentPrivateInterconnectInfo
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InterconnectAttachmentPrivateInterconnectInfo
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInterconnectAttachmentPrivateInterconnectInfoNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInterconnectAttachmentPrivateInterconnectInfo(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInterconnectAttachmentPrivateInterconnectInfoSlice(c *Client, des, nw []InterconnectAttachmentPrivateInterconnectInfo) []InterconnectAttachmentPrivateInterconnectInfo {
@@ -871,7 +892,7 @@ func canonicalizeInterconnectAttachmentPartnerMetadata(des, initial *Interconnec
 }
 
 func canonicalizeInterconnectAttachmentPartnerMetadataSlice(des, initial []InterconnectAttachmentPartnerMetadata, opts ...dcl.ApplyOption) []InterconnectAttachmentPartnerMetadata {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -905,7 +926,7 @@ func canonicalizeNewInterconnectAttachmentPartnerMetadata(c *Client, des, nw *In
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for InterconnectAttachmentPartnerMetadata while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -929,23 +950,26 @@ func canonicalizeNewInterconnectAttachmentPartnerMetadataSet(c *Client, des, nw 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []InterconnectAttachmentPartnerMetadata
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []InterconnectAttachmentPartnerMetadata
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareInterconnectAttachmentPartnerMetadataNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewInterconnectAttachmentPartnerMetadata(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewInterconnectAttachmentPartnerMetadataSlice(c *Client, des, nw []InterconnectAttachmentPartnerMetadata) []InterconnectAttachmentPartnerMetadata {
@@ -986,195 +1010,198 @@ func diffInterconnectAttachment(c *Client, desired, actual *InterconnectAttachme
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Interconnect, actual.Interconnect, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Interconnect")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Interconnect, actual.Interconnect, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Interconnect")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Router, actual.Router, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Router")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Router, actual.Router, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Router")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Region, actual.Region, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Region")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Region, actual.Region, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Region")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Mtu, actual.Mtu, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Mtu")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Mtu, actual.Mtu, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Mtu")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PrivateInterconnectInfo, actual.PrivateInterconnectInfo, dcl.Info{OutputOnly: true, ObjectFunction: compareInterconnectAttachmentPrivateInterconnectInfoNewStyle, EmptyObject: EmptyInterconnectAttachmentPrivateInterconnectInfo, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PrivateInterconnectInfo")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PrivateInterconnectInfo, actual.PrivateInterconnectInfo, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareInterconnectAttachmentPrivateInterconnectInfoNewStyle, EmptyObject: EmptyInterconnectAttachmentPrivateInterconnectInfo, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PrivateInterconnectInfo")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.OperationalStatus, actual.OperationalStatus, dcl.Info{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OperationalStatus")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.OperationalStatus, actual.OperationalStatus, dcl.DiffInfo{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("OperationalStatus")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CloudRouterIPAddress, actual.CloudRouterIPAddress, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CloudRouterIpAddress")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CloudRouterIPAddress, actual.CloudRouterIPAddress, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CloudRouterIpAddress")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CustomerRouterIPAddress, actual.CustomerRouterIPAddress, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CustomerRouterIpAddress")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CustomerRouterIPAddress, actual.CustomerRouterIPAddress, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CustomerRouterIpAddress")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Type, actual.Type, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Type")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Type, actual.Type, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Type")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PairingKey, actual.PairingKey, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PairingKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PairingKey, actual.PairingKey, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PairingKey")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AdminEnabled, actual.AdminEnabled, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("AdminEnabled")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AdminEnabled, actual.AdminEnabled, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("AdminEnabled")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.VlanTag8021q, actual.VlanTag8021q, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("VlanTag8021q")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.VlanTag8021q, actual.VlanTag8021q, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("VlanTag8021q")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EdgeAvailabilityDomain, actual.EdgeAvailabilityDomain, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("EdgeAvailabilityDomain")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EdgeAvailabilityDomain, actual.EdgeAvailabilityDomain, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("EdgeAvailabilityDomain")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CandidateSubnets, actual.CandidateSubnets, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("CandidateSubnets")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CandidateSubnets, actual.CandidateSubnets, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("CandidateSubnets")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Bandwidth, actual.Bandwidth, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Bandwidth")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Bandwidth, actual.Bandwidth, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Bandwidth")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PartnerMetadata, actual.PartnerMetadata, dcl.Info{ObjectFunction: compareInterconnectAttachmentPartnerMetadataNewStyle, EmptyObject: EmptyInterconnectAttachmentPartnerMetadata, OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PartnerMetadata")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PartnerMetadata, actual.PartnerMetadata, dcl.DiffInfo{ObjectFunction: compareInterconnectAttachmentPartnerMetadataNewStyle, EmptyObject: EmptyInterconnectAttachmentPartnerMetadata, OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PartnerMetadata")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.State, actual.State, dcl.Info{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("State")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.State, actual.State, dcl.DiffInfo{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("State")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PartnerAsn, actual.PartnerAsn, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PartnerAsn")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PartnerAsn, actual.PartnerAsn, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PartnerAsn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Encryption, actual.Encryption, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Encryption")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Encryption, actual.Encryption, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("Encryption")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IpsecInternalAddresses, actual.IpsecInternalAddresses, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("IpsecInternalAddresses")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IpsecInternalAddresses, actual.IpsecInternalAddresses, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("IpsecInternalAddresses")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DataplaneVersion, actual.DataplaneVersion, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("DataplaneVersion")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DataplaneVersion, actual.DataplaneVersion, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("DataplaneVersion")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SatisfiesPzs, actual.SatisfiesPzs, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SatisfiesPzs")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SatisfiesPzs, actual.SatisfiesPzs, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SatisfiesPzs")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareInterconnectAttachmentPrivateInterconnectInfoNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -1197,7 +1224,7 @@ func compareInterconnectAttachmentPrivateInterconnectInfoNewStyle(d, a interface
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Tag8021q, actual.Tag8021q, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tag8021q")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Tag8021q, actual.Tag8021q, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tag8021q")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1226,21 +1253,21 @@ func compareInterconnectAttachmentPartnerMetadataNewStyle(d, a interface{}, fn d
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.PartnerName, actual.PartnerName, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PartnerName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PartnerName, actual.PartnerName, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PartnerName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.InterconnectName, actual.InterconnectName, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("InterconnectName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.InterconnectName, actual.InterconnectName, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("InterconnectName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PortalUrl, actual.PortalUrl, dcl.Info{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PortalUrl")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PortalUrl, actual.PortalUrl, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateInterconnectAttachmentPatchOperation")}, fn.AddNest("PortalUrl")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1295,17 +1322,17 @@ func (r *InterconnectAttachment) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalInterconnectAttachment decodes JSON responses into the InterconnectAttachment resource schema.
-func unmarshalInterconnectAttachment(b []byte, c *Client) (*InterconnectAttachment, error) {
+func unmarshalInterconnectAttachment(b []byte, c *Client, res *InterconnectAttachment) (*InterconnectAttachment, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapInterconnectAttachment(m, c)
+	return unmarshalMapInterconnectAttachment(m, c, res)
 }
 
-func unmarshalMapInterconnectAttachment(m map[string]interface{}, c *Client) (*InterconnectAttachment, error) {
+func unmarshalMapInterconnectAttachment(m map[string]interface{}, c *Client, res *InterconnectAttachment) (*InterconnectAttachment, error) {
 
-	flattened := flattenInterconnectAttachment(c, m)
+	flattened := flattenInterconnectAttachment(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -1315,6 +1342,8 @@ func unmarshalMapInterconnectAttachment(m map[string]interface{}, c *Client) (*I
 // expandInterconnectAttachment expands InterconnectAttachment into a JSON request object.
 func expandInterconnectAttachment(c *Client, f *InterconnectAttachment) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v := f.Description; dcl.ValueShouldBeSent(v) {
 		m["description"] = v
 	}
@@ -1326,6 +1355,9 @@ func expandInterconnectAttachment(c *Client, f *InterconnectAttachment) (map[str
 	}
 	if v := f.Router; dcl.ValueShouldBeSent(v) {
 		m["router"] = v
+	}
+	if v := f.Region; dcl.ValueShouldBeSent(v) {
+		m["region"] = v
 	}
 	if v := f.Mtu; dcl.ValueShouldBeSent(v) {
 		m["mtu"] = v
@@ -1345,13 +1377,15 @@ func expandInterconnectAttachment(c *Client, f *InterconnectAttachment) (map[str
 	if v := f.EdgeAvailabilityDomain; dcl.ValueShouldBeSent(v) {
 		m["edgeAvailabilityDomain"] = v
 	}
-	m["candidateSubnets"] = f.CandidateSubnets
+	if v := f.CandidateSubnets; v != nil {
+		m["candidateSubnets"] = v
+	}
 	if v := f.Bandwidth; dcl.ValueShouldBeSent(v) {
 		m["bandwidth"] = v
 	}
-	if v, err := expandInterconnectAttachmentPartnerMetadata(c, f.PartnerMetadata); err != nil {
+	if v, err := expandInterconnectAttachmentPartnerMetadata(c, f.PartnerMetadata, res); err != nil {
 		return nil, fmt.Errorf("error expanding PartnerMetadata into partnerMetadata: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["partnerMetadata"] = v
 	}
 	if v := f.PartnerAsn; dcl.ValueShouldBeSent(v) {
@@ -1360,13 +1394,15 @@ func expandInterconnectAttachment(c *Client, f *InterconnectAttachment) (map[str
 	if v := f.Encryption; dcl.ValueShouldBeSent(v) {
 		m["encryption"] = v
 	}
-	m["ipsecInternalAddresses"] = f.IpsecInternalAddresses
+	if v := f.IpsecInternalAddresses; v != nil {
+		m["ipsecInternalAddresses"] = v
+	}
 	if v := f.DataplaneVersion; dcl.ValueShouldBeSent(v) {
 		m["dataplaneVersion"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 
@@ -1375,7 +1411,7 @@ func expandInterconnectAttachment(c *Client, f *InterconnectAttachment) (map[str
 
 // flattenInterconnectAttachment flattens InterconnectAttachment from a JSON request object into the
 // InterconnectAttachment type.
-func flattenInterconnectAttachment(c *Client, i interface{}) *InterconnectAttachment {
+func flattenInterconnectAttachment(c *Client, i interface{}, res *InterconnectAttachment) *InterconnectAttachment {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1384,48 +1420,48 @@ func flattenInterconnectAttachment(c *Client, i interface{}) *InterconnectAttach
 		return nil
 	}
 
-	res := &InterconnectAttachment{}
-	res.Description = dcl.FlattenString(m["description"])
-	res.SelfLink = dcl.FlattenString(m["selfLink"])
-	res.Id = dcl.FlattenInteger(m["id"])
-	res.Name = dcl.FlattenString(m["name"])
-	res.Interconnect = dcl.FlattenString(m["interconnect"])
-	res.Router = dcl.FlattenString(m["router"])
-	res.Region = dcl.FlattenString(m["region"])
-	res.Mtu = dcl.FlattenInteger(m["mtu"])
-	res.PrivateInterconnectInfo = flattenInterconnectAttachmentPrivateInterconnectInfo(c, m["privateInterconnectInfo"])
-	res.OperationalStatus = flattenInterconnectAttachmentOperationalStatusEnum(m["operationalStatus"])
-	res.CloudRouterIPAddress = dcl.FlattenString(m["cloudRouterIpAddress"])
-	res.CustomerRouterIPAddress = dcl.FlattenString(m["customerRouterIpAddress"])
-	res.Type = flattenInterconnectAttachmentTypeEnum(m["type"])
-	res.PairingKey = dcl.FlattenString(m["pairingKey"])
-	res.AdminEnabled = dcl.FlattenBool(m["adminEnabled"])
-	res.VlanTag8021q = dcl.FlattenInteger(m["vlanTag8021q"])
-	res.EdgeAvailabilityDomain = flattenInterconnectAttachmentEdgeAvailabilityDomainEnum(m["edgeAvailabilityDomain"])
-	res.CandidateSubnets = dcl.FlattenStringSlice(m["candidateSubnets"])
-	res.Bandwidth = flattenInterconnectAttachmentBandwidthEnum(m["bandwidth"])
-	res.PartnerMetadata = flattenInterconnectAttachmentPartnerMetadata(c, m["partnerMetadata"])
-	res.State = flattenInterconnectAttachmentStateEnum(m["state"])
-	res.PartnerAsn = dcl.FlattenInteger(m["partnerAsn"])
-	res.Encryption = flattenInterconnectAttachmentEncryptionEnum(m["encryption"])
-	res.IpsecInternalAddresses = dcl.FlattenStringSlice(m["ipsecInternalAddresses"])
-	res.DataplaneVersion = dcl.FlattenInteger(m["dataplaneVersion"])
-	res.SatisfiesPzs = dcl.FlattenBool(m["satisfiesPzs"])
-	res.Project = dcl.FlattenString(m["project"])
+	resultRes := &InterconnectAttachment{}
+	resultRes.Description = dcl.FlattenString(m["description"])
+	resultRes.SelfLink = dcl.FlattenString(m["selfLink"])
+	resultRes.Id = dcl.FlattenInteger(m["id"])
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.Interconnect = dcl.FlattenString(m["interconnect"])
+	resultRes.Router = dcl.FlattenString(m["router"])
+	resultRes.Region = dcl.FlattenString(m["region"])
+	resultRes.Mtu = dcl.FlattenInteger(m["mtu"])
+	resultRes.PrivateInterconnectInfo = flattenInterconnectAttachmentPrivateInterconnectInfo(c, m["privateInterconnectInfo"], res)
+	resultRes.OperationalStatus = flattenInterconnectAttachmentOperationalStatusEnum(m["operationalStatus"])
+	resultRes.CloudRouterIPAddress = dcl.FlattenString(m["cloudRouterIpAddress"])
+	resultRes.CustomerRouterIPAddress = dcl.FlattenString(m["customerRouterIpAddress"])
+	resultRes.Type = flattenInterconnectAttachmentTypeEnum(m["type"])
+	resultRes.PairingKey = dcl.FlattenString(m["pairingKey"])
+	resultRes.AdminEnabled = dcl.FlattenBool(m["adminEnabled"])
+	resultRes.VlanTag8021q = dcl.FlattenInteger(m["vlanTag8021q"])
+	resultRes.EdgeAvailabilityDomain = flattenInterconnectAttachmentEdgeAvailabilityDomainEnum(m["edgeAvailabilityDomain"])
+	resultRes.CandidateSubnets = dcl.FlattenStringSlice(m["candidateSubnets"])
+	resultRes.Bandwidth = flattenInterconnectAttachmentBandwidthEnum(m["bandwidth"])
+	resultRes.PartnerMetadata = flattenInterconnectAttachmentPartnerMetadata(c, m["partnerMetadata"], res)
+	resultRes.State = flattenInterconnectAttachmentStateEnum(m["state"])
+	resultRes.PartnerAsn = dcl.FlattenInteger(m["partnerAsn"])
+	resultRes.Encryption = flattenInterconnectAttachmentEncryptionEnum(m["encryption"])
+	resultRes.IpsecInternalAddresses = dcl.FlattenStringSlice(m["ipsecInternalAddresses"])
+	resultRes.DataplaneVersion = dcl.FlattenInteger(m["dataplaneVersion"])
+	resultRes.SatisfiesPzs = dcl.FlattenBool(m["satisfiesPzs"])
+	resultRes.Project = dcl.FlattenString(m["project"])
 
-	return res
+	return resultRes
 }
 
 // expandInterconnectAttachmentPrivateInterconnectInfoMap expands the contents of InterconnectAttachmentPrivateInterconnectInfo into a JSON
 // request object.
-func expandInterconnectAttachmentPrivateInterconnectInfoMap(c *Client, f map[string]InterconnectAttachmentPrivateInterconnectInfo) (map[string]interface{}, error) {
+func expandInterconnectAttachmentPrivateInterconnectInfoMap(c *Client, f map[string]InterconnectAttachmentPrivateInterconnectInfo, res *InterconnectAttachment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInterconnectAttachmentPrivateInterconnectInfo(c, &item)
+		i, err := expandInterconnectAttachmentPrivateInterconnectInfo(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1439,14 +1475,14 @@ func expandInterconnectAttachmentPrivateInterconnectInfoMap(c *Client, f map[str
 
 // expandInterconnectAttachmentPrivateInterconnectInfoSlice expands the contents of InterconnectAttachmentPrivateInterconnectInfo into a JSON
 // request object.
-func expandInterconnectAttachmentPrivateInterconnectInfoSlice(c *Client, f []InterconnectAttachmentPrivateInterconnectInfo) ([]map[string]interface{}, error) {
+func expandInterconnectAttachmentPrivateInterconnectInfoSlice(c *Client, f []InterconnectAttachmentPrivateInterconnectInfo, res *InterconnectAttachment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInterconnectAttachmentPrivateInterconnectInfo(c, &item)
+		i, err := expandInterconnectAttachmentPrivateInterconnectInfo(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1459,7 +1495,7 @@ func expandInterconnectAttachmentPrivateInterconnectInfoSlice(c *Client, f []Int
 
 // flattenInterconnectAttachmentPrivateInterconnectInfoMap flattens the contents of InterconnectAttachmentPrivateInterconnectInfo from a JSON
 // response object.
-func flattenInterconnectAttachmentPrivateInterconnectInfoMap(c *Client, i interface{}) map[string]InterconnectAttachmentPrivateInterconnectInfo {
+func flattenInterconnectAttachmentPrivateInterconnectInfoMap(c *Client, i interface{}, res *InterconnectAttachment) map[string]InterconnectAttachmentPrivateInterconnectInfo {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InterconnectAttachmentPrivateInterconnectInfo{}
@@ -1471,7 +1507,7 @@ func flattenInterconnectAttachmentPrivateInterconnectInfoMap(c *Client, i interf
 
 	items := make(map[string]InterconnectAttachmentPrivateInterconnectInfo)
 	for k, item := range a {
-		items[k] = *flattenInterconnectAttachmentPrivateInterconnectInfo(c, item.(map[string]interface{}))
+		items[k] = *flattenInterconnectAttachmentPrivateInterconnectInfo(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1479,7 +1515,7 @@ func flattenInterconnectAttachmentPrivateInterconnectInfoMap(c *Client, i interf
 
 // flattenInterconnectAttachmentPrivateInterconnectInfoSlice flattens the contents of InterconnectAttachmentPrivateInterconnectInfo from a JSON
 // response object.
-func flattenInterconnectAttachmentPrivateInterconnectInfoSlice(c *Client, i interface{}) []InterconnectAttachmentPrivateInterconnectInfo {
+func flattenInterconnectAttachmentPrivateInterconnectInfoSlice(c *Client, i interface{}, res *InterconnectAttachment) []InterconnectAttachmentPrivateInterconnectInfo {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InterconnectAttachmentPrivateInterconnectInfo{}
@@ -1491,7 +1527,7 @@ func flattenInterconnectAttachmentPrivateInterconnectInfoSlice(c *Client, i inte
 
 	items := make([]InterconnectAttachmentPrivateInterconnectInfo, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInterconnectAttachmentPrivateInterconnectInfo(c, item.(map[string]interface{})))
+		items = append(items, *flattenInterconnectAttachmentPrivateInterconnectInfo(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1499,7 +1535,7 @@ func flattenInterconnectAttachmentPrivateInterconnectInfoSlice(c *Client, i inte
 
 // expandInterconnectAttachmentPrivateInterconnectInfo expands an instance of InterconnectAttachmentPrivateInterconnectInfo into a JSON
 // request object.
-func expandInterconnectAttachmentPrivateInterconnectInfo(c *Client, f *InterconnectAttachmentPrivateInterconnectInfo) (map[string]interface{}, error) {
+func expandInterconnectAttachmentPrivateInterconnectInfo(c *Client, f *InterconnectAttachmentPrivateInterconnectInfo, res *InterconnectAttachment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1511,7 +1547,7 @@ func expandInterconnectAttachmentPrivateInterconnectInfo(c *Client, f *Interconn
 
 // flattenInterconnectAttachmentPrivateInterconnectInfo flattens an instance of InterconnectAttachmentPrivateInterconnectInfo from a JSON
 // response object.
-func flattenInterconnectAttachmentPrivateInterconnectInfo(c *Client, i interface{}) *InterconnectAttachmentPrivateInterconnectInfo {
+func flattenInterconnectAttachmentPrivateInterconnectInfo(c *Client, i interface{}, res *InterconnectAttachment) *InterconnectAttachmentPrivateInterconnectInfo {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1529,14 +1565,14 @@ func flattenInterconnectAttachmentPrivateInterconnectInfo(c *Client, i interface
 
 // expandInterconnectAttachmentPartnerMetadataMap expands the contents of InterconnectAttachmentPartnerMetadata into a JSON
 // request object.
-func expandInterconnectAttachmentPartnerMetadataMap(c *Client, f map[string]InterconnectAttachmentPartnerMetadata) (map[string]interface{}, error) {
+func expandInterconnectAttachmentPartnerMetadataMap(c *Client, f map[string]InterconnectAttachmentPartnerMetadata, res *InterconnectAttachment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandInterconnectAttachmentPartnerMetadata(c, &item)
+		i, err := expandInterconnectAttachmentPartnerMetadata(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1550,14 +1586,14 @@ func expandInterconnectAttachmentPartnerMetadataMap(c *Client, f map[string]Inte
 
 // expandInterconnectAttachmentPartnerMetadataSlice expands the contents of InterconnectAttachmentPartnerMetadata into a JSON
 // request object.
-func expandInterconnectAttachmentPartnerMetadataSlice(c *Client, f []InterconnectAttachmentPartnerMetadata) ([]map[string]interface{}, error) {
+func expandInterconnectAttachmentPartnerMetadataSlice(c *Client, f []InterconnectAttachmentPartnerMetadata, res *InterconnectAttachment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandInterconnectAttachmentPartnerMetadata(c, &item)
+		i, err := expandInterconnectAttachmentPartnerMetadata(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1570,7 +1606,7 @@ func expandInterconnectAttachmentPartnerMetadataSlice(c *Client, f []Interconnec
 
 // flattenInterconnectAttachmentPartnerMetadataMap flattens the contents of InterconnectAttachmentPartnerMetadata from a JSON
 // response object.
-func flattenInterconnectAttachmentPartnerMetadataMap(c *Client, i interface{}) map[string]InterconnectAttachmentPartnerMetadata {
+func flattenInterconnectAttachmentPartnerMetadataMap(c *Client, i interface{}, res *InterconnectAttachment) map[string]InterconnectAttachmentPartnerMetadata {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InterconnectAttachmentPartnerMetadata{}
@@ -1582,7 +1618,7 @@ func flattenInterconnectAttachmentPartnerMetadataMap(c *Client, i interface{}) m
 
 	items := make(map[string]InterconnectAttachmentPartnerMetadata)
 	for k, item := range a {
-		items[k] = *flattenInterconnectAttachmentPartnerMetadata(c, item.(map[string]interface{}))
+		items[k] = *flattenInterconnectAttachmentPartnerMetadata(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1590,7 +1626,7 @@ func flattenInterconnectAttachmentPartnerMetadataMap(c *Client, i interface{}) m
 
 // flattenInterconnectAttachmentPartnerMetadataSlice flattens the contents of InterconnectAttachmentPartnerMetadata from a JSON
 // response object.
-func flattenInterconnectAttachmentPartnerMetadataSlice(c *Client, i interface{}) []InterconnectAttachmentPartnerMetadata {
+func flattenInterconnectAttachmentPartnerMetadataSlice(c *Client, i interface{}, res *InterconnectAttachment) []InterconnectAttachmentPartnerMetadata {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InterconnectAttachmentPartnerMetadata{}
@@ -1602,7 +1638,7 @@ func flattenInterconnectAttachmentPartnerMetadataSlice(c *Client, i interface{})
 
 	items := make([]InterconnectAttachmentPartnerMetadata, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenInterconnectAttachmentPartnerMetadata(c, item.(map[string]interface{})))
+		items = append(items, *flattenInterconnectAttachmentPartnerMetadata(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1610,7 +1646,7 @@ func flattenInterconnectAttachmentPartnerMetadataSlice(c *Client, i interface{})
 
 // expandInterconnectAttachmentPartnerMetadata expands an instance of InterconnectAttachmentPartnerMetadata into a JSON
 // request object.
-func expandInterconnectAttachmentPartnerMetadata(c *Client, f *InterconnectAttachmentPartnerMetadata) (map[string]interface{}, error) {
+func expandInterconnectAttachmentPartnerMetadata(c *Client, f *InterconnectAttachmentPartnerMetadata, res *InterconnectAttachment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1631,7 +1667,7 @@ func expandInterconnectAttachmentPartnerMetadata(c *Client, f *InterconnectAttac
 
 // flattenInterconnectAttachmentPartnerMetadata flattens an instance of InterconnectAttachmentPartnerMetadata from a JSON
 // response object.
-func flattenInterconnectAttachmentPartnerMetadata(c *Client, i interface{}) *InterconnectAttachmentPartnerMetadata {
+func flattenInterconnectAttachmentPartnerMetadata(c *Client, i interface{}, res *InterconnectAttachment) *InterconnectAttachmentPartnerMetadata {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1651,7 +1687,7 @@ func flattenInterconnectAttachmentPartnerMetadata(c *Client, i interface{}) *Int
 
 // flattenInterconnectAttachmentOperationalStatusEnumMap flattens the contents of InterconnectAttachmentOperationalStatusEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentOperationalStatusEnumMap(c *Client, i interface{}) map[string]InterconnectAttachmentOperationalStatusEnum {
+func flattenInterconnectAttachmentOperationalStatusEnumMap(c *Client, i interface{}, res *InterconnectAttachment) map[string]InterconnectAttachmentOperationalStatusEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InterconnectAttachmentOperationalStatusEnum{}
@@ -1671,7 +1707,7 @@ func flattenInterconnectAttachmentOperationalStatusEnumMap(c *Client, i interfac
 
 // flattenInterconnectAttachmentOperationalStatusEnumSlice flattens the contents of InterconnectAttachmentOperationalStatusEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentOperationalStatusEnumSlice(c *Client, i interface{}) []InterconnectAttachmentOperationalStatusEnum {
+func flattenInterconnectAttachmentOperationalStatusEnumSlice(c *Client, i interface{}, res *InterconnectAttachment) []InterconnectAttachmentOperationalStatusEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InterconnectAttachmentOperationalStatusEnum{}
@@ -1694,7 +1730,7 @@ func flattenInterconnectAttachmentOperationalStatusEnumSlice(c *Client, i interf
 func flattenInterconnectAttachmentOperationalStatusEnum(i interface{}) *InterconnectAttachmentOperationalStatusEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InterconnectAttachmentOperationalStatusEnumRef("")
+		return nil
 	}
 
 	return InterconnectAttachmentOperationalStatusEnumRef(s)
@@ -1702,7 +1738,7 @@ func flattenInterconnectAttachmentOperationalStatusEnum(i interface{}) *Intercon
 
 // flattenInterconnectAttachmentTypeEnumMap flattens the contents of InterconnectAttachmentTypeEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentTypeEnumMap(c *Client, i interface{}) map[string]InterconnectAttachmentTypeEnum {
+func flattenInterconnectAttachmentTypeEnumMap(c *Client, i interface{}, res *InterconnectAttachment) map[string]InterconnectAttachmentTypeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InterconnectAttachmentTypeEnum{}
@@ -1722,7 +1758,7 @@ func flattenInterconnectAttachmentTypeEnumMap(c *Client, i interface{}) map[stri
 
 // flattenInterconnectAttachmentTypeEnumSlice flattens the contents of InterconnectAttachmentTypeEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentTypeEnumSlice(c *Client, i interface{}) []InterconnectAttachmentTypeEnum {
+func flattenInterconnectAttachmentTypeEnumSlice(c *Client, i interface{}, res *InterconnectAttachment) []InterconnectAttachmentTypeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InterconnectAttachmentTypeEnum{}
@@ -1745,7 +1781,7 @@ func flattenInterconnectAttachmentTypeEnumSlice(c *Client, i interface{}) []Inte
 func flattenInterconnectAttachmentTypeEnum(i interface{}) *InterconnectAttachmentTypeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InterconnectAttachmentTypeEnumRef("")
+		return nil
 	}
 
 	return InterconnectAttachmentTypeEnumRef(s)
@@ -1753,7 +1789,7 @@ func flattenInterconnectAttachmentTypeEnum(i interface{}) *InterconnectAttachmen
 
 // flattenInterconnectAttachmentEdgeAvailabilityDomainEnumMap flattens the contents of InterconnectAttachmentEdgeAvailabilityDomainEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentEdgeAvailabilityDomainEnumMap(c *Client, i interface{}) map[string]InterconnectAttachmentEdgeAvailabilityDomainEnum {
+func flattenInterconnectAttachmentEdgeAvailabilityDomainEnumMap(c *Client, i interface{}, res *InterconnectAttachment) map[string]InterconnectAttachmentEdgeAvailabilityDomainEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InterconnectAttachmentEdgeAvailabilityDomainEnum{}
@@ -1773,7 +1809,7 @@ func flattenInterconnectAttachmentEdgeAvailabilityDomainEnumMap(c *Client, i int
 
 // flattenInterconnectAttachmentEdgeAvailabilityDomainEnumSlice flattens the contents of InterconnectAttachmentEdgeAvailabilityDomainEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentEdgeAvailabilityDomainEnumSlice(c *Client, i interface{}) []InterconnectAttachmentEdgeAvailabilityDomainEnum {
+func flattenInterconnectAttachmentEdgeAvailabilityDomainEnumSlice(c *Client, i interface{}, res *InterconnectAttachment) []InterconnectAttachmentEdgeAvailabilityDomainEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InterconnectAttachmentEdgeAvailabilityDomainEnum{}
@@ -1796,7 +1832,7 @@ func flattenInterconnectAttachmentEdgeAvailabilityDomainEnumSlice(c *Client, i i
 func flattenInterconnectAttachmentEdgeAvailabilityDomainEnum(i interface{}) *InterconnectAttachmentEdgeAvailabilityDomainEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InterconnectAttachmentEdgeAvailabilityDomainEnumRef("")
+		return nil
 	}
 
 	return InterconnectAttachmentEdgeAvailabilityDomainEnumRef(s)
@@ -1804,7 +1840,7 @@ func flattenInterconnectAttachmentEdgeAvailabilityDomainEnum(i interface{}) *Int
 
 // flattenInterconnectAttachmentBandwidthEnumMap flattens the contents of InterconnectAttachmentBandwidthEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentBandwidthEnumMap(c *Client, i interface{}) map[string]InterconnectAttachmentBandwidthEnum {
+func flattenInterconnectAttachmentBandwidthEnumMap(c *Client, i interface{}, res *InterconnectAttachment) map[string]InterconnectAttachmentBandwidthEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InterconnectAttachmentBandwidthEnum{}
@@ -1824,7 +1860,7 @@ func flattenInterconnectAttachmentBandwidthEnumMap(c *Client, i interface{}) map
 
 // flattenInterconnectAttachmentBandwidthEnumSlice flattens the contents of InterconnectAttachmentBandwidthEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentBandwidthEnumSlice(c *Client, i interface{}) []InterconnectAttachmentBandwidthEnum {
+func flattenInterconnectAttachmentBandwidthEnumSlice(c *Client, i interface{}, res *InterconnectAttachment) []InterconnectAttachmentBandwidthEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InterconnectAttachmentBandwidthEnum{}
@@ -1847,7 +1883,7 @@ func flattenInterconnectAttachmentBandwidthEnumSlice(c *Client, i interface{}) [
 func flattenInterconnectAttachmentBandwidthEnum(i interface{}) *InterconnectAttachmentBandwidthEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InterconnectAttachmentBandwidthEnumRef("")
+		return nil
 	}
 
 	return InterconnectAttachmentBandwidthEnumRef(s)
@@ -1855,7 +1891,7 @@ func flattenInterconnectAttachmentBandwidthEnum(i interface{}) *InterconnectAtta
 
 // flattenInterconnectAttachmentStateEnumMap flattens the contents of InterconnectAttachmentStateEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentStateEnumMap(c *Client, i interface{}) map[string]InterconnectAttachmentStateEnum {
+func flattenInterconnectAttachmentStateEnumMap(c *Client, i interface{}, res *InterconnectAttachment) map[string]InterconnectAttachmentStateEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InterconnectAttachmentStateEnum{}
@@ -1875,7 +1911,7 @@ func flattenInterconnectAttachmentStateEnumMap(c *Client, i interface{}) map[str
 
 // flattenInterconnectAttachmentStateEnumSlice flattens the contents of InterconnectAttachmentStateEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentStateEnumSlice(c *Client, i interface{}) []InterconnectAttachmentStateEnum {
+func flattenInterconnectAttachmentStateEnumSlice(c *Client, i interface{}, res *InterconnectAttachment) []InterconnectAttachmentStateEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InterconnectAttachmentStateEnum{}
@@ -1898,7 +1934,7 @@ func flattenInterconnectAttachmentStateEnumSlice(c *Client, i interface{}) []Int
 func flattenInterconnectAttachmentStateEnum(i interface{}) *InterconnectAttachmentStateEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InterconnectAttachmentStateEnumRef("")
+		return nil
 	}
 
 	return InterconnectAttachmentStateEnumRef(s)
@@ -1906,7 +1942,7 @@ func flattenInterconnectAttachmentStateEnum(i interface{}) *InterconnectAttachme
 
 // flattenInterconnectAttachmentEncryptionEnumMap flattens the contents of InterconnectAttachmentEncryptionEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentEncryptionEnumMap(c *Client, i interface{}) map[string]InterconnectAttachmentEncryptionEnum {
+func flattenInterconnectAttachmentEncryptionEnumMap(c *Client, i interface{}, res *InterconnectAttachment) map[string]InterconnectAttachmentEncryptionEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]InterconnectAttachmentEncryptionEnum{}
@@ -1926,7 +1962,7 @@ func flattenInterconnectAttachmentEncryptionEnumMap(c *Client, i interface{}) ma
 
 // flattenInterconnectAttachmentEncryptionEnumSlice flattens the contents of InterconnectAttachmentEncryptionEnum from a JSON
 // response object.
-func flattenInterconnectAttachmentEncryptionEnumSlice(c *Client, i interface{}) []InterconnectAttachmentEncryptionEnum {
+func flattenInterconnectAttachmentEncryptionEnumSlice(c *Client, i interface{}, res *InterconnectAttachment) []InterconnectAttachmentEncryptionEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []InterconnectAttachmentEncryptionEnum{}
@@ -1949,7 +1985,7 @@ func flattenInterconnectAttachmentEncryptionEnumSlice(c *Client, i interface{}) 
 func flattenInterconnectAttachmentEncryptionEnum(i interface{}) *InterconnectAttachmentEncryptionEnum {
 	s, ok := i.(string)
 	if !ok {
-		return InterconnectAttachmentEncryptionEnumRef("")
+		return nil
 	}
 
 	return InterconnectAttachmentEncryptionEnumRef(s)
@@ -1960,7 +1996,7 @@ func flattenInterconnectAttachmentEncryptionEnum(i interface{}) *InterconnectAtt
 // identity).  This is useful in extracting the element from a List call.
 func (r *InterconnectAttachment) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalInterconnectAttachment(b, c)
+		cr, err := unmarshalInterconnectAttachment(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -2001,6 +2037,7 @@ type interconnectAttachmentDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         interconnectAttachmentApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToInterconnectAttachmentDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]interconnectAttachmentDiff, error) {
@@ -2020,7 +2057,8 @@ func convertFieldDiffsToInterconnectAttachmentDiffs(config *dcl.Config, fds []*d
 	var diffs []interconnectAttachmentDiff
 	// For each operation name, create a interconnectAttachmentDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := interconnectAttachmentDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := interconnectAttachmentDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -2055,7 +2093,7 @@ func extractInterconnectAttachmentFields(r *InterconnectAttachment) error {
 	if err := extractInterconnectAttachmentPrivateInterconnectInfoFields(r, vPrivateInterconnectInfo); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPrivateInterconnectInfo) {
+	if !dcl.IsEmptyValueIndirect(vPrivateInterconnectInfo) {
 		r.PrivateInterconnectInfo = vPrivateInterconnectInfo
 	}
 	vPartnerMetadata := r.PartnerMetadata
@@ -2066,7 +2104,7 @@ func extractInterconnectAttachmentFields(r *InterconnectAttachment) error {
 	if err := extractInterconnectAttachmentPartnerMetadataFields(r, vPartnerMetadata); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPartnerMetadata) {
+	if !dcl.IsEmptyValueIndirect(vPartnerMetadata) {
 		r.PartnerMetadata = vPartnerMetadata
 	}
 	return nil
@@ -2087,7 +2125,7 @@ func postReadExtractInterconnectAttachmentFields(r *InterconnectAttachment) erro
 	if err := postReadExtractInterconnectAttachmentPrivateInterconnectInfoFields(r, vPrivateInterconnectInfo); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPrivateInterconnectInfo) {
+	if !dcl.IsEmptyValueIndirect(vPrivateInterconnectInfo) {
 		r.PrivateInterconnectInfo = vPrivateInterconnectInfo
 	}
 	vPartnerMetadata := r.PartnerMetadata
@@ -2098,7 +2136,7 @@ func postReadExtractInterconnectAttachmentFields(r *InterconnectAttachment) erro
 	if err := postReadExtractInterconnectAttachmentPartnerMetadataFields(r, vPartnerMetadata); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPartnerMetadata) {
+	if !dcl.IsEmptyValueIndirect(vPartnerMetadata) {
 		r.PartnerMetadata = vPartnerMetadata
 	}
 	return nil

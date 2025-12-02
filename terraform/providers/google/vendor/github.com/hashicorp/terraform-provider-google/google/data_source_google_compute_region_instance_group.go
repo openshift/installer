@@ -10,7 +10,7 @@ import (
 	"google.golang.org/api/googleapi"
 )
 
-func dataSourceGoogleComputeRegionInstanceGroup() *schema.Resource {
+func DataSourceGoogleComputeRegionInstanceGroup() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceComputeRegionInstanceGroupRead,
 		Schema: map[string]*schema.Schema{
@@ -87,7 +87,7 @@ func dataSourceGoogleComputeRegionInstanceGroup() *schema.Resource {
 
 func dataSourceComputeRegionInstanceGroupRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

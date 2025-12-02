@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceLoggingBillingAccountSink() *schema.Resource {
+func ResourceLoggingBillingAccountSink() *schema.Resource {
 	schm := &schema.Resource{
 		Create: resourceLoggingBillingAccountSinkCreate,
 		Read:   resourceLoggingBillingAccountSinkRead,
@@ -29,7 +29,7 @@ func resourceLoggingBillingAccountSink() *schema.Resource {
 
 func resourceLoggingBillingAccountSinkCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -48,7 +48,7 @@ func resourceLoggingBillingAccountSinkCreate(d *schema.ResourceData, meta interf
 
 func resourceLoggingBillingAccountSinkRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -67,7 +67,7 @@ func resourceLoggingBillingAccountSinkRead(d *schema.ResourceData, meta interfac
 
 func resourceLoggingBillingAccountSinkUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func resourceLoggingBillingAccountSinkUpdate(d *schema.ResourceData, meta interf
 
 func resourceLoggingBillingAccountSinkDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

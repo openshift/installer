@@ -1,9 +1,0 @@
-load("@io_bazel_rules_go//go:def.bzl", "go_library")
-
-go_library(
-    name = "go_default_library",
-    srcs = ["client.go"],
-    importpath = "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/cloudbuild",
-    visibility = ["//visibility:public"],
-    deps = ["//dcl:go_default_library"],
-)

@@ -19,14 +19,13 @@ import (
 	"log"
 	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceComputeSnapshot() *schema.Resource {
+func ResourceComputeSnapshot() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeSnapshotCreate,
 		Read:   resourceComputeSnapshotRead,
@@ -38,9 +37,9 @@ func resourceComputeSnapshot() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(5 * time.Minute),
-			Update: schema.DefaultTimeout(5 * time.Minute),
-			Delete: schema.DefaultTimeout(5 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -63,6 +62,17 @@ character, which cannot be a dash.`,
 				DiffSuppressFunc: compareSelfLinkOrResourceName,
 				Description:      `A reference to the disk used to create this snapshot.`,
 			},
+			"chain_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: `Creates the new snapshot in the snapshot chain labeled with the 
+specified name. The chain name must be 1-63 characters long and 
+comply with RFC1035. This is an uncommon option only for advanced 
+service owners who needs to create separate snapshot chains, for 
+example, for chargeback tracking.  When you describe your snapshot 
+resource, this field is visible only if it has a non-empty value.`,
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
@@ -79,8 +89,19 @@ character, which cannot be a dash.`,
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
-				Description: `The customer-supplied encryption key of the snapshot. Required if the
-source snapshot is protected by a customer-supplied encryption key.`,
+				Description: `Encrypts the snapshot using a customer-supplied encryption key.
+
+After you encrypt a snapshot using a customer-supplied key, you must
+provide the same key if you use the snapshot later. For example, you
+must provide the encryption key when you create a disk from the
+encrypted snapshot in a future request.
+
+Customer-supplied encryption keys do not protect access to metadata of
+the snapshot.
+
+If you do not provide an encryption key when creating the snapshot,
+then the snapshot will be encrypted using an automatically generated
+key and you do not need to provide a key to use the snapshot later.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -217,12 +238,18 @@ creation/deletion.`,
 
 func resourceComputeSnapshotCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
 	obj := make(map[string]interface{})
+	chainNameProp, err := expandComputeSnapshotChainName(d.Get("chain_name"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("chain_name"); !isEmptyValue(reflect.ValueOf(chainNameProp)) && (ok || !reflect.DeepEqual(v, chainNameProp)) {
+		obj["chainName"] = chainNameProp
+	}
 	nameProp, err := expandComputeSnapshotName(d.Get("name"), d, config)
 	if err != nil {
 		return err
@@ -298,7 +325,7 @@ func resourceComputeSnapshotCreate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	url = regexp.MustCompile("PRE_CREATE_REPLACE_ME").ReplaceAllLiteralString(url, sourceDiskProp.(string))
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Snapshot: %s", err)
 	}
@@ -310,7 +337,7 @@ func resourceComputeSnapshotCreate(d *schema.ResourceData, meta interface{}) err
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating Snapshot", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -327,7 +354,7 @@ func resourceComputeSnapshotCreate(d *schema.ResourceData, meta interface{}) err
 
 func resourceComputeSnapshotRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -350,7 +377,7 @@ func resourceComputeSnapshotRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeSnapshot %q", d.Id()))
 	}
@@ -378,6 +405,9 @@ func resourceComputeSnapshotRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("Error reading Snapshot: %s", err)
 	}
 	if err := d.Set("disk_size_gb", flattenComputeSnapshotDiskSizeGb(res["diskSizeGb"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Snapshot: %s", err)
+	}
+	if err := d.Set("chain_name", flattenComputeSnapshotChainName(res["chainName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Snapshot: %s", err)
 	}
 	if err := d.Set("name", flattenComputeSnapshotName(res["name"], d, config)); err != nil {
@@ -416,7 +446,7 @@ func resourceComputeSnapshotRead(d *schema.ResourceData, meta interface{}) error
 
 func resourceComputeSnapshotUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -457,14 +487,14 @@ func resourceComputeSnapshotUpdate(d *schema.ResourceData, meta interface{}) err
 			billingProject = bp
 		}
 
-		res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error updating Snapshot %q: %s", d.Id(), err)
 		} else {
 			log.Printf("[DEBUG] Finished updating Snapshot %q: %#v", d.Id(), res)
 		}
 
-		err = computeOperationWaitTime(
+		err = ComputeOperationWaitTime(
 			config, res, project, "Updating Snapshot", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
@@ -479,7 +509,7 @@ func resourceComputeSnapshotUpdate(d *schema.ResourceData, meta interface{}) err
 
 func resourceComputeSnapshotDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -505,12 +535,12 @@ func resourceComputeSnapshotDelete(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Snapshot")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting Snapshot", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -549,7 +579,7 @@ func flattenComputeSnapshotCreationTimestamp(v interface{}, d *schema.ResourceDa
 func flattenComputeSnapshotSnapshotId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -566,7 +596,7 @@ func flattenComputeSnapshotSnapshotId(v interface{}, d *schema.ResourceData, con
 func flattenComputeSnapshotDiskSizeGb(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -580,6 +610,10 @@ func flattenComputeSnapshotDiskSizeGb(v interface{}, d *schema.ResourceData, con
 	return v // let terraform core handle it otherwise
 }
 
+func flattenComputeSnapshotChainName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenComputeSnapshotName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
@@ -591,7 +625,7 @@ func flattenComputeSnapshotDescription(v interface{}, d *schema.ResourceData, co
 func flattenComputeSnapshotStorageBytes(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -664,6 +698,10 @@ func flattenComputeSnapshotSnapshotEncryptionKeyKmsKeySelfLink(v interface{}, d 
 
 func flattenComputeSnapshotSnapshotEncryptionKeyKmsKeyServiceAccount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
+}
+
+func expandComputeSnapshotChainName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
 }
 
 func expandComputeSnapshotName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {

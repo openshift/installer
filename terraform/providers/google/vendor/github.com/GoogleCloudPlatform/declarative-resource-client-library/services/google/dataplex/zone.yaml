@@ -1,0 +1,319 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Dataplex/Zone
+  description: The Dataplex Zone resource
+  x-dcl-struct-name: Zone
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Zone
+    parameters:
+    - name: zone
+      required: true
+      description: A full instance of a Zone
+  apply:
+    description: The function used to apply information about a Zone
+    parameters:
+    - name: zone
+      required: true
+      description: A full instance of a Zone
+  delete:
+    description: The function used to delete a Zone
+    parameters:
+    - name: zone
+      required: true
+      description: A full instance of a Zone
+  deleteAll:
+    description: The function used to delete all Zone
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: lake
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Zone
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+    - name: lake
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Zone:
+      title: Zone
+      x-dcl-id: projects/{{project}}/locations/{{location}}/lakes/{{lake}}/zones/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - type
+      - discoverySpec
+      - resourceSpec
+      - project
+      - location
+      - lake
+      properties:
+        assetStatus:
+          type: object
+          x-dcl-go-name: AssetStatus
+          x-dcl-go-type: ZoneAssetStatus
+          readOnly: true
+          description: Output only. Aggregated status of the underlying assets of
+            the zone.
+          properties:
+            activeAssets:
+              type: integer
+              format: int64
+              x-dcl-go-name: ActiveAssets
+              description: Number of active assets.
+            securityPolicyApplyingAssets:
+              type: integer
+              format: int64
+              x-dcl-go-name: SecurityPolicyApplyingAssets
+              description: Number of assets that are in process of updating the security
+                policy on attached resources.
+            updateTime:
+              type: string
+              format: date-time
+              x-dcl-go-name: UpdateTime
+              description: Last update time of the status.
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. The time when the zone was created.
+          x-kubernetes-immutable: true
+        description:
+          type: string
+          x-dcl-go-name: Description
+          description: Optional. Description of the zone.
+        discoverySpec:
+          type: object
+          x-dcl-go-name: DiscoverySpec
+          x-dcl-go-type: ZoneDiscoverySpec
+          description: Required. Specification of the discovery feature applied to
+            data in this zone.
+          required:
+          - enabled
+          properties:
+            csvOptions:
+              type: object
+              x-dcl-go-name: CsvOptions
+              x-dcl-go-type: ZoneDiscoverySpecCsvOptions
+              description: Optional. Configuration for CSV data.
+              x-dcl-server-default: true
+              properties:
+                delimiter:
+                  type: string
+                  x-dcl-go-name: Delimiter
+                  description: Optional. The delimiter being used to separate values.
+                    This defaults to ','.
+                disableTypeInference:
+                  type: boolean
+                  x-dcl-go-name: DisableTypeInference
+                  description: Optional. Whether to disable the inference of data
+                    type for CSV data. If true, all columns will be registered as
+                    strings.
+                encoding:
+                  type: string
+                  x-dcl-go-name: Encoding
+                  description: Optional. The character encoding of the data. The default
+                    is UTF-8.
+                headerRows:
+                  type: integer
+                  format: int64
+                  x-dcl-go-name: HeaderRows
+                  description: Optional. The number of rows to interpret as header
+                    rows that should be skipped when reading data rows.
+            enabled:
+              type: boolean
+              x-dcl-go-name: Enabled
+              description: Required. Whether discovery is enabled.
+            excludePatterns:
+              type: array
+              x-dcl-go-name: ExcludePatterns
+              description: Optional. The list of patterns to apply for selecting data
+                to exclude during discovery. For Cloud Storage bucket assets, these
+                are interpreted as glob patterns used to match object names. For BigQuery
+                dataset assets, these are interpreted as patterns to match table names.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            includePatterns:
+              type: array
+              x-dcl-go-name: IncludePatterns
+              description: Optional. The list of patterns to apply for selecting data
+                to include during discovery if only a subset of the data should considered.
+                For Cloud Storage bucket assets, these are interpreted as glob patterns
+                used to match object names. For BigQuery dataset assets, these are
+                interpreted as patterns to match table names.
+              x-dcl-send-empty: true
+              x-dcl-list-type: list
+              items:
+                type: string
+                x-dcl-go-type: string
+            jsonOptions:
+              type: object
+              x-dcl-go-name: JsonOptions
+              x-dcl-go-type: ZoneDiscoverySpecJsonOptions
+              description: Optional. Configuration for Json data.
+              x-dcl-server-default: true
+              properties:
+                disableTypeInference:
+                  type: boolean
+                  x-dcl-go-name: DisableTypeInference
+                  description: Optional. Whether to disable the inference of data
+                    type for Json data. If true, all columns will be registered as
+                    their primitive types (strings, number or boolean).
+                encoding:
+                  type: string
+                  x-dcl-go-name: Encoding
+                  description: Optional. The character encoding of the data. The default
+                    is UTF-8.
+            schedule:
+              type: string
+              x-dcl-go-name: Schedule
+              description: 'Optional. Cron schedule (https://en.wikipedia.org/wiki/Cron)
+                for running discovery periodically. Successive discovery runs must
+                be scheduled at least 60 minutes apart. The default value is to run
+                discovery every 60 minutes. To explicitly set a timezone to the cron
+                tab, apply a prefix in the cron tab: "CRON_TZ=${IANA_TIME_ZONE}" or
+                TZ=${IANA_TIME_ZONE}". The ${IANA_TIME_ZONE} may only be a valid string
+                from IANA time zone database. For example, "CRON_TZ=America/New_York
+                1 * * * *", or "TZ=America/New_York 1 * * * *".'
+              x-dcl-server-default: true
+        displayName:
+          type: string
+          x-dcl-go-name: DisplayName
+          description: Optional. User friendly display name.
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: Labels
+          description: Optional. User defined labels for the zone.
+        lake:
+          type: string
+          x-dcl-go-name: Lake
+          description: The lake for the resource
+          x-kubernetes-immutable: true
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: The name of the zone.
+          x-dcl-references:
+          - resource: Dataplex/Zone
+            field: selfLink
+            parent: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        resourceSpec:
+          type: object
+          x-dcl-go-name: ResourceSpec
+          x-dcl-go-type: ZoneResourceSpec
+          description: Required. Immutable. Specification of the resources that are
+            referenced by the assets within this zone.
+          x-kubernetes-immutable: true
+          required:
+          - locationType
+          properties:
+            locationType:
+              type: string
+              x-dcl-go-name: LocationType
+              x-dcl-go-type: ZoneResourceSpecLocationTypeEnum
+              description: 'Required. Immutable. The location type of the resources
+                that are allowed to be attached to the assets within this zone. Possible
+                values: LOCATION_TYPE_UNSPECIFIED, SINGLE_REGION, MULTI_REGION'
+              x-kubernetes-immutable: true
+              enum:
+              - LOCATION_TYPE_UNSPECIFIED
+              - SINGLE_REGION
+              - MULTI_REGION
+        state:
+          type: string
+          x-dcl-go-name: State
+          x-dcl-go-type: ZoneStateEnum
+          readOnly: true
+          description: 'Output only. Current state of the zone. Possible values: STATE_UNSPECIFIED,
+            ACTIVE, CREATING, DELETING, ACTION_REQUIRED'
+          x-kubernetes-immutable: true
+          enum:
+          - STATE_UNSPECIFIED
+          - ACTIVE
+          - CREATING
+          - DELETING
+          - ACTION_REQUIRED
+        type:
+          type: string
+          x-dcl-go-name: Type
+          x-dcl-go-type: ZoneTypeEnum
+          description: 'Required. Immutable. The type of the zone. Possible values:
+            TYPE_UNSPECIFIED, RAW, CURATED'
+          x-kubernetes-immutable: true
+          enum:
+          - TYPE_UNSPECIFIED
+          - RAW
+          - CURATED
+        uid:
+          type: string
+          x-dcl-go-name: Uid
+          readOnly: true
+          description: Output only. System generated globally unique ID for the zone.
+            This ID will be different if the zone is deleted and re-created with the
+            same name.
+          x-kubernetes-immutable: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. The time when the zone was last updated.
+          x-kubernetes-immutable: true

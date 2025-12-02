@@ -21,14 +21,12 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourcePubsubSchema() *schema.Resource {
+func ResourcePubsubSchema() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePubsubSchemaCreate,
 		Read:   resourcePubsubSchemaRead,
-		Update: resourcePubsubSchemaUpdate,
 		Delete: resourcePubsubSchemaDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -36,9 +34,8 @@ func resourcePubsubSchema() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(6 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -52,6 +49,7 @@ func resourcePubsubSchema() *schema.Resource {
 			"definition": {
 				Type:     schema.TypeString,
 				Optional: true,
+				ForceNew: true,
 				Description: `The definition of the schema.
 This should contain a string representing the full definition of the schema
 that is a valid schema definition of the type specified in type.`,
@@ -59,7 +57,8 @@ that is a valid schema definition of the type specified in type.`,
 			"type": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"TYPE_UNSPECIFIED", "PROTOCOL_BUFFER", "AVRO", ""}, false),
+				ForceNew:     true,
+				ValidateFunc: validateEnum([]string{"TYPE_UNSPECIFIED", "PROTOCOL_BUFFER", "AVRO", ""}),
 				Description:  `The type of the schema definition Default value: "TYPE_UNSPECIFIED" Possible values: ["TYPE_UNSPECIFIED", "PROTOCOL_BUFFER", "AVRO"]`,
 				Default:      "TYPE_UNSPECIFIED",
 			},
@@ -76,7 +75,7 @@ that is a valid schema definition of the type specified in type.`,
 
 func resourcePubsubSchemaCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -120,7 +119,7 @@ func resourcePubsubSchemaCreate(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Schema: %s", err)
 	}
@@ -159,12 +158,12 @@ func resourcePubsubSchemaPollRead(d *schema.ResourceData, meta interface{}) Poll
 			billingProject = bp
 		}
 
-		userAgent, err := generateUserAgentString(d, config.userAgent)
+		userAgent, err := generateUserAgentString(d, config.UserAgent)
 		if err != nil {
 			return nil, err
 		}
 
-		res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+		res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 		if err != nil {
 			return res, err
 		}
@@ -174,7 +173,7 @@ func resourcePubsubSchemaPollRead(d *schema.ResourceData, meta interface{}) Poll
 
 func resourcePubsubSchemaRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -197,7 +196,7 @@ func resourcePubsubSchemaRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("PubsubSchema %q", d.Id()))
 	}
@@ -216,67 +215,9 @@ func resourcePubsubSchemaRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourcePubsubSchemaUpdate(d *schema.ResourceData, meta interface{}) error {
-	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
-	if err != nil {
-		return err
-	}
-
-	billingProject := ""
-
-	project, err := getProject(d, config)
-	if err != nil {
-		return fmt.Errorf("Error fetching project for Schema: %s", err)
-	}
-	billingProject = project
-
-	obj := make(map[string]interface{})
-	typeProp, err := expandPubsubSchemaType(d.Get("type"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("type"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, typeProp)) {
-		obj["type"] = typeProp
-	}
-	definitionProp, err := expandPubsubSchemaDefinition(d.Get("definition"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("definition"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, definitionProp)) {
-		obj["definition"] = definitionProp
-	}
-	nameProp, err := expandPubsubSchemaName(d.Get("name"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nameProp)) {
-		obj["name"] = nameProp
-	}
-
-	url, err := replaceVars(d, config, "{{PubsubBasePath}}projects/{{project}}/schemas/{{name}}")
-	if err != nil {
-		return err
-	}
-
-	log.Printf("[DEBUG] Updating Schema %q: %#v", d.Id(), obj)
-
-	// err == nil indicates that the billing_project value was found
-	if bp, err := getBillingProject(d, config); err == nil {
-		billingProject = bp
-	}
-
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
-
-	if err != nil {
-		return fmt.Errorf("Error updating Schema %q: %s", d.Id(), err)
-	} else {
-		log.Printf("[DEBUG] Finished updating Schema %q: %#v", d.Id(), res)
-	}
-
-	return resourcePubsubSchemaRead(d, meta)
-}
-
 func resourcePubsubSchemaDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -302,7 +243,7 @@ func resourcePubsubSchemaDelete(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Schema")
 	}

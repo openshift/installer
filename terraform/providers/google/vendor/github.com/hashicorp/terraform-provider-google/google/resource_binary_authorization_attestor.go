@@ -52,7 +52,7 @@ func compareSignatureAlgorithm(_, old, new string, _ *schema.ResourceData) bool 
 	return false
 }
 
-func resourceBinaryAuthorizationAttestor() *schema.Resource {
+func ResourceBinaryAuthorizationAttestor() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBinaryAuthorizationAttestorCreate,
 		Read:   resourceBinaryAuthorizationAttestorRead,
@@ -64,9 +64,9 @@ func resourceBinaryAuthorizationAttestor() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -150,8 +150,9 @@ encoding of the public key.`,
 'https://tools.ietf.org/html/rfc7468#section-13'`,
 												},
 												"signature_algorithm": {
-													Type:     schema.TypeString,
-													Optional: true,
+													Type:             schema.TypeString,
+													Optional:         true,
+													DiffSuppressFunc: compareSignatureAlgorithm,
 													Description: `The signature algorithm used to verify a message against
 a signature using this key. These signature algorithm must
 match the structure and any object identifiers encoded in
@@ -205,7 +206,7 @@ displayed in chooser dialogs.`,
 
 func resourceBinaryAuthorizationAttestorCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -249,7 +250,7 @@ func resourceBinaryAuthorizationAttestorCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Attestor: %s", err)
 	}
@@ -268,7 +269,7 @@ func resourceBinaryAuthorizationAttestorCreate(d *schema.ResourceData, meta inte
 
 func resourceBinaryAuthorizationAttestorRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -291,7 +292,7 @@ func resourceBinaryAuthorizationAttestorRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("BinaryAuthorizationAttestor %q", d.Id()))
 	}
@@ -315,7 +316,7 @@ func resourceBinaryAuthorizationAttestorRead(d *schema.ResourceData, meta interf
 
 func resourceBinaryAuthorizationAttestorUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -360,7 +361,7 @@ func resourceBinaryAuthorizationAttestorUpdate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Attestor %q: %s", d.Id(), err)
@@ -373,7 +374,7 @@ func resourceBinaryAuthorizationAttestorUpdate(d *schema.ResourceData, meta inte
 
 func resourceBinaryAuthorizationAttestorDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -399,7 +400,7 @@ func resourceBinaryAuthorizationAttestorDelete(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Attestor")
 	}

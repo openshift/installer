@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -72,7 +72,7 @@ type CRMOperationErrorError struct {
 
 // Wait waits for an CRMOperation to complete by fetching the operation until it completes.
 func (op *CRMOperation) Wait(ctx context.Context, c *dcl.Config, basePath, verb string) error {
-	c.Logger.Infof("Waiting on: %v", op)
+	c.Logger.Infof("Waiting on operation: %v", op)
 	op.config = c
 	op.basePath = basePath
 	op.verb = verb
@@ -87,11 +87,19 @@ func (op *CRMOperation) Wait(ctx context.Context, c *dcl.Config, basePath, verb 
 		op.version = "v3"
 	}
 
+	if t, ok := op.Metadata["@type"].(string); ok && t == "type.googleapis.com/google.cloud.resourcemanager.v3.DeleteTagValueMetadata" {
+		// TagValue delete operation requires the use of the v3 endpoint
+		op.version = "v3"
+	}
+
 	if op.Done {
+		c.Logger.Infof("Completed operation: %v", op)
 		return nil
 	}
 
-	return dcl.Do(ctx, op.operate, c.RetryProvider)
+	err := dcl.Do(ctx, op.operate, c.RetryProvider)
+	c.Logger.Infof("Completed operation: %v", op)
+	return err
 }
 
 func (op *CRMOperation) operate(ctx context.Context) (*dcl.RetryDetails, error) {

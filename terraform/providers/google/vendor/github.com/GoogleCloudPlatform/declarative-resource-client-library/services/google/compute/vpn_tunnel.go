@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ import (
 )
 
 type VpnTunnel struct {
-	Labels                       map[string]string    `json:"labels"`
 	Id                           *int64               `json:"id"`
 	Name                         *string              `json:"name"`
 	Description                  *string              `json:"description"`
-	Region                       *string              `json:"region"`
+	Location                     *string              `json:"location"`
 	TargetVpnGateway             *string              `json:"targetVpnGateway"`
 	VpnGateway                   *string              `json:"vpnGateway"`
 	VpnGatewayInterface          *int64               `json:"vpnGatewayInterface"`
@@ -94,30 +93,29 @@ func (r *VpnTunnel) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"labels":                       dcl.ValueOrEmptyString(nr.Labels),
-		"id":                           dcl.ValueOrEmptyString(nr.Id),
-		"name":                         dcl.ValueOrEmptyString(nr.Name),
-		"description":                  dcl.ValueOrEmptyString(nr.Description),
-		"region":                       dcl.ValueOrEmptyString(nr.Region),
-		"targetVpnGateway":             dcl.ValueOrEmptyString(nr.TargetVpnGateway),
-		"vpnGateway":                   dcl.ValueOrEmptyString(nr.VpnGateway),
-		"vpnGatewayInterface":          dcl.ValueOrEmptyString(nr.VpnGatewayInterface),
-		"peerExternalGateway":          dcl.ValueOrEmptyString(nr.PeerExternalGateway),
-		"peerExternalGatewayInterface": dcl.ValueOrEmptyString(nr.PeerExternalGatewayInterface),
-		"peerGcpGateway":               dcl.ValueOrEmptyString(nr.PeerGcpGateway),
-		"router":                       dcl.ValueOrEmptyString(nr.Router),
-		"peerIP":                       dcl.ValueOrEmptyString(nr.PeerIP),
-		"sharedSecret":                 dcl.ValueOrEmptyString(nr.SharedSecret),
-		"sharedSecretHash":             dcl.ValueOrEmptyString(nr.SharedSecretHash),
-		"status":                       dcl.ValueOrEmptyString(nr.Status),
-		"selfLink":                     dcl.ValueOrEmptyString(nr.SelfLink),
-		"ikeVersion":                   dcl.ValueOrEmptyString(nr.IkeVersion),
-		"detailedStatus":               dcl.ValueOrEmptyString(nr.DetailedStatus),
-		"localTrafficSelector":         dcl.ValueOrEmptyString(nr.LocalTrafficSelector),
-		"remoteTrafficSelector":        dcl.ValueOrEmptyString(nr.RemoteTrafficSelector),
-		"project":                      dcl.ValueOrEmptyString(nr.Project),
+		"id":                              dcl.ValueOrEmptyString(nr.Id),
+		"name":                            dcl.ValueOrEmptyString(nr.Name),
+		"description":                     dcl.ValueOrEmptyString(nr.Description),
+		"location":                        dcl.ValueOrEmptyString(nr.Location),
+		"target_vpn_gateway":              dcl.ValueOrEmptyString(nr.TargetVpnGateway),
+		"vpn_gateway":                     dcl.ValueOrEmptyString(nr.VpnGateway),
+		"vpn_gateway_interface":           dcl.ValueOrEmptyString(nr.VpnGatewayInterface),
+		"peer_external_gateway":           dcl.ValueOrEmptyString(nr.PeerExternalGateway),
+		"peer_external_gateway_interface": dcl.ValueOrEmptyString(nr.PeerExternalGatewayInterface),
+		"peer_gcp_gateway":                dcl.ValueOrEmptyString(nr.PeerGcpGateway),
+		"router":                          dcl.ValueOrEmptyString(nr.Router),
+		"peer_ip":                         dcl.ValueOrEmptyString(nr.PeerIP),
+		"shared_secret":                   dcl.ValueOrEmptyString(nr.SharedSecret),
+		"shared_secret_hash":              dcl.ValueOrEmptyString(nr.SharedSecretHash),
+		"status":                          dcl.ValueOrEmptyString(nr.Status),
+		"self_link":                       dcl.ValueOrEmptyString(nr.SelfLink),
+		"ike_version":                     dcl.ValueOrEmptyString(nr.IkeVersion),
+		"detailed_status":                 dcl.ValueOrEmptyString(nr.DetailedStatus),
+		"local_traffic_selector":          dcl.ValueOrEmptyString(nr.LocalTrafficSelector),
+		"remote_traffic_selector":         dcl.ValueOrEmptyString(nr.RemoteTrafficSelector),
+		"project":                         dcl.ValueOrEmptyString(nr.Project),
 	}
-	return dcl.Nprintf("projects/{{project}}/regions/{{region}}/vpnTunnels/{{name}}", params), nil
+	return dcl.Nprintf("projects/{{project}}/regions/{{location}}/vpnTunnels/{{name}}", params), nil
 }
 
 const VpnTunnelMaxPage = -1
@@ -152,23 +150,23 @@ func (l *VpnTunnelList) Next(ctx context.Context, c *Client) error {
 	return err
 }
 
-func (c *Client) ListVpnTunnel(ctx context.Context, project, region string) (*VpnTunnelList, error) {
+func (c *Client) ListVpnTunnel(ctx context.Context, project, location string) (*VpnTunnelList, error) {
 	ctx = dcl.ContextWithRequestID(ctx)
 	ctx, cancel := context.WithTimeout(ctx, c.Config.TimeoutOr(0*time.Second))
 	defer cancel()
 
-	return c.ListVpnTunnelWithMaxResults(ctx, project, region, VpnTunnelMaxPage)
+	return c.ListVpnTunnelWithMaxResults(ctx, project, location, VpnTunnelMaxPage)
 
 }
 
-func (c *Client) ListVpnTunnelWithMaxResults(ctx context.Context, project, region string, pageSize int32) (*VpnTunnelList, error) {
+func (c *Client) ListVpnTunnelWithMaxResults(ctx context.Context, project, location string, pageSize int32) (*VpnTunnelList, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.Config.TimeoutOr(0*time.Second))
 	defer cancel()
 
 	// Create a resource object so that we can use proper url normalization methods.
 	r := &VpnTunnel{
-		Project: &project,
-		Region:  &region,
+		Project:  &project,
+		Location: &location,
 	}
 	items, token, err := c.listVpnTunnel(ctx, r, "", pageSize)
 	if err != nil {
@@ -202,12 +200,12 @@ func (c *Client) GetVpnTunnel(ctx context.Context, r *VpnTunnel) (*VpnTunnel, er
 		}
 		return nil, err
 	}
-	result, err := unmarshalVpnTunnel(b, c)
+	result, err := unmarshalVpnTunnel(b, c, r)
 	if err != nil {
 		return nil, err
 	}
 	result.Project = r.Project
-	result.Region = r.Region
+	result.Location = r.Location
 	result.Name = r.Name
 	if dcl.IsZeroValue(result.IkeVersion) {
 		result.IkeVersion = dcl.Int64(2)
@@ -241,8 +239,8 @@ func (c *Client) DeleteVpnTunnel(ctx context.Context, r *VpnTunnel) error {
 }
 
 // DeleteAllVpnTunnel deletes all resources that the filter functions returns true on.
-func (c *Client) DeleteAllVpnTunnel(ctx context.Context, project, region string, filter func(*VpnTunnel) bool) error {
-	listObj, err := c.ListVpnTunnel(ctx, project, region)
+func (c *Client) DeleteAllVpnTunnel(ctx context.Context, project, location string, filter func(*VpnTunnel) bool) error {
+	listObj, err := c.ListVpnTunnel(ctx, project, location)
 	if err != nil {
 		return err
 	}
@@ -362,7 +360,7 @@ func applyVpnTunnelHelper(c *Client, ctx context.Context, rawDesired *VpnTunnel,
 func applyVpnTunnelDiff(c *Client, ctx context.Context, desired *VpnTunnel, rawDesired *VpnTunnel, ops []vpnTunnelApiOperation, opts ...dcl.ApplyOption) (*VpnTunnel, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetVpnTunnel(ctx, desired.urlNormalized())
+	rawNew, err := c.GetVpnTunnel(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -375,7 +373,7 @@ func applyVpnTunnelDiff(c *Client, ctx context.Context, desired *VpnTunnel, rawD
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapVpnTunnel(r, c)
+				fullResp, err := unmarshalMapVpnTunnel(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

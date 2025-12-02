@@ -37,7 +37,7 @@ func sensitiveLabelCustomizeDiff(_ context.Context, diff *schema.ResourceDiff, v
 	return nil
 }
 
-func resourceMonitoringNotificationChannel() *schema.Resource {
+func ResourceMonitoringNotificationChannel() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMonitoringNotificationChannelCreate,
 		Read:   resourceMonitoringNotificationChannelRead,
@@ -49,9 +49,9 @@ func resourceMonitoringNotificationChannel() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		CustomizeDiff: sensitiveLabelCustomizeDiff,
@@ -145,6 +145,16 @@ The [CHANNEL_ID] is automatically assigned by the server on creation.`,
 				Computed:    true,
 				Description: `Indicates whether this channel has been verified or not. On a ListNotificationChannels or GetNotificationChannel operation, this field is expected to be populated.If the value is UNVERIFIED, then it indicates that the channel is non-functioning (it both requires verification and lacks verification); otherwise, it is assumed that the channel works.If the channel is neither VERIFIED nor UNVERIFIED, it implies that the channel is of a type that does not require verification or that this specific channel has been exempted from verification because it was created prior to verification being required for channels of this type.This field cannot be modified using a standard UpdateNotificationChannel operation. To change the value of this field, you must call VerifyNotificationChannel.`,
 			},
+			"force_delete": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  false,
+				Description: `If true, the notification channel will be deleted regardless
+of its use in alert policies (the policies will be updated
+to remove the channel). If false, channels that are still
+referenced by an existing alerting policy will fail to be
+deleted in a delete operation.`,
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -158,7 +168,7 @@ The [CHANNEL_ID] is automatically assigned by the server on creation.`,
 
 func resourceMonitoringNotificationChannelCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -232,7 +242,7 @@ func resourceMonitoringNotificationChannelCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isMonitoringConcurrentEditError)
 	if err != nil {
 		return fmt.Errorf("Error creating NotificationChannel: %s", err)
 	}
@@ -272,7 +282,7 @@ func resourceMonitoringNotificationChannelCreate(d *schema.ResourceData, meta in
 
 func resourceMonitoringNotificationChannelRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -295,7 +305,7 @@ func resourceMonitoringNotificationChannelRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isMonitoringConcurrentEditError)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isMonitoringConcurrentEditError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("MonitoringNotificationChannel %q", d.Id()))
 	}
@@ -312,6 +322,12 @@ func resourceMonitoringNotificationChannelRead(d *schema.ResourceData, meta inte
 		return nil
 	}
 
+	// Explicitly set virtual fields to default values if unset
+	if _, ok := d.GetOkExists("force_delete"); !ok {
+		if err := d.Set("force_delete", false); err != nil {
+			return fmt.Errorf("Error setting force_delete: %s", err)
+		}
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading NotificationChannel: %s", err)
 	}
@@ -346,7 +362,7 @@ func resourceMonitoringNotificationChannelRead(d *schema.ResourceData, meta inte
 
 func resourceMonitoringNotificationChannelUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -421,7 +437,7 @@ func resourceMonitoringNotificationChannelUpdate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isMonitoringConcurrentEditError)
 
 	if err != nil {
 		return fmt.Errorf("Error updating NotificationChannel %q: %s", d.Id(), err)
@@ -434,7 +450,7 @@ func resourceMonitoringNotificationChannelUpdate(d *schema.ResourceData, meta in
 
 func resourceMonitoringNotificationChannelDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -454,7 +470,7 @@ func resourceMonitoringNotificationChannelDelete(d *schema.ResourceData, meta in
 	mutexKV.Lock(lockName)
 	defer mutexKV.Unlock(lockName)
 
-	url, err := replaceVars(d, config, "{{MonitoringBasePath}}v3/{{name}}")
+	url, err := replaceVars(d, config, "{{MonitoringBasePath}}v3/{{name}}?force={{force_delete}}")
 	if err != nil {
 		return err
 	}
@@ -467,7 +483,7 @@ func resourceMonitoringNotificationChannelDelete(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isMonitoringConcurrentEditError)
 	if err != nil {
 		return handleNotFoundError(err, d, "NotificationChannel")
 	}

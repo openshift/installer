@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -160,8 +160,8 @@ func (r *KeyWebSettings) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this KeyWebSettings is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyKeyWebSettings *KeyWebSettings = &KeyWebSettings{empty: true}
 
 func (r *KeyWebSettings) Empty() bool {
@@ -209,8 +209,8 @@ func (r *KeyAndroidSettings) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this KeyAndroidSettings is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyKeyAndroidSettings *KeyAndroidSettings = &KeyAndroidSettings{empty: true}
 
 func (r *KeyAndroidSettings) Empty() bool {
@@ -258,8 +258,8 @@ func (r *KeyIosSettings) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this KeyIosSettings is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyKeyIosSettings *KeyIosSettings = &KeyIosSettings{empty: true}
 
 func (r *KeyIosSettings) Empty() bool {
@@ -307,8 +307,8 @@ func (r *KeyTestingOptions) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this KeyTestingOptions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyKeyTestingOptions *KeyTestingOptions = &KeyTestingOptions{empty: true}
 
 func (r *KeyTestingOptions) Empty() bool {
@@ -342,15 +342,15 @@ func (r *Key) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":            dcl.ValueOrEmptyString(nr.Name),
-		"displayName":     dcl.ValueOrEmptyString(nr.DisplayName),
-		"webSettings":     dcl.ValueOrEmptyString(nr.WebSettings),
-		"androidSettings": dcl.ValueOrEmptyString(nr.AndroidSettings),
-		"iosSettings":     dcl.ValueOrEmptyString(nr.IosSettings),
-		"labels":          dcl.ValueOrEmptyString(nr.Labels),
-		"createTime":      dcl.ValueOrEmptyString(nr.CreateTime),
-		"testingOptions":  dcl.ValueOrEmptyString(nr.TestingOptions),
-		"project":         dcl.ValueOrEmptyString(nr.Project),
+		"name":             dcl.ValueOrEmptyString(nr.Name),
+		"display_name":     dcl.ValueOrEmptyString(nr.DisplayName),
+		"web_settings":     dcl.ValueOrEmptyString(nr.WebSettings),
+		"android_settings": dcl.ValueOrEmptyString(nr.AndroidSettings),
+		"ios_settings":     dcl.ValueOrEmptyString(nr.IosSettings),
+		"labels":           dcl.ValueOrEmptyString(nr.Labels),
+		"create_time":      dcl.ValueOrEmptyString(nr.CreateTime),
+		"testing_options":  dcl.ValueOrEmptyString(nr.TestingOptions),
+		"project":          dcl.ValueOrEmptyString(nr.Project),
 	}
 	return dcl.Nprintf("projects/{{project}}/keys/{{name}}", params), nil
 }
@@ -436,7 +436,7 @@ func (c *Client) GetKey(ctx context.Context, r *Key) (*Key, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalKey(b, c)
+	result, err := unmarshalKey(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -592,7 +592,7 @@ func applyKeyHelper(c *Client, ctx context.Context, rawDesired *Key, opts ...dcl
 func applyKeyDiff(c *Client, ctx context.Context, desired *Key, rawDesired *Key, ops []keyApiOperation, opts ...dcl.ApplyOption) (*Key, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetKey(ctx, desired.urlNormalized())
+	rawNew, err := c.GetKey(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -605,7 +605,7 @@ func applyKeyDiff(c *Client, ctx context.Context, desired *Key, rawDesired *Key,
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapKey(r, c)
+				fullResp, err := unmarshalMapKey(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}
