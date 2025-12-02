@@ -18,14 +18,12 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceComputeGlobalAddress() *schema.Resource {
+func ResourceComputeGlobalAddress() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeGlobalAddressCreate,
 		Read:   resourceComputeGlobalAddressRead,
@@ -36,8 +34,8 @@ func resourceComputeGlobalAddress() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -66,7 +64,7 @@ address or omitted to allow GCP to choose a valid one for you.`,
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
-				ValidateFunc:     validation.StringInSlice([]string{"EXTERNAL", "INTERNAL", ""}, false),
+				ValidateFunc:     validateEnum([]string{"EXTERNAL", "INTERNAL", ""}),
 				DiffSuppressFunc: emptyOrDefaultStringSuppress("EXTERNAL"),
 				Description: `The type of the address to reserve.
 
@@ -84,7 +82,7 @@ address or omitted to allow GCP to choose a valid one for you.`,
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
-				ValidateFunc:     validation.StringInSlice([]string{"IPV4", "IPV6", ""}, false),
+				ValidateFunc:     validateEnum([]string{"IPV4", "IPV6", ""}),
 				DiffSuppressFunc: emptyOrDefaultStringSuppress("IPV4"),
 				Description:      `The IP Version that will be used by this address. The default value is 'IPV4'. Possible values: ["IPV4", "IPV6"]`,
 			},
@@ -141,7 +139,7 @@ or addressType=INTERNAL when purpose=PRIVATE_SERVICE_CONNECT`,
 
 func resourceComputeGlobalAddressCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -215,7 +213,7 @@ func resourceComputeGlobalAddressCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating GlobalAddress: %s", err)
 	}
@@ -227,7 +225,7 @@ func resourceComputeGlobalAddressCreate(d *schema.ResourceData, meta interface{}
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating GlobalAddress", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -244,7 +242,7 @@ func resourceComputeGlobalAddressCreate(d *schema.ResourceData, meta interface{}
 
 func resourceComputeGlobalAddressRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -267,7 +265,7 @@ func resourceComputeGlobalAddressRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeGlobalAddress %q", d.Id()))
 	}
@@ -312,7 +310,7 @@ func resourceComputeGlobalAddressRead(d *schema.ResourceData, meta interface{}) 
 
 func resourceComputeGlobalAddressDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -338,12 +336,12 @@ func resourceComputeGlobalAddressDelete(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "GlobalAddress")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting GlobalAddress", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -398,7 +396,7 @@ func flattenComputeGlobalAddressIpVersion(v interface{}, d *schema.ResourceData,
 func flattenComputeGlobalAddressPrefixLength(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

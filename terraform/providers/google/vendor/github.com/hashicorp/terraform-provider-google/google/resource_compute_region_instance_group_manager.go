@@ -13,7 +13,7 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-func resourceComputeRegionInstanceGroupManager() *schema.Resource {
+func ResourceComputeRegionInstanceGroupManager() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeRegionInstanceGroupManagerCreate,
 		Read:   resourceComputeRegionInstanceGroupManagerRead,
@@ -51,7 +51,7 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 						"instance_template": {
 							Type:             schema.TypeString,
 							Required:         true,
-							DiffSuppressFunc: compareSelfLinkRelativePaths,
+							DiffSuppressFunc: compareSelfLinkRelativePathsIgnoreParams,
 							Description:      `The full URL to an instance template from which all new instances of this version will be created.`,
 						},
 
@@ -166,6 +166,14 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 				Description: `The target number of running instances for this managed instance group. This value should always be explicitly set unless this resource is attached to an autoscaler, in which case it should never be set. Defaults to 0.`,
 			},
 
+			"list_managed_instances_results": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				Default:      "PAGELESS",
+				ValidateFunc: validation.StringInSlice([]string{"PAGELESS", "PAGINATED"}, false),
+				Description:  `Pagination behavior of the listManagedInstances API method for this managed instance group. Valid values are: "PAGELESS", "PAGINATED". If PAGELESS (default), Pagination is disabled for the group's listManagedInstances API method. maxResults and pageToken query parameters are ignored and all instances are returned in a single response. If PAGINATED, pagination is enabled, maxResults and pageToken query parameters are respected.`,
+			},
+
 			// If true, the resource will report ready only after no instances are being created.
 			// This will not block future reads if instances are being recreated, and it respects
 			// the "createNoRetry" parameter that's available for this resource.
@@ -180,7 +188,8 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 				Optional:     true,
 				Default:      "STABLE",
 				ValidateFunc: validation.StringInSlice([]string{"STABLE", "UPDATED"}, false),
-				Description:  `When used with wait_for_instances specifies the status to wait for. When STABLE is specified this resource will wait until the instances are stable before returning. When UPDATED is set, it will wait for the version target to be reached and any per instance configs to be effective as well as all instances to be stable before returning.`,
+
+				Description: `When used with wait_for_instances specifies the status to wait for. When STABLE is specified this resource will wait until the instances are stable before returning. When UPDATED is set, it will wait for the version target to be reached and any per instance configs to be effective as well as all instances to be stable before returning.`,
 			},
 
 			"auto_healing_policies": {
@@ -239,8 +248,15 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 						"minimal_action": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"RESTART", "REPLACE"}, false),
-							Description:  `Minimal action to be taken on an instance. You can specify either RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a RESTART, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.`,
+							ValidateFunc: validation.StringInSlice([]string{"REFRESH", "RESTART", "REPLACE"}, false),
+							Description:  `Minimal action to be taken on an instance. You can specify either REFRESH to update without stopping instances, RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a REFRESH, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.`,
+						},
+
+						"most_disruptive_allowed_action": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"NONE", "REFRESH", "RESTART", "REPLACE"}, false),
+							Description:  `Most disruptive action that is allowed to be taken on an instance. You can specify either NONE to forbid any actions, REFRESH to allow actions that do not need instance restart, RESTART to allow actions that can be applied without instance replacing or REPLACE to allow all possible actions. If the Updater determines that the minimal update action needed is more disruptive than most disruptive allowed action you specify it will not perform the update at all.`,
 						},
 
 						"type": {
@@ -299,7 +315,6 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 					},
 				},
 			},
-
 			"stateful_disk": {
 				Type:        schema.TypeSet,
 				Optional:    true,
@@ -386,7 +401,7 @@ func resourceComputeRegionInstanceGroupManager() *schema.Resource {
 
 func resourceComputeRegionInstanceGroupManagerCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -402,17 +417,18 @@ func resourceComputeRegionInstanceGroupManagerCreate(d *schema.ResourceData, met
 	}
 
 	manager := &compute.InstanceGroupManager{
-		Name:                d.Get("name").(string),
-		Description:         d.Get("description").(string),
-		BaseInstanceName:    d.Get("base_instance_name").(string),
-		TargetSize:          int64(d.Get("target_size").(int)),
-		NamedPorts:          getNamedPortsBeta(d.Get("named_port").(*schema.Set).List()),
-		TargetPools:         convertStringSet(d.Get("target_pools").(*schema.Set)),
-		AutoHealingPolicies: expandAutoHealingPolicies(d.Get("auto_healing_policies").([]interface{})),
-		Versions:            expandVersions(d.Get("version").([]interface{})),
-		UpdatePolicy:        expandRegionUpdatePolicy(d.Get("update_policy").([]interface{})),
-		DistributionPolicy:  expandDistributionPolicy(d),
-		StatefulPolicy:      expandStatefulPolicy(d.Get("stateful_disk").(*schema.Set).List()),
+		Name:                        d.Get("name").(string),
+		Description:                 d.Get("description").(string),
+		BaseInstanceName:            d.Get("base_instance_name").(string),
+		TargetSize:                  int64(d.Get("target_size").(int)),
+		ListManagedInstancesResults: d.Get("list_managed_instances_results").(string),
+		NamedPorts:                  getNamedPortsBeta(d.Get("named_port").(*schema.Set).List()),
+		TargetPools:                 convertStringSet(d.Get("target_pools").(*schema.Set)),
+		AutoHealingPolicies:         expandAutoHealingPolicies(d.Get("auto_healing_policies").([]interface{})),
+		Versions:                    expandVersions(d.Get("version").([]interface{})),
+		UpdatePolicy:                expandRegionUpdatePolicy(d.Get("update_policy").([]interface{})),
+		DistributionPolicy:          expandDistributionPolicy(d),
+		StatefulPolicy:              expandStatefulPolicy(d),
 		// Force send TargetSize to allow size of 0.
 		ForceSendFields: []string{"TargetSize"},
 	}
@@ -430,7 +446,7 @@ func resourceComputeRegionInstanceGroupManagerCreate(d *schema.ResourceData, met
 	d.SetId(id)
 
 	// Wait for the operation to complete
-	err = computeOperationWaitTime(config, op, project, "Creating InstanceGroupManager", userAgent, d.Timeout(schema.TimeoutCreate))
+	err = ComputeOperationWaitTime(config, op, project, "Creating InstanceGroupManager", userAgent, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return err
 	}
@@ -475,7 +491,7 @@ func getRegionalManager(d *schema.ResourceData, meta interface{}) (*compute.Inst
 		return nil, err
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -503,6 +519,9 @@ func waitForInstancesRefreshFunc(f getInstanceManagerFunc, waitForUpdates bool, 
 					if !m.Status.Stateful.PerInstanceConfigs.AllEffective {
 						return false, "updating per instance configs", nil
 					}
+				}
+				if !m.Status.VersionTarget.IsReached {
+					return false, "reaching version target", nil
 				}
 				if !m.Status.VersionTarget.IsReached {
 					return false, "reaching version target", nil
@@ -551,6 +570,9 @@ func resourceComputeRegionInstanceGroupManagerRead(d *schema.ResourceData, meta 
 	if err := d.Set("target_size", manager.TargetSize); err != nil {
 		return fmt.Errorf("Error setting target_size: %s", err)
 	}
+	if err := d.Set("list_managed_instances_results", manager.ListManagedInstancesResults); err != nil {
+		return fmt.Errorf("Error setting list_managed_instances_results: %s", err)
+	}
 	if err := d.Set("target_pools", mapStringArr(manager.TargetPools, ConvertSelfLinkToV1)); err != nil {
 		return fmt.Errorf("Error setting target_pools in state: %s", err.Error())
 	}
@@ -588,7 +610,6 @@ func resourceComputeRegionInstanceGroupManagerRead(d *schema.ResourceData, meta 
 	if err = d.Set("status", flattenStatus(manager.Status)); err != nil {
 		return fmt.Errorf("Error setting status in state: %s", err.Error())
 	}
-
 	// If unset in state set to default value
 	if d.Get("wait_for_instances_status").(string) == "" {
 		if err = d.Set("wait_for_instances_status", "STABLE"); err != nil {
@@ -602,14 +623,7 @@ func resourceComputeRegionInstanceGroupManagerRead(d *schema.ResourceData, meta 
 func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
 
-	if d.Get("wait_for_instances").(bool) {
-		err := computeRIGMWaitForInstanceStatus(d, meta)
-		if err != nil {
-			return err
-		}
-	}
-
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -652,7 +666,12 @@ func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, met
 	}
 
 	if d.HasChange("stateful_disk") {
-		updatedManager.StatefulPolicy = expandStatefulPolicy(d.Get("stateful_disk").(*schema.Set).List())
+		updatedManager.StatefulPolicy = expandStatefulPolicy(d)
+		change = true
+	}
+
+	if d.HasChange("list_managed_instances_results") {
+		updatedManager.ListManagedInstancesResults = d.Get("list_managed_instances_results").(string)
 		change = true
 	}
 
@@ -662,7 +681,7 @@ func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, met
 			return fmt.Errorf("Error updating region managed group instances: %s", err)
 		}
 
-		err = computeOperationWaitTime(config, op, project, "Updating region managed group instances", userAgent, d.Timeout(schema.TimeoutUpdate))
+		err = ComputeOperationWaitTime(config, op, project, "Updating region managed group instances", userAgent, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return err
 		}
@@ -684,7 +703,7 @@ func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, met
 			return fmt.Errorf("Error updating RegionInstanceGroupManager: %s", err)
 		}
 
-		err = computeOperationWaitTime(config, op, project, "Updating RegionInstanceGroupManager", userAgent, d.Timeout(schema.TimeoutUpdate))
+		err = ComputeOperationWaitTime(config, op, project, "Updating RegionInstanceGroupManager", userAgent, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return err
 		}
@@ -701,7 +720,7 @@ func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, met
 			return fmt.Errorf("Error resizing RegionInstanceGroupManager: %s", err)
 		}
 
-		err = computeOperationWaitTime(config, op, project, "Resizing RegionInstanceGroupManager", userAgent, d.Timeout(schema.TimeoutUpdate))
+		err = ComputeOperationWaitTime(config, op, project, "Resizing RegionInstanceGroupManager", userAgent, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return err
 		}
@@ -729,7 +748,7 @@ func resourceComputeRegionInstanceGroupManagerDelete(d *schema.ResourceData, met
 		}
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -753,7 +772,7 @@ func resourceComputeRegionInstanceGroupManagerDelete(d *schema.ResourceData, met
 	}
 
 	// Wait for the operation to complete
-	err = computeOperationWaitTime(config, op, project, "Deleting RegionInstanceGroupManager", userAgent, d.Timeout(schema.TimeoutDelete))
+	err = ComputeOperationWaitTime(config, op, project, "Deleting RegionInstanceGroupManager", userAgent, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return fmt.Errorf("Error waiting for delete to complete: %s", err)
 	}
@@ -769,6 +788,12 @@ func expandRegionUpdatePolicy(configured []interface{}) *compute.InstanceGroupMa
 		data := raw.(map[string]interface{})
 
 		updatePolicy.MinimalAction = data["minimal_action"].(string)
+		mostDisruptiveAllowedAction := data["most_disruptive_allowed_action"].(string)
+		if mostDisruptiveAllowedAction != "" {
+			updatePolicy.MostDisruptiveAllowedAction = mostDisruptiveAllowedAction
+		} else {
+			updatePolicy.NullFields = append(updatePolicy.NullFields, "MostDisruptiveAllowedAction")
+		}
 		updatePolicy.Type = data["type"].(string)
 		updatePolicy.InstanceRedistributionType = data["instance_redistribution_type"].(string)
 		updatePolicy.ReplacementMethod = data["replacement_method"].(string)
@@ -825,6 +850,7 @@ func flattenRegionUpdatePolicy(updatePolicy *compute.InstanceGroupManagerUpdateP
 			up["max_unavailable_percent"] = 0
 		}
 		up["minimal_action"] = updatePolicy.MinimalAction
+		up["most_disruptive_allowed_action"] = updatePolicy.MostDisruptiveAllowedAction
 		up["type"] = updatePolicy.Type
 		up["instance_redistribution_type"] = updatePolicy.InstanceRedistributionType
 		up["replacement_method"] = updatePolicy.ReplacementMethod

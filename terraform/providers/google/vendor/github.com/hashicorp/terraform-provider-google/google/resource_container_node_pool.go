@@ -16,7 +16,7 @@ import (
 
 var clusterIdRegex = regexp.MustCompile("projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/clusters/(?P<name>[^/]+)")
 
-func resourceContainerNodePool() *schema.Resource {
+func ResourceContainerNodePool() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceContainerNodePoolCreate,
 		Read:   resourceContainerNodePoolRead,
@@ -74,6 +74,53 @@ func resourceContainerNodePool() *schema.Resource {
 	}
 }
 
+var schemaBlueGreenSettings = &schema.Schema{
+	Type:     schema.TypeList,
+	Optional: true,
+	Computed: true,
+	MaxItems: 1,
+	Elem: &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"standard_rollout_policy": {
+				Type:        schema.TypeList,
+				Required:    true,
+				MaxItems:    1,
+				Description: `Standard rollout policy is the default policy for blue-green.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"batch_percentage": {
+							Type:         schema.TypeFloat,
+							Optional:     true,
+							Computed:     true,
+							Description:  `Percentage of the blue pool nodes to drain in a batch.`,
+							ValidateFunc: validation.FloatBetween(0.0, 1.0),
+						},
+						"batch_node_count": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Computed:    true,
+							Description: `Number of blue nodes to drain in a batch.`,
+						},
+						"batch_soak_duration": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							Description: `Soak time after each batch gets drained.`,
+						},
+					},
+				},
+			},
+			"node_pool_soak_duration": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				Description: `Time needed after draining entire blue pool. After this period, blue pool will be cleaned up.`,
+			},
+		},
+	},
+	Description: `Settings for BlueGreen node pool upgrade.`,
+}
+
 var schemaNodePool = map[string]*schema.Schema{
 	"autoscaling": {
 		Type:        schema.TypeList,
@@ -84,16 +131,55 @@ var schemaNodePool = map[string]*schema.Schema{
 			Schema: map[string]*schema.Schema{
 				"min_node_count": {
 					Type:         schema.TypeInt,
-					Required:     true,
+					Optional:     true,
 					ValidateFunc: validation.IntAtLeast(0),
-					Description:  `Minimum number of nodes in the NodePool. Must be >=0 and <= max_node_count.`,
+					Description:  `Minimum number of nodes per zone in the node pool. Must be >=0 and <= max_node_count. Cannot be used with total limits.`,
 				},
 
 				"max_node_count": {
 					Type:         schema.TypeInt,
-					Required:     true,
-					ValidateFunc: validation.IntAtLeast(1),
-					Description:  `Maximum number of nodes in the NodePool. Must be >= min_node_count.`,
+					Optional:     true,
+					ValidateFunc: validation.IntAtLeast(0),
+					Description:  `Maximum number of nodes per zone in the node pool. Must be >= min_node_count. Cannot be used with total limits.`,
+				},
+
+				"total_min_node_count": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					ValidateFunc: validation.IntAtLeast(0),
+					Description:  `Minimum number of all nodes in the node pool. Must be >=0 and <= total_max_node_count. Cannot be used with per zone limits.`,
+				},
+
+				"total_max_node_count": {
+					Type:         schema.TypeInt,
+					Optional:     true,
+					ValidateFunc: validation.IntAtLeast(0),
+					Description:  `Maximum number of all nodes in the node pool. Must be >= total_min_node_count. Cannot be used with per zone limits.`,
+				},
+
+				"location_policy": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Computed:     true,
+					ValidateFunc: validation.StringInSlice([]string{"BALANCED", "ANY"}, false),
+					Description:  `Location policy specifies the algorithm used when scaling-up the node pool. "BALANCED" - Is a best effort policy that aims to balance the sizes of available zones. "ANY" - Instructs the cluster autoscaler to prioritize utilization of unused reservations, and reduces preemption risk for Spot VMs.`,
+				},
+			},
+		},
+	},
+
+	"placement_policy": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		MaxItems:    1,
+		Description: `Specifies the node placement policy`,
+		ForceNew:    true,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"type": {
+					Type:        schema.TypeString,
+					Required:    true,
+					Description: `Type defines the type of placement policy`,
 				},
 			},
 		},
@@ -125,17 +211,29 @@ var schemaNodePool = map[string]*schema.Schema{
 			Schema: map[string]*schema.Schema{
 				"max_surge": {
 					Type:         schema.TypeInt,
-					Required:     true,
+					Optional:     true,
+					Computed:     true,
 					ValidateFunc: validation.IntAtLeast(0),
 					Description:  `The number of additional nodes that can be added to the node pool during an upgrade. Increasing max_surge raises the number of nodes that can be upgraded simultaneously. Can be set to 0 or greater.`,
 				},
 
 				"max_unavailable": {
 					Type:         schema.TypeInt,
-					Required:     true,
+					Optional:     true,
+					Computed:     true,
 					ValidateFunc: validation.IntAtLeast(0),
 					Description:  `The number of nodes that can be simultaneously unavailable during an upgrade. Increasing max_unavailable raises the number of nodes that can be upgraded in parallel. Can be set to 0 or greater.`,
 				},
+
+				"strategy": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					Default:      "SURGE",
+					ValidateFunc: validation.StringInSlice([]string{"SURGE", "BLUE_GREEN"}, false),
+					Description:  `Update strategy for the given nodepool.`,
+				},
+
+				"blue_green_settings": schemaBlueGreenSettings,
 			},
 		},
 	},
@@ -219,6 +317,44 @@ var schemaNodePool = map[string]*schema.Schema{
 		Computed:    true,
 		Description: `The Kubernetes version for the nodes in this pool. Note that if this field and auto_upgrade are both specified, they will fight each other for what the node version should be, so setting both is highly discouraged. While a fuzzy version can be specified, it's recommended that you specify explicit versions as Terraform will see spurious diffs when fuzzy versions are used. See the google_container_engine_versions data source's version_prefix field to approximate fuzzy versions in a Terraform-compatible way.`,
 	},
+
+	"network_config": {
+		Type:        schema.TypeList,
+		Optional:    true,
+		Computed:    true,
+		MaxItems:    1,
+		Description: `Networking configuration for this NodePool. If specified, it overrides the cluster-level defaults.`,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"create_pod_range": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					ForceNew:    true,
+					Description: `Whether to create a new range for pod IPs in this node pool. Defaults are provided for pod_range and pod_ipv4_cidr_block if they are not specified.`,
+				},
+				"enable_private_nodes": {
+					Type:        schema.TypeBool,
+					Optional:    true,
+					Computed:    true,
+					Description: `Whether nodes have internal IP addresses only.`,
+				},
+				"pod_range": {
+					Type:        schema.TypeString,
+					Optional:    true,
+					ForceNew:    true,
+					Description: `The ID of the secondary range for pod IPs. If create_pod_range is true, this ID is used for the new range. If create_pod_range is false, uses an existing secondary range with this ID.`,
+				},
+				"pod_ipv4_cidr_block": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					ForceNew:     true,
+					Computed:     true,
+					ValidateFunc: validateIpCidrRange,
+					Description:  `The IP address range for pod IPs in this node pool. Only applicable if create_pod_range is true. Set to blank to have a range chosen with the default size. Set to /netmask (e.g. /14) to have a range chosen with a specific netmask. Set to a CIDR notation (e.g. 10.96.0.0/14) to pick a specific range to use.`,
+				},
+			},
+		},
+	},
 }
 
 type NodePoolInformation struct {
@@ -246,9 +382,19 @@ func (nodePoolInformation *NodePoolInformation) parent() string {
 	)
 }
 
-func (nodePoolInformation *NodePoolInformation) lockKey() string {
+func (nodePoolInformation *NodePoolInformation) clusterLockKey() string {
 	return containerClusterMutexKey(nodePoolInformation.project,
 		nodePoolInformation.location, nodePoolInformation.cluster)
+}
+
+func (nodePoolInformation *NodePoolInformation) nodePoolLockKey(nodePoolName string) string {
+	return fmt.Sprintf(
+		"projects/%s/locations/%s/clusters/%s/nodePools/%s",
+		nodePoolInformation.project,
+		nodePoolInformation.location,
+		nodePoolInformation.cluster,
+		nodePoolName,
+	)
 }
 
 func extractNodePoolInformation(d *schema.ResourceData, config *Config) (*NodePoolInformation, error) {
@@ -283,7 +429,7 @@ func extractNodePoolInformation(d *schema.ResourceData, config *Config) (*NodePo
 
 func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -298,8 +444,15 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	mutexKV.Lock(nodePoolInfo.lockKey())
-	defer mutexKV.Unlock(nodePoolInfo.lockKey())
+	// Acquire read-lock on cluster.
+	clusterLockKey := nodePoolInfo.clusterLockKey()
+	mutexKV.RLock(clusterLockKey)
+	defer mutexKV.RUnlock(clusterLockKey)
+
+	// Acquire write-lock on nodepool.
+	npLockKey := nodePoolInfo.nodePoolLockKey(nodePool.Name)
+	mutexKV.Lock(npLockKey)
+	defer mutexKV.Unlock(npLockKey)
 
 	req := &container.CreateNodePoolRequest{
 		NodePool: nodePool,
@@ -316,7 +469,7 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 		clusterNodePoolsGetCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
 	}
 	_, err = clusterNodePoolsGetCall.Do()
-	if err != nil && isGoogleApiErrorWithCode(err, 404) {
+	if err != nil && IsGoogleApiErrorWithCode(err, 404) {
 		// Set the ID before we attempt to create if the resource doesn't exist. That
 		// way, if we receive an error but the resource is created anyway, it will be
 		// refreshed on the next call to apply.
@@ -383,12 +536,6 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 
-	//Check cluster is in running state
-	_, err = containerClusterAwaitRestingState(config, nodePoolInfo.project, nodePoolInfo.location, nodePoolInfo.cluster, userAgent, d.Timeout(schema.TimeoutCreate))
-	if err != nil {
-		return err
-	}
-
 	state, err := containerNodePoolAwaitRestingState(config, d.Id(), nodePoolInfo.project, userAgent, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return err
@@ -403,7 +550,7 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceContainerNodePoolRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -462,7 +609,7 @@ func resourceContainerNodePoolRead(d *schema.ResourceData, meta interface{}) err
 
 func resourceContainerNodePoolUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -472,12 +619,6 @@ func resourceContainerNodePoolUpdate(d *schema.ResourceData, meta interface{}) e
 		return err
 	}
 	name := getNodePoolName(d.Id())
-
-	//Check cluster is in running state
-	_, err = containerClusterAwaitRestingState(config, nodePoolInfo.project, nodePoolInfo.location, nodePoolInfo.cluster, userAgent, d.Timeout(schema.TimeoutCreate))
-	if err != nil {
-		return err
-	}
 
 	_, err = containerNodePoolAwaitRestingState(config, nodePoolInfo.fullyQualifiedName(name), nodePoolInfo.project, userAgent, d.Timeout(schema.TimeoutUpdate))
 	if err != nil {
@@ -505,7 +646,7 @@ func resourceContainerNodePoolUpdate(d *schema.ResourceData, meta interface{}) e
 
 func resourceContainerNodePoolDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -517,21 +658,11 @@ func resourceContainerNodePoolDelete(d *schema.ResourceData, meta interface{}) e
 
 	name := getNodePoolName(d.Id())
 
-	//Check cluster is in running state
-	_, err = containerClusterAwaitRestingState(config, nodePoolInfo.project, nodePoolInfo.location, nodePoolInfo.cluster, userAgent, d.Timeout(schema.TimeoutCreate))
-	if err != nil {
-		if isGoogleApiErrorWithCode(err, 404) {
-			log.Printf("[INFO] GKE cluster %s doesn't exist, skipping node pool %s deletion", nodePoolInfo.cluster, d.Id())
-			return nil
-		}
-		return err
-	}
-
 	_, err = containerNodePoolAwaitRestingState(config, nodePoolInfo.fullyQualifiedName(name), nodePoolInfo.project, userAgent, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		// If the node pool doesn't get created and then we try to delete it, we get an error,
 		// but I don't think we need an error during delete if it doesn't exist
-		if isGoogleApiErrorWithCode(err, 404) {
+		if IsGoogleApiErrorWithCode(err, 404) {
 			log.Printf("node pool %q not found, doesn't need to be cleaned up", name)
 			return nil
 		} else {
@@ -539,8 +670,15 @@ func resourceContainerNodePoolDelete(d *schema.ResourceData, meta interface{}) e
 		}
 	}
 
-	mutexKV.Lock(nodePoolInfo.lockKey())
-	defer mutexKV.Unlock(nodePoolInfo.lockKey())
+	// Acquire read-lock on cluster.
+	clusterLockKey := nodePoolInfo.clusterLockKey()
+	mutexKV.RLock(clusterLockKey)
+	defer mutexKV.RUnlock(clusterLockKey)
+
+	// Acquire write-lock on nodepool.
+	npLockKey := nodePoolInfo.nodePoolLockKey(name)
+	mutexKV.Lock(npLockKey)
+	defer mutexKV.Unlock(npLockKey)
 
 	timeout := d.Timeout(schema.TimeoutDelete)
 	startTime := time.Now()
@@ -591,7 +729,7 @@ func resourceContainerNodePoolExists(d *schema.ResourceData, meta interface{}) (
 		return false, err
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return false, err
 	}
@@ -616,7 +754,7 @@ func resourceContainerNodePoolExists(d *schema.ResourceData, meta interface{}) (
 func resourceContainerNodePoolStateImporter(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -690,15 +828,28 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*container.NodePool,
 		Config:           expandNodeConfig(d.Get(prefix + "node_config")),
 		Locations:        locations,
 		Version:          d.Get(prefix + "version").(string),
+		NetworkConfig:    expandNodeNetworkConfig(d.Get(prefix + "network_config")),
 	}
 
 	if v, ok := d.GetOk(prefix + "autoscaling"); ok {
 		autoscaling := v.([]interface{})[0].(map[string]interface{})
 		np.Autoscaling = &container.NodePoolAutoscaling{
-			Enabled:         true,
-			MinNodeCount:    int64(autoscaling["min_node_count"].(int)),
-			MaxNodeCount:    int64(autoscaling["max_node_count"].(int)),
-			ForceSendFields: []string{"MinNodeCount"},
+			Enabled:           true,
+			MinNodeCount:      int64(autoscaling["min_node_count"].(int)),
+			MaxNodeCount:      int64(autoscaling["max_node_count"].(int)),
+			TotalMinNodeCount: int64(autoscaling["total_min_node_count"].(int)),
+			TotalMaxNodeCount: int64(autoscaling["total_max_node_count"].(int)),
+			LocationPolicy:    autoscaling["location_policy"].(string),
+			ForceSendFields:   []string{"MinNodeCount", "MaxNodeCount", "TotalMinNodeCount", "TotalMaxNodeCount"},
+		}
+	}
+
+	if v, ok := d.GetOk(prefix + "placement_policy"); ok {
+		if v.([]interface{}) != nil && v.([]interface{})[0] != nil {
+			placement_policy := v.([]interface{})[0].(map[string]interface{})
+			np.PlacementPolicy = &container.PlacementPolicy{
+				Type: placement_policy["type"].(string),
+			}
 		}
 	}
 
@@ -725,20 +876,105 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*container.NodePool,
 		upgradeSettingsConfig := v.([]interface{})[0].(map[string]interface{})
 		np.UpgradeSettings = &container.UpgradeSettings{}
 
-		if v, ok := upgradeSettingsConfig["max_surge"]; ok {
-			np.UpgradeSettings.MaxSurge = int64(v.(int))
+		if v, ok := upgradeSettingsConfig["strategy"]; ok {
+			np.UpgradeSettings.Strategy = v.(string)
 		}
 
-		if v, ok := upgradeSettingsConfig["max_unavailable"]; ok {
-			np.UpgradeSettings.MaxUnavailable = int64(v.(int))
+		if d.HasChange(prefix + "upgrade_settings.0.max_surge") {
+			if np.UpgradeSettings.Strategy != "SURGE" {
+				return nil, fmt.Errorf("Surge upgrade settings may not be changed when surge strategy is not enabled")
+			}
+			if v, ok := upgradeSettingsConfig["max_surge"]; ok {
+				np.UpgradeSettings.MaxSurge = int64(v.(int))
+			}
+		}
+
+		if d.HasChange(prefix + "upgrade_settings.0.max_unavailable") {
+			if np.UpgradeSettings.Strategy != "SURGE" {
+				return nil, fmt.Errorf("Surge upgrade settings may not be changed when surge strategy is not enabled")
+			}
+			if v, ok := upgradeSettingsConfig["max_unavailable"]; ok {
+				np.UpgradeSettings.MaxUnavailable = int64(v.(int))
+			}
+		}
+
+		if v, ok := upgradeSettingsConfig["blue_green_settings"]; ok && len(v.([]interface{})) > 0 {
+			blueGreenSettingsConfig := v.([]interface{})[0].(map[string]interface{})
+			np.UpgradeSettings.BlueGreenSettings = &container.BlueGreenSettings{}
+
+			if np.UpgradeSettings.Strategy != "BLUE_GREEN" {
+				return nil, fmt.Errorf("Blue-green upgrade settings may not be changed when blue-green strategy is not enabled")
+			}
+
+			if v, ok := blueGreenSettingsConfig["node_pool_soak_duration"]; ok {
+				np.UpgradeSettings.BlueGreenSettings.NodePoolSoakDuration = v.(string)
+			}
+
+			if v, ok := blueGreenSettingsConfig["standard_rollout_policy"]; ok && len(v.([]interface{})) > 0 {
+				standardRolloutPolicyConfig := v.([]interface{})[0].(map[string]interface{})
+				standardRolloutPolicy := &container.StandardRolloutPolicy{}
+
+				if v, ok := standardRolloutPolicyConfig["batch_soak_duration"]; ok {
+					standardRolloutPolicy.BatchSoakDuration = v.(string)
+				}
+				if v, ok := standardRolloutPolicyConfig["batch_node_count"]; ok {
+					standardRolloutPolicy.BatchNodeCount = int64(v.(int))
+				}
+				if v, ok := standardRolloutPolicyConfig["batch_percentage"]; ok {
+					standardRolloutPolicy.BatchPercentage = v.(float64)
+				}
+
+				np.UpgradeSettings.BlueGreenSettings.StandardRolloutPolicy = standardRolloutPolicy
+			}
 		}
 	}
 
 	return np, nil
 }
 
+func flattenNodePoolStandardRolloutPolicy(rp *container.StandardRolloutPolicy) []map[string]interface{} {
+	if rp == nil {
+		return nil
+	}
+
+	return []map[string]interface{}{
+		{
+			"batch_node_count":    rp.BatchNodeCount,
+			"batch_percentage":    rp.BatchPercentage,
+			"batch_soak_duration": rp.BatchSoakDuration,
+		},
+	}
+}
+
+func flattenNodePoolBlueGreenSettings(bg *container.BlueGreenSettings) []map[string]interface{} {
+	if bg == nil {
+		return nil
+	}
+	return []map[string]interface{}{
+		{
+			"node_pool_soak_duration": bg.NodePoolSoakDuration,
+			"standard_rollout_policy": flattenNodePoolStandardRolloutPolicy(bg.StandardRolloutPolicy),
+		},
+	}
+}
+
+func flattenNodePoolUpgradeSettings(us *container.UpgradeSettings) []map[string]interface{} {
+	if us == nil {
+		return nil
+	}
+
+	upgradeSettings := make(map[string]interface{})
+
+	upgradeSettings["blue_green_settings"] = flattenNodePoolBlueGreenSettings(us.BlueGreenSettings)
+	upgradeSettings["max_surge"] = us.MaxSurge
+	upgradeSettings["max_unavailable"] = us.MaxUnavailable
+
+	upgradeSettings["strategy"] = us.Strategy
+	return []map[string]interface{}{upgradeSettings}
+}
+
 func flattenNodePool(d *schema.ResourceData, config *Config, np *container.NodePool, prefix string) (map[string]interface{}, error) {
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -756,7 +992,7 @@ func flattenNodePool(d *schema.ResourceData, config *Config, np *container.NodeP
 			return nil, fmt.Errorf("Error reading instance group manage URL '%q'", url)
 		}
 		igm, err := config.NewComputeClient(userAgent).InstanceGroupManagers.Get(matches[1], matches[2], matches[3]).Do()
-		if isGoogleApiErrorWithCode(err, 404) {
+		if IsGoogleApiErrorWithCode(err, 404) {
 			// The IGM URL in is stale; don't include it
 			continue
 		}
@@ -781,18 +1017,30 @@ func flattenNodePool(d *schema.ResourceData, config *Config, np *container.NodeP
 		"instance_group_urls":         igmUrls,
 		"managed_instance_group_urls": managedIgmUrls,
 		"version":                     np.Version,
+		"network_config":              flattenNodeNetworkConfig(np.NetworkConfig, d, prefix),
 	}
 
 	if np.Autoscaling != nil {
 		if np.Autoscaling.Enabled {
 			nodePool["autoscaling"] = []map[string]interface{}{
 				{
-					"min_node_count": np.Autoscaling.MinNodeCount,
-					"max_node_count": np.Autoscaling.MaxNodeCount,
+					"min_node_count":       np.Autoscaling.MinNodeCount,
+					"max_node_count":       np.Autoscaling.MaxNodeCount,
+					"total_min_node_count": np.Autoscaling.TotalMinNodeCount,
+					"total_max_node_count": np.Autoscaling.TotalMaxNodeCount,
+					"location_policy":      np.Autoscaling.LocationPolicy,
 				},
 			}
 		} else {
 			nodePool["autoscaling"] = []map[string]interface{}{}
+		}
+	}
+
+	if np.PlacementPolicy != nil {
+		nodePool["placement_policy"] = []map[string]interface{}{
+			{
+				"type": np.PlacementPolicy.Type,
+			},
 		}
 	}
 
@@ -808,12 +1056,7 @@ func flattenNodePool(d *schema.ResourceData, config *Config, np *container.NodeP
 	}
 
 	if np.UpgradeSettings != nil {
-		nodePool["upgrade_settings"] = []map[string]interface{}{
-			{
-				"max_surge":       np.UpgradeSettings.MaxSurge,
-				"max_unavailable": np.UpgradeSettings.MaxUnavailable,
-			},
-		}
+		nodePool["upgrade_settings"] = flattenNodePoolUpgradeSettings(np.UpgradeSettings)
 	} else {
 		delete(nodePool, "upgrade_settings")
 	}
@@ -821,16 +1064,66 @@ func flattenNodePool(d *schema.ResourceData, config *Config, np *container.NodeP
 	return nodePool, nil
 }
 
+func flattenNodeNetworkConfig(c *container.NodeNetworkConfig, d *schema.ResourceData, prefix string) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c != nil {
+		result = append(result, map[string]interface{}{
+			"create_pod_range":     d.Get(prefix + "network_config.0.create_pod_range"), // API doesn't return this value so we set the old one. Field is ForceNew + Required
+			"pod_ipv4_cidr_block":  c.PodIpv4CidrBlock,
+			"pod_range":            c.PodRange,
+			"enable_private_nodes": c.EnablePrivateNodes,
+		})
+	}
+	return result
+}
+
+func expandNodeNetworkConfig(v interface{}) *container.NodeNetworkConfig {
+	networkNodeConfigs := v.([]interface{})
+
+	nnc := &container.NodeNetworkConfig{}
+
+	if len(networkNodeConfigs) == 0 {
+		return nnc
+	}
+
+	networkNodeConfig := networkNodeConfigs[0].(map[string]interface{})
+
+	if v, ok := networkNodeConfig["create_pod_range"]; ok {
+		nnc.CreatePodRange = v.(bool)
+	}
+
+	if v, ok := networkNodeConfig["pod_range"]; ok {
+		nnc.PodRange = v.(string)
+	}
+
+	if v, ok := networkNodeConfig["pod_ipv4_cidr_block"]; ok {
+		nnc.PodIpv4CidrBlock = v.(string)
+	}
+
+	if v, ok := networkNodeConfig["enable_private_nodes"]; ok {
+		nnc.EnablePrivateNodes = v.(bool)
+		nnc.ForceSendFields = []string{"EnablePrivateNodes"}
+	}
+
+	return nnc
+}
+
 func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *NodePoolInformation, prefix string, timeout time.Duration) error {
 	config := meta.(*Config)
 	name := d.Get(prefix + "name").(string)
 
-	lockKey := nodePoolInfo.lockKey()
-
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
+
+	// Acquire read-lock on cluster.
+	clusterLockKey := nodePoolInfo.clusterLockKey()
+	mutexKV.RLock(clusterLockKey)
+	defer mutexKV.RUnlock(clusterLockKey)
+
+	// Nodepool write-lock will be acquired when update function is called.
+	npLockKey := nodePoolInfo.nodePoolLockKey(name)
 
 	if d.HasChange(prefix + "autoscaling") {
 		update := &container.ClusterUpdate{
@@ -839,10 +1132,13 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 		if v, ok := d.GetOk(prefix + "autoscaling"); ok {
 			autoscaling := v.([]interface{})[0].(map[string]interface{})
 			update.DesiredNodePoolAutoscaling = &container.NodePoolAutoscaling{
-				Enabled:         true,
-				MinNodeCount:    int64(autoscaling["min_node_count"].(int)),
-				MaxNodeCount:    int64(autoscaling["max_node_count"].(int)),
-				ForceSendFields: []string{"MinNodeCount"},
+				Enabled:           true,
+				MinNodeCount:      int64(autoscaling["min_node_count"].(int)),
+				MaxNodeCount:      int64(autoscaling["max_node_count"].(int)),
+				TotalMinNodeCount: int64(autoscaling["total_min_node_count"].(int)),
+				TotalMaxNodeCount: int64(autoscaling["total_max_node_count"].(int)),
+				LocationPolicy:    autoscaling["location_policy"].(string),
+				ForceSendFields:   []string{"MinNodeCount", "TotalMinNodeCount"},
 			}
 		} else {
 			update.DesiredNodePoolAutoscaling = &container.NodePoolAutoscaling{
@@ -871,15 +1167,180 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				timeout)
 		}
 
-		// Call update serially.
-		if err := lockedCall(lockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
-
 		log.Printf("[INFO] Updated autoscaling in Node Pool %s", d.Id())
 	}
 
 	if d.HasChange(prefix + "node_config") {
+
+		if d.HasChange(prefix + "node_config.0.logging_variant") {
+			if v, ok := d.GetOk(prefix + "node_config.0.logging_variant"); ok {
+				loggingVariant := v.(string)
+				req := &container.UpdateNodePoolRequest{
+					Name: name,
+					LoggingConfig: &container.NodePoolLoggingConfig{
+						VariantConfig: &container.LoggingVariantConfig{
+							Variant: loggingVariant,
+						},
+					},
+				}
+
+				updateF := func() error {
+					clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+					if config.UserProjectOverride {
+						clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+					}
+					op, err := clusterNodePoolsUpdateCall.Do()
+					if err != nil {
+						return err
+					}
+
+					// Wait until it's updated
+					return containerOperationWait(config, op,
+						nodePoolInfo.project,
+						nodePoolInfo.location,
+						"updating GKE node pool logging_variant", userAgent,
+						timeout)
+				}
+
+				if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+					return err
+				}
+
+				log.Printf("[INFO] Updated logging_variant for node pool %s", name)
+			}
+		}
+
+		if d.HasChange(prefix + "node_config.0.tags") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+			if v, ok := d.GetOk(prefix + "node_config.0.tags"); ok {
+				tagsList := v.([]interface{})
+				tags := []string{}
+				for _, v := range tagsList {
+					if v != nil {
+						tags = append(tags, v.(string))
+					}
+				}
+				ntags := &container.NetworkTags{
+					Tags: tags,
+				}
+				req.Tags = ntags
+			}
+
+			// sets tags to the empty list when user removes a previously defined list of tags entriely
+			// aka the node pool goes from having tags to no longer having any
+			if req.Tags == nil {
+				tags := []string{}
+				ntags := &container.NetworkTags{
+					Tags: tags,
+				}
+				req.Tags = ntags
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return containerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool tags", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated tags for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.resource_labels") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+
+			if v, ok := d.GetOk(prefix + "node_config.0.resource_labels"); ok {
+				resourceLabels := v.(map[string]interface{})
+				req.ResourceLabels = &container.ResourceLabels{
+					Labels: convertStringMap(resourceLabels),
+				}
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return containerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool resource labels", userAgent,
+					timeout)
+			}
+
+			// Call update serially.
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated resource labels for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.labels") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+
+			if v, ok := d.GetOk(prefix + "node_config.0.labels"); ok {
+				labels := v.(map[string]interface{})
+				req.Labels = &container.NodeLabels{
+					Labels: convertStringMap(labels),
+				}
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return containerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool labels", userAgent,
+					timeout)
+			}
+
+			// Call update serially.
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated labels for node pool %s", name)
+		}
+
 		if d.HasChange(prefix + "node_config.0.image_type") {
 			req := &container.UpdateClusterRequest{
 				Update: &container.ClusterUpdate{
@@ -905,11 +1366,9 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 					timeout)
 			}
 
-			// Call update serially.
-			if err := lockedCall(lockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
-
 			log.Printf("[INFO] Updated image type in Node Pool %s", d.Id())
 		}
 
@@ -941,12 +1400,77 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 					timeout)
 			}
 
-			// Call update serially.
-			if err := lockedCall(lockKey, updateF); err != nil {
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated workload_metadata_config for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.kubelet_config") {
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId: name,
+				KubeletConfig: expandKubeletConfig(
+					d.Get(prefix + "node_config.0.kubelet_config")),
+			}
+			if req.KubeletConfig == nil {
+				req.ForceSendFields = []string{"KubeletConfig"}
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return containerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool kubelet_config", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 				return err
 			}
 
-			log.Printf("[INFO] Updated workload_metadata_config for node pool %s", name)
+			log.Printf("[INFO] Updated kubelet_config for node pool %s", name)
+		}
+		if d.HasChange(prefix + "node_config.0.linux_node_config") {
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId: name,
+				LinuxNodeConfig: expandLinuxNodeConfig(
+					d.Get(prefix + "node_config.0.linux_node_config")),
+			}
+			if req.LinuxNodeConfig == nil {
+				req.ForceSendFields = []string{"LinuxNodeConfig"}
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return containerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool linux_node_config", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated linux_node_config for node pool %s", name)
 		}
 
 	}
@@ -973,12 +1497,9 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				nodePoolInfo.location, "updating GKE node pool size", userAgent,
 				timeout)
 		}
-
-		// Call update serially.
-		if err := lockedCall(lockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
-
 		log.Printf("[INFO] GKE node pool %s size has been updated to %d", name, newSize)
 	}
 
@@ -1011,11 +1532,9 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				nodePoolInfo.location, "updating GKE node pool management", userAgent, timeout)
 		}
 
-		// Call update serially.
-		if err := lockedCall(lockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
-
 		log.Printf("[INFO] Updated management in Node Pool %s", name)
 	}
 
@@ -1040,12 +1559,9 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 				nodePoolInfo.project,
 				nodePoolInfo.location, "updating GKE node pool version", userAgent, timeout)
 		}
-
-		// Call update serially.
-		if err := lockedCall(lockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
-
 		log.Printf("[INFO] Updated version in Node Pool %s", name)
 	}
 
@@ -1068,11 +1584,9 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			return containerOperationWait(config, op, nodePoolInfo.project, nodePoolInfo.location, "updating GKE node pool node locations", userAgent, timeout)
 		}
 
-		// Call update serially.
-		if err := lockedCall(lockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
-
 		log.Printf("[INFO] Updated node locations in Node Pool %s", name)
 	}
 
@@ -1080,8 +1594,57 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 		upgradeSettings := &container.UpgradeSettings{}
 		if v, ok := d.GetOk(prefix + "upgrade_settings"); ok {
 			upgradeSettingsConfig := v.([]interface{})[0].(map[string]interface{})
-			upgradeSettings.MaxSurge = int64(upgradeSettingsConfig["max_surge"].(int))
-			upgradeSettings.MaxUnavailable = int64(upgradeSettingsConfig["max_unavailable"].(int))
+			upgradeSettings.Strategy = upgradeSettingsConfig["strategy"].(string)
+
+			if d.HasChange(prefix + "upgrade_settings.0.max_surge") {
+				if upgradeSettings.Strategy != "SURGE" {
+					return fmt.Errorf("Surge upgrade settings may not be changed when surge strategy is not enabled")
+				}
+				if v, ok := upgradeSettingsConfig["max_surge"]; ok {
+					upgradeSettings.MaxSurge = int64(v.(int))
+				}
+				// max_unavailable not be preserved if only max_surge is updated
+				if v, ok := upgradeSettingsConfig["max_unavailable"]; ok {
+					upgradeSettings.MaxUnavailable = int64(v.(int))
+				}
+			}
+
+			if d.HasChange(prefix + "upgrade_settings.0.max_unavailable") {
+				if upgradeSettings.Strategy != "SURGE" {
+					return fmt.Errorf("Surge upgrade settings may not be changed when surge strategy is not enabled")
+				}
+				if v, ok := upgradeSettingsConfig["max_unavailable"]; ok {
+					upgradeSettings.MaxUnavailable = int64(v.(int))
+				}
+				// max_surge not be preserved if only max_unavailable is updated
+				if v, ok := upgradeSettingsConfig["max_surge"]; ok {
+					upgradeSettings.MaxSurge = int64(v.(int))
+				}
+			}
+
+			if d.HasChange(prefix + "upgrade_settings.0.blue_green_settings") {
+				if upgradeSettings.Strategy != "BLUE_GREEN" {
+					return fmt.Errorf("Blue-green upgrade settings may not be changed when blue-green strategy is not enabled")
+				}
+
+				blueGreenSettings := &container.BlueGreenSettings{}
+				blueGreenSettingsConfig := upgradeSettingsConfig["blue_green_settings"].([]interface{})[0].(map[string]interface{})
+				blueGreenSettings.NodePoolSoakDuration = blueGreenSettingsConfig["node_pool_soak_duration"].(string)
+
+				if v, ok := blueGreenSettingsConfig["standard_rollout_policy"]; ok && len(v.([]interface{})) > 0 {
+					standardRolloutPolicy := &container.StandardRolloutPolicy{}
+					standardRolloutPolicyConfig := v.([]interface{})[0].(map[string]interface{})
+					standardRolloutPolicy.BatchSoakDuration = standardRolloutPolicyConfig["batch_soak_duration"].(string)
+					if v, ok := standardRolloutPolicyConfig["batch_node_count"]; ok {
+						standardRolloutPolicy.BatchNodeCount = int64(v.(int))
+					}
+					if v, ok := standardRolloutPolicyConfig["batch_percentage"]; ok {
+						standardRolloutPolicy.BatchPercentage = v.(float64)
+					}
+					blueGreenSettings.StandardRolloutPolicy = standardRolloutPolicy
+				}
+				upgradeSettings.BlueGreenSettings = blueGreenSettings
+			}
 		}
 		req := &container.UpdateNodePoolRequest{
 			UpgradeSettings: upgradeSettings,
@@ -1100,13 +1663,43 @@ func nodePoolUpdate(d *schema.ResourceData, meta interface{}, nodePoolInfo *Node
 			// Wait until it's updated
 			return containerOperationWait(config, op, nodePoolInfo.project, nodePoolInfo.location, "updating GKE node pool upgrade settings", userAgent, timeout)
 		}
-
-		// Call update serially.
-		if err := lockedCall(lockKey, updateF); err != nil {
+		if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
 			return err
 		}
-
 		log.Printf("[INFO] Updated upgrade settings in Node Pool %s", name)
+	}
+
+	if d.HasChange(prefix + "network_config") {
+		if d.HasChange(prefix + "network_config.0.enable_private_nodes") {
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId:        name,
+				NodeNetworkConfig: expandNodeNetworkConfig(d.Get(prefix + "network_config")),
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return containerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool workload_metadata_config", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated workload_metadata_config for node pool %s", name)
+		}
 	}
 
 	return nil

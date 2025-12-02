@@ -13,10 +13,10 @@ func retry(retryFunc func() error) error {
 }
 
 func retryTime(retryFunc func() error, minutes int) error {
-	return retryTimeDuration(retryFunc, time.Duration(minutes)*time.Minute)
+	return RetryTimeDuration(retryFunc, time.Duration(minutes)*time.Minute)
 }
 
-func retryTimeDuration(retryFunc func() error, duration time.Duration, errorRetryPredicates ...RetryErrorPredicateFunc) error {
+func RetryTimeDuration(retryFunc func() error, duration time.Duration, errorRetryPredicates ...RetryErrorPredicateFunc) error {
 	return resource.Retry(duration, func() *resource.RetryError {
 		err := retryFunc()
 		if err == nil {
@@ -51,4 +51,35 @@ func isRetryableError(topErr error, customPredicates ...RetryErrorPredicateFunc)
 		}
 	})
 	return isRetryable
+}
+
+// The polling overrides the default backoff logic with max backoff of 10s. The poll interval can be greater than 10s.
+func retryWithPolling(retryFunc func() (interface{}, error), timeout time.Duration, pollInterval time.Duration, errorRetryPredicates ...RetryErrorPredicateFunc) (interface{}, error) {
+	refreshFunc := func() (interface{}, string, error) {
+		result, err := retryFunc()
+		if err == nil {
+			return result, "done", nil
+		}
+
+		// Check if it is a retryable error.
+		if isRetryableError(err, errorRetryPredicates...) {
+			return result, "retrying", nil
+		}
+
+		// The error is not retryable.
+		return result, "done", err
+	}
+	stateChange := &resource.StateChangeConf{
+		Pending: []string{
+			"retrying",
+		},
+		Target: []string{
+			"done",
+		},
+		Refresh:      refreshFunc,
+		Timeout:      timeout,
+		PollInterval: pollInterval,
+	}
+
+	return stateChange.WaitForState()
 }

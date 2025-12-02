@@ -1,0 +1,161 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Eventarc/Channel
+  description: The Eventarc Channel resource
+  x-dcl-struct-name: Channel
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Channel
+    parameters:
+    - name: channel
+      required: true
+      description: A full instance of a Channel
+  apply:
+    description: The function used to apply information about a Channel
+    parameters:
+    - name: channel
+      required: true
+      description: A full instance of a Channel
+  delete:
+    description: The function used to delete a Channel
+    parameters:
+    - name: channel
+      required: true
+      description: A full instance of a Channel
+  deleteAll:
+    description: The function used to delete all Channel
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Channel
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Channel:
+      title: Channel
+      x-dcl-id: projects/{{project}}/locations/{{location}}/channels/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - project
+      - location
+      properties:
+        activationToken:
+          type: string
+          x-dcl-go-name: ActivationToken
+          readOnly: true
+          description: Output only. The activation token for the channel. The token
+            must be used by the provider to register the channel for publishing.
+          x-kubernetes-immutable: true
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. The creation time.
+          x-kubernetes-immutable: true
+        cryptoKeyName:
+          type: string
+          x-dcl-go-name: CryptoKeyName
+          description: Optional. Resource name of a KMS crypto key (managed by the
+            user) used to encrypt/decrypt their event data. It must match the pattern
+            `projects/*/locations/*/keyRings/*/cryptoKeys/*`.
+          x-dcl-references:
+          - resource: Cloudkms/CryptoKey
+            field: selfLink
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: Required. The resource name of the channel. Must be unique
+            within the location on the project.
+          x-kubernetes-immutable: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        pubsubTopic:
+          type: string
+          x-dcl-go-name: PubsubTopic
+          readOnly: true
+          description: 'Output only. The name of the Pub/Sub topic created and managed
+            by Eventarc system as a transport for the event delivery. Format: `projects/{project}/topics/{topic_id}`.'
+          x-kubernetes-immutable: true
+        state:
+          type: string
+          x-dcl-go-name: State
+          x-dcl-go-type: ChannelStateEnum
+          readOnly: true
+          description: 'Output only. The state of a Channel. Possible values: STATE_UNSPECIFIED,
+            PENDING, ACTIVE, INACTIVE'
+          x-kubernetes-immutable: true
+          enum:
+          - STATE_UNSPECIFIED
+          - PENDING
+          - ACTIVE
+          - INACTIVE
+        thirdPartyProvider:
+          type: string
+          x-dcl-go-name: ThirdPartyProvider
+          description: 'The name of the event provider (e.g. Eventarc SaaS partner)
+            associated with the channel. This provider will be granted permissions
+            to publish events to the channel. Format: `projects/{project}/locations/{location}/providers/{provider_id}`.'
+          x-kubernetes-immutable: true
+        uid:
+          type: string
+          x-dcl-go-name: Uid
+          readOnly: true
+          description: Output only. Server assigned unique identifier for the channel.
+            The value is a UUID4 string and guaranteed to remain unchanged until the
+            resource is deleted.
+          x-kubernetes-immutable: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. The last-modified time.
+          x-kubernetes-immutable: true

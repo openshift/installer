@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -140,7 +139,7 @@ func (c *Client) listRoute(ctx context.Context, r *Route, pageToken string, page
 
 	var l []*Route
 	for _, v := range m.Items {
-		res, err := unmarshalMapRoute(v, c)
+		res, err := unmarshalMapRoute(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -203,20 +202,20 @@ func (op *deleteRouteOperation) do(ctx context.Context, r *Route, c *Client) err
 		return err
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetRoute(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetRoute(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -318,6 +317,11 @@ func (c *Client) routeDiffsForRawDesired(ctx context.Context, rawDesired *Route,
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for Route: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for Route: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractRouteFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeRouteInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -397,47 +401,6 @@ func canonicalizeRouteDesiredState(rawDesired, rawInitial *Route, opts ...dcl.Ap
 
 		return rawDesired, nil
 	}
-
-	if rawDesired.NextHopVpnTunnel != nil || rawInitial.NextHopVpnTunnel != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.NextHopIP, rawDesired.NextHopInstance, rawDesired.NextHopGateway, rawDesired.NextHopIlb) {
-			rawDesired.NextHopVpnTunnel = nil
-			rawInitial.NextHopVpnTunnel = nil
-		}
-	}
-
-	if rawDesired.NextHopIP != nil || rawInitial.NextHopIP != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.NextHopVpnTunnel, rawDesired.NextHopInstance, rawDesired.NextHopGateway, rawDesired.NextHopIlb) {
-			rawDesired.NextHopIP = nil
-			rawInitial.NextHopIP = nil
-		}
-	}
-
-	if rawDesired.NextHopInstance != nil || rawInitial.NextHopInstance != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.NextHopVpnTunnel, rawDesired.NextHopIP, rawDesired.NextHopGateway, rawDesired.NextHopIlb) {
-			rawDesired.NextHopInstance = nil
-			rawInitial.NextHopInstance = nil
-		}
-	}
-
-	if rawDesired.NextHopGateway != nil || rawInitial.NextHopGateway != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.NextHopVpnTunnel, rawDesired.NextHopIP, rawDesired.NextHopInstance, rawDesired.NextHopIlb) {
-			rawDesired.NextHopGateway = nil
-			rawInitial.NextHopGateway = nil
-		}
-	}
-
-	if rawDesired.NextHopIlb != nil || rawInitial.NextHopIlb != nil {
-		// Check if anything else is set.
-		if dcl.AnySet(rawDesired.NextHopVpnTunnel, rawDesired.NextHopIP, rawDesired.NextHopInstance, rawDesired.NextHopGateway) {
-			rawDesired.NextHopIlb = nil
-			rawInitial.NextHopIlb = nil
-		}
-	}
-
 	canonicalDesired := &Route{}
 	if dcl.StringCanonicalize(rawDesired.Name, rawInitial.Name) {
 		canonicalDesired.Name = rawInitial.Name
@@ -464,7 +427,8 @@ func canonicalizeRouteDesiredState(rawDesired, rawInitial *Route, opts ...dcl.Ap
 	} else {
 		canonicalDesired.DestRange = rawDesired.DestRange
 	}
-	if dcl.IsZeroValue(rawDesired.Priority) {
+	if dcl.IsZeroValue(rawDesired.Priority) || (dcl.IsEmptyValueIndirect(rawDesired.Priority) && dcl.IsEmptyValueIndirect(rawInitial.Priority)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Priority = rawInitial.Priority
 	} else {
 		canonicalDesired.Priority = rawDesired.Priority
@@ -500,17 +464,52 @@ func canonicalizeRouteDesiredState(rawDesired, rawInitial *Route, opts ...dcl.Ap
 		canonicalDesired.Project = rawDesired.Project
 	}
 
+	if canonicalDesired.NextHopVpnTunnel != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.NextHopIP, rawDesired.NextHopInstance, rawDesired.NextHopGateway, rawDesired.NextHopIlb) {
+			canonicalDesired.NextHopVpnTunnel = dcl.String("")
+		}
+	}
+
+	if canonicalDesired.NextHopIP != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.NextHopVpnTunnel, rawDesired.NextHopInstance, rawDesired.NextHopGateway, rawDesired.NextHopIlb) {
+			canonicalDesired.NextHopIP = dcl.String("")
+		}
+	}
+
+	if canonicalDesired.NextHopInstance != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.NextHopVpnTunnel, rawDesired.NextHopIP, rawDesired.NextHopGateway, rawDesired.NextHopIlb) {
+			canonicalDesired.NextHopInstance = dcl.String("")
+		}
+	}
+
+	if canonicalDesired.NextHopGateway != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.NextHopVpnTunnel, rawDesired.NextHopIP, rawDesired.NextHopInstance, rawDesired.NextHopIlb) {
+			canonicalDesired.NextHopGateway = dcl.String("")
+		}
+	}
+
+	if canonicalDesired.NextHopIlb != nil {
+		// Check if anything else is set.
+		if dcl.AnySet(rawDesired.NextHopVpnTunnel, rawDesired.NextHopIP, rawDesired.NextHopInstance, rawDesired.NextHopGateway) {
+			canonicalDesired.NextHopIlb = dcl.String("")
+		}
+	}
+
 	return canonicalDesired, nil
 }
 
 func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Id) && dcl.IsNotReturnedByServer(rawDesired.Id) {
+	if dcl.IsEmptyValueIndirect(rawNew.Id) && dcl.IsEmptyValueIndirect(rawDesired.Id) {
 		rawNew.Id = rawDesired.Id
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Name, rawNew.Name) {
@@ -518,7 +517,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Description) && dcl.IsNotReturnedByServer(rawDesired.Description) {
+	if dcl.IsEmptyValueIndirect(rawNew.Description) && dcl.IsEmptyValueIndirect(rawDesired.Description) {
 		rawNew.Description = rawDesired.Description
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Description, rawNew.Description) {
@@ -526,7 +525,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Network) && dcl.IsNotReturnedByServer(rawDesired.Network) {
+	if dcl.IsEmptyValueIndirect(rawNew.Network) && dcl.IsEmptyValueIndirect(rawDesired.Network) {
 		rawNew.Network = rawDesired.Network
 	} else {
 		if dcl.PartialSelfLinkToSelfLink(rawDesired.Network, rawNew.Network) {
@@ -534,7 +533,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Tag) && dcl.IsNotReturnedByServer(rawDesired.Tag) {
+	if dcl.IsEmptyValueIndirect(rawNew.Tag) && dcl.IsEmptyValueIndirect(rawDesired.Tag) {
 		rawNew.Tag = rawDesired.Tag
 	} else {
 		if dcl.StringArrayCanonicalize(rawDesired.Tag, rawNew.Tag) {
@@ -542,7 +541,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.DestRange) && dcl.IsNotReturnedByServer(rawDesired.DestRange) {
+	if dcl.IsEmptyValueIndirect(rawNew.DestRange) && dcl.IsEmptyValueIndirect(rawDesired.DestRange) {
 		rawNew.DestRange = rawDesired.DestRange
 	} else {
 		if dcl.StringCanonicalize(rawDesired.DestRange, rawNew.DestRange) {
@@ -550,12 +549,12 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Priority) && dcl.IsNotReturnedByServer(rawDesired.Priority) {
+	if dcl.IsEmptyValueIndirect(rawNew.Priority) && dcl.IsEmptyValueIndirect(rawDesired.Priority) {
 		rawNew.Priority = rawDesired.Priority
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NextHopInstance) && dcl.IsNotReturnedByServer(rawDesired.NextHopInstance) {
+	if dcl.IsEmptyValueIndirect(rawNew.NextHopInstance) && dcl.IsEmptyValueIndirect(rawDesired.NextHopInstance) {
 		rawNew.NextHopInstance = rawDesired.NextHopInstance
 	} else {
 		if dcl.StringCanonicalize(rawDesired.NextHopInstance, rawNew.NextHopInstance) {
@@ -563,7 +562,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NextHopIP) && dcl.IsNotReturnedByServer(rawDesired.NextHopIP) {
+	if dcl.IsEmptyValueIndirect(rawNew.NextHopIP) && dcl.IsEmptyValueIndirect(rawDesired.NextHopIP) {
 		rawNew.NextHopIP = rawDesired.NextHopIP
 	} else {
 		if dcl.StringCanonicalize(rawDesired.NextHopIP, rawNew.NextHopIP) {
@@ -571,7 +570,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NextHopNetwork) && dcl.IsNotReturnedByServer(rawDesired.NextHopNetwork) {
+	if dcl.IsEmptyValueIndirect(rawNew.NextHopNetwork) && dcl.IsEmptyValueIndirect(rawDesired.NextHopNetwork) {
 		rawNew.NextHopNetwork = rawDesired.NextHopNetwork
 	} else {
 		if dcl.StringCanonicalize(rawDesired.NextHopNetwork, rawNew.NextHopNetwork) {
@@ -579,7 +578,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NextHopGateway) && dcl.IsNotReturnedByServer(rawDesired.NextHopGateway) {
+	if dcl.IsEmptyValueIndirect(rawNew.NextHopGateway) && dcl.IsEmptyValueIndirect(rawDesired.NextHopGateway) {
 		rawNew.NextHopGateway = rawDesired.NextHopGateway
 	} else {
 		if dcl.PartialSelfLinkToSelfLink(rawDesired.NextHopGateway, rawNew.NextHopGateway) {
@@ -587,7 +586,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NextHopPeering) && dcl.IsNotReturnedByServer(rawDesired.NextHopPeering) {
+	if dcl.IsEmptyValueIndirect(rawNew.NextHopPeering) && dcl.IsEmptyValueIndirect(rawDesired.NextHopPeering) {
 		rawNew.NextHopPeering = rawDesired.NextHopPeering
 	} else {
 		if dcl.StringCanonicalize(rawDesired.NextHopPeering, rawNew.NextHopPeering) {
@@ -595,7 +594,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NextHopIlb) && dcl.IsNotReturnedByServer(rawDesired.NextHopIlb) {
+	if dcl.IsEmptyValueIndirect(rawNew.NextHopIlb) && dcl.IsEmptyValueIndirect(rawDesired.NextHopIlb) {
 		rawNew.NextHopIlb = rawDesired.NextHopIlb
 	} else {
 		if dcl.StringCanonicalize(rawDesired.NextHopIlb, rawNew.NextHopIlb) {
@@ -603,13 +602,13 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Warning) && dcl.IsNotReturnedByServer(rawDesired.Warning) {
+	if dcl.IsEmptyValueIndirect(rawNew.Warning) && dcl.IsEmptyValueIndirect(rawDesired.Warning) {
 		rawNew.Warning = rawDesired.Warning
 	} else {
 		rawNew.Warning = canonicalizeNewRouteWarningSlice(c, rawDesired.Warning, rawNew.Warning)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NextHopVpnTunnel) && dcl.IsNotReturnedByServer(rawDesired.NextHopVpnTunnel) {
+	if dcl.IsEmptyValueIndirect(rawNew.NextHopVpnTunnel) && dcl.IsEmptyValueIndirect(rawDesired.NextHopVpnTunnel) {
 		rawNew.NextHopVpnTunnel = rawDesired.NextHopVpnTunnel
 	} else {
 		if dcl.StringCanonicalize(rawDesired.NextHopVpnTunnel, rawNew.NextHopVpnTunnel) {
@@ -617,7 +616,7 @@ func canonicalizeRouteNewState(c *Client, rawNew, rawDesired *Route) (*Route, er
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.SelfLink) && dcl.IsNotReturnedByServer(rawDesired.SelfLink) {
+	if dcl.IsEmptyValueIndirect(rawNew.SelfLink) && dcl.IsEmptyValueIndirect(rawDesired.SelfLink) {
 		rawNew.SelfLink = rawDesired.SelfLink
 	} else {
 		if dcl.StringCanonicalize(rawDesired.SelfLink, rawNew.SelfLink) {
@@ -648,7 +647,7 @@ func canonicalizeRouteWarning(des, initial *RouteWarning, opts ...dcl.ApplyOptio
 }
 
 func canonicalizeRouteWarningSlice(des, initial []RouteWarning, opts ...dcl.ApplyOption) []RouteWarning {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -682,7 +681,7 @@ func canonicalizeNewRouteWarning(c *Client, des, nw *RouteWarning) *RouteWarning
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for RouteWarning while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -700,23 +699,26 @@ func canonicalizeNewRouteWarningSet(c *Client, des, nw []RouteWarning) []RouteWa
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []RouteWarning
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []RouteWarning
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareRouteWarningNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewRouteWarning(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewRouteWarningSlice(c *Client, des, nw []RouteWarning) []RouteWarning {
@@ -757,125 +759,128 @@ func diffRoute(c *Client, desired, actual *Route, opts ...dcl.ApplyOption) ([]*d
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Network, actual.Network, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Network")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Network, actual.Network, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Network")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Tag, actual.Tag, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tags")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Tag, actual.Tag, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tags")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DestRange, actual.DestRange, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DestRange")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DestRange, actual.DestRange, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DestRange")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Priority, actual.Priority, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Priority")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Priority, actual.Priority, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Priority")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NextHopInstance, actual.NextHopInstance, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopInstance")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NextHopInstance, actual.NextHopInstance, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopInstance")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NextHopIP, actual.NextHopIP, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopIp")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NextHopIP, actual.NextHopIP, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopIp")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NextHopNetwork, actual.NextHopNetwork, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopNetwork")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NextHopNetwork, actual.NextHopNetwork, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopNetwork")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NextHopGateway, actual.NextHopGateway, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopGateway")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NextHopGateway, actual.NextHopGateway, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopGateway")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NextHopPeering, actual.NextHopPeering, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopPeering")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NextHopPeering, actual.NextHopPeering, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopPeering")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NextHopIlb, actual.NextHopIlb, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopIlb")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NextHopIlb, actual.NextHopIlb, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopIlb")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Warning, actual.Warning, dcl.Info{OutputOnly: true, ObjectFunction: compareRouteWarningNewStyle, EmptyObject: EmptyRouteWarning, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Warnings")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Warning, actual.Warning, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareRouteWarningNewStyle, EmptyObject: EmptyRouteWarning, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Warnings")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NextHopVpnTunnel, actual.NextHopVpnTunnel, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopVpnTunnel")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NextHopVpnTunnel, actual.NextHopVpnTunnel, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NextHopVpnTunnel")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareRouteWarningNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -898,21 +903,21 @@ func compareRouteWarningNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.Fie
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Code, actual.Code, dcl.Info{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Code")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Code, actual.Code, dcl.DiffInfo{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Code")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Message, actual.Message, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Message")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Message, actual.Message, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Message")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Data, actual.Data, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Data")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Data, actual.Data, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Data")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -959,15 +964,15 @@ func (r *Route) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalRoute decodes JSON responses into the Route resource schema.
-func unmarshalRoute(b []byte, c *Client) (*Route, error) {
+func unmarshalRoute(b []byte, c *Client, res *Route) (*Route, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapRoute(m, c)
+	return unmarshalMapRoute(m, c, res)
 }
 
-func unmarshalMapRoute(m map[string]interface{}, c *Client) (*Route, error) {
+func unmarshalMapRoute(m map[string]interface{}, c *Client, res *Route) (*Route, error) {
 	if v, err := dcl.MapFromListOfKeyValues(m, []string{"warnings", "data", "items"}, "key", "value"); err != nil {
 		return nil, err
 	} else {
@@ -978,7 +983,7 @@ func unmarshalMapRoute(m map[string]interface{}, c *Client) (*Route, error) {
 		)
 	}
 
-	flattened := flattenRoute(c, m)
+	flattened := flattenRoute(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -988,6 +993,8 @@ func unmarshalMapRoute(m map[string]interface{}, c *Client) (*Route, error) {
 // expandRoute expands Route into a JSON request object.
 func expandRoute(c *Client, f *Route) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v := f.Name; dcl.ValueShouldBeSent(v) {
 		m["name"] = v
 	}
@@ -996,10 +1003,12 @@ func expandRoute(c *Client, f *Route) (map[string]interface{}, error) {
 	}
 	if v, err := dcl.DeriveField("global/networks/%s", f.Network, dcl.SelfLinkToName(f.Network)); err != nil {
 		return nil, fmt.Errorf("error expanding Network into network: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["network"] = v
 	}
-	m["tags"] = f.Tag
+	if v := f.Tag; v != nil {
+		m["tags"] = v
+	}
 	if v := f.DestRange; dcl.ValueShouldBeSent(v) {
 		m["destRange"] = v
 	}
@@ -1014,7 +1023,7 @@ func expandRoute(c *Client, f *Route) (map[string]interface{}, error) {
 	}
 	if v, err := dcl.DeriveField("projects/%s/global/gateways/%s", f.NextHopGateway, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.NextHopGateway)); err != nil {
 		return nil, fmt.Errorf("error expanding NextHopGateway into nextHopGateway: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["nextHopGateway"] = v
 	}
 	if v := f.NextHopIlb; dcl.ValueShouldBeSent(v) {
@@ -1025,7 +1034,7 @@ func expandRoute(c *Client, f *Route) (map[string]interface{}, error) {
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 
@@ -1034,7 +1043,7 @@ func expandRoute(c *Client, f *Route) (map[string]interface{}, error) {
 
 // flattenRoute flattens Route from a JSON request object into the
 // Route type.
-func flattenRoute(c *Client, i interface{}) *Route {
+func flattenRoute(c *Client, i interface{}, res *Route) *Route {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1043,42 +1052,42 @@ func flattenRoute(c *Client, i interface{}) *Route {
 		return nil
 	}
 
-	res := &Route{}
-	res.Id = dcl.FlattenInteger(m["id"])
-	res.Name = dcl.FlattenString(m["name"])
-	res.Description = dcl.FlattenString(m["description"])
-	res.Network = dcl.FlattenString(m["network"])
-	res.Tag = dcl.FlattenStringSlice(m["tags"])
-	res.DestRange = dcl.FlattenString(m["destRange"])
-	res.Priority = dcl.FlattenInteger(m["priority"])
+	resultRes := &Route{}
+	resultRes.Id = dcl.FlattenInteger(m["id"])
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.Description = dcl.FlattenString(m["description"])
+	resultRes.Network = dcl.FlattenString(m["network"])
+	resultRes.Tag = dcl.FlattenStringSlice(m["tags"])
+	resultRes.DestRange = dcl.FlattenString(m["destRange"])
+	resultRes.Priority = dcl.FlattenInteger(m["priority"])
 	if _, ok := m["priority"]; !ok {
 		c.Config.Logger.Info("Using default value for priority")
-		res.Priority = dcl.Int64(1000)
+		resultRes.Priority = dcl.Int64(1000)
 	}
-	res.NextHopInstance = dcl.FlattenString(m["nextHopInstance"])
-	res.NextHopIP = dcl.FlattenString(m["nextHopIp"])
-	res.NextHopNetwork = dcl.FlattenString(m["nextHopNetwork"])
-	res.NextHopGateway = dcl.FlattenString(m["nextHopGateway"])
-	res.NextHopPeering = dcl.FlattenString(m["nextHopPeering"])
-	res.NextHopIlb = dcl.FlattenString(m["nextHopIlb"])
-	res.Warning = flattenRouteWarningSlice(c, m["warnings"])
-	res.NextHopVpnTunnel = dcl.FlattenString(m["nextHopVpnTunnel"])
-	res.SelfLink = dcl.FlattenString(m["selfLink"])
-	res.Project = dcl.FlattenString(m["project"])
+	resultRes.NextHopInstance = dcl.FlattenString(m["nextHopInstance"])
+	resultRes.NextHopIP = dcl.FlattenString(m["nextHopIp"])
+	resultRes.NextHopNetwork = dcl.FlattenString(m["nextHopNetwork"])
+	resultRes.NextHopGateway = dcl.FlattenString(m["nextHopGateway"])
+	resultRes.NextHopPeering = dcl.FlattenString(m["nextHopPeering"])
+	resultRes.NextHopIlb = dcl.FlattenString(m["nextHopIlb"])
+	resultRes.Warning = flattenRouteWarningSlice(c, m["warnings"], res)
+	resultRes.NextHopVpnTunnel = dcl.FlattenString(m["nextHopVpnTunnel"])
+	resultRes.SelfLink = dcl.FlattenString(m["selfLink"])
+	resultRes.Project = dcl.FlattenString(m["project"])
 
-	return res
+	return resultRes
 }
 
 // expandRouteWarningMap expands the contents of RouteWarning into a JSON
 // request object.
-func expandRouteWarningMap(c *Client, f map[string]RouteWarning) (map[string]interface{}, error) {
+func expandRouteWarningMap(c *Client, f map[string]RouteWarning, res *Route) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandRouteWarning(c, &item)
+		i, err := expandRouteWarning(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1092,14 +1101,14 @@ func expandRouteWarningMap(c *Client, f map[string]RouteWarning) (map[string]int
 
 // expandRouteWarningSlice expands the contents of RouteWarning into a JSON
 // request object.
-func expandRouteWarningSlice(c *Client, f []RouteWarning) ([]map[string]interface{}, error) {
+func expandRouteWarningSlice(c *Client, f []RouteWarning, res *Route) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandRouteWarning(c, &item)
+		i, err := expandRouteWarning(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1112,7 +1121,7 @@ func expandRouteWarningSlice(c *Client, f []RouteWarning) ([]map[string]interfac
 
 // flattenRouteWarningMap flattens the contents of RouteWarning from a JSON
 // response object.
-func flattenRouteWarningMap(c *Client, i interface{}) map[string]RouteWarning {
+func flattenRouteWarningMap(c *Client, i interface{}, res *Route) map[string]RouteWarning {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]RouteWarning{}
@@ -1124,7 +1133,7 @@ func flattenRouteWarningMap(c *Client, i interface{}) map[string]RouteWarning {
 
 	items := make(map[string]RouteWarning)
 	for k, item := range a {
-		items[k] = *flattenRouteWarning(c, item.(map[string]interface{}))
+		items[k] = *flattenRouteWarning(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1132,7 +1141,7 @@ func flattenRouteWarningMap(c *Client, i interface{}) map[string]RouteWarning {
 
 // flattenRouteWarningSlice flattens the contents of RouteWarning from a JSON
 // response object.
-func flattenRouteWarningSlice(c *Client, i interface{}) []RouteWarning {
+func flattenRouteWarningSlice(c *Client, i interface{}, res *Route) []RouteWarning {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []RouteWarning{}
@@ -1144,7 +1153,7 @@ func flattenRouteWarningSlice(c *Client, i interface{}) []RouteWarning {
 
 	items := make([]RouteWarning, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenRouteWarning(c, item.(map[string]interface{})))
+		items = append(items, *flattenRouteWarning(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1152,7 +1161,7 @@ func flattenRouteWarningSlice(c *Client, i interface{}) []RouteWarning {
 
 // expandRouteWarning expands an instance of RouteWarning into a JSON
 // request object.
-func expandRouteWarning(c *Client, f *RouteWarning) (map[string]interface{}, error) {
+func expandRouteWarning(c *Client, f *RouteWarning, res *Route) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1164,7 +1173,7 @@ func expandRouteWarning(c *Client, f *RouteWarning) (map[string]interface{}, err
 
 // flattenRouteWarning flattens an instance of RouteWarning from a JSON
 // response object.
-func flattenRouteWarning(c *Client, i interface{}) *RouteWarning {
+func flattenRouteWarning(c *Client, i interface{}, res *Route) *RouteWarning {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1184,7 +1193,7 @@ func flattenRouteWarning(c *Client, i interface{}) *RouteWarning {
 
 // flattenRouteWarningCodeEnumMap flattens the contents of RouteWarningCodeEnum from a JSON
 // response object.
-func flattenRouteWarningCodeEnumMap(c *Client, i interface{}) map[string]RouteWarningCodeEnum {
+func flattenRouteWarningCodeEnumMap(c *Client, i interface{}, res *Route) map[string]RouteWarningCodeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]RouteWarningCodeEnum{}
@@ -1204,7 +1213,7 @@ func flattenRouteWarningCodeEnumMap(c *Client, i interface{}) map[string]RouteWa
 
 // flattenRouteWarningCodeEnumSlice flattens the contents of RouteWarningCodeEnum from a JSON
 // response object.
-func flattenRouteWarningCodeEnumSlice(c *Client, i interface{}) []RouteWarningCodeEnum {
+func flattenRouteWarningCodeEnumSlice(c *Client, i interface{}, res *Route) []RouteWarningCodeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []RouteWarningCodeEnum{}
@@ -1227,7 +1236,7 @@ func flattenRouteWarningCodeEnumSlice(c *Client, i interface{}) []RouteWarningCo
 func flattenRouteWarningCodeEnum(i interface{}) *RouteWarningCodeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return RouteWarningCodeEnumRef("")
+		return nil
 	}
 
 	return RouteWarningCodeEnumRef(s)
@@ -1238,7 +1247,7 @@ func flattenRouteWarningCodeEnum(i interface{}) *RouteWarningCodeEnum {
 // identity).  This is useful in extracting the element from a List call.
 func (r *Route) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalRoute(b, c)
+		cr, err := unmarshalRoute(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -1271,6 +1280,7 @@ type routeDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         routeApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToRouteDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]routeDiff, error) {
@@ -1290,7 +1300,8 @@ func convertFieldDiffsToRouteDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opt
 	var diffs []routeDiff
 	// For each operation name, create a routeDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := routeDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := routeDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {

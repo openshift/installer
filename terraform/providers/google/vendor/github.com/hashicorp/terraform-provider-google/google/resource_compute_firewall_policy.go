@@ -27,7 +27,7 @@ import (
 	compute "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/compute"
 )
 
-func resourceComputeFirewallPolicy() *schema.Resource {
+func ResourceComputeFirewallPolicy() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeFirewallPolicyCreate,
 		Read:   resourceComputeFirewallPolicyRead,
@@ -39,9 +39,9 @@ func resourceComputeFirewallPolicy() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -120,13 +120,13 @@ func resourceComputeFirewallPolicyCreate(d *schema.ResourceData, meta interface{
 		Description: dcl.String(d.Get("description").(string)),
 	}
 
-	id, err := replaceVars(d, config, "locations/global/firewallPolicies/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -142,7 +142,7 @@ func resourceComputeFirewallPolicyCreate(d *schema.ResourceData, meta interface{
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyFirewallPolicy(context.Background(), obj, createDirective...)
+	res, err := client.ApplyFirewallPolicy(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -152,17 +152,18 @@ func resourceComputeFirewallPolicyCreate(d *schema.ResourceData, meta interface{
 		return fmt.Errorf("Error creating FirewallPolicy: %s", err)
 	}
 
-	log.Printf("[DEBUG] Finished creating FirewallPolicy %q: %#v", d.Id(), res)
-
 	if err = d.Set("name", res.Name); err != nil {
 		return fmt.Errorf("error setting name in state: %s", err)
 	}
-	// Id has a server-generated value, set again after creation
-	id, err = replaceVars(d, config, "locations/global/firewallPolicies/{{name}}")
+	// ID has a server-generated value, set again after creation.
+
+	id, err = res.ID()
 	if err != nil {
-		return fmt.Errorf("Error constructing id: %s", err)
+		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	log.Printf("[DEBUG] Finished creating FirewallPolicy %q: %#v", d.Id(), res)
 
 	return resourceComputeFirewallPolicyRead(d, meta)
 }
@@ -177,7 +178,7 @@ func resourceComputeFirewallPolicyRead(d *schema.ResourceData, meta interface{})
 		Name:        dcl.StringOrNil(d.Get("name").(string)),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -242,7 +243,7 @@ func resourceComputeFirewallPolicyUpdate(d *schema.ResourceData, meta interface{
 		Name:        dcl.StringOrNil(d.Get("name").(string)),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -285,7 +286,7 @@ func resourceComputeFirewallPolicyDelete(d *schema.ResourceData, meta interface{
 	}
 
 	log.Printf("[DEBUG] Deleting FirewallPolicy %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -311,6 +312,7 @@ func resourceComputeFirewallPolicyDelete(d *schema.ResourceData, meta interface{
 
 func resourceComputeFirewallPolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"locations/global/firewallPolicies/(?P<name>[^/]+)",
 		"(?P<name>[^/]+)",

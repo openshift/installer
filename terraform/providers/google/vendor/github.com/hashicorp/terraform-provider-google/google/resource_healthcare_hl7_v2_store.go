@@ -27,7 +27,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceHealthcareHl7V2Store() *schema.Resource {
+func ResourceHealthcareHl7V2Store() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceHealthcareHl7V2StoreCreate,
 		Read:   resourceHealthcareHl7V2StoreRead,
@@ -39,9 +39,9 @@ func resourceHealthcareHl7V2Store() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -172,8 +172,8 @@ A base64-encoded string.`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"V1", "V2", ""}, false),
-							Description:  `The version of the unschematized parser to be used when a custom 'schema' is not set. Default value: "V1" Possible values: ["V1", "V2"]`,
+							ValidateFunc: validateEnum([]string{"V1", "V2", "V3", ""}),
+							Description:  `The version of the unschematized parser to be used when a custom 'schema' is not set. Default value: "V1" Possible values: ["V1", "V2", "V3"]`,
 							Default:      "V1",
 						},
 					},
@@ -191,7 +191,7 @@ A base64-encoded string.`,
 
 func resourceHealthcareHl7V2StoreCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -241,7 +241,7 @@ func resourceHealthcareHl7V2StoreCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Hl7V2Store: %s", err)
 	}
@@ -260,7 +260,7 @@ func resourceHealthcareHl7V2StoreCreate(d *schema.ResourceData, meta interface{}
 
 func resourceHealthcareHl7V2StoreRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -277,7 +277,7 @@ func resourceHealthcareHl7V2StoreRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("HealthcareHl7V2Store %q", d.Id()))
 	}
@@ -315,7 +315,7 @@ func resourceHealthcareHl7V2StoreRead(d *schema.ResourceData, meta interface{}) 
 
 func resourceHealthcareHl7V2StoreUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -385,7 +385,7 @@ func resourceHealthcareHl7V2StoreUpdate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Hl7V2Store %q: %s", d.Id(), err)
@@ -398,7 +398,7 @@ func resourceHealthcareHl7V2StoreUpdate(d *schema.ResourceData, meta interface{}
 
 func resourceHealthcareHl7V2StoreDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -418,7 +418,7 @@ func resourceHealthcareHl7V2StoreDelete(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Hl7V2Store")
 	}
@@ -681,10 +681,14 @@ func expandHealthcareHl7V2StoreNotificationConfigPubsubTopic(v interface{}, d Te
 }
 
 func resourceHealthcareHl7V2StoreDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
-	// Modify the name to be the user specified form.
+	// Take the returned long form of the name and use it as `self_link`.
+	// Then modify the name to be the user specified form.
 	// We can't just ignore_read on `name` as the linter will
 	// complain that the returned `res` is never used afterwards.
 	// Some field needs to be actually set, and we chose `name`.
+	if err := d.Set("self_link", res["name"].(string)); err != nil {
+		return nil, fmt.Errorf("Error setting self_link: %s", err)
+	}
 	res["name"] = d.Get("name").(string)
 	return res, nil
 }

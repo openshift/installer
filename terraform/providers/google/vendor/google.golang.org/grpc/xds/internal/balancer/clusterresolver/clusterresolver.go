@@ -23,10 +23,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"google.golang.org/grpc/attributes"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/balancer/base"
+	"google.golang.org/grpc/balancer/roundrobin"
 	"google.golang.org/grpc/connectivity"
 	"google.golang.org/grpc/internal/buffer"
 	"google.golang.org/grpc/internal/grpclog"
@@ -35,7 +37,9 @@ import (
 	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/serviceconfig"
 	"google.golang.org/grpc/xds/internal/balancer/priority"
+	"google.golang.org/grpc/xds/internal/balancer/ringhash"
 	"google.golang.org/grpc/xds/internal/xdsclient"
+	"google.golang.org/grpc/xds/internal/xdsclient/xdsresource"
 )
 
 // Name is the name of the cluster_resolver balancer.
@@ -98,6 +102,9 @@ func (bb) ParseConfig(c json.RawMessage) (serviceconfig.LoadBalancingConfig, err
 	if err := json.Unmarshal(c, &cfg); err != nil {
 		return nil, fmt.Errorf("unable to unmarshal balancer config %s into cluster-resolver config, error: %v", string(c), err)
 	}
+	if lbp := cfg.XDSLBPolicy; lbp != nil && !strings.EqualFold(lbp.Name, roundrobin.Name) && !strings.EqualFold(lbp.Name, ringhash.Name) {
+		return nil, fmt.Errorf("unsupported child policy with name %q, not one of {%q,%q}", lbp.Name, roundrobin.Name, ringhash.Name)
+	}
 	return &cfg, nil
 }
 
@@ -114,6 +121,8 @@ type scUpdate struct {
 	subConn balancer.SubConn
 	state   balancer.SubConnState
 }
+
+type exitIdle struct{}
 
 // clusterResolverBalancer manages xdsClient and the actual EDS balancer implementation that
 // does load balancing.
@@ -185,7 +194,6 @@ func (b *clusterResolverBalancer) handleWatchUpdate(update *resourceUpdate) {
 		return
 	}
 
-	b.logger.Infof("resource update: %+v", pretty.ToJSON(update.priorities))
 	b.watchUpdateReceived = true
 	b.priorities = update.priorities
 
@@ -209,7 +217,7 @@ func (b *clusterResolverBalancer) updateChildConfig() error {
 		b.child = newChildBalancer(b.priorityBuilder, b.cc, b.bOpts)
 	}
 
-	childCfgBytes, addrs, err := buildPriorityConfigJSON(b.priorities, b.config.EndpointPickingPolicy)
+	childCfgBytes, addrs, err := buildPriorityConfigJSON(b.priorities, b.config.XDSLBPolicy)
 	if err != nil {
 		return fmt.Errorf("failed to build priority balancer config: %v", err)
 	}
@@ -242,7 +250,7 @@ func (b *clusterResolverBalancer) updateChildConfig() error {
 // In both cases, the sub-balancers will be receive the error.
 func (b *clusterResolverBalancer) handleErrorFromUpdate(err error, fromParent bool) {
 	b.logger.Warningf("Received error: %v", err)
-	if fromParent && xdsclient.ErrType(err) == xdsclient.ErrorTypeResourceNotFound {
+	if fromParent && xdsresource.ErrType(err) == xdsresource.ErrorTypeResourceNotFound {
 		// This is an error from the parent ClientConn (can be the parent CDS
 		// balancer), and is a resource-not-found error. This means the resource
 		// (can be either LDS or CDS) was removed. Stop the EDS watch.
@@ -279,6 +287,18 @@ func (b *clusterResolverBalancer) run() {
 					break
 				}
 				b.child.UpdateSubConnState(update.subConn, update.state)
+			case exitIdle:
+				if b.child == nil {
+					b.logger.Errorf("xds: received ExitIdle with no child balancer")
+					break
+				}
+				// This implementation assumes the child balancer supports
+				// ExitIdle (but still checks for the interface's existence to
+				// avoid a panic if not).  If the child does not, no subconns
+				// will be connected.
+				if ei, ok := b.child.(balancer.ExitIdler); ok {
+					ei.ExitIdle()
+				}
 			}
 		case u := <-b.resourceWatcher.updateChannel:
 			b.handleWatchUpdate(u)
@@ -346,6 +366,10 @@ func (b *clusterResolverBalancer) UpdateSubConnState(sc balancer.SubConn, state 
 func (b *clusterResolverBalancer) Close() {
 	b.closed.Fire()
 	<-b.done.Done()
+}
+
+func (b *clusterResolverBalancer) ExitIdle() {
+	b.updateCh.Put(exitIdle{})
 }
 
 // ccWrapper overrides ResolveNow(), so that re-resolution from the child

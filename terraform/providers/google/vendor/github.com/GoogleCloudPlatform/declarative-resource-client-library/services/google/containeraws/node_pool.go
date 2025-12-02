@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -129,16 +129,18 @@ func (v NodePoolStateEnum) Validate() error {
 }
 
 type NodePoolConfig struct {
-	empty              bool                            `json:"-"`
-	InstanceType       *string                         `json:"instanceType"`
-	RootVolume         *NodePoolConfigRootVolume       `json:"rootVolume"`
-	Taints             []NodePoolConfigTaints          `json:"taints"`
-	Labels             map[string]string               `json:"labels"`
-	Tags               map[string]string               `json:"tags"`
-	IamInstanceProfile *string                         `json:"iamInstanceProfile"`
-	ConfigEncryption   *NodePoolConfigConfigEncryption `json:"configEncryption"`
-	SshConfig          *NodePoolConfigSshConfig        `json:"sshConfig"`
-	SecurityGroupIds   []string                        `json:"securityGroupIds"`
+	empty                        bool                                        `json:"-"`
+	InstanceType                 *string                                     `json:"instanceType"`
+	RootVolume                   *NodePoolConfigRootVolume                   `json:"rootVolume"`
+	Taints                       []NodePoolConfigTaints                      `json:"taints"`
+	Labels                       map[string]string                           `json:"labels"`
+	Tags                         map[string]string                           `json:"tags"`
+	IamInstanceProfile           *string                                     `json:"iamInstanceProfile"`
+	ConfigEncryption             *NodePoolConfigConfigEncryption             `json:"configEncryption"`
+	SshConfig                    *NodePoolConfigSshConfig                    `json:"sshConfig"`
+	SecurityGroupIds             []string                                    `json:"securityGroupIds"`
+	ProxyConfig                  *NodePoolConfigProxyConfig                  `json:"proxyConfig"`
+	AutoscalingMetricsCollection *NodePoolConfigAutoscalingMetricsCollection `json:"autoscalingMetricsCollection"`
 }
 
 type jsonNodePoolConfig NodePoolConfig
@@ -174,13 +176,17 @@ func (r *NodePoolConfig) UnmarshalJSON(data []byte) error {
 
 		r.SecurityGroupIds = res.SecurityGroupIds
 
+		r.ProxyConfig = res.ProxyConfig
+
+		r.AutoscalingMetricsCollection = res.AutoscalingMetricsCollection
+
 	}
 	return nil
 }
 
 // This object is used to assert a desired state where this NodePoolConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyNodePoolConfig *NodePoolConfig = &NodePoolConfig{empty: true}
 
 func (r *NodePoolConfig) Empty() bool {
@@ -234,8 +240,8 @@ func (r *NodePoolConfigRootVolume) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this NodePoolConfigRootVolume is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyNodePoolConfigRootVolume *NodePoolConfigRootVolume = &NodePoolConfigRootVolume{empty: true}
 
 func (r *NodePoolConfigRootVolume) Empty() bool {
@@ -286,8 +292,8 @@ func (r *NodePoolConfigTaints) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this NodePoolConfigTaints is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyNodePoolConfigTaints *NodePoolConfigTaints = &NodePoolConfigTaints{empty: true}
 
 func (r *NodePoolConfigTaints) Empty() bool {
@@ -332,8 +338,8 @@ func (r *NodePoolConfigConfigEncryption) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this NodePoolConfigConfigEncryption is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyNodePoolConfigConfigEncryption *NodePoolConfigConfigEncryption = &NodePoolConfigConfigEncryption{empty: true}
 
 func (r *NodePoolConfigConfigEncryption) Empty() bool {
@@ -378,8 +384,8 @@ func (r *NodePoolConfigSshConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this NodePoolConfigSshConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyNodePoolConfigSshConfig *NodePoolConfigSshConfig = &NodePoolConfigSshConfig{empty: true}
 
 func (r *NodePoolConfigSshConfig) Empty() bool {
@@ -391,6 +397,104 @@ func (r *NodePoolConfigSshConfig) String() string {
 }
 
 func (r *NodePoolConfigSshConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type NodePoolConfigProxyConfig struct {
+	empty         bool    `json:"-"`
+	SecretArn     *string `json:"secretArn"`
+	SecretVersion *string `json:"secretVersion"`
+}
+
+type jsonNodePoolConfigProxyConfig NodePoolConfigProxyConfig
+
+func (r *NodePoolConfigProxyConfig) UnmarshalJSON(data []byte) error {
+	var res jsonNodePoolConfigProxyConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyNodePoolConfigProxyConfig
+	} else {
+
+		r.SecretArn = res.SecretArn
+
+		r.SecretVersion = res.SecretVersion
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this NodePoolConfigProxyConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyNodePoolConfigProxyConfig *NodePoolConfigProxyConfig = &NodePoolConfigProxyConfig{empty: true}
+
+func (r *NodePoolConfigProxyConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *NodePoolConfigProxyConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *NodePoolConfigProxyConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type NodePoolConfigAutoscalingMetricsCollection struct {
+	empty       bool     `json:"-"`
+	Granularity *string  `json:"granularity"`
+	Metrics     []string `json:"metrics"`
+}
+
+type jsonNodePoolConfigAutoscalingMetricsCollection NodePoolConfigAutoscalingMetricsCollection
+
+func (r *NodePoolConfigAutoscalingMetricsCollection) UnmarshalJSON(data []byte) error {
+	var res jsonNodePoolConfigAutoscalingMetricsCollection
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyNodePoolConfigAutoscalingMetricsCollection
+	} else {
+
+		r.Granularity = res.Granularity
+
+		r.Metrics = res.Metrics
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this NodePoolConfigAutoscalingMetricsCollection is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyNodePoolConfigAutoscalingMetricsCollection *NodePoolConfigAutoscalingMetricsCollection = &NodePoolConfigAutoscalingMetricsCollection{empty: true}
+
+func (r *NodePoolConfigAutoscalingMetricsCollection) Empty() bool {
+	return r.empty
+}
+
+func (r *NodePoolConfigAutoscalingMetricsCollection) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *NodePoolConfigAutoscalingMetricsCollection) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
 	hash := sha256.New().Sum([]byte(r.String()))
@@ -427,8 +531,8 @@ func (r *NodePoolAutoscaling) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this NodePoolAutoscaling is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyNodePoolAutoscaling *NodePoolAutoscaling = &NodePoolAutoscaling{empty: true}
 
 func (r *NodePoolAutoscaling) Empty() bool {
@@ -473,8 +577,8 @@ func (r *NodePoolMaxPodsConstraint) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this NodePoolMaxPodsConstraint is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyNodePoolMaxPodsConstraint *NodePoolMaxPodsConstraint = &NodePoolMaxPodsConstraint{empty: true}
 
 func (r *NodePoolMaxPodsConstraint) Empty() bool {
@@ -508,22 +612,22 @@ func (r *NodePool) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":              dcl.ValueOrEmptyString(nr.Name),
-		"version":           dcl.ValueOrEmptyString(nr.Version),
-		"config":            dcl.ValueOrEmptyString(nr.Config),
-		"autoscaling":       dcl.ValueOrEmptyString(nr.Autoscaling),
-		"subnetId":          dcl.ValueOrEmptyString(nr.SubnetId),
-		"state":             dcl.ValueOrEmptyString(nr.State),
-		"uid":               dcl.ValueOrEmptyString(nr.Uid),
-		"reconciling":       dcl.ValueOrEmptyString(nr.Reconciling),
-		"createTime":        dcl.ValueOrEmptyString(nr.CreateTime),
-		"updateTime":        dcl.ValueOrEmptyString(nr.UpdateTime),
-		"etag":              dcl.ValueOrEmptyString(nr.Etag),
-		"annotations":       dcl.ValueOrEmptyString(nr.Annotations),
-		"maxPodsConstraint": dcl.ValueOrEmptyString(nr.MaxPodsConstraint),
-		"project":           dcl.ValueOrEmptyString(nr.Project),
-		"location":          dcl.ValueOrEmptyString(nr.Location),
-		"cluster":           dcl.ValueOrEmptyString(nr.Cluster),
+		"name":                dcl.ValueOrEmptyString(nr.Name),
+		"version":             dcl.ValueOrEmptyString(nr.Version),
+		"config":              dcl.ValueOrEmptyString(nr.Config),
+		"autoscaling":         dcl.ValueOrEmptyString(nr.Autoscaling),
+		"subnet_id":           dcl.ValueOrEmptyString(nr.SubnetId),
+		"state":               dcl.ValueOrEmptyString(nr.State),
+		"uid":                 dcl.ValueOrEmptyString(nr.Uid),
+		"reconciling":         dcl.ValueOrEmptyString(nr.Reconciling),
+		"create_time":         dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":         dcl.ValueOrEmptyString(nr.UpdateTime),
+		"etag":                dcl.ValueOrEmptyString(nr.Etag),
+		"annotations":         dcl.ValueOrEmptyString(nr.Annotations),
+		"max_pods_constraint": dcl.ValueOrEmptyString(nr.MaxPodsConstraint),
+		"project":             dcl.ValueOrEmptyString(nr.Project),
+		"location":            dcl.ValueOrEmptyString(nr.Location),
+		"cluster":             dcl.ValueOrEmptyString(nr.Cluster),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/awsClusters/{{cluster}}/awsNodePools/{{name}}", params), nil
 }
@@ -611,7 +715,7 @@ func (c *Client) GetNodePool(ctx context.Context, r *NodePool) (*NodePool, error
 		}
 		return nil, err
 	}
-	result, err := unmarshalNodePool(b, c)
+	result, err := unmarshalNodePool(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -769,7 +873,7 @@ func applyNodePoolHelper(c *Client, ctx context.Context, rawDesired *NodePool, o
 func applyNodePoolDiff(c *Client, ctx context.Context, desired *NodePool, rawDesired *NodePool, ops []nodePoolApiOperation, opts ...dcl.ApplyOption) (*NodePool, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetNodePool(ctx, desired.urlNormalized())
+	rawNew, err := c.GetNodePool(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -782,7 +886,7 @@ func applyNodePoolDiff(c *Client, ctx context.Context, desired *NodePool, rawDes
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapNodePool(r, c)
+				fullResp, err := unmarshalMapNodePool(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

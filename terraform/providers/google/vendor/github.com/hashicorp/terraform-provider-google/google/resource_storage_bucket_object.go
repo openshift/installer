@@ -21,7 +21,7 @@ import (
 	"google.golang.org/api/storage/v1"
 )
 
-func resourceStorageBucketObject() *schema.Resource {
+func ResourceStorageBucketObject() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceStorageBucketObjectCreate,
 		Read:   resourceStorageBucketObjectRead,
@@ -86,12 +86,12 @@ func resourceStorageBucketObject() *schema.Resource {
 			},
 
 			"content": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"source"},
-				Sensitive:     true,
-				Description:   `Data as string to be uploaded. Must be defined if source is not. Note: The content field is marked as sensitive. To view the raw contents of the object, please define an output.`,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"source"},
+				Sensitive:    true,
+				Description:  `Data as string to be uploaded. Must be defined if source is not. Note: The content field is marked as sensitive. To view the raw contents of the object, please define an output.`,
 			},
 
 			"crc32c": {
@@ -107,11 +107,11 @@ func resourceStorageBucketObject() *schema.Resource {
 			},
 
 			"source": {
-				Type:          schema.TypeString,
-				Optional:      true,
-				ForceNew:      true,
-				ConflictsWith: []string{"content"},
-				Description:   `A path to the data you want to upload. Must be defined if content is not.`,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ExactlyOneOf: []string{"content"},
+				Description:  `A path to the data you want to upload. Must be defined if content is not.`,
 			},
 
 			// Detect changes to local file or changes made outside of Terraform to the file stored on the server.
@@ -267,7 +267,7 @@ func compareCryptoKeyVersions(_, old, new string, _ *schema.ResourceData) bool {
 
 func resourceStorageBucketObjectCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -352,7 +352,7 @@ func resourceStorageBucketObjectCreate(d *schema.ResourceData, meta interface{})
 
 func resourceStorageBucketObjectUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -390,7 +390,7 @@ func resourceStorageBucketObjectUpdate(d *schema.ResourceData, meta interface{})
 
 func resourceStorageBucketObjectRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -468,7 +468,7 @@ func resourceStorageBucketObjectRead(d *schema.ResourceData, meta interface{}) e
 
 func resourceStorageBucketObjectDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

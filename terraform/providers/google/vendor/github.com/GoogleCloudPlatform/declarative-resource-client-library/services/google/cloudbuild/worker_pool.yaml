@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a WorkerPool
     parameters:
-    - name: WorkerPool
+    - name: workerPool
       required: true
       description: A full instance of a WorkerPool
   apply:
     description: The function used to apply information about a WorkerPool
     parameters:
-    - name: WorkerPool
+    - name: workerPool
       required: true
       description: A full instance of a WorkerPool
   delete:
     description: The function used to delete a WorkerPool
     parameters:
-    - name: WorkerPool
+    - name: workerPool
       required: true
       description: A full instance of a WorkerPool
   deleteAll:
@@ -63,7 +63,11 @@ components:
       title: WorkerPool
       x-dcl-id: projects/{{project}}/locations/{{location}}/workerPools/{{name}}
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -139,6 +143,17 @@ components:
               x-dcl-references:
               - resource: Compute/Network
                 field: selfLink
+            peeredNetworkIPRange:
+              type: string
+              x-dcl-go-name: PeeredNetworkIPRange
+              description: Optional. Immutable. Subnet IP range within the peered
+                network. This is specified in CIDR notation with a slash and the subnet
+                prefix size. You can optionally specify an IP address before the subnet
+                prefix value. e.g. `192.168.0.0/29` would specify an IP range starting
+                at 192.168.0.0 with a prefix size of 29 bits. `/16` would specify
+                a prefix size of 16 bits, with an automatically determined IP within
+                the peered VPC. If unspecified, a value of `/24` will be used.
+              x-kubernetes-immutable: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -202,3 +217,4 @@ components:
               x-dcl-go-name: NoExternalIP
               description: If true, workers are created without any public address,
                 which prevents network egress to public IPs.
+              x-dcl-server-default: true

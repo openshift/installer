@@ -18,14 +18,12 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceAppEngineStandardAppVersion() *schema.Resource {
+func ResourceAppEngineStandardAppVersion() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAppEngineStandardAppVersionCreate,
 		Read:   resourceAppEngineStandardAppVersionRead,
@@ -37,9 +35,9 @@ func resourceAppEngineStandardAppVersion() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -124,6 +122,11 @@ All files must be readable using the credentials supplied with this call.`,
 				Required:         true,
 				DiffSuppressFunc: compareSelfLinkOrResourceName,
 				Description:      `AppEngine service resource`,
+			},
+			"app_engine_apis": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `Allows App Engine second generation runtimes to access the legacy bundled services.`,
 			},
 			"automatic_scaling": {
 				Type:        schema.TypeList,
@@ -235,19 +238,19 @@ The first matching URL handles the request and other request handlers are not at
 						"auth_fail_action": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED", ""}, false),
+							ValidateFunc: validateEnum([]string{"AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED", ""}),
 							Description:  `Actions to take when the user is not logged in. Possible values: ["AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED"]`,
 						},
 						"login": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED", ""}, false),
+							ValidateFunc: validateEnum([]string{"LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED", ""}),
 							Description:  `Methods to restrict access to a URL based on login status. Possible values: ["LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED"]`,
 						},
 						"redirect_http_response_code": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"REDIRECT_HTTP_RESPONSE_CODE_301", "REDIRECT_HTTP_RESPONSE_CODE_302", "REDIRECT_HTTP_RESPONSE_CODE_303", "REDIRECT_HTTP_RESPONSE_CODE_307", ""}, false),
+							ValidateFunc: validateEnum([]string{"REDIRECT_HTTP_RESPONSE_CODE_301", "REDIRECT_HTTP_RESPONSE_CODE_302", "REDIRECT_HTTP_RESPONSE_CODE_303", "REDIRECT_HTTP_RESPONSE_CODE_307", ""}),
 							Description:  `30x code to use when performing redirects for the secure field. Possible values: ["REDIRECT_HTTP_RESPONSE_CODE_301", "REDIRECT_HTTP_RESPONSE_CODE_302", "REDIRECT_HTTP_RESPONSE_CODE_303", "REDIRECT_HTTP_RESPONSE_CODE_307"]`,
 						},
 						"script": {
@@ -269,7 +272,7 @@ Only the auto value is supported for Node.js in the App Engine standard environm
 						"security_level": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS", ""}, false),
+							ValidateFunc: validateEnum([]string{"SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS", ""}),
 							Description:  `Security (HTTPS) enforcement for this URL. Possible values: ["SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS"]`,
 						},
 						"static_files": {
@@ -338,7 +341,7 @@ All URLs that begin with this prefix are handled by this handler, using the port
 				Description: `A list of the types of messages that this application is able to receive. Possible values: ["INBOUND_SERVICE_MAIL", "INBOUND_SERVICE_MAIL_BOUNCE", "INBOUND_SERVICE_XMPP_ERROR", "INBOUND_SERVICE_XMPP_MESSAGE", "INBOUND_SERVICE_XMPP_SUBSCRIBE", "INBOUND_SERVICE_XMPP_PRESENCE", "INBOUND_SERVICE_CHANNEL_PRESENCE", "INBOUND_SERVICE_WARMUP"]`,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: validation.StringInSlice([]string{"INBOUND_SERVICE_MAIL", "INBOUND_SERVICE_MAIL_BOUNCE", "INBOUND_SERVICE_XMPP_ERROR", "INBOUND_SERVICE_XMPP_MESSAGE", "INBOUND_SERVICE_XMPP_SUBSCRIBE", "INBOUND_SERVICE_XMPP_PRESENCE", "INBOUND_SERVICE_CHANNEL_PRESENCE", "INBOUND_SERVICE_WARMUP"}, false),
+					ValidateFunc: validateEnum([]string{"INBOUND_SERVICE_MAIL", "INBOUND_SERVICE_MAIL_BOUNCE", "INBOUND_SERVICE_XMPP_ERROR", "INBOUND_SERVICE_XMPP_MESSAGE", "INBOUND_SERVICE_XMPP_SUBSCRIBE", "INBOUND_SERVICE_XMPP_PRESENCE", "INBOUND_SERVICE_CHANNEL_PRESENCE", "INBOUND_SERVICE_WARMUP"}),
 				},
 				Set: schema.HashString,
 			},
@@ -393,7 +396,14 @@ Modules API set_num_instances() you must use 'lifecycle.ignore_changes = ["manua
 				Type:     schema.TypeString,
 				Optional: true,
 				Description: `The version of the API in the given runtime environment.
-Please see the app.yaml reference for valid values at https://cloud.google.com/appengine/docs/standard//config/appref`,
+Please see the app.yaml reference for valid values at 'https://cloud.google.com/appengine/docs/standard/<language>/config/appref'\
+Substitute '<language>' with 'python', 'java', 'php', 'ruby', 'go' or 'nodejs'.`,
+			},
+			"service_account": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Optional:    true,
+				Description: `The identity that the deployed version will run as. Admin API will use the App Engine Appspot service account as default if this field is neither provided in app.yaml file nor through CLI flag.`,
 			},
 			"threadsafe": {
 				Type:        schema.TypeBool,
@@ -418,6 +428,11 @@ Please see the app.yaml reference for valid values at https://cloud.google.com/a
 							Required:    true,
 							Description: `Full Serverless VPC Access Connector name e.g. /projects/my-project/locations/us-central1/connectors/c1.`,
 						},
+						"egress_setting": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `The egress setting for the connector, controlling what traffic is diverted through it.`,
+						},
 					},
 				},
 			},
@@ -427,14 +442,16 @@ Please see the app.yaml reference for valid values at https://cloud.google.com/a
 				Description: `Full path to the Version resource in the API. Example, "v1".`,
 			},
 			"noop_on_destroy": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: `If set to 'true', the application version will not be deleted.`,
 			},
 			"delete_service_on_destroy": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: `If set to 'true', the service will be deleted if it is the last version.`,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -449,7 +466,7 @@ Please see the app.yaml reference for valid values at https://cloud.google.com/a
 
 func resourceAppEngineStandardAppVersionCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -467,11 +484,23 @@ func resourceAppEngineStandardAppVersionCreate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("runtime"); !isEmptyValue(reflect.ValueOf(runtimeProp)) && (ok || !reflect.DeepEqual(v, runtimeProp)) {
 		obj["runtime"] = runtimeProp
 	}
+	serviceAccountProp, err := expandAppEngineStandardAppVersionServiceAccount(d.Get("service_account"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("service_account"); !isEmptyValue(reflect.ValueOf(serviceAccountProp)) && (ok || !reflect.DeepEqual(v, serviceAccountProp)) {
+		obj["serviceAccount"] = serviceAccountProp
+	}
 	threadsafeProp, err := expandAppEngineStandardAppVersionThreadsafe(d.Get("threadsafe"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("threadsafe"); !isEmptyValue(reflect.ValueOf(threadsafeProp)) && (ok || !reflect.DeepEqual(v, threadsafeProp)) {
 		obj["threadsafe"] = threadsafeProp
+	}
+	appEngineApisProp, err := expandAppEngineStandardAppVersionAppEngineApis(d.Get("app_engine_apis"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("app_engine_apis"); !isEmptyValue(reflect.ValueOf(appEngineApisProp)) && (ok || !reflect.DeepEqual(v, appEngineApisProp)) {
+		obj["appEngineApis"] = appEngineApisProp
 	}
 	runtimeApiVersionProp, err := expandAppEngineStandardAppVersionRuntimeApiVersion(d.Get("runtime_api_version"), d, config)
 	if err != nil {
@@ -509,7 +538,7 @@ func resourceAppEngineStandardAppVersionCreate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("entrypoint"); !isEmptyValue(reflect.ValueOf(entrypointProp)) && (ok || !reflect.DeepEqual(v, entrypointProp)) {
 		obj["entrypoint"] = entrypointProp
 	}
-	vpcAccessConnectorProp, err := expandAppEngineStandardAppVersionVPCAccessConnector(d.Get("vpc_access_connector"), d, config)
+	vpcAccessConnectorProp, err := expandAppEngineStandardAppVersionVpcAccessConnector(d.Get("vpc_access_connector"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("vpc_access_connector"); !isEmptyValue(reflect.ValueOf(vpcAccessConnectorProp)) && (ok || !reflect.DeepEqual(v, vpcAccessConnectorProp)) {
@@ -572,7 +601,7 @@ func resourceAppEngineStandardAppVersionCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isAppEngineRetryableError)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isAppEngineRetryableError)
 	if err != nil {
 		return fmt.Errorf("Error creating StandardAppVersion: %s", err)
 	}
@@ -584,7 +613,7 @@ func resourceAppEngineStandardAppVersionCreate(d *schema.ResourceData, meta inte
 	}
 	d.SetId(id)
 
-	err = appEngineOperationWaitTime(
+	err = AppEngineOperationWaitTime(
 		config, res, project, "Creating StandardAppVersion", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -601,7 +630,7 @@ func resourceAppEngineStandardAppVersionCreate(d *schema.ResourceData, meta inte
 
 func resourceAppEngineStandardAppVersionRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -624,7 +653,7 @@ func resourceAppEngineStandardAppVersionRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isAppEngineRetryableError)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isAppEngineRetryableError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AppEngineStandardAppVersion %q", d.Id()))
 	}
@@ -653,6 +682,12 @@ func resourceAppEngineStandardAppVersionRead(d *schema.ResourceData, meta interf
 	if err := d.Set("runtime", flattenAppEngineStandardAppVersionRuntime(res["runtime"], d, config)); err != nil {
 		return fmt.Errorf("Error reading StandardAppVersion: %s", err)
 	}
+	if err := d.Set("service_account", flattenAppEngineStandardAppVersionServiceAccount(res["serviceAccount"], d, config)); err != nil {
+		return fmt.Errorf("Error reading StandardAppVersion: %s", err)
+	}
+	if err := d.Set("app_engine_apis", flattenAppEngineStandardAppVersionAppEngineApis(res["appEngineApis"], d, config)); err != nil {
+		return fmt.Errorf("Error reading StandardAppVersion: %s", err)
+	}
 	if err := d.Set("runtime_api_version", flattenAppEngineStandardAppVersionRuntimeApiVersion(res["runtimeApiVersion"], d, config)); err != nil {
 		return fmt.Errorf("Error reading StandardAppVersion: %s", err)
 	}
@@ -662,7 +697,7 @@ func resourceAppEngineStandardAppVersionRead(d *schema.ResourceData, meta interf
 	if err := d.Set("libraries", flattenAppEngineStandardAppVersionLibraries(res["libraries"], d, config)); err != nil {
 		return fmt.Errorf("Error reading StandardAppVersion: %s", err)
 	}
-	if err := d.Set("vpc_access_connector", flattenAppEngineStandardAppVersionVPCAccessConnector(res["vpcAccessConnector"], d, config)); err != nil {
+	if err := d.Set("vpc_access_connector", flattenAppEngineStandardAppVersionVpcAccessConnector(res["vpcAccessConnector"], d, config)); err != nil {
 		return fmt.Errorf("Error reading StandardAppVersion: %s", err)
 	}
 	if err := d.Set("inbound_services", flattenAppEngineStandardAppVersionInboundServices(res["inboundServices"], d, config)); err != nil {
@@ -686,7 +721,7 @@ func resourceAppEngineStandardAppVersionRead(d *schema.ResourceData, meta interf
 
 func resourceAppEngineStandardAppVersionUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -712,11 +747,23 @@ func resourceAppEngineStandardAppVersionUpdate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("runtime"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, runtimeProp)) {
 		obj["runtime"] = runtimeProp
 	}
+	serviceAccountProp, err := expandAppEngineStandardAppVersionServiceAccount(d.Get("service_account"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("service_account"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, serviceAccountProp)) {
+		obj["serviceAccount"] = serviceAccountProp
+	}
 	threadsafeProp, err := expandAppEngineStandardAppVersionThreadsafe(d.Get("threadsafe"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("threadsafe"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, threadsafeProp)) {
 		obj["threadsafe"] = threadsafeProp
+	}
+	appEngineApisProp, err := expandAppEngineStandardAppVersionAppEngineApis(d.Get("app_engine_apis"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("app_engine_apis"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, appEngineApisProp)) {
+		obj["appEngineApis"] = appEngineApisProp
 	}
 	runtimeApiVersionProp, err := expandAppEngineStandardAppVersionRuntimeApiVersion(d.Get("runtime_api_version"), d, config)
 	if err != nil {
@@ -754,7 +801,7 @@ func resourceAppEngineStandardAppVersionUpdate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("entrypoint"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, entrypointProp)) {
 		obj["entrypoint"] = entrypointProp
 	}
-	vpcAccessConnectorProp, err := expandAppEngineStandardAppVersionVPCAccessConnector(d.Get("vpc_access_connector"), d, config)
+	vpcAccessConnectorProp, err := expandAppEngineStandardAppVersionVpcAccessConnector(d.Get("vpc_access_connector"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("vpc_access_connector"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, vpcAccessConnectorProp)) {
@@ -810,7 +857,7 @@ func resourceAppEngineStandardAppVersionUpdate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isAppEngineRetryableError)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isAppEngineRetryableError)
 
 	if err != nil {
 		return fmt.Errorf("Error updating StandardAppVersion %q: %s", d.Id(), err)
@@ -818,7 +865,7 @@ func resourceAppEngineStandardAppVersionUpdate(d *schema.ResourceData, meta inte
 		log.Printf("[DEBUG] Finished updating StandardAppVersion %q: %#v", d.Id(), res)
 	}
 
-	err = appEngineOperationWaitTime(
+	err = AppEngineOperationWaitTime(
 		config, res, project, "Updating StandardAppVersion", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -831,7 +878,7 @@ func resourceAppEngineStandardAppVersionUpdate(d *schema.ResourceData, meta inte
 
 func resourceAppEngineStandardAppVersionDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -860,11 +907,11 @@ func resourceAppEngineStandardAppVersionDelete(d *schema.ResourceData, meta inte
 		}
 		var obj map[string]interface{}
 		log.Printf("[DEBUG] Deleting Service %q", d.Id())
-		res, err := sendRequestWithTimeout(config, "DELETE", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isAppEngineRetryableError)
+		res, err := SendRequestWithTimeout(config, "DELETE", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isAppEngineRetryableError)
 		if err != nil {
 			return handleNotFoundError(err, d, "Service")
 		}
-		err = appEngineOperationWaitTime(
+		err = AppEngineOperationWaitTime(
 			config, res, project, "Deleting Service", userAgent,
 			d.Timeout(schema.TimeoutDelete))
 
@@ -880,11 +927,11 @@ func resourceAppEngineStandardAppVersionDelete(d *schema.ResourceData, meta inte
 		}
 		var obj map[string]interface{}
 		log.Printf("[DEBUG] Deleting AppVersion %q", d.Id())
-		res, err := sendRequestWithTimeout(config, "DELETE", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isAppEngineRetryableError)
+		res, err := SendRequestWithTimeout(config, "DELETE", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isAppEngineRetryableError)
 		if err != nil {
 			return handleNotFoundError(err, d, "AppVersion")
 		}
-		err = appEngineOperationWaitTime(
+		err = AppEngineOperationWaitTime(
 			config, res, project, "Deleting AppVersion", userAgent,
 			d.Timeout(schema.TimeoutDelete))
 
@@ -934,6 +981,14 @@ func flattenAppEngineStandardAppVersionVersionId(v interface{}, d *schema.Resour
 }
 
 func flattenAppEngineStandardAppVersionRuntime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenAppEngineStandardAppVersionServiceAccount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenAppEngineStandardAppVersionAppEngineApis(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1082,7 +1137,7 @@ func flattenAppEngineStandardAppVersionLibrariesVersion(v interface{}, d *schema
 	return v
 }
 
-func flattenAppEngineStandardAppVersionVPCAccessConnector(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+func flattenAppEngineStandardAppVersionVpcAccessConnector(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -1092,10 +1147,16 @@ func flattenAppEngineStandardAppVersionVPCAccessConnector(v interface{}, d *sche
 	}
 	transformed := make(map[string]interface{})
 	transformed["name"] =
-		flattenAppEngineStandardAppVersionVPCAccessConnectorName(original["name"], d, config)
+		flattenAppEngineStandardAppVersionVpcAccessConnectorName(original["name"], d, config)
+	transformed["egress_setting"] =
+		flattenAppEngineStandardAppVersionVpcAccessConnectorEgressSetting(original["egressSetting"], d, config)
 	return []interface{}{transformed}
 }
-func flattenAppEngineStandardAppVersionVPCAccessConnectorName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+func flattenAppEngineStandardAppVersionVpcAccessConnectorName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenAppEngineStandardAppVersionVpcAccessConnectorEgressSetting(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1136,7 +1197,7 @@ func flattenAppEngineStandardAppVersionAutomaticScaling(v interface{}, d *schema
 func flattenAppEngineStandardAppVersionAutomaticScalingMaxConcurrentRequests(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1153,7 +1214,7 @@ func flattenAppEngineStandardAppVersionAutomaticScalingMaxConcurrentRequests(v i
 func flattenAppEngineStandardAppVersionAutomaticScalingMaxIdleInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1174,7 +1235,7 @@ func flattenAppEngineStandardAppVersionAutomaticScalingMaxPendingLatency(v inter
 func flattenAppEngineStandardAppVersionAutomaticScalingMinIdleInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1222,7 +1283,7 @@ func flattenAppEngineStandardAppVersionAutomaticScalingStandardSchedulerSettings
 func flattenAppEngineStandardAppVersionAutomaticScalingStandardSchedulerSettingsMinInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1239,7 +1300,7 @@ func flattenAppEngineStandardAppVersionAutomaticScalingStandardSchedulerSettings
 func flattenAppEngineStandardAppVersionAutomaticScalingStandardSchedulerSettingsMaxInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1275,7 +1336,7 @@ func flattenAppEngineStandardAppVersionBasicScalingIdleTimeout(v interface{}, d 
 func flattenAppEngineStandardAppVersionBasicScalingMaxInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1305,7 +1366,7 @@ func flattenAppEngineStandardAppVersionManualScaling(v interface{}, d *schema.Re
 func flattenAppEngineStandardAppVersionManualScalingInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1327,7 +1388,15 @@ func expandAppEngineStandardAppVersionRuntime(v interface{}, d TerraformResource
 	return v, nil
 }
 
+func expandAppEngineStandardAppVersionServiceAccount(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandAppEngineStandardAppVersionThreadsafe(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAppEngineStandardAppVersionAppEngineApis(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1709,7 +1778,7 @@ func expandAppEngineStandardAppVersionEntrypointShell(v interface{}, d Terraform
 	return v, nil
 }
 
-func expandAppEngineStandardAppVersionVPCAccessConnector(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+func expandAppEngineStandardAppVersionVpcAccessConnector(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -1718,17 +1787,28 @@ func expandAppEngineStandardAppVersionVPCAccessConnector(v interface{}, d Terraf
 	original := raw.(map[string]interface{})
 	transformed := make(map[string]interface{})
 
-	transformedName, err := expandAppEngineStandardAppVersionVPCAccessConnectorName(original["name"], d, config)
+	transformedName, err := expandAppEngineStandardAppVersionVpcAccessConnectorName(original["name"], d, config)
 	if err != nil {
 		return nil, err
 	} else if val := reflect.ValueOf(transformedName); val.IsValid() && !isEmptyValue(val) {
 		transformed["name"] = transformedName
 	}
 
+	transformedEgressSetting, err := expandAppEngineStandardAppVersionVpcAccessConnectorEgressSetting(original["egress_setting"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEgressSetting); val.IsValid() && !isEmptyValue(val) {
+		transformed["egressSetting"] = transformedEgressSetting
+	}
+
 	return transformed, nil
 }
 
-func expandAppEngineStandardAppVersionVPCAccessConnectorName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+func expandAppEngineStandardAppVersionVpcAccessConnectorName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAppEngineStandardAppVersionVpcAccessConnectorEgressSetting(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

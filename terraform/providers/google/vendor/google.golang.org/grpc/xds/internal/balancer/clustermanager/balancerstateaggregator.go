@@ -57,6 +57,11 @@ type balancerStateAggregator struct {
 	//
 	// If an ID is not in map, it's either removed or never added.
 	idToPickerState map[string]*subBalancerState
+	// Set when UpdateState call propagation is paused.
+	pauseUpdateState bool
+	// Set when UpdateState call propagation is paused and an UpdateState call
+	// is suppressed.
+	needUpdateStateOnResume bool
 }
 
 func newBalancerStateAggregator(cc balancer.ClientConn, logger *grpclog.PrefixLogger) *balancerStateAggregator {
@@ -118,6 +123,27 @@ func (bsa *balancerStateAggregator) remove(id string) {
 	delete(bsa.idToPickerState, id)
 }
 
+// pauseStateUpdates causes UpdateState calls to not propagate to the parent
+// ClientConn.  The last state will be remembered and propagated when
+// ResumeStateUpdates is called.
+func (bsa *balancerStateAggregator) pauseStateUpdates() {
+	bsa.mu.Lock()
+	defer bsa.mu.Unlock()
+	bsa.pauseUpdateState = true
+	bsa.needUpdateStateOnResume = false
+}
+
+// resumeStateUpdates will resume propagating UpdateState calls to the parent,
+// and call UpdateState on the parent if any UpdateState call was suppressed.
+func (bsa *balancerStateAggregator) resumeStateUpdates() {
+	bsa.mu.Lock()
+	defer bsa.mu.Unlock()
+	bsa.pauseUpdateState = false
+	if bsa.needUpdateStateOnResume {
+		bsa.cc.UpdateState(bsa.build())
+	}
+}
+
 // UpdateState is called to report a balancer state change from sub-balancer.
 // It's usually called by the balancer group.
 //
@@ -141,6 +167,12 @@ func (bsa *balancerStateAggregator) UpdateState(id string, state balancer.State)
 	pickerSt.state = state
 
 	if !bsa.started {
+		return
+	}
+	if bsa.pauseUpdateState {
+		// If updates are paused, do not call UpdateState, but remember that we
+		// need to call it when they are resumed.
+		bsa.needUpdateStateOnResume = true
 		return
 	}
 	bsa.cc.UpdateState(bsa.build())
@@ -168,6 +200,12 @@ func (bsa *balancerStateAggregator) buildAndUpdate() {
 	if !bsa.started {
 		return
 	}
+	if bsa.pauseUpdateState {
+		// If updates are paused, do not call UpdateState, but remember that we
+		// need to call it when they are resumed.
+		bsa.needUpdateStateOnResume = true
+		return
+	}
 	bsa.cc.UpdateState(bsa.build())
 }
 
@@ -183,13 +221,18 @@ func (bsa *balancerStateAggregator) build() balancer.State {
 	// handling the special connecting after ready, as in UpdateState(). Then a
 	// function to calculate the aggregated connectivity state as in this
 	// function.
-	var readyN, connectingN int
+	//
+	// TODO: use balancer.ConnectivityStateEvaluator to calculate the aggregated
+	// state.
+	var readyN, connectingN, idleN int
 	for _, ps := range bsa.idToPickerState {
 		switch ps.stateToAggregate {
 		case connectivity.Ready:
 			readyN++
 		case connectivity.Connecting:
 			connectingN++
+		case connectivity.Idle:
+			idleN++
 		}
 	}
 	var aggregatedState connectivity.State
@@ -198,6 +241,8 @@ func (bsa *balancerStateAggregator) build() balancer.State {
 		aggregatedState = connectivity.Ready
 	case connectingN > 0:
 		aggregatedState = connectivity.Connecting
+	case idleN > 0:
+		aggregatedState = connectivity.Idle
 	default:
 		aggregatedState = connectivity.TransientFailure
 	}

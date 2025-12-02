@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
+	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
 )
 
 func (r *FirewallPolicyAssociation) validate() error {
@@ -129,7 +130,7 @@ func (c *Client) listFirewallPolicyAssociation(ctx context.Context, r *FirewallP
 
 	var l []*FirewallPolicyAssociation
 	for _, v := range m.Associations {
-		res, err := unmarshalMapFirewallPolicyAssociation(v, c)
+		res, err := unmarshalMapFirewallPolicyAssociation(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -160,6 +161,55 @@ func (c *Client) deleteAllFirewallPolicyAssociation(ctx context.Context, f func(
 
 type deleteFirewallPolicyAssociationOperation struct{}
 
+func (op *deleteFirewallPolicyAssociationOperation) do(ctx context.Context, r *FirewallPolicyAssociation, c *Client) error {
+	r, err := c.GetFirewallPolicyAssociation(ctx, r)
+	if err != nil {
+		if dcl.IsNotFoundOrCode(err, 400) {
+			c.Config.Logger.InfoWithContextf(ctx, "FirewallPolicyAssociation not found, returning. Original error: %v", err)
+			return nil
+		}
+		c.Config.Logger.WarningWithContextf(ctx, "GetFirewallPolicyAssociation checking for existence. error: %v", err)
+		return err
+	}
+
+	u, err := r.deleteURL(c.Config.BasePath)
+	if err != nil {
+		return err
+	}
+
+	// Delete should never have a body
+	body := &bytes.Buffer{}
+	resp, err := dcl.SendRequest(ctx, c.Config, "POST", u, body, c.Config.RetryProvider)
+	if err != nil {
+		return err
+	}
+
+	// wait for object to be deleted.
+	var o operations.ComputeOperation
+	if err := dcl.ParseResponse(resp.Response, &o); err != nil {
+		return err
+	}
+	if err := o.Wait(context.WithValue(ctx, dcl.DoNotLogRequestsKey, true), c.Config, r.basePath(), "GET"); err != nil {
+		return err
+	}
+
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetFirewallPolicyAssociation(ctx, r)
+		if dcl.IsNotFoundOrCode(err, 400) {
+			return nil, nil
+		}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
+	return nil
+}
+
 // Create operations are similar to Update operations, although they do not have
 // specific request objects. The Create request object is the json encoding of
 // the resource, which is modified by res.marshal to form the base request body.
@@ -169,6 +219,41 @@ type createFirewallPolicyAssociationOperation struct {
 
 func (op *createFirewallPolicyAssociationOperation) FirstResponse() (map[string]interface{}, bool) {
 	return op.response, len(op.response) > 0
+}
+
+func (op *createFirewallPolicyAssociationOperation) do(ctx context.Context, r *FirewallPolicyAssociation, c *Client) error {
+	c.Config.Logger.InfoWithContextf(ctx, "Attempting to create %v", r)
+	u, err := r.createURL(c.Config.BasePath)
+	if err != nil {
+		return err
+	}
+
+	req, err := r.marshal(c)
+	if err != nil {
+		return err
+	}
+	resp, err := dcl.SendRequest(ctx, c.Config, "POST", u, bytes.NewBuffer(req), c.Config.RetryProvider)
+	if err != nil {
+		return err
+	}
+	// wait for object to be created.
+	var o operations.ComputeOperation
+	if err := dcl.ParseResponse(resp.Response, &o); err != nil {
+		return err
+	}
+	if err := o.Wait(context.WithValue(ctx, dcl.DoNotLogRequestsKey, true), c.Config, r.basePath(), "GET"); err != nil {
+		c.Config.Logger.Warningf("Creation failed after waiting for operation: %v", err)
+		return err
+	}
+	c.Config.Logger.InfoWithContextf(ctx, "Successfully waited for operation")
+	op.response, _ = o.FirstResponse()
+
+	if _, err := c.GetFirewallPolicyAssociation(ctx, r); err != nil {
+		c.Config.Logger.WarningWithContextf(ctx, "get returned error: %v", err)
+		return err
+	}
+
+	return nil
 }
 
 func (c *Client) getFirewallPolicyAssociationRaw(ctx context.Context, r *FirewallPolicyAssociation) ([]byte, error) {
@@ -220,6 +305,11 @@ func (c *Client) firewallPolicyAssociationDiffsForRawDesired(ctx context.Context
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for FirewallPolicyAssociation: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for FirewallPolicyAssociation: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractFirewallPolicyAssociationFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeFirewallPolicyAssociationInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -265,23 +355,23 @@ func canonicalizeFirewallPolicyAssociationDesiredState(rawDesired, rawInitial *F
 	} else {
 		canonicalDesired.Name = rawDesired.Name
 	}
-	if dcl.NameToSelfLink(rawDesired.AttachmentTarget, rawInitial.AttachmentTarget) {
+	if dcl.IsZeroValue(rawDesired.AttachmentTarget) || (dcl.IsEmptyValueIndirect(rawDesired.AttachmentTarget) && dcl.IsEmptyValueIndirect(rawInitial.AttachmentTarget)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.AttachmentTarget = rawInitial.AttachmentTarget
 	} else {
 		canonicalDesired.AttachmentTarget = rawDesired.AttachmentTarget
 	}
-	if dcl.NameToSelfLink(rawDesired.FirewallPolicy, rawInitial.FirewallPolicy) {
+	if dcl.PartialSelfLinkToSelfLink(rawDesired.FirewallPolicy, rawInitial.FirewallPolicy) {
 		canonicalDesired.FirewallPolicy = rawInitial.FirewallPolicy
 	} else {
 		canonicalDesired.FirewallPolicy = rawDesired.FirewallPolicy
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeFirewallPolicyAssociationNewState(c *Client, rawNew, rawDesired *FirewallPolicyAssociation) (*FirewallPolicyAssociation, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Name, rawNew.Name) {
@@ -289,23 +379,20 @@ func canonicalizeFirewallPolicyAssociationNewState(c *Client, rawNew, rawDesired
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.AttachmentTarget) && dcl.IsNotReturnedByServer(rawDesired.AttachmentTarget) {
+	if dcl.IsEmptyValueIndirect(rawNew.AttachmentTarget) && dcl.IsEmptyValueIndirect(rawDesired.AttachmentTarget) {
 		rawNew.AttachmentTarget = rawDesired.AttachmentTarget
 	} else {
-		if dcl.NameToSelfLink(rawDesired.AttachmentTarget, rawNew.AttachmentTarget) {
-			rawNew.AttachmentTarget = rawDesired.AttachmentTarget
-		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.FirewallPolicy) && dcl.IsNotReturnedByServer(rawDesired.FirewallPolicy) {
+	if dcl.IsEmptyValueIndirect(rawNew.FirewallPolicy) && dcl.IsEmptyValueIndirect(rawDesired.FirewallPolicy) {
 		rawNew.FirewallPolicy = rawDesired.FirewallPolicy
 	} else {
-		if dcl.NameToSelfLink(rawDesired.FirewallPolicy, rawNew.FirewallPolicy) {
+		if dcl.PartialSelfLinkToSelfLink(rawDesired.FirewallPolicy, rawNew.FirewallPolicy) {
 			rawNew.FirewallPolicy = rawDesired.FirewallPolicy
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ShortName) && dcl.IsNotReturnedByServer(rawDesired.ShortName) {
+	if dcl.IsEmptyValueIndirect(rawNew.ShortName) && dcl.IsEmptyValueIndirect(rawDesired.ShortName) {
 		rawNew.ShortName = rawDesired.ShortName
 	} else {
 		if dcl.StringCanonicalize(rawDesired.ShortName, rawNew.ShortName) {
@@ -334,34 +421,37 @@ func diffFirewallPolicyAssociation(c *Client, desired, actual *FirewallPolicyAss
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AttachmentTarget, actual.AttachmentTarget, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AttachmentTarget")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AttachmentTarget, actual.AttachmentTarget, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AttachmentTarget")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.FirewallPolicy, actual.FirewallPolicy, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("FirewallPolicyId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.FirewallPolicy, actual.FirewallPolicy, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("FirewallPolicyId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ShortName, actual.ShortName, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ShortName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ShortName, actual.ShortName, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ShortName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 
@@ -394,17 +484,17 @@ func (r *FirewallPolicyAssociation) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalFirewallPolicyAssociation decodes JSON responses into the FirewallPolicyAssociation resource schema.
-func unmarshalFirewallPolicyAssociation(b []byte, c *Client) (*FirewallPolicyAssociation, error) {
+func unmarshalFirewallPolicyAssociation(b []byte, c *Client, res *FirewallPolicyAssociation) (*FirewallPolicyAssociation, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapFirewallPolicyAssociation(m, c)
+	return unmarshalMapFirewallPolicyAssociation(m, c, res)
 }
 
-func unmarshalMapFirewallPolicyAssociation(m map[string]interface{}, c *Client) (*FirewallPolicyAssociation, error) {
+func unmarshalMapFirewallPolicyAssociation(m map[string]interface{}, c *Client, res *FirewallPolicyAssociation) (*FirewallPolicyAssociation, error) {
 
-	flattened := flattenFirewallPolicyAssociation(c, m)
+	flattened := flattenFirewallPolicyAssociation(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -414,13 +504,17 @@ func unmarshalMapFirewallPolicyAssociation(m map[string]interface{}, c *Client) 
 // expandFirewallPolicyAssociation expands FirewallPolicyAssociation into a JSON request object.
 func expandFirewallPolicyAssociation(c *Client, f *FirewallPolicyAssociation) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v := f.Name; dcl.ValueShouldBeSent(v) {
 		m["name"] = v
 	}
 	if v := f.AttachmentTarget; dcl.ValueShouldBeSent(v) {
 		m["attachmentTarget"] = v
 	}
-	if v := f.FirewallPolicy; dcl.ValueShouldBeSent(v) {
+	if v, err := dcl.DeriveField("locations/global/firewallPolicies/%s", f.FirewallPolicy, dcl.SelfLinkToName(f.FirewallPolicy)); err != nil {
+		return nil, fmt.Errorf("error expanding FirewallPolicy into firewallPolicyId: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["firewallPolicyId"] = v
 	}
 
@@ -429,7 +523,7 @@ func expandFirewallPolicyAssociation(c *Client, f *FirewallPolicyAssociation) (m
 
 // flattenFirewallPolicyAssociation flattens FirewallPolicyAssociation from a JSON request object into the
 // FirewallPolicyAssociation type.
-func flattenFirewallPolicyAssociation(c *Client, i interface{}) *FirewallPolicyAssociation {
+func flattenFirewallPolicyAssociation(c *Client, i interface{}, res *FirewallPolicyAssociation) *FirewallPolicyAssociation {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -438,13 +532,13 @@ func flattenFirewallPolicyAssociation(c *Client, i interface{}) *FirewallPolicyA
 		return nil
 	}
 
-	res := &FirewallPolicyAssociation{}
-	res.Name = dcl.FlattenString(m["name"])
-	res.AttachmentTarget = dcl.FlattenString(m["attachmentTarget"])
-	res.FirewallPolicy = dcl.FlattenString(m["firewallPolicyId"])
-	res.ShortName = dcl.FlattenString(m["shortName"])
+	resultRes := &FirewallPolicyAssociation{}
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.AttachmentTarget = dcl.FlattenString(m["attachmentTarget"])
+	resultRes.FirewallPolicy = dcl.FlattenString(m["firewallPolicyId"])
+	resultRes.ShortName = dcl.FlattenString(m["shortName"])
 
-	return res
+	return resultRes
 }
 
 // This function returns a matcher that checks whether a serialized resource matches this resource
@@ -452,7 +546,7 @@ func flattenFirewallPolicyAssociation(c *Client, i interface{}) *FirewallPolicyA
 // identity).  This is useful in extracting the element from a List call.
 func (r *FirewallPolicyAssociation) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalFirewallPolicyAssociation(b, c)
+		cr, err := unmarshalFirewallPolicyAssociation(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -485,6 +579,7 @@ type firewallPolicyAssociationDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         firewallPolicyAssociationApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToFirewallPolicyAssociationDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]firewallPolicyAssociationDiff, error) {
@@ -504,7 +599,8 @@ func convertFieldDiffsToFirewallPolicyAssociationDiffs(config *dcl.Config, fds [
 	var diffs []firewallPolicyAssociationDiff
 	// For each operation name, create a firewallPolicyAssociationDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := firewallPolicyAssociationDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := firewallPolicyAssociationDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {

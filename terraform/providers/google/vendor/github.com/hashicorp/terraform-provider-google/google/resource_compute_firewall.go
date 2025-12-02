@@ -21,7 +21,6 @@ import (
 	"log"
 	"reflect"
 	"sort"
-	"strconv"
 	"strings"
 	"time"
 
@@ -88,10 +87,10 @@ func resourceComputeFirewallSourceFieldsCustomizeDiff(_ context.Context, diff *s
 		_, sasOk := diff.GetOk("source_service_accounts")
 
 		_, tagsExist := diff.GetOkExists("source_tags")
-		// ranges is computed, but this is what we're trying to avoid, so we're not going to check this
+		_, rangesExist := diff.GetOkExists("source_ranges")
 		_, sasExist := diff.GetOkExists("source_service_accounts")
 
-		if !tagsOk && !rangesOk && !sasOk && !tagsExist && !sasExist {
+		if !tagsOk && !rangesOk && !sasOk && !tagsExist && !rangesExist && !sasExist {
 			return fmt.Errorf("one of source_tags, source_ranges, or source_service_accounts must be defined")
 		}
 	}
@@ -135,7 +134,7 @@ func diffSuppressSourceRanges(k, old, new string, d *schema.ResourceData) bool {
 	return false
 }
 
-func resourceComputeFirewall() *schema.Resource {
+func ResourceComputeFirewall() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeFirewallCreate,
 		Read:   resourceComputeFirewallRead,
@@ -147,9 +146,9 @@ func resourceComputeFirewall() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		SchemaVersion: 1,
@@ -164,7 +163,7 @@ func resourceComputeFirewall() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateGCPName,
+				ValidateFunc: validateGCEName,
 				Description: `Name of the resource. Provided by the client when the resource is
 created. The name must be 1-63 characters long, and comply with
 RFC1035. Specifically, the name must be 1-63 characters long and match
@@ -210,19 +209,18 @@ you create the resource.`,
 				Optional: true,
 				Description: `If destination ranges are specified, the firewall will apply only to
 traffic that has destination IP address in these ranges. These ranges
-must be expressed in CIDR format. Only IPv4 is supported.`,
+must be expressed in CIDR format. IPv4 or IPv6 ranges are supported.`,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Set:           schema.HashString,
-				ConflictsWith: []string{"source_ranges", "source_tags"},
+				Set: schema.HashString,
 			},
 			"direction": {
 				Type:         schema.TypeString,
 				Computed:     true,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"INGRESS", "EGRESS", ""}, false),
+				ValidateFunc: validateEnum([]string{"INGRESS", "EGRESS", ""}),
 				Description: `Direction of traffic to which this firewall applies; default is
 INGRESS. Note: For INGRESS traffic, it is NOT supported to specify
 destinationRanges; For EGRESS traffic, it is NOT supported to specify
@@ -249,7 +247,7 @@ If defined, logging is enabled, and logs will be exported to Cloud Logging.`,
 						"metadata": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"EXCLUDE_ALL_METADATA", "INCLUDE_ALL_METADATA"}, false),
+							ValidateFunc: validateEnum([]string{"EXCLUDE_ALL_METADATA", "INCLUDE_ALL_METADATA"}),
 							Description:  `This field denotes whether to include or exclude metadata for firewall logs. Possible values: ["EXCLUDE_ALL_METADATA", "INCLUDE_ALL_METADATA"]`,
 						},
 					},
@@ -278,12 +276,12 @@ sourceTags may be set. If both properties are set, the firewall will
 apply to traffic that has source IP address within sourceRanges OR the
 source IP that belongs to a tag listed in the sourceTags property. The
 connection does not need to match both properties for the firewall to
-apply. Only IPv4 is supported.`,
+apply. IPv4 or IPv6 ranges are supported. For INGRESS traffic, one of
+'source_ranges', 'source_tags' or 'source_service_accounts' is required.`,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
-				Set:           schema.HashString,
-				ConflictsWith: []string{"destination_ranges"},
+				Set: schema.HashString,
 			},
 			"source_service_accounts": {
 				Type:     schema.TypeSet,
@@ -298,7 +296,8 @@ apply to traffic that has source IP address within sourceRanges OR the
 source IP belongs to an instance with service account listed in
 sourceServiceAccount. The connection does not need to match both
 properties for the firewall to apply. sourceServiceAccounts cannot be
-used at the same time as sourceTags or targetTags.`,
+used at the same time as sourceTags or targetTags. For INGRESS traffic,
+one of 'source_ranges', 'source_tags' or 'source_service_accounts' is required.`,
 				MaxItems: 10,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
@@ -317,12 +316,13 @@ address. One or both of sourceRanges and sourceTags may be set. If
 both properties are set, the firewall will apply to traffic that has
 source IP address within sourceRanges OR the source IP that belongs to
 a tag listed in the sourceTags property. The connection does not need
-to match both properties for the firewall to apply.`,
+to match both properties for the firewall to apply. For INGRESS traffic,
+one of 'source_ranges', 'source_tags' or 'source_service_accounts' is required.`,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
 				Set:           schema.HashString,
-				ConflictsWith: []string{"destination_ranges", "source_service_accounts", "target_service_accounts"},
+				ConflictsWith: []string{"source_service_accounts", "target_service_accounts"},
 			},
 			"target_service_accounts": {
 				Type:     schema.TypeSet,
@@ -442,7 +442,7 @@ Example inputs include: ["22"], ["80","443"], and
 
 func resourceComputeFirewallCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -558,7 +558,7 @@ func resourceComputeFirewallCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Firewall: %s", err)
 	}
@@ -570,7 +570,7 @@ func resourceComputeFirewallCreate(d *schema.ResourceData, meta interface{}) err
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating Firewall", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -587,7 +587,7 @@ func resourceComputeFirewallCreate(d *schema.ResourceData, meta interface{}) err
 
 func resourceComputeFirewallRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -610,7 +610,7 @@ func resourceComputeFirewallRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeFirewall %q", d.Id()))
 	}
@@ -676,7 +676,7 @@ func resourceComputeFirewallRead(d *schema.ResourceData, meta interface{}) error
 
 func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -781,7 +781,7 @@ func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Firewall %q: %s", d.Id(), err)
@@ -789,7 +789,7 @@ func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 		log.Printf("[DEBUG] Finished updating Firewall %q: %#v", d.Id(), res)
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Updating Firewall", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -802,7 +802,7 @@ func resourceComputeFirewallUpdate(d *schema.ResourceData, meta interface{}) err
 
 func resourceComputeFirewallDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -828,12 +828,12 @@ func resourceComputeFirewallDelete(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Firewall")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting Firewall", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -975,7 +975,7 @@ func flattenComputeFirewallNetwork(v interface{}, d *schema.ResourceData, config
 func flattenComputeFirewallPriority(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

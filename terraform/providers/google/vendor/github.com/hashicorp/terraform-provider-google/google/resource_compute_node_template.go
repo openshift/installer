@@ -21,10 +21,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceComputeNodeTemplate() *schema.Resource {
+func ResourceComputeNodeTemplate() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeNodeTemplateCreate,
 		Read:   resourceComputeNodeTemplateRead,
@@ -35,8 +34,8 @@ func resourceComputeNodeTemplate() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -44,7 +43,7 @@ func resourceComputeNodeTemplate() *schema.Resource {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ENABLED", "NONE", ""}, false),
+				ValidateFunc: validateEnum([]string{"ENABLED", "NONE", ""}),
 				Description:  `CPU overcommit. Default value: "NONE" Possible values: ["ENABLED", "NONE"]`,
 				Default:      "NONE",
 			},
@@ -133,7 +132,7 @@ where the nodes should restart following a maintenance event.`,
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"RESTART_NODE_ON_ANY_SERVER", "RESTART_NODE_ON_MINIMAL_SERVERS"}, false),
+							ValidateFunc: validateEnum([]string{"RESTART_NODE_ON_ANY_SERVER", "RESTART_NODE_ON_MINIMAL_SERVERS"}),
 							Description: `Type of server binding policy. If 'RESTART_NODE_ON_ANY_SERVER',
 nodes using this template will restart on any physical server
 following a maintenance event.
@@ -172,7 +171,7 @@ nodes will experience outages while maintenance is applied. Possible values: ["R
 
 func resourceComputeNodeTemplateCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -246,7 +245,7 @@ func resourceComputeNodeTemplateCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating NodeTemplate: %s", err)
 	}
@@ -258,7 +257,7 @@ func resourceComputeNodeTemplateCreate(d *schema.ResourceData, meta interface{})
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating NodeTemplate", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -275,7 +274,7 @@ func resourceComputeNodeTemplateCreate(d *schema.ResourceData, meta interface{})
 
 func resourceComputeNodeTemplateRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -298,7 +297,7 @@ func resourceComputeNodeTemplateRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeNodeTemplate %q", d.Id()))
 	}
@@ -343,7 +342,7 @@ func resourceComputeNodeTemplateRead(d *schema.ResourceData, meta interface{}) e
 
 func resourceComputeNodeTemplateDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -369,12 +368,12 @@ func resourceComputeNodeTemplateDelete(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "NodeTemplate")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting NodeTemplate", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

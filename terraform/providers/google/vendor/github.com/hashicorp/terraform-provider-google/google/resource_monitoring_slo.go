@@ -41,7 +41,7 @@ func validateAvailabilitySli(v interface{}, key string) (ws []string, errs []err
 	return
 }
 
-func resourceMonitoringSlo() *schema.Resource {
+func ResourceMonitoringSlo() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMonitoringSloCreate,
 		Read:   resourceMonitoringSloRead,
@@ -53,9 +53,9 @@ func resourceMonitoringSlo() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -75,7 +75,7 @@ to be met. 0 < goal <= 0.999`,
 			"calendar_period": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"DAY", "WEEK", "FORTNIGHT", "MONTH", ""}, false),
+				ValidateFunc: validateEnum([]string{"DAY", "WEEK", "FORTNIGHT", "MONTH", ""}),
 				Description: `A calendar period, semantically "since the start of the current
 <calendarPeriod>". Possible values: ["DAY", "WEEK", "FORTNIGHT", "MONTH"]`,
 				ExactlyOneOf: []string{"rolling_period_days", "calendar_period"},
@@ -240,16 +240,14 @@ just one of min or max.`,
 													Type:     schema.TypeFloat,
 													Optional: true,
 													Description: `max value for the range (inclusive). If not given,
-will be set to "infinity", defining an open range
-">= range.min"`,
+will be set to 0`,
 													AtLeastOneOf: []string{"request_based_sli.0.distribution_cut.0.range.0.min", "request_based_sli.0.distribution_cut.0.range.0.max"},
 												},
 												"min": {
 													Type:     schema.TypeFloat,
 													Optional: true,
 													Description: `Min value for the range (inclusive). If not given,
-will be set to "-infinity", defining an open range
-"< range.max"`,
+will be set to 0`,
 													AtLeastOneOf: []string{"request_based_sli.0.distribution_cut.0.range.0.min", "request_based_sli.0.distribution_cut.0.range.0.max"},
 												},
 											},
@@ -487,16 +485,14 @@ just one of min or max.`,
 																			Type:     schema.TypeFloat,
 																			Optional: true,
 																			Description: `max value for the range (inclusive). If not given,
-will be set to "infinity", defining an open range
-">= range.min"`,
+will be set to 0`,
 																			AtLeastOneOf: []string{"windows_based_sli.0.good_total_ratio_threshold.0.performance.0.distribution_cut.0.range.0.min", "windows_based_sli.0.good_total_ratio_threshold.0.performance.0.distribution_cut.0.range.0.max"},
 																		},
 																		"min": {
 																			Type:     schema.TypeFloat,
 																			Optional: true,
 																			Description: `Min value for the range (inclusive). If not given,
-will be set to "-infinity", defining an open range
-"< range.max"`,
+will be set to 0`,
 																			AtLeastOneOf: []string{"windows_based_sli.0.good_total_ratio_threshold.0.performance.0.distribution_cut.0.range.0.min", "windows_based_sli.0.good_total_ratio_threshold.0.performance.0.distribution_cut.0.range.0.max"},
 																		},
 																	},
@@ -714,6 +710,16 @@ integer fraction of a day and at least 60s.`,
 				ValidateFunc: validateRegexp(`^[a-z0-9\-]+$`),
 				Description:  `The id to use for this ServiceLevelObjective. If omitted, an id will be generated instead.`,
 			},
+			"user_labels": {
+				Type:     schema.TypeMap,
+				Optional: true,
+				Description: `This field is intended to be used for organizing and identifying the AlertPolicy
+objects.The field can contain up to 64 entries. Each key and value is limited
+to 63 Unicode characters or 128 bytes, whichever is smaller. Labels and values
+can contain only lowercase letters, numerals, underscores, and dashes. Keys
+must begin with a letter.`,
+				Elem: &schema.Schema{Type: schema.TypeString},
+			},
 			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -733,7 +739,7 @@ projects/[PROJECT_ID_OR_NUMBER]/services/[SERVICE_ID]/serviceLevelObjectives/[SL
 
 func resourceMonitoringSloCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -762,6 +768,12 @@ func resourceMonitoringSloCreate(d *schema.ResourceData, meta interface{}) error
 		return err
 	} else if v, ok := d.GetOkExists("calendar_period"); !isEmptyValue(reflect.ValueOf(calendarPeriodProp)) && (ok || !reflect.DeepEqual(v, calendarPeriodProp)) {
 		obj["calendarPeriod"] = calendarPeriodProp
+	}
+	userLabelsProp, err := expandMonitoringSloUserLabels(d.Get("user_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("user_labels"); ok || !reflect.DeepEqual(v, userLabelsProp) {
+		obj["userLabels"] = userLabelsProp
 	}
 	serviceLevelIndicatorProp, err := expandMonitoringSloServiceLevelIndicator(nil, d, config)
 	if err != nil {
@@ -807,7 +819,7 @@ func resourceMonitoringSloCreate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Slo: %s", err)
 	}
@@ -829,7 +841,7 @@ func resourceMonitoringSloCreate(d *schema.ResourceData, meta interface{}) error
 
 func resourceMonitoringSloRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -852,7 +864,7 @@ func resourceMonitoringSloRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("MonitoringSlo %q", d.Id()))
 	}
@@ -874,6 +886,9 @@ func resourceMonitoringSloRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading Slo: %s", err)
 	}
 	if err := d.Set("calendar_period", flattenMonitoringSloCalendarPeriod(res["calendarPeriod"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Slo: %s", err)
+	}
+	if err := d.Set("user_labels", flattenMonitoringSloUserLabels(res["userLabels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Slo: %s", err)
 	}
 	// Terraform must set the top level schema field, but since this object contains collapsed properties
@@ -900,7 +915,7 @@ func resourceMonitoringSloRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceMonitoringSloUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -937,6 +952,12 @@ func resourceMonitoringSloUpdate(d *schema.ResourceData, meta interface{}) error
 		return err
 	} else if v, ok := d.GetOkExists("calendar_period"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, calendarPeriodProp)) {
 		obj["calendarPeriod"] = calendarPeriodProp
+	}
+	userLabelsProp, err := expandMonitoringSloUserLabels(d.Get("user_labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("user_labels"); ok || !reflect.DeepEqual(v, userLabelsProp) {
+		obj["userLabels"] = userLabelsProp
 	}
 	serviceLevelIndicatorProp, err := expandMonitoringSloServiceLevelIndicator(nil, d, config)
 	if err != nil {
@@ -981,6 +1002,10 @@ func resourceMonitoringSloUpdate(d *schema.ResourceData, meta interface{}) error
 		updateMask = append(updateMask, "calendarPeriod")
 	}
 
+	if d.HasChange("user_labels") {
+		updateMask = append(updateMask, "userLabels")
+	}
+
 	if d.HasChange("basic_sli") {
 		updateMask = append(updateMask, "serviceLevelIndicator.basicSli")
 	}
@@ -1020,7 +1045,7 @@ func resourceMonitoringSloUpdate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Slo %q: %s", d.Id(), err)
@@ -1033,7 +1058,7 @@ func resourceMonitoringSloUpdate(d *schema.ResourceData, meta interface{}) error
 
 func resourceMonitoringSloDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1066,7 +1091,7 @@ func resourceMonitoringSloDelete(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Slo")
 	}
@@ -1115,6 +1140,10 @@ func expandMonitoringSloRollingPeriodDays(v interface{}, d TerraformResourceData
 }
 
 func flattenMonitoringSloCalendarPeriod(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenMonitoringSloUserLabels(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1608,6 +1637,17 @@ func flattenMonitoringSloRollingPeriodDays(v interface{}, d *schema.ResourceData
 
 func expandMonitoringSloCalendarPeriod(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
+}
+
+func expandMonitoringSloUserLabels(v interface{}, d TerraformResourceData, config *Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
 }
 
 func expandMonitoringSloServiceLevelIndicator(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {

@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"google.golang.org/api/googleapi"
 )
 
 var bigqueryAccessRoleToPrimitiveMap = map[string]string{
@@ -54,19 +53,19 @@ func resourceBigQueryDatasetAccessIamMemberDiffSuppress(k, old, new string, d *s
 		}
 
 		if memberInState := d.Get("user_by_email").(string); memberInState != "" {
-			return memberInState == strippedIamMember
+			return strings.ToUpper(memberInState) == strings.ToUpper(strippedIamMember)
 		}
 
 		if memberInState := d.Get("group_by_email").(string); memberInState != "" {
-			return memberInState == strippedIamMember
+			return strings.ToUpper(memberInState) == strings.ToUpper(strippedIamMember)
 		}
 
 		if memberInState := d.Get("domain").(string); memberInState != "" {
-			return memberInState == strippedIamMember
+			return strings.ToUpper(memberInState) == strings.ToUpper(strippedIamMember)
 		}
 
 		if memberInState := d.Get("special_group").(string); memberInState != "" {
-			return memberInState == strippedIamMember
+			return strings.ToUpper(memberInState) == strings.ToUpper(strippedIamMember)
 		}
 	}
 
@@ -140,15 +139,15 @@ func resourceBigQueryDatasetAccessReassignIamMemberInNestedObjectList(d *schema.
 	return "", nil, nil
 }
 
-func resourceBigQueryDatasetAccess() *schema.Resource {
+func ResourceBigQueryDatasetAccess() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceBigQueryDatasetAccessCreate,
 		Read:   resourceBigQueryDatasetAccessRead,
 		Delete: resourceBigQueryDatasetAccessDelete,
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -160,6 +159,51 @@ func resourceBigQueryDatasetAccess() *schema.Resource {
 must contain only letters (a-z, A-Z), numbers (0-9), or
 underscores (_). The maximum length is 1,024 characters.`,
 			},
+			"dataset": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Grants all resources of particular types in a particular dataset read access to the current dataset.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"dataset": {
+							Type:        schema.TypeList,
+							Required:    true,
+							ForceNew:    true,
+							Description: `The dataset this entry applies to`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"dataset_id": {
+										Type:        schema.TypeString,
+										Required:    true,
+										ForceNew:    true,
+										Description: `The ID of the dataset containing this table.`,
+									},
+									"project_id": {
+										Type:        schema.TypeString,
+										Required:    true,
+										ForceNew:    true,
+										Description: `The ID of the project containing this table.`,
+									},
+								},
+							},
+						},
+						"target_types": {
+							Type:     schema.TypeList,
+							Required: true,
+							ForceNew: true,
+							Description: `Which resources in the dataset this entry applies to. Currently, only views are supported,
+but additional target types may be added in the future. Possible values: VIEWS`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
+			},
 			"domain": {
 				Type:             schema.TypeString,
 				Optional:         true,
@@ -167,7 +211,7 @@ underscores (_). The maximum length is 1,024 characters.`,
 				DiffSuppressFunc: resourceBigQueryDatasetAccessIamMemberDiffSuppress,
 				Description: `A domain to grant access to. Any users signed in with the
 domain specified will be granted the specified access`,
-				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view"},
+				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
 			},
 			"group_by_email": {
 				Type:             schema.TypeString,
@@ -175,7 +219,7 @@ domain specified will be granted the specified access`,
 				ForceNew:         true,
 				DiffSuppressFunc: resourceBigQueryDatasetAccessIamMemberDiffSuppress,
 				Description:      `An email address of a Google Group to grant access to.`,
-				ExactlyOneOf:     []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view"},
+				ExactlyOneOf:     []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
 			},
 			"iam_member": {
 				Type:             schema.TypeString,
@@ -184,7 +228,7 @@ domain specified will be granted the specified access`,
 				DiffSuppressFunc: resourceBigQueryDatasetAccessIamMemberDiffSuppress,
 				Description: `Some other type of member that appears in the IAM Policy but isn't a user,
 group, domain, or special group. For example: 'allUsers'`,
-				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view"},
+				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
 			},
 			"role": {
 				Type:             schema.TypeString,
@@ -197,6 +241,42 @@ supported. Predefined roles that have equivalent basic roles are
 swapped by the API to their basic counterparts, and will show a diff
 post-create. See
 [official docs](https://cloud.google.com/bigquery/docs/access-control).`,
+			},
+			"routine": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Description: `A routine from a different dataset to grant access to. Queries
+executed against that routine will have read access to tables in
+this dataset. The role field is not required when this field is
+set. If that routine is updated by any user, access to the routine
+needs to be granted again via an update operation.`,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"dataset_id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: `The ID of the dataset containing this table.`,
+						},
+						"project_id": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: `The ID of the project containing this table.`,
+						},
+						"routine_id": {
+							Type:     schema.TypeString,
+							Required: true,
+							ForceNew: true,
+							Description: `The ID of the routine. The ID must contain only letters (a-z,
+A-Z), numbers (0-9), or underscores (_). The maximum length
+is 256 characters.`,
+						},
+					},
+				},
+				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
 			},
 			"special_group": {
 				Type:             schema.TypeString,
@@ -216,7 +296,7 @@ post-create. See
 
 
 * 'allAuthenticatedUsers': All authenticated BigQuery users.`,
-				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view"},
+				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
 			},
 			"user_by_email": {
 				Type:             schema.TypeString,
@@ -225,7 +305,7 @@ post-create. See
 				DiffSuppressFunc: resourceBigQueryDatasetAccessIamMemberDiffSuppress,
 				Description: `An email address of a user to grant access to. For example:
 fred@example.com`,
-				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view"},
+				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
 			},
 			"view": {
 				Type:     schema.TypeList,
@@ -261,7 +341,7 @@ is 1,024 characters.`,
 						},
 					},
 				},
-				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view"},
+				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
 			},
 			"api_updated_member": {
 				Type:        schema.TypeBool,
@@ -281,7 +361,7 @@ is 1,024 characters.`,
 
 func resourceBigQueryDatasetAccessCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -335,6 +415,18 @@ func resourceBigQueryDatasetAccessCreate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("view"); !isEmptyValue(reflect.ValueOf(viewProp)) && (ok || !reflect.DeepEqual(v, viewProp)) {
 		obj["view"] = viewProp
 	}
+	datasetProp, err := expandNestedBigQueryDatasetAccessDataset(d.Get("dataset"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("dataset"); !isEmptyValue(reflect.ValueOf(datasetProp)) && (ok || !reflect.DeepEqual(v, datasetProp)) {
+		obj["dataset"] = datasetProp
+	}
+	routineProp, err := expandNestedBigQueryDatasetAccessRoutine(d.Get("routine"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("routine"); !isEmptyValue(reflect.ValueOf(routineProp)) && (ok || !reflect.DeepEqual(v, routineProp)) {
+		obj["routine"] = routineProp
+	}
 
 	lockName, err := replaceVars(d, config, "{{dataset_id}}")
 	if err != nil {
@@ -367,7 +459,7 @@ func resourceBigQueryDatasetAccessCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isBigqueryIAMQuotaError)
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isBigqueryIAMQuotaError)
 	if err != nil {
 		return fmt.Errorf("Error creating DatasetAccess: %s", err)
 	}
@@ -414,7 +506,7 @@ func resourceBigQueryDatasetAccessCreate(d *schema.ResourceData, meta interface{
 
 func resourceBigQueryDatasetAccessRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -437,7 +529,7 @@ func resourceBigQueryDatasetAccessRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isBigqueryIAMQuotaError)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isBigqueryIAMQuotaError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("BigQueryDatasetAccess %q", d.Id()))
 	}
@@ -479,13 +571,19 @@ func resourceBigQueryDatasetAccessRead(d *schema.ResourceData, meta interface{})
 	if err := d.Set("view", flattenNestedBigQueryDatasetAccessView(res["view"], d, config)); err != nil {
 		return fmt.Errorf("Error reading DatasetAccess: %s", err)
 	}
+	if err := d.Set("dataset", flattenNestedBigQueryDatasetAccessDataset(res["dataset"], d, config)); err != nil {
+		return fmt.Errorf("Error reading DatasetAccess: %s", err)
+	}
+	if err := d.Set("routine", flattenNestedBigQueryDatasetAccessRoutine(res["routine"], d, config)); err != nil {
+		return fmt.Errorf("Error reading DatasetAccess: %s", err)
+	}
 
 	return nil
 }
 
 func resourceBigQueryDatasetAccessDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -523,7 +621,7 @@ func resourceBigQueryDatasetAccessDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isBigqueryIAMQuotaError)
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isBigqueryIAMQuotaError)
 	if err != nil {
 		return handleNotFoundError(err, d, "DatasetAccess")
 	}
@@ -582,6 +680,77 @@ func flattenNestedBigQueryDatasetAccessViewProjectId(v interface{}, d *schema.Re
 }
 
 func flattenNestedBigQueryDatasetAccessViewTableId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNestedBigQueryDatasetAccessDataset(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["dataset"] =
+		flattenNestedBigQueryDatasetAccessDatasetDataset(original["dataset"], d, config)
+	transformed["target_types"] =
+		flattenNestedBigQueryDatasetAccessDatasetTargetTypes(original["targetTypes"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNestedBigQueryDatasetAccessDatasetDataset(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["dataset_id"] =
+		flattenNestedBigQueryDatasetAccessDatasetDatasetDatasetId(original["datasetId"], d, config)
+	transformed["project_id"] =
+		flattenNestedBigQueryDatasetAccessDatasetDatasetProjectId(original["projectId"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNestedBigQueryDatasetAccessDatasetDatasetDatasetId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNestedBigQueryDatasetAccessDatasetDatasetProjectId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNestedBigQueryDatasetAccessDatasetTargetTypes(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNestedBigQueryDatasetAccessRoutine(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["dataset_id"] =
+		flattenNestedBigQueryDatasetAccessRoutineDatasetId(original["datasetId"], d, config)
+	transformed["project_id"] =
+		flattenNestedBigQueryDatasetAccessRoutineProjectId(original["projectId"], d, config)
+	transformed["routine_id"] =
+		flattenNestedBigQueryDatasetAccessRoutineRoutineId(original["routineId"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNestedBigQueryDatasetAccessRoutineDatasetId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNestedBigQueryDatasetAccessRoutineProjectId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNestedBigQueryDatasetAccessRoutineRoutineId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -665,6 +834,115 @@ func expandNestedBigQueryDatasetAccessViewTableId(v interface{}, d TerraformReso
 	return v, nil
 }
 
+func expandNestedBigQueryDatasetAccessDataset(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDataset, err := expandNestedBigQueryDatasetAccessDatasetDataset(original["dataset"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDataset); val.IsValid() && !isEmptyValue(val) {
+		transformed["dataset"] = transformedDataset
+	}
+
+	transformedTargetTypes, err := expandNestedBigQueryDatasetAccessDatasetTargetTypes(original["target_types"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTargetTypes); val.IsValid() && !isEmptyValue(val) {
+		transformed["targetTypes"] = transformedTargetTypes
+	}
+
+	return transformed, nil
+}
+
+func expandNestedBigQueryDatasetAccessDatasetDataset(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDatasetId, err := expandNestedBigQueryDatasetAccessDatasetDatasetDatasetId(original["dataset_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDatasetId); val.IsValid() && !isEmptyValue(val) {
+		transformed["datasetId"] = transformedDatasetId
+	}
+
+	transformedProjectId, err := expandNestedBigQueryDatasetAccessDatasetDatasetProjectId(original["project_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedProjectId); val.IsValid() && !isEmptyValue(val) {
+		transformed["projectId"] = transformedProjectId
+	}
+
+	return transformed, nil
+}
+
+func expandNestedBigQueryDatasetAccessDatasetDatasetDatasetId(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNestedBigQueryDatasetAccessDatasetDatasetProjectId(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNestedBigQueryDatasetAccessDatasetTargetTypes(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNestedBigQueryDatasetAccessRoutine(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedDatasetId, err := expandNestedBigQueryDatasetAccessRoutineDatasetId(original["dataset_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDatasetId); val.IsValid() && !isEmptyValue(val) {
+		transformed["datasetId"] = transformedDatasetId
+	}
+
+	transformedProjectId, err := expandNestedBigQueryDatasetAccessRoutineProjectId(original["project_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedProjectId); val.IsValid() && !isEmptyValue(val) {
+		transformed["projectId"] = transformedProjectId
+	}
+
+	transformedRoutineId, err := expandNestedBigQueryDatasetAccessRoutineRoutineId(original["routine_id"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRoutineId); val.IsValid() && !isEmptyValue(val) {
+		transformed["routineId"] = transformedRoutineId
+	}
+
+	return transformed, nil
+}
+
+func expandNestedBigQueryDatasetAccessRoutineDatasetId(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNestedBigQueryDatasetAccessRoutineProjectId(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNestedBigQueryDatasetAccessRoutineRoutineId(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func flattenNestedBigQueryDatasetAccess(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
 	var v interface{}
 	var ok bool
@@ -727,6 +1005,16 @@ func resourceBigQueryDatasetAccessFindNestedObjectInList(d *schema.ResourceData,
 		return -1, nil, err
 	}
 	expectedFlattenedView := flattenNestedBigQueryDatasetAccessView(expectedView, d, meta.(*Config))
+	expectedDataset, err := expandNestedBigQueryDatasetAccessDataset(d.Get("dataset"), d, meta.(*Config))
+	if err != nil {
+		return -1, nil, err
+	}
+	expectedFlattenedDataset := flattenNestedBigQueryDatasetAccessDataset(expectedDataset, d, meta.(*Config))
+	expectedRoutine, err := expandNestedBigQueryDatasetAccessRoutine(d.Get("routine"), d, meta.(*Config))
+	if err != nil {
+		return -1, nil, err
+	}
+	expectedFlattenedRoutine := flattenNestedBigQueryDatasetAccessRoutine(expectedRoutine, d, meta.(*Config))
 
 	// Search list for this resource.
 	for idx, itemRaw := range items {
@@ -777,6 +1065,18 @@ func resourceBigQueryDatasetAccessFindNestedObjectInList(d *schema.ResourceData,
 			log.Printf("[DEBUG] Skipping item with view= %#v, looking for %#v)", itemView, expectedFlattenedView)
 			continue
 		}
+		itemDataset := flattenNestedBigQueryDatasetAccessDataset(item["dataset"], d, meta.(*Config))
+		// isEmptyValue check so that if one is nil and the other is "", that's considered a match
+		if !(isEmptyValue(reflect.ValueOf(itemDataset)) && isEmptyValue(reflect.ValueOf(expectedFlattenedDataset))) && !reflect.DeepEqual(itemDataset, expectedFlattenedDataset) {
+			log.Printf("[DEBUG] Skipping item with dataset= %#v, looking for %#v)", itemDataset, expectedFlattenedDataset)
+			continue
+		}
+		itemRoutine := flattenNestedBigQueryDatasetAccessRoutine(item["routine"], d, meta.(*Config))
+		// isEmptyValue check so that if one is nil and the other is "", that's considered a match
+		if !(isEmptyValue(reflect.ValueOf(itemRoutine)) && isEmptyValue(reflect.ValueOf(expectedFlattenedRoutine))) && !reflect.DeepEqual(itemRoutine, expectedFlattenedRoutine) {
+			log.Printf("[DEBUG] Skipping item with routine= %#v, looking for %#v)", itemRoutine, expectedFlattenedRoutine)
+			continue
+		}
 		log.Printf("[DEBUG] Found item for resource %q: %#v)", d.Id(), item)
 		return idx, item, nil
 	}
@@ -823,10 +1123,7 @@ func resourceBigQueryDatasetAccessPatchDeleteEncoder(d *schema.ResourceData, met
 	}
 	if item == nil {
 		// Spoof 404 error for proper handling by Delete (i.e. no-op)
-		return nil, &googleapi.Error{
-			Code:    404,
-			Message: "DatasetAccess not found in list",
-		}
+		return nil, fake404("nested", "BigQueryDatasetAccess")
 	}
 
 	updatedItems := append(currItems[:idx], currItems[idx+1:]...)
@@ -850,12 +1147,12 @@ func resourceBigQueryDatasetAccessListForPatch(d *schema.ResourceData, meta inte
 		return nil, err
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := sendRequest(config, "GET", project, url, userAgent, nil, isBigqueryIAMQuotaError)
+	res, err := SendRequest(config, "GET", project, url, userAgent, nil, isBigqueryIAMQuotaError)
 	if err != nil {
 		return nil, err
 	}

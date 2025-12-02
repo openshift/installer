@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a Network
     parameters:
-    - name: Network
+    - name: network
       required: true
       description: A full instance of a Network
   apply:
     description: The function used to apply information about a Network
     parameters:
-    - name: Network
+    - name: network
       required: true
       description: A full instance of a Network
   delete:
     description: The function used to delete a Network
     parameters:
-    - name: Network
+    - name: network
       required: true
       description: A full instance of a Network
   deleteAll:
@@ -57,7 +57,11 @@ components:
       x-dcl-locations:
       - global
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -73,6 +77,7 @@ components:
             resources. '
           x-kubernetes-immutable: true
           default: true
+          x-dcl-server-default: true
           x-dcl-send-empty: true
         description:
           type: string
@@ -120,6 +125,7 @@ components:
           description: 'The network-level routing configuration for this network.
             Used by Cloud Router to determine what type of network-wide routing behavior
             to enforce. '
+          x-dcl-server-default: true
           properties:
             routingMode:
               type: string

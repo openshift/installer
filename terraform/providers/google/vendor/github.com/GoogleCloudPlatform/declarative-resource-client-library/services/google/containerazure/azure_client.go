@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,14 +53,14 @@ func (r *AzureClient) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":          dcl.ValueOrEmptyString(nr.Name),
-		"tenantId":      dcl.ValueOrEmptyString(nr.TenantId),
-		"applicationId": dcl.ValueOrEmptyString(nr.ApplicationId),
-		"certificate":   dcl.ValueOrEmptyString(nr.Certificate),
-		"uid":           dcl.ValueOrEmptyString(nr.Uid),
-		"createTime":    dcl.ValueOrEmptyString(nr.CreateTime),
-		"project":       dcl.ValueOrEmptyString(nr.Project),
-		"location":      dcl.ValueOrEmptyString(nr.Location),
+		"name":           dcl.ValueOrEmptyString(nr.Name),
+		"tenant_id":      dcl.ValueOrEmptyString(nr.TenantId),
+		"application_id": dcl.ValueOrEmptyString(nr.ApplicationId),
+		"certificate":    dcl.ValueOrEmptyString(nr.Certificate),
+		"uid":            dcl.ValueOrEmptyString(nr.Uid),
+		"create_time":    dcl.ValueOrEmptyString(nr.CreateTime),
+		"project":        dcl.ValueOrEmptyString(nr.Project),
+		"location":       dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/azureClients/{{name}}", params), nil
 }
@@ -147,7 +147,7 @@ func (c *Client) GetClient(ctx context.Context, r *AzureClient) (*AzureClient, e
 		}
 		return nil, err
 	}
-	result, err := unmarshalClient(b, c)
+	result, err := unmarshalClient(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +304,7 @@ func applyClientHelper(c *Client, ctx context.Context, rawDesired *AzureClient, 
 func applyClientDiff(c *Client, ctx context.Context, desired *AzureClient, rawDesired *AzureClient, ops []clientApiOperation, opts ...dcl.ApplyOption) (*AzureClient, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetClient(ctx, desired.urlNormalized())
+	rawNew, err := c.GetClient(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -317,7 +317,7 @@ func applyClientDiff(c *Client, ctx context.Context, desired *AzureClient, rawDe
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapClient(r, c)
+				fullResp, err := unmarshalMapClient(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

@@ -1,0 +1,98 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Monitoring/MetricsScope
+  description: The Monitoring MetricsScope resource
+  x-dcl-struct-name: MetricsScope
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a MetricsScope
+    parameters:
+    - name: metricsScope
+      required: true
+      description: A full instance of a MetricsScope
+  apply:
+    description: The function used to apply information about a MetricsScope
+    parameters:
+    - name: metricsScope
+      required: true
+      description: A full instance of a MetricsScope
+components:
+  schemas:
+    MetricsScope:
+      title: MetricsScope
+      x-dcl-id: locations/global/metricsScopes/{{name}}
+      x-dcl-locations:
+      - global
+      x-dcl-has-create: false
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      properties:
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. The time when this `Metrics Scope` was created.
+          x-kubernetes-immutable: true
+        monitoredProjects:
+          type: array
+          x-dcl-go-name: MonitoredProjects
+          readOnly: true
+          description: Output only. The list of projects monitored by this `Metrics
+            Scope`.
+          x-kubernetes-immutable: true
+          x-dcl-list-type: list
+          items:
+            type: object
+            x-dcl-go-type: MetricsScopeMonitoredProjects
+            properties:
+              createTime:
+                type: string
+                format: date-time
+                x-dcl-go-name: CreateTime
+                readOnly: true
+                description: Output only. The time when this `MonitoredProject` was
+                  created.
+                x-kubernetes-immutable: true
+              name:
+                type: string
+                x-dcl-go-name: Name
+                description: 'Immutable. The resource name of the `MonitoredProject`.
+                  On input, the resource name includes the scoping project ID and
+                  monitored project ID. On output, it contains the equivalent project
+                  numbers. Example: `locations/global/metricsScopes/{SCOPING_PROJECT_ID_OR_NUMBER}/projects/{MONITORED_PROJECT_ID_OR_NUMBER}`'
+                x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: 'Immutable. The resource name of the Monitoring Metrics Scope.
+            On input, the resource name can be specified with the scoping project
+            ID or number. On output, the resource name is specified with the scoping
+            project number. Example: `locations/global/metricsScopes/{SCOPING_PROJECT_ID_OR_NUMBER}`'
+          x-kubernetes-immutable: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. The time when this `Metrics Scope` record was
+            last updated.
+          x-kubernetes-immutable: true

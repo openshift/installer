@@ -18,12 +18,10 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 const notebooksInstanceGoogleProvidedLabel = "goog-caip-notebook"
@@ -43,7 +41,7 @@ func NotebooksInstanceLabelDiffSuppress(k, old, new string, d *schema.ResourceDa
 	return false
 }
 
-func resourceNotebooksInstance() *schema.Resource {
+func ResourceNotebooksInstance() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceNotebooksInstanceCreate,
 		Read:   resourceNotebooksInstanceRead,
@@ -55,9 +53,9 @@ func resourceNotebooksInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(15 * time.Minute),
-			Update: schema.DefaultTimeout(15 * time.Minute),
-			Delete: schema.DefaultTimeout(15 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -101,7 +99,7 @@ machineType you have selected.`,
 							Type:         schema.TypeString,
 							Required:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ACCELERATOR_TYPE_UNSPECIFIED", "NVIDIA_TESLA_K80", "NVIDIA_TESLA_P100", "NVIDIA_TESLA_V100", "NVIDIA_TESLA_P4", "NVIDIA_TESLA_T4", "NVIDIA_TESLA_T4_VWS", "NVIDIA_TESLA_P100_VWS", "NVIDIA_TESLA_P4_VWS", "NVIDIA_TESLA_A100", "TPU_V2", "TPU_V3"}, false),
+							ValidateFunc: validateEnum([]string{"ACCELERATOR_TYPE_UNSPECIFIED", "NVIDIA_TESLA_K80", "NVIDIA_TESLA_P100", "NVIDIA_TESLA_V100", "NVIDIA_TESLA_P4", "NVIDIA_TESLA_T4", "NVIDIA_TESLA_T4_VWS", "NVIDIA_TESLA_P100_VWS", "NVIDIA_TESLA_P4_VWS", "NVIDIA_TESLA_A100", "TPU_V2", "TPU_V3"}),
 							Description:  `Type of this accelerator. Possible values: ["ACCELERATOR_TYPE_UNSPECIFIED", "NVIDIA_TESLA_K80", "NVIDIA_TESLA_P100", "NVIDIA_TESLA_V100", "NVIDIA_TESLA_P4", "NVIDIA_TESLA_T4", "NVIDIA_TESLA_T4_VWS", "NVIDIA_TESLA_P100_VWS", "NVIDIA_TESLA_P4_VWS", "NVIDIA_TESLA_A100", "TPU_V2", "TPU_V3"]`,
 						},
 					},
@@ -119,8 +117,8 @@ If not specified, this defaults to 100.`,
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"DISK_TYPE_UNSPECIFIED", "PD_STANDARD", "PD_SSD", "PD_BALANCED", ""}, false),
-				Description:  `Possible disk types for notebook instances. Possible values: ["DISK_TYPE_UNSPECIFIED", "PD_STANDARD", "PD_SSD", "PD_BALANCED"]`,
+				ValidateFunc: validateEnum([]string{"DISK_TYPE_UNSPECIFIED", "PD_STANDARD", "PD_SSD", "PD_BALANCED", "PD_EXTREME", ""}),
+				Description:  `Possible disk types for notebook instances. Possible values: ["DISK_TYPE_UNSPECIFIED", "PD_STANDARD", "PD_SSD", "PD_BALANCED", "PD_EXTREME"]`,
 			},
 			"container_image": {
 				Type:        schema.TypeList,
@@ -164,18 +162,17 @@ You can choose the size of the data disk based on how big your notebooks and dat
 If not specified, this defaults to 100.`,
 			},
 			"data_disk_type": {
-				Type:             schema.TypeString,
-				Optional:         true,
-				ForceNew:         true,
-				ValidateFunc:     validation.StringInSlice([]string{"DISK_TYPE_UNSPECIFIED", "PD_STANDARD", "PD_SSD", "PD_BALANCED", ""}, false),
-				DiffSuppressFunc: emptyOrDefaultStringSuppress("DISK_TYPE_UNSPECIFIED"),
-				Description:      `Possible disk types for notebook instances. Possible values: ["DISK_TYPE_UNSPECIFIED", "PD_STANDARD", "PD_SSD", "PD_BALANCED"]`,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateEnum([]string{"DISK_TYPE_UNSPECIFIED", "PD_STANDARD", "PD_SSD", "PD_BALANCED", "PD_EXTREME", ""}),
+				Description:  `Possible disk types for notebook instances. Possible values: ["DISK_TYPE_UNSPECIFIED", "PD_STANDARD", "PD_SSD", "PD_BALANCED", "PD_EXTREME"]`,
 			},
 			"disk_encryption": {
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
-				ValidateFunc:     validation.StringInSlice([]string{"DISK_ENCRYPTION_UNSPECIFIED", "GMEK", "CMEK", ""}, false),
+				ValidateFunc:     validateEnum([]string{"DISK_ENCRYPTION_UNSPECIFIED", "GMEK", "CMEK", ""}),
 				DiffSuppressFunc: emptyOrDefaultStringSuppress("DISK_ENCRYPTION_UNSPECIFIED"),
 				Description:      `Disk encryption method used on the boot and data disks, defaults to GMEK. Possible values: ["DISK_ENCRYPTION_UNSPECIFIED", "GMEK", "CMEK"]`,
 			},
@@ -233,6 +230,13 @@ An object containing a list of "key": value pairs. Example: { "name": "wrench", 
 				Description: `The name of the VPC that this instance is in.
 Format: projects/{project_id}/global/networks/{network_id}`,
 			},
+			"nic_type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validateEnum([]string{"UNSPECIFIED_NIC_TYPE", "VIRTIO_NET", "GVNIC", ""}),
+				Description:  `The type of vNIC driver. Possible values: ["UNSPECIFIED_NIC_TYPE", "VIRTIO_NET", "GVNIC"]`,
+			},
 			"no_proxy_access": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -258,6 +262,39 @@ Format: projects/{project_id}/global/networks/{network_id}`,
 				Description: `Path to a Bash script that automatically runs after a
 notebook instance fully boots up. The path must be a URL
 or Cloud Storage path (gs://path-to-file/file-name).`,
+			},
+			"reservation_affinity": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Reservation Affinity for consuming Zonal reservation.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"consume_reservation_type": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ForceNew:     true,
+							ValidateFunc: validateEnum([]string{"NO_RESERVATION", "ANY_RESERVATION", "SPECIFIC_RESERVATION"}),
+							Description:  `The type of Compute Reservation. Possible values: ["NO_RESERVATION", "ANY_RESERVATION", "SPECIFIC_RESERVATION"]`,
+						},
+						"key": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							ForceNew:    true,
+							Description: `Corresponds to the label key of reservation resource.`,
+						},
+						"values": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							ForceNew:    true,
+							Description: `Corresponds to the label values of reservation resource.`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
 			},
 			"service_account": {
 				Type:     schema.TypeString,
@@ -378,9 +415,12 @@ Format: projects/{project_id}`,
 				Description: `Instance creation time`,
 			},
 			"proxy_uri": {
-				Type:        schema.TypeString,
-				Computed:    true,
-				Description: `The proxy endpoint that is used to access the Jupyter notebook.`,
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `The proxy endpoint that is used to access the Jupyter notebook.
+Only returned when the resource is in a 'PROVISIONED' state. If
+needed you can utilize 'terraform apply -refresh-only' to await
+the population of this value.`,
 			},
 			"state": {
 				Type:        schema.TypeString,
@@ -406,7 +446,7 @@ Format: projects/{project_id}`,
 
 func resourceNotebooksInstanceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -453,6 +493,18 @@ func resourceNotebooksInstanceCreate(d *schema.ResourceData, meta interface{}) e
 		return err
 	} else if v, ok := d.GetOkExists("shielded_instance_config"); !isEmptyValue(reflect.ValueOf(shieldedInstanceConfigProp)) && (ok || !reflect.DeepEqual(v, shieldedInstanceConfigProp)) {
 		obj["shieldedInstanceConfig"] = shieldedInstanceConfigProp
+	}
+	nicTypeProp, err := expandNotebooksInstanceNicType(d.Get("nic_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("nic_type"); !isEmptyValue(reflect.ValueOf(nicTypeProp)) && (ok || !reflect.DeepEqual(v, nicTypeProp)) {
+		obj["nicType"] = nicTypeProp
+	}
+	reservationAffinityProp, err := expandNotebooksInstanceReservationAffinity(d.Get("reservation_affinity"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("reservation_affinity"); !isEmptyValue(reflect.ValueOf(reservationAffinityProp)) && (ok || !reflect.DeepEqual(v, reservationAffinityProp)) {
+		obj["reservationAffinity"] = reservationAffinityProp
 	}
 	installGpuDriverProp, err := expandNotebooksInstanceInstallGpuDriver(d.Get("install_gpu_driver"), d, config)
 	if err != nil {
@@ -582,7 +634,7 @@ func resourceNotebooksInstanceCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
 	}
@@ -597,12 +649,13 @@ func resourceNotebooksInstanceCreate(d *schema.ResourceData, meta interface{}) e
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = notebooksOperationWaitTimeWithResponse(
+	err = NotebooksOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Instance", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Instance: %s", err)
 	}
 
@@ -620,7 +673,7 @@ func resourceNotebooksInstanceCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceNotebooksInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -643,7 +696,7 @@ func resourceNotebooksInstanceRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("NotebooksInstance %q", d.Id()))
 	}
@@ -673,6 +726,12 @@ func resourceNotebooksInstanceRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("shielded_instance_config", flattenNotebooksInstanceShieldedInstanceConfig(res["shieldedInstanceConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("nic_type", flattenNotebooksInstanceNicType(res["nicType"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("reservation_affinity", flattenNotebooksInstanceReservationAffinity(res["reservationAffinity"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 	if err := d.Set("state", flattenNotebooksInstanceState(res["state"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -680,9 +739,6 @@ func resourceNotebooksInstanceRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("custom_gpu_driver_path", flattenNotebooksInstanceCustomGpuDriverPath(res["customGpuDriverPath"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Instance: %s", err)
-	}
-	if err := d.Set("data_disk_type", flattenNotebooksInstanceDataDiskType(res["dataDiskType"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("disk_encryption", flattenNotebooksInstanceDiskEncryption(res["diskEncryption"], d, config)); err != nil {
@@ -721,7 +777,7 @@ func resourceNotebooksInstanceRead(d *schema.ResourceData, meta interface{}) err
 
 func resourceNotebooksInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -756,14 +812,14 @@ func resourceNotebooksInstanceUpdate(d *schema.ResourceData, meta interface{}) e
 			billingProject = bp
 		}
 
-		res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
 		} else {
 			log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
 		}
 
-		err = notebooksOperationWaitTime(
+		err = NotebooksOperationWaitTime(
 			config, res, project, "Updating Instance", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
@@ -778,7 +834,7 @@ func resourceNotebooksInstanceUpdate(d *schema.ResourceData, meta interface{}) e
 
 func resourceNotebooksInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -804,12 +860,12 @@ func resourceNotebooksInstanceDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Instance")
 	}
 
-	err = notebooksOperationWaitTime(
+	err = NotebooksOperationWaitTime(
 		config, res, project, "Deleting Instance", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -886,7 +942,7 @@ func flattenNotebooksInstanceAcceleratorConfigType(v interface{}, d *schema.Reso
 func flattenNotebooksInstanceAcceleratorConfigCoreCount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -929,6 +985,39 @@ func flattenNotebooksInstanceShieldedInstanceConfigEnableVtpm(v interface{}, d *
 	return v
 }
 
+func flattenNotebooksInstanceNicType(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNotebooksInstanceReservationAffinity(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["consume_reservation_type"] =
+		flattenNotebooksInstanceReservationAffinityConsumeReservationType(original["consumeReservationType"], d, config)
+	transformed["key"] =
+		flattenNotebooksInstanceReservationAffinityKey(original["key"], d, config)
+	transformed["values"] =
+		flattenNotebooksInstanceReservationAffinityValues(original["values"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNotebooksInstanceReservationAffinityConsumeReservationType(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNotebooksInstanceReservationAffinityKey(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNotebooksInstanceReservationAffinityValues(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenNotebooksInstanceState(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
@@ -938,10 +1027,6 @@ func flattenNotebooksInstanceInstallGpuDriver(v interface{}, d *schema.ResourceD
 }
 
 func flattenNotebooksInstanceCustomGpuDriverPath(v interface{}, d *schema.ResourceData, config *Config) interface{} {
-	return v
-}
-
-func flattenNotebooksInstanceDataDiskType(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1081,6 +1166,55 @@ func expandNotebooksInstanceShieldedInstanceConfigEnableSecureBoot(v interface{}
 }
 
 func expandNotebooksInstanceShieldedInstanceConfigEnableVtpm(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNotebooksInstanceNicType(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNotebooksInstanceReservationAffinity(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedConsumeReservationType, err := expandNotebooksInstanceReservationAffinityConsumeReservationType(original["consume_reservation_type"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedConsumeReservationType); val.IsValid() && !isEmptyValue(val) {
+		transformed["consumeReservationType"] = transformedConsumeReservationType
+	}
+
+	transformedKey, err := expandNotebooksInstanceReservationAffinityKey(original["key"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKey); val.IsValid() && !isEmptyValue(val) {
+		transformed["key"] = transformedKey
+	}
+
+	transformedValues, err := expandNotebooksInstanceReservationAffinityValues(original["values"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedValues); val.IsValid() && !isEmptyValue(val) {
+		transformed["values"] = transformedValues
+	}
+
+	return transformed, nil
+}
+
+func expandNotebooksInstanceReservationAffinityConsumeReservationType(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNotebooksInstanceReservationAffinityKey(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNotebooksInstanceReservationAffinityValues(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

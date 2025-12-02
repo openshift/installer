@@ -11,7 +11,7 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-func dataSourceGoogleComputeZones() *schema.Resource {
+func DataSourceGoogleComputeZones() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleComputeZonesRead,
 		Schema: map[string]*schema.Schema{
@@ -40,7 +40,7 @@ func dataSourceGoogleComputeZones() *schema.Resource {
 
 func dataSourceGoogleComputeZonesRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

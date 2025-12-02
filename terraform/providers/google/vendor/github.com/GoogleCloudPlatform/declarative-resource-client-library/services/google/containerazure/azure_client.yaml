@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,19 +32,19 @@ paths:
   get:
     description: The function used to get information about a Client
     parameters:
-    - name: Client
+    - name: client
       required: true
       description: A full instance of a Client
   apply:
     description: The function used to apply information about a Client
     parameters:
-    - name: Client
+    - name: client
       required: true
       description: A full instance of a Client
   delete:
     description: The function used to delete a Client
     parameters:
-    - name: Client
+    - name: client
       required: true
       description: A full instance of a Client
   deleteAll:
@@ -75,7 +75,11 @@ components:
       title: AzureClient
       x-dcl-id: projects/{{project}}/locations/{{location}}/azureClients/{{name}}
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -87,7 +91,7 @@ components:
         applicationId:
           type: string
           x-dcl-go-name: ApplicationId
-          description: Required. The Azure Active Directory Application ID.
+          description: The Azure Active Directory Application ID.
           x-kubernetes-immutable: true
         certificate:
           type: string
@@ -124,7 +128,7 @@ components:
         tenantId:
           type: string
           x-dcl-go-name: TenantId
-          description: Required. The Azure Active Directory Tenant ID.
+          description: The Azure Active Directory Tenant ID.
           x-kubernetes-immutable: true
         uid:
           type: string
