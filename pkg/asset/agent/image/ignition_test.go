@@ -16,7 +16,7 @@ import (
 	"github.com/vincent-petithory/dataurl"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/utils/pointer"
+	"k8s.io/utils/ptr"
 
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
@@ -706,6 +706,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&tls.AdminKubeConfigClientCertKey{},
 		&gencrypto.AuthConfig{},
 		&common.InfraEnvID{},
+		&agentcommon.OptionalInstallConfig{},
 	}
 }
 
@@ -933,7 +934,7 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 				AssetBase: installconfig.AssetBase{
 					Config: &types.InstallConfig{
 						ControlPlane: &types.MachinePool{
-							Replicas: pointer.Int64(2),
+							Replicas: ptr.To[int64](2),
 							Fencing:  nil,
 						},
 					},
@@ -947,7 +948,7 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 				AssetBase: installconfig.AssetBase{
 					Config: &types.InstallConfig{
 						ControlPlane: &types.MachinePool{
-							Replicas: pointer.Int64(2),
+							Replicas: ptr.To[int64](2),
 							Fencing: &types.Fencing{
 								Credentials: []*types.Credential{},
 							},
@@ -963,7 +964,7 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 				AssetBase: installconfig.AssetBase{
 					Config: &types.InstallConfig{
 						ControlPlane: &types.MachinePool{
-							Replicas: pointer.Int64(2),
+							Replicas: ptr.To[int64](2),
 							Fencing: &types.Fencing{
 								Credentials: []*types.Credential{
 									{
@@ -1009,7 +1010,7 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 				AssetBase: installconfig.AssetBase{
 					Config: &types.InstallConfig{
 						ControlPlane: &types.MachinePool{
-							Replicas: pointer.Int64(2),
+							Replicas: ptr.To[int64](2),
 							Fencing: &types.Fencing{
 								Credentials: []*types.Credential{
 									{
@@ -1053,7 +1054,7 @@ func TestIgnition_addFencingCredentials(t *testing.T) {
 				AssetBase: installconfig.AssetBase{
 					Config: &types.InstallConfig{
 						ControlPlane: &types.MachinePool{
-							Replicas: pointer.Int64(2),
+							Replicas: ptr.To[int64](2),
 							Fencing: &types.Fencing{
 								Credentials: []*types.Credential{
 									{
