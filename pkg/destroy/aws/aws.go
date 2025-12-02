@@ -7,6 +7,7 @@ import (
 	"time"
 
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2v2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/arn"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -105,10 +106,80 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}, nil
 }
 
-func (o *ClusterUninstaller) validate() error {
+// validate runs before the uninstall process to ensure that
+// all prerequisites are met for a safe destroy.
+func (o *ClusterUninstaller) validate(ctx context.Context) error {
 	if len(o.Filters) == 0 {
 		return errors.Errorf("you must specify at least one tag filter")
 	}
+
+	return o.ValidateOwnedSubnets(ctx)
+}
+
+// ValidateOwnedSubnets validates whether the subnets owned by the cluster are safe to destroy. That is, the subnets are not currently in use (shared) by other clusters.
+// This scenario is a misconfiguration and should not happen, but in practice it did: https://issues.redhat.com//browse/OCPBUGS-60071
+// Thus, we add a preflight check to abort the uninstall process in this case to avoid disruptions to other clusters.
+func (o *ClusterUninstaller) ValidateOwnedSubnets(ctx context.Context) error {
+	o.Logger.Debug("Checking owned subnets for shared tags...")
+
+	subnets := make(map[string]awssession.Subnet, 0)
+
+	// Retrieve the subnet(s) to be destroyed during the uninstall process.
+	for _, tags := range o.Filters {
+		subnetFilters := make([]ec2v2types.Filter, 0, len(tags))
+		for tagKey, tagValue := range tags {
+			subnetFilters = append(subnetFilters, ec2v2types.Filter{
+				Name:   aws.String(fmt.Sprintf("tag:%s", tagKey)),
+				Values: []string{tagValue},
+			})
+		}
+
+		input := &ec2v2.DescribeSubnetsInput{Filters: subnetFilters}
+		paginator := ec2v2.NewDescribeSubnetsPaginator(o.EC2Client, input)
+		for paginator.HasMorePages() {
+			page, err := paginator.NextPage(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to describe subnets by tags: %w", err)
+			}
+
+			for _, subnet := range page.Subnets {
+				id := aws.StringValue(subnet.SubnetId)
+				if id == "" {
+					continue
+				}
+				// If the results return the subnet, skip adding.
+				if _, ok := subnets[id]; ok {
+					continue
+				}
+
+				subnets[id] = awssession.Subnet{
+					ID:   id,
+					Tags: awssession.FromAWSTags(subnet.Tags),
+				}
+			}
+		}
+	}
+
+	// The cluster does not own any subnets (i.e. BYO VPC/Subnet use case)
+	// so we can skip the check.
+	if len(subnets) == 0 {
+		o.Logger.Debug("No owned subnets found, skipping validation")
+		return nil
+	}
+
+	for _, subnet := range subnets {
+		// The subnet is marked for deletion but has a shared tag.
+		// We abort the uninstall process.
+		if subnet.Tags.HasClusterSharedTag() {
+			sharedClusterIDs := subnet.Tags.GetClusterIDs(awssession.TagValueShared)
+
+			errMsg := fmt.Sprintf("shared tags found from clusters %v on subnet %s, owned by cluster %s. Destroying cluster %s will delete resources depended on by other clusters, resulting in an outage",
+				sharedClusterIDs, subnet.ID, o.ClusterID, o.ClusterID)
+			resolveMsg := fmt.Sprintf("To destroy cluster %s, first destroy clusters %v", o.ClusterID, sharedClusterIDs)
+			return fmt.Errorf("%s. %s", errMsg, resolveMsg)
+		}
+	}
+
 	return nil
 }
 
@@ -121,7 +192,7 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 // RunWithContext runs the uninstall process with a context.
 // The first return is the list of ARNs for resources that could not be destroyed.
 func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, error) {
-	err := o.validate()
+	err := o.validate(ctx)
 	if err != nil {
 		return nil, err
 	}
