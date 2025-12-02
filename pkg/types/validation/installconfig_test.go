@@ -3196,7 +3196,7 @@ func TestValidateTNF(t *testing.T) {
 						c2().FencingCredentialAddress("ilo5-redfish://192.168.111.2/redfish/v1/Systems/2"))).
 				CpReplicas(2).build(),
 			name:     "fencing_credential_redfish_scheme_no_port",
-			expected: "controlPlane.fencing.credentials\\[0\\].address: Invalid value: \"idrac-redfish://192.168.111.1/redfish/v1/Systems/1\": failed to parse redfish address, no port number found",
+			expected: "",
 		},
 		{
 			config: installConfig().
@@ -3213,7 +3213,7 @@ func TestValidateTNF(t *testing.T) {
 				CpReplicas(2).build(),
 			name:         "fencing_only_valid_for_control_plane",
 			checkCompute: true,
-			expected:     `compute\[\d+\]\.fencing: Invalid value: \{"credentials":\[\{"hostName":"host1","username":"root","password":"password","address":"ipmi://192.168.111.1"\}\]\}: fencing is only valid for control plane`,
+			expected:     `compute\[\d+\]\.fencing: Invalid value: \{"credentials":\[\{"hostName":"host1","username":"root","password":"password","address":"redfish\+https://192.168.111.1/redfish/v1/Systems/1"\}\]\}: fencing is only valid for control plane`,
 		},
 		{
 			config: installConfig().

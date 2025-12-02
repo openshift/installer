@@ -1713,6 +1713,7 @@ func validateFencingCredentialAddress(address string, fldPath *field.Path) field
 	}
 
 	// Validate port - try to infer standard schema ports for https/http, otherwise notify user port is needed
+	// Vendor-specific redfish schemes (idrac-redfish, ilo5-redfish, etc.) default to HTTPS (port 443)
 	redfishPort := parsedURL.Port()
 	if redfishPort == "" {
 		switch {
@@ -1720,6 +1721,8 @@ func validateFencingCredentialAddress(address string, fldPath *field.Path) field
 			// Port 443 is default for https, so it's acceptable
 		case strings.Contains(parsedURL.Scheme, "http"):
 			// Port 80 is default for http, so it's acceptable
+		case strings.Contains(parsedURL.Scheme, "redfish"):
+			// Vendor-specific redfish schemes (idrac-redfish, ilo5-redfish, etc.) use HTTPS by default
 		default:
 			errs = append(errs, field.Invalid(fldPath, address, "failed to parse redfish address, no port number found"))
 		}
