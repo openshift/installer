@@ -23,6 +23,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/templates/content/manifests"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/vsphere"
 	"github.com/openshift/library-go/pkg/crypto"
@@ -337,6 +338,58 @@ func redactedInstallConfig(config types.InstallConfig) ([]byte, error) {
 			PrismAPICallTimeout:    p.PrismAPICallTimeout,
 		}
 		newConfig.Platform.Nutanix = &newNutanixPlatform
+
+	case newConfig.Platform.BareMetal != nil:
+		p := config.BareMetal
+		// Create new hosts with redacted BMC credentials
+		newHosts := make([]*baremetal.Host, len(p.Hosts))
+		for i, host := range p.Hosts {
+			newHost := &baremetal.Host{
+				Name: host.Name,
+				BMC: baremetal.BMC{
+					Username:                       "",
+					Password:                       "",
+					Address:                        host.BMC.Address,
+					DisableCertificateVerification: host.BMC.DisableCertificateVerification,
+				},
+				Role:            host.Role,
+				BootMACAddress:  host.BootMACAddress,
+				HardwareProfile: host.HardwareProfile,
+				RootDeviceHints: host.RootDeviceHints,
+				BootMode:        host.BootMode,
+				NetworkConfig:   host.NetworkConfig,
+			}
+			newHosts[i] = newHost
+		}
+		newBaremetalPlatform := baremetal.Platform{
+			LibvirtURI:                         p.LibvirtURI,
+			ClusterProvisioningIP:              p.ClusterProvisioningIP,
+			DeprecatedProvisioningHostIP:       p.DeprecatedProvisioningHostIP,
+			BootstrapProvisioningIP:            p.BootstrapProvisioningIP,
+			ExternalBridge:                     p.ExternalBridge,
+			ExternalMACAddress:                 p.ExternalMACAddress,
+			ProvisioningNetwork:                p.ProvisioningNetwork,
+			ProvisioningBridge:                 p.ProvisioningBridge,
+			ProvisioningMACAddress:             p.ProvisioningMACAddress,
+			ProvisioningNetworkInterface:       p.ProvisioningNetworkInterface,
+			ProvisioningNetworkCIDR:            p.ProvisioningNetworkCIDR,
+			DeprecatedProvisioningDHCPExternal: p.DeprecatedProvisioningDHCPExternal,
+			ProvisioningDHCPRange:              p.ProvisioningDHCPRange,
+			Hosts:                              newHosts,
+			DefaultMachinePlatform:             p.DefaultMachinePlatform,
+			DeprecatedAPIVIP:                   p.DeprecatedAPIVIP,
+			APIVIPs:                            p.APIVIPs,
+			DeprecatedIngressVIP:               p.DeprecatedIngressVIP,
+			IngressVIPs:                        p.IngressVIPs,
+			BootstrapOSImage:                   p.BootstrapOSImage,
+			ClusterOSImage:                     p.ClusterOSImage,
+			BootstrapExternalStaticIP:          p.BootstrapExternalStaticIP,
+			BootstrapExternalStaticGateway:     p.BootstrapExternalStaticGateway,
+			LoadBalancer:                       p.LoadBalancer,
+			BootstrapExternalStaticDNS:         p.BootstrapExternalStaticDNS,
+			AdditionalNTPServers:               p.AdditionalNTPServers,
+		}
+		newConfig.Platform.BareMetal = &newBaremetalPlatform
 	}
 
 	return yaml.Marshal(newConfig)
