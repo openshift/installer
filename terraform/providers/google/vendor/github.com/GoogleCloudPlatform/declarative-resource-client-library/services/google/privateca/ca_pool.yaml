@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a CaPool
     parameters:
-    - name: CaPool
+    - name: caPool
       required: true
       description: A full instance of a CaPool
   apply:
     description: The function used to apply information about a CaPool
     parameters:
-    - name: CaPool
+    - name: caPool
       required: true
       description: A full instance of a CaPool
   delete:
     description: The function used to delete a CaPool
     parameters:
-    - name: CaPool
+    - name: caPool
       required: true
       description: A full instance of a CaPool
   deleteAll:
@@ -62,10 +62,13 @@ components:
     CaPool:
       title: CaPool
       x-dcl-id: projects/{{project}}/locations/{{location}}/caPools/{{name}}
-      x-dcl-uses-state-hint: true
       x-dcl-parent-container: project
       x-dcl-labels: labels
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -114,6 +117,8 @@ components:
                     x-dcl-go-name: EllipticCurve
                     x-dcl-go-type: CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve
                     description: Represents an allowed Elliptic Curve key type.
+                    x-dcl-conflicts:
+                    - rsa
                     properties:
                       signatureAlgorithm:
                         type: string
@@ -133,6 +138,8 @@ components:
                     x-dcl-go-name: Rsa
                     x-dcl-go-type: CaPoolIssuancePolicyAllowedKeyTypesRsa
                     description: Represents an allowed RSA key type.
+                    x-dcl-conflicts:
+                    - ellipticCurve
                     properties:
                       maxModulusSize:
                         type: integer
@@ -237,7 +244,6 @@ components:
                         If this value is less than 0, the request will fail. If this
                         value is missing, the max path length will be omitted from
                         the CA certificate.
-                      x-dcl-mutable-unreadable: true
                 keyUsage:
                   type: object
                   x-dcl-go-name: KeyUsage

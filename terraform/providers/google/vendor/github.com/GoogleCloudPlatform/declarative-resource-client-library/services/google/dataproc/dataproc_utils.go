@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,17 +18,23 @@ import (
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 )
 
-func encodeJobCreateRequest(m map[string]interface{}) map[string]interface{} {
-	req := make(map[string]interface{}, 1)
+func encodeJobCreateRequest(m map[string]any) map[string]any {
+	req := make(map[string]any, 1)
 	dcl.PutMapEntry(req, []string{"job"}, m)
 	return req
 }
 
-func expandClusterProject(cluster *Cluster, project *string) (*string, error) {
+func expandClusterProject(_ *Client, project *string, _ *Cluster) (*string, error) {
 	return dcl.SelfLinkToName(project), nil
 }
 
-// CompareClusterInstanceGroupConfigNewStyle exposes the compareClusterInstanceGroupConfigNewStyle function for testing.
-func CompareClusterInstanceGroupConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
-	return compareClusterInstanceGroupConfigNewStyle(d, a, fn)
+// CompareClusterConfigMasterConfigNewStyle exposes the compareClusterConfigMasterConfigNewStyle function for testing.
+func CompareClusterConfigMasterConfigNewStyle(d, a any, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	return compareClusterConfigMasterConfigNewStyle(d, a, fn)
+}
+
+func canonicalizeSoftwareConfigProperties(o, n any) bool {
+	// This field is a map that contains both client provided and server provided values. It
+	// is also immutable, so always return "no diff".
+	return true
 }

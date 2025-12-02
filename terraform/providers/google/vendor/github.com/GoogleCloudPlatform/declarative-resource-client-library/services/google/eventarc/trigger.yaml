@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a Trigger
     parameters:
-    - name: Trigger
+    - name: trigger
       required: true
       description: A full instance of a Trigger
   apply:
     description: The function used to apply information about a Trigger
     parameters:
-    - name: Trigger
+    - name: trigger
       required: true
       description: A full instance of a Trigger
   delete:
     description: The function used to delete a Trigger
     parameters:
-    - name: Trigger
+    - name: trigger
       required: true
       description: A full instance of a Trigger
   deleteAll:
@@ -64,7 +64,11 @@ components:
       x-dcl-id: projects/{{project}}/locations/{{location}}/triggers/{{name}}
       x-dcl-parent-container: project
       x-dcl-labels: labels
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -73,6 +77,24 @@ components:
       - project
       - location
       properties:
+        channel:
+          type: string
+          x-dcl-go-name: Channel
+          description: Optional. The name of the channel associated with the trigger
+            in `projects/{project}/locations/{location}/channels/{channel}` format.
+            You must provide a channel to receive events from Eventarc SaaS partners.
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Eventarc/Channel
+            field: name
+        conditions:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: Conditions
+          readOnly: true
+          description: Output only. The reason(s) why a trigger is in FAILED state.
+          x-kubernetes-immutable: true
         createTime:
           type: string
           format: date-time
@@ -90,17 +112,25 @@ components:
             cloudFunction:
               type: string
               x-dcl-go-name: CloudFunction
-              description: 'The Cloud Function resource name. Only Cloud Functions
-                V2 is supported. Format: projects/{project}/locations/{location}/functions/{function}'
+              description: '[WARNING] Configuring a Cloud Function in Trigger is not
+                supported as of today. The Cloud Function resource name. Format: projects/{project}/locations/{location}/functions/{function}'
+              x-dcl-conflicts:
+              - cloudRunService
+              - gke
+              - workflow
               x-dcl-references:
-              - resource: Cloudfunctions/CloudFunction
-                field: selfLink
+              - resource: Cloudfunctions/Function
+                field: name
             cloudRunService:
               type: object
               x-dcl-go-name: CloudRunService
               x-dcl-go-type: TriggerDestinationCloudRunService
               description: Cloud Run fully-managed service that receives the events.
                 The service should be running in the same project of the trigger.
+              x-dcl-conflicts:
+              - cloudFunction
+              - gke
+              - workflow
               required:
               - service
               - region
@@ -126,7 +156,68 @@ components:
                     can be addressed.
                   x-dcl-references:
                   - resource: Run/Service
+                    field: name
+            gke:
+              type: object
+              x-dcl-go-name: Gke
+              x-dcl-go-type: TriggerDestinationGke
+              description: A GKE service capable of receiving events. The service
+                should be running in the same project as the trigger.
+              x-dcl-conflicts:
+              - cloudRunService
+              - cloudFunction
+              - workflow
+              required:
+              - cluster
+              - location
+              - namespace
+              - service
+              properties:
+                cluster:
+                  type: string
+                  x-dcl-go-name: Cluster
+                  description: Required. The name of the cluster the GKE service is
+                    running in. The cluster must be running in the same project as
+                    the trigger being created.
+                  x-dcl-references:
+                  - resource: Container/Cluster
                     field: selfLink
+                location:
+                  type: string
+                  x-dcl-go-name: Location
+                  description: Required. The name of the Google Compute Engine in
+                    which the cluster resides, which can either be compute zone (for
+                    example, us-central1-a) for the zonal clusters or region (for
+                    example, us-central1) for regional clusters.
+                namespace:
+                  type: string
+                  x-dcl-go-name: Namespace
+                  description: Required. The namespace the GKE service is running
+                    in.
+                path:
+                  type: string
+                  x-dcl-go-name: Path
+                  description: 'Optional. The relative path on the GKE service the
+                    events should be sent to. The value must conform to the definition
+                    of a URI path segment (section 3.3 of RFC2396). Examples: "/route",
+                    "route", "route/subroute".'
+                service:
+                  type: string
+                  x-dcl-go-name: Service
+                  description: Required. Name of the GKE service.
+            workflow:
+              type: string
+              x-dcl-go-name: Workflow
+              description: 'The resource name of the Workflow whose Executions are
+                triggered by the events. The Workflow resource should be deployed
+                in the same project as the trigger. Format: `projects/{project}/locations/{location}/workflows/{workflow}`'
+              x-dcl-conflicts:
+              - cloudRunService
+              - cloudFunction
+              - gke
+              x-dcl-references:
+              - resource: Workflows/Workflow
+                field: name
         etag:
           type: string
           x-dcl-go-name: Etag
@@ -167,16 +258,24 @@ components:
                 description: Required. The name of a CloudEvents attribute. Currently,
                   only a subset of attributes are supported for filtering. All triggers
                   MUST provide a filter for the 'type' attribute.
+              operator:
+                type: string
+                x-dcl-go-name: Operator
+                description: Optional. The operator used for matching the events with
+                  the value of the filter. If not specified, only events that have
+                  an exact key-value pair specified in the filter are matched. The
+                  only allowed value is `match-path-pattern`.
               value:
                 type: string
                 x-dcl-go-name: Value
-                description: Required. The value for the attribute.
+                description: Required. The value for the attribute. See https://cloud.google.com/eventarc/docs/creating-triggers#trigger-gcloud
+                  for available values.
         name:
           type: string
           x-dcl-go-name: Name
           description: Required. The resource name of the trigger. Must be unique
-            within the location on the project and must be in `projects/{project}/locations/{location}/triggers/{trigger}`
-            format.
+            within the location on the project.
+          x-kubernetes-immutable: true
         project:
           type: string
           x-dcl-go-name: Project
@@ -192,7 +291,7 @@ components:
           description: Optional. The IAM service account email associated with the
             trigger. The service account represents the identity of the trigger. The
             principal who calls this API must have `iam.serviceAccounts.actAs` permission
-            in the service account. See https://cloud.google.com/iam/docs/understanding-service-accounts?hl=en#sa_common
+            in the service account. See https://cloud.google.com/iam/docs/understanding-service-accounts#sa_common
             for more information. For Cloud Run destinations, this service account
             is used to generate identity tokens when invoking the service. See https://cloud.google.com/run/docs/triggering/pubsub-push#create-service-account
             for information on how to invoke authenticated Cloud Run services. In
@@ -228,16 +327,22 @@ components:
                     created and managed by Eventarc system as a transport for the
                     event delivery. Format: `projects/{PROJECT_ID}/subscriptions/{SUBSCRIPTION_NAME}`.'
                   x-kubernetes-immutable: true
+                  x-dcl-references:
+                  - resource: Pubsub/Subscription
+                    field: name
                 topic:
                   type: string
                   x-dcl-go-name: Topic
                   description: 'Optional. The name of the Pub/Sub topic created and
                     managed by Eventarc system as a transport for the event delivery.
-                    Format: `projects/{PROJECT_ID}/topics/{TOPIC_NAME You may set
+                    Format: `projects/{PROJECT_ID}/topics/{TOPIC_NAME}. You may set
                     an existing topic for triggers of the type google.cloud.pubsub.topic.v1.messagePublished`
                     only. The topic you provide here will not be deleted by Eventarc
                     at trigger deletion.'
                   x-kubernetes-immutable: true
+                  x-dcl-references:
+                  - resource: Pubsub/Topic
+                    field: name
         uid:
           type: string
           x-dcl-go-name: Uid

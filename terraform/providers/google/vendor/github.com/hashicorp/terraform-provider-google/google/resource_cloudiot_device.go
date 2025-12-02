@@ -18,15 +18,13 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceCloudIotDevice() *schema.Resource {
+func ResourceCloudIotDevice() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceCloudIotDeviceCreate,
 		Read:   resourceCloudIotDeviceRead,
@@ -38,9 +36,9 @@ func resourceCloudIotDevice() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -78,7 +76,7 @@ func resourceCloudIotDevice() *schema.Resource {
 									"format": {
 										Type:         schema.TypeString,
 										Required:     true,
-										ValidateFunc: validation.StringInSlice([]string{"RSA_PEM", "RSA_X509_PEM", "ES256_PEM", "ES256_X509_PEM"}, false),
+										ValidateFunc: validateEnum([]string{"RSA_PEM", "RSA_X509_PEM", "ES256_PEM", "ES256_X509_PEM"}),
 										Description:  `The format of the key. Possible values: ["RSA_PEM", "RSA_X509_PEM", "ES256_PEM", "ES256_X509_PEM"]`,
 									},
 									"key": {
@@ -108,14 +106,14 @@ func resourceCloudIotDevice() *schema.Resource {
 						"gateway_auth_method": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ASSOCIATION_ONLY", "DEVICE_AUTH_TOKEN_ONLY", "ASSOCIATION_AND_DEVICE_AUTH_TOKEN", ""}, false),
+							ValidateFunc: validateEnum([]string{"ASSOCIATION_ONLY", "DEVICE_AUTH_TOKEN_ONLY", "ASSOCIATION_AND_DEVICE_AUTH_TOKEN", ""}),
 							Description:  `Indicates whether the device is a gateway. Possible values: ["ASSOCIATION_ONLY", "DEVICE_AUTH_TOKEN_ONLY", "ASSOCIATION_AND_DEVICE_AUTH_TOKEN"]`,
 						},
 						"gateway_type": {
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"GATEWAY", "NON_GATEWAY", ""}, false),
+							ValidateFunc: validateEnum([]string{"GATEWAY", "NON_GATEWAY", ""}),
 							Description:  `Indicates whether the device is a gateway. Default value: "NON_GATEWAY" Possible values: ["GATEWAY", "NON_GATEWAY"]`,
 							Default:      "NON_GATEWAY",
 						},
@@ -135,7 +133,7 @@ func resourceCloudIotDevice() *schema.Resource {
 			"log_level": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"NONE", "ERROR", "INFO", "DEBUG", ""}, false),
+				ValidateFunc: validateEnum([]string{"NONE", "ERROR", "INFO", "DEBUG", ""}),
 				Description:  `The logging verbosity for device activity. Possible values: ["NONE", "ERROR", "INFO", "DEBUG"]`,
 			},
 			"metadata": {
@@ -263,7 +261,7 @@ This is a more compact way to identify devices, and it is globally unique.`,
 
 func resourceCloudIotDeviceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -319,7 +317,7 @@ func resourceCloudIotDeviceCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Device: %s", err)
 	}
@@ -338,7 +336,7 @@ func resourceCloudIotDeviceCreate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceCloudIotDeviceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -355,7 +353,7 @@ func resourceCloudIotDeviceRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("CloudIotDevice %q", d.Id()))
 	}
@@ -414,7 +412,7 @@ func resourceCloudIotDeviceRead(d *schema.ResourceData, meta interface{}) error 
 
 func resourceCloudIotDeviceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -492,7 +490,7 @@ func resourceCloudIotDeviceUpdate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Device %q: %s", d.Id(), err)
@@ -505,7 +503,7 @@ func resourceCloudIotDeviceUpdate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceCloudIotDeviceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -525,7 +523,7 @@ func resourceCloudIotDeviceDelete(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Device")
 	}
@@ -654,7 +652,7 @@ func flattenCloudIotDeviceLastErrorStatus(v interface{}, d *schema.ResourceData,
 func flattenCloudIotDeviceLastErrorStatusNumber(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

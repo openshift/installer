@@ -18,14 +18,12 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceStorageObjectAccessControl() *schema.Resource {
+func ResourceStorageObjectAccessControl() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceStorageObjectAccessControlCreate,
 		Read:   resourceStorageObjectAccessControlRead,
@@ -37,9 +35,9 @@ func resourceStorageObjectAccessControl() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -70,7 +68,7 @@ func resourceStorageObjectAccessControl() *schema.Resource {
 			"role": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"OWNER", "READER"}, false),
+				ValidateFunc: validateEnum([]string{"OWNER", "READER"}),
 				Description:  `The access permission for the entity. Possible values: ["OWNER", "READER"]`,
 			},
 			"domain": {
@@ -107,7 +105,7 @@ func resourceStorageObjectAccessControl() *schema.Resource {
 						"team": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"editors", "owners", "viewers", ""}, false),
+							ValidateFunc: validateEnum([]string{"editors", "owners", "viewers", ""}),
 							Description:  `The team. Possible values: ["editors", "owners", "viewers"]`,
 						},
 					},
@@ -120,7 +118,7 @@ func resourceStorageObjectAccessControl() *schema.Resource {
 
 func resourceStorageObjectAccessControlCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -171,7 +169,7 @@ func resourceStorageObjectAccessControlCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating ObjectAccessControl: %s", err)
 	}
@@ -190,7 +188,7 @@ func resourceStorageObjectAccessControlCreate(d *schema.ResourceData, meta inter
 
 func resourceStorageObjectAccessControlRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -207,7 +205,7 @@ func resourceStorageObjectAccessControlRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("StorageObjectAccessControl %q", d.Id()))
 	}
@@ -245,7 +243,7 @@ func resourceStorageObjectAccessControlRead(d *schema.ResourceData, meta interfa
 
 func resourceStorageObjectAccessControlUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -297,7 +295,7 @@ func resourceStorageObjectAccessControlUpdate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating ObjectAccessControl %q: %s", d.Id(), err)
@@ -310,7 +308,7 @@ func resourceStorageObjectAccessControlUpdate(d *schema.ResourceData, meta inter
 
 func resourceStorageObjectAccessControlDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -337,7 +335,7 @@ func resourceStorageObjectAccessControlDelete(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "ObjectAccessControl")
 	}
@@ -390,7 +388,7 @@ func flattenStorageObjectAccessControlEntityId(v interface{}, d *schema.Resource
 func flattenStorageObjectAccessControlGeneration(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

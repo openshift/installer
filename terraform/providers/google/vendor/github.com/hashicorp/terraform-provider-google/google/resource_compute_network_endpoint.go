@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceComputeNetworkEndpoint() *schema.Resource {
+func ResourceComputeNetworkEndpoint() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeNetworkEndpointCreate,
 		Read:   resourceComputeNetworkEndpointRead,
@@ -34,20 +34,11 @@ func resourceComputeNetworkEndpoint() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Delete: schema.DefaultTimeout(6 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
-			"instance": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				DiffSuppressFunc: compareSelfLinkOrResourceName,
-				Description: `The name for a specific VM instance that the IP address belongs to.
-This is required for network endpoints of type GCE_VM_IP_PORT.
-The instance must be in the same zone of network endpoint group.`,
-			},
 			"ip_address": {
 				Type:     schema.TypeString,
 				Required: true,
@@ -63,11 +54,22 @@ range).`,
 				DiffSuppressFunc: compareResourceNames,
 				Description:      `The network endpoint group this endpoint is part of.`,
 			},
+			"instance": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
+				Description: `The name for a specific VM instance that the IP address belongs to.
+This is required for network endpoints of type GCE_VM_IP_PORT.
+The instance must be in the same zone of network endpoint group.`,
+			},
 			"port": {
-				Type:        schema.TypeInt,
-				Required:    true,
-				ForceNew:    true,
-				Description: `Port number of network endpoint.`,
+				Type:     schema.TypeInt,
+				Optional: true,
+				ForceNew: true,
+				Description: `Port number of network endpoint.
+**Note** 'port' is required unless the Network Endpoint Group is created
+with the type of 'GCE_VM_IP'`,
 			},
 			"zone": {
 				Type:             schema.TypeString,
@@ -90,7 +92,7 @@ range).`,
 
 func resourceComputeNetworkEndpointCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -146,7 +148,7 @@ func resourceComputeNetworkEndpointCreate(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating NetworkEndpoint: %s", err)
 	}
@@ -158,7 +160,7 @@ func resourceComputeNetworkEndpointCreate(d *schema.ResourceData, meta interface
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating NetworkEndpoint", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -175,7 +177,7 @@ func resourceComputeNetworkEndpointCreate(d *schema.ResourceData, meta interface
 
 func resourceComputeNetworkEndpointRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -198,7 +200,7 @@ func resourceComputeNetworkEndpointRead(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "POST", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "POST", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeNetworkEndpoint %q", d.Id()))
 	}
@@ -246,7 +248,7 @@ func resourceComputeNetworkEndpointRead(d *schema.ResourceData, meta interface{}
 
 func resourceComputeNetworkEndpointDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -277,13 +279,17 @@ func resourceComputeNetworkEndpointDelete(d *schema.ResourceData, meta interface
 	if err != nil {
 		return err
 	}
-	toDelete["instance"] = instanceProp
+	if instanceProp != "" {
+		toDelete["instance"] = instanceProp
+	}
 
 	portProp, err := expandNestedComputeNetworkEndpointPort(d.Get("port"), d, config)
 	if err != nil {
 		return err
 	}
-	toDelete["port"] = portProp
+	if portProp != 0 {
+		toDelete["port"] = portProp
+	}
 
 	ipAddressProp, err := expandNestedComputeNetworkEndpointIpAddress(d.Get("ip_address"), d, config)
 	if err != nil {
@@ -301,12 +307,12 @@ func resourceComputeNetworkEndpointDelete(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "NetworkEndpoint")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting NetworkEndpoint", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -320,11 +326,12 @@ func resourceComputeNetworkEndpointDelete(d *schema.ResourceData, meta interface
 
 func resourceComputeNetworkEndpointImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+	// instance is optional, so use * instead of + when reading the import id
 	if err := parseImportId([]string{
-		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/networkEndpointGroups/(?P<network_endpoint_group>[^/]+)/(?P<instance>[^/]+)/(?P<ip_address>[^/]+)/(?P<port>[^/]+)",
-		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<network_endpoint_group>[^/]+)/(?P<instance>[^/]+)/(?P<ip_address>[^/]+)/(?P<port>[^/]+)",
-		"(?P<zone>[^/]+)/(?P<network_endpoint_group>[^/]+)/(?P<instance>[^/]+)/(?P<ip_address>[^/]+)/(?P<port>[^/]+)",
-		"(?P<network_endpoint_group>[^/]+)/(?P<instance>[^/]+)/(?P<ip_address>[^/]+)/(?P<port>[^/]+)",
+		"projects/(?P<project>[^/]+)/zones/(?P<zone>[^/]+)/networkEndpointGroups/(?P<network_endpoint_group>[^/]+)/(?P<instance>[^/]*)/(?P<ip_address>[^/]+)/(?P<port>[^/]+)",
+		"(?P<project>[^/]+)/(?P<zone>[^/]+)/(?P<network_endpoint_group>[^/]+)/(?P<instance>[^/]*)/(?P<ip_address>[^/]+)/(?P<port>[^/]+)",
+		"(?P<zone>[^/]+)/(?P<network_endpoint_group>[^/]+)/(?P<instance>[^/]*)/(?P<ip_address>[^/]+)/(?P<port>[^/]+)",
+		"(?P<network_endpoint_group>[^/]+)/(?P<instance>[^/]*)/(?P<ip_address>[^/]+)/(?P<port>[^/]+)",
 	}, d, config); err != nil {
 		return nil, err
 	}

@@ -27,7 +27,7 @@ import (
 	compute "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/compute"
 )
 
-func resourceComputeFirewallPolicyRule() *schema.Resource {
+func ResourceComputeFirewallPolicyRule() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeFirewallPolicyRuleCreate,
 		Read:   resourceComputeFirewallPolicyRuleRead,
@@ -39,9 +39,9 @@ func resourceComputeFirewallPolicyRule() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -190,13 +190,13 @@ func resourceComputeFirewallPolicyRuleCreate(d *schema.ResourceData, meta interf
 		TargetServiceAccounts: expandStringArray(d.Get("target_service_accounts")),
 	}
 
-	id, err := replaceVarsForId(d, config, "locations/global/firewallPolicies/{{firewall_policy}}/rules/{{priority}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -212,7 +212,7 @@ func resourceComputeFirewallPolicyRuleCreate(d *schema.ResourceData, meta interf
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyFirewallPolicyRule(context.Background(), obj, createDirective...)
+	res, err := client.ApplyFirewallPolicyRule(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -243,7 +243,7 @@ func resourceComputeFirewallPolicyRuleRead(d *schema.ResourceData, meta interfac
 		TargetServiceAccounts: expandStringArray(d.Get("target_service_accounts")),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -320,7 +320,7 @@ func resourceComputeFirewallPolicyRuleUpdate(d *schema.ResourceData, meta interf
 		TargetServiceAccounts: expandStringArray(d.Get("target_service_accounts")),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -369,7 +369,7 @@ func resourceComputeFirewallPolicyRuleDelete(d *schema.ResourceData, meta interf
 	}
 
 	log.Printf("[DEBUG] Deleting FirewallPolicyRule %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -395,6 +395,7 @@ func resourceComputeFirewallPolicyRuleDelete(d *schema.ResourceData, meta interf
 
 func resourceComputeFirewallPolicyRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"locations/global/firewallPolicies/(?P<firewall_policy>[^/]+)/rules/(?P<priority>[^/]+)",
 		"(?P<firewall_policy>[^/]+)/(?P<priority>[^/]+)",
@@ -417,7 +418,7 @@ func expandComputeFirewallPolicyRuleMatch(o interface{}) *compute.FirewallPolicy
 		return compute.EmptyFirewallPolicyRuleMatch
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return compute.EmptyFirewallPolicyRuleMatch
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -447,7 +448,7 @@ func expandComputeFirewallPolicyRuleMatchLayer4ConfigsArray(o interface{}) []com
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]compute.FirewallPolicyRuleMatchLayer4Configs, 0)
 	}
 

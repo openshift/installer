@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -161,8 +161,8 @@ func (r *CaPoolIssuancePolicy) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicy is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicy *CaPoolIssuancePolicy = &CaPoolIssuancePolicy{empty: true}
 
 func (r *CaPoolIssuancePolicy) Empty() bool {
@@ -210,8 +210,8 @@ func (r *CaPoolIssuancePolicyAllowedKeyTypes) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyAllowedKeyTypes is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyAllowedKeyTypes *CaPoolIssuancePolicyAllowedKeyTypes = &CaPoolIssuancePolicyAllowedKeyTypes{empty: true}
 
 func (r *CaPoolIssuancePolicyAllowedKeyTypes) Empty() bool {
@@ -259,8 +259,8 @@ func (r *CaPoolIssuancePolicyAllowedKeyTypesRsa) UnmarshalJSON(data []byte) erro
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyAllowedKeyTypesRsa is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyAllowedKeyTypesRsa *CaPoolIssuancePolicyAllowedKeyTypesRsa = &CaPoolIssuancePolicyAllowedKeyTypesRsa{empty: true}
 
 func (r *CaPoolIssuancePolicyAllowedKeyTypesRsa) Empty() bool {
@@ -305,8 +305,8 @@ func (r *CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve) UnmarshalJSON(data []
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyAllowedKeyTypesEllipticCurve *CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve = &CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve{empty: true}
 
 func (r *CaPoolIssuancePolicyAllowedKeyTypesEllipticCurve) Empty() bool {
@@ -354,8 +354,8 @@ func (r *CaPoolIssuancePolicyAllowedIssuanceModes) UnmarshalJSON(data []byte) er
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyAllowedIssuanceModes is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyAllowedIssuanceModes *CaPoolIssuancePolicyAllowedIssuanceModes = &CaPoolIssuancePolicyAllowedIssuanceModes{empty: true}
 
 func (r *CaPoolIssuancePolicyAllowedIssuanceModes) Empty() bool {
@@ -412,8 +412,8 @@ func (r *CaPoolIssuancePolicyBaselineValues) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValues is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValues *CaPoolIssuancePolicyBaselineValues = &CaPoolIssuancePolicyBaselineValues{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValues) Empty() bool {
@@ -464,8 +464,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesKeyUsage) UnmarshalJSON(data []byte) 
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValuesKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValuesKeyUsage *CaPoolIssuancePolicyBaselineValuesKeyUsage = &CaPoolIssuancePolicyBaselineValuesKeyUsage{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValuesKeyUsage) Empty() bool {
@@ -534,8 +534,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage) UnmarshalJSON(d
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage *CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage = &CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValuesKeyUsageBaseKeyUsage) Empty() bool {
@@ -595,8 +595,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage) UnmarshalJS
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage *CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage = &CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValuesKeyUsageExtendedKeyUsage) Empty() bool {
@@ -641,8 +641,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages) Unm
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages *CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages = &CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValuesKeyUsageUnknownExtendedKeyUsages) Empty() bool {
@@ -690,8 +690,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesCaOptions) UnmarshalJSON(data []byte)
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValuesCaOptions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValuesCaOptions *CaPoolIssuancePolicyBaselineValuesCaOptions = &CaPoolIssuancePolicyBaselineValuesCaOptions{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValuesCaOptions) Empty() bool {
@@ -736,8 +736,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesPolicyIds) UnmarshalJSON(data []byte)
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValuesPolicyIds is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValuesPolicyIds *CaPoolIssuancePolicyBaselineValuesPolicyIds = &CaPoolIssuancePolicyBaselineValuesPolicyIds{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValuesPolicyIds) Empty() bool {
@@ -788,8 +788,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesAdditionalExtensions) UnmarshalJSON(d
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValuesAdditionalExtensions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValuesAdditionalExtensions *CaPoolIssuancePolicyBaselineValuesAdditionalExtensions = &CaPoolIssuancePolicyBaselineValuesAdditionalExtensions{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValuesAdditionalExtensions) Empty() bool {
@@ -834,8 +834,8 @@ func (r *CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId) Unmarsh
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId *CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId = &CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId{empty: true}
 
 func (r *CaPoolIssuancePolicyBaselineValuesAdditionalExtensionsObjectId) Empty() bool {
@@ -886,8 +886,8 @@ func (r *CaPoolIssuancePolicyIdentityConstraints) UnmarshalJSON(data []byte) err
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyIdentityConstraints is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyIdentityConstraints *CaPoolIssuancePolicyIdentityConstraints = &CaPoolIssuancePolicyIdentityConstraints{empty: true}
 
 func (r *CaPoolIssuancePolicyIdentityConstraints) Empty() bool {
@@ -941,8 +941,8 @@ func (r *CaPoolIssuancePolicyIdentityConstraintsCelExpression) UnmarshalJSON(dat
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyIdentityConstraintsCelExpression is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyIdentityConstraintsCelExpression *CaPoolIssuancePolicyIdentityConstraintsCelExpression = &CaPoolIssuancePolicyIdentityConstraintsCelExpression{empty: true}
 
 func (r *CaPoolIssuancePolicyIdentityConstraintsCelExpression) Empty() bool {
@@ -990,8 +990,8 @@ func (r *CaPoolIssuancePolicyPassthroughExtensions) UnmarshalJSON(data []byte) e
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyPassthroughExtensions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyPassthroughExtensions *CaPoolIssuancePolicyPassthroughExtensions = &CaPoolIssuancePolicyPassthroughExtensions{empty: true}
 
 func (r *CaPoolIssuancePolicyPassthroughExtensions) Empty() bool {
@@ -1036,8 +1036,8 @@ func (r *CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions) Unmarsha
 }
 
 // This object is used to assert a desired state where this CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions *CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions = &CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions{empty: true}
 
 func (r *CaPoolIssuancePolicyPassthroughExtensionsAdditionalExtensions) Empty() bool {
@@ -1085,8 +1085,8 @@ func (r *CaPoolPublishingOptions) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CaPoolPublishingOptions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCaPoolPublishingOptions *CaPoolPublishingOptions = &CaPoolPublishingOptions{empty: true}
 
 func (r *CaPoolPublishingOptions) Empty() bool {
@@ -1120,13 +1120,13 @@ func (r *CaPool) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":              dcl.ValueOrEmptyString(nr.Name),
-		"tier":              dcl.ValueOrEmptyString(nr.Tier),
-		"issuancePolicy":    dcl.ValueOrEmptyString(nr.IssuancePolicy),
-		"publishingOptions": dcl.ValueOrEmptyString(nr.PublishingOptions),
-		"labels":            dcl.ValueOrEmptyString(nr.Labels),
-		"project":           dcl.ValueOrEmptyString(nr.Project),
-		"location":          dcl.ValueOrEmptyString(nr.Location),
+		"name":               dcl.ValueOrEmptyString(nr.Name),
+		"tier":               dcl.ValueOrEmptyString(nr.Tier),
+		"issuance_policy":    dcl.ValueOrEmptyString(nr.IssuancePolicy),
+		"publishing_options": dcl.ValueOrEmptyString(nr.PublishingOptions),
+		"labels":             dcl.ValueOrEmptyString(nr.Labels),
+		"project":            dcl.ValueOrEmptyString(nr.Project),
+		"location":           dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/caPools/{{name}}", params), nil
 }
@@ -1213,7 +1213,7 @@ func (c *Client) GetCaPool(ctx context.Context, r *CaPool) (*CaPool, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalCaPool(b, c)
+	result, err := unmarshalCaPool(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -1370,7 +1370,7 @@ func applyCaPoolHelper(c *Client, ctx context.Context, rawDesired *CaPool, opts 
 func applyCaPoolDiff(c *Client, ctx context.Context, desired *CaPool, rawDesired *CaPool, ops []caPoolApiOperation, opts ...dcl.ApplyOption) (*CaPool, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetCaPool(ctx, desired.urlNormalized())
+	rawNew, err := c.GetCaPool(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -1383,7 +1383,7 @@ func applyCaPoolDiff(c *Client, ctx context.Context, desired *CaPool, rawDesired
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapCaPool(r, c)
+				fullResp, err := unmarshalMapCaPool(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

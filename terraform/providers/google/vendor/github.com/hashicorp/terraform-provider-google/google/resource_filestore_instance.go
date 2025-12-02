@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -27,7 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceFilestoreInstance() *schema.Resource {
+func ResourceFilestoreInstance() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceFilestoreInstanceCreate,
 		Read:   resourceFilestoreInstanceRead,
@@ -39,9 +38,9 @@ func resourceFilestoreInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
-			Update: schema.DefaultTimeout(6 * time.Minute),
-			Delete: schema.DefaultTimeout(6 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		SchemaVersion: 1,
@@ -74,6 +73,63 @@ for the standard tier, or 2560 GiB for the premium tier.`,
 							ForceNew:    true,
 							Description: `The name of the fileshare (16 characters or less)`,
 						},
+						"nfs_export_options": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Nfs Export Options. There is a limit of 10 export options per file share.`,
+							MaxItems:    10,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"access_mode": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: validateEnum([]string{"READ_ONLY", "READ_WRITE", ""}),
+										Description: `Either READ_ONLY, for allowing only read requests on the exported directory,
+or READ_WRITE, for allowing both read and write requests. The default is READ_WRITE. Default value: "READ_WRITE" Possible values: ["READ_ONLY", "READ_WRITE"]`,
+										Default: "READ_WRITE",
+									},
+									"anon_gid": {
+										Type:     schema.TypeInt,
+										Optional: true,
+										Description: `An integer representing the anonymous group id with a default value of 65534.
+Anon_gid may only be set with squashMode of ROOT_SQUASH. An error will be returned
+if this field is specified for other squashMode settings.`,
+									},
+									"anon_uid": {
+										Type:     schema.TypeInt,
+										Optional: true,
+										Description: `An integer representing the anonymous user id with a default value of 65534.
+Anon_uid may only be set with squashMode of ROOT_SQUASH. An error will be returned
+if this field is specified for other squashMode settings.`,
+									},
+									"ip_ranges": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `List of either IPv4 addresses, or ranges in CIDR notation which may mount the file share.
+Overlapping IP ranges are not allowed, both within and across NfsExportOptions. An error will be returned.
+The limit is 64 IP ranges/addresses for each FileShareConfig among all NfsExportOptions.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+									"squash_mode": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: validateEnum([]string{"NO_ROOT_SQUASH", "ROOT_SQUASH", ""}),
+										Description: `Either NO_ROOT_SQUASH, for allowing root access on the exported directory, or ROOT_SQUASH,
+for not allowing root access. The default is NO_ROOT_SQUASH. Default value: "NO_ROOT_SQUASH" Possible values: ["NO_ROOT_SQUASH", "ROOT_SQUASH"]`,
+										Default: "NO_ROOT_SQUASH",
+									},
+								},
+							},
+						},
+						"source_backup": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `The resource name of the backup, in the format
+projects/{projectId}/locations/{locationId}/backups/{backupId},
+that this file share has been restored from.`,
+						},
 					},
 				},
 			},
@@ -99,15 +155,26 @@ only a single network is supported.`,
 IP addresses assigned. Possible values: ["ADDRESS_MODE_UNSPECIFIED", "MODE_IPV4", "MODE_IPV6"]`,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validation.StringInSlice([]string{"ADDRESS_MODE_UNSPECIFIED", "MODE_IPV4", "MODE_IPV6"}, false),
+								ValidateFunc: validateEnum([]string{"ADDRESS_MODE_UNSPECIFIED", "MODE_IPV4", "MODE_IPV6"}),
 							},
 						},
 						"network": {
-							Type:     schema.TypeString,
-							Required: true,
-							ForceNew: true,
+							Type:             schema.TypeString,
+							Required:         true,
+							ForceNew:         true,
+							DiffSuppressFunc: compareSelfLinkOrResourceName,
 							Description: `The name of the GCE VPC network to which the
 instance is connected.`,
+						},
+						"connect_mode": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ForceNew:     true,
+							ValidateFunc: validateEnum([]string{"DIRECT_PEERING", "PRIVATE_SERVICE_ACCESS", ""}),
+							Description: `The network connect mode of the Filestore instance.
+If not provided, the connect mode defaults to
+DIRECT_PEERING. Default value: "DIRECT_PEERING" Possible values: ["DIRECT_PEERING", "PRIVATE_SERVICE_ACCESS"]`,
+							Default: "DIRECT_PEERING",
 						},
 						"reserved_ip_range": {
 							Type:     schema.TypeString,
@@ -133,12 +200,18 @@ addresses reserved for this instance.`,
 				Required: true,
 				ForceNew: true,
 				Description: `The service tier of the instance.
-Possible values include: STANDARD, PREMIUM, BASIC_HDD, BASIC_SSD, HIGH_SCALE_SSD and ENTERPRISE (beta only)`,
+Possible values include: STANDARD, PREMIUM, BASIC_HDD, BASIC_SSD, HIGH_SCALE_SSD and ENTERPRISE`,
 			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: `A description of the instance.`,
+			},
+			"kms_key_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				ForceNew:    true,
+				Description: `KMS key name used for data encryption.`,
 			},
 			"labels": {
 				Type:        schema.TypeMap,
@@ -187,7 +260,7 @@ simultaneous updates from overwriting each other.`,
 
 func resourceFilestoreInstanceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -223,13 +296,12 @@ func resourceFilestoreInstanceCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("networks"); !isEmptyValue(reflect.ValueOf(networksProp)) && (ok || !reflect.DeepEqual(v, networksProp)) {
 		obj["networks"] = networksProp
 	}
-
-	lockName, err := replaceVars(d, config, "filestore/{{project}}")
+	kmsKeyNameProp, err := expandFilestoreInstanceKmsKeyName(d.Get("kms_key_name"), d, config)
 	if err != nil {
 		return err
+	} else if v, ok := d.GetOkExists("kms_key_name"); !isEmptyValue(reflect.ValueOf(kmsKeyNameProp)) && (ok || !reflect.DeepEqual(v, kmsKeyNameProp)) {
+		obj["kmsKeyName"] = kmsKeyNameProp
 	}
-	mutexKV.Lock(lockName)
-	defer mutexKV.Unlock(lockName)
 
 	url, err := replaceVars(d, config, "{{FilestoreBasePath}}projects/{{project}}/locations/{{location}}/instances?instanceId={{name}}")
 	if err != nil {
@@ -267,7 +339,7 @@ func resourceFilestoreInstanceCreate(d *schema.ResourceData, meta interface{}) e
 			return err
 		}
 	}
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isNotFilestoreQuotaError)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isNotFilestoreQuotaError)
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
 	}
@@ -282,12 +354,13 @@ func resourceFilestoreInstanceCreate(d *schema.ResourceData, meta interface{}) e
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = filestoreOperationWaitTimeWithResponse(
+	err = FilestoreOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Instance", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Instance: %s", err)
 	}
 
@@ -305,7 +378,7 @@ func resourceFilestoreInstanceCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceFilestoreInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -328,7 +401,7 @@ func resourceFilestoreInstanceRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isNotFilestoreQuotaError)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isNotFilestoreQuotaError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("FilestoreInstance %q", d.Id()))
 	}
@@ -358,13 +431,16 @@ func resourceFilestoreInstanceRead(d *schema.ResourceData, meta interface{}) err
 	if err := d.Set("etag", flattenFilestoreInstanceEtag(res["etag"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("kms_key_name", flattenFilestoreInstanceKmsKeyName(res["kmsKeyName"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 
 	return nil
 }
 
 func resourceFilestoreInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -397,13 +473,6 @@ func resourceFilestoreInstanceUpdate(d *schema.ResourceData, meta interface{}) e
 		obj["fileShares"] = fileSharesProp
 	}
 
-	lockName, err := replaceVars(d, config, "filestore/{{project}}")
-	if err != nil {
-		return err
-	}
-	mutexKV.Lock(lockName)
-	defer mutexKV.Unlock(lockName)
-
 	url, err := replaceVars(d, config, "{{FilestoreBasePath}}projects/{{project}}/locations/{{location}}/instances/{{name}}")
 	if err != nil {
 		return err
@@ -435,7 +504,7 @@ func resourceFilestoreInstanceUpdate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isNotFilestoreQuotaError)
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isNotFilestoreQuotaError)
 
 	if err != nil {
 		return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
@@ -443,7 +512,7 @@ func resourceFilestoreInstanceUpdate(d *schema.ResourceData, meta interface{}) e
 		log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
 	}
 
-	err = filestoreOperationWaitTime(
+	err = FilestoreOperationWaitTime(
 		config, res, project, "Updating Instance", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -456,7 +525,7 @@ func resourceFilestoreInstanceUpdate(d *schema.ResourceData, meta interface{}) e
 
 func resourceFilestoreInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -468,13 +537,6 @@ func resourceFilestoreInstanceDelete(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("Error fetching project for Instance: %s", err)
 	}
 	billingProject = project
-
-	lockName, err := replaceVars(d, config, "filestore/{{project}}")
-	if err != nil {
-		return err
-	}
-	mutexKV.Lock(lockName)
-	defer mutexKV.Unlock(lockName)
 
 	url, err := replaceVars(d, config, "{{FilestoreBasePath}}projects/{{project}}/locations/{{location}}/instances/{{name}}")
 	if err != nil {
@@ -489,12 +551,12 @@ func resourceFilestoreInstanceDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isNotFilestoreQuotaError)
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isNotFilestoreQuotaError)
 	if err != nil {
 		return handleNotFoundError(err, d, "Instance")
 	}
 
-	err = filestoreOperationWaitTime(
+	err = FilestoreOperationWaitTime(
 		config, res, project, "Deleting Instance", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -555,8 +617,10 @@ func flattenFilestoreInstanceFileShares(v interface{}, d *schema.ResourceData, c
 			continue
 		}
 		transformed = append(transformed, map[string]interface{}{
-			"name":        flattenFilestoreInstanceFileSharesName(original["name"], d, config),
-			"capacity_gb": flattenFilestoreInstanceFileSharesCapacityGb(original["capacityGb"], d, config),
+			"name":               flattenFilestoreInstanceFileSharesName(original["name"], d, config),
+			"capacity_gb":        flattenFilestoreInstanceFileSharesCapacityGb(original["capacityGb"], d, config),
+			"source_backup":      flattenFilestoreInstanceFileSharesSourceBackup(original["sourceBackup"], d, config),
+			"nfs_export_options": flattenFilestoreInstanceFileSharesNfsExportOptions(original["nfsExportOptions"], d, config),
 		})
 	}
 	return transformed
@@ -568,7 +632,79 @@ func flattenFilestoreInstanceFileSharesName(v interface{}, d *schema.ResourceDat
 func flattenFilestoreInstanceFileSharesCapacityGb(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenFilestoreInstanceFileSharesSourceBackup(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenFilestoreInstanceFileSharesNfsExportOptions(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"ip_ranges":   flattenFilestoreInstanceFileSharesNfsExportOptionsIpRanges(original["ipRanges"], d, config),
+			"access_mode": flattenFilestoreInstanceFileSharesNfsExportOptionsAccessMode(original["accessMode"], d, config),
+			"squash_mode": flattenFilestoreInstanceFileSharesNfsExportOptionsSquashMode(original["squashMode"], d, config),
+			"anon_uid":    flattenFilestoreInstanceFileSharesNfsExportOptionsAnonUid(original["anonUid"], d, config),
+			"anon_gid":    flattenFilestoreInstanceFileSharesNfsExportOptionsAnonGid(original["anonGid"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenFilestoreInstanceFileSharesNfsExportOptionsIpRanges(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenFilestoreInstanceFileSharesNfsExportOptionsAccessMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenFilestoreInstanceFileSharesNfsExportOptionsSquashMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenFilestoreInstanceFileSharesNfsExportOptionsAnonUid(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenFilestoreInstanceFileSharesNfsExportOptionsAnonGid(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -599,6 +735,7 @@ func flattenFilestoreInstanceNetworks(v interface{}, d *schema.ResourceData, con
 			"modes":             flattenFilestoreInstanceNetworksModes(original["modes"], d, config),
 			"reserved_ip_range": flattenFilestoreInstanceNetworksReservedIpRange(original["reservedIpRange"], d, config),
 			"ip_addresses":      flattenFilestoreInstanceNetworksIpAddresses(original["ipAddresses"], d, config),
+			"connect_mode":      flattenFilestoreInstanceNetworksConnectMode(original["connectMode"], d, config),
 		})
 	}
 	return transformed
@@ -619,7 +756,19 @@ func flattenFilestoreInstanceNetworksIpAddresses(v interface{}, d *schema.Resour
 	return v
 }
 
+func flattenFilestoreInstanceNetworksConnectMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil || isEmptyValue(reflect.ValueOf(v)) {
+		return "DIRECT_PEERING"
+	}
+
+	return v
+}
+
 func flattenFilestoreInstanceEtag(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenFilestoreInstanceKmsKeyName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -666,6 +815,20 @@ func expandFilestoreInstanceFileShares(v interface{}, d TerraformResourceData, c
 			transformed["capacityGb"] = transformedCapacityGb
 		}
 
+		transformedSourceBackup, err := expandFilestoreInstanceFileSharesSourceBackup(original["source_backup"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSourceBackup); val.IsValid() && !isEmptyValue(val) {
+			transformed["sourceBackup"] = transformedSourceBackup
+		}
+
+		transformedNfsExportOptions, err := expandFilestoreInstanceFileSharesNfsExportOptions(original["nfs_export_options"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedNfsExportOptions); val.IsValid() && !isEmptyValue(val) {
+			transformed["nfsExportOptions"] = transformedNfsExportOptions
+		}
+
 		req = append(req, transformed)
 	}
 	return req, nil
@@ -676,6 +839,80 @@ func expandFilestoreInstanceFileSharesName(v interface{}, d TerraformResourceDat
 }
 
 func expandFilestoreInstanceFileSharesCapacityGb(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFilestoreInstanceFileSharesSourceBackup(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFilestoreInstanceFileSharesNfsExportOptions(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedIpRanges, err := expandFilestoreInstanceFileSharesNfsExportOptionsIpRanges(original["ip_ranges"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedIpRanges); val.IsValid() && !isEmptyValue(val) {
+			transformed["ipRanges"] = transformedIpRanges
+		}
+
+		transformedAccessMode, err := expandFilestoreInstanceFileSharesNfsExportOptionsAccessMode(original["access_mode"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedAccessMode); val.IsValid() && !isEmptyValue(val) {
+			transformed["accessMode"] = transformedAccessMode
+		}
+
+		transformedSquashMode, err := expandFilestoreInstanceFileSharesNfsExportOptionsSquashMode(original["squash_mode"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedSquashMode); val.IsValid() && !isEmptyValue(val) {
+			transformed["squashMode"] = transformedSquashMode
+		}
+
+		transformedAnonUid, err := expandFilestoreInstanceFileSharesNfsExportOptionsAnonUid(original["anon_uid"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedAnonUid); val.IsValid() && !isEmptyValue(val) {
+			transformed["anonUid"] = transformedAnonUid
+		}
+
+		transformedAnonGid, err := expandFilestoreInstanceFileSharesNfsExportOptionsAnonGid(original["anon_gid"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedAnonGid); val.IsValid() && !isEmptyValue(val) {
+			transformed["anonGid"] = transformedAnonGid
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandFilestoreInstanceFileSharesNfsExportOptionsIpRanges(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFilestoreInstanceFileSharesNfsExportOptionsAccessMode(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFilestoreInstanceFileSharesNfsExportOptionsSquashMode(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFilestoreInstanceFileSharesNfsExportOptionsAnonUid(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFilestoreInstanceFileSharesNfsExportOptionsAnonGid(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -717,6 +954,13 @@ func expandFilestoreInstanceNetworks(v interface{}, d TerraformResourceData, con
 			transformed["ipAddresses"] = transformedIpAddresses
 		}
 
+		transformedConnectMode, err := expandFilestoreInstanceNetworksConnectMode(original["connect_mode"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedConnectMode); val.IsValid() && !isEmptyValue(val) {
+			transformed["connectMode"] = transformedConnectMode
+		}
+
 		req = append(req, transformed)
 	}
 	return req, nil
@@ -735,6 +979,14 @@ func expandFilestoreInstanceNetworksReservedIpRange(v interface{}, d TerraformRe
 }
 
 func expandFilestoreInstanceNetworksIpAddresses(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFilestoreInstanceNetworksConnectMode(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandFilestoreInstanceKmsKeyName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

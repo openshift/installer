@@ -59,7 +59,15 @@ func isRedisVersionDecreasingFunc(old, new interface{}) bool {
 	return newVersion < oldVersion
 }
 
-func resourceRedisInstance() *schema.Resource {
+// returns true if old=new or old='auto'
+func secondaryIpDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
+	if (strings.ToLower(new) == "auto" && old != "") || old == new {
+		return true
+	}
+	return false
+}
+
+func ResourceRedisInstance() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceRedisInstanceCreate,
 		Read:   resourceRedisInstanceRead,
@@ -124,9 +132,16 @@ will be used.`,
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"DIRECT_PEERING", "PRIVATE_SERVICE_ACCESS", ""}, false),
+				ValidateFunc: validateEnum([]string{"DIRECT_PEERING", "PRIVATE_SERVICE_ACCESS", ""}),
 				Description:  `The connection mode of the Redis instance. Default value: "DIRECT_PEERING" Possible values: ["DIRECT_PEERING", "PRIVATE_SERVICE_ACCESS"]`,
 				Default:      "DIRECT_PEERING",
+			},
+			"customer_managed_key": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: `Optional. The KMS key reference that you want to use to encrypt the data at rest for this Redis
+instance. If this is provided, CMEK is enabled.`,
 			},
 			"display_name": {
 				Type:        schema.TypeString,
@@ -150,6 +165,202 @@ instances will be created across two zones for protection against
 zonal failures. If [alternativeLocationId] is also provided, it must
 be different from [locationId].`,
 			},
+			"maintenance_policy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Maintenance policy for an instance.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"description": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Description: `Optional. Description of what this policy is for.
+Create/Update methods return INVALID_ARGUMENT if the
+length is greater than 512.`,
+						},
+						"weekly_maintenance_window": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `Optional. Maintenance window that is applied to resources covered by this policy.
+Minimum 1. For the current version, the maximum number
+of weekly_window is expected to be one.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"day": {
+										Type:         schema.TypeString,
+										Required:     true,
+										ValidateFunc: validateEnum([]string{"DAY_OF_WEEK_UNSPECIFIED", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"}),
+										Description: `Required. The day of week that maintenance updates occur.
+
+- DAY_OF_WEEK_UNSPECIFIED: The day of the week is unspecified.
+- MONDAY: Monday
+- TUESDAY: Tuesday
+- WEDNESDAY: Wednesday
+- THURSDAY: Thursday
+- FRIDAY: Friday
+- SATURDAY: Saturday
+- SUNDAY: Sunday Possible values: ["DAY_OF_WEEK_UNSPECIFIED", "MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"]`,
+									},
+									"start_time": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: `Required. Start time of the window in UTC time.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"hours": {
+													Type:         schema.TypeInt,
+													Optional:     true,
+													ValidateFunc: validation.IntBetween(0, 23),
+													Description: `Hours of day in 24 hour format. Should be from 0 to 23.
+An API may choose to allow the value "24:00:00" for scenarios like business closing time.`,
+												},
+												"minutes": {
+													Type:         schema.TypeInt,
+													Optional:     true,
+													ValidateFunc: validation.IntBetween(0, 59),
+													Description:  `Minutes of hour of day. Must be from 0 to 59.`,
+												},
+												"nanos": {
+													Type:         schema.TypeInt,
+													Optional:     true,
+													ValidateFunc: validation.IntBetween(0, 999999999),
+													Description:  `Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.`,
+												},
+												"seconds": {
+													Type:         schema.TypeInt,
+													Optional:     true,
+													ValidateFunc: validation.IntBetween(0, 60),
+													Description: `Seconds of minutes of the time. Must normally be from 0 to 59.
+An API may allow the value 60 if it allows leap-seconds.`,
+												},
+											},
+										},
+									},
+									"duration": {
+										Type:     schema.TypeString,
+										Computed: true,
+										Description: `Output only. Duration of the maintenance window.
+The current window is fixed at 1 hour.
+A duration in seconds with up to nine fractional digits,
+terminated by 's'. Example: "3.5s".`,
+									},
+								},
+							},
+						},
+						"create_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `Output only. The time when the policy was created.
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond
+resolution and up to nine fractional digits.`,
+						},
+						"update_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `Output only. The time when the policy was last updated.
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond
+resolution and up to nine fractional digits.`,
+						},
+					},
+				},
+			},
+			"maintenance_schedule": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Upcoming maintenance schedule.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"end_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `Output only. The end time of any upcoming scheduled maintenance for this instance.
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond
+resolution and up to nine fractional digits.`,
+						},
+						"schedule_deadline_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `Output only. The deadline that the maintenance schedule start time
+can not go beyond, including reschedule.
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond
+resolution and up to nine fractional digits.`,
+						},
+						"start_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `Output only. The start time of any upcoming scheduled maintenance for this instance.
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond
+resolution and up to nine fractional digits.`,
+						},
+					},
+				},
+			},
+			"persistence_config": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Optional:    true,
+				Description: `Persistence configuration for an instance.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"persistence_mode": {
+							Type:         schema.TypeString,
+							Computed:     true,
+							Optional:     true,
+							ValidateFunc: validateEnum([]string{"DISABLED", "RDB"}),
+							Description: `Optional. Controls whether Persistence features are enabled. If not provided, the existing value will be used.
+
+- DISABLED: 	Persistence is disabled for the instance, and any existing snapshots are deleted.
+- RDB: RDB based Persistence is enabled. Possible values: ["DISABLED", "RDB"]`,
+						},
+						"rdb_snapshot_period": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validateEnum([]string{"ONE_HOUR", "SIX_HOURS", "TWELVE_HOURS", "TWENTY_FOUR_HOURS", ""}),
+							Description: `Optional. Available snapshot periods for scheduling.
+
+- ONE_HOUR:	Snapshot every 1 hour.
+- SIX_HOURS:	Snapshot every 6 hours.
+- TWELVE_HOURS:	Snapshot every 12 hours.
+- TWENTY_FOUR_HOURS:	Snapshot every 24 hours. Possible values: ["ONE_HOUR", "SIX_HOURS", "TWELVE_HOURS", "TWENTY_FOUR_HOURS"]`,
+						},
+						"rdb_snapshot_start_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Optional: true,
+							Description: `Optional. Date and time that the first snapshot was/will be attempted,
+and to which future snapshots will be aligned. If not provided,
+the current time will be used.
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution
+and up to nine fractional digits.
+Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
+						},
+						"rdb_next_snapshot_time": {
+							Type:     schema.TypeString,
+							Computed: true,
+							Description: `Output only. The next time that a snapshot attempt is scheduled to occur.
+A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up
+to nine fractional digits.
+Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
+						},
+					},
+				},
+			},
+			"read_replicas_mode": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: validateEnum([]string{"READ_REPLICAS_DISABLED", "READ_REPLICAS_ENABLED", ""}),
+				Description: `Optional. Read replica mode. Can only be specified when trying to create the instance.
+If not set, Memorystore Redis backend will default to READ_REPLICAS_DISABLED.
+- READ_REPLICAS_DISABLED: If disabled, read endpoint will not be provided and the
+instance cannot scale up or down the number of replicas.
+- READ_REPLICAS_ENABLED: If enabled, read endpoint will be provided and the instance
+can scale up and down the number of replicas. Possible values: ["READ_REPLICAS_DISABLED", "READ_REPLICAS_ENABLED"]`,
+			},
 			"redis_configs": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -163,7 +374,7 @@ https://cloud.google.com/memorystore/docs/redis/reference/rest/v1/projects.locat
 				Computed: true,
 				Optional: true,
 				Description: `The version of Redis software. If not provided, latest supported
-version will be used. Please check the API documentation linked 
+version will be used. Please check the API documentation linked
 at the top for the latest valid values.`,
 			},
 			"region": {
@@ -172,6 +383,15 @@ at the top for the latest valid values.`,
 				Optional:    true,
 				ForceNew:    true,
 				Description: `The name of the Redis region of the instance.`,
+			},
+			"replica_count": {
+				Type:     schema.TypeInt,
+				Computed: true,
+				Optional: true,
+				Description: `Optional. The number of replica nodes. The valid range for the Standard Tier with
+read replicas enabled is [1-5] and defaults to 2. If read replicas are not enabled
+for a Standard Tier instance, the only valid value is 1 and the default is 1.
+The valid value for basic tier is 0 and the default is also 0.`,
 			},
 			"reserved_ip_range": {
 				Type:     schema.TypeString,
@@ -184,11 +404,21 @@ block, for example, 10.0.0.0/29 or 192.168.0.0/29. Ranges must be
 unique and non-overlapping with existing subnets in an authorized
 network.`,
 			},
+			"secondary_ip_range": {
+				Type:             schema.TypeString,
+				Computed:         true,
+				Optional:         true,
+				DiffSuppressFunc: secondaryIpDiffSuppress,
+				Description: `Optional. Additional IP range for node placement. Required when enabling read replicas on
+an existing instance. For DIRECT_PEERING mode value must be a CIDR range of size /28, or
+"auto". For PRIVATE_SERVICE_ACCESS mode value must be the name of an allocated address
+range associated with the private service access connection, or "auto".`,
+			},
 			"tier": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"BASIC", "STANDARD_HA", ""}, false),
+				ValidateFunc: validateEnum([]string{"BASIC", "STANDARD_HA", ""}),
 				Description: `The service tier of the instance. Must be one of these values:
 
 - BASIC: standalone instance
@@ -199,7 +429,7 @@ network.`,
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"SERVER_AUTHENTICATION", "DISABLED", ""}, false),
+				ValidateFunc: validateEnum([]string{"SERVER_AUTHENTICATION", "DISABLED", ""}),
 				Description: `The TLS mode of the Redis instance, If not provided, TLS is disabled for the instance.
 
 - SERVER_AUTHENTICATION: Client to Server traffic encryption enabled with server authentication Default value: "DISABLED" Possible values: ["SERVER_AUTHENTICATION", "DISABLED"]`,
@@ -226,6 +456,25 @@ and can change after a failover event.`,
 				Description: `Hostname or IP address of the exposed Redis endpoint used by clients
 to connect to the service.`,
 			},
+			"nodes": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: `Output only. Info per node.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `Node identifying string. e.g. 'node-0', 'node-1'`,
+						},
+						"zone": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `Location of the node.`,
+						},
+					},
+				},
+			},
 			"persistence_iam_identity": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -239,6 +488,19 @@ checked before each import/export operation.`,
 				Computed:    true,
 				Description: `The port number of the exposed Redis endpoint.`,
 			},
+			"read_endpoint": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `Output only. Hostname or IP address of the exposed readonly Redis endpoint. Standard tier only.
+Targets all healthy replica nodes in instance. Replication is asynchronous and replica nodes
+will exhibit some lag behind the primary. Write requests must target 'host'.`,
+			},
+			"read_endpoint_port": {
+				Type:     schema.TypeInt,
+				Computed: true,
+				Description: `Output only. The port number of the exposed readonly redis endpoint. Standard tier only.
+Write requests should target 'port'.`,
+			},
 			"server_ca_certs": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -248,7 +510,7 @@ checked before each import/export operation.`,
 						"cert": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: `Serial number, as extracted from the certificate.`,
+							Description: `The certificate data in PEM format.`,
 						},
 						"create_time": {
 							Type:        schema.TypeString,
@@ -292,7 +554,7 @@ checked before each import/export operation.`,
 
 func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -352,6 +614,24 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	} else if v, ok := d.GetOkExists("name"); !isEmptyValue(reflect.ValueOf(nameProp)) && (ok || !reflect.DeepEqual(v, nameProp)) {
 		obj["name"] = nameProp
 	}
+	persistenceConfigProp, err := expandRedisInstancePersistenceConfig(d.Get("persistence_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("persistence_config"); !isEmptyValue(reflect.ValueOf(persistenceConfigProp)) && (ok || !reflect.DeepEqual(v, persistenceConfigProp)) {
+		obj["persistenceConfig"] = persistenceConfigProp
+	}
+	maintenancePolicyProp, err := expandRedisInstanceMaintenancePolicy(d.Get("maintenance_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("maintenance_policy"); !isEmptyValue(reflect.ValueOf(maintenancePolicyProp)) && (ok || !reflect.DeepEqual(v, maintenancePolicyProp)) {
+		obj["maintenancePolicy"] = maintenancePolicyProp
+	}
+	maintenanceScheduleProp, err := expandRedisInstanceMaintenanceSchedule(d.Get("maintenance_schedule"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("maintenance_schedule"); !isEmptyValue(reflect.ValueOf(maintenanceScheduleProp)) && (ok || !reflect.DeepEqual(v, maintenanceScheduleProp)) {
+		obj["maintenanceSchedule"] = maintenanceScheduleProp
+	}
 	memorySizeGbProp, err := expandRedisInstanceMemorySizeGb(d.Get("memory_size_gb"), d, config)
 	if err != nil {
 		return err
@@ -382,6 +662,30 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	} else if v, ok := d.GetOkExists("transit_encryption_mode"); !isEmptyValue(reflect.ValueOf(transitEncryptionModeProp)) && (ok || !reflect.DeepEqual(v, transitEncryptionModeProp)) {
 		obj["transitEncryptionMode"] = transitEncryptionModeProp
 	}
+	replicaCountProp, err := expandRedisInstanceReplicaCount(d.Get("replica_count"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("replica_count"); !isEmptyValue(reflect.ValueOf(replicaCountProp)) && (ok || !reflect.DeepEqual(v, replicaCountProp)) {
+		obj["replicaCount"] = replicaCountProp
+	}
+	readReplicasModeProp, err := expandRedisInstanceReadReplicasMode(d.Get("read_replicas_mode"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("read_replicas_mode"); !isEmptyValue(reflect.ValueOf(readReplicasModeProp)) && (ok || !reflect.DeepEqual(v, readReplicasModeProp)) {
+		obj["readReplicasMode"] = readReplicasModeProp
+	}
+	secondaryIpRangeProp, err := expandRedisInstanceSecondaryIpRange(d.Get("secondary_ip_range"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("secondary_ip_range"); !isEmptyValue(reflect.ValueOf(secondaryIpRangeProp)) && (ok || !reflect.DeepEqual(v, secondaryIpRangeProp)) {
+		obj["secondaryIpRange"] = secondaryIpRangeProp
+	}
+	customerManagedKeyProp, err := expandRedisInstanceCustomerManagedKey(d.Get("customer_managed_key"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("customer_managed_key"); !isEmptyValue(reflect.ValueOf(customerManagedKeyProp)) && (ok || !reflect.DeepEqual(v, customerManagedKeyProp)) {
+		obj["customerManagedKey"] = customerManagedKeyProp
+	}
 
 	obj, err = resourceRedisInstanceEncoder(d, meta, obj)
 	if err != nil {
@@ -407,7 +711,7 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
 	}
@@ -422,12 +726,13 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = redisOperationWaitTimeWithResponse(
+	err = RedisOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Instance", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Instance: %s", err)
 	}
 
@@ -457,7 +762,7 @@ func resourceRedisInstanceCreate(d *schema.ResourceData, meta interface{}) error
 
 func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -480,7 +785,7 @@ func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("RedisInstance %q", d.Id()))
 	}
@@ -545,6 +850,15 @@ func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("name", flattenRedisInstanceName(res["name"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("persistence_config", flattenRedisInstancePersistenceConfig(res["persistenceConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("maintenance_policy", flattenRedisInstanceMaintenancePolicy(res["maintenancePolicy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("maintenance_schedule", flattenRedisInstanceMaintenanceSchedule(res["maintenanceSchedule"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 	if err := d.Set("memory_size_gb", flattenRedisInstanceMemorySizeGb(res["memorySizeGb"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -557,9 +871,6 @@ func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("redis_version", flattenRedisInstanceRedisVersion(res["redisVersion"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
-	if err := d.Set("reserved_ip_range", flattenRedisInstanceReservedIpRange(res["reservedIpRange"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Instance: %s", err)
-	}
 	if err := d.Set("tier", flattenRedisInstanceTier(res["tier"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -569,13 +880,34 @@ func resourceRedisInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("server_ca_certs", flattenRedisInstanceServerCaCerts(res["serverCaCerts"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("replica_count", flattenRedisInstanceReplicaCount(res["replicaCount"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("nodes", flattenRedisInstanceNodes(res["nodes"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("read_endpoint", flattenRedisInstanceReadEndpoint(res["readEndpoint"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("read_endpoint_port", flattenRedisInstanceReadEndpointPort(res["readEndpointPort"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("read_replicas_mode", flattenRedisInstanceReadReplicasMode(res["readReplicasMode"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("secondary_ip_range", flattenRedisInstanceSecondaryIpRange(res["secondaryIpRange"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("customer_managed_key", flattenRedisInstanceCustomerManagedKey(res["customerManagedKey"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 
 	return nil
 }
 
 func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -613,11 +945,47 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 	} else if v, ok := d.GetOkExists("redis_configs"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, redisConfigsProp)) {
 		obj["redisConfigs"] = redisConfigsProp
 	}
+	persistenceConfigProp, err := expandRedisInstancePersistenceConfig(d.Get("persistence_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("persistence_config"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, persistenceConfigProp)) {
+		obj["persistenceConfig"] = persistenceConfigProp
+	}
+	maintenancePolicyProp, err := expandRedisInstanceMaintenancePolicy(d.Get("maintenance_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("maintenance_policy"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, maintenancePolicyProp)) {
+		obj["maintenancePolicy"] = maintenancePolicyProp
+	}
+	maintenanceScheduleProp, err := expandRedisInstanceMaintenanceSchedule(d.Get("maintenance_schedule"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("maintenance_schedule"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, maintenanceScheduleProp)) {
+		obj["maintenanceSchedule"] = maintenanceScheduleProp
+	}
 	memorySizeGbProp, err := expandRedisInstanceMemorySizeGb(d.Get("memory_size_gb"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("memory_size_gb"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, memorySizeGbProp)) {
 		obj["memorySizeGb"] = memorySizeGbProp
+	}
+	replicaCountProp, err := expandRedisInstanceReplicaCount(d.Get("replica_count"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("replica_count"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, replicaCountProp)) {
+		obj["replicaCount"] = replicaCountProp
+	}
+	readReplicasModeProp, err := expandRedisInstanceReadReplicasMode(d.Get("read_replicas_mode"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("read_replicas_mode"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, readReplicasModeProp)) {
+		obj["readReplicasMode"] = readReplicasModeProp
+	}
+	secondaryIpRangeProp, err := expandRedisInstanceSecondaryIpRange(d.Get("secondary_ip_range"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("secondary_ip_range"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, secondaryIpRangeProp)) {
+		obj["secondaryIpRange"] = secondaryIpRangeProp
 	}
 
 	obj, err = resourceRedisInstanceEncoder(d, meta, obj)
@@ -649,8 +1017,32 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 		updateMask = append(updateMask, "redisConfigs")
 	}
 
+	if d.HasChange("persistence_config") {
+		updateMask = append(updateMask, "persistenceConfig")
+	}
+
+	if d.HasChange("maintenance_policy") {
+		updateMask = append(updateMask, "maintenancePolicy")
+	}
+
+	if d.HasChange("maintenance_schedule") {
+		updateMask = append(updateMask, "maintenanceSchedule")
+	}
+
 	if d.HasChange("memory_size_gb") {
 		updateMask = append(updateMask, "memorySizeGb")
+	}
+
+	if d.HasChange("replica_count") {
+		updateMask = append(updateMask, "replicaCount")
+	}
+
+	if d.HasChange("read_replicas_mode") {
+		updateMask = append(updateMask, "readReplicasMode")
+	}
+
+	if d.HasChange("secondary_ip_range") {
+		updateMask = append(updateMask, "secondaryIpRange")
 	}
 	// updateMask is a URL parameter but not present in the schema, so replaceVars
 	// won't set it
@@ -666,7 +1058,7 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 
 	// if updateMask is empty we are not updating anything so skip the post
 	if len(updateMask) > 0 {
-		res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 		if err != nil {
 			return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
@@ -674,7 +1066,7 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 			log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
 		}
 
-		err = redisOperationWaitTime(
+		err = RedisOperationWaitTime(
 			config, res, project, "Updating Instance", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 
@@ -704,14 +1096,14 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 			billingProject = bp
 		}
 
-		res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error updating Instance %q: %s", d.Id(), err)
 		} else {
 			log.Printf("[DEBUG] Finished updating Instance %q: %#v", d.Id(), res)
 		}
 
-		err = redisOperationWaitTime(
+		err = RedisOperationWaitTime(
 			config, res, project, "Updating Instance", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
@@ -726,7 +1118,7 @@ func resourceRedisInstanceUpdate(d *schema.ResourceData, meta interface{}) error
 
 func resourceRedisInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -752,12 +1144,12 @@ func resourceRedisInstanceDelete(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Instance")
 	}
 
-	err = redisOperationWaitTime(
+	err = RedisOperationWaitTime(
 		config, res, project, "Deleting Instance", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -841,10 +1233,217 @@ func flattenRedisInstanceName(v interface{}, d *schema.ResourceData, config *Con
 	return NameFromSelfLinkStateFunc(v)
 }
 
+func flattenRedisInstancePersistenceConfig(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["persistence_mode"] =
+		flattenRedisInstancePersistenceConfigPersistenceMode(original["persistenceMode"], d, config)
+	transformed["rdb_snapshot_period"] =
+		flattenRedisInstancePersistenceConfigRdbSnapshotPeriod(original["rdbSnapshotPeriod"], d, config)
+	transformed["rdb_next_snapshot_time"] =
+		flattenRedisInstancePersistenceConfigRdbNextSnapshotTime(original["rdbNextSnapshotTime"], d, config)
+	transformed["rdb_snapshot_start_time"] =
+		flattenRedisInstancePersistenceConfigRdbSnapshotStartTime(original["rdbSnapshotStartTime"], d, config)
+	return []interface{}{transformed}
+}
+func flattenRedisInstancePersistenceConfigPersistenceMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstancePersistenceConfigRdbSnapshotPeriod(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstancePersistenceConfigRdbNextSnapshotTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstancePersistenceConfigRdbSnapshotStartTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceMaintenancePolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["create_time"] =
+		flattenRedisInstanceMaintenancePolicyCreateTime(original["createTime"], d, config)
+	transformed["update_time"] =
+		flattenRedisInstanceMaintenancePolicyUpdateTime(original["updateTime"], d, config)
+	transformed["description"] =
+		flattenRedisInstanceMaintenancePolicyDescription(original["description"], d, config)
+	transformed["weekly_maintenance_window"] =
+		flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindow(original["weeklyMaintenanceWindow"], d, config)
+	return []interface{}{transformed}
+}
+func flattenRedisInstanceMaintenancePolicyCreateTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceMaintenancePolicyUpdateTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceMaintenancePolicyDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindow(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"day":        flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowDay(original["day"], d, config),
+			"duration":   flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowDuration(original["duration"], d, config),
+			"start_time": flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTime(original["startTime"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowDay(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowDuration(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+	transformed["hours"] =
+		flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeHours(original["hours"], d, config)
+	transformed["minutes"] =
+		flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeMinutes(original["minutes"], d, config)
+	transformed["seconds"] =
+		flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeSeconds(original["seconds"], d, config)
+	transformed["nanos"] =
+		flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeNanos(original["nanos"], d, config)
+	return []interface{}{transformed}
+}
+func flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeHours(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeMinutes(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeSeconds(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeNanos(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenRedisInstanceMaintenanceSchedule(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["start_time"] =
+		flattenRedisInstanceMaintenanceScheduleStartTime(original["startTime"], d, config)
+	transformed["end_time"] =
+		flattenRedisInstanceMaintenanceScheduleEndTime(original["endTime"], d, config)
+	transformed["schedule_deadline_time"] =
+		flattenRedisInstanceMaintenanceScheduleScheduleDeadlineTime(original["scheduleDeadlineTime"], d, config)
+	return []interface{}{transformed}
+}
+func flattenRedisInstanceMaintenanceScheduleStartTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceMaintenanceScheduleEndTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceMaintenanceScheduleScheduleDeadlineTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenRedisInstanceMemorySizeGb(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -861,7 +1460,7 @@ func flattenRedisInstanceMemorySizeGb(v interface{}, d *schema.ResourceData, con
 func flattenRedisInstancePort(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -880,10 +1479,6 @@ func flattenRedisInstancePersistenceIamIdentity(v interface{}, d *schema.Resourc
 }
 
 func flattenRedisInstanceRedisVersion(v interface{}, d *schema.ResourceData, config *Config) interface{} {
-	return v
-}
-
-func flattenRedisInstanceReservedIpRange(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -934,6 +1529,83 @@ func flattenRedisInstanceServerCaCertsExpireTime(v interface{}, d *schema.Resour
 }
 
 func flattenRedisInstanceServerCaCertsSha1Fingerprint(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceReplicaCount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenRedisInstanceNodes(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"id":   flattenRedisInstanceNodesId(original["id"], d, config),
+			"zone": flattenRedisInstanceNodesZone(original["zone"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenRedisInstanceNodesId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceNodesZone(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceReadEndpoint(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceReadEndpointPort(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenRedisInstanceReadReplicasMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceSecondaryIpRange(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenRedisInstanceCustomerManagedKey(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -991,6 +1663,264 @@ func expandRedisInstanceName(v interface{}, d TerraformResourceData, config *Con
 	return replaceVars(d, config, "projects/{{project}}/locations/{{region}}/instances/{{name}}")
 }
 
+func expandRedisInstancePersistenceConfig(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedPersistenceMode, err := expandRedisInstancePersistenceConfigPersistenceMode(original["persistence_mode"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPersistenceMode); val.IsValid() && !isEmptyValue(val) {
+		transformed["persistenceMode"] = transformedPersistenceMode
+	}
+
+	transformedRdbSnapshotPeriod, err := expandRedisInstancePersistenceConfigRdbSnapshotPeriod(original["rdb_snapshot_period"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRdbSnapshotPeriod); val.IsValid() && !isEmptyValue(val) {
+		transformed["rdbSnapshotPeriod"] = transformedRdbSnapshotPeriod
+	}
+
+	transformedRdbNextSnapshotTime, err := expandRedisInstancePersistenceConfigRdbNextSnapshotTime(original["rdb_next_snapshot_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRdbNextSnapshotTime); val.IsValid() && !isEmptyValue(val) {
+		transformed["rdbNextSnapshotTime"] = transformedRdbNextSnapshotTime
+	}
+
+	transformedRdbSnapshotStartTime, err := expandRedisInstancePersistenceConfigRdbSnapshotStartTime(original["rdb_snapshot_start_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRdbSnapshotStartTime); val.IsValid() && !isEmptyValue(val) {
+		transformed["rdbSnapshotStartTime"] = transformedRdbSnapshotStartTime
+	}
+
+	return transformed, nil
+}
+
+func expandRedisInstancePersistenceConfigPersistenceMode(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstancePersistenceConfigRdbSnapshotPeriod(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstancePersistenceConfigRdbNextSnapshotTime(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstancePersistenceConfigRdbSnapshotStartTime(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedCreateTime, err := expandRedisInstanceMaintenancePolicyCreateTime(original["create_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCreateTime); val.IsValid() && !isEmptyValue(val) {
+		transformed["createTime"] = transformedCreateTime
+	}
+
+	transformedUpdateTime, err := expandRedisInstanceMaintenancePolicyUpdateTime(original["update_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUpdateTime); val.IsValid() && !isEmptyValue(val) {
+		transformed["updateTime"] = transformedUpdateTime
+	}
+
+	transformedDescription, err := expandRedisInstanceMaintenancePolicyDescription(original["description"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedDescription); val.IsValid() && !isEmptyValue(val) {
+		transformed["description"] = transformedDescription
+	}
+
+	transformedWeeklyMaintenanceWindow, err := expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindow(original["weekly_maintenance_window"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedWeeklyMaintenanceWindow); val.IsValid() && !isEmptyValue(val) {
+		transformed["weeklyMaintenanceWindow"] = transformedWeeklyMaintenanceWindow
+	}
+
+	return transformed, nil
+}
+
+func expandRedisInstanceMaintenancePolicyCreateTime(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicyUpdateTime(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicyDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindow(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedDay, err := expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowDay(original["day"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDay); val.IsValid() && !isEmptyValue(val) {
+			transformed["day"] = transformedDay
+		}
+
+		transformedDuration, err := expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowDuration(original["duration"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedDuration); val.IsValid() && !isEmptyValue(val) {
+			transformed["duration"] = transformedDuration
+		}
+
+		transformedStartTime, err := expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTime(original["start_time"], d, config)
+		if err != nil {
+			return nil, err
+		} else {
+			transformed["startTime"] = transformedStartTime
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowDay(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowDuration(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTime(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+
+	if l[0] == nil {
+		transformed := make(map[string]interface{})
+		return transformed, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedHours, err := expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeHours(original["hours"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedHours); val.IsValid() && !isEmptyValue(val) {
+		transformed["hours"] = transformedHours
+	}
+
+	transformedMinutes, err := expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeMinutes(original["minutes"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMinutes); val.IsValid() && !isEmptyValue(val) {
+		transformed["minutes"] = transformedMinutes
+	}
+
+	transformedSeconds, err := expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeSeconds(original["seconds"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSeconds); val.IsValid() && !isEmptyValue(val) {
+		transformed["seconds"] = transformedSeconds
+	}
+
+	transformedNanos, err := expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeNanos(original["nanos"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNanos); val.IsValid() && !isEmptyValue(val) {
+		transformed["nanos"] = transformedNanos
+	}
+
+	return transformed, nil
+}
+
+func expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeHours(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeMinutes(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeSeconds(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenancePolicyWeeklyMaintenanceWindowStartTimeNanos(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenanceSchedule(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedStartTime, err := expandRedisInstanceMaintenanceScheduleStartTime(original["start_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedStartTime); val.IsValid() && !isEmptyValue(val) {
+		transformed["startTime"] = transformedStartTime
+	}
+
+	transformedEndTime, err := expandRedisInstanceMaintenanceScheduleEndTime(original["end_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEndTime); val.IsValid() && !isEmptyValue(val) {
+		transformed["endTime"] = transformedEndTime
+	}
+
+	transformedScheduleDeadlineTime, err := expandRedisInstanceMaintenanceScheduleScheduleDeadlineTime(original["schedule_deadline_time"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedScheduleDeadlineTime); val.IsValid() && !isEmptyValue(val) {
+		transformed["scheduleDeadlineTime"] = transformedScheduleDeadlineTime
+	}
+
+	return transformed, nil
+}
+
+func expandRedisInstanceMaintenanceScheduleStartTime(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenanceScheduleEndTime(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceMaintenanceScheduleScheduleDeadlineTime(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandRedisInstanceMemorySizeGb(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
@@ -1011,6 +1941,22 @@ func expandRedisInstanceTransitEncryptionMode(v interface{}, d TerraformResource
 	return v, nil
 }
 
+func expandRedisInstanceReplicaCount(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceReadReplicasMode(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceSecondaryIpRange(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandRedisInstanceCustomerManagedKey(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func resourceRedisInstanceEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
 	config := meta.(*Config)
 	region, err := getRegionFromSchema("region", "location_id", d, config)
@@ -1026,7 +1972,7 @@ func resourceRedisInstanceEncoder(d *schema.ResourceData, meta interface{}, obj 
 func resourceRedisInstanceDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
 	config := meta.(*Config)
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -1052,7 +1998,7 @@ func resourceRedisInstanceDecoder(d *schema.ResourceData, meta interface{}, res 
 				billingProject = bp
 			}
 
-			res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+			res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 			if err != nil {
 				return nil, fmt.Errorf("Error reading AuthString: %s", err)
 			}

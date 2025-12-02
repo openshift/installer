@@ -7,7 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleServiceAccount() *schema.Resource {
+func DataSourceGoogleServiceAccount() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleServiceAccountRead,
 		Schema: map[string]*schema.Schema{
@@ -35,13 +35,17 @@ func dataSourceGoogleServiceAccount() *schema.Resource {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
+			"member": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
 		},
 	}
 }
 
 func dataSourceGoogleServiceAccountRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -74,6 +78,9 @@ func dataSourceGoogleServiceAccountRead(d *schema.ResourceData, meta interface{}
 	}
 	if err := d.Set("display_name", sa.DisplayName); err != nil {
 		return fmt.Errorf("Error setting display_name: %s", err)
+	}
+	if err := d.Set("member", "serviceAccount:"+sa.Email); err != nil {
+		return fmt.Errorf("Error setting member: %s", err)
 	}
 
 	return nil

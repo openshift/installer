@@ -3,6 +3,7 @@ package google
 import (
 	"fmt"
 	"log"
+	"reflect"
 	"strings"
 	"time"
 
@@ -18,12 +19,15 @@ var (
 		"transfer_spec.0.object_conditions.0.max_time_elapsed_since_last_modification",
 		"transfer_spec.0.object_conditions.0.include_prefixes",
 		"transfer_spec.0.object_conditions.0.exclude_prefixes",
+		"transfer_spec.0.object_conditions.0.last_modified_since",
+		"transfer_spec.0.object_conditions.0.last_modified_before",
 	}
 
 	transferOptionsKeys = []string{
 		"transfer_spec.0.transfer_options.0.overwrite_objects_already_existing_in_sink",
 		"transfer_spec.0.transfer_options.0.delete_objects_unique_in_sink",
 		"transfer_spec.0.transfer_options.0.delete_objects_from_source_after_transfer",
+		"transfer_spec.0.transfer_options.0.overwrite_when",
 	}
 
 	transferSpecDataSourceKeys = []string{
@@ -31,10 +35,19 @@ var (
 		"transfer_spec.0.aws_s3_data_source",
 		"transfer_spec.0.http_data_source",
 		"transfer_spec.0.azure_blob_storage_data_source",
+		"transfer_spec.0.posix_data_source",
+	}
+	transferSpecDataSinkKeys = []string{
+		"transfer_spec.0.gcs_data_sink",
+		"transfer_spec.0.posix_data_sink",
+	}
+	awsS3AuthKeys = []string{
+		"transfer_spec.0.aws_s3_data_source.0.aws_access_key",
+		"transfer_spec.0.aws_s3_data_source.0.role_arn",
 	}
 )
 
-func resourceStorageTransferJob() *schema.Resource {
+func ResourceStorageTransferJob() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceStorageTransferJobCreate,
 		Read:   resourceStorageTransferJobRead,
@@ -71,12 +84,35 @@ func resourceStorageTransferJob() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"object_conditions": objectConditionsSchema(),
 						"transfer_options":  transferOptionsSchema(),
-						"gcs_data_sink": {
-							Type:        schema.TypeList,
+						"source_agent_pool_name": {
+							Type:        schema.TypeString,
 							Optional:    true,
-							MaxItems:    1,
-							Elem:        gcsDataSchema(),
-							Description: `A Google Cloud Storage data sink.`,
+							Computed:    true,
+							ForceNew:    true,
+							Description: `Specifies the agent pool name associated with the posix data source. When unspecified, the default name is used.`,
+						},
+						"sink_agent_pool_name": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Computed:    true,
+							ForceNew:    true,
+							Description: `Specifies the agent pool name associated with the posix data source. When unspecified, the default name is used.`,
+						},
+						"gcs_data_sink": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							MaxItems:     1,
+							Elem:         gcsDataSchema(),
+							ExactlyOneOf: transferSpecDataSinkKeys,
+							Description:  `A Google Cloud Storage data sink.`,
+						},
+						"posix_data_sink": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							MaxItems:     1,
+							Elem:         posixDataSchema(),
+							ExactlyOneOf: transferSpecDataSinkKeys,
+							Description:  `A POSIX filesystem data sink.`,
 						},
 						"gcs_data_source": {
 							Type:         schema.TypeList,
@@ -102,6 +138,14 @@ func resourceStorageTransferJob() *schema.Resource {
 							ExactlyOneOf: transferSpecDataSourceKeys,
 							Description:  `A HTTP URL data source.`,
 						},
+						"posix_data_source": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							MaxItems:     1,
+							Elem:         posixDataSchema(),
+							ExactlyOneOf: transferSpecDataSourceKeys,
+							Description:  `A POSIX filesystem data source.`,
+						},
 						"azure_blob_storage_data_source": {
 							Type:         schema.TypeList,
 							Optional:     true,
@@ -114,16 +158,45 @@ func resourceStorageTransferJob() *schema.Resource {
 				},
 				Description: `Transfer specification.`,
 			},
+			"notification_config": {
+				Type:     schema.TypeList,
+				Optional: true,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"pubsub_topic": {
+							Type:        schema.TypeString,
+							Required:    true,
+							Description: `The Topic.name of the Pub/Sub topic to which to publish notifications.`,
+						},
+						"event_types": {
+							Type:     schema.TypeSet,
+							Optional: true,
+							Elem: &schema.Schema{
+								Type:         schema.TypeString,
+								ValidateFunc: validation.StringInSlice([]string{"TRANSFER_OPERATION_SUCCESS", "TRANSFER_OPERATION_FAILED", "TRANSFER_OPERATION_ABORTED"}, false),
+							},
+							Description: `Event types for which a notification is desired. If empty, send notifications for all event types. The valid types are "TRANSFER_OPERATION_SUCCESS", "TRANSFER_OPERATION_FAILED", "TRANSFER_OPERATION_ABORTED".`,
+						},
+						"payload_format": {
+							Type:         schema.TypeString,
+							Required:     true,
+							ValidateFunc: validation.StringInSlice([]string{"NONE", "JSON"}, false),
+							Description:  `The desired format of the notification message payloads. One of "NONE" or "JSON".`,
+						},
+					},
+				},
+				Description: `Notification configuration.`,
+			},
 			"schedule": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"schedule_start_date": {
 							Type:        schema.TypeList,
 							Required:    true,
-							ForceNew:    true,
 							MaxItems:    1,
 							Elem:        dateObjectSchema(),
 							Description: `The first day the recurring transfer is scheduled to run. If schedule_start_date is in the past, the transfer will run for the first time on the following day.`,
@@ -131,7 +204,6 @@ func resourceStorageTransferJob() *schema.Resource {
 						"schedule_end_date": {
 							Type:        schema.TypeList,
 							Optional:    true,
-							ForceNew:    true,
 							MaxItems:    1,
 							Elem:        dateObjectSchema(),
 							Description: `The last day the recurring transfer will be run. If schedule_end_date is the same as schedule_start_date, the transfer will be executed only once.`,
@@ -139,11 +211,17 @@ func resourceStorageTransferJob() *schema.Resource {
 						"start_time_of_day": {
 							Type:             schema.TypeList,
 							Optional:         true,
-							ForceNew:         true,
 							MaxItems:         1,
 							Elem:             timeObjectSchema(),
 							DiffSuppressFunc: diffSuppressEmptyStartTimeOfDay,
 							Description:      `The time in UTC at which the transfer will be scheduled to start in a day. Transfers may start later than this time. If not specified, recurring and one-time transfers that are scheduled to run today will run immediately; recurring transfers that are scheduled to run on a future date will start at approximately midnight UTC on that date. Note that when configuring a transfer with the Cloud Platform Console, the transfer's start time in a day is specified in your local timezone.`,
+						},
+						"repeat_interval": {
+							Type:         schema.TypeString,
+							ValidateFunc: validateDuration(),
+							Optional:     true,
+							Description:  `Interval between the start of each scheduled transfer. If unspecified, the default value is 24 hours. This value may not be less than 1 hour. A duration in seconds with up to nine fractional digits, terminated by 's'. Example: "3.5s".`,
+							Default:      "86400s",
 						},
 					},
 				},
@@ -217,6 +295,20 @@ func objectConditionsSchema() *schema.Schema {
 					},
 					Description: `exclude_prefixes must follow the requirements described for include_prefixes.`,
 				},
+				"last_modified_since": {
+					Type:         schema.TypeString,
+					ValidateFunc: validateRFC3339Date,
+					Optional:     true,
+					AtLeastOneOf: objectConditionsKeys,
+					Description:  `If specified, only objects with a "last modification time" on or after this timestamp and objects that don't have a "last modification time" are transferred. A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits. Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
+				},
+				"last_modified_before": {
+					Type:         schema.TypeString,
+					ValidateFunc: validateRFC3339Date,
+					Optional:     true,
+					AtLeastOneOf: objectConditionsKeys,
+					Description:  `If specified, only objects with a "last modification time" before this timestamp and objects that don't have a "last modification time" are transferred. A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine fractional digits. Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
+				},
 			},
 		},
 		Description: `Only objects that satisfy these object conditions are included in the set of data source and data sink objects. Object conditions based on objects' last_modification_time do not exclude objects in a data sink.`,
@@ -250,6 +342,13 @@ func transferOptionsSchema() *schema.Schema {
 					ConflictsWith: []string{"transfer_spec.transfer_options.delete_objects_unique_in_sink"},
 					Description:   `Whether objects should be deleted from the source after they are transferred to the sink. Note that this option and delete_objects_unique_in_sink are mutually exclusive.`,
 				},
+				"overwrite_when": {
+					Type:         schema.TypeString,
+					Optional:     true,
+					AtLeastOneOf: transferOptionsKeys,
+					ValidateFunc: validation.StringInSlice([]string{"DIFFERENT", "NEVER", "ALWAYS"}, false),
+					Description:  `When to overwrite objects that already exist in the sink. If not set, overwrite behavior is determined by overwriteObjectsAlreadyExistingInSink.`,
+				},
 			},
 		},
 		Description: `Characteristics of how to treat files from datasource and sink during job. If the option delete_objects_unique_in_sink is true, object conditions based on objects' last_modification_time are ignored and do not exclude objects in a data source or a data sink.`,
@@ -262,28 +361,24 @@ func timeObjectSchema() *schema.Resource {
 			"hours": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntBetween(0, 24),
 				Description:  `Hours of day in 24 hour format. Should be from 0 to 23.`,
 			},
 			"minutes": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntBetween(0, 59),
 				Description:  `Minutes of hour of day. Must be from 0 to 59.`,
 			},
 			"seconds": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntBetween(0, 60),
 				Description:  `Seconds of minutes of the time. Must normally be from 0 to 59.`,
 			},
 			"nanos": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntBetween(0, 999999999),
 				Description:  `Fractions of seconds in nanoseconds. Must be from 0 to 999,999,999.`,
 			},
@@ -297,7 +392,6 @@ func dateObjectSchema() *schema.Resource {
 			"year": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntBetween(0, 9999),
 				Description:  `Year of date. Must be from 1 to 9999.`,
 			},
@@ -305,7 +399,6 @@ func dateObjectSchema() *schema.Resource {
 			"month": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntBetween(1, 12),
 				Description:  `Month of year. Must be from 1 to 12.`,
 			},
@@ -313,7 +406,6 @@ func dateObjectSchema() *schema.Resource {
 			"day": {
 				Type:         schema.TypeInt,
 				Required:     true,
-				ForceNew:     true,
 				ValidateFunc: validation.IntBetween(0, 31),
 				Description:  `Day of month. Must be from 1 to 31 and valid for the year and month.`,
 			},
@@ -349,7 +441,7 @@ func awsS3DataSchema() *schema.Resource {
 			},
 			"aws_access_key": {
 				Type:     schema.TypeList,
-				Required: true,
+				Optional: true,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -367,7 +459,14 @@ func awsS3DataSchema() *schema.Resource {
 						},
 					},
 				},
-				Description: `AWS credentials block.`,
+				ExactlyOneOf: awsS3AuthKeys,
+				Description:  `AWS credentials block.`,
+			},
+			"role_arn": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ExactlyOneOf: awsS3AuthKeys,
+				Description:  `The Amazon Resource Name (ARN) of the role to support temporary credentials via 'AssumeRoleWithWebIdentity'. For more information about ARNs, see [IAM ARNs](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html#identifiers-arns). When a role ARN is provided, Transfer Service fetches temporary credentials for the session using a 'AssumeRoleWithWebIdentity' call for the provided role using the [GoogleServiceAccount][] for this project.`,
 			},
 		},
 	}
@@ -380,6 +479,18 @@ func httpDataSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: `The URL that points to the file that stores the object list entries. This file must allow public access. Currently, only URLs with HTTP and HTTPS schemes are supported.`,
+			},
+		},
+	}
+}
+
+func posixDataSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"root_directory": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: `Root directory path to the filesystem.`,
 			},
 		},
 	}
@@ -430,7 +541,7 @@ func diffSuppressEmptyStartTimeOfDay(k, old, new string, d *schema.ResourceData)
 
 func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -441,11 +552,12 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	transferJob := &storagetransfer.TransferJob{
-		Description:  d.Get("description").(string),
-		ProjectId:    project,
-		Status:       d.Get("status").(string),
-		Schedule:     expandTransferSchedules(d.Get("schedule").([]interface{})),
-		TransferSpec: expandTransferSpecs(d.Get("transfer_spec").([]interface{})),
+		Description:        d.Get("description").(string),
+		ProjectId:          project,
+		Status:             d.Get("status").(string),
+		Schedule:           expandTransferSchedules(d.Get("schedule").([]interface{})),
+		TransferSpec:       expandTransferSpecs(d.Get("transfer_spec").([]interface{})),
+		NotificationConfig: expandTransferJobNotificationConfig(d.Get("notification_config").([]interface{})),
 	}
 
 	var res *storagetransfer.TransferJob
@@ -472,7 +584,7 @@ func resourceStorageTransferJobCreate(d *schema.ResourceData, meta interface{}) 
 
 func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -487,7 +599,11 @@ func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) er
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("Transfer Job %q", name))
 	}
-	log.Printf("[DEBUG] Read transfer job: %v in project: %v \n\n", res.Name, res.ProjectId)
+
+	if res.Status == "DELETED" {
+		d.SetId("")
+		return nil
+	}
 
 	if err := d.Set("project", res.ProjectId); err != nil {
 		return fmt.Errorf("Error setting project: %s", err)
@@ -518,12 +634,17 @@ func resourceStorageTransferJobRead(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
+	err = d.Set("notification_config", flattenTransferJobNotificationConfig(res.NotificationConfig))
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -537,31 +658,44 @@ func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) 
 	fieldMask := []string{}
 
 	if d.HasChange("description") {
+		fieldMask = append(fieldMask, "description")
 		if v, ok := d.GetOk("description"); ok {
-			fieldMask = append(fieldMask, "description")
 			transferJob.Description = v.(string)
 		}
 	}
 
 	if d.HasChange("status") {
+		fieldMask = append(fieldMask, "status")
 		if v, ok := d.GetOk("status"); ok {
-			fieldMask = append(fieldMask, "status")
 			transferJob.Status = v.(string)
 		}
 	}
 
 	if d.HasChange("schedule") {
+		fieldMask = append(fieldMask, "schedule")
 		if v, ok := d.GetOk("schedule"); ok {
-			fieldMask = append(fieldMask, "schedule")
 			transferJob.Schedule = expandTransferSchedules(v.([]interface{}))
 		}
 	}
 
 	if d.HasChange("transfer_spec") {
+		fieldMask = append(fieldMask, "transfer_spec")
 		if v, ok := d.GetOk("transfer_spec"); ok {
-			fieldMask = append(fieldMask, "transfer_spec")
 			transferJob.TransferSpec = expandTransferSpecs(v.([]interface{}))
 		}
+	}
+
+	if d.HasChange("notification_config") {
+		fieldMask = append(fieldMask, "notification_config")
+		if v, ok := d.GetOk("notification_config"); ok {
+			transferJob.NotificationConfig = expandTransferJobNotificationConfig(v.([]interface{}))
+		} else {
+			transferJob.NotificationConfig = nil
+		}
+	}
+
+	if len(fieldMask) == 0 {
+		return nil
 	}
 
 	updateRequest := &storagetransfer.UpdateTransferJobRequest{
@@ -582,7 +716,7 @@ func resourceStorageTransferJobUpdate(d *schema.ResourceData, meta interface{}) 
 
 func resourceStorageTransferJobDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -724,11 +858,16 @@ func expandTransferSchedules(transferSchedules []interface{}) *storagetransfer.S
 		ScheduleStartDate: expandDates(schedule["schedule_start_date"].([]interface{})),
 		ScheduleEndDate:   expandDates(schedule["schedule_end_date"].([]interface{})),
 		StartTimeOfDay:    expandTimeOfDays(schedule["start_time_of_day"].([]interface{})),
+		RepeatInterval:    schedule["repeat_interval"].(string),
 	}
 }
 
-func flattenTransferSchedule(transferSchedule *storagetransfer.Schedule) []map[string][]map[string]interface{} {
-	data := map[string][]map[string]interface{}{
+func flattenTransferSchedule(transferSchedule *storagetransfer.Schedule) []map[string]interface{} {
+	if transferSchedule == nil || reflect.DeepEqual(transferSchedule, &storagetransfer.Schedule{}) {
+		return nil
+	}
+
+	data := map[string]interface{}{
 		"schedule_start_date": flattenDate(transferSchedule.ScheduleStartDate),
 	}
 
@@ -740,7 +879,11 @@ func flattenTransferSchedule(transferSchedule *storagetransfer.Schedule) []map[s
 		data["start_time_of_day"] = flattenTimeOfDay(transferSchedule.StartTimeOfDay)
 	}
 
-	return []map[string][]map[string]interface{}{data}
+	if transferSchedule.RepeatInterval != "" {
+		data["repeat_interval"] = transferSchedule.RepeatInterval
+	}
+
+	return []map[string]interface{}{data}
 }
 
 func expandGcsData(gcsDatas []interface{}) *storagetransfer.GcsData {
@@ -796,13 +939,17 @@ func expandAwsS3Data(awsS3Datas []interface{}) *storagetransfer.AwsS3Data {
 	return &storagetransfer.AwsS3Data{
 		BucketName:   awsS3Data["bucket_name"].(string),
 		AwsAccessKey: expandAwsAccessKeys(awsS3Data["aws_access_key"].([]interface{})),
+		RoleArn:      awsS3Data["role_arn"].(string),
 	}
 }
 
 func flattenAwsS3Data(awsS3Data *storagetransfer.AwsS3Data, d *schema.ResourceData) []map[string]interface{} {
 	data := map[string]interface{}{
-		"bucket_name":    awsS3Data.BucketName,
-		"aws_access_key": flattenAwsAccessKeys(d),
+		"bucket_name": awsS3Data.BucketName,
+		"role_arn":    awsS3Data.RoleArn,
+	}
+	if awsS3Data.AwsAccessKey != nil {
+		data["aws_access_key"] = flattenAwsAccessKeys(d)
 	}
 
 	return []map[string]interface{}{data}
@@ -822,6 +969,25 @@ func expandHttpData(httpDatas []interface{}) *storagetransfer.HttpData {
 func flattenHttpData(httpData *storagetransfer.HttpData) []map[string]interface{} {
 	data := map[string]interface{}{
 		"list_url": httpData.ListUrl,
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func expandPosixData(posixDatas []interface{}) *storagetransfer.PosixFilesystem {
+	if len(posixDatas) == 0 || posixDatas[0] == nil {
+		return nil
+	}
+
+	posixData := posixDatas[0].(map[string]interface{})
+	return &storagetransfer.PosixFilesystem{
+		RootDirectory: posixData["root_directory"].(string),
+	}
+}
+
+func flattenPosixData(posixData *storagetransfer.PosixFilesystem) []map[string]interface{} {
+	data := map[string]interface{}{
+		"root_directory": posixData.RootDirectory,
 	}
 
 	return []map[string]interface{}{data}
@@ -883,6 +1049,8 @@ func expandObjectConditions(conditions []interface{}) *storagetransfer.ObjectCon
 		IncludePrefixes:                     convertStringArr(condition["include_prefixes"].([]interface{})),
 		MaxTimeElapsedSinceLastModification: condition["max_time_elapsed_since_last_modification"].(string),
 		MinTimeElapsedSinceLastModification: condition["min_time_elapsed_since_last_modification"].(string),
+		LastModifiedSince:                   condition["last_modified_since"].(string),
+		LastModifiedBefore:                  condition["last_modified_before"].(string),
 	}
 }
 
@@ -892,6 +1060,8 @@ func flattenObjectCondition(condition *storagetransfer.ObjectConditions) []map[s
 		"include_prefixes":                         condition.IncludePrefixes,
 		"max_time_elapsed_since_last_modification": condition.MaxTimeElapsedSinceLastModification,
 		"min_time_elapsed_since_last_modification": condition.MinTimeElapsedSinceLastModification,
+		"last_modified_since":                      condition.LastModifiedSince,
+		"last_modified_before":                     condition.LastModifiedBefore,
 	}
 	return []map[string]interface{}{data}
 }
@@ -906,6 +1076,7 @@ func expandTransferOptions(options []interface{}) *storagetransfer.TransferOptio
 		DeleteObjectsFromSourceAfterTransfer:  option["delete_objects_from_source_after_transfer"].(bool),
 		DeleteObjectsUniqueInSink:             option["delete_objects_unique_in_sink"].(bool),
 		OverwriteObjectsAlreadyExistingInSink: option["overwrite_objects_already_existing_in_sink"].(bool),
+		OverwriteWhen:                         option["overwrite_when"].(string),
 	}
 }
 
@@ -914,6 +1085,7 @@ func flattenTransferOption(option *storagetransfer.TransferOptions) []map[string
 		"delete_objects_from_source_after_transfer":  option.DeleteObjectsFromSourceAfterTransfer,
 		"delete_objects_unique_in_sink":              option.DeleteObjectsUniqueInSink,
 		"overwrite_objects_already_existing_in_sink": option.OverwriteObjectsAlreadyExistingInSink,
+		"overwrite_when":                             option.OverwriteWhen,
 	}
 
 	return []map[string]interface{}{data}
@@ -926,26 +1098,40 @@ func expandTransferSpecs(transferSpecs []interface{}) *storagetransfer.TransferS
 
 	transferSpec := transferSpecs[0].(map[string]interface{})
 	return &storagetransfer.TransferSpec{
+		SourceAgentPoolName:        transferSpec["source_agent_pool_name"].(string),
+		SinkAgentPoolName:          transferSpec["sink_agent_pool_name"].(string),
 		GcsDataSink:                expandGcsData(transferSpec["gcs_data_sink"].([]interface{})),
+		PosixDataSink:              expandPosixData(transferSpec["posix_data_sink"].([]interface{})),
 		ObjectConditions:           expandObjectConditions(transferSpec["object_conditions"].([]interface{})),
 		TransferOptions:            expandTransferOptions(transferSpec["transfer_options"].([]interface{})),
 		GcsDataSource:              expandGcsData(transferSpec["gcs_data_source"].([]interface{})),
 		AwsS3DataSource:            expandAwsS3Data(transferSpec["aws_s3_data_source"].([]interface{})),
 		HttpDataSource:             expandHttpData(transferSpec["http_data_source"].([]interface{})),
 		AzureBlobStorageDataSource: expandAzureBlobStorageData(transferSpec["azure_blob_storage_data_source"].([]interface{})),
+		PosixDataSource:            expandPosixData(transferSpec["posix_data_source"].([]interface{})),
 	}
 }
 
-func flattenTransferSpec(transferSpec *storagetransfer.TransferSpec, d *schema.ResourceData) []map[string][]map[string]interface{} {
+func flattenTransferSpec(transferSpec *storagetransfer.TransferSpec, d *schema.ResourceData) []map[string]interface{} {
 
-	data := map[string][]map[string]interface{}{
-		"gcs_data_sink": flattenGcsData(transferSpec.GcsDataSink),
+	data := map[string]interface{}{}
+
+	data["sink_agent_pool_name"] = transferSpec.SinkAgentPoolName
+	data["source_agent_pool_name"] = transferSpec.SourceAgentPoolName
+
+	if transferSpec.GcsDataSink != nil {
+		data["gcs_data_sink"] = flattenGcsData(transferSpec.GcsDataSink)
+	}
+	if transferSpec.PosixDataSink != nil {
+		data["posix_data_sink"] = flattenPosixData(transferSpec.PosixDataSink)
 	}
 
 	if transferSpec.ObjectConditions != nil {
 		data["object_conditions"] = flattenObjectCondition(transferSpec.ObjectConditions)
 	}
-	if transferSpec.TransferOptions != nil {
+	if transferSpec.TransferOptions != nil &&
+		(usingPosix(transferSpec) == false ||
+			(usingPosix(transferSpec) == true && reflect.DeepEqual(transferSpec.TransferOptions, &storagetransfer.TransferOptions{}) == false)) {
 		data["transfer_options"] = flattenTransferOption(transferSpec.TransferOptions)
 	}
 	if transferSpec.GcsDataSource != nil {
@@ -956,7 +1142,49 @@ func flattenTransferSpec(transferSpec *storagetransfer.TransferSpec, d *schema.R
 		data["http_data_source"] = flattenHttpData(transferSpec.HttpDataSource)
 	} else if transferSpec.AzureBlobStorageDataSource != nil {
 		data["azure_blob_storage_data_source"] = flattenAzureBlobStorageData(transferSpec.AzureBlobStorageDataSource, d)
+	} else if transferSpec.PosixDataSource != nil {
+		data["posix_data_source"] = flattenPosixData(transferSpec.PosixDataSource)
 	}
 
-	return []map[string][]map[string]interface{}{data}
+	return []map[string]interface{}{data}
+}
+
+func usingPosix(transferSpec *storagetransfer.TransferSpec) bool {
+	return transferSpec.PosixDataSource != nil || transferSpec.PosixDataSink != nil
+}
+
+func expandTransferJobNotificationConfig(notificationConfigs []interface{}) *storagetransfer.NotificationConfig {
+	if len(notificationConfigs) == 0 || notificationConfigs[0] == nil {
+		return nil
+	}
+
+	notificationConfig := notificationConfigs[0].(map[string]interface{})
+	var apiData = &storagetransfer.NotificationConfig{
+		PayloadFormat: notificationConfig["payload_format"].(string),
+		PubsubTopic:   notificationConfig["pubsub_topic"].(string),
+	}
+
+	if notificationConfig["event_types"] != nil {
+		apiData.EventTypes = convertStringArr(notificationConfig["event_types"].(*schema.Set).List())
+	}
+
+	log.Printf("[DEBUG] apiData: %v\n\n", apiData)
+	return apiData
+}
+
+func flattenTransferJobNotificationConfig(notificationConfig *storagetransfer.NotificationConfig) []map[string]interface{} {
+	if notificationConfig == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"payload_format": notificationConfig.PayloadFormat,
+		"pubsub_topic":   notificationConfig.PubsubTopic,
+	}
+
+	if notificationConfig.EventTypes != nil {
+		data["event_types"] = convertStringArrToInterface(notificationConfig.EventTypes)
+	}
+
+	return []map[string]interface{}{data}
 }

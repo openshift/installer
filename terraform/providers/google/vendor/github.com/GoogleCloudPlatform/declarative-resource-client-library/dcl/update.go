@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,18 +38,33 @@ func UpdateMask(ds []*FieldDiff) string {
 	return strings.Join(dupesRemoved, ",")
 }
 
+func titleCaseToCamelCase(s string) string {
+	r, n := utf8.DecodeRuneInString(s)
+	p := string(unicode.ToLower(r))
+	p = p + s[n:]
+	return p
+}
+
 // Diffs come in the form Http.AuthInfo.Password
 // Needs to be in the form http.authInfo.password
 func convertUpdateMaskVal(s string) string {
 	r := regexp.MustCompile(`\[\d\]`)
-	t := r.ReplaceAllString(s, "")
 
 	// camelCase string (right now, it's in TitleCase).
-	parts := strings.Split(t, ".")
+	parts := strings.Split(s, ".")
 	var p []string
 	for _, q := range parts {
-		r, n := utf8.DecodeRuneInString(q)
-		p = append(p, string(unicode.ToLower(r))+q[n:])
+		if r.MatchString(q) {
+			// Indexing into a repeated field.
+			bareFieldName := r.ReplaceAllString(q, "")
+			p = append(p, titleCaseToCamelCase(bareFieldName))
+
+			// Repeated fields cannot be intermediary in a field mask, so we
+			// must terminate the field mask here.
+			break
+		} else {
+			p = append(p, titleCaseToCamelCase(q))
+		}
 	}
 
 	// * notation should only be used if this is not the last field.

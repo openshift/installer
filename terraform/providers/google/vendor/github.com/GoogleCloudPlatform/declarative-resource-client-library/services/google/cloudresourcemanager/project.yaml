@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,34 +20,46 @@ paths:
   get:
     description: The function used to get information about a Project
     parameters:
-    - name: Project
+    - name: project
       required: true
       description: A full instance of a Project
   apply:
     description: The function used to apply information about a Project
     parameters:
-    - name: Project
+    - name: project
       required: true
       description: A full instance of a Project
   delete:
     description: The function used to delete a Project
     parameters:
-    - name: Project
+    - name: project
       required: true
       description: A full instance of a Project
   deleteAll:
     description: The function used to delete all Project
-    parameters: []
+    parameters:
+    - name: parent
+      required: true
+      schema:
+        type: string
   list:
     description: The function used to list information about many Project
-    parameters: []
+    parameters:
+    - name: parent
+      required: true
+      schema:
+        type: string
 components:
   schemas:
     Project:
       title: Project
       x-dcl-id: projects/{{name}}
       x-dcl-labels: labels
+      x-dcl-has-create: true
       x-dcl-has-iam: true
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       properties:
         displayname:
@@ -94,6 +106,7 @@ components:
             the `UpdateProject` method; the end user must have the `resourcemanager.projects.create`
             permission on the parent. Read-write. '
           x-kubernetes-immutable: true
+          x-dcl-forward-slash-allowed: true
         projectNumber:
           type: integer
           format: int64

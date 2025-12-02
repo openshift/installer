@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceDialogflowCXEntityType() *schema.Resource {
+func ResourceDialogflowCXEntityType() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceDialogflowCXEntityTypeCreate,
 		Read:   resourceDialogflowCXEntityTypeRead,
@@ -39,7 +40,7 @@ func resourceDialogflowCXEntityType() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(40 * time.Minute),
 			Update: schema.DefaultTimeout(40 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -77,7 +78,7 @@ For KIND_LIST entity types: A string that can contain references to other entity
 			"kind": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"KIND_MAP", "KIND_LIST", "KIND_REGEXP"}, false),
+				ValidateFunc: validateEnum([]string{"KIND_MAP", "KIND_LIST", "KIND_REGEXP"}),
 				Description: `Indicates whether the entity type can be automatically expanded.
 * KIND_MAP: Map entity types allow mapping of a group of synonyms to a canonical value.
 * KIND_LIST: List entity types contain a set of entries that do not map to canonical values. However, list entity types can contain references to other entity types (with or without aliases).
@@ -86,7 +87,7 @@ For KIND_LIST entity types: A string that can contain references to other entity
 			"auto_expansion_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"AUTO_EXPANSION_MODE_DEFAULT", "AUTO_EXPANSION_MODE_UNSPECIFIED", ""}, false),
+				ValidateFunc: validateEnum([]string{"AUTO_EXPANSION_MODE_DEFAULT", "AUTO_EXPANSION_MODE_UNSPECIFIED", ""}),
 				Description: `Represents kinds of entities.
 * AUTO_EXPANSION_MODE_UNSPECIFIED: Auto expansion disabled for the entity.
 * AUTO_EXPANSION_MODE_DEFAULT: Allows an agent to recognize values that have not been explicitly listed in the entity. Possible values: ["AUTO_EXPANSION_MODE_DEFAULT", "AUTO_EXPANSION_MODE_UNSPECIFIED"]`,
@@ -99,7 +100,7 @@ For KIND_LIST entity types: A string that can contain references to other entity
 			"excluded_phrases": {
 				Type:     schema.TypeList,
 				Optional: true,
-				Description: `Collection of exceptional words and phrases that shouldn't be matched. For example, if you have a size entity type with entry giant(an adjective), you might consider adding giants(a noun) as an exclusion. 
+				Description: `Collection of exceptional words and phrases that shouldn't be matched. For example, if you have a size entity type with entry giant(an adjective), you might consider adding giants(a noun) as an exclusion.
 If the kind of entity type is KIND_MAP, then the phrases specified by entities and excluded phrases should be mutually exclusive.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -125,7 +126,7 @@ If not specified, the agent's default language is used. Many languages are suppo
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Description: `The agent to create a entity type for. 
+				Description: `The agent to create a entity type for.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>.`,
 			},
 			"redact": {
@@ -146,7 +147,7 @@ Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/entityTy
 
 func resourceDialogflowCXEntityTypeCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -208,7 +209,21 @@ func resourceDialogflowCXEntityTypeCreate(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	// extract location from the parent
+	location := ""
+
+	if parts := regexp.MustCompile(`locations\/([^\/]*)\/`).FindStringSubmatch(d.Get("parent").(string)); parts != nil {
+		location = parts[1]
+	} else {
+		return fmt.Errorf(
+			"Saw %s when the parent is expected to contains location %s",
+			d.Get("parent"),
+			"projects/{{project}}/locations/{{location}}/...",
+		)
+	}
+
+	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating EntityType: %s", err)
 	}
@@ -230,7 +245,7 @@ func resourceDialogflowCXEntityTypeCreate(d *schema.ResourceData, meta interface
 
 func resourceDialogflowCXEntityTypeRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -247,7 +262,21 @@ func resourceDialogflowCXEntityTypeRead(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	// extract location from the parent
+	location := ""
+
+	if parts := regexp.MustCompile(`locations\/([^\/]*)\/`).FindStringSubmatch(d.Get("parent").(string)); parts != nil {
+		location = parts[1]
+	} else {
+		return fmt.Errorf(
+			"Saw %s when the parent is expected to contains location %s",
+			d.Get("parent"),
+			"projects/{{project}}/locations/{{location}}/...",
+		)
+	}
+
+	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("DialogflowCXEntityType %q", d.Id()))
 	}
@@ -282,7 +311,7 @@ func resourceDialogflowCXEntityTypeRead(d *schema.ResourceData, meta interface{}
 
 func resourceDialogflowCXEntityTypeUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -375,12 +404,27 @@ func resourceDialogflowCXEntityTypeUpdate(d *schema.ResourceData, meta interface
 		return err
 	}
 
+	// extract location from the parent
+	location := ""
+
+	if parts := regexp.MustCompile(`locations\/([^\/]*)\/`).FindStringSubmatch(d.Get("parent").(string)); parts != nil {
+		location = parts[1]
+	} else {
+		return fmt.Errorf(
+			"Saw %s when the parent is expected to contains location %s",
+			d.Get("parent"),
+			"projects/{{project}}/locations/{{location}}/...",
+		)
+	}
+
+	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
+
 	// err == nil indicates that the billing_project value was found
 	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating EntityType %q: %s", d.Id(), err)
@@ -393,7 +437,7 @@ func resourceDialogflowCXEntityTypeUpdate(d *schema.ResourceData, meta interface
 
 func resourceDialogflowCXEntityTypeDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -406,6 +450,21 @@ func resourceDialogflowCXEntityTypeDelete(d *schema.ResourceData, meta interface
 	}
 
 	var obj map[string]interface{}
+
+	// extract location from the parent
+	location := ""
+
+	if parts := regexp.MustCompile(`locations\/([^\/]*)\/`).FindStringSubmatch(d.Get("parent").(string)); parts != nil {
+		location = parts[1]
+	} else {
+		return fmt.Errorf(
+			"Saw %s when the parent is expected to contains location %s",
+			d.Get("parent"),
+			"projects/{{project}}/locations/{{location}}/...",
+		)
+	}
+
+	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
 	log.Printf("[DEBUG] Deleting EntityType %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
@@ -413,7 +472,7 @@ func resourceDialogflowCXEntityTypeDelete(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "EntityType")
 	}

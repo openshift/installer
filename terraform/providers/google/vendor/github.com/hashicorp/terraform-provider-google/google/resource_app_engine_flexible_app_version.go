@@ -18,14 +18,12 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceAppEngineFlexibleAppVersion() *schema.Resource {
+func ResourceAppEngineFlexibleAppVersion() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAppEngineFlexibleAppVersionCreate,
 		Read:   resourceAppEngineFlexibleAppVersionRead,
@@ -37,9 +35,9 @@ func resourceAppEngineFlexibleAppVersion() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -170,21 +168,21 @@ replies to a healthcheck until it is ready to serve traffic. Default: "300s"`,
 						"auth_fail_action": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED", ""}, false),
+							ValidateFunc: validateEnum([]string{"AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED", ""}),
 							Description:  `Action to take when users access resources that require authentication. Default value: "AUTH_FAIL_ACTION_REDIRECT" Possible values: ["AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED"]`,
 							Default:      "AUTH_FAIL_ACTION_REDIRECT",
 						},
 						"login": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED", ""}, false),
+							ValidateFunc: validateEnum([]string{"LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED", ""}),
 							Description:  `Level of login required to access this resource. Default value: "LOGIN_OPTIONAL" Possible values: ["LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED"]`,
 							Default:      "LOGIN_OPTIONAL",
 						},
 						"security_level": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS", ""}, false),
+							ValidateFunc: validateEnum([]string{"SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS", ""}),
 							Description:  `Security (HTTPS) enforcement for this URL. Possible values: ["SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS"]`,
 						},
 						"url": {
@@ -507,7 +505,7 @@ the configuration ID. In this case, configId must be omitted.`,
 						"rollout_strategy": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"FIXED", "MANAGED", ""}, false),
+							ValidateFunc: validateEnum([]string{"FIXED", "MANAGED", ""}),
 							Description:  `Endpoints rollout strategy. If FIXED, configId must be specified. If MANAGED, configId must be omitted. Default value: "FIXED" Possible values: ["FIXED", "MANAGED"]`,
 							Default:      "FIXED",
 						},
@@ -546,19 +544,19 @@ The first matching URL handles the request and other request handlers are not at
 						"auth_fail_action": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED", ""}, false),
+							ValidateFunc: validateEnum([]string{"AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED", ""}),
 							Description:  `Actions to take when the user is not logged in. Possible values: ["AUTH_FAIL_ACTION_REDIRECT", "AUTH_FAIL_ACTION_UNAUTHORIZED"]`,
 						},
 						"login": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED", ""}, false),
+							ValidateFunc: validateEnum([]string{"LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED", ""}),
 							Description:  `Methods to restrict access to a URL based on login status. Possible values: ["LOGIN_OPTIONAL", "LOGIN_ADMIN", "LOGIN_REQUIRED"]`,
 						},
 						"redirect_http_response_code": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"REDIRECT_HTTP_RESPONSE_CODE_301", "REDIRECT_HTTP_RESPONSE_CODE_302", "REDIRECT_HTTP_RESPONSE_CODE_303", "REDIRECT_HTTP_RESPONSE_CODE_307", ""}, false),
+							ValidateFunc: validateEnum([]string{"REDIRECT_HTTP_RESPONSE_CODE_301", "REDIRECT_HTTP_RESPONSE_CODE_302", "REDIRECT_HTTP_RESPONSE_CODE_303", "REDIRECT_HTTP_RESPONSE_CODE_307", ""}),
 							Description:  `30x code to use when performing redirects for the secure field. Possible values: ["REDIRECT_HTTP_RESPONSE_CODE_301", "REDIRECT_HTTP_RESPONSE_CODE_302", "REDIRECT_HTTP_RESPONSE_CODE_303", "REDIRECT_HTTP_RESPONSE_CODE_307"]`,
 						},
 						"script": {
@@ -580,7 +578,7 @@ Only the auto value is supported for Node.js in the App Engine standard environm
 						"security_level": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS", ""}, false),
+							ValidateFunc: validateEnum([]string{"SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS", ""}),
 							Description:  `Security (HTTPS) enforcement for this URL. Possible values: ["SECURE_DEFAULT", "SECURE_NEVER", "SECURE_OPTIONAL", "SECURE_ALWAYS"]`,
 						},
 						"static_files": {
@@ -653,7 +651,7 @@ All URLs that begin with this prefix are handled by this handler, using the port
 				Description: `A list of the types of messages that this application is able to receive. Possible values: ["INBOUND_SERVICE_MAIL", "INBOUND_SERVICE_MAIL_BOUNCE", "INBOUND_SERVICE_XMPP_ERROR", "INBOUND_SERVICE_XMPP_MESSAGE", "INBOUND_SERVICE_XMPP_SUBSCRIBE", "INBOUND_SERVICE_XMPP_PRESENCE", "INBOUND_SERVICE_CHANNEL_PRESENCE", "INBOUND_SERVICE_WARMUP"]`,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: validation.StringInSlice([]string{"INBOUND_SERVICE_MAIL", "INBOUND_SERVICE_MAIL_BOUNCE", "INBOUND_SERVICE_XMPP_ERROR", "INBOUND_SERVICE_XMPP_MESSAGE", "INBOUND_SERVICE_XMPP_SUBSCRIBE", "INBOUND_SERVICE_XMPP_PRESENCE", "INBOUND_SERVICE_CHANNEL_PRESENCE", "INBOUND_SERVICE_WARMUP"}, false),
+					ValidateFunc: validateEnum([]string{"INBOUND_SERVICE_MAIL", "INBOUND_SERVICE_MAIL_BOUNCE", "INBOUND_SERVICE_XMPP_ERROR", "INBOUND_SERVICE_XMPP_MESSAGE", "INBOUND_SERVICE_XMPP_SUBSCRIBE", "INBOUND_SERVICE_XMPP_PRESENCE", "INBOUND_SERVICE_CHANNEL_PRESENCE", "INBOUND_SERVICE_WARMUP"}),
 				},
 				Set: schema.HashString,
 			},
@@ -790,7 +788,8 @@ If specified, the subnetwork must exist in the same region as the App Engine fle
 				Computed: true,
 				Optional: true,
 				Description: `The version of the API in the given runtime environment.
-Please see the app.yaml reference for valid values at https://cloud.google.com/appengine/docs/standard//config/appref`,
+Please see the app.yaml reference for valid values at 'https://cloud.google.com/appengine/docs/standard/<language>/config/appref'\
+Substitute '<language>' with 'python', 'java', 'php', 'ruby', 'go' or 'nodejs'.`,
 			},
 			"runtime_channel": {
 				Type:        schema.TypeString,
@@ -802,10 +801,17 @@ Please see the app.yaml reference for valid values at https://cloud.google.com/a
 				Optional:    true,
 				Description: `The path or name of the app's main executable.`,
 			},
+			"service_account": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+				Description: `The identity that the deployed version will run as. Admin API will use the App Engine Appspot service account as
+default if this field is neither provided in app.yaml file nor through CLI flag.`,
+			},
 			"serving_status": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"SERVING", "STOPPED", ""}, false),
+				ValidateFunc: validateEnum([]string{"SERVING", "STOPPED", ""}),
 				Description:  `Current serving status of this version. Only the versions with a SERVING status create instances and can be billed. Default value: "SERVING" Possible values: ["SERVING", "STOPPED"]`,
 				Default:      "SERVING",
 			},
@@ -837,14 +843,16 @@ Reserved names,"default", "latest", and any name with the prefix "ah-".`,
 				Description: `Full path to the Version resource in the API. Example, "v1".`,
 			},
 			"noop_on_destroy": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: `If set to 'true', the application version will not be deleted.`,
 			},
 			"delete_service_on_destroy": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				Default:  false,
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Default:     false,
+				Description: `If set to 'true', the service will be deleted if it is the last version.`,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -859,7 +867,7 @@ Reserved names,"default", "latest", and any name with the prefix "ah-".`,
 
 func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -937,6 +945,12 @@ func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("runtime_main_executable_path"); !isEmptyValue(reflect.ValueOf(runtimeMainExecutablePathProp)) && (ok || !reflect.DeepEqual(v, runtimeMainExecutablePathProp)) {
 		obj["runtimeMainExecutablePath"] = runtimeMainExecutablePathProp
 	}
+	serviceAccountProp, err := expandAppEngineFlexibleAppVersionServiceAccount(d.Get("service_account"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("service_account"); !isEmptyValue(reflect.ValueOf(serviceAccountProp)) && (ok || !reflect.DeepEqual(v, serviceAccountProp)) {
+		obj["serviceAccount"] = serviceAccountProp
+	}
 	apiConfigProp, err := expandAppEngineFlexibleAppVersionApiConfig(d.Get("api_config"), d, config)
 	if err != nil {
 		return err
@@ -991,7 +1005,7 @@ func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("entrypoint"); !isEmptyValue(reflect.ValueOf(entrypointProp)) && (ok || !reflect.DeepEqual(v, entrypointProp)) {
 		obj["entrypoint"] = entrypointProp
 	}
-	vpcAccessConnectorProp, err := expandAppEngineFlexibleAppVersionVPCAccessConnector(d.Get("vpc_access_connector"), d, config)
+	vpcAccessConnectorProp, err := expandAppEngineFlexibleAppVersionVpcAccessConnector(d.Get("vpc_access_connector"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("vpc_access_connector"); !isEmptyValue(reflect.ValueOf(vpcAccessConnectorProp)) && (ok || !reflect.DeepEqual(v, vpcAccessConnectorProp)) {
@@ -1041,7 +1055,7 @@ func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isAppEngineRetryableError)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isAppEngineRetryableError)
 	if err != nil {
 		return fmt.Errorf("Error creating FlexibleAppVersion: %s", err)
 	}
@@ -1053,7 +1067,7 @@ func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta inte
 	}
 	d.SetId(id)
 
-	err = appEngineOperationWaitTime(
+	err = AppEngineOperationWaitTime(
 		config, res, project, "Creating FlexibleAppVersion", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -1070,7 +1084,7 @@ func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta inte
 
 func resourceAppEngineFlexibleAppVersionRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1093,7 +1107,7 @@ func resourceAppEngineFlexibleAppVersionRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isAppEngineRetryableError)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isAppEngineRetryableError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AppEngineFlexibleAppVersion %q", d.Id()))
 	}
@@ -1149,6 +1163,9 @@ func resourceAppEngineFlexibleAppVersionRead(d *schema.ResourceData, meta interf
 	if err := d.Set("runtime_main_executable_path", flattenAppEngineFlexibleAppVersionRuntimeMainExecutablePath(res["runtimeMainExecutablePath"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
 	}
+	if err := d.Set("service_account", flattenAppEngineFlexibleAppVersionServiceAccount(res["serviceAccount"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
+	}
 	if err := d.Set("api_config", flattenAppEngineFlexibleAppVersionApiConfig(res["apiConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
 	}
@@ -1170,7 +1187,7 @@ func resourceAppEngineFlexibleAppVersionRead(d *schema.ResourceData, meta interf
 	if err := d.Set("endpoints_api_service", flattenAppEngineFlexibleAppVersionEndpointsApiService(res["endpointsApiService"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
 	}
-	if err := d.Set("vpc_access_connector", flattenAppEngineFlexibleAppVersionVPCAccessConnector(res["vpcAccessConnector"], d, config)); err != nil {
+	if err := d.Set("vpc_access_connector", flattenAppEngineFlexibleAppVersionVpcAccessConnector(res["vpcAccessConnector"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
 	}
 	if err := d.Set("automatic_scaling", flattenAppEngineFlexibleAppVersionAutomaticScaling(res["automaticScaling"], d, config)); err != nil {
@@ -1185,7 +1202,7 @@ func resourceAppEngineFlexibleAppVersionRead(d *schema.ResourceData, meta interf
 
 func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1271,6 +1288,12 @@ func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("runtime_main_executable_path"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, runtimeMainExecutablePathProp)) {
 		obj["runtimeMainExecutablePath"] = runtimeMainExecutablePathProp
 	}
+	serviceAccountProp, err := expandAppEngineFlexibleAppVersionServiceAccount(d.Get("service_account"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("service_account"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, serviceAccountProp)) {
+		obj["serviceAccount"] = serviceAccountProp
+	}
 	apiConfigProp, err := expandAppEngineFlexibleAppVersionApiConfig(d.Get("api_config"), d, config)
 	if err != nil {
 		return err
@@ -1325,7 +1348,7 @@ func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("entrypoint"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, entrypointProp)) {
 		obj["entrypoint"] = entrypointProp
 	}
-	vpcAccessConnectorProp, err := expandAppEngineFlexibleAppVersionVPCAccessConnector(d.Get("vpc_access_connector"), d, config)
+	vpcAccessConnectorProp, err := expandAppEngineFlexibleAppVersionVpcAccessConnector(d.Get("vpc_access_connector"), d, config)
 	if err != nil {
 		return err
 	} else if v, ok := d.GetOkExists("vpc_access_connector"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, vpcAccessConnectorProp)) {
@@ -1368,7 +1391,7 @@ func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isAppEngineRetryableError)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isAppEngineRetryableError)
 
 	if err != nil {
 		return fmt.Errorf("Error updating FlexibleAppVersion %q: %s", d.Id(), err)
@@ -1376,7 +1399,7 @@ func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta inte
 		log.Printf("[DEBUG] Finished updating FlexibleAppVersion %q: %#v", d.Id(), res)
 	}
 
-	err = appEngineOperationWaitTime(
+	err = AppEngineOperationWaitTime(
 		config, res, project, "Updating FlexibleAppVersion", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -1389,7 +1412,7 @@ func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta inte
 
 func resourceAppEngineFlexibleAppVersionDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1418,11 +1441,11 @@ func resourceAppEngineFlexibleAppVersionDelete(d *schema.ResourceData, meta inte
 		}
 		var obj map[string]interface{}
 		log.Printf("[DEBUG] Deleting Service %q", d.Id())
-		res, err := sendRequestWithTimeout(config, "DELETE", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isAppEngineRetryableError)
+		res, err := SendRequestWithTimeout(config, "DELETE", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isAppEngineRetryableError)
 		if err != nil {
 			return handleNotFoundError(err, d, "Service")
 		}
-		err = appEngineOperationWaitTime(
+		err = AppEngineOperationWaitTime(
 			config, res, project, "Deleting Service", userAgent,
 			d.Timeout(schema.TimeoutDelete))
 
@@ -1438,11 +1461,11 @@ func resourceAppEngineFlexibleAppVersionDelete(d *schema.ResourceData, meta inte
 		}
 		var obj map[string]interface{}
 		log.Printf("[DEBUG] Deleting AppVersion %q", d.Id())
-		res, err := sendRequestWithTimeout(config, "DELETE", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isAppEngineRetryableError)
+		res, err := SendRequestWithTimeout(config, "DELETE", project, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isAppEngineRetryableError)
 		if err != nil {
 			return handleNotFoundError(err, d, "AppVersion")
 		}
-		err = appEngineOperationWaitTime(
+		err = AppEngineOperationWaitTime(
 			config, res, project, "Deleting AppVersion", userAgent,
 			d.Timeout(schema.TimeoutDelete))
 
@@ -1565,7 +1588,7 @@ func flattenAppEngineFlexibleAppVersionResources(v interface{}, d *schema.Resour
 func flattenAppEngineFlexibleAppVersionResourcesCpu(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1582,7 +1605,7 @@ func flattenAppEngineFlexibleAppVersionResourcesCpu(v interface{}, d *schema.Res
 func flattenAppEngineFlexibleAppVersionResourcesDiskGb(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1631,7 +1654,7 @@ func flattenAppEngineFlexibleAppVersionResourcesVolumesVolumeType(v interface{},
 func flattenAppEngineFlexibleAppVersionResourcesVolumesSizeGb(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1776,6 +1799,10 @@ func flattenAppEngineFlexibleAppVersionHandlersStaticFilesApplicationReadable(v 
 }
 
 func flattenAppEngineFlexibleAppVersionRuntimeMainExecutablePath(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenAppEngineFlexibleAppVersionServiceAccount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -2024,7 +2051,7 @@ func flattenAppEngineFlexibleAppVersionEndpointsApiServiceDisableTraceSampling(v
 	return v
 }
 
-func flattenAppEngineFlexibleAppVersionVPCAccessConnector(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+func flattenAppEngineFlexibleAppVersionVpcAccessConnector(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return nil
 	}
@@ -2034,10 +2061,10 @@ func flattenAppEngineFlexibleAppVersionVPCAccessConnector(v interface{}, d *sche
 	}
 	transformed := make(map[string]interface{})
 	transformed["name"] =
-		flattenAppEngineFlexibleAppVersionVPCAccessConnectorName(original["name"], d, config)
+		flattenAppEngineFlexibleAppVersionVpcAccessConnectorName(original["name"], d, config)
 	return []interface{}{transformed}
 }
-func flattenAppEngineFlexibleAppVersionVPCAccessConnectorName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+func flattenAppEngineFlexibleAppVersionVpcAccessConnectorName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -2106,7 +2133,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingCpuUtilizationTargetUtili
 func flattenAppEngineFlexibleAppVersionAutomaticScalingMaxConcurrentRequests(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2123,7 +2150,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingMaxConcurrentRequests(v i
 func flattenAppEngineFlexibleAppVersionAutomaticScalingMaxIdleInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2140,7 +2167,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingMaxIdleInstances(v interf
 func flattenAppEngineFlexibleAppVersionAutomaticScalingMaxTotalInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2161,7 +2188,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingMaxPendingLatency(v inter
 func flattenAppEngineFlexibleAppVersionAutomaticScalingMinIdleInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2178,7 +2205,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingMinIdleInstances(v interf
 func flattenAppEngineFlexibleAppVersionAutomaticScalingMinTotalInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2241,7 +2268,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingDiskUtilization(v interfa
 func flattenAppEngineFlexibleAppVersionAutomaticScalingDiskUtilizationTargetWriteBytesPerSecond(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2258,7 +2285,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingDiskUtilizationTargetWrit
 func flattenAppEngineFlexibleAppVersionAutomaticScalingDiskUtilizationTargetWriteOpsPerSecond(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2275,7 +2302,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingDiskUtilizationTargetWrit
 func flattenAppEngineFlexibleAppVersionAutomaticScalingDiskUtilizationTargetReadBytesPerSecond(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2292,7 +2319,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingDiskUtilizationTargetRead
 func flattenAppEngineFlexibleAppVersionAutomaticScalingDiskUtilizationTargetReadOpsPerSecond(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2328,7 +2355,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilization(v inte
 func flattenAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilizationTargetSentBytesPerSecond(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2345,7 +2372,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilizationTargetS
 func flattenAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilizationTargetSentPacketsPerSecond(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2362,7 +2389,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilizationTargetS
 func flattenAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilizationTargetReceivedBytesPerSecond(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2379,7 +2406,7 @@ func flattenAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilizationTargetR
 func flattenAppEngineFlexibleAppVersionAutomaticScalingNetworkUtilizationTargetReceivedPacketsPerSecond(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2409,7 +2436,7 @@ func flattenAppEngineFlexibleAppVersionManualScaling(v interface{}, d *schema.Re
 func flattenAppEngineFlexibleAppVersionManualScalingInstances(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2834,6 +2861,10 @@ func expandAppEngineFlexibleAppVersionHandlersStaticFilesApplicationReadable(v i
 }
 
 func expandAppEngineFlexibleAppVersionRuntimeMainExecutablePath(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAppEngineFlexibleAppVersionServiceAccount(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -3351,7 +3382,7 @@ func expandAppEngineFlexibleAppVersionEntrypointShell(v interface{}, d Terraform
 	return v, nil
 }
 
-func expandAppEngineFlexibleAppVersionVPCAccessConnector(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+func expandAppEngineFlexibleAppVersionVpcAccessConnector(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
 		return nil, nil
@@ -3360,7 +3391,7 @@ func expandAppEngineFlexibleAppVersionVPCAccessConnector(v interface{}, d Terraf
 	original := raw.(map[string]interface{})
 	transformed := make(map[string]interface{})
 
-	transformedName, err := expandAppEngineFlexibleAppVersionVPCAccessConnectorName(original["name"], d, config)
+	transformedName, err := expandAppEngineFlexibleAppVersionVpcAccessConnectorName(original["name"], d, config)
 	if err != nil {
 		return nil, err
 	} else if val := reflect.ValueOf(transformedName); val.IsValid() && !isEmptyValue(val) {
@@ -3370,7 +3401,7 @@ func expandAppEngineFlexibleAppVersionVPCAccessConnector(v interface{}, d Terraf
 	return transformed, nil
 }
 
-func expandAppEngineFlexibleAppVersionVPCAccessConnectorName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+func expandAppEngineFlexibleAppVersionVpcAccessConnectorName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

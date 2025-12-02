@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ type Trigger struct {
 	Etag             *string                   `json:"etag"`
 	Project          *string                   `json:"project"`
 	Location         *string                   `json:"location"`
+	Channel          *string                   `json:"channel"`
+	Conditions       map[string]string         `json:"conditions"`
 }
 
 func (r *Trigger) String() string {
@@ -47,6 +49,7 @@ type TriggerMatchingCriteria struct {
 	empty     bool    `json:"-"`
 	Attribute *string `json:"attribute"`
 	Value     *string `json:"value"`
+	Operator  *string `json:"operator"`
 }
 
 type jsonTriggerMatchingCriteria TriggerMatchingCriteria
@@ -68,13 +71,15 @@ func (r *TriggerMatchingCriteria) UnmarshalJSON(data []byte) error {
 
 		r.Value = res.Value
 
+		r.Operator = res.Operator
+
 	}
 	return nil
 }
 
 // This object is used to assert a desired state where this TriggerMatchingCriteria is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyTriggerMatchingCriteria *TriggerMatchingCriteria = &TriggerMatchingCriteria{empty: true}
 
 func (r *TriggerMatchingCriteria) Empty() bool {
@@ -96,6 +101,8 @@ type TriggerDestination struct {
 	empty           bool                               `json:"-"`
 	CloudRunService *TriggerDestinationCloudRunService `json:"cloudRunService"`
 	CloudFunction   *string                            `json:"cloudFunction"`
+	Gke             *TriggerDestinationGke             `json:"gke"`
+	Workflow        *string                            `json:"workflow"`
 }
 
 type jsonTriggerDestination TriggerDestination
@@ -117,13 +124,17 @@ func (r *TriggerDestination) UnmarshalJSON(data []byte) error {
 
 		r.CloudFunction = res.CloudFunction
 
+		r.Gke = res.Gke
+
+		r.Workflow = res.Workflow
+
 	}
 	return nil
 }
 
 // This object is used to assert a desired state where this TriggerDestination is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyTriggerDestination *TriggerDestination = &TriggerDestination{empty: true}
 
 func (r *TriggerDestination) Empty() bool {
@@ -174,8 +185,8 @@ func (r *TriggerDestinationCloudRunService) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this TriggerDestinationCloudRunService is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyTriggerDestinationCloudRunService *TriggerDestinationCloudRunService = &TriggerDestinationCloudRunService{empty: true}
 
 func (r *TriggerDestinationCloudRunService) Empty() bool {
@@ -187,6 +198,64 @@ func (r *TriggerDestinationCloudRunService) String() string {
 }
 
 func (r *TriggerDestinationCloudRunService) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type TriggerDestinationGke struct {
+	empty     bool    `json:"-"`
+	Cluster   *string `json:"cluster"`
+	Location  *string `json:"location"`
+	Namespace *string `json:"namespace"`
+	Service   *string `json:"service"`
+	Path      *string `json:"path"`
+}
+
+type jsonTriggerDestinationGke TriggerDestinationGke
+
+func (r *TriggerDestinationGke) UnmarshalJSON(data []byte) error {
+	var res jsonTriggerDestinationGke
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyTriggerDestinationGke
+	} else {
+
+		r.Cluster = res.Cluster
+
+		r.Location = res.Location
+
+		r.Namespace = res.Namespace
+
+		r.Service = res.Service
+
+		r.Path = res.Path
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this TriggerDestinationGke is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyTriggerDestinationGke *TriggerDestinationGke = &TriggerDestinationGke{empty: true}
+
+func (r *TriggerDestinationGke) Empty() bool {
+	return r.empty
+}
+
+func (r *TriggerDestinationGke) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *TriggerDestinationGke) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
 	hash := sha256.New().Sum([]byte(r.String()))
@@ -220,8 +289,8 @@ func (r *TriggerTransport) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this TriggerTransport is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyTriggerTransport *TriggerTransport = &TriggerTransport{empty: true}
 
 func (r *TriggerTransport) Empty() bool {
@@ -269,8 +338,8 @@ func (r *TriggerTransportPubsub) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this TriggerTransportPubsub is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyTriggerTransportPubsub *TriggerTransportPubsub = &TriggerTransportPubsub{empty: true}
 
 func (r *TriggerTransportPubsub) Empty() bool {
@@ -304,18 +373,20 @@ func (r *Trigger) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":             dcl.ValueOrEmptyString(nr.Name),
-		"uid":              dcl.ValueOrEmptyString(nr.Uid),
-		"createTime":       dcl.ValueOrEmptyString(nr.CreateTime),
-		"updateTime":       dcl.ValueOrEmptyString(nr.UpdateTime),
-		"matchingCriteria": dcl.ValueOrEmptyString(nr.MatchingCriteria),
-		"serviceAccount":   dcl.ValueOrEmptyString(nr.ServiceAccount),
-		"destination":      dcl.ValueOrEmptyString(nr.Destination),
-		"transport":        dcl.ValueOrEmptyString(nr.Transport),
-		"labels":           dcl.ValueOrEmptyString(nr.Labels),
-		"etag":             dcl.ValueOrEmptyString(nr.Etag),
-		"project":          dcl.ValueOrEmptyString(nr.Project),
-		"location":         dcl.ValueOrEmptyString(nr.Location),
+		"name":              dcl.ValueOrEmptyString(nr.Name),
+		"uid":               dcl.ValueOrEmptyString(nr.Uid),
+		"create_time":       dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":       dcl.ValueOrEmptyString(nr.UpdateTime),
+		"matching_criteria": dcl.ValueOrEmptyString(nr.MatchingCriteria),
+		"service_account":   dcl.ValueOrEmptyString(nr.ServiceAccount),
+		"destination":       dcl.ValueOrEmptyString(nr.Destination),
+		"transport":         dcl.ValueOrEmptyString(nr.Transport),
+		"labels":            dcl.ValueOrEmptyString(nr.Labels),
+		"etag":              dcl.ValueOrEmptyString(nr.Etag),
+		"project":           dcl.ValueOrEmptyString(nr.Project),
+		"location":          dcl.ValueOrEmptyString(nr.Location),
+		"channel":           dcl.ValueOrEmptyString(nr.Channel),
+		"conditions":        dcl.ValueOrEmptyString(nr.Conditions),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/triggers/{{name}}", params), nil
 }
@@ -402,7 +473,7 @@ func (c *Client) GetTrigger(ctx context.Context, r *Trigger) (*Trigger, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalTrigger(b, c)
+	result, err := unmarshalTrigger(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +630,7 @@ func applyTriggerHelper(c *Client, ctx context.Context, rawDesired *Trigger, opt
 func applyTriggerDiff(c *Client, ctx context.Context, desired *Trigger, rawDesired *Trigger, ops []triggerApiOperation, opts ...dcl.ApplyOption) (*Trigger, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetTrigger(ctx, desired.urlNormalized())
+	rawNew, err := c.GetTrigger(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -572,7 +643,7 @@ func applyTriggerDiff(c *Client, ctx context.Context, desired *Trigger, rawDesir
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapTrigger(r, c)
+				fullResp, err := unmarshalMapTrigger(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

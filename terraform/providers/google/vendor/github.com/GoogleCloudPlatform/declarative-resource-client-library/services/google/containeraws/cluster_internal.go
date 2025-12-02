@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -266,14 +265,21 @@ type clusterApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateClusterUpdateAwsClusterRequest(ctx context.Context, f *Cluster, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Description; !dcl.IsEmptyValueIndirect(v) {
 		req["description"] = v
 	}
-	if v, err := expandClusterControlPlane(c, f.ControlPlane); err != nil {
+	if v, err := expandClusterControlPlane(c, f.ControlPlane, res); err != nil {
 		return nil, fmt.Errorf("error expanding ControlPlane into controlPlane: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		req["controlPlane"] = v
+	}
+	if v, err := expandClusterAuthorization(c, f.Authorization, res); err != nil {
+		return nil, fmt.Errorf("error expanding Authorization into authorization: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		req["authorization"] = v
 	}
 	if v := f.Annotations; !dcl.IsEmptyValueIndirect(v) {
 		req["annotations"] = v
@@ -406,7 +412,7 @@ func (c *Client) listCluster(ctx context.Context, r *Cluster, pageToken string, 
 
 	var l []*Cluster
 	for _, v := range m.AwsClusters {
-		res, err := unmarshalMapCluster(v, c)
+		res, err := unmarshalMapCluster(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -470,20 +476,20 @@ func (op *deleteClusterOperation) do(ctx context.Context, r *Cluster, c *Client)
 		return err
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetCluster(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetCluster(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -582,6 +588,11 @@ func (c *Client) clusterDiffsForRawDesired(ctx context.Context, rawDesired *Clus
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for Cluster: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for Cluster: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractClusterFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeClusterInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -645,7 +656,8 @@ func canonicalizeClusterDesiredState(rawDesired, rawInitial *Cluster, opts ...dc
 	}
 	canonicalDesired.ControlPlane = canonicalizeClusterControlPlane(rawDesired.ControlPlane, rawInitial.ControlPlane, opts...)
 	canonicalDesired.Authorization = canonicalizeClusterAuthorization(rawDesired.Authorization, rawInitial.Authorization, opts...)
-	if dcl.IsZeroValue(rawDesired.Annotations) {
+	if dcl.IsZeroValue(rawDesired.Annotations) || (dcl.IsEmptyValueIndirect(rawDesired.Annotations) && dcl.IsEmptyValueIndirect(rawInitial.Annotations)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Annotations = rawInitial.Annotations
 	} else {
 		canonicalDesired.Annotations = rawDesired.Annotations
@@ -661,13 +673,12 @@ func canonicalizeClusterDesiredState(rawDesired, rawInitial *Cluster, opts ...dc
 		canonicalDesired.Location = rawDesired.Location
 	}
 	canonicalDesired.Fleet = canonicalizeClusterFleet(rawDesired.Fleet, rawInitial.Fleet, opts...)
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Cluster, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.PartialSelfLinkToSelfLink(rawDesired.Name, rawNew.Name) {
@@ -675,7 +686,7 @@ func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Clust
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Description) && dcl.IsNotReturnedByServer(rawDesired.Description) {
+	if dcl.IsEmptyValueIndirect(rawNew.Description) && dcl.IsEmptyValueIndirect(rawDesired.Description) {
 		rawNew.Description = rawDesired.Description
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Description, rawNew.Description) {
@@ -683,13 +694,13 @@ func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Clust
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Networking) && dcl.IsNotReturnedByServer(rawDesired.Networking) {
+	if dcl.IsEmptyValueIndirect(rawNew.Networking) && dcl.IsEmptyValueIndirect(rawDesired.Networking) {
 		rawNew.Networking = rawDesired.Networking
 	} else {
 		rawNew.Networking = canonicalizeNewClusterNetworking(c, rawDesired.Networking, rawNew.Networking)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.AwsRegion) && dcl.IsNotReturnedByServer(rawDesired.AwsRegion) {
+	if dcl.IsEmptyValueIndirect(rawNew.AwsRegion) && dcl.IsEmptyValueIndirect(rawDesired.AwsRegion) {
 		rawNew.AwsRegion = rawDesired.AwsRegion
 	} else {
 		if dcl.StringCanonicalize(rawDesired.AwsRegion, rawNew.AwsRegion) {
@@ -697,24 +708,24 @@ func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Clust
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ControlPlane) && dcl.IsNotReturnedByServer(rawDesired.ControlPlane) {
+	if dcl.IsEmptyValueIndirect(rawNew.ControlPlane) && dcl.IsEmptyValueIndirect(rawDesired.ControlPlane) {
 		rawNew.ControlPlane = rawDesired.ControlPlane
 	} else {
 		rawNew.ControlPlane = canonicalizeNewClusterControlPlane(c, rawDesired.ControlPlane, rawNew.ControlPlane)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Authorization) && dcl.IsNotReturnedByServer(rawDesired.Authorization) {
+	if dcl.IsEmptyValueIndirect(rawNew.Authorization) && dcl.IsEmptyValueIndirect(rawDesired.Authorization) {
 		rawNew.Authorization = rawDesired.Authorization
 	} else {
 		rawNew.Authorization = canonicalizeNewClusterAuthorization(c, rawDesired.Authorization, rawNew.Authorization)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.State) && dcl.IsNotReturnedByServer(rawDesired.State) {
+	if dcl.IsEmptyValueIndirect(rawNew.State) && dcl.IsEmptyValueIndirect(rawDesired.State) {
 		rawNew.State = rawDesired.State
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Endpoint) && dcl.IsNotReturnedByServer(rawDesired.Endpoint) {
+	if dcl.IsEmptyValueIndirect(rawNew.Endpoint) && dcl.IsEmptyValueIndirect(rawDesired.Endpoint) {
 		rawNew.Endpoint = rawDesired.Endpoint
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Endpoint, rawNew.Endpoint) {
@@ -722,7 +733,7 @@ func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Clust
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Uid) && dcl.IsNotReturnedByServer(rawDesired.Uid) {
+	if dcl.IsEmptyValueIndirect(rawNew.Uid) && dcl.IsEmptyValueIndirect(rawDesired.Uid) {
 		rawNew.Uid = rawDesired.Uid
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Uid, rawNew.Uid) {
@@ -730,7 +741,7 @@ func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Clust
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Reconciling) && dcl.IsNotReturnedByServer(rawDesired.Reconciling) {
+	if dcl.IsEmptyValueIndirect(rawNew.Reconciling) && dcl.IsEmptyValueIndirect(rawDesired.Reconciling) {
 		rawNew.Reconciling = rawDesired.Reconciling
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.Reconciling, rawNew.Reconciling) {
@@ -738,17 +749,17 @@ func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Clust
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CreateTime) && dcl.IsNotReturnedByServer(rawDesired.CreateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.CreateTime) && dcl.IsEmptyValueIndirect(rawDesired.CreateTime) {
 		rawNew.CreateTime = rawDesired.CreateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.UpdateTime) && dcl.IsNotReturnedByServer(rawDesired.UpdateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.UpdateTime) && dcl.IsEmptyValueIndirect(rawDesired.UpdateTime) {
 		rawNew.UpdateTime = rawDesired.UpdateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Etag) && dcl.IsNotReturnedByServer(rawDesired.Etag) {
+	if dcl.IsEmptyValueIndirect(rawNew.Etag) && dcl.IsEmptyValueIndirect(rawDesired.Etag) {
 		rawNew.Etag = rawDesired.Etag
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Etag, rawNew.Etag) {
@@ -756,12 +767,12 @@ func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Clust
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Annotations) && dcl.IsNotReturnedByServer(rawDesired.Annotations) {
+	if dcl.IsEmptyValueIndirect(rawNew.Annotations) && dcl.IsEmptyValueIndirect(rawDesired.Annotations) {
 		rawNew.Annotations = rawDesired.Annotations
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.WorkloadIdentityConfig) && dcl.IsNotReturnedByServer(rawDesired.WorkloadIdentityConfig) {
+	if dcl.IsEmptyValueIndirect(rawNew.WorkloadIdentityConfig) && dcl.IsEmptyValueIndirect(rawDesired.WorkloadIdentityConfig) {
 		rawNew.WorkloadIdentityConfig = rawDesired.WorkloadIdentityConfig
 	} else {
 		rawNew.WorkloadIdentityConfig = canonicalizeNewClusterWorkloadIdentityConfig(c, rawDesired.WorkloadIdentityConfig, rawNew.WorkloadIdentityConfig)
@@ -771,7 +782,7 @@ func canonicalizeClusterNewState(c *Client, rawNew, rawDesired *Cluster) (*Clust
 
 	rawNew.Location = rawDesired.Location
 
-	if dcl.IsNotReturnedByServer(rawNew.Fleet) && dcl.IsNotReturnedByServer(rawDesired.Fleet) {
+	if dcl.IsEmptyValueIndirect(rawNew.Fleet) && dcl.IsEmptyValueIndirect(rawDesired.Fleet) {
 		rawNew.Fleet = rawDesired.Fleet
 	} else {
 		rawNew.Fleet = canonicalizeNewClusterFleet(c, rawDesired.Fleet, rawNew.Fleet)
@@ -799,12 +810,12 @@ func canonicalizeClusterNetworking(des, initial *ClusterNetworking, opts ...dcl.
 	} else {
 		cDes.VPCId = des.VPCId
 	}
-	if dcl.StringArrayCanonicalize(des.PodAddressCidrBlocks, initial.PodAddressCidrBlocks) || dcl.IsZeroValue(des.PodAddressCidrBlocks) {
+	if dcl.StringArrayCanonicalize(des.PodAddressCidrBlocks, initial.PodAddressCidrBlocks) {
 		cDes.PodAddressCidrBlocks = initial.PodAddressCidrBlocks
 	} else {
 		cDes.PodAddressCidrBlocks = des.PodAddressCidrBlocks
 	}
-	if dcl.StringArrayCanonicalize(des.ServiceAddressCidrBlocks, initial.ServiceAddressCidrBlocks) || dcl.IsZeroValue(des.ServiceAddressCidrBlocks) {
+	if dcl.StringArrayCanonicalize(des.ServiceAddressCidrBlocks, initial.ServiceAddressCidrBlocks) {
 		cDes.ServiceAddressCidrBlocks = initial.ServiceAddressCidrBlocks
 	} else {
 		cDes.ServiceAddressCidrBlocks = des.ServiceAddressCidrBlocks
@@ -814,7 +825,7 @@ func canonicalizeClusterNetworking(des, initial *ClusterNetworking, opts ...dcl.
 }
 
 func canonicalizeClusterNetworkingSlice(des, initial []ClusterNetworking, opts ...dcl.ApplyOption) []ClusterNetworking {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -848,7 +859,7 @@ func canonicalizeNewClusterNetworking(c *Client, des, nw *ClusterNetworking) *Cl
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterNetworking while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -872,23 +883,26 @@ func canonicalizeNewClusterNetworkingSet(c *Client, des, nw []ClusterNetworking)
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterNetworking
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterNetworking
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterNetworkingNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterNetworking(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterNetworkingSlice(c *Client, des, nw []ClusterNetworking) []ClusterNetworking {
@@ -936,13 +950,13 @@ func canonicalizeClusterControlPlane(des, initial *ClusterControlPlane, opts ...
 		cDes.InstanceType = des.InstanceType
 	}
 	cDes.SshConfig = canonicalizeClusterControlPlaneSshConfig(des.SshConfig, initial.SshConfig, opts...)
-	if dcl.StringArrayCanonicalize(des.SubnetIds, initial.SubnetIds) || dcl.IsZeroValue(des.SubnetIds) {
+	if dcl.StringArrayCanonicalize(des.SubnetIds, initial.SubnetIds) {
 		cDes.SubnetIds = initial.SubnetIds
 	} else {
 		cDes.SubnetIds = des.SubnetIds
 	}
 	cDes.ConfigEncryption = canonicalizeClusterControlPlaneConfigEncryption(des.ConfigEncryption, initial.ConfigEncryption, opts...)
-	if dcl.StringArrayCanonicalize(des.SecurityGroupIds, initial.SecurityGroupIds) || dcl.IsZeroValue(des.SecurityGroupIds) {
+	if dcl.StringArrayCanonicalize(des.SecurityGroupIds, initial.SecurityGroupIds) {
 		cDes.SecurityGroupIds = initial.SecurityGroupIds
 	} else {
 		cDes.SecurityGroupIds = des.SecurityGroupIds
@@ -955,7 +969,8 @@ func canonicalizeClusterControlPlane(des, initial *ClusterControlPlane, opts ...
 	cDes.RootVolume = canonicalizeClusterControlPlaneRootVolume(des.RootVolume, initial.RootVolume, opts...)
 	cDes.MainVolume = canonicalizeClusterControlPlaneMainVolume(des.MainVolume, initial.MainVolume, opts...)
 	cDes.DatabaseEncryption = canonicalizeClusterControlPlaneDatabaseEncryption(des.DatabaseEncryption, initial.DatabaseEncryption, opts...)
-	if dcl.IsZeroValue(des.Tags) {
+	if dcl.IsZeroValue(des.Tags) || (dcl.IsEmptyValueIndirect(des.Tags) && dcl.IsEmptyValueIndirect(initial.Tags)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Tags = initial.Tags
 	} else {
 		cDes.Tags = des.Tags
@@ -967,7 +982,7 @@ func canonicalizeClusterControlPlane(des, initial *ClusterControlPlane, opts ...
 }
 
 func canonicalizeClusterControlPlaneSlice(des, initial []ClusterControlPlane, opts ...dcl.ApplyOption) []ClusterControlPlane {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1001,7 +1016,7 @@ func canonicalizeNewClusterControlPlane(c *Client, des, nw *ClusterControlPlane)
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterControlPlane while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1038,23 +1053,26 @@ func canonicalizeNewClusterControlPlaneSet(c *Client, des, nw []ClusterControlPl
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterControlPlane
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterControlPlane
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterControlPlaneNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterControlPlane(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterControlPlaneSlice(c *Client, des, nw []ClusterControlPlane) []ClusterControlPlane {
@@ -1101,7 +1119,7 @@ func canonicalizeClusterControlPlaneSshConfig(des, initial *ClusterControlPlaneS
 }
 
 func canonicalizeClusterControlPlaneSshConfigSlice(des, initial []ClusterControlPlaneSshConfig, opts ...dcl.ApplyOption) []ClusterControlPlaneSshConfig {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1135,7 +1153,7 @@ func canonicalizeNewClusterControlPlaneSshConfig(c *Client, des, nw *ClusterCont
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterControlPlaneSshConfig while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1153,23 +1171,26 @@ func canonicalizeNewClusterControlPlaneSshConfigSet(c *Client, des, nw []Cluster
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterControlPlaneSshConfig
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterControlPlaneSshConfig
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterControlPlaneSshConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterControlPlaneSshConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterControlPlaneSshConfigSlice(c *Client, des, nw []ClusterControlPlaneSshConfig) []ClusterControlPlaneSshConfig {
@@ -1216,7 +1237,7 @@ func canonicalizeClusterControlPlaneConfigEncryption(des, initial *ClusterContro
 }
 
 func canonicalizeClusterControlPlaneConfigEncryptionSlice(des, initial []ClusterControlPlaneConfigEncryption, opts ...dcl.ApplyOption) []ClusterControlPlaneConfigEncryption {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1250,7 +1271,7 @@ func canonicalizeNewClusterControlPlaneConfigEncryption(c *Client, des, nw *Clus
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterControlPlaneConfigEncryption while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1268,23 +1289,26 @@ func canonicalizeNewClusterControlPlaneConfigEncryptionSet(c *Client, des, nw []
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterControlPlaneConfigEncryption
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterControlPlaneConfigEncryption
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterControlPlaneConfigEncryptionNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterControlPlaneConfigEncryption(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterControlPlaneConfigEncryptionSlice(c *Client, des, nw []ClusterControlPlaneConfigEncryption) []ClusterControlPlaneConfigEncryption {
@@ -1321,17 +1345,20 @@ func canonicalizeClusterControlPlaneRootVolume(des, initial *ClusterControlPlane
 
 	cDes := &ClusterControlPlaneRootVolume{}
 
-	if dcl.IsZeroValue(des.SizeGib) {
+	if dcl.IsZeroValue(des.SizeGib) || (dcl.IsEmptyValueIndirect(des.SizeGib) && dcl.IsEmptyValueIndirect(initial.SizeGib)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.SizeGib = initial.SizeGib
 	} else {
 		cDes.SizeGib = des.SizeGib
 	}
-	if dcl.IsZeroValue(des.VolumeType) {
+	if dcl.IsZeroValue(des.VolumeType) || (dcl.IsEmptyValueIndirect(des.VolumeType) && dcl.IsEmptyValueIndirect(initial.VolumeType)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.VolumeType = initial.VolumeType
 	} else {
 		cDes.VolumeType = des.VolumeType
 	}
-	if dcl.IsZeroValue(des.Iops) {
+	if dcl.IsZeroValue(des.Iops) || (dcl.IsEmptyValueIndirect(des.Iops) && dcl.IsEmptyValueIndirect(initial.Iops)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Iops = initial.Iops
 	} else {
 		cDes.Iops = des.Iops
@@ -1346,7 +1373,7 @@ func canonicalizeClusterControlPlaneRootVolume(des, initial *ClusterControlPlane
 }
 
 func canonicalizeClusterControlPlaneRootVolumeSlice(des, initial []ClusterControlPlaneRootVolume, opts ...dcl.ApplyOption) []ClusterControlPlaneRootVolume {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1380,7 +1407,7 @@ func canonicalizeNewClusterControlPlaneRootVolume(c *Client, des, nw *ClusterCon
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterControlPlaneRootVolume while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1398,23 +1425,26 @@ func canonicalizeNewClusterControlPlaneRootVolumeSet(c *Client, des, nw []Cluste
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterControlPlaneRootVolume
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterControlPlaneRootVolume
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterControlPlaneRootVolumeNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterControlPlaneRootVolume(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterControlPlaneRootVolumeSlice(c *Client, des, nw []ClusterControlPlaneRootVolume) []ClusterControlPlaneRootVolume {
@@ -1451,17 +1481,20 @@ func canonicalizeClusterControlPlaneMainVolume(des, initial *ClusterControlPlane
 
 	cDes := &ClusterControlPlaneMainVolume{}
 
-	if dcl.IsZeroValue(des.SizeGib) {
+	if dcl.IsZeroValue(des.SizeGib) || (dcl.IsEmptyValueIndirect(des.SizeGib) && dcl.IsEmptyValueIndirect(initial.SizeGib)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.SizeGib = initial.SizeGib
 	} else {
 		cDes.SizeGib = des.SizeGib
 	}
-	if dcl.IsZeroValue(des.VolumeType) {
+	if dcl.IsZeroValue(des.VolumeType) || (dcl.IsEmptyValueIndirect(des.VolumeType) && dcl.IsEmptyValueIndirect(initial.VolumeType)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.VolumeType = initial.VolumeType
 	} else {
 		cDes.VolumeType = des.VolumeType
 	}
-	if dcl.IsZeroValue(des.Iops) {
+	if dcl.IsZeroValue(des.Iops) || (dcl.IsEmptyValueIndirect(des.Iops) && dcl.IsEmptyValueIndirect(initial.Iops)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Iops = initial.Iops
 	} else {
 		cDes.Iops = des.Iops
@@ -1476,7 +1509,7 @@ func canonicalizeClusterControlPlaneMainVolume(des, initial *ClusterControlPlane
 }
 
 func canonicalizeClusterControlPlaneMainVolumeSlice(des, initial []ClusterControlPlaneMainVolume, opts ...dcl.ApplyOption) []ClusterControlPlaneMainVolume {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1510,7 +1543,7 @@ func canonicalizeNewClusterControlPlaneMainVolume(c *Client, des, nw *ClusterCon
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterControlPlaneMainVolume while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1528,23 +1561,26 @@ func canonicalizeNewClusterControlPlaneMainVolumeSet(c *Client, des, nw []Cluste
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterControlPlaneMainVolume
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterControlPlaneMainVolume
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterControlPlaneMainVolumeNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterControlPlaneMainVolume(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterControlPlaneMainVolumeSlice(c *Client, des, nw []ClusterControlPlaneMainVolume) []ClusterControlPlaneMainVolume {
@@ -1591,7 +1627,7 @@ func canonicalizeClusterControlPlaneDatabaseEncryption(des, initial *ClusterCont
 }
 
 func canonicalizeClusterControlPlaneDatabaseEncryptionSlice(des, initial []ClusterControlPlaneDatabaseEncryption, opts ...dcl.ApplyOption) []ClusterControlPlaneDatabaseEncryption {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1625,7 +1661,7 @@ func canonicalizeNewClusterControlPlaneDatabaseEncryption(c *Client, des, nw *Cl
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterControlPlaneDatabaseEncryption while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1643,23 +1679,26 @@ func canonicalizeNewClusterControlPlaneDatabaseEncryptionSet(c *Client, des, nw 
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterControlPlaneDatabaseEncryption
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterControlPlaneDatabaseEncryption
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterControlPlaneDatabaseEncryptionNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterControlPlaneDatabaseEncryption(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterControlPlaneDatabaseEncryptionSlice(c *Client, des, nw []ClusterControlPlaneDatabaseEncryption) []ClusterControlPlaneDatabaseEncryption {
@@ -1711,7 +1750,7 @@ func canonicalizeClusterControlPlaneAwsServicesAuthentication(des, initial *Clus
 }
 
 func canonicalizeClusterControlPlaneAwsServicesAuthenticationSlice(des, initial []ClusterControlPlaneAwsServicesAuthentication, opts ...dcl.ApplyOption) []ClusterControlPlaneAwsServicesAuthentication {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1745,7 +1784,7 @@ func canonicalizeNewClusterControlPlaneAwsServicesAuthentication(c *Client, des,
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterControlPlaneAwsServicesAuthentication while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1766,23 +1805,26 @@ func canonicalizeNewClusterControlPlaneAwsServicesAuthenticationSet(c *Client, d
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterControlPlaneAwsServicesAuthentication
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterControlPlaneAwsServicesAuthentication
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterControlPlaneAwsServicesAuthenticationNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterControlPlaneAwsServicesAuthentication(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterControlPlaneAwsServicesAuthenticationSlice(c *Client, des, nw []ClusterControlPlaneAwsServicesAuthentication) []ClusterControlPlaneAwsServicesAuthentication {
@@ -1834,7 +1876,7 @@ func canonicalizeClusterControlPlaneProxyConfig(des, initial *ClusterControlPlan
 }
 
 func canonicalizeClusterControlPlaneProxyConfigSlice(des, initial []ClusterControlPlaneProxyConfig, opts ...dcl.ApplyOption) []ClusterControlPlaneProxyConfig {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1868,7 +1910,7 @@ func canonicalizeNewClusterControlPlaneProxyConfig(c *Client, des, nw *ClusterCo
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterControlPlaneProxyConfig while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1889,23 +1931,26 @@ func canonicalizeNewClusterControlPlaneProxyConfigSet(c *Client, des, nw []Clust
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterControlPlaneProxyConfig
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterControlPlaneProxyConfig
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterControlPlaneProxyConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterControlPlaneProxyConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterControlPlaneProxyConfigSlice(c *Client, des, nw []ClusterControlPlaneProxyConfig) []ClusterControlPlaneProxyConfig {
@@ -1948,7 +1993,7 @@ func canonicalizeClusterAuthorization(des, initial *ClusterAuthorization, opts .
 }
 
 func canonicalizeClusterAuthorizationSlice(des, initial []ClusterAuthorization, opts ...dcl.ApplyOption) []ClusterAuthorization {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1982,7 +2027,7 @@ func canonicalizeNewClusterAuthorization(c *Client, des, nw *ClusterAuthorizatio
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterAuthorization while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1998,23 +2043,26 @@ func canonicalizeNewClusterAuthorizationSet(c *Client, des, nw []ClusterAuthoriz
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterAuthorization
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterAuthorization
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterAuthorizationNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterAuthorization(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterAuthorizationSlice(c *Client, des, nw []ClusterAuthorization) []ClusterAuthorization {
@@ -2095,7 +2143,7 @@ func canonicalizeNewClusterAuthorizationAdminUsers(c *Client, des, nw *ClusterAu
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterAuthorizationAdminUsers while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2113,23 +2161,26 @@ func canonicalizeNewClusterAuthorizationAdminUsersSet(c *Client, des, nw []Clust
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterAuthorizationAdminUsers
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterAuthorizationAdminUsers
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterAuthorizationAdminUsersNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterAuthorizationAdminUsers(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterAuthorizationAdminUsersSlice(c *Client, des, nw []ClusterAuthorizationAdminUsers) []ClusterAuthorizationAdminUsers {
@@ -2186,7 +2237,7 @@ func canonicalizeClusterWorkloadIdentityConfig(des, initial *ClusterWorkloadIden
 }
 
 func canonicalizeClusterWorkloadIdentityConfigSlice(des, initial []ClusterWorkloadIdentityConfig, opts ...dcl.ApplyOption) []ClusterWorkloadIdentityConfig {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2220,7 +2271,7 @@ func canonicalizeNewClusterWorkloadIdentityConfig(c *Client, des, nw *ClusterWor
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterWorkloadIdentityConfig while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2244,23 +2295,26 @@ func canonicalizeNewClusterWorkloadIdentityConfigSet(c *Client, des, nw []Cluste
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterWorkloadIdentityConfig
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterWorkloadIdentityConfig
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterWorkloadIdentityConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterWorkloadIdentityConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterWorkloadIdentityConfigSlice(c *Client, des, nw []ClusterWorkloadIdentityConfig) []ClusterWorkloadIdentityConfig {
@@ -2307,7 +2361,7 @@ func canonicalizeClusterFleet(des, initial *ClusterFleet, opts ...dcl.ApplyOptio
 }
 
 func canonicalizeClusterFleetSlice(des, initial []ClusterFleet, opts ...dcl.ApplyOption) []ClusterFleet {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -2341,7 +2395,7 @@ func canonicalizeNewClusterFleet(c *Client, des, nw *ClusterFleet) *ClusterFleet
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ClusterFleet while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -2362,23 +2416,26 @@ func canonicalizeNewClusterFleetSet(c *Client, des, nw []ClusterFleet) []Cluster
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ClusterFleet
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ClusterFleet
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareClusterFleetNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewClusterFleet(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewClusterFleetSlice(c *Client, des, nw []ClusterFleet) []ClusterFleet {
@@ -2419,132 +2476,135 @@ func diffCluster(c *Client, desired, actual *Cluster, opts ...dcl.ApplyOption) (
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Networking, actual.Networking, dcl.Info{ObjectFunction: compareClusterNetworkingNewStyle, EmptyObject: EmptyClusterNetworking, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Networking")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Networking, actual.Networking, dcl.DiffInfo{ObjectFunction: compareClusterNetworkingNewStyle, EmptyObject: EmptyClusterNetworking, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Networking")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AwsRegion, actual.AwsRegion, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AwsRegion")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AwsRegion, actual.AwsRegion, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AwsRegion")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ControlPlane, actual.ControlPlane, dcl.Info{ObjectFunction: compareClusterControlPlaneNewStyle, EmptyObject: EmptyClusterControlPlane, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ControlPlane")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ControlPlane, actual.ControlPlane, dcl.DiffInfo{ObjectFunction: compareClusterControlPlaneNewStyle, EmptyObject: EmptyClusterControlPlane, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ControlPlane")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Authorization, actual.Authorization, dcl.Info{ObjectFunction: compareClusterAuthorizationNewStyle, EmptyObject: EmptyClusterAuthorization, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Authorization")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Authorization, actual.Authorization, dcl.DiffInfo{ObjectFunction: compareClusterAuthorizationNewStyle, EmptyObject: EmptyClusterAuthorization, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Authorization")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.State, actual.State, dcl.Info{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("State")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.State, actual.State, dcl.DiffInfo{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("State")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Endpoint, actual.Endpoint, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Endpoint")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Endpoint, actual.Endpoint, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Endpoint")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Uid, actual.Uid, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uid")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Uid, actual.Uid, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uid")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Reconciling, actual.Reconciling, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Reconciling")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Reconciling, actual.Reconciling, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Reconciling")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.UpdateTime, actual.UpdateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UpdateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.UpdateTime, actual.UpdateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UpdateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Etag, actual.Etag, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Etag")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Etag, actual.Etag, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Etag")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Annotations, actual.Annotations, dcl.Info{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Annotations")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Annotations, actual.Annotations, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Annotations")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.WorkloadIdentityConfig, actual.WorkloadIdentityConfig, dcl.Info{OutputOnly: true, ObjectFunction: compareClusterWorkloadIdentityConfigNewStyle, EmptyObject: EmptyClusterWorkloadIdentityConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WorkloadIdentityConfig")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.WorkloadIdentityConfig, actual.WorkloadIdentityConfig, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareClusterWorkloadIdentityConfigNewStyle, EmptyObject: EmptyClusterWorkloadIdentityConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WorkloadIdentityConfig")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Fleet, actual.Fleet, dcl.Info{ObjectFunction: compareClusterFleetNewStyle, EmptyObject: EmptyClusterFleet, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Fleet")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Fleet, actual.Fleet, dcl.DiffInfo{ObjectFunction: compareClusterFleetNewStyle, EmptyObject: EmptyClusterFleet, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Fleet")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareClusterNetworkingNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -2567,21 +2627,21 @@ func compareClusterNetworkingNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dc
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.VPCId, actual.VPCId, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("VpcId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.VPCId, actual.VPCId, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("VpcId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PodAddressCidrBlocks, actual.PodAddressCidrBlocks, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PodAddressCidrBlocks")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PodAddressCidrBlocks, actual.PodAddressCidrBlocks, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PodAddressCidrBlocks")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ServiceAddressCidrBlocks, actual.ServiceAddressCidrBlocks, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServiceAddressCidrBlocks")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ServiceAddressCidrBlocks, actual.ServiceAddressCidrBlocks, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ServiceAddressCidrBlocks")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2610,91 +2670,91 @@ func compareClusterControlPlaneNewStyle(d, a interface{}, fn dcl.FieldName) ([]*
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Version, actual.Version, dcl.Info{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Version")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Version, actual.Version, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Version")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.InstanceType, actual.InstanceType, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("InstanceType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.InstanceType, actual.InstanceType, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("InstanceType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SshConfig, actual.SshConfig, dcl.Info{ObjectFunction: compareClusterControlPlaneSshConfigNewStyle, EmptyObject: EmptyClusterControlPlaneSshConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SshConfig")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SshConfig, actual.SshConfig, dcl.DiffInfo{ObjectFunction: compareClusterControlPlaneSshConfigNewStyle, EmptyObject: EmptyClusterControlPlaneSshConfig, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("SshConfig")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SubnetIds, actual.SubnetIds, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubnetIds")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubnetIds, actual.SubnetIds, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubnetIds")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ConfigEncryption, actual.ConfigEncryption, dcl.Info{ObjectFunction: compareClusterControlPlaneConfigEncryptionNewStyle, EmptyObject: EmptyClusterControlPlaneConfigEncryption, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ConfigEncryption")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ConfigEncryption, actual.ConfigEncryption, dcl.DiffInfo{ObjectFunction: compareClusterControlPlaneConfigEncryptionNewStyle, EmptyObject: EmptyClusterControlPlaneConfigEncryption, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ConfigEncryption")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SecurityGroupIds, actual.SecurityGroupIds, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SecurityGroupIds")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SecurityGroupIds, actual.SecurityGroupIds, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("SecurityGroupIds")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IamInstanceProfile, actual.IamInstanceProfile, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IamInstanceProfile")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IamInstanceProfile, actual.IamInstanceProfile, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("IamInstanceProfile")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RootVolume, actual.RootVolume, dcl.Info{ObjectFunction: compareClusterControlPlaneRootVolumeNewStyle, EmptyObject: EmptyClusterControlPlaneRootVolume, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RootVolume")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RootVolume, actual.RootVolume, dcl.DiffInfo{ServerDefault: true, ObjectFunction: compareClusterControlPlaneRootVolumeNewStyle, EmptyObject: EmptyClusterControlPlaneRootVolume, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RootVolume")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MainVolume, actual.MainVolume, dcl.Info{ObjectFunction: compareClusterControlPlaneMainVolumeNewStyle, EmptyObject: EmptyClusterControlPlaneMainVolume, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MainVolume")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MainVolume, actual.MainVolume, dcl.DiffInfo{ServerDefault: true, ObjectFunction: compareClusterControlPlaneMainVolumeNewStyle, EmptyObject: EmptyClusterControlPlaneMainVolume, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MainVolume")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DatabaseEncryption, actual.DatabaseEncryption, dcl.Info{ObjectFunction: compareClusterControlPlaneDatabaseEncryptionNewStyle, EmptyObject: EmptyClusterControlPlaneDatabaseEncryption, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DatabaseEncryption")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DatabaseEncryption, actual.DatabaseEncryption, dcl.DiffInfo{ObjectFunction: compareClusterControlPlaneDatabaseEncryptionNewStyle, EmptyObject: EmptyClusterControlPlaneDatabaseEncryption, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("DatabaseEncryption")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Tags, actual.Tags, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tags")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Tags, actual.Tags, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Tags")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AwsServicesAuthentication, actual.AwsServicesAuthentication, dcl.Info{ObjectFunction: compareClusterControlPlaneAwsServicesAuthenticationNewStyle, EmptyObject: EmptyClusterControlPlaneAwsServicesAuthentication, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AwsServicesAuthentication")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AwsServicesAuthentication, actual.AwsServicesAuthentication, dcl.DiffInfo{ObjectFunction: compareClusterControlPlaneAwsServicesAuthenticationNewStyle, EmptyObject: EmptyClusterControlPlaneAwsServicesAuthentication, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AwsServicesAuthentication")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ProxyConfig, actual.ProxyConfig, dcl.Info{ObjectFunction: compareClusterControlPlaneProxyConfigNewStyle, EmptyObject: EmptyClusterControlPlaneProxyConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ProxyConfig")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ProxyConfig, actual.ProxyConfig, dcl.DiffInfo{ObjectFunction: compareClusterControlPlaneProxyConfigNewStyle, EmptyObject: EmptyClusterControlPlaneProxyConfig, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("ProxyConfig")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2723,7 +2783,7 @@ func compareClusterControlPlaneSshConfigNewStyle(d, a interface{}, fn dcl.FieldN
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Ec2KeyPair, actual.Ec2KeyPair, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Ec2KeyPair")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Ec2KeyPair, actual.Ec2KeyPair, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Ec2KeyPair")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2752,7 +2812,7 @@ func compareClusterControlPlaneConfigEncryptionNewStyle(d, a interface{}, fn dcl
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2781,28 +2841,28 @@ func compareClusterControlPlaneRootVolumeNewStyle(d, a interface{}, fn dcl.Field
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.SizeGib, actual.SizeGib, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SizeGib")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SizeGib, actual.SizeGib, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("SizeGib")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.VolumeType, actual.VolumeType, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("VolumeType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.VolumeType, actual.VolumeType, dcl.DiffInfo{ServerDefault: true, Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("VolumeType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Iops, actual.Iops, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Iops")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Iops, actual.Iops, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Iops")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2831,28 +2891,28 @@ func compareClusterControlPlaneMainVolumeNewStyle(d, a interface{}, fn dcl.Field
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.SizeGib, actual.SizeGib, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SizeGib")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SizeGib, actual.SizeGib, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SizeGib")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.VolumeType, actual.VolumeType, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("VolumeType")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.VolumeType, actual.VolumeType, dcl.DiffInfo{ServerDefault: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("VolumeType")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Iops, actual.Iops, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Iops")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Iops, actual.Iops, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Iops")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2881,7 +2941,7 @@ func compareClusterControlPlaneDatabaseEncryptionNewStyle(d, a interface{}, fn d
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.KmsKeyArn, actual.KmsKeyArn, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KmsKeyArn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2910,14 +2970,14 @@ func compareClusterControlPlaneAwsServicesAuthenticationNewStyle(d, a interface{
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.RoleArn, actual.RoleArn, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RoleArn")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RoleArn, actual.RoleArn, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("RoleArn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RoleSessionName, actual.RoleSessionName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RoleSessionName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RoleSessionName, actual.RoleSessionName, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("RoleSessionName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2946,14 +3006,14 @@ func compareClusterControlPlaneProxyConfigNewStyle(d, a interface{}, fn dcl.Fiel
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.SecretArn, actual.SecretArn, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SecretArn")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SecretArn, actual.SecretArn, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("SecretArn")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SecretVersion, actual.SecretVersion, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SecretVersion")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SecretVersion, actual.SecretVersion, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("SecretVersion")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2982,7 +3042,7 @@ func compareClusterAuthorizationNewStyle(d, a interface{}, fn dcl.FieldName) ([]
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AdminUsers, actual.AdminUsers, dcl.Info{ObjectFunction: compareClusterAuthorizationAdminUsersNewStyle, EmptyObject: EmptyClusterAuthorizationAdminUsers, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AdminUsers")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AdminUsers, actual.AdminUsers, dcl.DiffInfo{ObjectFunction: compareClusterAuthorizationAdminUsersNewStyle, EmptyObject: EmptyClusterAuthorizationAdminUsers, OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("AdminUsers")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3011,7 +3071,7 @@ func compareClusterAuthorizationAdminUsersNewStyle(d, a interface{}, fn dcl.Fiel
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Username, actual.Username, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Username")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Username, actual.Username, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateClusterUpdateAwsClusterOperation")}, fn.AddNest("Username")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3040,21 +3100,21 @@ func compareClusterWorkloadIdentityConfigNewStyle(d, a interface{}, fn dcl.Field
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.IssuerUri, actual.IssuerUri, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IssuerUri")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IssuerUri, actual.IssuerUri, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IssuerUri")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.WorkloadPool, actual.WorkloadPool, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WorkloadPool")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.WorkloadPool, actual.WorkloadPool, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WorkloadPool")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.IdentityProvider, actual.IdentityProvider, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IdentityProvider")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.IdentityProvider, actual.IdentityProvider, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("IdentityProvider")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3083,14 +3143,14 @@ func compareClusterFleetNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.Fie
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Membership, actual.Membership, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Membership")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Membership, actual.Membership, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Membership")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -3143,17 +3203,17 @@ func (r *Cluster) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalCluster decodes JSON responses into the Cluster resource schema.
-func unmarshalCluster(b []byte, c *Client) (*Cluster, error) {
+func unmarshalCluster(b []byte, c *Client, res *Cluster) (*Cluster, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapCluster(m, c)
+	return unmarshalMapCluster(m, c, res)
 }
 
-func unmarshalMapCluster(m map[string]interface{}, c *Client) (*Cluster, error) {
+func unmarshalMapCluster(m map[string]interface{}, c *Client, res *Cluster) (*Cluster, error) {
 
-	flattened := flattenCluster(c, m)
+	flattened := flattenCluster(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -3163,30 +3223,32 @@ func unmarshalMapCluster(m map[string]interface{}, c *Client) (*Cluster, error) 
 // expandCluster expands Cluster into a JSON request object.
 func expandCluster(c *Client, f *Cluster) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v, err := dcl.DeriveField("projects/%s/locations/%s/awsClusters/%s", f.Name, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.Location), dcl.SelfLinkToName(f.Name)); err != nil {
 		return nil, fmt.Errorf("error expanding Name into name: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["name"] = v
 	}
 	if v := f.Description; dcl.ValueShouldBeSent(v) {
 		m["description"] = v
 	}
-	if v, err := expandClusterNetworking(c, f.Networking); err != nil {
+	if v, err := expandClusterNetworking(c, f.Networking, res); err != nil {
 		return nil, fmt.Errorf("error expanding Networking into networking: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["networking"] = v
 	}
 	if v := f.AwsRegion; dcl.ValueShouldBeSent(v) {
 		m["awsRegion"] = v
 	}
-	if v, err := expandClusterControlPlane(c, f.ControlPlane); err != nil {
+	if v, err := expandClusterControlPlane(c, f.ControlPlane, res); err != nil {
 		return nil, fmt.Errorf("error expanding ControlPlane into controlPlane: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["controlPlane"] = v
 	}
-	if v, err := expandClusterAuthorization(c, f.Authorization); err != nil {
+	if v, err := expandClusterAuthorization(c, f.Authorization, res); err != nil {
 		return nil, fmt.Errorf("error expanding Authorization into authorization: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["authorization"] = v
 	}
 	if v := f.Annotations; dcl.ValueShouldBeSent(v) {
@@ -3194,17 +3256,17 @@ func expandCluster(c *Client, f *Cluster) (map[string]interface{}, error) {
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Location into location: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["location"] = v
 	}
-	if v, err := expandClusterFleet(c, f.Fleet); err != nil {
+	if v, err := expandClusterFleet(c, f.Fleet, res); err != nil {
 		return nil, fmt.Errorf("error expanding Fleet into fleet: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["fleet"] = v
 	}
 
@@ -3213,7 +3275,7 @@ func expandCluster(c *Client, f *Cluster) (map[string]interface{}, error) {
 
 // flattenCluster flattens Cluster from a JSON request object into the
 // Cluster type.
-func flattenCluster(c *Client, i interface{}) *Cluster {
+func flattenCluster(c *Client, i interface{}, res *Cluster) *Cluster {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -3222,39 +3284,39 @@ func flattenCluster(c *Client, i interface{}) *Cluster {
 		return nil
 	}
 
-	res := &Cluster{}
-	res.Name = dcl.FlattenString(m["name"])
-	res.Description = dcl.FlattenString(m["description"])
-	res.Networking = flattenClusterNetworking(c, m["networking"])
-	res.AwsRegion = dcl.FlattenString(m["awsRegion"])
-	res.ControlPlane = flattenClusterControlPlane(c, m["controlPlane"])
-	res.Authorization = flattenClusterAuthorization(c, m["authorization"])
-	res.State = flattenClusterStateEnum(m["state"])
-	res.Endpoint = dcl.FlattenString(m["endpoint"])
-	res.Uid = dcl.FlattenString(m["uid"])
-	res.Reconciling = dcl.FlattenBool(m["reconciling"])
-	res.CreateTime = dcl.FlattenString(m["createTime"])
-	res.UpdateTime = dcl.FlattenString(m["updateTime"])
-	res.Etag = dcl.FlattenString(m["etag"])
-	res.Annotations = dcl.FlattenKeyValuePairs(m["annotations"])
-	res.WorkloadIdentityConfig = flattenClusterWorkloadIdentityConfig(c, m["workloadIdentityConfig"])
-	res.Project = dcl.FlattenString(m["project"])
-	res.Location = dcl.FlattenString(m["location"])
-	res.Fleet = flattenClusterFleet(c, m["fleet"])
+	resultRes := &Cluster{}
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.Description = dcl.FlattenString(m["description"])
+	resultRes.Networking = flattenClusterNetworking(c, m["networking"], res)
+	resultRes.AwsRegion = dcl.FlattenString(m["awsRegion"])
+	resultRes.ControlPlane = flattenClusterControlPlane(c, m["controlPlane"], res)
+	resultRes.Authorization = flattenClusterAuthorization(c, m["authorization"], res)
+	resultRes.State = flattenClusterStateEnum(m["state"])
+	resultRes.Endpoint = dcl.FlattenString(m["endpoint"])
+	resultRes.Uid = dcl.FlattenString(m["uid"])
+	resultRes.Reconciling = dcl.FlattenBool(m["reconciling"])
+	resultRes.CreateTime = dcl.FlattenString(m["createTime"])
+	resultRes.UpdateTime = dcl.FlattenString(m["updateTime"])
+	resultRes.Etag = dcl.FlattenString(m["etag"])
+	resultRes.Annotations = dcl.FlattenKeyValuePairs(m["annotations"])
+	resultRes.WorkloadIdentityConfig = flattenClusterWorkloadIdentityConfig(c, m["workloadIdentityConfig"], res)
+	resultRes.Project = dcl.FlattenString(m["project"])
+	resultRes.Location = dcl.FlattenString(m["location"])
+	resultRes.Fleet = flattenClusterFleet(c, m["fleet"], res)
 
-	return res
+	return resultRes
 }
 
 // expandClusterNetworkingMap expands the contents of ClusterNetworking into a JSON
 // request object.
-func expandClusterNetworkingMap(c *Client, f map[string]ClusterNetworking) (map[string]interface{}, error) {
+func expandClusterNetworkingMap(c *Client, f map[string]ClusterNetworking, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterNetworking(c, &item)
+		i, err := expandClusterNetworking(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3268,14 +3330,14 @@ func expandClusterNetworkingMap(c *Client, f map[string]ClusterNetworking) (map[
 
 // expandClusterNetworkingSlice expands the contents of ClusterNetworking into a JSON
 // request object.
-func expandClusterNetworkingSlice(c *Client, f []ClusterNetworking) ([]map[string]interface{}, error) {
+func expandClusterNetworkingSlice(c *Client, f []ClusterNetworking, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterNetworking(c, &item)
+		i, err := expandClusterNetworking(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3288,7 +3350,7 @@ func expandClusterNetworkingSlice(c *Client, f []ClusterNetworking) ([]map[strin
 
 // flattenClusterNetworkingMap flattens the contents of ClusterNetworking from a JSON
 // response object.
-func flattenClusterNetworkingMap(c *Client, i interface{}) map[string]ClusterNetworking {
+func flattenClusterNetworkingMap(c *Client, i interface{}, res *Cluster) map[string]ClusterNetworking {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterNetworking{}
@@ -3300,7 +3362,7 @@ func flattenClusterNetworkingMap(c *Client, i interface{}) map[string]ClusterNet
 
 	items := make(map[string]ClusterNetworking)
 	for k, item := range a {
-		items[k] = *flattenClusterNetworking(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterNetworking(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -3308,7 +3370,7 @@ func flattenClusterNetworkingMap(c *Client, i interface{}) map[string]ClusterNet
 
 // flattenClusterNetworkingSlice flattens the contents of ClusterNetworking from a JSON
 // response object.
-func flattenClusterNetworkingSlice(c *Client, i interface{}) []ClusterNetworking {
+func flattenClusterNetworkingSlice(c *Client, i interface{}, res *Cluster) []ClusterNetworking {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterNetworking{}
@@ -3320,7 +3382,7 @@ func flattenClusterNetworkingSlice(c *Client, i interface{}) []ClusterNetworking
 
 	items := make([]ClusterNetworking, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterNetworking(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterNetworking(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -3328,7 +3390,7 @@ func flattenClusterNetworkingSlice(c *Client, i interface{}) []ClusterNetworking
 
 // expandClusterNetworking expands an instance of ClusterNetworking into a JSON
 // request object.
-func expandClusterNetworking(c *Client, f *ClusterNetworking) (map[string]interface{}, error) {
+func expandClusterNetworking(c *Client, f *ClusterNetworking, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -3349,7 +3411,7 @@ func expandClusterNetworking(c *Client, f *ClusterNetworking) (map[string]interf
 
 // flattenClusterNetworking flattens an instance of ClusterNetworking from a JSON
 // response object.
-func flattenClusterNetworking(c *Client, i interface{}) *ClusterNetworking {
+func flattenClusterNetworking(c *Client, i interface{}, res *Cluster) *ClusterNetworking {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -3369,14 +3431,14 @@ func flattenClusterNetworking(c *Client, i interface{}) *ClusterNetworking {
 
 // expandClusterControlPlaneMap expands the contents of ClusterControlPlane into a JSON
 // request object.
-func expandClusterControlPlaneMap(c *Client, f map[string]ClusterControlPlane) (map[string]interface{}, error) {
+func expandClusterControlPlaneMap(c *Client, f map[string]ClusterControlPlane, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterControlPlane(c, &item)
+		i, err := expandClusterControlPlane(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3390,14 +3452,14 @@ func expandClusterControlPlaneMap(c *Client, f map[string]ClusterControlPlane) (
 
 // expandClusterControlPlaneSlice expands the contents of ClusterControlPlane into a JSON
 // request object.
-func expandClusterControlPlaneSlice(c *Client, f []ClusterControlPlane) ([]map[string]interface{}, error) {
+func expandClusterControlPlaneSlice(c *Client, f []ClusterControlPlane, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterControlPlane(c, &item)
+		i, err := expandClusterControlPlane(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3410,7 +3472,7 @@ func expandClusterControlPlaneSlice(c *Client, f []ClusterControlPlane) ([]map[s
 
 // flattenClusterControlPlaneMap flattens the contents of ClusterControlPlane from a JSON
 // response object.
-func flattenClusterControlPlaneMap(c *Client, i interface{}) map[string]ClusterControlPlane {
+func flattenClusterControlPlaneMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlane {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlane{}
@@ -3422,7 +3484,7 @@ func flattenClusterControlPlaneMap(c *Client, i interface{}) map[string]ClusterC
 
 	items := make(map[string]ClusterControlPlane)
 	for k, item := range a {
-		items[k] = *flattenClusterControlPlane(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterControlPlane(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -3430,7 +3492,7 @@ func flattenClusterControlPlaneMap(c *Client, i interface{}) map[string]ClusterC
 
 // flattenClusterControlPlaneSlice flattens the contents of ClusterControlPlane from a JSON
 // response object.
-func flattenClusterControlPlaneSlice(c *Client, i interface{}) []ClusterControlPlane {
+func flattenClusterControlPlaneSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlane {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlane{}
@@ -3442,7 +3504,7 @@ func flattenClusterControlPlaneSlice(c *Client, i interface{}) []ClusterControlP
 
 	items := make([]ClusterControlPlane, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterControlPlane(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterControlPlane(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -3450,7 +3512,7 @@ func flattenClusterControlPlaneSlice(c *Client, i interface{}) []ClusterControlP
 
 // expandClusterControlPlane expands an instance of ClusterControlPlane into a JSON
 // request object.
-func expandClusterControlPlane(c *Client, f *ClusterControlPlane) (map[string]interface{}, error) {
+func expandClusterControlPlane(c *Client, f *ClusterControlPlane, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -3462,7 +3524,7 @@ func expandClusterControlPlane(c *Client, f *ClusterControlPlane) (map[string]in
 	if v := f.InstanceType; !dcl.IsEmptyValueIndirect(v) {
 		m["instanceType"] = v
 	}
-	if v, err := expandClusterControlPlaneSshConfig(c, f.SshConfig); err != nil {
+	if v, err := expandClusterControlPlaneSshConfig(c, f.SshConfig, res); err != nil {
 		return nil, fmt.Errorf("error expanding SshConfig into sshConfig: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["sshConfig"] = v
@@ -3470,7 +3532,7 @@ func expandClusterControlPlane(c *Client, f *ClusterControlPlane) (map[string]in
 	if v := f.SubnetIds; v != nil {
 		m["subnetIds"] = v
 	}
-	if v, err := expandClusterControlPlaneConfigEncryption(c, f.ConfigEncryption); err != nil {
+	if v, err := expandClusterControlPlaneConfigEncryption(c, f.ConfigEncryption, res); err != nil {
 		return nil, fmt.Errorf("error expanding ConfigEncryption into configEncryption: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["configEncryption"] = v
@@ -3481,17 +3543,17 @@ func expandClusterControlPlane(c *Client, f *ClusterControlPlane) (map[string]in
 	if v := f.IamInstanceProfile; !dcl.IsEmptyValueIndirect(v) {
 		m["iamInstanceProfile"] = v
 	}
-	if v, err := expandClusterControlPlaneRootVolume(c, f.RootVolume); err != nil {
+	if v, err := expandClusterControlPlaneRootVolume(c, f.RootVolume, res); err != nil {
 		return nil, fmt.Errorf("error expanding RootVolume into rootVolume: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["rootVolume"] = v
 	}
-	if v, err := expandClusterControlPlaneMainVolume(c, f.MainVolume); err != nil {
+	if v, err := expandClusterControlPlaneMainVolume(c, f.MainVolume, res); err != nil {
 		return nil, fmt.Errorf("error expanding MainVolume into mainVolume: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["mainVolume"] = v
 	}
-	if v, err := expandClusterControlPlaneDatabaseEncryption(c, f.DatabaseEncryption); err != nil {
+	if v, err := expandClusterControlPlaneDatabaseEncryption(c, f.DatabaseEncryption, res); err != nil {
 		return nil, fmt.Errorf("error expanding DatabaseEncryption into databaseEncryption: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["databaseEncryption"] = v
@@ -3499,12 +3561,12 @@ func expandClusterControlPlane(c *Client, f *ClusterControlPlane) (map[string]in
 	if v := f.Tags; !dcl.IsEmptyValueIndirect(v) {
 		m["tags"] = v
 	}
-	if v, err := expandClusterControlPlaneAwsServicesAuthentication(c, f.AwsServicesAuthentication); err != nil {
+	if v, err := expandClusterControlPlaneAwsServicesAuthentication(c, f.AwsServicesAuthentication, res); err != nil {
 		return nil, fmt.Errorf("error expanding AwsServicesAuthentication into awsServicesAuthentication: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["awsServicesAuthentication"] = v
 	}
-	if v, err := expandClusterControlPlaneProxyConfig(c, f.ProxyConfig); err != nil {
+	if v, err := expandClusterControlPlaneProxyConfig(c, f.ProxyConfig, res); err != nil {
 		return nil, fmt.Errorf("error expanding ProxyConfig into proxyConfig: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["proxyConfig"] = v
@@ -3515,7 +3577,7 @@ func expandClusterControlPlane(c *Client, f *ClusterControlPlane) (map[string]in
 
 // flattenClusterControlPlane flattens an instance of ClusterControlPlane from a JSON
 // response object.
-func flattenClusterControlPlane(c *Client, i interface{}) *ClusterControlPlane {
+func flattenClusterControlPlane(c *Client, i interface{}, res *Cluster) *ClusterControlPlane {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -3528,31 +3590,31 @@ func flattenClusterControlPlane(c *Client, i interface{}) *ClusterControlPlane {
 	}
 	r.Version = dcl.FlattenString(m["version"])
 	r.InstanceType = dcl.FlattenString(m["instanceType"])
-	r.SshConfig = flattenClusterControlPlaneSshConfig(c, m["sshConfig"])
+	r.SshConfig = flattenClusterControlPlaneSshConfig(c, m["sshConfig"], res)
 	r.SubnetIds = dcl.FlattenStringSlice(m["subnetIds"])
-	r.ConfigEncryption = flattenClusterControlPlaneConfigEncryption(c, m["configEncryption"])
+	r.ConfigEncryption = flattenClusterControlPlaneConfigEncryption(c, m["configEncryption"], res)
 	r.SecurityGroupIds = dcl.FlattenStringSlice(m["securityGroupIds"])
 	r.IamInstanceProfile = dcl.FlattenString(m["iamInstanceProfile"])
-	r.RootVolume = flattenClusterControlPlaneRootVolume(c, m["rootVolume"])
-	r.MainVolume = flattenClusterControlPlaneMainVolume(c, m["mainVolume"])
-	r.DatabaseEncryption = flattenClusterControlPlaneDatabaseEncryption(c, m["databaseEncryption"])
+	r.RootVolume = flattenClusterControlPlaneRootVolume(c, m["rootVolume"], res)
+	r.MainVolume = flattenClusterControlPlaneMainVolume(c, m["mainVolume"], res)
+	r.DatabaseEncryption = flattenClusterControlPlaneDatabaseEncryption(c, m["databaseEncryption"], res)
 	r.Tags = dcl.FlattenKeyValuePairs(m["tags"])
-	r.AwsServicesAuthentication = flattenClusterControlPlaneAwsServicesAuthentication(c, m["awsServicesAuthentication"])
-	r.ProxyConfig = flattenClusterControlPlaneProxyConfig(c, m["proxyConfig"])
+	r.AwsServicesAuthentication = flattenClusterControlPlaneAwsServicesAuthentication(c, m["awsServicesAuthentication"], res)
+	r.ProxyConfig = flattenClusterControlPlaneProxyConfig(c, m["proxyConfig"], res)
 
 	return r
 }
 
 // expandClusterControlPlaneSshConfigMap expands the contents of ClusterControlPlaneSshConfig into a JSON
 // request object.
-func expandClusterControlPlaneSshConfigMap(c *Client, f map[string]ClusterControlPlaneSshConfig) (map[string]interface{}, error) {
+func expandClusterControlPlaneSshConfigMap(c *Client, f map[string]ClusterControlPlaneSshConfig, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterControlPlaneSshConfig(c, &item)
+		i, err := expandClusterControlPlaneSshConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3566,14 +3628,14 @@ func expandClusterControlPlaneSshConfigMap(c *Client, f map[string]ClusterContro
 
 // expandClusterControlPlaneSshConfigSlice expands the contents of ClusterControlPlaneSshConfig into a JSON
 // request object.
-func expandClusterControlPlaneSshConfigSlice(c *Client, f []ClusterControlPlaneSshConfig) ([]map[string]interface{}, error) {
+func expandClusterControlPlaneSshConfigSlice(c *Client, f []ClusterControlPlaneSshConfig, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterControlPlaneSshConfig(c, &item)
+		i, err := expandClusterControlPlaneSshConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3586,7 +3648,7 @@ func expandClusterControlPlaneSshConfigSlice(c *Client, f []ClusterControlPlaneS
 
 // flattenClusterControlPlaneSshConfigMap flattens the contents of ClusterControlPlaneSshConfig from a JSON
 // response object.
-func flattenClusterControlPlaneSshConfigMap(c *Client, i interface{}) map[string]ClusterControlPlaneSshConfig {
+func flattenClusterControlPlaneSshConfigMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneSshConfig {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneSshConfig{}
@@ -3598,7 +3660,7 @@ func flattenClusterControlPlaneSshConfigMap(c *Client, i interface{}) map[string
 
 	items := make(map[string]ClusterControlPlaneSshConfig)
 	for k, item := range a {
-		items[k] = *flattenClusterControlPlaneSshConfig(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterControlPlaneSshConfig(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -3606,7 +3668,7 @@ func flattenClusterControlPlaneSshConfigMap(c *Client, i interface{}) map[string
 
 // flattenClusterControlPlaneSshConfigSlice flattens the contents of ClusterControlPlaneSshConfig from a JSON
 // response object.
-func flattenClusterControlPlaneSshConfigSlice(c *Client, i interface{}) []ClusterControlPlaneSshConfig {
+func flattenClusterControlPlaneSshConfigSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneSshConfig {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneSshConfig{}
@@ -3618,7 +3680,7 @@ func flattenClusterControlPlaneSshConfigSlice(c *Client, i interface{}) []Cluste
 
 	items := make([]ClusterControlPlaneSshConfig, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterControlPlaneSshConfig(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterControlPlaneSshConfig(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -3626,7 +3688,7 @@ func flattenClusterControlPlaneSshConfigSlice(c *Client, i interface{}) []Cluste
 
 // expandClusterControlPlaneSshConfig expands an instance of ClusterControlPlaneSshConfig into a JSON
 // request object.
-func expandClusterControlPlaneSshConfig(c *Client, f *ClusterControlPlaneSshConfig) (map[string]interface{}, error) {
+func expandClusterControlPlaneSshConfig(c *Client, f *ClusterControlPlaneSshConfig, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -3641,7 +3703,7 @@ func expandClusterControlPlaneSshConfig(c *Client, f *ClusterControlPlaneSshConf
 
 // flattenClusterControlPlaneSshConfig flattens an instance of ClusterControlPlaneSshConfig from a JSON
 // response object.
-func flattenClusterControlPlaneSshConfig(c *Client, i interface{}) *ClusterControlPlaneSshConfig {
+func flattenClusterControlPlaneSshConfig(c *Client, i interface{}, res *Cluster) *ClusterControlPlaneSshConfig {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -3659,14 +3721,14 @@ func flattenClusterControlPlaneSshConfig(c *Client, i interface{}) *ClusterContr
 
 // expandClusterControlPlaneConfigEncryptionMap expands the contents of ClusterControlPlaneConfigEncryption into a JSON
 // request object.
-func expandClusterControlPlaneConfigEncryptionMap(c *Client, f map[string]ClusterControlPlaneConfigEncryption) (map[string]interface{}, error) {
+func expandClusterControlPlaneConfigEncryptionMap(c *Client, f map[string]ClusterControlPlaneConfigEncryption, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterControlPlaneConfigEncryption(c, &item)
+		i, err := expandClusterControlPlaneConfigEncryption(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3680,14 +3742,14 @@ func expandClusterControlPlaneConfigEncryptionMap(c *Client, f map[string]Cluste
 
 // expandClusterControlPlaneConfigEncryptionSlice expands the contents of ClusterControlPlaneConfigEncryption into a JSON
 // request object.
-func expandClusterControlPlaneConfigEncryptionSlice(c *Client, f []ClusterControlPlaneConfigEncryption) ([]map[string]interface{}, error) {
+func expandClusterControlPlaneConfigEncryptionSlice(c *Client, f []ClusterControlPlaneConfigEncryption, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterControlPlaneConfigEncryption(c, &item)
+		i, err := expandClusterControlPlaneConfigEncryption(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3700,7 +3762,7 @@ func expandClusterControlPlaneConfigEncryptionSlice(c *Client, f []ClusterContro
 
 // flattenClusterControlPlaneConfigEncryptionMap flattens the contents of ClusterControlPlaneConfigEncryption from a JSON
 // response object.
-func flattenClusterControlPlaneConfigEncryptionMap(c *Client, i interface{}) map[string]ClusterControlPlaneConfigEncryption {
+func flattenClusterControlPlaneConfigEncryptionMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneConfigEncryption {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneConfigEncryption{}
@@ -3712,7 +3774,7 @@ func flattenClusterControlPlaneConfigEncryptionMap(c *Client, i interface{}) map
 
 	items := make(map[string]ClusterControlPlaneConfigEncryption)
 	for k, item := range a {
-		items[k] = *flattenClusterControlPlaneConfigEncryption(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterControlPlaneConfigEncryption(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -3720,7 +3782,7 @@ func flattenClusterControlPlaneConfigEncryptionMap(c *Client, i interface{}) map
 
 // flattenClusterControlPlaneConfigEncryptionSlice flattens the contents of ClusterControlPlaneConfigEncryption from a JSON
 // response object.
-func flattenClusterControlPlaneConfigEncryptionSlice(c *Client, i interface{}) []ClusterControlPlaneConfigEncryption {
+func flattenClusterControlPlaneConfigEncryptionSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneConfigEncryption {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneConfigEncryption{}
@@ -3732,7 +3794,7 @@ func flattenClusterControlPlaneConfigEncryptionSlice(c *Client, i interface{}) [
 
 	items := make([]ClusterControlPlaneConfigEncryption, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterControlPlaneConfigEncryption(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterControlPlaneConfigEncryption(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -3740,7 +3802,7 @@ func flattenClusterControlPlaneConfigEncryptionSlice(c *Client, i interface{}) [
 
 // expandClusterControlPlaneConfigEncryption expands an instance of ClusterControlPlaneConfigEncryption into a JSON
 // request object.
-func expandClusterControlPlaneConfigEncryption(c *Client, f *ClusterControlPlaneConfigEncryption) (map[string]interface{}, error) {
+func expandClusterControlPlaneConfigEncryption(c *Client, f *ClusterControlPlaneConfigEncryption, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -3755,7 +3817,7 @@ func expandClusterControlPlaneConfigEncryption(c *Client, f *ClusterControlPlane
 
 // flattenClusterControlPlaneConfigEncryption flattens an instance of ClusterControlPlaneConfigEncryption from a JSON
 // response object.
-func flattenClusterControlPlaneConfigEncryption(c *Client, i interface{}) *ClusterControlPlaneConfigEncryption {
+func flattenClusterControlPlaneConfigEncryption(c *Client, i interface{}, res *Cluster) *ClusterControlPlaneConfigEncryption {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -3773,14 +3835,14 @@ func flattenClusterControlPlaneConfigEncryption(c *Client, i interface{}) *Clust
 
 // expandClusterControlPlaneRootVolumeMap expands the contents of ClusterControlPlaneRootVolume into a JSON
 // request object.
-func expandClusterControlPlaneRootVolumeMap(c *Client, f map[string]ClusterControlPlaneRootVolume) (map[string]interface{}, error) {
+func expandClusterControlPlaneRootVolumeMap(c *Client, f map[string]ClusterControlPlaneRootVolume, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterControlPlaneRootVolume(c, &item)
+		i, err := expandClusterControlPlaneRootVolume(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3794,14 +3856,14 @@ func expandClusterControlPlaneRootVolumeMap(c *Client, f map[string]ClusterContr
 
 // expandClusterControlPlaneRootVolumeSlice expands the contents of ClusterControlPlaneRootVolume into a JSON
 // request object.
-func expandClusterControlPlaneRootVolumeSlice(c *Client, f []ClusterControlPlaneRootVolume) ([]map[string]interface{}, error) {
+func expandClusterControlPlaneRootVolumeSlice(c *Client, f []ClusterControlPlaneRootVolume, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterControlPlaneRootVolume(c, &item)
+		i, err := expandClusterControlPlaneRootVolume(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3814,7 +3876,7 @@ func expandClusterControlPlaneRootVolumeSlice(c *Client, f []ClusterControlPlane
 
 // flattenClusterControlPlaneRootVolumeMap flattens the contents of ClusterControlPlaneRootVolume from a JSON
 // response object.
-func flattenClusterControlPlaneRootVolumeMap(c *Client, i interface{}) map[string]ClusterControlPlaneRootVolume {
+func flattenClusterControlPlaneRootVolumeMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneRootVolume {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneRootVolume{}
@@ -3826,7 +3888,7 @@ func flattenClusterControlPlaneRootVolumeMap(c *Client, i interface{}) map[strin
 
 	items := make(map[string]ClusterControlPlaneRootVolume)
 	for k, item := range a {
-		items[k] = *flattenClusterControlPlaneRootVolume(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterControlPlaneRootVolume(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -3834,7 +3896,7 @@ func flattenClusterControlPlaneRootVolumeMap(c *Client, i interface{}) map[strin
 
 // flattenClusterControlPlaneRootVolumeSlice flattens the contents of ClusterControlPlaneRootVolume from a JSON
 // response object.
-func flattenClusterControlPlaneRootVolumeSlice(c *Client, i interface{}) []ClusterControlPlaneRootVolume {
+func flattenClusterControlPlaneRootVolumeSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneRootVolume {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneRootVolume{}
@@ -3846,7 +3908,7 @@ func flattenClusterControlPlaneRootVolumeSlice(c *Client, i interface{}) []Clust
 
 	items := make([]ClusterControlPlaneRootVolume, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterControlPlaneRootVolume(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterControlPlaneRootVolume(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -3854,7 +3916,7 @@ func flattenClusterControlPlaneRootVolumeSlice(c *Client, i interface{}) []Clust
 
 // expandClusterControlPlaneRootVolume expands an instance of ClusterControlPlaneRootVolume into a JSON
 // request object.
-func expandClusterControlPlaneRootVolume(c *Client, f *ClusterControlPlaneRootVolume) (map[string]interface{}, error) {
+func expandClusterControlPlaneRootVolume(c *Client, f *ClusterControlPlaneRootVolume, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -3878,7 +3940,7 @@ func expandClusterControlPlaneRootVolume(c *Client, f *ClusterControlPlaneRootVo
 
 // flattenClusterControlPlaneRootVolume flattens an instance of ClusterControlPlaneRootVolume from a JSON
 // response object.
-func flattenClusterControlPlaneRootVolume(c *Client, i interface{}) *ClusterControlPlaneRootVolume {
+func flattenClusterControlPlaneRootVolume(c *Client, i interface{}, res *Cluster) *ClusterControlPlaneRootVolume {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -3899,14 +3961,14 @@ func flattenClusterControlPlaneRootVolume(c *Client, i interface{}) *ClusterCont
 
 // expandClusterControlPlaneMainVolumeMap expands the contents of ClusterControlPlaneMainVolume into a JSON
 // request object.
-func expandClusterControlPlaneMainVolumeMap(c *Client, f map[string]ClusterControlPlaneMainVolume) (map[string]interface{}, error) {
+func expandClusterControlPlaneMainVolumeMap(c *Client, f map[string]ClusterControlPlaneMainVolume, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterControlPlaneMainVolume(c, &item)
+		i, err := expandClusterControlPlaneMainVolume(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3920,14 +3982,14 @@ func expandClusterControlPlaneMainVolumeMap(c *Client, f map[string]ClusterContr
 
 // expandClusterControlPlaneMainVolumeSlice expands the contents of ClusterControlPlaneMainVolume into a JSON
 // request object.
-func expandClusterControlPlaneMainVolumeSlice(c *Client, f []ClusterControlPlaneMainVolume) ([]map[string]interface{}, error) {
+func expandClusterControlPlaneMainVolumeSlice(c *Client, f []ClusterControlPlaneMainVolume, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterControlPlaneMainVolume(c, &item)
+		i, err := expandClusterControlPlaneMainVolume(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -3940,7 +4002,7 @@ func expandClusterControlPlaneMainVolumeSlice(c *Client, f []ClusterControlPlane
 
 // flattenClusterControlPlaneMainVolumeMap flattens the contents of ClusterControlPlaneMainVolume from a JSON
 // response object.
-func flattenClusterControlPlaneMainVolumeMap(c *Client, i interface{}) map[string]ClusterControlPlaneMainVolume {
+func flattenClusterControlPlaneMainVolumeMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneMainVolume {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneMainVolume{}
@@ -3952,7 +4014,7 @@ func flattenClusterControlPlaneMainVolumeMap(c *Client, i interface{}) map[strin
 
 	items := make(map[string]ClusterControlPlaneMainVolume)
 	for k, item := range a {
-		items[k] = *flattenClusterControlPlaneMainVolume(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterControlPlaneMainVolume(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -3960,7 +4022,7 @@ func flattenClusterControlPlaneMainVolumeMap(c *Client, i interface{}) map[strin
 
 // flattenClusterControlPlaneMainVolumeSlice flattens the contents of ClusterControlPlaneMainVolume from a JSON
 // response object.
-func flattenClusterControlPlaneMainVolumeSlice(c *Client, i interface{}) []ClusterControlPlaneMainVolume {
+func flattenClusterControlPlaneMainVolumeSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneMainVolume {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneMainVolume{}
@@ -3972,7 +4034,7 @@ func flattenClusterControlPlaneMainVolumeSlice(c *Client, i interface{}) []Clust
 
 	items := make([]ClusterControlPlaneMainVolume, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterControlPlaneMainVolume(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterControlPlaneMainVolume(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -3980,7 +4042,7 @@ func flattenClusterControlPlaneMainVolumeSlice(c *Client, i interface{}) []Clust
 
 // expandClusterControlPlaneMainVolume expands an instance of ClusterControlPlaneMainVolume into a JSON
 // request object.
-func expandClusterControlPlaneMainVolume(c *Client, f *ClusterControlPlaneMainVolume) (map[string]interface{}, error) {
+func expandClusterControlPlaneMainVolume(c *Client, f *ClusterControlPlaneMainVolume, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4004,7 +4066,7 @@ func expandClusterControlPlaneMainVolume(c *Client, f *ClusterControlPlaneMainVo
 
 // flattenClusterControlPlaneMainVolume flattens an instance of ClusterControlPlaneMainVolume from a JSON
 // response object.
-func flattenClusterControlPlaneMainVolume(c *Client, i interface{}) *ClusterControlPlaneMainVolume {
+func flattenClusterControlPlaneMainVolume(c *Client, i interface{}, res *Cluster) *ClusterControlPlaneMainVolume {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4025,14 +4087,14 @@ func flattenClusterControlPlaneMainVolume(c *Client, i interface{}) *ClusterCont
 
 // expandClusterControlPlaneDatabaseEncryptionMap expands the contents of ClusterControlPlaneDatabaseEncryption into a JSON
 // request object.
-func expandClusterControlPlaneDatabaseEncryptionMap(c *Client, f map[string]ClusterControlPlaneDatabaseEncryption) (map[string]interface{}, error) {
+func expandClusterControlPlaneDatabaseEncryptionMap(c *Client, f map[string]ClusterControlPlaneDatabaseEncryption, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterControlPlaneDatabaseEncryption(c, &item)
+		i, err := expandClusterControlPlaneDatabaseEncryption(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4046,14 +4108,14 @@ func expandClusterControlPlaneDatabaseEncryptionMap(c *Client, f map[string]Clus
 
 // expandClusterControlPlaneDatabaseEncryptionSlice expands the contents of ClusterControlPlaneDatabaseEncryption into a JSON
 // request object.
-func expandClusterControlPlaneDatabaseEncryptionSlice(c *Client, f []ClusterControlPlaneDatabaseEncryption) ([]map[string]interface{}, error) {
+func expandClusterControlPlaneDatabaseEncryptionSlice(c *Client, f []ClusterControlPlaneDatabaseEncryption, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterControlPlaneDatabaseEncryption(c, &item)
+		i, err := expandClusterControlPlaneDatabaseEncryption(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4066,7 +4128,7 @@ func expandClusterControlPlaneDatabaseEncryptionSlice(c *Client, f []ClusterCont
 
 // flattenClusterControlPlaneDatabaseEncryptionMap flattens the contents of ClusterControlPlaneDatabaseEncryption from a JSON
 // response object.
-func flattenClusterControlPlaneDatabaseEncryptionMap(c *Client, i interface{}) map[string]ClusterControlPlaneDatabaseEncryption {
+func flattenClusterControlPlaneDatabaseEncryptionMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneDatabaseEncryption {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneDatabaseEncryption{}
@@ -4078,7 +4140,7 @@ func flattenClusterControlPlaneDatabaseEncryptionMap(c *Client, i interface{}) m
 
 	items := make(map[string]ClusterControlPlaneDatabaseEncryption)
 	for k, item := range a {
-		items[k] = *flattenClusterControlPlaneDatabaseEncryption(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterControlPlaneDatabaseEncryption(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4086,7 +4148,7 @@ func flattenClusterControlPlaneDatabaseEncryptionMap(c *Client, i interface{}) m
 
 // flattenClusterControlPlaneDatabaseEncryptionSlice flattens the contents of ClusterControlPlaneDatabaseEncryption from a JSON
 // response object.
-func flattenClusterControlPlaneDatabaseEncryptionSlice(c *Client, i interface{}) []ClusterControlPlaneDatabaseEncryption {
+func flattenClusterControlPlaneDatabaseEncryptionSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneDatabaseEncryption {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneDatabaseEncryption{}
@@ -4098,7 +4160,7 @@ func flattenClusterControlPlaneDatabaseEncryptionSlice(c *Client, i interface{})
 
 	items := make([]ClusterControlPlaneDatabaseEncryption, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterControlPlaneDatabaseEncryption(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterControlPlaneDatabaseEncryption(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4106,7 +4168,7 @@ func flattenClusterControlPlaneDatabaseEncryptionSlice(c *Client, i interface{})
 
 // expandClusterControlPlaneDatabaseEncryption expands an instance of ClusterControlPlaneDatabaseEncryption into a JSON
 // request object.
-func expandClusterControlPlaneDatabaseEncryption(c *Client, f *ClusterControlPlaneDatabaseEncryption) (map[string]interface{}, error) {
+func expandClusterControlPlaneDatabaseEncryption(c *Client, f *ClusterControlPlaneDatabaseEncryption, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4121,7 +4183,7 @@ func expandClusterControlPlaneDatabaseEncryption(c *Client, f *ClusterControlPla
 
 // flattenClusterControlPlaneDatabaseEncryption flattens an instance of ClusterControlPlaneDatabaseEncryption from a JSON
 // response object.
-func flattenClusterControlPlaneDatabaseEncryption(c *Client, i interface{}) *ClusterControlPlaneDatabaseEncryption {
+func flattenClusterControlPlaneDatabaseEncryption(c *Client, i interface{}, res *Cluster) *ClusterControlPlaneDatabaseEncryption {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4139,14 +4201,14 @@ func flattenClusterControlPlaneDatabaseEncryption(c *Client, i interface{}) *Clu
 
 // expandClusterControlPlaneAwsServicesAuthenticationMap expands the contents of ClusterControlPlaneAwsServicesAuthentication into a JSON
 // request object.
-func expandClusterControlPlaneAwsServicesAuthenticationMap(c *Client, f map[string]ClusterControlPlaneAwsServicesAuthentication) (map[string]interface{}, error) {
+func expandClusterControlPlaneAwsServicesAuthenticationMap(c *Client, f map[string]ClusterControlPlaneAwsServicesAuthentication, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterControlPlaneAwsServicesAuthentication(c, &item)
+		i, err := expandClusterControlPlaneAwsServicesAuthentication(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4160,14 +4222,14 @@ func expandClusterControlPlaneAwsServicesAuthenticationMap(c *Client, f map[stri
 
 // expandClusterControlPlaneAwsServicesAuthenticationSlice expands the contents of ClusterControlPlaneAwsServicesAuthentication into a JSON
 // request object.
-func expandClusterControlPlaneAwsServicesAuthenticationSlice(c *Client, f []ClusterControlPlaneAwsServicesAuthentication) ([]map[string]interface{}, error) {
+func expandClusterControlPlaneAwsServicesAuthenticationSlice(c *Client, f []ClusterControlPlaneAwsServicesAuthentication, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterControlPlaneAwsServicesAuthentication(c, &item)
+		i, err := expandClusterControlPlaneAwsServicesAuthentication(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4180,7 +4242,7 @@ func expandClusterControlPlaneAwsServicesAuthenticationSlice(c *Client, f []Clus
 
 // flattenClusterControlPlaneAwsServicesAuthenticationMap flattens the contents of ClusterControlPlaneAwsServicesAuthentication from a JSON
 // response object.
-func flattenClusterControlPlaneAwsServicesAuthenticationMap(c *Client, i interface{}) map[string]ClusterControlPlaneAwsServicesAuthentication {
+func flattenClusterControlPlaneAwsServicesAuthenticationMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneAwsServicesAuthentication {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneAwsServicesAuthentication{}
@@ -4192,7 +4254,7 @@ func flattenClusterControlPlaneAwsServicesAuthenticationMap(c *Client, i interfa
 
 	items := make(map[string]ClusterControlPlaneAwsServicesAuthentication)
 	for k, item := range a {
-		items[k] = *flattenClusterControlPlaneAwsServicesAuthentication(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterControlPlaneAwsServicesAuthentication(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4200,7 +4262,7 @@ func flattenClusterControlPlaneAwsServicesAuthenticationMap(c *Client, i interfa
 
 // flattenClusterControlPlaneAwsServicesAuthenticationSlice flattens the contents of ClusterControlPlaneAwsServicesAuthentication from a JSON
 // response object.
-func flattenClusterControlPlaneAwsServicesAuthenticationSlice(c *Client, i interface{}) []ClusterControlPlaneAwsServicesAuthentication {
+func flattenClusterControlPlaneAwsServicesAuthenticationSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneAwsServicesAuthentication {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneAwsServicesAuthentication{}
@@ -4212,7 +4274,7 @@ func flattenClusterControlPlaneAwsServicesAuthenticationSlice(c *Client, i inter
 
 	items := make([]ClusterControlPlaneAwsServicesAuthentication, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterControlPlaneAwsServicesAuthentication(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterControlPlaneAwsServicesAuthentication(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4220,7 +4282,7 @@ func flattenClusterControlPlaneAwsServicesAuthenticationSlice(c *Client, i inter
 
 // expandClusterControlPlaneAwsServicesAuthentication expands an instance of ClusterControlPlaneAwsServicesAuthentication into a JSON
 // request object.
-func expandClusterControlPlaneAwsServicesAuthentication(c *Client, f *ClusterControlPlaneAwsServicesAuthentication) (map[string]interface{}, error) {
+func expandClusterControlPlaneAwsServicesAuthentication(c *Client, f *ClusterControlPlaneAwsServicesAuthentication, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4238,7 +4300,7 @@ func expandClusterControlPlaneAwsServicesAuthentication(c *Client, f *ClusterCon
 
 // flattenClusterControlPlaneAwsServicesAuthentication flattens an instance of ClusterControlPlaneAwsServicesAuthentication from a JSON
 // response object.
-func flattenClusterControlPlaneAwsServicesAuthentication(c *Client, i interface{}) *ClusterControlPlaneAwsServicesAuthentication {
+func flattenClusterControlPlaneAwsServicesAuthentication(c *Client, i interface{}, res *Cluster) *ClusterControlPlaneAwsServicesAuthentication {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4257,14 +4319,14 @@ func flattenClusterControlPlaneAwsServicesAuthentication(c *Client, i interface{
 
 // expandClusterControlPlaneProxyConfigMap expands the contents of ClusterControlPlaneProxyConfig into a JSON
 // request object.
-func expandClusterControlPlaneProxyConfigMap(c *Client, f map[string]ClusterControlPlaneProxyConfig) (map[string]interface{}, error) {
+func expandClusterControlPlaneProxyConfigMap(c *Client, f map[string]ClusterControlPlaneProxyConfig, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterControlPlaneProxyConfig(c, &item)
+		i, err := expandClusterControlPlaneProxyConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4278,14 +4340,14 @@ func expandClusterControlPlaneProxyConfigMap(c *Client, f map[string]ClusterCont
 
 // expandClusterControlPlaneProxyConfigSlice expands the contents of ClusterControlPlaneProxyConfig into a JSON
 // request object.
-func expandClusterControlPlaneProxyConfigSlice(c *Client, f []ClusterControlPlaneProxyConfig) ([]map[string]interface{}, error) {
+func expandClusterControlPlaneProxyConfigSlice(c *Client, f []ClusterControlPlaneProxyConfig, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterControlPlaneProxyConfig(c, &item)
+		i, err := expandClusterControlPlaneProxyConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4298,7 +4360,7 @@ func expandClusterControlPlaneProxyConfigSlice(c *Client, f []ClusterControlPlan
 
 // flattenClusterControlPlaneProxyConfigMap flattens the contents of ClusterControlPlaneProxyConfig from a JSON
 // response object.
-func flattenClusterControlPlaneProxyConfigMap(c *Client, i interface{}) map[string]ClusterControlPlaneProxyConfig {
+func flattenClusterControlPlaneProxyConfigMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneProxyConfig {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneProxyConfig{}
@@ -4310,7 +4372,7 @@ func flattenClusterControlPlaneProxyConfigMap(c *Client, i interface{}) map[stri
 
 	items := make(map[string]ClusterControlPlaneProxyConfig)
 	for k, item := range a {
-		items[k] = *flattenClusterControlPlaneProxyConfig(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterControlPlaneProxyConfig(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4318,7 +4380,7 @@ func flattenClusterControlPlaneProxyConfigMap(c *Client, i interface{}) map[stri
 
 // flattenClusterControlPlaneProxyConfigSlice flattens the contents of ClusterControlPlaneProxyConfig from a JSON
 // response object.
-func flattenClusterControlPlaneProxyConfigSlice(c *Client, i interface{}) []ClusterControlPlaneProxyConfig {
+func flattenClusterControlPlaneProxyConfigSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneProxyConfig {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneProxyConfig{}
@@ -4330,7 +4392,7 @@ func flattenClusterControlPlaneProxyConfigSlice(c *Client, i interface{}) []Clus
 
 	items := make([]ClusterControlPlaneProxyConfig, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterControlPlaneProxyConfig(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterControlPlaneProxyConfig(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4338,7 +4400,7 @@ func flattenClusterControlPlaneProxyConfigSlice(c *Client, i interface{}) []Clus
 
 // expandClusterControlPlaneProxyConfig expands an instance of ClusterControlPlaneProxyConfig into a JSON
 // request object.
-func expandClusterControlPlaneProxyConfig(c *Client, f *ClusterControlPlaneProxyConfig) (map[string]interface{}, error) {
+func expandClusterControlPlaneProxyConfig(c *Client, f *ClusterControlPlaneProxyConfig, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4356,7 +4418,7 @@ func expandClusterControlPlaneProxyConfig(c *Client, f *ClusterControlPlaneProxy
 
 // flattenClusterControlPlaneProxyConfig flattens an instance of ClusterControlPlaneProxyConfig from a JSON
 // response object.
-func flattenClusterControlPlaneProxyConfig(c *Client, i interface{}) *ClusterControlPlaneProxyConfig {
+func flattenClusterControlPlaneProxyConfig(c *Client, i interface{}, res *Cluster) *ClusterControlPlaneProxyConfig {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4375,14 +4437,14 @@ func flattenClusterControlPlaneProxyConfig(c *Client, i interface{}) *ClusterCon
 
 // expandClusterAuthorizationMap expands the contents of ClusterAuthorization into a JSON
 // request object.
-func expandClusterAuthorizationMap(c *Client, f map[string]ClusterAuthorization) (map[string]interface{}, error) {
+func expandClusterAuthorizationMap(c *Client, f map[string]ClusterAuthorization, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterAuthorization(c, &item)
+		i, err := expandClusterAuthorization(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4396,14 +4458,14 @@ func expandClusterAuthorizationMap(c *Client, f map[string]ClusterAuthorization)
 
 // expandClusterAuthorizationSlice expands the contents of ClusterAuthorization into a JSON
 // request object.
-func expandClusterAuthorizationSlice(c *Client, f []ClusterAuthorization) ([]map[string]interface{}, error) {
+func expandClusterAuthorizationSlice(c *Client, f []ClusterAuthorization, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterAuthorization(c, &item)
+		i, err := expandClusterAuthorization(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4416,7 +4478,7 @@ func expandClusterAuthorizationSlice(c *Client, f []ClusterAuthorization) ([]map
 
 // flattenClusterAuthorizationMap flattens the contents of ClusterAuthorization from a JSON
 // response object.
-func flattenClusterAuthorizationMap(c *Client, i interface{}) map[string]ClusterAuthorization {
+func flattenClusterAuthorizationMap(c *Client, i interface{}, res *Cluster) map[string]ClusterAuthorization {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterAuthorization{}
@@ -4428,7 +4490,7 @@ func flattenClusterAuthorizationMap(c *Client, i interface{}) map[string]Cluster
 
 	items := make(map[string]ClusterAuthorization)
 	for k, item := range a {
-		items[k] = *flattenClusterAuthorization(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterAuthorization(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4436,7 +4498,7 @@ func flattenClusterAuthorizationMap(c *Client, i interface{}) map[string]Cluster
 
 // flattenClusterAuthorizationSlice flattens the contents of ClusterAuthorization from a JSON
 // response object.
-func flattenClusterAuthorizationSlice(c *Client, i interface{}) []ClusterAuthorization {
+func flattenClusterAuthorizationSlice(c *Client, i interface{}, res *Cluster) []ClusterAuthorization {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterAuthorization{}
@@ -4448,7 +4510,7 @@ func flattenClusterAuthorizationSlice(c *Client, i interface{}) []ClusterAuthori
 
 	items := make([]ClusterAuthorization, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterAuthorization(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterAuthorization(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4456,13 +4518,13 @@ func flattenClusterAuthorizationSlice(c *Client, i interface{}) []ClusterAuthori
 
 // expandClusterAuthorization expands an instance of ClusterAuthorization into a JSON
 // request object.
-func expandClusterAuthorization(c *Client, f *ClusterAuthorization) (map[string]interface{}, error) {
+func expandClusterAuthorization(c *Client, f *ClusterAuthorization, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
 
 	m := make(map[string]interface{})
-	if v, err := expandClusterAuthorizationAdminUsersSlice(c, f.AdminUsers); err != nil {
+	if v, err := expandClusterAuthorizationAdminUsersSlice(c, f.AdminUsers, res); err != nil {
 		return nil, fmt.Errorf("error expanding AdminUsers into adminUsers: %w", err)
 	} else if v != nil {
 		m["adminUsers"] = v
@@ -4473,7 +4535,7 @@ func expandClusterAuthorization(c *Client, f *ClusterAuthorization) (map[string]
 
 // flattenClusterAuthorization flattens an instance of ClusterAuthorization from a JSON
 // response object.
-func flattenClusterAuthorization(c *Client, i interface{}) *ClusterAuthorization {
+func flattenClusterAuthorization(c *Client, i interface{}, res *Cluster) *ClusterAuthorization {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4484,21 +4546,21 @@ func flattenClusterAuthorization(c *Client, i interface{}) *ClusterAuthorization
 	if dcl.IsEmptyValueIndirect(i) {
 		return EmptyClusterAuthorization
 	}
-	r.AdminUsers = flattenClusterAuthorizationAdminUsersSlice(c, m["adminUsers"])
+	r.AdminUsers = flattenClusterAuthorizationAdminUsersSlice(c, m["adminUsers"], res)
 
 	return r
 }
 
 // expandClusterAuthorizationAdminUsersMap expands the contents of ClusterAuthorizationAdminUsers into a JSON
 // request object.
-func expandClusterAuthorizationAdminUsersMap(c *Client, f map[string]ClusterAuthorizationAdminUsers) (map[string]interface{}, error) {
+func expandClusterAuthorizationAdminUsersMap(c *Client, f map[string]ClusterAuthorizationAdminUsers, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterAuthorizationAdminUsers(c, &item)
+		i, err := expandClusterAuthorizationAdminUsers(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4512,14 +4574,14 @@ func expandClusterAuthorizationAdminUsersMap(c *Client, f map[string]ClusterAuth
 
 // expandClusterAuthorizationAdminUsersSlice expands the contents of ClusterAuthorizationAdminUsers into a JSON
 // request object.
-func expandClusterAuthorizationAdminUsersSlice(c *Client, f []ClusterAuthorizationAdminUsers) ([]map[string]interface{}, error) {
+func expandClusterAuthorizationAdminUsersSlice(c *Client, f []ClusterAuthorizationAdminUsers, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterAuthorizationAdminUsers(c, &item)
+		i, err := expandClusterAuthorizationAdminUsers(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4532,7 +4594,7 @@ func expandClusterAuthorizationAdminUsersSlice(c *Client, f []ClusterAuthorizati
 
 // flattenClusterAuthorizationAdminUsersMap flattens the contents of ClusterAuthorizationAdminUsers from a JSON
 // response object.
-func flattenClusterAuthorizationAdminUsersMap(c *Client, i interface{}) map[string]ClusterAuthorizationAdminUsers {
+func flattenClusterAuthorizationAdminUsersMap(c *Client, i interface{}, res *Cluster) map[string]ClusterAuthorizationAdminUsers {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterAuthorizationAdminUsers{}
@@ -4544,7 +4606,7 @@ func flattenClusterAuthorizationAdminUsersMap(c *Client, i interface{}) map[stri
 
 	items := make(map[string]ClusterAuthorizationAdminUsers)
 	for k, item := range a {
-		items[k] = *flattenClusterAuthorizationAdminUsers(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterAuthorizationAdminUsers(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4552,7 +4614,7 @@ func flattenClusterAuthorizationAdminUsersMap(c *Client, i interface{}) map[stri
 
 // flattenClusterAuthorizationAdminUsersSlice flattens the contents of ClusterAuthorizationAdminUsers from a JSON
 // response object.
-func flattenClusterAuthorizationAdminUsersSlice(c *Client, i interface{}) []ClusterAuthorizationAdminUsers {
+func flattenClusterAuthorizationAdminUsersSlice(c *Client, i interface{}, res *Cluster) []ClusterAuthorizationAdminUsers {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterAuthorizationAdminUsers{}
@@ -4564,7 +4626,7 @@ func flattenClusterAuthorizationAdminUsersSlice(c *Client, i interface{}) []Clus
 
 	items := make([]ClusterAuthorizationAdminUsers, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterAuthorizationAdminUsers(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterAuthorizationAdminUsers(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4572,8 +4634,8 @@ func flattenClusterAuthorizationAdminUsersSlice(c *Client, i interface{}) []Clus
 
 // expandClusterAuthorizationAdminUsers expands an instance of ClusterAuthorizationAdminUsers into a JSON
 // request object.
-func expandClusterAuthorizationAdminUsers(c *Client, f *ClusterAuthorizationAdminUsers) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandClusterAuthorizationAdminUsers(c *Client, f *ClusterAuthorizationAdminUsers, res *Cluster) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -4587,7 +4649,7 @@ func expandClusterAuthorizationAdminUsers(c *Client, f *ClusterAuthorizationAdmi
 
 // flattenClusterAuthorizationAdminUsers flattens an instance of ClusterAuthorizationAdminUsers from a JSON
 // response object.
-func flattenClusterAuthorizationAdminUsers(c *Client, i interface{}) *ClusterAuthorizationAdminUsers {
+func flattenClusterAuthorizationAdminUsers(c *Client, i interface{}, res *Cluster) *ClusterAuthorizationAdminUsers {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4605,14 +4667,14 @@ func flattenClusterAuthorizationAdminUsers(c *Client, i interface{}) *ClusterAut
 
 // expandClusterWorkloadIdentityConfigMap expands the contents of ClusterWorkloadIdentityConfig into a JSON
 // request object.
-func expandClusterWorkloadIdentityConfigMap(c *Client, f map[string]ClusterWorkloadIdentityConfig) (map[string]interface{}, error) {
+func expandClusterWorkloadIdentityConfigMap(c *Client, f map[string]ClusterWorkloadIdentityConfig, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterWorkloadIdentityConfig(c, &item)
+		i, err := expandClusterWorkloadIdentityConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4626,14 +4688,14 @@ func expandClusterWorkloadIdentityConfigMap(c *Client, f map[string]ClusterWorkl
 
 // expandClusterWorkloadIdentityConfigSlice expands the contents of ClusterWorkloadIdentityConfig into a JSON
 // request object.
-func expandClusterWorkloadIdentityConfigSlice(c *Client, f []ClusterWorkloadIdentityConfig) ([]map[string]interface{}, error) {
+func expandClusterWorkloadIdentityConfigSlice(c *Client, f []ClusterWorkloadIdentityConfig, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterWorkloadIdentityConfig(c, &item)
+		i, err := expandClusterWorkloadIdentityConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4646,7 +4708,7 @@ func expandClusterWorkloadIdentityConfigSlice(c *Client, f []ClusterWorkloadIden
 
 // flattenClusterWorkloadIdentityConfigMap flattens the contents of ClusterWorkloadIdentityConfig from a JSON
 // response object.
-func flattenClusterWorkloadIdentityConfigMap(c *Client, i interface{}) map[string]ClusterWorkloadIdentityConfig {
+func flattenClusterWorkloadIdentityConfigMap(c *Client, i interface{}, res *Cluster) map[string]ClusterWorkloadIdentityConfig {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterWorkloadIdentityConfig{}
@@ -4658,7 +4720,7 @@ func flattenClusterWorkloadIdentityConfigMap(c *Client, i interface{}) map[strin
 
 	items := make(map[string]ClusterWorkloadIdentityConfig)
 	for k, item := range a {
-		items[k] = *flattenClusterWorkloadIdentityConfig(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterWorkloadIdentityConfig(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4666,7 +4728,7 @@ func flattenClusterWorkloadIdentityConfigMap(c *Client, i interface{}) map[strin
 
 // flattenClusterWorkloadIdentityConfigSlice flattens the contents of ClusterWorkloadIdentityConfig from a JSON
 // response object.
-func flattenClusterWorkloadIdentityConfigSlice(c *Client, i interface{}) []ClusterWorkloadIdentityConfig {
+func flattenClusterWorkloadIdentityConfigSlice(c *Client, i interface{}, res *Cluster) []ClusterWorkloadIdentityConfig {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterWorkloadIdentityConfig{}
@@ -4678,7 +4740,7 @@ func flattenClusterWorkloadIdentityConfigSlice(c *Client, i interface{}) []Clust
 
 	items := make([]ClusterWorkloadIdentityConfig, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterWorkloadIdentityConfig(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterWorkloadIdentityConfig(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4686,7 +4748,7 @@ func flattenClusterWorkloadIdentityConfigSlice(c *Client, i interface{}) []Clust
 
 // expandClusterWorkloadIdentityConfig expands an instance of ClusterWorkloadIdentityConfig into a JSON
 // request object.
-func expandClusterWorkloadIdentityConfig(c *Client, f *ClusterWorkloadIdentityConfig) (map[string]interface{}, error) {
+func expandClusterWorkloadIdentityConfig(c *Client, f *ClusterWorkloadIdentityConfig, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4707,7 +4769,7 @@ func expandClusterWorkloadIdentityConfig(c *Client, f *ClusterWorkloadIdentityCo
 
 // flattenClusterWorkloadIdentityConfig flattens an instance of ClusterWorkloadIdentityConfig from a JSON
 // response object.
-func flattenClusterWorkloadIdentityConfig(c *Client, i interface{}) *ClusterWorkloadIdentityConfig {
+func flattenClusterWorkloadIdentityConfig(c *Client, i interface{}, res *Cluster) *ClusterWorkloadIdentityConfig {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4727,14 +4789,14 @@ func flattenClusterWorkloadIdentityConfig(c *Client, i interface{}) *ClusterWork
 
 // expandClusterFleetMap expands the contents of ClusterFleet into a JSON
 // request object.
-func expandClusterFleetMap(c *Client, f map[string]ClusterFleet) (map[string]interface{}, error) {
+func expandClusterFleetMap(c *Client, f map[string]ClusterFleet, res *Cluster) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandClusterFleet(c, &item)
+		i, err := expandClusterFleet(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4748,14 +4810,14 @@ func expandClusterFleetMap(c *Client, f map[string]ClusterFleet) (map[string]int
 
 // expandClusterFleetSlice expands the contents of ClusterFleet into a JSON
 // request object.
-func expandClusterFleetSlice(c *Client, f []ClusterFleet) ([]map[string]interface{}, error) {
+func expandClusterFleetSlice(c *Client, f []ClusterFleet, res *Cluster) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandClusterFleet(c, &item)
+		i, err := expandClusterFleet(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -4768,7 +4830,7 @@ func expandClusterFleetSlice(c *Client, f []ClusterFleet) ([]map[string]interfac
 
 // flattenClusterFleetMap flattens the contents of ClusterFleet from a JSON
 // response object.
-func flattenClusterFleetMap(c *Client, i interface{}) map[string]ClusterFleet {
+func flattenClusterFleetMap(c *Client, i interface{}, res *Cluster) map[string]ClusterFleet {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterFleet{}
@@ -4780,7 +4842,7 @@ func flattenClusterFleetMap(c *Client, i interface{}) map[string]ClusterFleet {
 
 	items := make(map[string]ClusterFleet)
 	for k, item := range a {
-		items[k] = *flattenClusterFleet(c, item.(map[string]interface{}))
+		items[k] = *flattenClusterFleet(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -4788,7 +4850,7 @@ func flattenClusterFleetMap(c *Client, i interface{}) map[string]ClusterFleet {
 
 // flattenClusterFleetSlice flattens the contents of ClusterFleet from a JSON
 // response object.
-func flattenClusterFleetSlice(c *Client, i interface{}) []ClusterFleet {
+func flattenClusterFleetSlice(c *Client, i interface{}, res *Cluster) []ClusterFleet {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterFleet{}
@@ -4800,7 +4862,7 @@ func flattenClusterFleetSlice(c *Client, i interface{}) []ClusterFleet {
 
 	items := make([]ClusterFleet, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenClusterFleet(c, item.(map[string]interface{})))
+		items = append(items, *flattenClusterFleet(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -4808,7 +4870,7 @@ func flattenClusterFleetSlice(c *Client, i interface{}) []ClusterFleet {
 
 // expandClusterFleet expands an instance of ClusterFleet into a JSON
 // request object.
-func expandClusterFleet(c *Client, f *ClusterFleet) (map[string]interface{}, error) {
+func expandClusterFleet(c *Client, f *ClusterFleet, res *Cluster) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -4825,7 +4887,7 @@ func expandClusterFleet(c *Client, f *ClusterFleet) (map[string]interface{}, err
 
 // flattenClusterFleet flattens an instance of ClusterFleet from a JSON
 // response object.
-func flattenClusterFleet(c *Client, i interface{}) *ClusterFleet {
+func flattenClusterFleet(c *Client, i interface{}, res *Cluster) *ClusterFleet {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -4844,7 +4906,7 @@ func flattenClusterFleet(c *Client, i interface{}) *ClusterFleet {
 
 // flattenClusterControlPlaneRootVolumeVolumeTypeEnumMap flattens the contents of ClusterControlPlaneRootVolumeVolumeTypeEnum from a JSON
 // response object.
-func flattenClusterControlPlaneRootVolumeVolumeTypeEnumMap(c *Client, i interface{}) map[string]ClusterControlPlaneRootVolumeVolumeTypeEnum {
+func flattenClusterControlPlaneRootVolumeVolumeTypeEnumMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneRootVolumeVolumeTypeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneRootVolumeVolumeTypeEnum{}
@@ -4864,7 +4926,7 @@ func flattenClusterControlPlaneRootVolumeVolumeTypeEnumMap(c *Client, i interfac
 
 // flattenClusterControlPlaneRootVolumeVolumeTypeEnumSlice flattens the contents of ClusterControlPlaneRootVolumeVolumeTypeEnum from a JSON
 // response object.
-func flattenClusterControlPlaneRootVolumeVolumeTypeEnumSlice(c *Client, i interface{}) []ClusterControlPlaneRootVolumeVolumeTypeEnum {
+func flattenClusterControlPlaneRootVolumeVolumeTypeEnumSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneRootVolumeVolumeTypeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneRootVolumeVolumeTypeEnum{}
@@ -4887,7 +4949,7 @@ func flattenClusterControlPlaneRootVolumeVolumeTypeEnumSlice(c *Client, i interf
 func flattenClusterControlPlaneRootVolumeVolumeTypeEnum(i interface{}) *ClusterControlPlaneRootVolumeVolumeTypeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return ClusterControlPlaneRootVolumeVolumeTypeEnumRef("")
+		return nil
 	}
 
 	return ClusterControlPlaneRootVolumeVolumeTypeEnumRef(s)
@@ -4895,7 +4957,7 @@ func flattenClusterControlPlaneRootVolumeVolumeTypeEnum(i interface{}) *ClusterC
 
 // flattenClusterControlPlaneMainVolumeVolumeTypeEnumMap flattens the contents of ClusterControlPlaneMainVolumeVolumeTypeEnum from a JSON
 // response object.
-func flattenClusterControlPlaneMainVolumeVolumeTypeEnumMap(c *Client, i interface{}) map[string]ClusterControlPlaneMainVolumeVolumeTypeEnum {
+func flattenClusterControlPlaneMainVolumeVolumeTypeEnumMap(c *Client, i interface{}, res *Cluster) map[string]ClusterControlPlaneMainVolumeVolumeTypeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterControlPlaneMainVolumeVolumeTypeEnum{}
@@ -4915,7 +4977,7 @@ func flattenClusterControlPlaneMainVolumeVolumeTypeEnumMap(c *Client, i interfac
 
 // flattenClusterControlPlaneMainVolumeVolumeTypeEnumSlice flattens the contents of ClusterControlPlaneMainVolumeVolumeTypeEnum from a JSON
 // response object.
-func flattenClusterControlPlaneMainVolumeVolumeTypeEnumSlice(c *Client, i interface{}) []ClusterControlPlaneMainVolumeVolumeTypeEnum {
+func flattenClusterControlPlaneMainVolumeVolumeTypeEnumSlice(c *Client, i interface{}, res *Cluster) []ClusterControlPlaneMainVolumeVolumeTypeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterControlPlaneMainVolumeVolumeTypeEnum{}
@@ -4938,7 +5000,7 @@ func flattenClusterControlPlaneMainVolumeVolumeTypeEnumSlice(c *Client, i interf
 func flattenClusterControlPlaneMainVolumeVolumeTypeEnum(i interface{}) *ClusterControlPlaneMainVolumeVolumeTypeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return ClusterControlPlaneMainVolumeVolumeTypeEnumRef("")
+		return nil
 	}
 
 	return ClusterControlPlaneMainVolumeVolumeTypeEnumRef(s)
@@ -4946,7 +5008,7 @@ func flattenClusterControlPlaneMainVolumeVolumeTypeEnum(i interface{}) *ClusterC
 
 // flattenClusterStateEnumMap flattens the contents of ClusterStateEnum from a JSON
 // response object.
-func flattenClusterStateEnumMap(c *Client, i interface{}) map[string]ClusterStateEnum {
+func flattenClusterStateEnumMap(c *Client, i interface{}, res *Cluster) map[string]ClusterStateEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ClusterStateEnum{}
@@ -4966,7 +5028,7 @@ func flattenClusterStateEnumMap(c *Client, i interface{}) map[string]ClusterStat
 
 // flattenClusterStateEnumSlice flattens the contents of ClusterStateEnum from a JSON
 // response object.
-func flattenClusterStateEnumSlice(c *Client, i interface{}) []ClusterStateEnum {
+func flattenClusterStateEnumSlice(c *Client, i interface{}, res *Cluster) []ClusterStateEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ClusterStateEnum{}
@@ -4989,7 +5051,7 @@ func flattenClusterStateEnumSlice(c *Client, i interface{}) []ClusterStateEnum {
 func flattenClusterStateEnum(i interface{}) *ClusterStateEnum {
 	s, ok := i.(string)
 	if !ok {
-		return ClusterStateEnumRef("")
+		return nil
 	}
 
 	return ClusterStateEnumRef(s)
@@ -5000,7 +5062,7 @@ func flattenClusterStateEnum(i interface{}) *ClusterStateEnum {
 // identity).  This is useful in extracting the element from a List call.
 func (r *Cluster) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalCluster(b, c)
+		cr, err := unmarshalCluster(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -5041,6 +5103,7 @@ type clusterDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         clusterApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToClusterDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]clusterDiff, error) {
@@ -5060,7 +5123,8 @@ func convertFieldDiffsToClusterDiffs(config *dcl.Config, fds []*dcl.FieldDiff, o
 	var diffs []clusterDiff
 	// For each operation name, create a clusterDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := clusterDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := clusterDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -5095,7 +5159,7 @@ func extractClusterFields(r *Cluster) error {
 	if err := extractClusterNetworkingFields(r, vNetworking); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vNetworking) {
+	if !dcl.IsEmptyValueIndirect(vNetworking) {
 		r.Networking = vNetworking
 	}
 	vControlPlane := r.ControlPlane
@@ -5106,7 +5170,7 @@ func extractClusterFields(r *Cluster) error {
 	if err := extractClusterControlPlaneFields(r, vControlPlane); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vControlPlane) {
+	if !dcl.IsEmptyValueIndirect(vControlPlane) {
 		r.ControlPlane = vControlPlane
 	}
 	vAuthorization := r.Authorization
@@ -5117,7 +5181,7 @@ func extractClusterFields(r *Cluster) error {
 	if err := extractClusterAuthorizationFields(r, vAuthorization); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAuthorization) {
+	if !dcl.IsEmptyValueIndirect(vAuthorization) {
 		r.Authorization = vAuthorization
 	}
 	vWorkloadIdentityConfig := r.WorkloadIdentityConfig
@@ -5128,7 +5192,7 @@ func extractClusterFields(r *Cluster) error {
 	if err := extractClusterWorkloadIdentityConfigFields(r, vWorkloadIdentityConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vWorkloadIdentityConfig) {
+	if !dcl.IsEmptyValueIndirect(vWorkloadIdentityConfig) {
 		r.WorkloadIdentityConfig = vWorkloadIdentityConfig
 	}
 	vFleet := r.Fleet
@@ -5139,7 +5203,7 @@ func extractClusterFields(r *Cluster) error {
 	if err := extractClusterFleetFields(r, vFleet); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vFleet) {
+	if !dcl.IsEmptyValueIndirect(vFleet) {
 		r.Fleet = vFleet
 	}
 	return nil
@@ -5156,7 +5220,7 @@ func extractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane) error 
 	if err := extractClusterControlPlaneSshConfigFields(r, vSshConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSshConfig) {
+	if !dcl.IsEmptyValueIndirect(vSshConfig) {
 		o.SshConfig = vSshConfig
 	}
 	vConfigEncryption := o.ConfigEncryption
@@ -5167,7 +5231,7 @@ func extractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane) error 
 	if err := extractClusterControlPlaneConfigEncryptionFields(r, vConfigEncryption); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vConfigEncryption) {
+	if !dcl.IsEmptyValueIndirect(vConfigEncryption) {
 		o.ConfigEncryption = vConfigEncryption
 	}
 	vRootVolume := o.RootVolume
@@ -5178,7 +5242,7 @@ func extractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane) error 
 	if err := extractClusterControlPlaneRootVolumeFields(r, vRootVolume); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRootVolume) {
+	if !dcl.IsEmptyValueIndirect(vRootVolume) {
 		o.RootVolume = vRootVolume
 	}
 	vMainVolume := o.MainVolume
@@ -5189,7 +5253,7 @@ func extractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane) error 
 	if err := extractClusterControlPlaneMainVolumeFields(r, vMainVolume); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vMainVolume) {
+	if !dcl.IsEmptyValueIndirect(vMainVolume) {
 		o.MainVolume = vMainVolume
 	}
 	vDatabaseEncryption := o.DatabaseEncryption
@@ -5200,7 +5264,7 @@ func extractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane) error 
 	if err := extractClusterControlPlaneDatabaseEncryptionFields(r, vDatabaseEncryption); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vDatabaseEncryption) {
+	if !dcl.IsEmptyValueIndirect(vDatabaseEncryption) {
 		o.DatabaseEncryption = vDatabaseEncryption
 	}
 	vAwsServicesAuthentication := o.AwsServicesAuthentication
@@ -5211,7 +5275,7 @@ func extractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane) error 
 	if err := extractClusterControlPlaneAwsServicesAuthenticationFields(r, vAwsServicesAuthentication); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAwsServicesAuthentication) {
+	if !dcl.IsEmptyValueIndirect(vAwsServicesAuthentication) {
 		o.AwsServicesAuthentication = vAwsServicesAuthentication
 	}
 	vProxyConfig := o.ProxyConfig
@@ -5222,7 +5286,7 @@ func extractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane) error 
 	if err := extractClusterControlPlaneProxyConfigFields(r, vProxyConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vProxyConfig) {
+	if !dcl.IsEmptyValueIndirect(vProxyConfig) {
 		o.ProxyConfig = vProxyConfig
 	}
 	return nil
@@ -5270,7 +5334,7 @@ func postReadExtractClusterFields(r *Cluster) error {
 	if err := postReadExtractClusterNetworkingFields(r, vNetworking); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vNetworking) {
+	if !dcl.IsEmptyValueIndirect(vNetworking) {
 		r.Networking = vNetworking
 	}
 	vControlPlane := r.ControlPlane
@@ -5281,7 +5345,7 @@ func postReadExtractClusterFields(r *Cluster) error {
 	if err := postReadExtractClusterControlPlaneFields(r, vControlPlane); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vControlPlane) {
+	if !dcl.IsEmptyValueIndirect(vControlPlane) {
 		r.ControlPlane = vControlPlane
 	}
 	vAuthorization := r.Authorization
@@ -5292,7 +5356,7 @@ func postReadExtractClusterFields(r *Cluster) error {
 	if err := postReadExtractClusterAuthorizationFields(r, vAuthorization); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAuthorization) {
+	if !dcl.IsEmptyValueIndirect(vAuthorization) {
 		r.Authorization = vAuthorization
 	}
 	vWorkloadIdentityConfig := r.WorkloadIdentityConfig
@@ -5303,7 +5367,7 @@ func postReadExtractClusterFields(r *Cluster) error {
 	if err := postReadExtractClusterWorkloadIdentityConfigFields(r, vWorkloadIdentityConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vWorkloadIdentityConfig) {
+	if !dcl.IsEmptyValueIndirect(vWorkloadIdentityConfig) {
 		r.WorkloadIdentityConfig = vWorkloadIdentityConfig
 	}
 	vFleet := r.Fleet
@@ -5314,7 +5378,7 @@ func postReadExtractClusterFields(r *Cluster) error {
 	if err := postReadExtractClusterFleetFields(r, vFleet); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vFleet) {
+	if !dcl.IsEmptyValueIndirect(vFleet) {
 		r.Fleet = vFleet
 	}
 	return nil
@@ -5331,7 +5395,7 @@ func postReadExtractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane
 	if err := extractClusterControlPlaneSshConfigFields(r, vSshConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSshConfig) {
+	if !dcl.IsEmptyValueIndirect(vSshConfig) {
 		o.SshConfig = vSshConfig
 	}
 	vConfigEncryption := o.ConfigEncryption
@@ -5342,7 +5406,7 @@ func postReadExtractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane
 	if err := extractClusterControlPlaneConfigEncryptionFields(r, vConfigEncryption); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vConfigEncryption) {
+	if !dcl.IsEmptyValueIndirect(vConfigEncryption) {
 		o.ConfigEncryption = vConfigEncryption
 	}
 	vRootVolume := o.RootVolume
@@ -5353,7 +5417,7 @@ func postReadExtractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane
 	if err := extractClusterControlPlaneRootVolumeFields(r, vRootVolume); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRootVolume) {
+	if !dcl.IsEmptyValueIndirect(vRootVolume) {
 		o.RootVolume = vRootVolume
 	}
 	vMainVolume := o.MainVolume
@@ -5364,7 +5428,7 @@ func postReadExtractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane
 	if err := extractClusterControlPlaneMainVolumeFields(r, vMainVolume); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vMainVolume) {
+	if !dcl.IsEmptyValueIndirect(vMainVolume) {
 		o.MainVolume = vMainVolume
 	}
 	vDatabaseEncryption := o.DatabaseEncryption
@@ -5375,7 +5439,7 @@ func postReadExtractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane
 	if err := extractClusterControlPlaneDatabaseEncryptionFields(r, vDatabaseEncryption); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vDatabaseEncryption) {
+	if !dcl.IsEmptyValueIndirect(vDatabaseEncryption) {
 		o.DatabaseEncryption = vDatabaseEncryption
 	}
 	vAwsServicesAuthentication := o.AwsServicesAuthentication
@@ -5386,7 +5450,7 @@ func postReadExtractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane
 	if err := extractClusterControlPlaneAwsServicesAuthenticationFields(r, vAwsServicesAuthentication); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAwsServicesAuthentication) {
+	if !dcl.IsEmptyValueIndirect(vAwsServicesAuthentication) {
 		o.AwsServicesAuthentication = vAwsServicesAuthentication
 	}
 	vProxyConfig := o.ProxyConfig
@@ -5397,7 +5461,7 @@ func postReadExtractClusterControlPlaneFields(r *Cluster, o *ClusterControlPlane
 	if err := extractClusterControlPlaneProxyConfigFields(r, vProxyConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vProxyConfig) {
+	if !dcl.IsEmptyValueIndirect(vProxyConfig) {
 		o.ProxyConfig = vProxyConfig
 	}
 	return nil

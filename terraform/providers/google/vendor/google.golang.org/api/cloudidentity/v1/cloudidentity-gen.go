@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC.
+// Copyright 2023 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,35 +8,35 @@
 //
 // For product documentation, see: https://cloud.google.com/identity/
 //
-// Creating a client
+// # Creating a client
 //
 // Usage example:
 //
-//   import "google.golang.org/api/cloudidentity/v1"
-//   ...
-//   ctx := context.Background()
-//   cloudidentityService, err := cloudidentity.NewService(ctx)
+//	import "google.golang.org/api/cloudidentity/v1"
+//	...
+//	ctx := context.Background()
+//	cloudidentityService, err := cloudidentity.NewService(ctx)
 //
 // In this example, Google Application Default Credentials are used for authentication.
 //
 // For information on how to create and obtain Application Default Credentials, see https://developers.google.com/identity/protocols/application-default-credentials.
 //
-// Other authentication options
+// # Other authentication options
 //
 // By default, all available scopes (see "Constants") are used to authenticate. To restrict scopes, use option.WithScopes:
 //
-//   cloudidentityService, err := cloudidentity.NewService(ctx, option.WithScopes(cloudidentity.CloudPlatformScope))
+//	cloudidentityService, err := cloudidentity.NewService(ctx, option.WithScopes(cloudidentity.CloudPlatformScope))
 //
 // To use an API key for authentication (note: some APIs do not support API keys), use option.WithAPIKey:
 //
-//   cloudidentityService, err := cloudidentity.NewService(ctx, option.WithAPIKey("AIza..."))
+//	cloudidentityService, err := cloudidentity.NewService(ctx, option.WithAPIKey("AIza..."))
 //
 // To use an OAuth token (e.g., a user token obtained via a three-legged OAuth flow), use option.WithTokenSource:
 //
-//   config := &oauth2.Config{...}
-//   // ...
-//   token, err := config.Exchange(ctx, ...)
-//   cloudidentityService, err := cloudidentity.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, token)))
+//	config := &oauth2.Config{...}
+//	// ...
+//	token, err := config.Exchange(ctx, ...)
+//	cloudidentityService, err := cloudidentity.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, token)))
 //
 // See https://godoc.org/google.golang.org/api/option/ for details on options.
 package cloudidentity // import "google.golang.org/api/cloudidentity/v1"
@@ -54,6 +54,7 @@ import (
 	"strings"
 
 	googleapi "google.golang.org/api/googleapi"
+	internal "google.golang.org/api/internal"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
 	internaloption "google.golang.org/api/option/internaloption"
@@ -83,8 +84,16 @@ const mtlsBasePath = "https://cloudidentity.mtls.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
+	// Private Service:
+	// https://www.googleapis.com/auth/cloud-identity.devices
+	CloudIdentityDevicesScope = "https://www.googleapis.com/auth/cloud-identity.devices"
+
 	// See your device details
 	CloudIdentityDevicesLookupScope = "https://www.googleapis.com/auth/cloud-identity.devices.lookup"
+
+	// Private Service:
+	// https://www.googleapis.com/auth/cloud-identity.devices.readonly
+	CloudIdentityDevicesReadonlyScope = "https://www.googleapis.com/auth/cloud-identity.devices.readonly"
 
 	// See, change, create, and delete any of the Cloud Identity Groups that
 	// you can access, including the members of each group
@@ -101,8 +110,10 @@ const (
 
 // NewService creates a new Service.
 func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, error) {
-	scopesOption := option.WithScopes(
+	scopesOption := internaloption.WithDefaultScopes(
+		"https://www.googleapis.com/auth/cloud-identity.devices",
 		"https://www.googleapis.com/auth/cloud-identity.devices.lookup",
+		"https://www.googleapis.com/auth/cloud-identity.devices.readonly",
 		"https://www.googleapis.com/auth/cloud-identity.groups",
 		"https://www.googleapis.com/auth/cloud-identity.groups.readonly",
 		"https://www.googleapis.com/auth/cloud-platform",
@@ -135,8 +146,11 @@ func New(client *http.Client) (*Service, error) {
 		return nil, errors.New("client is nil")
 	}
 	s := &Service{client: client, BasePath: basePath}
+	s.Customers = NewCustomersService(s)
 	s.Devices = NewDevicesService(s)
 	s.Groups = NewGroupsService(s)
+	s.InboundSamlSsoProfiles = NewInboundSamlSsoProfilesService(s)
+	s.InboundSsoAssignments = NewInboundSsoAssignmentsService(s)
 	return s, nil
 }
 
@@ -145,9 +159,15 @@ type Service struct {
 	BasePath  string // API endpoint base URL
 	UserAgent string // optional additional User-Agent fragment
 
+	Customers *CustomersService
+
 	Devices *DevicesService
 
 	Groups *GroupsService
+
+	InboundSamlSsoProfiles *InboundSamlSsoProfilesService
+
+	InboundSsoAssignments *InboundSsoAssignmentsService
 }
 
 func (s *Service) userAgent() string {
@@ -155,6 +175,27 @@ func (s *Service) userAgent() string {
 		return googleapi.UserAgent
 	}
 	return googleapi.UserAgent + " " + s.UserAgent
+}
+
+func NewCustomersService(s *Service) *CustomersService {
+	rs := &CustomersService{s: s}
+	rs.Userinvitations = NewCustomersUserinvitationsService(s)
+	return rs
+}
+
+type CustomersService struct {
+	s *Service
+
+	Userinvitations *CustomersUserinvitationsService
+}
+
+func NewCustomersUserinvitationsService(s *Service) *CustomersUserinvitationsService {
+	rs := &CustomersUserinvitationsService{s: s}
+	return rs
+}
+
+type CustomersUserinvitationsService struct {
+	s *Service
 }
 
 func NewDevicesService(s *Service) *DevicesService {
@@ -211,6 +252,77 @@ type GroupsMembershipsService struct {
 	s *Service
 }
 
+func NewInboundSamlSsoProfilesService(s *Service) *InboundSamlSsoProfilesService {
+	rs := &InboundSamlSsoProfilesService{s: s}
+	rs.IdpCredentials = NewInboundSamlSsoProfilesIdpCredentialsService(s)
+	return rs
+}
+
+type InboundSamlSsoProfilesService struct {
+	s *Service
+
+	IdpCredentials *InboundSamlSsoProfilesIdpCredentialsService
+}
+
+func NewInboundSamlSsoProfilesIdpCredentialsService(s *Service) *InboundSamlSsoProfilesIdpCredentialsService {
+	rs := &InboundSamlSsoProfilesIdpCredentialsService{s: s}
+	return rs
+}
+
+type InboundSamlSsoProfilesIdpCredentialsService struct {
+	s *Service
+}
+
+func NewInboundSsoAssignmentsService(s *Service) *InboundSsoAssignmentsService {
+	rs := &InboundSsoAssignmentsService{s: s}
+	return rs
+}
+
+type InboundSsoAssignmentsService struct {
+	s *Service
+}
+
+// AddIdpCredentialOperationMetadata: LRO response metadata for
+// InboundSamlSsoProfilesService.AddIdpCredential.
+type AddIdpCredentialOperationMetadata struct {
+}
+
+// AddIdpCredentialRequest: The request for creating an IdpCredential
+// with its associated payload. An InboundSamlSsoProfile can own up to 2
+// credentials.
+type AddIdpCredentialRequest struct {
+	// PemData: PEM encoded x509 certificate containing the public key for
+	// verifying IdP signatures.
+	PemData string `json:"pemData,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "PemData") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "PemData") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AddIdpCredentialRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod AddIdpCredentialRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// CancelUserInvitationRequest: Request to cancel sent invitation for
+// target email in UserInvitation.
+type CancelUserInvitationRequest struct {
+}
+
 // CheckTransitiveMembershipResponse: The response message for
 // MembershipsService.CheckTransitiveMembership.
 type CheckTransitiveMembershipResponse struct {
@@ -252,6 +364,16 @@ func (s *CheckTransitiveMembershipResponse) MarshalJSON() ([]byte, error) {
 type CreateGroupMetadata struct {
 }
 
+// CreateInboundSamlSsoProfileOperationMetadata: LRO response metadata
+// for InboundSamlSsoProfilesService.CreateInboundSamlSsoProfile.
+type CreateInboundSamlSsoProfileOperationMetadata struct {
+}
+
+// CreateInboundSsoAssignmentOperationMetadata: LRO response metadata
+// for InboundSsoAssignmentsService.CreateInboundSsoAssignment.
+type CreateInboundSsoAssignmentOperationMetadata struct {
+}
+
 // CreateMembershipMetadata: Metadata for CreateMembership LRO.
 type CreateMembershipMetadata struct {
 }
@@ -260,8 +382,51 @@ type CreateMembershipMetadata struct {
 type DeleteGroupMetadata struct {
 }
 
+// DeleteIdpCredentialOperationMetadata: LRO response metadata for
+// InboundSamlSsoProfilesService.DeleteIdpCredential.
+type DeleteIdpCredentialOperationMetadata struct {
+}
+
+// DeleteInboundSamlSsoProfileOperationMetadata: LRO response metadata
+// for InboundSamlSsoProfilesService.DeleteInboundSamlSsoProfile.
+type DeleteInboundSamlSsoProfileOperationMetadata struct {
+}
+
+// DeleteInboundSsoAssignmentOperationMetadata: LRO response metadata
+// for InboundSsoAssignmentsService.DeleteInboundSsoAssignment.
+type DeleteInboundSsoAssignmentOperationMetadata struct {
+}
+
 // DeleteMembershipMetadata: Metadata for DeleteMembership LRO.
 type DeleteMembershipMetadata struct {
+}
+
+// DsaPublicKeyInfo: Information of a DSA public key.
+type DsaPublicKeyInfo struct {
+	// KeySize: Key size in bits (size of parameter P).
+	KeySize int64 `json:"keySize,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "KeySize") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "KeySize") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *DsaPublicKeyInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod DsaPublicKeyInfo
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // DynamicGroupMetadata: Dynamic group metadata like queries and status.
@@ -1048,6 +1213,9 @@ type GoogleAppsCloudidentityDevicesV1Device struct {
 	// This field is empty for BYOD devices.
 	CreateTime string `json:"createTime,omitempty"`
 
+	// DeviceId: Unique identifier for the device.
+	DeviceId string `json:"deviceId,omitempty"`
+
 	// DeviceType: Output only. Type of device.
 	//
 	// Possible values:
@@ -1399,7 +1567,7 @@ type GoogleAppsCloudidentityDevicesV1ListEndpointAppsMetadata struct {
 // Response containing resource names of the DeviceUsers associated with
 // the caller's credentials.
 type GoogleAppsCloudidentityDevicesV1LookupSelfDeviceUsersResponse struct {
-	// Customer: The obfuscated customer Id that may be passed back to other
+	// Customer: The customer resource name that may be passed back to other
 	// Devices API methods such as List, Get, etc.
 	Customer string `json:"customer,omitempty"`
 
@@ -1472,6 +1640,14 @@ type GoogleAppsCloudidentityDevicesV1WipeDeviceRequest struct {
 	// organization, use `customers/{customer}`, where customer is the
 	// customer to whom the device belongs.
 	Customer string `json:"customer,omitempty"`
+
+	// RemoveResetLock: Optional. Specifies if a user is able to factory
+	// reset a device after a Device Wipe. On iOS, this is called
+	// "Activation Lock", while on Android, this is known as "Factory Reset
+	// Protection". If true, this protection will be removed from the
+	// device, so that a user can successfully factory reset. If false, the
+	// setting is untouched on the device.
+	RemoveResetLock bool `json:"removeResetLock,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Customer") to
 	// unconditionally include in API requests. By default, fields with
@@ -1598,6 +1774,10 @@ func (s *GoogleAppsCloudidentityDevicesV1WipeDeviceUserResponse) MarshalJSON() (
 // collection of entities, where each entity is either a user, another
 // group, or a service account.
 type Group struct {
+	// AdditionalGroupKeys: Output only. Additional group keys associated
+	// with the Group.
+	AdditionalGroupKeys []*EntityKey `json:"additionalGroupKeys,omitempty"`
+
 	// CreateTime: Output only. The time when the `Group` was created.
 	CreateTime string `json:"createTime,omitempty"`
 
@@ -1612,7 +1792,7 @@ type Group struct {
 	// and status.
 	DynamicGroupMetadata *DynamicGroupMetadata `json:"dynamicGroupMetadata,omitempty"`
 
-	// GroupKey: Required. Immutable. The `EntityKey` of the `Group`.
+	// GroupKey: Required. The `EntityKey` of the `Group`.
 	GroupKey *EntityKey `json:"groupKey,omitempty"`
 
 	// Labels: Required. One or more label entries that apply to the Group.
@@ -1635,9 +1815,11 @@ type Group struct {
 
 	// Parent: Required. Immutable. The resource name of the entity under
 	// which this `Group` resides in the Cloud Identity resource hierarchy.
-	// Must be of the form `identitysources/{identity_source}` for external-
-	// identity-mapped groups or `customers/{customer}` for Google Groups.
-	// The `customer` must begin with "C" (for example, 'C046psxkn').
+	// Must be of the form `identitysources/{identity_source}` for external
+	// identity-mapped groups (https://support.google.com/a/answer/9039510)
+	// or `customers/{customer_id}` for Google Groups. The `customer_id`
+	// must begin with "C" (for example, 'C046psxkn'). [Find your customer
+	// ID.] (https://support.google.com/cloudidentity/answer/10070793)
 	Parent string `json:"parent,omitempty"`
 
 	// UpdateTime: Output only. The time when the `Group` was last updated.
@@ -1647,20 +1829,21 @@ type Group struct {
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "CreateTime") to
-	// unconditionally include in API requests. By default, fields with
+	// ForceSendFields is a list of field names (e.g. "AdditionalGroupKeys")
+	// to unconditionally include in API requests. By default, fields with
 	// empty or default values are omitted from API requests. However, any
 	// non-pointer, non-interface field appearing in ForceSendFields will be
 	// sent to the server regardless of whether the field is empty or not.
 	// This may be used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "CreateTime") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "AdditionalGroupKeys") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -1726,6 +1909,208 @@ func (s *GroupRelation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// IdpCredential: Credential for verifying signatures produced by the
+// Identity Provider.
+type IdpCredential struct {
+	// DsaKeyInfo: Output only. Information of a DSA public key.
+	DsaKeyInfo *DsaPublicKeyInfo `json:"dsaKeyInfo,omitempty"`
+
+	// Name: Output only. Resource name
+	// (https://cloud.google.com/apis/design/resource_names) of the
+	// credential.
+	Name string `json:"name,omitempty"`
+
+	// RsaKeyInfo: Output only. Information of a RSA public key.
+	RsaKeyInfo *RsaPublicKeyInfo `json:"rsaKeyInfo,omitempty"`
+
+	// UpdateTime: Output only. Time when the `IdpCredential` was last
+	// updated.
+	UpdateTime string `json:"updateTime,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "DsaKeyInfo") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DsaKeyInfo") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *IdpCredential) MarshalJSON() ([]byte, error) {
+	type NoMethod IdpCredential
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// InboundSamlSsoProfile: A SAML 2.0
+// (https://www.oasis-open.org/standards#samlv2.0) federation between a
+// Google enterprise customer and a SAML identity provider.
+type InboundSamlSsoProfile struct {
+	// Customer: Immutable. The customer. For example: `customers/C0123abc`.
+	Customer string `json:"customer,omitempty"`
+
+	// DisplayName: Human-readable name of the SAML SSO profile.
+	DisplayName string `json:"displayName,omitempty"`
+
+	// IdpConfig: SAML identity provider configuration.
+	IdpConfig *SamlIdpConfig `json:"idpConfig,omitempty"`
+
+	// Name: Output only. Resource name
+	// (https://cloud.google.com/apis/design/resource_names) of the SAML SSO
+	// profile.
+	Name string `json:"name,omitempty"`
+
+	// SpConfig: SAML service provider configuration for this SAML SSO
+	// profile. These are the service provider details provided by Google
+	// that should be configured on the corresponding identity provider.
+	SpConfig *SamlSpConfig `json:"spConfig,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Customer") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Customer") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *InboundSamlSsoProfile) MarshalJSON() ([]byte, error) {
+	type NoMethod InboundSamlSsoProfile
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// InboundSsoAssignment: Targets with "set" SSO assignments and their
+// respective assignments.
+type InboundSsoAssignment struct {
+	// Customer: Immutable. The customer. For example: `customers/C0123abc`.
+	Customer string `json:"customer,omitempty"`
+
+	// Name: Output only. Resource name
+	// (https://cloud.google.com/apis/design/resource_names) of the Inbound
+	// SSO Assignment.
+	Name string `json:"name,omitempty"`
+
+	// Rank: Must be zero (which is the default value so it can be omitted)
+	// for assignments with `target_org_unit` set and must be
+	// greater-than-or-equal-to one for assignments with `target_group` set.
+	Rank int64 `json:"rank,omitempty"`
+
+	// SamlSsoInfo: SAML SSO details. Must be set if and only if `sso_mode`
+	// is set to `SAML_SSO`.
+	SamlSsoInfo *SamlSsoInfo `json:"samlSsoInfo,omitempty"`
+
+	// SignInBehavior: Assertions about users assigned to an IdP will always
+	// be accepted from that IdP. This controls whether/when Google should
+	// redirect a user to the IdP. Unset (defaults) is the recommended
+	// configuration.
+	SignInBehavior *SignInBehavior `json:"signInBehavior,omitempty"`
+
+	// SsoMode: Inbound SSO behavior.
+	//
+	// Possible values:
+	//   "SSO_MODE_UNSPECIFIED" - Not allowed.
+	//   "SSO_OFF" - Disable SSO for the targeted users.
+	//   "SAML_SSO" - Use an external SAML Identity Provider for SSO for the
+	// targeted users.
+	//   "DOMAIN_WIDE_SAML_IF_ENABLED" - Use the domain-wide SAML Identity
+	// Provider for the targeted users if one is configured; otherwise, this
+	// is equivalent to `SSO_OFF`. Note that this will also be equivalent to
+	// `SSO_OFF` if/when support for domain-wide SAML is removed. Google may
+	// disallow this mode at that point and existing assignments with this
+	// mode may be automatically changed to `SSO_OFF`.
+	SsoMode string `json:"ssoMode,omitempty"`
+
+	// TargetGroup: Immutable. Must be of the form `groups/{group}`.
+	TargetGroup string `json:"targetGroup,omitempty"`
+
+	// TargetOrgUnit: Immutable. Must be of the form `orgUnits/{org_unit}`.
+	TargetOrgUnit string `json:"targetOrgUnit,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Customer") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Customer") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *InboundSsoAssignment) MarshalJSON() ([]byte, error) {
+	type NoMethod InboundSsoAssignment
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// IsInvitableUserResponse: Response for IsInvitableUser RPC.
+type IsInvitableUserResponse struct {
+	// IsInvitableUser: Returns true if the email address is invitable.
+	IsInvitableUser bool `json:"isInvitableUser,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "IsInvitableUser") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "IsInvitableUser") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *IsInvitableUserResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod IsInvitableUserResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ListGroupsResponse: Response message for ListGroups operation.
 type ListGroupsResponse struct {
 	// Groups: Groups returned in response to list request. The results are
@@ -1763,6 +2148,126 @@ func (s *ListGroupsResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ListIdpCredentialsResponse: Response of the
+// InboundSamlSsoProfilesService.ListIdpCredentials method.
+type ListIdpCredentialsResponse struct {
+	// IdpCredentials: The IdpCredentials from the specified
+	// InboundSamlSsoProfile.
+	IdpCredentials []*IdpCredential `json:"idpCredentials,omitempty"`
+
+	// NextPageToken: A token, which can be sent as `page_token` to retrieve
+	// the next page. If this field is omitted, there are no subsequent
+	// pages.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "IdpCredentials") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "IdpCredentials") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListIdpCredentialsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListIdpCredentialsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListInboundSamlSsoProfilesResponse: Response of the
+// InboundSamlSsoProfilesService.ListInboundSamlSsoProfiles method.
+type ListInboundSamlSsoProfilesResponse struct {
+	// InboundSamlSsoProfiles: List of InboundSamlSsoProfiles.
+	InboundSamlSsoProfiles []*InboundSamlSsoProfile `json:"inboundSamlSsoProfiles,omitempty"`
+
+	// NextPageToken: A token, which can be sent as `page_token` to retrieve
+	// the next page. If this field is omitted, there are no subsequent
+	// pages.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "InboundSamlSsoProfiles") to unconditionally include in API requests.
+	// By default, fields with empty or default values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InboundSamlSsoProfiles")
+	// to include in API requests with the JSON null value. By default,
+	// fields with empty values are omitted from API requests. However, any
+	// field with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListInboundSamlSsoProfilesResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListInboundSamlSsoProfilesResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListInboundSsoAssignmentsResponse: Response of the
+// InboundSsoAssignmentsService.ListInboundSsoAssignments method.
+type ListInboundSsoAssignmentsResponse struct {
+	// InboundSsoAssignments: The assignments.
+	InboundSsoAssignments []*InboundSsoAssignment `json:"inboundSsoAssignments,omitempty"`
+
+	// NextPageToken: A token, which can be sent as `page_token` to retrieve
+	// the next page. If this field is omitted, there are no subsequent
+	// pages.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "InboundSsoAssignments") to unconditionally include in API requests.
+	// By default, fields with empty or default values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InboundSsoAssignments") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListInboundSsoAssignmentsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListInboundSsoAssignmentsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ListMembershipsResponse: The response message for
 // MembershipsService.ListMemberships.
 type ListMembershipsResponse struct {
@@ -1796,6 +2301,46 @@ type ListMembershipsResponse struct {
 
 func (s *ListMembershipsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListMembershipsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ListUserInvitationsResponse: Response message for UserInvitation
+// listing request.
+type ListUserInvitationsResponse struct {
+	// NextPageToken: The token for the next page. If not empty, indicates
+	// that there may be more `UserInvitation` resources that match the
+	// listing request; this value can be used in a subsequent
+	// ListUserInvitationsRequest to get continued results with the current
+	// list call.
+	NextPageToken string `json:"nextPageToken,omitempty"`
+
+	// UserInvitations: The list of UserInvitation resources.
+	UserInvitations []*UserInvitation `json:"userInvitations,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "NextPageToken") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "NextPageToken") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListUserInvitationsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod ListUserInvitationsResponse
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1923,6 +2468,47 @@ func (s *MemberRelation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// MemberRestriction: The definition of MemberRestriction
+type MemberRestriction struct {
+	// Evaluation: The evaluated state of this restriction on a group.
+	Evaluation *RestrictionEvaluation `json:"evaluation,omitempty"`
+
+	// Query: Member Restriction as defined by CEL expression. Supported
+	// restrictions are: `member.customer_id` and `member.type`. Valid
+	// values for `member.type` are `1`, `2` and `3`. They correspond to
+	// USER, SERVICE_ACCOUNT, and GROUP respectively. The value for
+	// `member.customer_id` only supports `groupCustomerId()` currently
+	// which means the customer id of the group will be used for
+	// restriction. Supported operators are `&&`, `||` and `==`,
+	// corresponding to AND, OR, and EQUAL. Examples: Allow only service
+	// accounts of given customer to be members. `member.type == 2 &&
+	// member.customer_id == groupCustomerId()` Allow only users or groups
+	// to be members. `member.type == 1 || member.type == 3`
+	Query string `json:"query,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Evaluation") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Evaluation") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *MemberRestriction) MarshalJSON() ([]byte, error) {
+	type NoMethod MemberRestriction
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Membership: A membership within the Cloud Identity Groups API. A
 // `Membership` defines a relationship between a `Group` and an entity
 // belonging to that `Group`, referred to as a "member".
@@ -2036,6 +2622,10 @@ type MembershipRole struct {
 	// `MANAGER`, `MEMBER`.
 	Name string `json:"name,omitempty"`
 
+	// RestrictionEvaluations: Evaluations of restrictions applied to parent
+	// group on this membership.
+	RestrictionEvaluations *RestrictionEvaluations `json:"restrictionEvaluations,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "ExpiryDetail") to
 	// unconditionally include in API requests. By default, fields with
 	// empty or default values are omitted from API requests. However, any
@@ -2055,6 +2645,46 @@ type MembershipRole struct {
 
 func (s *MembershipRole) MarshalJSON() ([]byte, error) {
 	type NoMethod MembershipRole
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// MembershipRoleRestrictionEvaluation: The evaluated state of this
+// restriction.
+type MembershipRoleRestrictionEvaluation struct {
+	// State: Output only. The current state of the restriction
+	//
+	// Possible values:
+	//   "STATE_UNSPECIFIED" - Default. Should not be used.
+	//   "COMPLIANT" - The member adheres to the parent group's restriction.
+	//   "FORWARD_COMPLIANT" - The group-group membership might be currently
+	// violating some parent group's restriction but in future, it will
+	// never allow any new member in the child group which can violate
+	// parent group's restriction.
+	//   "NON_COMPLIANT" - The member violates the parent group's
+	// restriction.
+	//   "EVALUATING" - The state of the membership is under evaluation.
+	State string `json:"state,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "State") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "State") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *MembershipRoleRestrictionEvaluation) MarshalJSON() ([]byte, error) {
+	type NoMethod MembershipRoleRestrictionEvaluation
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2200,6 +2830,223 @@ func (s *Operation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// RestrictionEvaluation: The evaluated state of this restriction.
+type RestrictionEvaluation struct {
+	// State: Output only. The current state of the restriction
+	//
+	// Possible values:
+	//   "STATE_UNSPECIFIED" - Default. Should not be used.
+	//   "EVALUATING" - The restriction state is currently being evaluated.
+	//   "COMPLIANT" - All transitive memberships are adhering to
+	// restriction.
+	//   "FORWARD_COMPLIANT" - Some transitive memberships violate the
+	// restriction. No new violating memberships can be added.
+	//   "NON_COMPLIANT" - Some transitive memberships violate the
+	// restriction. New violating direct memberships will be denied while
+	// indirect memberships may be added.
+	State string `json:"state,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "State") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "State") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RestrictionEvaluation) MarshalJSON() ([]byte, error) {
+	type NoMethod RestrictionEvaluation
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RestrictionEvaluations: Evaluations of restrictions applied to parent
+// group on this membership.
+type RestrictionEvaluations struct {
+	// MemberRestrictionEvaluation: Evaluation of the member restriction
+	// applied to this membership. Empty if the user lacks permission to
+	// view the restriction evaluation.
+	MemberRestrictionEvaluation *MembershipRoleRestrictionEvaluation `json:"memberRestrictionEvaluation,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "MemberRestrictionEvaluation") to unconditionally include in API
+	// requests. By default, fields with empty or default values are omitted
+	// from API requests. However, any non-pointer, non-interface field
+	// appearing in ForceSendFields will be sent to the server regardless of
+	// whether the field is empty or not. This may be used to include empty
+	// fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "MemberRestrictionEvaluation") to include in API requests with the
+	// JSON null value. By default, fields with empty values are omitted
+	// from API requests. However, any field with an empty value appearing
+	// in NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RestrictionEvaluations) MarshalJSON() ([]byte, error) {
+	type NoMethod RestrictionEvaluations
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RsaPublicKeyInfo: Information of a RSA public key.
+type RsaPublicKeyInfo struct {
+	// KeySize: Key size in bits (size of the modulus).
+	KeySize int64 `json:"keySize,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "KeySize") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "KeySize") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RsaPublicKeyInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod RsaPublicKeyInfo
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// SamlIdpConfig: SAML IDP (identity provider) configuration.
+type SamlIdpConfig struct {
+	// ChangePasswordUri: The **Change Password URL** of the identity
+	// provider. Users will be sent to this URL when changing their
+	// passwords at `myaccount.google.com`. This takes precedence over the
+	// change password URL configured at customer-level. Must use `HTTPS`.
+	ChangePasswordUri string `json:"changePasswordUri,omitempty"`
+
+	// EntityId: Required. The SAML **Entity ID** of the identity provider.
+	EntityId string `json:"entityId,omitempty"`
+
+	// LogoutRedirectUri: The **Logout Redirect URL** (sign-out page URL) of
+	// the identity provider. When a user clicks the sign-out link on a
+	// Google page, they will be redirected to this URL. This is a pure
+	// redirect with no attached SAML `LogoutRequest` i.e. SAML single
+	// logout is not supported. Must use `HTTPS`.
+	LogoutRedirectUri string `json:"logoutRedirectUri,omitempty"`
+
+	// SingleSignOnServiceUri: Required. The `SingleSignOnService` endpoint
+	// location (sign-in page URL) of the identity provider. This is the URL
+	// where the `AuthnRequest` will be sent. Must use `HTTPS`. Assumed to
+	// accept the `HTTP-Redirect` binding.
+	SingleSignOnServiceUri string `json:"singleSignOnServiceUri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ChangePasswordUri")
+	// to unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ChangePasswordUri") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SamlIdpConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod SamlIdpConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// SamlSpConfig: SAML SP (service provider) configuration.
+type SamlSpConfig struct {
+	// AssertionConsumerServiceUri: Output only. The SAML **Assertion
+	// Consumer Service (ACS) URL** to be used for the IDP-initiated login.
+	// Assumed to accept response messages via the `HTTP-POST` binding.
+	AssertionConsumerServiceUri string `json:"assertionConsumerServiceUri,omitempty"`
+
+	// EntityId: Output only. The SAML **Entity ID** for this service
+	// provider.
+	EntityId string `json:"entityId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "AssertionConsumerServiceUri") to unconditionally include in API
+	// requests. By default, fields with empty or default values are omitted
+	// from API requests. However, any non-pointer, non-interface field
+	// appearing in ForceSendFields will be sent to the server regardless of
+	// whether the field is empty or not. This may be used to include empty
+	// fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g.
+	// "AssertionConsumerServiceUri") to include in API requests with the
+	// JSON null value. By default, fields with empty values are omitted
+	// from API requests. However, any field with an empty value appearing
+	// in NullFields will be sent to the server as null. It is an error if a
+	// field in this list has a non-empty value. This may be used to include
+	// null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SamlSpConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod SamlSpConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// SamlSsoInfo: Details that are applicable when `sso_mode` ==
+// `SAML_SSO`.
+type SamlSsoInfo struct {
+	// InboundSamlSsoProfile: Required. Name of the `InboundSamlSsoProfile`
+	// to use. Must be of the form
+	// `inboundSamlSsoProfiles/{inbound_saml_sso_profile}`.
+	InboundSamlSsoProfile string `json:"inboundSamlSsoProfile,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "InboundSamlSsoProfile") to unconditionally include in API requests.
+	// By default, fields with empty or default values are omitted from API
+	// requests. However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "InboundSamlSsoProfile") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SamlSsoInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod SamlSsoInfo
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // SearchGroupsResponse: The response message for
 // GroupsService.SearchGroups.
 type SearchGroupsResponse struct {
@@ -2311,6 +3158,86 @@ func (s *SearchTransitiveMembershipsResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// SecuritySettings: The definition of security settings.
+type SecuritySettings struct {
+	// MemberRestriction: The Member Restriction value
+	MemberRestriction *MemberRestriction `json:"memberRestriction,omitempty"`
+
+	// Name: Output only. The resource name of the security settings. Shall
+	// be of the form `groups/{group_id}/securitySettings`.
+	Name string `json:"name,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "MemberRestriction")
+	// to unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "MemberRestriction") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SecuritySettings) MarshalJSON() ([]byte, error) {
+	type NoMethod SecuritySettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// SendUserInvitationRequest: A request to send email for inviting
+// target user corresponding to the UserInvitation.
+type SendUserInvitationRequest struct {
+}
+
+// SignInBehavior: Controls sign-in behavior.
+type SignInBehavior struct {
+	// RedirectCondition: When to redirect sign-ins to the IdP.
+	//
+	// Possible values:
+	//   "REDIRECT_CONDITION_UNSPECIFIED" - Default and means "always"
+	//   "NEVER" - Sign-in flows where the user is prompted for their
+	// identity will not redirect to the IdP (so the user will most likely
+	// be prompted by Google for a password), but special flows like
+	// IdP-initiated SAML and sign-in following automatic redirection to the
+	// IdP by domain-specific service URLs will accept the IdP's assertion
+	// of the user's identity.
+	RedirectCondition string `json:"redirectCondition,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "RedirectCondition")
+	// to unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "RedirectCondition") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SignInBehavior) MarshalJSON() ([]byte, error) {
+	type NoMethod SignInBehavior
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Status: The `Status` type defines a logical error model that is
 // suitable for different programming environments, including REST APIs
 // and RPC APIs. It is used by gRPC (https://github.com/grpc). Each
@@ -2389,6 +3316,16 @@ func (s *TransitiveMembershipRole) MarshalJSON() ([]byte, error) {
 type UpdateGroupMetadata struct {
 }
 
+// UpdateInboundSamlSsoProfileOperationMetadata: LRO response metadata
+// for InboundSamlSsoProfilesService.UpdateInboundSamlSsoProfile.
+type UpdateInboundSamlSsoProfileOperationMetadata struct {
+}
+
+// UpdateInboundSsoAssignmentOperationMetadata: LRO response metadata
+// for InboundSsoAssignmentsService.UpdateInboundSsoAssignment.
+type UpdateInboundSsoAssignmentOperationMetadata struct {
+}
+
 // UpdateMembershipMetadata: Metadata for UpdateMembership LRO.
 type UpdateMembershipMetadata struct {
 }
@@ -2458,6 +3395,10 @@ type UserInvitation struct {
 	// UpdateTime: Time when the `UserInvitation` was last updated.
 	UpdateTime string `json:"updateTime,omitempty"`
 
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
 	// ForceSendFields is a list of field names (e.g. "MailsSentCount") to
 	// unconditionally include in API requests. By default, fields with
 	// empty or default values are omitted from API requests. However, any
@@ -2482,6 +3423,818 @@ func (s *UserInvitation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// method id "cloudidentity.customers.userinvitations.cancel":
+
+type CustomersUserinvitationsCancelCall struct {
+	s                           *Service
+	name                        string
+	canceluserinvitationrequest *CancelUserInvitationRequest
+	urlParams_                  gensupport.URLParams
+	ctx_                        context.Context
+	header_                     http.Header
+}
+
+// Cancel: Cancels a UserInvitation that was already sent.
+//
+//   - name: `UserInvitation` name in the format
+//     `customers/{customer}/userinvitations/{user_email_address}`.
+func (r *CustomersUserinvitationsService) Cancel(name string, canceluserinvitationrequest *CancelUserInvitationRequest) *CustomersUserinvitationsCancelCall {
+	c := &CustomersUserinvitationsCancelCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.canceluserinvitationrequest = canceluserinvitationrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *CustomersUserinvitationsCancelCall) Fields(s ...googleapi.Field) *CustomersUserinvitationsCancelCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *CustomersUserinvitationsCancelCall) Context(ctx context.Context) *CustomersUserinvitationsCancelCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *CustomersUserinvitationsCancelCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *CustomersUserinvitationsCancelCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.canceluserinvitationrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:cancel")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.customers.userinvitations.cancel" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *CustomersUserinvitationsCancelCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Cancels a UserInvitation that was already sent.",
+	//   "flatPath": "v1/customers/{customersId}/userinvitations/{userinvitationsId}:cancel",
+	//   "httpMethod": "POST",
+	//   "id": "cloudidentity.customers.userinvitations.cancel",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. `UserInvitation` name in the format `customers/{customer}/userinvitations/{user_email_address}`",
+	//       "location": "path",
+	//       "pattern": "^customers/[^/]+/userinvitations/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}:cancel",
+	//   "request": {
+	//     "$ref": "CancelUserInvitationRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   }
+	// }
+
+}
+
+// method id "cloudidentity.customers.userinvitations.get":
+
+type CustomersUserinvitationsGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Retrieves a UserInvitation resource. **Note:** New consumer
+// accounts with the customer's verified domain created within the
+// previous 48 hours will not appear in the result. This delay also
+// applies to newly-verified domains.
+//
+//   - name: `UserInvitation` name in the format
+//     `customers/{customer}/userinvitations/{user_email_address}`.
+func (r *CustomersUserinvitationsService) Get(name string) *CustomersUserinvitationsGetCall {
+	c := &CustomersUserinvitationsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *CustomersUserinvitationsGetCall) Fields(s ...googleapi.Field) *CustomersUserinvitationsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *CustomersUserinvitationsGetCall) IfNoneMatch(entityTag string) *CustomersUserinvitationsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *CustomersUserinvitationsGetCall) Context(ctx context.Context) *CustomersUserinvitationsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *CustomersUserinvitationsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *CustomersUserinvitationsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.customers.userinvitations.get" call.
+// Exactly one of *UserInvitation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *UserInvitation.ServerResponse.Header or (if a response was returned
+// at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *CustomersUserinvitationsGetCall) Do(opts ...googleapi.CallOption) (*UserInvitation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &UserInvitation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Retrieves a UserInvitation resource. **Note:** New consumer accounts with the customer's verified domain created within the previous 48 hours will not appear in the result. This delay also applies to newly-verified domains.",
+	//   "flatPath": "v1/customers/{customersId}/userinvitations/{userinvitationsId}",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.customers.userinvitations.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. `UserInvitation` name in the format `customers/{customer}/userinvitations/{user_email_address}`",
+	//       "location": "path",
+	//       "pattern": "^customers/[^/]+/userinvitations/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "UserInvitation"
+	//   }
+	// }
+
+}
+
+// method id "cloudidentity.customers.userinvitations.isInvitableUser":
+
+type CustomersUserinvitationsIsInvitableUserCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// IsInvitableUser: Verifies whether a user account is eligible to
+// receive a UserInvitation (is an unmanaged account). Eligibility is
+// based on the following criteria: * the email address is a consumer
+// account and it's the primary email address of the account, and * the
+// domain of the email address matches an existing verified Google
+// Workspace or Cloud Identity domain If both conditions are met, the
+// user is eligible. **Note:** This method is not supported for
+// Workspace Essentials customers.
+//
+//   - name: `UserInvitation` name in the format
+//     `customers/{customer}/userinvitations/{user_email_address}`.
+func (r *CustomersUserinvitationsService) IsInvitableUser(name string) *CustomersUserinvitationsIsInvitableUserCall {
+	c := &CustomersUserinvitationsIsInvitableUserCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *CustomersUserinvitationsIsInvitableUserCall) Fields(s ...googleapi.Field) *CustomersUserinvitationsIsInvitableUserCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *CustomersUserinvitationsIsInvitableUserCall) IfNoneMatch(entityTag string) *CustomersUserinvitationsIsInvitableUserCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *CustomersUserinvitationsIsInvitableUserCall) Context(ctx context.Context) *CustomersUserinvitationsIsInvitableUserCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *CustomersUserinvitationsIsInvitableUserCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *CustomersUserinvitationsIsInvitableUserCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:isInvitableUser")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.customers.userinvitations.isInvitableUser" call.
+// Exactly one of *IsInvitableUserResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *IsInvitableUserResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *CustomersUserinvitationsIsInvitableUserCall) Do(opts ...googleapi.CallOption) (*IsInvitableUserResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &IsInvitableUserResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Verifies whether a user account is eligible to receive a UserInvitation (is an unmanaged account). Eligibility is based on the following criteria: * the email address is a consumer account and it's the primary email address of the account, and * the domain of the email address matches an existing verified Google Workspace or Cloud Identity domain If both conditions are met, the user is eligible. **Note:** This method is not supported for Workspace Essentials customers.",
+	//   "flatPath": "v1/customers/{customersId}/userinvitations/{userinvitationsId}:isInvitableUser",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.customers.userinvitations.isInvitableUser",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. `UserInvitation` name in the format `customers/{customer}/userinvitations/{user_email_address}`",
+	//       "location": "path",
+	//       "pattern": "^customers/[^/]+/userinvitations/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}:isInvitableUser",
+	//   "response": {
+	//     "$ref": "IsInvitableUserResponse"
+	//   }
+	// }
+
+}
+
+// method id "cloudidentity.customers.userinvitations.list":
+
+type CustomersUserinvitationsListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Retrieves a list of UserInvitation resources. **Note:** New
+// consumer accounts with the customer's verified domain created within
+// the previous 48 hours will not appear in the result. This delay also
+// applies to newly-verified domains.
+//
+//   - parent: The customer ID of the Google Workspace or Cloud Identity
+//     account the UserInvitation resources are associated with.
+func (r *CustomersUserinvitationsService) List(parent string) *CustomersUserinvitationsListCall {
+	c := &CustomersUserinvitationsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// Filter sets the optional parameter "filter": A query string for
+// filtering `UserInvitation` results by their current state, in the
+// format: "state=='invited'".
+func (c *CustomersUserinvitationsListCall) Filter(filter string) *CustomersUserinvitationsListCall {
+	c.urlParams_.Set("filter", filter)
+	return c
+}
+
+// OrderBy sets the optional parameter "orderBy": The sort order of the
+// list results. You can sort the results in descending order based on
+// either email or last update timestamp but not both, using
+// `order_by="email desc". Currently, sorting is supported for
+// `update_time asc`, `update_time desc`, `email asc`, and `email desc`.
+// If not specified, results will be returned based on `email asc`
+// order.
+func (c *CustomersUserinvitationsListCall) OrderBy(orderBy string) *CustomersUserinvitationsListCall {
+	c.urlParams_.Set("orderBy", orderBy)
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of UserInvitation resources to return. If unspecified, at most 100
+// resources will be returned. The maximum value is 200; values above
+// 200 will be set to 200.
+func (c *CustomersUserinvitationsListCall) PageSize(pageSize int64) *CustomersUserinvitationsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A page token,
+// received from a previous `ListUserInvitations` call. Provide this to
+// retrieve the subsequent page. When paginating, all other parameters
+// provided to `ListBooks` must match the call that provided the page
+// token.
+func (c *CustomersUserinvitationsListCall) PageToken(pageToken string) *CustomersUserinvitationsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *CustomersUserinvitationsListCall) Fields(s ...googleapi.Field) *CustomersUserinvitationsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *CustomersUserinvitationsListCall) IfNoneMatch(entityTag string) *CustomersUserinvitationsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *CustomersUserinvitationsListCall) Context(ctx context.Context) *CustomersUserinvitationsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *CustomersUserinvitationsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *CustomersUserinvitationsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/userinvitations")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.customers.userinvitations.list" call.
+// Exactly one of *ListUserInvitationsResponse or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *ListUserInvitationsResponse.ServerResponse.Header or (if a response
+// was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *CustomersUserinvitationsListCall) Do(opts ...googleapi.CallOption) (*ListUserInvitationsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &ListUserInvitationsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Retrieves a list of UserInvitation resources. **Note:** New consumer accounts with the customer's verified domain created within the previous 48 hours will not appear in the result. This delay also applies to newly-verified domains.",
+	//   "flatPath": "v1/customers/{customersId}/userinvitations",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.customers.userinvitations.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "filter": {
+	//       "description": "Optional. A query string for filtering `UserInvitation` results by their current state, in the format: `\"state=='invited'\"`.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "orderBy": {
+	//       "description": "Optional. The sort order of the list results. You can sort the results in descending order based on either email or last update timestamp but not both, using `order_by=\"email desc\"`. Currently, sorting is supported for `update_time asc`, `update_time desc`, `email asc`, and `email desc`. If not specified, results will be returned based on `email asc` order.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "Optional. The maximum number of UserInvitation resources to return. If unspecified, at most 100 resources will be returned. The maximum value is 200; values above 200 will be set to 200.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "Optional. A page token, received from a previous `ListUserInvitations` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListBooks` must match the call that provided the page token.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. The customer ID of the Google Workspace or Cloud Identity account the UserInvitation resources are associated with.",
+	//       "location": "path",
+	//       "pattern": "^customers/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+parent}/userinvitations",
+	//   "response": {
+	//     "$ref": "ListUserInvitationsResponse"
+	//   }
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *CustomersUserinvitationsListCall) Pages(ctx context.Context, f func(*ListUserInvitationsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "cloudidentity.customers.userinvitations.send":
+
+type CustomersUserinvitationsSendCall struct {
+	s                         *Service
+	name                      string
+	senduserinvitationrequest *SendUserInvitationRequest
+	urlParams_                gensupport.URLParams
+	ctx_                      context.Context
+	header_                   http.Header
+}
+
+// Send: Sends a UserInvitation to email. If the `UserInvitation` does
+// not exist for this request and it is a valid request, the request
+// creates a `UserInvitation`. **Note:** The `get` and `list` methods
+// have a 48-hour delay where newly-created consumer accounts will not
+// appear in the results. You can still send a `UserInvitation` to those
+// accounts if you know the unmanaged email address and
+// IsInvitableUser==True.
+//
+//   - name: `UserInvitation` name in the format
+//     `customers/{customer}/userinvitations/{user_email_address}`.
+func (r *CustomersUserinvitationsService) Send(name string, senduserinvitationrequest *SendUserInvitationRequest) *CustomersUserinvitationsSendCall {
+	c := &CustomersUserinvitationsSendCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.senduserinvitationrequest = senduserinvitationrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *CustomersUserinvitationsSendCall) Fields(s ...googleapi.Field) *CustomersUserinvitationsSendCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *CustomersUserinvitationsSendCall) Context(ctx context.Context) *CustomersUserinvitationsSendCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *CustomersUserinvitationsSendCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *CustomersUserinvitationsSendCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.senduserinvitationrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:send")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.customers.userinvitations.send" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *CustomersUserinvitationsSendCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Sends a UserInvitation to email. If the `UserInvitation` does not exist for this request and it is a valid request, the request creates a `UserInvitation`. **Note:** The `get` and `list` methods have a 48-hour delay where newly-created consumer accounts will not appear in the results. You can still send a `UserInvitation` to those accounts if you know the unmanaged email address and IsInvitableUser==True.",
+	//   "flatPath": "v1/customers/{customersId}/userinvitations/{userinvitationsId}:send",
+	//   "httpMethod": "POST",
+	//   "id": "cloudidentity.customers.userinvitations.send",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. `UserInvitation` name in the format `customers/{customer}/userinvitations/{user_email_address}`",
+	//       "location": "path",
+	//       "pattern": "^customers/[^/]+/userinvitations/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}:send",
+	//   "request": {
+	//     "$ref": "SendUserInvitationRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   }
+	// }
+
+}
+
 // method id "cloudidentity.devices.cancelWipe":
 
 type DevicesCancelWipeCall struct {
@@ -2501,10 +4254,10 @@ type DevicesCancelWipeCall struct {
 // but has not yet been sent to the device. The cancel wipe will fail if
 // the wipe command has already been issued to the device.
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}`, where device is the unique ID
-//   assigned to the Device.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}`, where device is the unique ID
+//     assigned to the Device.
 func (r *DevicesService) CancelWipe(name string, googleappscloudidentitydevicesv1cancelwipedevicerequest *GoogleAppsCloudidentityDevicesV1CancelWipeDeviceRequest) *DevicesCancelWipeCall {
 	c := &DevicesCancelWipeCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -2539,7 +4292,7 @@ func (c *DevicesCancelWipeCall) Header() http.Header {
 
 func (c *DevicesCancelWipeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2579,17 +4332,17 @@ func (c *DevicesCancelWipeCall) Do(opts ...googleapi.CallOption) (*Operation, er
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -2625,7 +4378,10 @@ func (c *DevicesCancelWipeCall) Do(opts ...googleapi.CallOption) (*Operation, er
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -2688,7 +4444,7 @@ func (c *DevicesCreateCall) Header() http.Header {
 
 func (c *DevicesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2725,17 +4481,17 @@ func (c *DevicesCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error)
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -2767,7 +4523,10 @@ func (c *DevicesCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error)
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -2784,10 +4543,10 @@ type DevicesDeleteCall struct {
 
 // Delete: Deletes the specified device.
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}`, where device is the unique ID
-//   assigned to the Device.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}`, where device is the unique ID
+//     assigned to the Device.
 func (r *DevicesService) Delete(name string) *DevicesDeleteCall {
 	c := &DevicesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -2832,7 +4591,7 @@ func (c *DevicesDeleteCall) Header() http.Header {
 
 func (c *DevicesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2867,17 +4626,17 @@ func (c *DevicesDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, error)
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -2915,7 +4674,10 @@ func (c *DevicesDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, error)
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -2933,10 +4695,10 @@ type DevicesGetCall struct {
 
 // Get: Retrieves the specified device.
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in the format: `devices/{device}`, where device is the unique ID
-//   assigned to the Device.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in the format: `devices/{device}`, where device is the unique ID
+//     assigned to the Device.
 func (r *DevicesService) Get(name string) *DevicesGetCall {
 	c := &DevicesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -2992,7 +4754,7 @@ func (c *DevicesGetCall) Header() http.Header {
 
 func (c *DevicesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3031,17 +4793,17 @@ func (c *DevicesGetCall) Do(opts ...googleapi.CallOption) (*GoogleAppsCloudident
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &GoogleAppsCloudidentityDevicesV1Device{
 		ServerResponse: googleapi.ServerResponse{
@@ -3079,7 +4841,11 @@ func (c *DevicesGetCall) Do(opts ...googleapi.CallOption) (*GoogleAppsCloudident
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "GoogleAppsCloudidentityDevicesV1Device"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices",
+	//     "https://www.googleapis.com/auth/cloud-identity.devices.readonly"
+	//   ]
 	// }
 
 }
@@ -3155,13 +4921,17 @@ func (c *DevicesListCall) PageToken(pageToken string) *DevicesListCall {
 // request.
 //
 // Possible values:
-//   "VIEW_UNSPECIFIED" - Default value. The value is unused.
-//   "COMPANY_INVENTORY" - This view contains all devices imported by
+//
+//	"VIEW_UNSPECIFIED" - Default value. The value is unused.
+//	"COMPANY_INVENTORY" - This view contains all devices imported by
+//
 // the company admin. Each device in the response contains all
 // information specified by the company admin when importing the device
 // (i.e. asset tags). This includes devices that may be unaassigned or
 // assigned to users.
-//   "USER_ASSIGNED_DEVICES" - This view contains all devices with at
+//
+//	"USER_ASSIGNED_DEVICES" - This view contains all devices with at
+//
 // least one user registered on the device. Each device in the response
 // contains all device information, except for asset tags.
 func (c *DevicesListCall) View(view string) *DevicesListCall {
@@ -3206,7 +4976,7 @@ func (c *DevicesListCall) Header() http.Header {
 
 func (c *DevicesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3243,17 +5013,17 @@ func (c *DevicesListCall) Do(opts ...googleapi.CallOption) (*GoogleAppsCloudiden
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &GoogleAppsCloudidentityDevicesV1ListDevicesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -3318,7 +5088,11 @@ func (c *DevicesListCall) Do(opts ...googleapi.CallOption) (*GoogleAppsCloudiden
 	//   "path": "v1/devices",
 	//   "response": {
 	//     "$ref": "GoogleAppsCloudidentityDevicesV1ListDevicesResponse"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices",
+	//     "https://www.googleapis.com/auth/cloud-identity.devices.readonly"
+	//   ]
 	// }
 
 }
@@ -3357,11 +5131,11 @@ type DevicesWipeCall struct {
 
 // Wipe: Wipes all data on the specified device.
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}/deviceUsers/{device_user}`, where
-//   device is the unique ID assigned to the Device, and device_user is
-//   the unique ID assigned to the User.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}/deviceUsers/{device_user}`, where
+//     device is the unique ID assigned to the Device, and device_user is
+//     the unique ID assigned to the User.
 func (r *DevicesService) Wipe(name string, googleappscloudidentitydevicesv1wipedevicerequest *GoogleAppsCloudidentityDevicesV1WipeDeviceRequest) *DevicesWipeCall {
 	c := &DevicesWipeCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3396,7 +5170,7 @@ func (c *DevicesWipeCall) Header() http.Header {
 
 func (c *DevicesWipeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3436,17 +5210,17 @@ func (c *DevicesWipeCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -3482,7 +5256,10 @@ func (c *DevicesWipeCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -3500,11 +5277,11 @@ type DevicesDeviceUsersApproveCall struct {
 
 // Approve: Approves device to access user data.
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}/deviceUsers/{device_user}`, where
-//   device is the unique ID assigned to the Device, and device_user is
-//   the unique ID assigned to the User.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}/deviceUsers/{device_user}`, where
+//     device is the unique ID assigned to the Device, and device_user is
+//     the unique ID assigned to the User.
 func (r *DevicesDeviceUsersService) Approve(name string, googleappscloudidentitydevicesv1approvedeviceuserrequest *GoogleAppsCloudidentityDevicesV1ApproveDeviceUserRequest) *DevicesDeviceUsersApproveCall {
 	c := &DevicesDeviceUsersApproveCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3539,7 +5316,7 @@ func (c *DevicesDeviceUsersApproveCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersApproveCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3579,17 +5356,17 @@ func (c *DevicesDeviceUsersApproveCall) Do(opts ...googleapi.CallOption) (*Opera
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -3625,7 +5402,10 @@ func (c *DevicesDeviceUsersApproveCall) Do(opts ...googleapi.CallOption) (*Opera
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -3643,11 +5423,11 @@ type DevicesDeviceUsersBlockCall struct {
 
 // Block: Blocks device from accessing user data
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}/deviceUsers/{device_user}`, where
-//   device is the unique ID assigned to the Device, and device_user is
-//   the unique ID assigned to the User.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}/deviceUsers/{device_user}`, where
+//     device is the unique ID assigned to the Device, and device_user is
+//     the unique ID assigned to the User.
 func (r *DevicesDeviceUsersService) Block(name string, googleappscloudidentitydevicesv1blockdeviceuserrequest *GoogleAppsCloudidentityDevicesV1BlockDeviceUserRequest) *DevicesDeviceUsersBlockCall {
 	c := &DevicesDeviceUsersBlockCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3682,7 +5462,7 @@ func (c *DevicesDeviceUsersBlockCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersBlockCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3722,17 +5502,17 @@ func (c *DevicesDeviceUsersBlockCall) Do(opts ...googleapi.CallOption) (*Operati
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -3768,7 +5548,10 @@ func (c *DevicesDeviceUsersBlockCall) Do(opts ...googleapi.CallOption) (*Operati
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -3788,11 +5571,11 @@ type DevicesDeviceUsersCancelWipeCall struct {
 // can be used to cancel device wipe in the gap between the wipe
 // operation returning success and the device being wiped.
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}/deviceUsers/{device_user}`, where
-//   device is the unique ID assigned to the Device, and device_user is
-//   the unique ID assigned to the User.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}/deviceUsers/{device_user}`, where
+//     device is the unique ID assigned to the Device, and device_user is
+//     the unique ID assigned to the User.
 func (r *DevicesDeviceUsersService) CancelWipe(name string, googleappscloudidentitydevicesv1cancelwipedeviceuserrequest *GoogleAppsCloudidentityDevicesV1CancelWipeDeviceUserRequest) *DevicesDeviceUsersCancelWipeCall {
 	c := &DevicesDeviceUsersCancelWipeCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3827,7 +5610,7 @@ func (c *DevicesDeviceUsersCancelWipeCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersCancelWipeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3867,17 +5650,17 @@ func (c *DevicesDeviceUsersCancelWipeCall) Do(opts ...googleapi.CallOption) (*Op
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -3913,7 +5696,10 @@ func (c *DevicesDeviceUsersCancelWipeCall) Do(opts ...googleapi.CallOption) (*Op
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -3931,11 +5717,11 @@ type DevicesDeviceUsersDeleteCall struct {
 // Delete: Deletes the specified DeviceUser. This also revokes the
 // user's access to device data.
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}/deviceUsers/{device_user}`, where
-//   device is the unique ID assigned to the Device, and device_user is
-//   the unique ID assigned to the User.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}/deviceUsers/{device_user}`, where
+//     device is the unique ID assigned to the Device, and device_user is
+//     the unique ID assigned to the User.
 func (r *DevicesDeviceUsersService) Delete(name string) *DevicesDeviceUsersDeleteCall {
 	c := &DevicesDeviceUsersDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3980,7 +5766,7 @@ func (c *DevicesDeviceUsersDeleteCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4015,17 +5801,17 @@ func (c *DevicesDeviceUsersDeleteCall) Do(opts ...googleapi.CallOption) (*Operat
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -4063,7 +5849,10 @@ func (c *DevicesDeviceUsersDeleteCall) Do(opts ...googleapi.CallOption) (*Operat
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -4081,11 +5870,11 @@ type DevicesDeviceUsersGetCall struct {
 
 // Get: Retrieves the specified DeviceUser
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}/deviceUsers/{device_user}`, where
-//   device is the unique ID assigned to the Device, and device_user is
-//   the unique ID assigned to the User.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}/deviceUsers/{device_user}`, where
+//     device is the unique ID assigned to the Device, and device_user is
+//     the unique ID assigned to the User.
 func (r *DevicesDeviceUsersService) Get(name string) *DevicesDeviceUsersGetCall {
 	c := &DevicesDeviceUsersGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4140,7 +5929,7 @@ func (c *DevicesDeviceUsersGetCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4180,17 +5969,17 @@ func (c *DevicesDeviceUsersGetCall) Do(opts ...googleapi.CallOption) (*GoogleApp
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &GoogleAppsCloudidentityDevicesV1DeviceUser{
 		ServerResponse: googleapi.ServerResponse{
@@ -4228,7 +6017,11 @@ func (c *DevicesDeviceUsersGetCall) Do(opts ...googleapi.CallOption) (*GoogleApp
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "GoogleAppsCloudidentityDevicesV1DeviceUser"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices",
+	//     "https://www.googleapis.com/auth/cloud-identity.devices.readonly"
+	//   ]
 	// }
 
 }
@@ -4246,9 +6039,9 @@ type DevicesDeviceUsersListCall struct {
 
 // List: Lists/Searches DeviceUsers.
 //
-// - parent: To list all DeviceUsers, set this to "devices/-". To list
-//   all DeviceUsers owned by a device, set this to the resource name of
-//   the device. Format: devices/{device}.
+//   - parent: To list all DeviceUsers, set this to "devices/-". To list
+//     all DeviceUsers owned by a device, set this to the resource name of
+//     the device. Format: devices/{device}.
 func (r *DevicesDeviceUsersService) List(parent string) *DevicesDeviceUsersListCall {
 	c := &DevicesDeviceUsersListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -4339,7 +6132,7 @@ func (c *DevicesDeviceUsersListCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4380,17 +6173,17 @@ func (c *DevicesDeviceUsersListCall) Do(opts ...googleapi.CallOption) (*GoogleAp
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &GoogleAppsCloudidentityDevicesV1ListDeviceUsersResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -4449,7 +6242,11 @@ func (c *DevicesDeviceUsersListCall) Do(opts ...googleapi.CallOption) (*GoogleAp
 	//   "path": "v1/{+parent}/deviceUsers",
 	//   "response": {
 	//     "$ref": "GoogleAppsCloudidentityDevicesV1ListDeviceUsersResponse"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices",
+	//     "https://www.googleapis.com/auth/cloud-identity.devices.readonly"
+	//   ]
 	// }
 
 }
@@ -4500,8 +6297,8 @@ type DevicesDeviceUsersLookupCall struct {
 // - Android: Specifying the 'android_id' field is required. - Desktop:
 // Specifying the 'raw_resource_id' field is required.
 //
-// - parent: Must be set to "devices/-/deviceUsers" to search across all
-//   DeviceUser belonging to the user.
+//   - parent: Must be set to "devices/-/deviceUsers" to search across all
+//     DeviceUser belonging to the user.
 func (r *DevicesDeviceUsersService) Lookup(parent string) *DevicesDeviceUsersLookupCall {
 	c := &DevicesDeviceUsersLookupCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -4592,7 +6389,7 @@ func (c *DevicesDeviceUsersLookupCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersLookupCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4633,17 +6430,17 @@ func (c *DevicesDeviceUsersLookupCall) Do(opts ...googleapi.CallOption) (*Google
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &GoogleAppsCloudidentityDevicesV1LookupSelfDeviceUsersResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -4750,11 +6547,11 @@ type DevicesDeviceUsersWipeCall struct {
 // the "deviceUser" by their work administrator will not affect their
 // personal account within Gmail or other apps such as Photos.
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the Device
-//   in format: `devices/{device}/deviceUsers/{device_user}`, where
-//   device is the unique ID assigned to the Device, and device_user is
-//   the unique ID assigned to the User.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the Device
+//     in format: `devices/{device}/deviceUsers/{device_user}`, where
+//     device is the unique ID assigned to the Device, and device_user is
+//     the unique ID assigned to the User.
 func (r *DevicesDeviceUsersService) Wipe(name string, googleappscloudidentitydevicesv1wipedeviceuserrequest *GoogleAppsCloudidentityDevicesV1WipeDeviceUserRequest) *DevicesDeviceUsersWipeCall {
 	c := &DevicesDeviceUsersWipeCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4789,7 +6586,7 @@ func (c *DevicesDeviceUsersWipeCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersWipeCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4829,17 +6626,17 @@ func (c *DevicesDeviceUsersWipeCall) Do(opts ...googleapi.CallOption) (*Operatio
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -4875,7 +6672,10 @@ func (c *DevicesDeviceUsersWipeCall) Do(opts ...googleapi.CallOption) (*Operatio
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -4893,22 +6693,22 @@ type DevicesDeviceUsersClientStatesGetCall struct {
 
 // Get: Gets the client state for the device user
 //
-// - name: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the
-//   ClientState in format:
-//   `devices/{device}/deviceUsers/{device_user}/clientStates/{partner}`,
-//    where `device` is the unique ID assigned to the Device,
-//   `device_user` is the unique ID assigned to the User and `partner`
-//   identifies the partner storing the data. To get the client state
-//   for devices belonging to your own organization, the `partnerId` is
-//   in the format: `customerId-*anystring*`. Where the `customerId` is
-//   your organization's customer ID and `anystring` is any suffix. This
-//   suffix is used in setting up Custom Access Levels in Context-Aware
-//   Access. You may use `my_customer` instead of the customer ID for
-//   devices managed by your own organization. You may specify `-` in
-//   place of the `{device}`, so the ClientState resource name can be:
-//   `devices/-/deviceUsers/{device_user_resource}/clientStates/{partner}
-//   `.
+//   - name: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     ClientState in format:
+//     `devices/{device}/deviceUsers/{device_user}/clientStates/{partner}`,
+//     where `device` is the unique ID assigned to the Device,
+//     `device_user` is the unique ID assigned to the User and `partner`
+//     identifies the partner storing the data. To get the client state
+//     for devices belonging to your own organization, the `partnerId` is
+//     in the format: `customerId-*anystring*`. Where the `customerId` is
+//     your organization's customer ID and `anystring` is any suffix. This
+//     suffix is used in setting up Custom Access Levels in Context-Aware
+//     Access. You may use `my_customer` instead of the customer ID for
+//     devices managed by your own organization. You may specify `-` in
+//     place of the `{device}`, so the ClientState resource name can be:
+//     `devices/-/deviceUsers/{device_user_resource}/clientStates/{partner}
+//     `.
 func (r *DevicesDeviceUsersClientStatesService) Get(name string) *DevicesDeviceUsersClientStatesGetCall {
 	c := &DevicesDeviceUsersClientStatesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4963,7 +6763,7 @@ func (c *DevicesDeviceUsersClientStatesGetCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersClientStatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5003,17 +6803,17 @@ func (c *DevicesDeviceUsersClientStatesGetCall) Do(opts ...googleapi.CallOption)
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &GoogleAppsCloudidentityDevicesV1ClientState{
 		ServerResponse: googleapi.ServerResponse{
@@ -5051,7 +6851,11 @@ func (c *DevicesDeviceUsersClientStatesGetCall) Do(opts ...googleapi.CallOption)
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "GoogleAppsCloudidentityDevicesV1ClientState"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices",
+	//     "https://www.googleapis.com/auth/cloud-identity.devices.readonly"
+	//   ]
 	// }
 
 }
@@ -5069,10 +6873,10 @@ type DevicesDeviceUsersClientStatesListCall struct {
 
 // List: Lists the client states for the given search query.
 //
-// - parent: To list all ClientStates, set this to
-//   "devices/-/deviceUsers/-". To list all ClientStates owned by a
-//   DeviceUser, set this to the resource name of the DeviceUser.
-//   Format: devices/{device}/deviceUsers/{deviceUser}.
+//   - parent: To list all ClientStates, set this to
+//     "devices/-/deviceUsers/-". To list all ClientStates owned by a
+//     DeviceUser, set this to the resource name of the DeviceUser.
+//     Format: devices/{device}/deviceUsers/{deviceUser}.
 func (r *DevicesDeviceUsersClientStatesService) List(parent string) *DevicesDeviceUsersClientStatesListCall {
 	c := &DevicesDeviceUsersClientStatesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -5151,7 +6955,7 @@ func (c *DevicesDeviceUsersClientStatesListCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersClientStatesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5192,17 +6996,17 @@ func (c *DevicesDeviceUsersClientStatesListCall) Do(opts ...googleapi.CallOption
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &GoogleAppsCloudidentityDevicesV1ListClientStatesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -5255,7 +7059,11 @@ func (c *DevicesDeviceUsersClientStatesListCall) Do(opts ...googleapi.CallOption
 	//   "path": "v1/{+parent}/clientStates",
 	//   "response": {
 	//     "$ref": "GoogleAppsCloudidentityDevicesV1ListClientStatesResponse"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices",
+	//     "https://www.googleapis.com/auth/cloud-identity.devices.readonly"
+	//   ]
 	// }
 
 }
@@ -5297,23 +7105,23 @@ type DevicesDeviceUsersClientStatesPatchCall struct {
 // SKUs: Enterprise Standard, Enterprise Plus, Enterprise for Education,
 // and Cloud Identity Premium
 //
-// - name: Output only. Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the
-//   ClientState in format:
-//   `devices/{device}/deviceUsers/{device_user}/clientState/{partner}`,
-//   where partner corresponds to the partner storing the data. For
-//   partners belonging to the "BeyondCorp Alliance", this is the
-//   partner ID specified to you by Google. For all other callers, this
-//   is a string of the form: `{customer}-suffix`, where `customer` is
-//   your customer ID. The *suffix* is any string the caller specifies.
-//   This string will be displayed verbatim in the administration
-//   console. This suffix is used in setting up Custom Access Levels in
-//   Context-Aware Access. Your organization's customer ID can be
-//   obtained from the URL: `GET
-//   https://www.googleapis.com/admin/directory/v1/customers/my_customer`
-//   The `id` field in the response contains the customer ID starting
-//   with the letter 'C'. The customer ID to be used in this API is the
-//   string after the letter 'C' (not including 'C').
+//   - name: Output only. Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     ClientState in format:
+//     `devices/{device}/deviceUsers/{device_user}/clientState/{partner}`,
+//     where partner corresponds to the partner storing the data. For
+//     partners belonging to the "BeyondCorp Alliance", this is the
+//     partner ID specified to you by Google. For all other callers, this
+//     is a string of the form: `{customer}-suffix`, where `customer` is
+//     your customer ID. The *suffix* is any string the caller specifies.
+//     This string will be displayed verbatim in the administration
+//     console. This suffix is used in setting up Custom Access Levels in
+//     Context-Aware Access. Your organization's customer ID can be
+//     obtained from the URL: `GET
+//     https://www.googleapis.com/admin/directory/v1/customers/my_customer`
+//     The `id` field in the response contains the customer ID starting
+//     with the letter 'C'. The customer ID to be used in this API is the
+//     string after the letter 'C' (not including 'C').
 func (r *DevicesDeviceUsersClientStatesService) Patch(name string, googleappscloudidentitydevicesv1clientstate *GoogleAppsCloudidentityDevicesV1ClientState) *DevicesDeviceUsersClientStatesPatchCall {
 	c := &DevicesDeviceUsersClientStatesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -5367,7 +7175,7 @@ func (c *DevicesDeviceUsersClientStatesPatchCall) Header() http.Header {
 
 func (c *DevicesDeviceUsersClientStatesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5407,17 +7215,17 @@ func (c *DevicesDeviceUsersClientStatesPatchCall) Do(opts ...googleapi.CallOptio
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -5464,7 +7272,10 @@ func (c *DevicesDeviceUsersClientStatesPatchCall) Do(opts ...googleapi.CallOptio
 	//   },
 	//   "response": {
 	//     "$ref": "Operation"
-	//   }
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.devices"
+	//   ]
 	// }
 
 }
@@ -5490,10 +7301,14 @@ func (r *GroupsService) Create(group *Group) *GroupsCreateCall {
 // The initial configuration option for the `Group`.
 //
 // Possible values:
-//   "INITIAL_GROUP_CONFIG_UNSPECIFIED" - Default. Should not be used.
-//   "WITH_INITIAL_OWNER" - The end user making the request will be
+//
+//	"INITIAL_GROUP_CONFIG_UNSPECIFIED" - Default. Should not be used.
+//	"WITH_INITIAL_OWNER" - The end user making the request will be
+//
 // added as the initial owner of the `Group`.
-//   "EMPTY" - An empty group is created without any initial owners.
+//
+//	"EMPTY" - An empty group is created without any initial owners.
+//
 // This can only be used by admins of the domain.
 func (c *GroupsCreateCall) InitialGroupConfig(initialGroupConfig string) *GroupsCreateCall {
 	c.urlParams_.Set("initialGroupConfig", initialGroupConfig)
@@ -5527,7 +7342,7 @@ func (c *GroupsCreateCall) Header() http.Header {
 
 func (c *GroupsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5564,17 +7379,17 @@ func (c *GroupsCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error) 
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -5637,9 +7452,9 @@ type GroupsDeleteCall struct {
 
 // Delete: Deletes a `Group`.
 //
-// - name: The resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the
-//   `Group` to retrieve. Must be of the form `groups/{group}`.
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     `Group` to retrieve. Must be of the form `groups/{group}`.
 func (r *GroupsService) Delete(name string) *GroupsDeleteCall {
 	c := &GroupsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -5673,7 +7488,7 @@ func (c *GroupsDeleteCall) Header() http.Header {
 
 func (c *GroupsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5708,17 +7523,17 @@ func (c *GroupsDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, error) 
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -5773,9 +7588,9 @@ type GroupsGetCall struct {
 
 // Get: Retrieves a `Group`.
 //
-// - name: The resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the
-//   `Group` to retrieve. Must be of the form `groups/{group}`.
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     `Group` to retrieve. Must be of the form `groups/{group}`.
 func (r *GroupsService) Get(name string) *GroupsGetCall {
 	c := &GroupsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -5819,7 +7634,7 @@ func (c *GroupsGetCall) Header() http.Header {
 
 func (c *GroupsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5857,17 +7672,17 @@ func (c *GroupsGetCall) Do(opts ...googleapi.CallOption) (*Group, error) {
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Group{
 		ServerResponse: googleapi.ServerResponse{
@@ -5900,6 +7715,170 @@ func (c *GroupsGetCall) Do(opts ...googleapi.CallOption) (*Group, error) {
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "Group"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.groups",
+	//     "https://www.googleapis.com/auth/cloud-identity.groups.readonly",
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.groups.getSecuritySettings":
+
+type GroupsGetSecuritySettingsCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetSecuritySettings: Get Security Settings
+//
+//   - name: The security settings to retrieve. Format:
+//     `groups/{group_id}/securitySettings`.
+func (r *GroupsService) GetSecuritySettings(name string) *GroupsGetSecuritySettingsCall {
+	c := &GroupsGetSecuritySettingsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// ReadMask sets the optional parameter "readMask": Field-level read
+// mask of which fields to return. "*" returns all fields. If not
+// specified, all fields will be returned. May only contain the
+// following field: `member_restriction`.
+func (c *GroupsGetSecuritySettingsCall) ReadMask(readMask string) *GroupsGetSecuritySettingsCall {
+	c.urlParams_.Set("readMask", readMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *GroupsGetSecuritySettingsCall) Fields(s ...googleapi.Field) *GroupsGetSecuritySettingsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *GroupsGetSecuritySettingsCall) IfNoneMatch(entityTag string) *GroupsGetSecuritySettingsCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *GroupsGetSecuritySettingsCall) Context(ctx context.Context) *GroupsGetSecuritySettingsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *GroupsGetSecuritySettingsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *GroupsGetSecuritySettingsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.groups.getSecuritySettings" call.
+// Exactly one of *SecuritySettings or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *SecuritySettings.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *GroupsGetSecuritySettingsCall) Do(opts ...googleapi.CallOption) (*SecuritySettings, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &SecuritySettings{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Get Security Settings",
+	//   "flatPath": "v1/groups/{groupsId}/securitySettings",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.groups.getSecuritySettings",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The security settings to retrieve. Format: `groups/{group_id}/securitySettings`",
+	//       "location": "path",
+	//       "pattern": "^groups/[^/]+/securitySettings$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "readMask": {
+	//       "description": "Field-level read mask of which fields to return. \"*\" returns all fields. If not specified, all fields will be returned. May only contain the following field: `member_restriction`.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "SecuritySettings"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-identity.groups",
@@ -5950,8 +7929,10 @@ func (c *GroupsListCall) PageToken(pageToken string) *GroupsListCall {
 // Parent sets the optional parameter "parent": Required. The parent
 // resource under which to list all `Group` resources. Must be of the
 // form `identitysources/{identity_source}` for external-
-// identity-mapped groups or `customers/{customer}` for Google Groups.
-// The `customer` must begin with "C" (for example, 'C046psxkn').
+// identity-mapped groups or `customers/{customer_id}` for Google
+// Groups. The `customer_id` must begin with "C" (for example,
+// 'C046psxkn'). [Find your customer ID.]
+// (https://support.google.com/cloudidentity/answer/10070793)
 func (c *GroupsListCall) Parent(parent string) *GroupsListCall {
 	c.urlParams_.Set("parent", parent)
 	return c
@@ -5961,9 +7942,10 @@ func (c *GroupsListCall) Parent(parent string) *GroupsListCall {
 // returned. If unspecified, defaults to `View.BASIC`.
 //
 // Possible values:
-//   "VIEW_UNSPECIFIED" - Default. Should not be used.
-//   "BASIC" - Only basic resource information is returned.
-//   "FULL" - All resource information is returned.
+//
+//	"VIEW_UNSPECIFIED" - Default. Should not be used.
+//	"BASIC" - Only basic resource information is returned.
+//	"FULL" - All resource information is returned.
 func (c *GroupsListCall) View(view string) *GroupsListCall {
 	c.urlParams_.Set("view", view)
 	return c
@@ -6006,7 +7988,7 @@ func (c *GroupsListCall) Header() http.Header {
 
 func (c *GroupsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6041,17 +8023,17 @@ func (c *GroupsListCall) Do(opts ...googleapi.CallOption) (*ListGroupsResponse, 
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListGroupsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -6083,7 +8065,7 @@ func (c *GroupsListCall) Do(opts ...googleapi.CallOption) (*ListGroupsResponse, 
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "Required. The parent resource under which to list all `Group` resources. Must be of the form `identitysources/{identity_source}` for external- identity-mapped groups or `customers/{customer}` for Google Groups. The `customer` must begin with \"C\" (for example, 'C046psxkn').",
+	//       "description": "Required. The parent resource under which to list all `Group` resources. Must be of the form `identitysources/{identity_source}` for external- identity-mapped groups or `customers/{customer_id}` for Google Groups. The `customer_id` must begin with \"C\" (for example, 'C046psxkn'). [Find your customer ID.] (https://support.google.com/cloudidentity/answer/10070793)",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -6214,7 +8196,7 @@ func (c *GroupsLookupCall) Header() http.Header {
 
 func (c *GroupsLookupCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6249,17 +8231,17 @@ func (c *GroupsLookupCall) Do(opts ...googleapi.CallOption) (*LookupGroupNameRes
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &LookupGroupNameResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -6316,9 +8298,9 @@ type GroupsPatchCall struct {
 
 // Patch: Updates a `Group`.
 //
-// - name: Output only. The resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the
-//   `Group`. Shall be of the form `groups/{group}`.
+//   - name: Output only. The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     `Group`. Shall be of the form `groups/{group}`.
 func (r *GroupsService) Patch(name string, group *Group) *GroupsPatchCall {
 	c := &GroupsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -6361,7 +8343,7 @@ func (c *GroupsPatchCall) Header() http.Header {
 
 func (c *GroupsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6401,17 +8383,17 @@ func (c *GroupsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -6500,12 +8482,22 @@ func (c *GroupsSearchCall) PageToken(pageToken string) *GroupsSearchCall {
 }
 
 // Query sets the optional parameter "query": Required. The search
-// query. Must be specified in Common Expression Language
-// (https://opensource.google/projects/cel). May only contain equality
-// operators on the parent and inclusion operators on labels (e.g.,
-// `parent == 'customers/{customer}' &&
-// 'cloudidentity.googleapis.com/groups.discussion_forum' in labels`).
-// The `customer` must begin with "C" (for example, 'C046psxkn').
+// query. * Must be specified in Common Expression Language
+// (https://opensource.google/projects/cel). * Must contain equality
+// operators on the parent, e.g. `parent == 'customers/{customer_id}'`.
+// The `customer_id` must begin with "C" (for example, 'C046psxkn').
+// [Find your customer ID.]
+// (https://support.google.com/cloudidentity/answer/10070793) * Can
+// contain optional inclusion operators on `labels` such as
+// `'cloudidentity.googleapis.com/groups.discussion_forum' in labels`).
+// * Can contain an optional equality operator on `domain_name`. e.g.
+// `domain_name == 'abc.com'` * Can contain optional
+// `startsWith/contains/equality` operators on `group_key`, e.g.
+// `group_key.startsWith('dev')`, `group_key.contains('dev'), group_key
+// == 'dev@abc.com'` * Can contain optional
+// `startsWith/contains/equality` operators on `display_name`, such as
+// `display_name.startsWith('dev')` , `display_name.contains('dev')`,
+// `display_name == 'dev'`
 func (c *GroupsSearchCall) Query(query string) *GroupsSearchCall {
 	c.urlParams_.Set("query", query)
 	return c
@@ -6515,9 +8507,10 @@ func (c *GroupsSearchCall) Query(query string) *GroupsSearchCall {
 // returned. If unspecified, defaults to `View.BASIC`.
 //
 // Possible values:
-//   "VIEW_UNSPECIFIED" - Default. Should not be used.
-//   "BASIC" - Only basic resource information is returned.
-//   "FULL" - All resource information is returned.
+//
+//	"VIEW_UNSPECIFIED" - Default. Should not be used.
+//	"BASIC" - Only basic resource information is returned.
+//	"FULL" - All resource information is returned.
 func (c *GroupsSearchCall) View(view string) *GroupsSearchCall {
 	c.urlParams_.Set("view", view)
 	return c
@@ -6560,7 +8553,7 @@ func (c *GroupsSearchCall) Header() http.Header {
 
 func (c *GroupsSearchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6595,17 +8588,17 @@ func (c *GroupsSearchCall) Do(opts ...googleapi.CallOption) (*SearchGroupsRespon
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &SearchGroupsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -6637,7 +8630,7 @@ func (c *GroupsSearchCall) Do(opts ...googleapi.CallOption) (*SearchGroupsRespon
 	//       "type": "string"
 	//     },
 	//     "query": {
-	//       "description": "Required. The search query. Must be specified in [Common Expression Language](https://opensource.google/projects/cel). May only contain equality operators on the parent and inclusion operators on labels (e.g., `parent == 'customers/{customer}' \u0026\u0026 'cloudidentity.googleapis.com/groups.discussion_forum' in labels`). The `customer` must begin with \"C\" (for example, 'C046psxkn').",
+	//       "description": "Required. The search query. * Must be specified in [Common Expression Language](https://opensource.google/projects/cel). * Must contain equality operators on the parent, e.g. `parent == 'customers/{customer_id}'`. The `customer_id` must begin with \"C\" (for example, 'C046psxkn'). [Find your customer ID.] (https://support.google.com/cloudidentity/answer/10070793) * Can contain optional inclusion operators on `labels` such as `'cloudidentity.googleapis.com/groups.discussion_forum' in labels`). * Can contain an optional equality operator on `domain_name`. e.g. `domain_name == 'abc.com'` * Can contain optional `startsWith/contains/equality` operators on `group_key`, e.g. `group_key.startsWith('dev')`, `group_key.contains('dev'), group_key == 'dev@abc.com'` * Can contain optional `startsWith/contains/equality` operators on `display_name`, such as `display_name.startsWith('dev')` , `display_name.contains('dev')`, `display_name == 'dev'`",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -6691,6 +8684,164 @@ func (c *GroupsSearchCall) Pages(ctx context.Context, f func(*SearchGroupsRespon
 	}
 }
 
+// method id "cloudidentity.groups.updateSecuritySettings":
+
+type GroupsUpdateSecuritySettingsCall struct {
+	s                *Service
+	name             string
+	securitysettings *SecuritySettings
+	urlParams_       gensupport.URLParams
+	ctx_             context.Context
+	header_          http.Header
+}
+
+// UpdateSecuritySettings: Update Security Settings
+//
+//   - name: Output only. The resource name of the security settings.
+//     Shall be of the form `groups/{group_id}/securitySettings`.
+func (r *GroupsService) UpdateSecuritySettings(name string, securitysettings *SecuritySettings) *GroupsUpdateSecuritySettingsCall {
+	c := &GroupsUpdateSecuritySettingsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.securitysettings = securitysettings
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": Required. The
+// fully-qualified names of fields to update. May only contain the
+// following field: `member_restriction.query`.
+func (c *GroupsUpdateSecuritySettingsCall) UpdateMask(updateMask string) *GroupsUpdateSecuritySettingsCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *GroupsUpdateSecuritySettingsCall) Fields(s ...googleapi.Field) *GroupsUpdateSecuritySettingsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *GroupsUpdateSecuritySettingsCall) Context(ctx context.Context) *GroupsUpdateSecuritySettingsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *GroupsUpdateSecuritySettingsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *GroupsUpdateSecuritySettingsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.securitysettings)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PATCH", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.groups.updateSecuritySettings" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *GroupsUpdateSecuritySettingsCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Update Security Settings",
+	//   "flatPath": "v1/groups/{groupsId}/securitySettings",
+	//   "httpMethod": "PATCH",
+	//   "id": "cloudidentity.groups.updateSecuritySettings",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Output only. The resource name of the security settings. Shall be of the form `groups/{group_id}/securitySettings`.",
+	//       "location": "path",
+	//       "pattern": "^groups/[^/]+/securitySettings$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "Required. The fully-qualified names of fields to update. May only contain the following field: `member_restriction.query`.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "request": {
+	//     "$ref": "SecuritySettings"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-identity.groups",
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
 // method id "cloudidentity.groups.memberships.checkTransitiveMembership":
 
 type GroupsMembershipsCheckTransitiveMembershipCall struct {
@@ -6712,11 +8863,11 @@ type GroupsMembershipsCheckTransitiveMembershipCall struct {
 // member. The actor must have view permissions to at least one
 // transitive membership between the member and group.
 //
-// - parent: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the group
-//   to check the transitive membership in. Format: `groups/{group}`,
-//   where `group` is the unique id assigned to the Group to which the
-//   Membership belongs to.
+//   - parent: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the group
+//     to check the transitive membership in. Format: `groups/{group}`,
+//     where `group` is the unique id assigned to the Group to which the
+//     Membership belongs to.
 func (r *GroupsMembershipsService) CheckTransitiveMembership(parent string) *GroupsMembershipsCheckTransitiveMembershipCall {
 	c := &GroupsMembershipsCheckTransitiveMembershipCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -6771,7 +8922,7 @@ func (c *GroupsMembershipsCheckTransitiveMembershipCall) Header() http.Header {
 
 func (c *GroupsMembershipsCheckTransitiveMembershipCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6810,17 +8961,17 @@ func (c *GroupsMembershipsCheckTransitiveMembershipCall) Do(opts ...googleapi.Ca
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &CheckTransitiveMembershipResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -6881,8 +9032,8 @@ type GroupsMembershipsCreateCall struct {
 
 // Create: Creates a `Membership`.
 //
-// - parent: The parent `Group` resource under which to create the
-//   `Membership`. Must be of the form `groups/{group}`.
+//   - parent: The parent `Group` resource under which to create the
+//     `Membership`. Must be of the form `groups/{group}`.
 func (r *GroupsMembershipsService) Create(parent string, membership *Membership) *GroupsMembershipsCreateCall {
 	c := &GroupsMembershipsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -6917,7 +9068,7 @@ func (c *GroupsMembershipsCreateCall) Header() http.Header {
 
 func (c *GroupsMembershipsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6957,17 +9108,17 @@ func (c *GroupsMembershipsCreateCall) Do(opts ...googleapi.CallOption) (*Operati
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -7024,10 +9175,10 @@ type GroupsMembershipsDeleteCall struct {
 
 // Delete: Deletes a `Membership`.
 //
-// - name: The resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the
-//   `Membership` to delete. Must be of the form
-//   `groups/{group}/memberships/{membership}`.
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     `Membership` to delete. Must be of the form
+//     `groups/{group}/memberships/{membership}`.
 func (r *GroupsMembershipsService) Delete(name string) *GroupsMembershipsDeleteCall {
 	c := &GroupsMembershipsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -7061,7 +9212,7 @@ func (c *GroupsMembershipsDeleteCall) Header() http.Header {
 
 func (c *GroupsMembershipsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7096,17 +9247,17 @@ func (c *GroupsMembershipsDeleteCall) Do(opts ...googleapi.CallOption) (*Operati
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -7161,10 +9312,10 @@ type GroupsMembershipsGetCall struct {
 
 // Get: Retrieves a `Membership`.
 //
-// - name: The resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the
-//   `Membership` to retrieve. Must be of the form
-//   `groups/{group}/memberships/{membership}`.
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     `Membership` to retrieve. Must be of the form
+//     `groups/{group}/memberships/{membership}`.
 func (r *GroupsMembershipsService) Get(name string) *GroupsMembershipsGetCall {
 	c := &GroupsMembershipsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -7208,7 +9359,7 @@ func (c *GroupsMembershipsGetCall) Header() http.Header {
 
 func (c *GroupsMembershipsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7246,17 +9397,17 @@ func (c *GroupsMembershipsGetCall) Do(opts ...googleapi.CallOption) (*Membership
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Membership{
 		ServerResponse: googleapi.ServerResponse{
@@ -7320,15 +9471,15 @@ type GroupsMembershipsGetMembershipGraphCall struct {
 // the response will contain all membership paths between the group and
 // the member.
 //
-// - parent: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the group
-//   to search transitive memberships in. Format: `groups/{group}`,
-//   where `group` is the unique ID assigned to the Group to which the
-//   Membership belongs to. group can be a wildcard collection id "-".
-//   When a group is specified, the membership graph will be constrained
-//   to paths between the member (defined in the query) and the parent.
-//   If a wildcard collection is provided, all membership paths
-//   connected to the member will be returned.
+//   - parent: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the group
+//     to search transitive memberships in. Format: `groups/{group}`,
+//     where `group` is the unique ID assigned to the Group to which the
+//     Membership belongs to. group can be a wildcard collection id "-".
+//     When a group is specified, the membership graph will be constrained
+//     to paths between the member (defined in the query) and the parent.
+//     If a wildcard collection is provided, all membership paths
+//     connected to the member will be returned.
 func (r *GroupsMembershipsService) GetMembershipGraph(parent string) *GroupsMembershipsGetMembershipGraphCall {
 	c := &GroupsMembershipsGetMembershipGraphCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -7383,7 +9534,7 @@ func (c *GroupsMembershipsGetMembershipGraphCall) Header() http.Header {
 
 func (c *GroupsMembershipsGetMembershipGraphCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7421,17 +9572,17 @@ func (c *GroupsMembershipsGetMembershipGraphCall) Do(opts ...googleapi.CallOptio
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -7492,8 +9643,8 @@ type GroupsMembershipsListCall struct {
 
 // List: Lists the `Membership`s within a `Group`.
 //
-// - parent: The parent `Group` resource under which to lookup the
-//   `Membership` name. Must be of the form `groups/{group}`.
+//   - parent: The parent `Group` resource under which to lookup the
+//     `Membership` name. Must be of the form `groups/{group}`.
 func (r *GroupsMembershipsService) List(parent string) *GroupsMembershipsListCall {
 	c := &GroupsMembershipsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -7525,9 +9676,10 @@ func (c *GroupsMembershipsListCall) PageToken(pageToken string) *GroupsMembershi
 // returned. If unspecified, defaults to `View.BASIC`.
 //
 // Possible values:
-//   "VIEW_UNSPECIFIED" - Default. Should not be used.
-//   "BASIC" - Only basic resource information is returned.
-//   "FULL" - All resource information is returned.
+//
+//	"VIEW_UNSPECIFIED" - Default. Should not be used.
+//	"BASIC" - Only basic resource information is returned.
+//	"FULL" - All resource information is returned.
 func (c *GroupsMembershipsListCall) View(view string) *GroupsMembershipsListCall {
 	c.urlParams_.Set("view", view)
 	return c
@@ -7570,7 +9722,7 @@ func (c *GroupsMembershipsListCall) Header() http.Header {
 
 func (c *GroupsMembershipsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7608,17 +9760,17 @@ func (c *GroupsMembershipsListCall) Do(opts ...googleapi.CallOption) (*ListMembe
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListMembershipsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -7723,8 +9875,8 @@ type GroupsMembershipsLookupCall struct {
 // (https://cloud.google.com/apis/design/resource_names) of a
 // `Membership` by its `EntityKey`.
 //
-// - parent: The parent `Group` resource under which to lookup the
-//   `Membership` name. Must be of the form `groups/{group}`.
+//   - parent: The parent `Group` resource under which to lookup the
+//     `Membership` name. Must be of the form `groups/{group}`.
 func (r *GroupsMembershipsService) Lookup(parent string) *GroupsMembershipsLookupCall {
 	c := &GroupsMembershipsLookupCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -7790,7 +9942,7 @@ func (c *GroupsMembershipsLookupCall) Header() http.Header {
 
 func (c *GroupsMembershipsLookupCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7828,17 +9980,17 @@ func (c *GroupsMembershipsLookupCall) Do(opts ...googleapi.CallOption) (*LookupM
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &LookupMembershipNameResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -7905,10 +10057,10 @@ type GroupsMembershipsModifyMembershipRolesCall struct {
 // ModifyMembershipRoles: Modifies the `MembershipRole`s of a
 // `Membership`.
 //
-// - name: The resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the
-//   `Membership` whose roles are to be modified. Must be of the form
-//   `groups/{group}/memberships/{membership}`.
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     `Membership` whose roles are to be modified. Must be of the form
+//     `groups/{group}/memberships/{membership}`.
 func (r *GroupsMembershipsService) ModifyMembershipRoles(name string, modifymembershiprolesrequest *ModifyMembershipRolesRequest) *GroupsMembershipsModifyMembershipRolesCall {
 	c := &GroupsMembershipsModifyMembershipRolesCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -7943,7 +10095,7 @@ func (c *GroupsMembershipsModifyMembershipRolesCall) Header() http.Header {
 
 func (c *GroupsMembershipsModifyMembershipRolesCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7983,17 +10135,17 @@ func (c *GroupsMembershipsModifyMembershipRolesCall) Do(opts ...googleapi.CallOp
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ModifyMembershipRolesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -8058,11 +10210,11 @@ type GroupsMembershipsSearchTransitiveGroupsCall struct {
 // indirect membership to the member. Actor must have view permissions
 // all transitive groups.
 //
-// - parent: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the group
-//   to search transitive memberships in. Format: `groups/{group}`,
-//   where `group` is always '-' as this API will search across all
-//   groups for a given member.
+//   - parent: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the group
+//     to search transitive memberships in. Format: `groups/{group}`,
+//     where `group` is always '-' as this API will search across all
+//     groups for a given member.
 func (r *GroupsMembershipsService) SearchTransitiveGroups(parent string) *GroupsMembershipsSearchTransitiveGroupsCall {
 	c := &GroupsMembershipsSearchTransitiveGroupsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -8090,7 +10242,14 @@ func (c *GroupsMembershipsSearchTransitiveGroupsCall) PageToken(pageToken string
 // are uniquely identified by both a `member_key_id` and a
 // `member_key_namespace`, which requires an additional query input:
 // `member_key_namespace`. Example query: `member_key_id ==
-// 'member_key_id_value' && in labels`
+// 'member_key_id_value' && in labels` Query may optionally contain
+// equality operators on the parent of the group restricting the search
+// within a particular customer, e.g. `parent ==
+// 'customers/{customer_id}'`. The `customer_id` must begin with "C"
+// (for example, 'C046psxkn'). This filtering is only supported for
+// Admins with groups read permissons on the input customer. Example
+// query: `member_key_id == 'member_key_id_value' && in labels && parent
+// == 'customers/C046psxkn'`
 func (c *GroupsMembershipsSearchTransitiveGroupsCall) Query(query string) *GroupsMembershipsSearchTransitiveGroupsCall {
 	c.urlParams_.Set("query", query)
 	return c
@@ -8133,7 +10292,7 @@ func (c *GroupsMembershipsSearchTransitiveGroupsCall) Header() http.Header {
 
 func (c *GroupsMembershipsSearchTransitiveGroupsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8171,17 +10330,17 @@ func (c *GroupsMembershipsSearchTransitiveGroupsCall) Do(opts ...googleapi.CallO
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &SearchTransitiveGroupsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -8222,7 +10381,7 @@ func (c *GroupsMembershipsSearchTransitiveGroupsCall) Do(opts ...googleapi.CallO
 	//       "type": "string"
 	//     },
 	//     "query": {
-	//       "description": "Required. A CEL expression that MUST include member specification AND label(s). This is a `required` field. Users can search on label attributes of groups. CONTAINS match ('in') is supported on labels. Identity-mapped groups are uniquely identified by both a `member_key_id` and a `member_key_namespace`, which requires an additional query input: `member_key_namespace`. Example query: `member_key_id == 'member_key_id_value' \u0026\u0026 in labels`",
+	//       "description": "Required. A CEL expression that MUST include member specification AND label(s). This is a `required` field. Users can search on label attributes of groups. CONTAINS match ('in') is supported on labels. Identity-mapped groups are uniquely identified by both a `member_key_id` and a `member_key_namespace`, which requires an additional query input: `member_key_namespace`. Example query: `member_key_id == 'member_key_id_value' \u0026\u0026 in labels` Query may optionally contain equality operators on the parent of the group restricting the search within a particular customer, e.g. `parent == 'customers/{customer_id}'`. The `customer_id` must begin with \"C\" (for example, 'C046psxkn'). This filtering is only supported for Admins with groups read permissons on the input customer. Example query: `member_key_id == 'member_key_id_value' \u0026\u0026 in labels \u0026\u0026 parent == 'customers/C046psxkn'`",
 	//       "location": "query",
 	//       "type": "string"
 	//     }
@@ -8281,10 +10440,10 @@ type GroupsMembershipsSearchTransitiveMembershipsCall struct {
 // membership of a group. Actor must have view permissions to all
 // transitive memberships.
 //
-// - parent: Resource name
-//   (https://cloud.google.com/apis/design/resource_names) of the group
-//   to search transitive memberships in. Format: `groups/{group}`,
-//   where `group` is the unique ID assigned to the Group.
+//   - parent: Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the group
+//     to search transitive memberships in. Format: `groups/{group}`,
+//     where `group` is the unique ID assigned to the Group.
 func (r *GroupsMembershipsService) SearchTransitiveMemberships(parent string) *GroupsMembershipsSearchTransitiveMembershipsCall {
 	c := &GroupsMembershipsSearchTransitiveMembershipsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -8342,7 +10501,7 @@ func (c *GroupsMembershipsSearchTransitiveMembershipsCall) Header() http.Header 
 
 func (c *GroupsMembershipsSearchTransitiveMembershipsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8381,17 +10540,17 @@ func (c *GroupsMembershipsSearchTransitiveMembershipsCall) Do(opts ...googleapi.
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &SearchTransitiveMembershipsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -8464,4 +10623,2172 @@ func (c *GroupsMembershipsSearchTransitiveMembershipsCall) Pages(ctx context.Con
 		}
 		c.PageToken(x.NextPageToken)
 	}
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.create":
+
+type InboundSamlSsoProfilesCreateCall struct {
+	s                     *Service
+	inboundsamlssoprofile *InboundSamlSsoProfile
+	urlParams_            gensupport.URLParams
+	ctx_                  context.Context
+	header_               http.Header
+}
+
+// Create: Creates an InboundSamlSsoProfile for a customer.
+func (r *InboundSamlSsoProfilesService) Create(inboundsamlssoprofile *InboundSamlSsoProfile) *InboundSamlSsoProfilesCreateCall {
+	c := &InboundSamlSsoProfilesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.inboundsamlssoprofile = inboundsamlssoprofile
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesCreateCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesCreateCall) Context(ctx context.Context) *InboundSamlSsoProfilesCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.inboundsamlssoprofile)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/inboundSamlSsoProfiles")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.create" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *InboundSamlSsoProfilesCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates an InboundSamlSsoProfile for a customer.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles",
+	//   "httpMethod": "POST",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.create",
+	//   "parameterOrder": [],
+	//   "parameters": {},
+	//   "path": "v1/inboundSamlSsoProfiles",
+	//   "request": {
+	//     "$ref": "InboundSamlSsoProfile"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.delete":
+
+type InboundSamlSsoProfilesDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes an InboundSamlSsoProfile.
+//
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     InboundSamlSsoProfile to delete. Format:
+//     `inboundSamlSsoProfiles/{sso_profile_id}`.
+func (r *InboundSamlSsoProfilesService) Delete(name string) *InboundSamlSsoProfilesDeleteCall {
+	c := &InboundSamlSsoProfilesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesDeleteCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesDeleteCall) Context(ctx context.Context) *InboundSamlSsoProfilesDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("DELETE", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.delete" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *InboundSamlSsoProfilesDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes an InboundSamlSsoProfile.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.delete",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The [resource name](https://cloud.google.com/apis/design/resource_names) of the InboundSamlSsoProfile to delete. Format: `inboundSamlSsoProfiles/{sso_profile_id}`",
+	//       "location": "path",
+	//       "pattern": "^inboundSamlSsoProfiles/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.get":
+
+type InboundSamlSsoProfilesGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets an InboundSamlSsoProfile.
+//
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     InboundSamlSsoProfile to get. Format:
+//     `inboundSamlSsoProfiles/{sso_profile_id}`.
+func (r *InboundSamlSsoProfilesService) Get(name string) *InboundSamlSsoProfilesGetCall {
+	c := &InboundSamlSsoProfilesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesGetCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *InboundSamlSsoProfilesGetCall) IfNoneMatch(entityTag string) *InboundSamlSsoProfilesGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesGetCall) Context(ctx context.Context) *InboundSamlSsoProfilesGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.get" call.
+// Exactly one of *InboundSamlSsoProfile or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *InboundSamlSsoProfile.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *InboundSamlSsoProfilesGetCall) Do(opts ...googleapi.CallOption) (*InboundSamlSsoProfile, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &InboundSamlSsoProfile{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets an InboundSamlSsoProfile.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The [resource name](https://cloud.google.com/apis/design/resource_names) of the InboundSamlSsoProfile to get. Format: `inboundSamlSsoProfiles/{sso_profile_id}`",
+	//       "location": "path",
+	//       "pattern": "^inboundSamlSsoProfiles/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "InboundSamlSsoProfile"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.list":
+
+type InboundSamlSsoProfilesListCall struct {
+	s            *Service
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists InboundSamlSsoProfiles for a customer.
+func (r *InboundSamlSsoProfilesService) List() *InboundSamlSsoProfilesListCall {
+	c := &InboundSamlSsoProfilesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	return c
+}
+
+// Filter sets the optional parameter "filter": A Common Expression
+// Language (https://github.com/google/cel-spec) expression to filter
+// the results. The only supported filter is filtering by customer. For
+// example: `customer=="customers/C0123abc". Omitting the filter or
+// specifying a filter of `customer=="customers/my_customer" will
+// return the profiles for the customer that the caller (authenticated
+// user) belongs to.
+func (c *InboundSamlSsoProfilesListCall) Filter(filter string) *InboundSamlSsoProfilesListCall {
+	c.urlParams_.Set("filter", filter)
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of InboundSamlSsoProfiles to return. The service may return fewer
+// than this value. If omitted (or defaulted to zero) the server will
+// use a sensible default. This default may change over time. The
+// maximum allowed value is 100. Requests with page_size greater than
+// that will be silently interpreted as having this maximum value.
+func (c *InboundSamlSsoProfilesListCall) PageSize(pageSize int64) *InboundSamlSsoProfilesListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A page token,
+// received from a previous `ListInboundSamlSsoProfiles` call. Provide
+// this to retrieve the subsequent page. When paginating, all other
+// parameters provided to `ListInboundSamlSsoProfiles` must match the
+// call that provided the page token.
+func (c *InboundSamlSsoProfilesListCall) PageToken(pageToken string) *InboundSamlSsoProfilesListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesListCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *InboundSamlSsoProfilesListCall) IfNoneMatch(entityTag string) *InboundSamlSsoProfilesListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesListCall) Context(ctx context.Context) *InboundSamlSsoProfilesListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/inboundSamlSsoProfiles")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.list" call.
+// Exactly one of *ListInboundSamlSsoProfilesResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *ListInboundSamlSsoProfilesResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *InboundSamlSsoProfilesListCall) Do(opts ...googleapi.CallOption) (*ListInboundSamlSsoProfilesResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &ListInboundSamlSsoProfilesResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists InboundSamlSsoProfiles for a customer.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.list",
+	//   "parameterOrder": [],
+	//   "parameters": {
+	//     "filter": {
+	//       "description": "A [Common Expression Language](https://github.com/google/cel-spec) expression to filter the results. The only supported filter is filtering by customer. For example: `customer==\"customers/C0123abc\"`. Omitting the filter or specifying a filter of `customer==\"customers/my_customer\"` will return the profiles for the customer that the caller (authenticated user) belongs to.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "The maximum number of InboundSamlSsoProfiles to return. The service may return fewer than this value. If omitted (or defaulted to zero) the server will use a sensible default. This default may change over time. The maximum allowed value is 100. Requests with page_size greater than that will be silently interpreted as having this maximum value.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A page token, received from a previous `ListInboundSamlSsoProfiles` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListInboundSamlSsoProfiles` must match the call that provided the page token.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/inboundSamlSsoProfiles",
+	//   "response": {
+	//     "$ref": "ListInboundSamlSsoProfilesResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *InboundSamlSsoProfilesListCall) Pages(ctx context.Context, f func(*ListInboundSamlSsoProfilesResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.patch":
+
+type InboundSamlSsoProfilesPatchCall struct {
+	s                     *Service
+	name                  string
+	inboundsamlssoprofile *InboundSamlSsoProfile
+	urlParams_            gensupport.URLParams
+	ctx_                  context.Context
+	header_               http.Header
+}
+
+// Patch: Updates an InboundSamlSsoProfile.
+//
+//   - name: Output only. Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the SAML
+//     SSO profile.
+func (r *InboundSamlSsoProfilesService) Patch(name string, inboundsamlssoprofile *InboundSamlSsoProfile) *InboundSamlSsoProfilesPatchCall {
+	c := &InboundSamlSsoProfilesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.inboundsamlssoprofile = inboundsamlssoprofile
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": Required. The
+// list of fields to be updated.
+func (c *InboundSamlSsoProfilesPatchCall) UpdateMask(updateMask string) *InboundSamlSsoProfilesPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesPatchCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesPatchCall) Context(ctx context.Context) *InboundSamlSsoProfilesPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.inboundsamlssoprofile)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PATCH", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.patch" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *InboundSamlSsoProfilesPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Updates an InboundSamlSsoProfile.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}",
+	//   "httpMethod": "PATCH",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.patch",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Output only. [Resource name](https://cloud.google.com/apis/design/resource_names) of the SAML SSO profile.",
+	//       "location": "path",
+	//       "pattern": "^inboundSamlSsoProfiles/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "Required. The list of fields to be updated.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "request": {
+	//     "$ref": "InboundSamlSsoProfile"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.idpCredentials.add":
+
+type InboundSamlSsoProfilesIdpCredentialsAddCall struct {
+	s                       *Service
+	parent                  string
+	addidpcredentialrequest *AddIdpCredentialRequest
+	urlParams_              gensupport.URLParams
+	ctx_                    context.Context
+	header_                 http.Header
+}
+
+// Add: Adds an IdpCredential. Up to 2 credentials are allowed.
+//
+//   - parent: The InboundSamlSsoProfile that owns the IdpCredential.
+//     Format: `inboundSamlSsoProfiles/{sso_profile_id}`.
+func (r *InboundSamlSsoProfilesIdpCredentialsService) Add(parent string, addidpcredentialrequest *AddIdpCredentialRequest) *InboundSamlSsoProfilesIdpCredentialsAddCall {
+	c := &InboundSamlSsoProfilesIdpCredentialsAddCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.addidpcredentialrequest = addidpcredentialrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesIdpCredentialsAddCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesIdpCredentialsAddCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesIdpCredentialsAddCall) Context(ctx context.Context) *InboundSamlSsoProfilesIdpCredentialsAddCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesIdpCredentialsAddCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesIdpCredentialsAddCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.addidpcredentialrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/idpCredentials:add")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.idpCredentials.add" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *InboundSamlSsoProfilesIdpCredentialsAddCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Adds an IdpCredential. Up to 2 credentials are allowed.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}/idpCredentials:add",
+	//   "httpMethod": "POST",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.idpCredentials.add",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "parent": {
+	//       "description": "Required. The InboundSamlSsoProfile that owns the IdpCredential. Format: `inboundSamlSsoProfiles/{sso_profile_id}`",
+	//       "location": "path",
+	//       "pattern": "^inboundSamlSsoProfiles/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+parent}/idpCredentials:add",
+	//   "request": {
+	//     "$ref": "AddIdpCredentialRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.idpCredentials.delete":
+
+type InboundSamlSsoProfilesIdpCredentialsDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes an IdpCredential.
+//
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     IdpCredential to delete. Format:
+//     `inboundSamlSsoProfiles/{sso_profile_id}/idpCredentials/{idp_credent
+//     ial_id}`.
+func (r *InboundSamlSsoProfilesIdpCredentialsService) Delete(name string) *InboundSamlSsoProfilesIdpCredentialsDeleteCall {
+	c := &InboundSamlSsoProfilesIdpCredentialsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesIdpCredentialsDeleteCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesIdpCredentialsDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesIdpCredentialsDeleteCall) Context(ctx context.Context) *InboundSamlSsoProfilesIdpCredentialsDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesIdpCredentialsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesIdpCredentialsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("DELETE", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.idpCredentials.delete" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *InboundSamlSsoProfilesIdpCredentialsDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes an IdpCredential.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}/idpCredentials/{idpCredentialsId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.idpCredentials.delete",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The [resource name](https://cloud.google.com/apis/design/resource_names) of the IdpCredential to delete. Format: `inboundSamlSsoProfiles/{sso_profile_id}/idpCredentials/{idp_credential_id}`",
+	//       "location": "path",
+	//       "pattern": "^inboundSamlSsoProfiles/[^/]+/idpCredentials/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.idpCredentials.get":
+
+type InboundSamlSsoProfilesIdpCredentialsGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets an IdpCredential.
+//
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     IdpCredential to retrieve. Format:
+//     `inboundSamlSsoProfiles/{sso_profile_id}/idpCredentials/{idp_credent
+//     ial_id}`.
+func (r *InboundSamlSsoProfilesIdpCredentialsService) Get(name string) *InboundSamlSsoProfilesIdpCredentialsGetCall {
+	c := &InboundSamlSsoProfilesIdpCredentialsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesIdpCredentialsGetCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesIdpCredentialsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *InboundSamlSsoProfilesIdpCredentialsGetCall) IfNoneMatch(entityTag string) *InboundSamlSsoProfilesIdpCredentialsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesIdpCredentialsGetCall) Context(ctx context.Context) *InboundSamlSsoProfilesIdpCredentialsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesIdpCredentialsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesIdpCredentialsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.idpCredentials.get" call.
+// Exactly one of *IdpCredential or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *IdpCredential.ServerResponse.Header or (if a response was returned
+// at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *InboundSamlSsoProfilesIdpCredentialsGetCall) Do(opts ...googleapi.CallOption) (*IdpCredential, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &IdpCredential{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets an IdpCredential.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}/idpCredentials/{idpCredentialsId}",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.idpCredentials.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The [resource name](https://cloud.google.com/apis/design/resource_names) of the IdpCredential to retrieve. Format: `inboundSamlSsoProfiles/{sso_profile_id}/idpCredentials/{idp_credential_id}`",
+	//       "location": "path",
+	//       "pattern": "^inboundSamlSsoProfiles/[^/]+/idpCredentials/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "IdpCredential"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSamlSsoProfiles.idpCredentials.list":
+
+type InboundSamlSsoProfilesIdpCredentialsListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Returns a list of IdpCredentials in an InboundSamlSsoProfile.
+//
+//   - parent: The parent, which owns this collection of `IdpCredential`s.
+//     Format: `inboundSamlSsoProfiles/{sso_profile_id}`.
+func (r *InboundSamlSsoProfilesIdpCredentialsService) List(parent string) *InboundSamlSsoProfilesIdpCredentialsListCall {
+	c := &InboundSamlSsoProfilesIdpCredentialsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of `IdpCredential`s to return. The service may return fewer than this
+// value.
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) PageSize(pageSize int64) *InboundSamlSsoProfilesIdpCredentialsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A page token,
+// received from a previous `ListIdpCredentials` call. Provide this to
+// retrieve the subsequent page. When paginating, all other parameters
+// provided to `ListIdpCredentials` must match the call that provided
+// the page token.
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) PageToken(pageToken string) *InboundSamlSsoProfilesIdpCredentialsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) Fields(s ...googleapi.Field) *InboundSamlSsoProfilesIdpCredentialsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) IfNoneMatch(entityTag string) *InboundSamlSsoProfilesIdpCredentialsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) Context(ctx context.Context) *InboundSamlSsoProfilesIdpCredentialsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/idpCredentials")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSamlSsoProfiles.idpCredentials.list" call.
+// Exactly one of *ListIdpCredentialsResponse or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *ListIdpCredentialsResponse.ServerResponse.Header or (if a response
+// was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) Do(opts ...googleapi.CallOption) (*ListIdpCredentialsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &ListIdpCredentialsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Returns a list of IdpCredentials in an InboundSamlSsoProfile.",
+	//   "flatPath": "v1/inboundSamlSsoProfiles/{inboundSamlSsoProfilesId}/idpCredentials",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.inboundSamlSsoProfiles.idpCredentials.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "pageSize": {
+	//       "description": "The maximum number of `IdpCredential`s to return. The service may return fewer than this value.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A page token, received from a previous `ListIdpCredentials` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListIdpCredentials` must match the call that provided the page token.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. The parent, which owns this collection of `IdpCredential`s. Format: `inboundSamlSsoProfiles/{sso_profile_id}`",
+	//       "location": "path",
+	//       "pattern": "^inboundSamlSsoProfiles/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+parent}/idpCredentials",
+	//   "response": {
+	//     "$ref": "ListIdpCredentialsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *InboundSamlSsoProfilesIdpCredentialsListCall) Pages(ctx context.Context, f func(*ListIdpCredentialsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "cloudidentity.inboundSsoAssignments.create":
+
+type InboundSsoAssignmentsCreateCall struct {
+	s                    *Service
+	inboundssoassignment *InboundSsoAssignment
+	urlParams_           gensupport.URLParams
+	ctx_                 context.Context
+	header_              http.Header
+}
+
+// Create: Creates an InboundSsoAssignment for users and devices in a
+// `Customer` under a given `Group` or `OrgUnit`.
+func (r *InboundSsoAssignmentsService) Create(inboundssoassignment *InboundSsoAssignment) *InboundSsoAssignmentsCreateCall {
+	c := &InboundSsoAssignmentsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.inboundssoassignment = inboundssoassignment
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSsoAssignmentsCreateCall) Fields(s ...googleapi.Field) *InboundSsoAssignmentsCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSsoAssignmentsCreateCall) Context(ctx context.Context) *InboundSsoAssignmentsCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSsoAssignmentsCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSsoAssignmentsCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.inboundssoassignment)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/inboundSsoAssignments")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSsoAssignments.create" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *InboundSsoAssignmentsCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates an InboundSsoAssignment for users and devices in a `Customer` under a given `Group` or `OrgUnit`.",
+	//   "flatPath": "v1/inboundSsoAssignments",
+	//   "httpMethod": "POST",
+	//   "id": "cloudidentity.inboundSsoAssignments.create",
+	//   "parameterOrder": [],
+	//   "parameters": {},
+	//   "path": "v1/inboundSsoAssignments",
+	//   "request": {
+	//     "$ref": "InboundSsoAssignment"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSsoAssignments.delete":
+
+type InboundSsoAssignmentsDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes an InboundSsoAssignment. To disable SSO, Create (or
+// Update) an assignment that has `sso_mode` == `SSO_OFF`.
+//
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     InboundSsoAssignment to delete. Format:
+//     `inboundSsoAssignments/{assignment}`.
+func (r *InboundSsoAssignmentsService) Delete(name string) *InboundSsoAssignmentsDeleteCall {
+	c := &InboundSsoAssignmentsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSsoAssignmentsDeleteCall) Fields(s ...googleapi.Field) *InboundSsoAssignmentsDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSsoAssignmentsDeleteCall) Context(ctx context.Context) *InboundSsoAssignmentsDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSsoAssignmentsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSsoAssignmentsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("DELETE", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSsoAssignments.delete" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *InboundSsoAssignmentsDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes an InboundSsoAssignment. To disable SSO, Create (or Update) an assignment that has `sso_mode` == `SSO_OFF`.",
+	//   "flatPath": "v1/inboundSsoAssignments/{inboundSsoAssignmentsId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "cloudidentity.inboundSsoAssignments.delete",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The [resource name](https://cloud.google.com/apis/design/resource_names) of the InboundSsoAssignment to delete. Format: `inboundSsoAssignments/{assignment}`",
+	//       "location": "path",
+	//       "pattern": "^inboundSsoAssignments/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSsoAssignments.get":
+
+type InboundSsoAssignmentsGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets an InboundSsoAssignment.
+//
+//   - name: The resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     InboundSsoAssignment to fetch. Format:
+//     `inboundSsoAssignments/{assignment}`.
+func (r *InboundSsoAssignmentsService) Get(name string) *InboundSsoAssignmentsGetCall {
+	c := &InboundSsoAssignmentsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSsoAssignmentsGetCall) Fields(s ...googleapi.Field) *InboundSsoAssignmentsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *InboundSsoAssignmentsGetCall) IfNoneMatch(entityTag string) *InboundSsoAssignmentsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSsoAssignmentsGetCall) Context(ctx context.Context) *InboundSsoAssignmentsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSsoAssignmentsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSsoAssignmentsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSsoAssignments.get" call.
+// Exactly one of *InboundSsoAssignment or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *InboundSsoAssignment.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *InboundSsoAssignmentsGetCall) Do(opts ...googleapi.CallOption) (*InboundSsoAssignment, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &InboundSsoAssignment{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets an InboundSsoAssignment.",
+	//   "flatPath": "v1/inboundSsoAssignments/{inboundSsoAssignmentsId}",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.inboundSsoAssignments.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The [resource name](https://cloud.google.com/apis/design/resource_names) of the InboundSsoAssignment to fetch. Format: `inboundSsoAssignments/{assignment}`",
+	//       "location": "path",
+	//       "pattern": "^inboundSsoAssignments/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "response": {
+	//     "$ref": "InboundSsoAssignment"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudidentity.inboundSsoAssignments.list":
+
+type InboundSsoAssignmentsListCall struct {
+	s            *Service
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists the InboundSsoAssignments for a `Customer`.
+func (r *InboundSsoAssignmentsService) List() *InboundSsoAssignmentsListCall {
+	c := &InboundSsoAssignmentsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	return c
+}
+
+// Filter sets the optional parameter "filter": A CEL expression to
+// filter the results. The only supported filter is filtering by
+// customer. For example: `customer==customers/C0123abc`. Omitting the
+// filter or specifying a filter of `customer==customers/my_customer`
+// will return the assignments for the customer that the caller
+// (authenticated user) belongs to.
+func (c *InboundSsoAssignmentsListCall) Filter(filter string) *InboundSsoAssignmentsListCall {
+	c.urlParams_.Set("filter", filter)
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of assignments to return. The service may return fewer than this
+// value. If omitted (or defaulted to zero) the server will use a
+// sensible default. This default may change over time. The maximum
+// allowed value is 100, though requests with page_size greater than
+// that will be silently interpreted as having this maximum value. This
+// may increase in the futue.
+func (c *InboundSsoAssignmentsListCall) PageSize(pageSize int64) *InboundSsoAssignmentsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": A page token,
+// received from a previous `ListInboundSsoAssignments` call. Provide
+// this to retrieve the subsequent page. When paginating, all other
+// parameters provided to `ListInboundSsoAssignments` must match the
+// call that provided the page token.
+func (c *InboundSsoAssignmentsListCall) PageToken(pageToken string) *InboundSsoAssignmentsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSsoAssignmentsListCall) Fields(s ...googleapi.Field) *InboundSsoAssignmentsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *InboundSsoAssignmentsListCall) IfNoneMatch(entityTag string) *InboundSsoAssignmentsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSsoAssignmentsListCall) Context(ctx context.Context) *InboundSsoAssignmentsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSsoAssignmentsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSsoAssignmentsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/inboundSsoAssignments")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSsoAssignments.list" call.
+// Exactly one of *ListInboundSsoAssignmentsResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *ListInboundSsoAssignmentsResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *InboundSsoAssignmentsListCall) Do(opts ...googleapi.CallOption) (*ListInboundSsoAssignmentsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &ListInboundSsoAssignmentsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists the InboundSsoAssignments for a `Customer`.",
+	//   "flatPath": "v1/inboundSsoAssignments",
+	//   "httpMethod": "GET",
+	//   "id": "cloudidentity.inboundSsoAssignments.list",
+	//   "parameterOrder": [],
+	//   "parameters": {
+	//     "filter": {
+	//       "description": "A CEL expression to filter the results. The only supported filter is filtering by customer. For example: `customer==customers/C0123abc`. Omitting the filter or specifying a filter of `customer==customers/my_customer` will return the assignments for the customer that the caller (authenticated user) belongs to.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "pageSize": {
+	//       "description": "The maximum number of assignments to return. The service may return fewer than this value. If omitted (or defaulted to zero) the server will use a sensible default. This default may change over time. The maximum allowed value is 100, though requests with page_size greater than that will be silently interpreted as having this maximum value. This may increase in the futue.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "A page token, received from a previous `ListInboundSsoAssignments` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListInboundSsoAssignments` must match the call that provided the page token.",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/inboundSsoAssignments",
+	//   "response": {
+	//     "$ref": "ListInboundSsoAssignmentsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *InboundSsoAssignmentsListCall) Pages(ctx context.Context, f func(*ListInboundSsoAssignmentsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "cloudidentity.inboundSsoAssignments.patch":
+
+type InboundSsoAssignmentsPatchCall struct {
+	s                    *Service
+	name                 string
+	inboundssoassignment *InboundSsoAssignment
+	urlParams_           gensupport.URLParams
+	ctx_                 context.Context
+	header_              http.Header
+}
+
+// Patch: Updates an InboundSsoAssignment. The body of this request is
+// the `inbound_sso_assignment` field and the `update_mask` is relative
+// to that. For example: a PATCH to
+// `/v1/inboundSsoAssignments/0abcdefg1234567&update_mask=rank` with a
+// body of `{ "rank": 1 }` moves that (presumably group-targeted) SSO
+// assignment to the highest priority and shifts any other
+// group-targeted assignments down in priority.
+//
+//   - name: Output only. Resource name
+//     (https://cloud.google.com/apis/design/resource_names) of the
+//     Inbound SSO Assignment.
+func (r *InboundSsoAssignmentsService) Patch(name string, inboundssoassignment *InboundSsoAssignment) *InboundSsoAssignmentsPatchCall {
+	c := &InboundSsoAssignmentsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.inboundssoassignment = inboundssoassignment
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": Required. The
+// list of fields to be updated.
+func (c *InboundSsoAssignmentsPatchCall) UpdateMask(updateMask string) *InboundSsoAssignmentsPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *InboundSsoAssignmentsPatchCall) Fields(s ...googleapi.Field) *InboundSsoAssignmentsPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *InboundSsoAssignmentsPatchCall) Context(ctx context.Context) *InboundSsoAssignmentsPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *InboundSsoAssignmentsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *InboundSsoAssignmentsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.inboundssoassignment)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PATCH", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudidentity.inboundSsoAssignments.patch" call.
+// Exactly one of *Operation or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *InboundSsoAssignmentsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Updates an InboundSsoAssignment. The body of this request is the `inbound_sso_assignment` field and the `update_mask` is relative to that. For example: a PATCH to `/v1/inboundSsoAssignments/0abcdefg1234567\u0026update_mask=rank` with a body of `{ \"rank\": 1 }` moves that (presumably group-targeted) SSO assignment to the highest priority and shifts any other group-targeted assignments down in priority.",
+	//   "flatPath": "v1/inboundSsoAssignments/{inboundSsoAssignmentsId}",
+	//   "httpMethod": "PATCH",
+	//   "id": "cloudidentity.inboundSsoAssignments.patch",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Output only. [Resource name](https://cloud.google.com/apis/design/resource_names) of the Inbound SSO Assignment.",
+	//       "location": "path",
+	//       "pattern": "^inboundSsoAssignments/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "Required. The list of fields to be updated.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "request": {
+	//     "$ref": "InboundSsoAssignment"
+	//   },
+	//   "response": {
+	//     "$ref": "Operation"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
 }

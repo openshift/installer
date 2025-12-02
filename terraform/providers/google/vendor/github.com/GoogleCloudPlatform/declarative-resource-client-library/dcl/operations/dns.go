@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,12 +37,14 @@ type DNSOperation struct {
 
 // Wait waits for an DNSOperation to complete by fetching the operation until it completes.
 func (op *DNSOperation) Wait(ctx context.Context, c *dcl.Config, project, managedZone string) error {
-	c.Logger.Infof("Waiting on: %v", op)
+	c.Logger.Infof("Waiting on operation: %v", op)
 	op.config = c
 	op.ManagedZone = managedZone
 	op.Project = project
 
-	return dcl.Do(ctx, op.operate, c.RetryProvider)
+	err := dcl.Do(ctx, op.operate, c.RetryProvider)
+	c.Logger.Infof("Completed operation: %v", op)
+	return err
 }
 
 func (op *DNSOperation) operate(ctx context.Context) (*dcl.RetryDetails, error) {

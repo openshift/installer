@@ -27,7 +27,7 @@ import (
 	recaptchaenterprise "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/recaptchaenterprise"
 )
 
-func resourceRecaptchaEnterpriseKey() *schema.Resource {
+func ResourceRecaptchaEnterpriseKey() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceRecaptchaEnterpriseKeyCreate,
 		Read:   resourceRecaptchaEnterpriseKeyRead,
@@ -39,9 +39,9 @@ func resourceRecaptchaEnterpriseKey() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -233,13 +233,13 @@ func resourceRecaptchaEnterpriseKeyCreate(d *schema.ResourceData, meta interface
 		WebSettings:     expandRecaptchaEnterpriseKeyWebSettings(d.Get("web_settings")),
 	}
 
-	id, err := replaceVarsForId(d, config, "projects/{{project}}/keys/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -255,7 +255,7 @@ func resourceRecaptchaEnterpriseKeyCreate(d *schema.ResourceData, meta interface
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyKey(context.Background(), obj, createDirective...)
+	res, err := client.ApplyKey(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -265,17 +265,18 @@ func resourceRecaptchaEnterpriseKeyCreate(d *schema.ResourceData, meta interface
 		return fmt.Errorf("Error creating Key: %s", err)
 	}
 
-	log.Printf("[DEBUG] Finished creating Key %q: %#v", d.Id(), res)
-
 	if err = d.Set("name", res.Name); err != nil {
 		return fmt.Errorf("error setting name in state: %s", err)
 	}
-	// Id has a server-generated value, set again after creation
-	id, err = replaceVarsForId(d, config, "projects/{{project}}/keys/{{name}}")
+	// ID has a server-generated value, set again after creation.
+
+	id, err = res.ID()
 	if err != nil {
-		return fmt.Errorf("Error constructing id: %s", err)
+		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	log.Printf("[DEBUG] Finished creating Key %q: %#v", d.Id(), res)
 
 	return resourceRecaptchaEnterpriseKeyRead(d, meta)
 }
@@ -298,7 +299,7 @@ func resourceRecaptchaEnterpriseKeyRead(d *schema.ResourceData, meta interface{}
 		Name:            dcl.StringOrNil(d.Get("name").(string)),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -368,7 +369,7 @@ func resourceRecaptchaEnterpriseKeyUpdate(d *schema.ResourceData, meta interface
 		Name:            dcl.StringOrNil(d.Get("name").(string)),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -419,7 +420,7 @@ func resourceRecaptchaEnterpriseKeyDelete(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Deleting Key %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -445,6 +446,7 @@ func resourceRecaptchaEnterpriseKeyDelete(d *schema.ResourceData, meta interface
 
 func resourceRecaptchaEnterpriseKeyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/keys/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<name>[^/]+)",
@@ -468,7 +470,7 @@ func expandRecaptchaEnterpriseKeyAndroidSettings(o interface{}) *recaptchaenterp
 		return recaptchaenterprise.EmptyKeyAndroidSettings
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return recaptchaenterprise.EmptyKeyAndroidSettings
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -496,7 +498,7 @@ func expandRecaptchaEnterpriseKeyIosSettings(o interface{}) *recaptchaenterprise
 		return recaptchaenterprise.EmptyKeyIosSettings
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return recaptchaenterprise.EmptyKeyIosSettings
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -524,7 +526,7 @@ func expandRecaptchaEnterpriseKeyTestingOptions(o interface{}) *recaptchaenterpr
 		return recaptchaenterprise.EmptyKeyTestingOptions
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return recaptchaenterprise.EmptyKeyTestingOptions
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -552,7 +554,7 @@ func expandRecaptchaEnterpriseKeyWebSettings(o interface{}) *recaptchaenterprise
 		return recaptchaenterprise.EmptyKeyWebSettings
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return recaptchaenterprise.EmptyKeyWebSettings
 	}
 	obj := objArr[0].(map[string]interface{})

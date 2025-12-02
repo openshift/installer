@@ -1,0 +1,127 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: BigqueryReservation/Reservation
+  description: The BigqueryReservation Reservation resource
+  x-dcl-struct-name: Reservation
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a Reservation
+    parameters:
+    - name: reservation
+      required: true
+      description: A full instance of a Reservation
+  apply:
+    description: The function used to apply information about a Reservation
+    parameters:
+    - name: reservation
+      required: true
+      description: A full instance of a Reservation
+  delete:
+    description: The function used to delete a Reservation
+    parameters:
+    - name: reservation
+      required: true
+      description: A full instance of a Reservation
+  deleteAll:
+    description: The function used to delete all Reservation
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Reservation
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Reservation:
+      title: Reservation
+      x-dcl-id: projects/{{project}}/locations/{{location}}/reservations/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - project
+      - location
+      properties:
+        creationTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreationTime
+          readOnly: true
+          description: Output only. Creation time of the reservation.
+          x-kubernetes-immutable: true
+        ignoreIdleSlots:
+          type: boolean
+          x-dcl-go-name: IgnoreIdleSlots
+          description: If false, any query using this reservation will use idle slots
+            from other reservations within the same admin project. If true, a query
+            using this reservation will execute with the slot capacity specified above
+            at most.
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: The resource name of the reservation.
+          x-kubernetes-immutable: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        slotCapacity:
+          type: integer
+          format: int64
+          x-dcl-go-name: SlotCapacity
+          description: Minimum slots available to this reservation. A slot is a unit
+            of computational power in BigQuery, and serves as the unit of parallelism.
+            Queries using this reservation might use more slots during runtime if
+            ignore_idle_slots is set to false. If the new reservation's slot capacity
+            exceed the parent's slot capacity or if total slot capacity of the new
+            reservation and its siblings exceeds the parent's slot capacity, the request
+            will fail with `google.rpc.Code.RESOURCE_EXHAUSTED`.
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. Last update time of the reservation.
+          x-kubernetes-immutable: true

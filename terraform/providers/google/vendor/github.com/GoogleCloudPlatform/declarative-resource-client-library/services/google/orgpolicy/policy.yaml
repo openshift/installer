@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -32,19 +32,19 @@ paths:
   get:
     description: The function used to get information about a Policy
     parameters:
-    - name: Policy
+    - name: policy
       required: true
       description: A full instance of a Policy
   apply:
     description: The function used to apply information about a Policy
     parameters:
-    - name: Policy
+    - name: policy
       required: true
       description: A full instance of a Policy
   delete:
     description: The function used to delete a Policy
     parameters:
-    - name: Policy
+    - name: policy
       required: true
       description: A full instance of a Policy
   deleteAll:
@@ -66,7 +66,11 @@ components:
     Policy:
       title: Policy
       x-dcl-id: '{{parent}}/policies/{{name}}'
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -89,6 +93,7 @@ components:
           x-dcl-go-name: Parent
           description: The parent of the resource.
           x-kubernetes-immutable: true
+          x-dcl-forward-slash-allowed: true
           x-dcl-references:
           - resource: Cloudresourcemanager/Folder
             field: name
@@ -153,6 +158,10 @@ components:
                     x-dcl-go-name: AllowAll
                     description: Setting this to true means that all values are allowed.
                       This field can be set only in Policies for list constraints.
+                    x-dcl-conflicts:
+                    - values
+                    - denyAll
+                    - enforce
                   condition:
                     type: object
                     x-dcl-go-name: Condition
@@ -196,18 +205,30 @@ components:
                     x-dcl-go-name: DenyAll
                     description: Setting this to true means that all values are denied.
                       This field can be set only in Policies for list constraints.
+                    x-dcl-conflicts:
+                    - values
+                    - allowAll
+                    - enforce
                   enforce:
                     type: boolean
                     x-dcl-go-name: Enforce
                     description: If `true`, then the `Policy` is enforced. If `false`,
                       then any configuration is acceptable. This field can be set
                       only in Policies for boolean constraints.
+                    x-dcl-conflicts:
+                    - values
+                    - allowAll
+                    - denyAll
                   values:
                     type: object
                     x-dcl-go-name: Values
                     x-dcl-go-type: PolicySpecRulesValues
                     description: List of values to be used for this PolicyRule. This
                       field can be set only in Policies for list constraints.
+                    x-dcl-conflicts:
+                    - allowAll
+                    - denyAll
+                    - enforce
                     properties:
                       allowedValues:
                         type: array

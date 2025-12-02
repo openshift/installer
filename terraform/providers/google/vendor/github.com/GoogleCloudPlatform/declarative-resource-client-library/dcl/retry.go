@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -84,6 +84,17 @@ func NewBackoff() *Backoff {
 	bo := backoff.NewExponentialBackOff()
 	bo.MaxInterval = BackoffMaxInterval
 	bo.InitialInterval = BackoffInitialInterval
+	bo.MaxElapsedTime = 0
+	return &Backoff{
+		bo: bo,
+	}
+}
+
+// NewBackoffWithOptions returns a Backoff with caller-supplied parameters.
+func NewBackoffWithOptions(initialInterval, maxInterval time.Duration) *Backoff {
+	bo := backoff.NewExponentialBackOff()
+	bo.MaxInterval = maxInterval
+	bo.InitialInterval = initialInterval
 	bo.MaxElapsedTime = 0
 	return &Backoff{
 		bo: bo,

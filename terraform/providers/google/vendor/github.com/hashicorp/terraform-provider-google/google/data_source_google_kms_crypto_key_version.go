@@ -3,13 +3,12 @@ package google
 import (
 	"fmt"
 	"log"
-	"strconv"
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleKmsCryptoKeyVersion() *schema.Resource {
+func DataSourceGoogleKmsCryptoKeyVersion() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleKmsCryptoKeyVersionRead,
 		Schema: map[string]*schema.Schema{
@@ -61,7 +60,7 @@ func dataSourceGoogleKmsCryptoKeyVersion() *schema.Resource {
 
 func dataSourceGoogleKmsCryptoKeyVersionRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -77,7 +76,7 @@ func dataSourceGoogleKmsCryptoKeyVersionRead(d *schema.ResourceData, meta interf
 	if err != nil {
 		return err
 	}
-	res, err := sendRequest(config, "GET", cryptoKeyId.KeyRingId.Project, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", cryptoKeyId.KeyRingId.Project, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("KmsCryptoKeyVersion %q", d.Id()))
 	}
@@ -104,7 +103,7 @@ func dataSourceGoogleKmsCryptoKeyVersionRead(d *schema.ResourceData, meta interf
 	}
 
 	log.Printf("[DEBUG] Getting purpose of CryptoKey: %#v", url)
-	res, err = sendRequest(config, "GET", cryptoKeyId.KeyRingId.Project, url, userAgent, nil)
+	res, err = SendRequest(config, "GET", cryptoKeyId.KeyRingId.Project, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("KmsCryptoKey %q", d.Id()))
 	}
@@ -116,7 +115,7 @@ func dataSourceGoogleKmsCryptoKeyVersionRead(d *schema.ResourceData, meta interf
 		}
 		log.Printf("[DEBUG] Getting public key of CryptoKeyVersion: %#v", url)
 
-		res, err = sendRequestWithTimeout(config, "GET", cryptoKeyId.KeyRingId.Project, url, userAgent, nil, d.Timeout(schema.TimeoutRead), isCryptoKeyVersionsPendingGeneration)
+		res, err = SendRequestWithTimeout(config, "GET", cryptoKeyId.KeyRingId.Project, url, userAgent, nil, d.Timeout(schema.TimeoutRead), isCryptoKeyVersionsPendingGeneration)
 
 		if err != nil {
 			log.Printf("Error generating public key: %s", err)
@@ -136,7 +135,7 @@ func flattenKmsCryptoKeyVersionVersion(v interface{}, d *schema.ResourceData) in
 	parts := strings.Split(v.(string), "/")
 	version := parts[len(parts)-1]
 	// Handles the string fixed64 format
-	if intVal, err := strconv.ParseInt(version, 10, 64); err == nil {
+	if intVal, err := StringToFixed64(version); err == nil {
 		return intVal
 	} // let terraform core handle it if we can't convert the string to an int.
 	return v
