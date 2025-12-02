@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceNotebooksLocation() *schema.Resource {
+func ResourceNotebooksLocation() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceNotebooksLocationCreate,
 		Read:   resourceNotebooksLocationRead,
@@ -35,9 +35,9 @@ func resourceNotebooksLocation() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -63,7 +63,7 @@ func resourceNotebooksLocation() *schema.Resource {
 
 func resourceNotebooksLocationCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -95,7 +95,7 @@ func resourceNotebooksLocationCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Location: %s", err)
 	}
@@ -110,12 +110,13 @@ func resourceNotebooksLocationCreate(d *schema.ResourceData, meta interface{}) e
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = notebooksOperationWaitTimeWithResponse(
+	err = NotebooksOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating Location", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Location: %s", err)
 	}
 
@@ -137,7 +138,7 @@ func resourceNotebooksLocationCreate(d *schema.ResourceData, meta interface{}) e
 
 func resourceNotebooksLocationRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -160,7 +161,7 @@ func resourceNotebooksLocationRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("NotebooksLocation %q", d.Id()))
 	}
@@ -181,7 +182,7 @@ func resourceNotebooksLocationRead(d *schema.ResourceData, meta interface{}) err
 
 func resourceNotebooksLocationUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -214,7 +215,7 @@ func resourceNotebooksLocationUpdate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Location %q: %s", d.Id(), err)
@@ -222,7 +223,7 @@ func resourceNotebooksLocationUpdate(d *schema.ResourceData, meta interface{}) e
 		log.Printf("[DEBUG] Finished updating Location %q: %#v", d.Id(), res)
 	}
 
-	err = notebooksOperationWaitTime(
+	err = NotebooksOperationWaitTime(
 		config, res, project, "Updating Location", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -235,7 +236,7 @@ func resourceNotebooksLocationUpdate(d *schema.ResourceData, meta interface{}) e
 
 func resourceNotebooksLocationDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -261,12 +262,12 @@ func resourceNotebooksLocationDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Location")
 	}
 
-	err = notebooksOperationWaitTime(
+	err = NotebooksOperationWaitTime(
 		config, res, project, "Deleting Location", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

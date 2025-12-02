@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a Certificate
     parameters:
-    - name: Certificate
+    - name: certificate
       required: true
       description: A full instance of a Certificate
   apply:
     description: The function used to apply information about a Certificate
     parameters:
-    - name: Certificate
+    - name: certificate
       required: true
       description: A full instance of a Certificate
   delete:
     description: The function used to delete a Certificate
     parameters:
-    - name: Certificate
+    - name: certificate
       required: true
       description: A full instance of a Certificate
   deleteAll:
@@ -46,7 +46,7 @@ paths:
       required: true
       schema:
         type: string
-    - name: capool
+    - name: caPool
       required: true
       schema:
         type: string
@@ -61,7 +61,7 @@ paths:
       required: true
       schema:
         type: string
-    - name: capool
+    - name: caPool
       required: true
       schema:
         type: string
@@ -71,7 +71,12 @@ components:
       title: Certificate
       x-dcl-id: projects/{{project}}/locations/{{location}}/caPools/{{ca_pool}}/certificates/{{name}}
       x-dcl-parent-container: project
+      x-dcl-labels: labels
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -161,9 +166,6 @@ components:
               x-dcl-go-type: CertificateCertificateDescriptionPublicKey
               description: The public key that corresponds to an issued certificate.
               x-kubernetes-immutable: true
-              required:
-              - key
-              - format
               properties:
                 format:
                   type: string
@@ -242,9 +244,6 @@ components:
                       x-dcl-go-name: Organization
                       description: The organization of the subject.
                       x-kubernetes-immutable: true
-                      x-dcl-references:
-                      - resource: Cloudresourcemanager/Organization
-                        field: name
                     organizationalUnit:
                       type: string
                       x-dcl-go-name: OrganizationalUnit
@@ -389,9 +388,6 @@ components:
                   items:
                     type: object
                     x-dcl-go-type: CertificateCertificateDescriptionX509DescriptionAdditionalExtensions
-                    required:
-                    - objectId
-                    - value
                     properties:
                       critical:
                         type: boolean
@@ -407,8 +403,6 @@ components:
                         x-dcl-go-type: CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId
                         description: Required. The OID for this X.509 extension.
                         x-kubernetes-immutable: true
-                        required:
-                        - objectIdPath
                         properties:
                           objectIdPath:
                             type: array
@@ -454,7 +448,6 @@ components:
                         is a boolean value. When this value is missing, the extension
                         will be omitted from the CA certificate.
                       x-kubernetes-immutable: true
-                      x-dcl-optional-type: true
                     maxIssuerPathLength:
                       type: integer
                       format: int64
@@ -586,8 +579,6 @@ components:
                       items:
                         type: object
                         x-dcl-go-type: CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages
-                        required:
-                        - objectIdPath
                         properties:
                           objectIdPath:
                             type: array
@@ -612,8 +603,6 @@ components:
                   items:
                     type: object
                     x-dcl-go-type: CertificateCertificateDescriptionX509DescriptionPolicyIds
-                    required:
-                    - objectIdPath
                     properties:
                       objectIdPath:
                         type: array
@@ -719,9 +708,6 @@ components:
                       x-dcl-go-name: Organization
                       description: The organization of the subject.
                       x-kubernetes-immutable: true
-                      x-dcl-references:
-                      - resource: Cloudresourcemanager/Organization
-                        field: name
                     organizationalUnit:
                       type: string
                       x-dcl-go-name: OrganizationalUnit
@@ -870,20 +856,33 @@ components:
                     isCa:
                       type: boolean
                       x-dcl-go-name: IsCa
-                      description: Optional. Refers to the "CA" X.509 extension, which
-                        is a boolean value. When this value is missing, the extension
-                        will be omitted from the CA certificate.
+                      description: Optional. When true, the "CA" in Basic Constraints
+                        extension will be set to true.
                       x-kubernetes-immutable: true
                     maxIssuerPathLength:
                       type: integer
                       format: int64
                       x-dcl-go-name: MaxIssuerPathLength
-                      description: Optional. Refers to the path length restriction
-                        X.509 extension. For a CA certificate, this value describes
-                        the depth of subordinate CA certificates that are allowed.
-                        If this value is less than 0, the request will fail. If this
-                        value is missing, the max path length will be omitted from
-                        the CA certificate.
+                      description: Optional. Refers to the "path length constraint"
+                        in Basic Constraints extension. For a CA certificate, this
+                        value describes the depth of subordinate CA certificates that
+                        are allowed. If this value is less than 0, the request will
+                        fail.
+                      x-kubernetes-immutable: true
+                    nonCa:
+                      type: boolean
+                      x-dcl-go-name: NonCa
+                      description: Optional. When true, the "CA" in Basic Constraints
+                        extension will be set to false. If both `is_ca` and `non_ca`
+                        are unset, the extension will be omitted from the CA certificate.
+                      x-kubernetes-immutable: true
+                    zeroMaxIssuerPathLength:
+                      type: boolean
+                      x-dcl-go-name: ZeroMaxIssuerPathLength
+                      description: Optional. When true, the "path length constraint"
+                        in Basic Constraints extension will be set to 0. if both max_issuer_path_length
+                        and zero_max_issuer_path_length are unset, the max path length
+                        will be omitted from the CA certificate.
                       x-kubernetes-immutable: true
                 keyUsage:
                   type: object
@@ -1085,14 +1084,8 @@ components:
         name:
           type: string
           x-dcl-go-name: Name
-          description: Output only. The resource name for this Certificate in the
-            format `projects/*/locations/*/caPools/*/certificates/*`.
+          description: The resource name for this Certificate in the format `projects/*/locations/*/caPools/*/certificates/*`.
           x-kubernetes-immutable: true
-          x-dcl-server-generated-parameter: true
-          x-dcl-references:
-          - resource: Privateca/Certificate
-            field: selfLink
-            parent: true
         pemCertificate:
           type: string
           x-dcl-go-name: PemCertificate

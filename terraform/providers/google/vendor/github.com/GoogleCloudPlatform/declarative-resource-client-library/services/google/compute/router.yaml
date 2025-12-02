@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a Router
     parameters:
-    - name: Router
+    - name: router
       required: true
       description: A full instance of a Router
   apply:
     description: The function used to apply information about a Router
     parameters:
-    - name: Router
+    - name: router
       required: true
       description: A full instance of a Router
   delete:
     description: The function used to delete a Router
     parameters:
-    - name: Router
+    - name: router
       required: true
       description: A full instance of a Router
   deleteAll:
@@ -65,7 +65,11 @@ components:
       x-dcl-locations:
       - region
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -158,145 +162,6 @@ components:
             characters must be a dash, lowercase letter, or digit, except the last
             character, which cannot be a dash. '
           x-kubernetes-immutable: true
-        nats:
-          type: array
-          x-dcl-go-name: Nats
-          description: A list of NAT services created in this router.
-          x-dcl-send-empty: true
-          x-dcl-list-type: list
-          items:
-            type: object
-            x-dcl-go-type: RouterNats
-            properties:
-              drainNatIps:
-                type: array
-                x-dcl-go-name: DrainNatIps
-                description: A list of URLs of the IP resources to be drained. These
-                  IPs must be valid static external IPs that have been assigned to
-                  the NAT. These IPs should be used for updating/patching a NAT only.
-                x-dcl-send-empty: true
-                x-dcl-list-type: list
-                items:
-                  type: string
-                  x-dcl-go-type: string
-              icmpIdleTimeoutSec:
-                type: integer
-                format: int64
-                x-dcl-go-name: IcmpIdleTimeoutSec
-                description: Timeout (in seconds) for ICMP connections. Defaults to
-                  30s if not set.
-              logConfig:
-                type: object
-                x-dcl-go-name: LogConfig
-                x-dcl-go-type: RouterNatsLogConfig
-                description: Configure logging on this NAT.
-                properties:
-                  enable:
-                    type: boolean
-                    x-dcl-go-name: Enable
-                    description: Indicates whether or not to export logs. This is
-                      false by default.
-                  filter:
-                    type: string
-                    x-dcl-go-name: Filter
-                    x-dcl-go-type: RouterNatsLogConfigFilterEnum
-                    description: 'Specify the desired filtering of logs on this NAT.
-                      If unspecified, logs are exported for all connections handled
-                      by this NAT. Possible values: ERRORS_ONLY, TRANSLATIONS_ONLY,
-                      ALL'
-                    enum:
-                    - ERRORS_ONLY
-                    - TRANSLATIONS_ONLY
-                    - ALL
-              minPortsPerVm:
-                type: integer
-                format: int64
-                x-dcl-go-name: MinPortsPerVm
-                description: Minimum number of ports allocated to a VM from this NAT
-                  config. If not set, a default number of ports is allocated to a
-                  VM. This is rounded up to the nearest power of 2. For example, if
-                  the value of this field is 50, at least 64 ports are allocated to
-                  a VM.
-              name:
-                type: string
-                x-dcl-go-name: Name
-                description: Unique name of this Nat service
-              natIPAllocateOption:
-                type: array
-                x-dcl-go-name: NatIPAllocateOption
-                description: The NAT IP Allocate Option
-                x-dcl-send-empty: true
-                x-dcl-list-type: list
-                items:
-                  type: string
-                  x-dcl-go-type: RouterNatsNatIPAllocateOptionEnum
-                  enum:
-                  - MANUAL_ONLY
-                  - AUTO_ONLY
-              natIps:
-                type: array
-                x-dcl-go-name: NatIps
-                description: A list of URLs of the IP resources used for this Nat
-                  service. These IP addresses must be valid static external IP addresses
-                  assigned to the project.
-                x-dcl-send-empty: true
-                x-dcl-list-type: list
-                items:
-                  type: string
-                  x-dcl-go-type: string
-              sourceSubnetworkIPRangesToNat:
-                type: string
-                x-dcl-go-name: SourceSubnetworkIPRangesToNat
-                x-dcl-go-type: RouterNatsSourceSubnetworkIPRangesToNatEnum
-                description: 'Unique name of this Nat service Possible values: ALL_SUBNETWORKS_ALL_IP_RANGES,
-                  ALL_SUBNETWORKS_ALL_PRIMARY_IP_RANGES, LIST_OF_SUBNETWORKS'
-                enum:
-                - ALL_SUBNETWORKS_ALL_IP_RANGES
-                - ALL_SUBNETWORKS_ALL_PRIMARY_IP_RANGES
-                - LIST_OF_SUBNETWORKS
-              subnetworks:
-                type: array
-                x-dcl-go-name: Subnetworks
-                description: A list of Subnetwork resources whose traffic should be
-                  translated by NAT Gateway. It is used only when LIST_OF_SUBNETWORKS
-                  is selected for the SubnetworkIpRangeToNatOption above.
-                x-dcl-send-empty: true
-                x-dcl-list-type: list
-                items:
-                  type: object
-                  x-dcl-go-type: RouterNatsSubnetworks
-                  properties:
-                    name:
-                      type: string
-                      x-dcl-go-name: Name
-                      description: URL for the subnetwork resource that will use NAT.
-                    secondaryIPRangeNames:
-                      type: string
-                      x-dcl-go-name: SecondaryIPRangeNames
-                      description: A list of the secondary ranges of the Subnetwork
-                        that are allowed to use NAT.
-                    sourceIPRangesToNat:
-                      type: string
-                      x-dcl-go-name: SourceIPRangesToNat
-                      description: Specify the options for NAT ranges in the Subnetwork.
-              tcpEstablishedIdleTimeoutSec:
-                type: integer
-                format: int64
-                x-dcl-go-name: TcpEstablishedIdleTimeoutSec
-                description: Timeout (in seconds) for TCP established connections.
-                  Defaults to 1200s if not set.
-              tcpTransitoryIdleTimeoutSec:
-                type: integer
-                format: int64
-                x-dcl-go-name: TcpTransitoryIdleTimeoutSec
-                description: Timeout (in seconds) for TCP transitory connections.
-                  Defaults to 30s if not set.
-              udpIdleTimeoutSec:
-                type: integer
-                format: int64
-                x-dcl-go-name: UdpIdleTimeoutSec
-                description: Timeout (in seconds) for UDP connections. Defaults to
-                  30s if not set.
         network:
           type: string
           x-dcl-go-name: Network

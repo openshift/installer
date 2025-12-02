@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a Instance
     parameters:
-    - name: Instance
+    - name: instance
       required: true
       description: A full instance of a Instance
   apply:
     description: The function used to apply information about a Instance
     parameters:
-    - name: Instance
+    - name: instance
       required: true
       description: A full instance of a Instance
   delete:
     description: The function used to delete a Instance
     parameters:
-    - name: Instance
+    - name: instance
       required: true
       description: A full instance of a Instance
   deleteAll:
@@ -67,7 +67,11 @@ components:
       x-dcl-uses-state-hint: true
       x-dcl-parent-container: project
       x-dcl-labels: labels
+      x-dcl-has-create: true
       x-dcl-has-iam: true
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - zone
@@ -429,6 +433,7 @@ components:
                         specify a static external IP address, it must live in the
                         same region as the zone of the instance.
                       x-kubernetes-immutable: true
+                      x-dcl-server-default: true
                       x-dcl-references:
                       - resource: Compute/Address
                         field: selfLink
@@ -445,6 +450,7 @@ components:
                         of the networkTier associated with the Address resource owning
                         that IP.'
                       x-kubernetes-immutable: true
+                      x-dcl-server-default: true
                       enum:
                       - PREMIUM
                       - STANDARD
@@ -551,6 +557,7 @@ components:
                         specify a static external IP address, it must live in the
                         same region as the zone of the instance.
                       x-kubernetes-immutable: true
+                      x-dcl-server-default: true
                       x-dcl-references:
                       - resource: Compute/Address
                         field: selfLink
@@ -608,6 +615,7 @@ components:
                   is not specified but the subnetwork is specified, the network is
                   inferred.
                 x-kubernetes-immutable: true
+                x-dcl-server-default: true
                 x-dcl-references:
                 - resource: Compute/Network
                   field: name
@@ -618,6 +626,7 @@ components:
                   for this network interface. If not specified by the user, an unused
                   internal IP is assigned by the system.
                 x-kubernetes-immutable: true
+                x-dcl-server-default: true
               subnetwork:
                 type: string
                 x-dcl-go-name: Subnetwork
@@ -626,6 +635,7 @@ components:
                   in auto subnet mode, providing the subnetwork is optional. If the
                   network is in custom subnet mode, then this field should be specified.
                 x-kubernetes-immutable: true
+                x-dcl-server-default: true
                 x-dcl-references:
                 - resource: Compute/Subnetwork
                   field: name
@@ -644,6 +654,7 @@ components:
           x-dcl-go-type: InstanceScheduling
           description: Sets the scheduling options for this instance.
           x-kubernetes-immutable: true
+          x-dcl-server-default: true
           properties:
             automaticRestart:
               type: boolean
@@ -707,6 +718,7 @@ components:
           x-dcl-go-name: ShieldedInstanceConfig
           x-dcl-go-type: InstanceShieldedInstanceConfig
           description: Configuration for various parameters related to shielded instances.
+          x-dcl-server-default: true
           properties:
             enableIntegrityMonitoring:
               type: boolean
@@ -729,6 +741,7 @@ components:
             a user, use RUNNING to keep a machine "on" and TERMINATED to turn a machine
             off'
           x-kubernetes-immutable: true
+          x-dcl-server-default: true
           enum:
           - PROVISIONING
           - STAGING

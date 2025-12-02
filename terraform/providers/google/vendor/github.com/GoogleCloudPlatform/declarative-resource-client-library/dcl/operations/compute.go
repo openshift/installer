@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,7 +40,9 @@ type ComputeOperation struct {
 
 // ComputeOperationError is the GCE operation's Error body.
 type ComputeOperationError struct {
-	Errors []*ComputeOperationErrorError `json:"errors"`
+	Code    int                           `json:"code"`
+	Message string                        `json:"message"`
+	Errors  []*ComputeOperationErrorError `json:"errors"`
 }
 
 // String formats the OperationError as an error string.
@@ -51,6 +53,9 @@ func (e *ComputeOperationError) String() string {
 	var b strings.Builder
 	for _, err := range e.Errors {
 		fmt.Fprintf(&b, "error code %q, message: %s\n", err.Code, err.Message)
+	}
+	if e.Code != 0 || e.Message != "" {
+		fmt.Fprintf(&b, "error code %d, message: %s\n", e.Code, e.Message)
 	}
 
 	return b.String()
@@ -64,10 +69,12 @@ type ComputeOperationErrorError struct {
 
 // Wait waits for an ComputeOperation to complete by fetching the operation until it completes.
 func (op *ComputeOperation) Wait(ctx context.Context, c *dcl.Config, _, _ string) error {
-	c.Logger.Infof("Waiting on: %v", op)
+	c.Logger.Infof("Waiting on operation: %v", op)
 	op.config = c
 
-	return dcl.Do(ctx, op.operate, c.RetryProvider)
+	err := dcl.Do(ctx, op.operate, c.RetryProvider)
+	c.Logger.Infof("Completed operation: %v", op)
+	return err
 }
 
 func (op *ComputeOperation) handleResponse(resp *dcl.RetryDetails, err error) (*dcl.RetryDetails, error) {
@@ -87,7 +94,7 @@ func (op *ComputeOperation) handleResponse(resp *dcl.RetryDetails, err error) (*
 	}
 
 	if op.Error != nil {
-		return nil, fmt.Errorf("operation received error: %+v", op.Error)
+		return nil, fmt.Errorf("operation received error: %v", op.Error)
 	}
 
 	return resp, nil

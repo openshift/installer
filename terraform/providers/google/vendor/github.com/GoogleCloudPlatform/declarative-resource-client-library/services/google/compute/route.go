@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -108,8 +108,8 @@ func (r *RouteWarning) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this RouteWarning is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyRouteWarning *RouteWarning = &RouteWarning{empty: true}
 
 func (r *RouteWarning) Empty() bool {
@@ -143,23 +143,23 @@ func (r *Route) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"id":               dcl.ValueOrEmptyString(nr.Id),
-		"name":             dcl.ValueOrEmptyString(nr.Name),
-		"description":      dcl.ValueOrEmptyString(nr.Description),
-		"network":          dcl.ValueOrEmptyString(nr.Network),
-		"tag":              dcl.ValueOrEmptyString(nr.Tag),
-		"destRange":        dcl.ValueOrEmptyString(nr.DestRange),
-		"priority":         dcl.ValueOrEmptyString(nr.Priority),
-		"nextHopInstance":  dcl.ValueOrEmptyString(nr.NextHopInstance),
-		"nextHopIP":        dcl.ValueOrEmptyString(nr.NextHopIP),
-		"nextHopNetwork":   dcl.ValueOrEmptyString(nr.NextHopNetwork),
-		"nextHopGateway":   dcl.ValueOrEmptyString(nr.NextHopGateway),
-		"nextHopPeering":   dcl.ValueOrEmptyString(nr.NextHopPeering),
-		"nextHopIlb":       dcl.ValueOrEmptyString(nr.NextHopIlb),
-		"warning":          dcl.ValueOrEmptyString(nr.Warning),
-		"nextHopVpnTunnel": dcl.ValueOrEmptyString(nr.NextHopVpnTunnel),
-		"selfLink":         dcl.ValueOrEmptyString(nr.SelfLink),
-		"project":          dcl.ValueOrEmptyString(nr.Project),
+		"id":                  dcl.ValueOrEmptyString(nr.Id),
+		"name":                dcl.ValueOrEmptyString(nr.Name),
+		"description":         dcl.ValueOrEmptyString(nr.Description),
+		"network":             dcl.ValueOrEmptyString(nr.Network),
+		"tag":                 dcl.ValueOrEmptyString(nr.Tag),
+		"dest_range":          dcl.ValueOrEmptyString(nr.DestRange),
+		"priority":            dcl.ValueOrEmptyString(nr.Priority),
+		"next_hop_instance":   dcl.ValueOrEmptyString(nr.NextHopInstance),
+		"next_hop_ip":         dcl.ValueOrEmptyString(nr.NextHopIP),
+		"next_hop_network":    dcl.ValueOrEmptyString(nr.NextHopNetwork),
+		"next_hop_gateway":    dcl.ValueOrEmptyString(nr.NextHopGateway),
+		"next_hop_peering":    dcl.ValueOrEmptyString(nr.NextHopPeering),
+		"next_hop_ilb":        dcl.ValueOrEmptyString(nr.NextHopIlb),
+		"warning":             dcl.ValueOrEmptyString(nr.Warning),
+		"next_hop_vpn_tunnel": dcl.ValueOrEmptyString(nr.NextHopVpnTunnel),
+		"self_link":           dcl.ValueOrEmptyString(nr.SelfLink),
+		"project":             dcl.ValueOrEmptyString(nr.Project),
 	}
 	return dcl.Nprintf("projects/{{project}}/global/routes/{{name}}", params), nil
 }
@@ -245,7 +245,7 @@ func (c *Client) GetRoute(ctx context.Context, r *Route) (*Route, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalRoute(b, c)
+	result, err := unmarshalRoute(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -404,7 +404,7 @@ func applyRouteHelper(c *Client, ctx context.Context, rawDesired *Route, opts ..
 func applyRouteDiff(c *Client, ctx context.Context, desired *Route, rawDesired *Route, ops []routeApiOperation, opts ...dcl.ApplyOption) (*Route, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetRoute(ctx, desired.urlNormalized())
+	rawNew, err := c.GetRoute(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +417,7 @@ func applyRouteDiff(c *Client, ctx context.Context, desired *Route, rawDesired *
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapRoute(r, c)
+				fullResp, err := unmarshalMapRoute(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

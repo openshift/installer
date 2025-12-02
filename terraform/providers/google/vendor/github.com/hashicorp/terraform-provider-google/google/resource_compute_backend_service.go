@@ -20,12 +20,10 @@ import (
 	"log"
 	"reflect"
 	"regexp"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/api/googleapi"
 )
 
@@ -176,7 +174,7 @@ func resourceGoogleComputeBackendServiceBackendHash(v interface{}) int {
 	return hashcode(buf.String())
 }
 
-func resourceComputeBackendService() *schema.Resource {
+func ResourceComputeBackendService() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeBackendServiceCreate,
 		Read:   resourceComputeBackendServiceRead,
@@ -188,9 +186,9 @@ func resourceComputeBackendService() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		SchemaVersion: 1,
@@ -244,13 +242,32 @@ When the load balancing scheme is INTERNAL, this field is not used.`,
 										Type:         schema.TypeBool,
 										Optional:     true,
 										Description:  `If true requests to different hosts will be cached separately.`,
-										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers", "cdn_policy.0.cache_key_policy.0.include_named_cookies"},
+									},
+									"include_http_headers": {
+										Type:     schema.TypeList,
+										Optional: true,
+										Description: `Allows HTTP request headers (by name) to be used in the
+cache key.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers", "cdn_policy.0.cache_key_policy.0.include_named_cookies"},
+									},
+									"include_named_cookies": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Names of cookies to include in cache keys.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers", "cdn_policy.0.cache_key_policy.0.include_named_cookies"},
 									},
 									"include_protocol": {
 										Type:         schema.TypeBool,
 										Optional:     true,
 										Description:  `If true, http and https requests will be cached separately.`,
-										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers", "cdn_policy.0.cache_key_policy.0.include_named_cookies"},
 									},
 									"include_query_string": {
 										Type:     schema.TypeBool,
@@ -262,7 +279,7 @@ string will be included.
 
 If false, the query string will be excluded from the cache
 key entirely.`,
-										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers", "cdn_policy.0.cache_key_policy.0.include_named_cookies"},
 									},
 									"query_string_blacklist": {
 										Type:     schema.TypeSet,
@@ -277,7 +294,7 @@ delimiters.`,
 											Type: schema.TypeString,
 										},
 										Set:          schema.HashString,
-										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers", "cdn_policy.0.cache_key_policy.0.include_named_cookies"},
 									},
 									"query_string_whitelist": {
 										Type:     schema.TypeSet,
@@ -292,7 +309,7 @@ delimiters.`,
 											Type: schema.TypeString,
 										},
 										Set:          schema.HashString,
-										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist"},
+										AtLeastOneOf: []string{"cdn_policy.0.cache_key_policy.0.include_host", "cdn_policy.0.cache_key_policy.0.include_protocol", "cdn_policy.0.cache_key_policy.0.include_query_string", "cdn_policy.0.cache_key_policy.0.query_string_blacklist", "cdn_policy.0.cache_key_policy.0.query_string_whitelist", "cdn_policy.0.cache_key_policy.0.include_http_headers", "cdn_policy.0.cache_key_policy.0.include_named_cookies"},
 									},
 								},
 							},
@@ -302,7 +319,7 @@ delimiters.`,
 							Type:         schema.TypeString,
 							Computed:     true,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "CACHE_ALL_STATIC", ""}, false),
+							ValidateFunc: validateEnum([]string{"USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "CACHE_ALL_STATIC", ""}),
 							Description: `Specifies the cache setting for all responses from this backend.
 The possible values are: USE_ORIGIN_HEADERS, FORCE_CACHE_ALL and CACHE_ALL_STATIC Possible values: ["USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "CACHE_ALL_STATIC"]`,
 						},
@@ -430,6 +447,12 @@ Defaults to 3.`,
 					},
 				},
 			},
+			"compression_mode": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateEnum([]string{"AUTOMATIC", "DISABLED", ""}),
+				Description:  `Compress text responses using Brotli or gzip compression, based on the client's Accept-Encoding header. Possible values: ["AUTOMATIC", "DISABLED"]`,
+			},
 			"connection_draining_timeout_sec": {
 				Type:     schema.TypeInt,
 				Optional: true,
@@ -550,6 +573,12 @@ responses.`,
 				Optional:    true,
 				Description: `An optional description of this resource.`,
 			},
+			"edge_security_policy": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
+				Description:      `The resource URL for the edge security policy associated with this backend service.`,
+			},
 			"enable_cdn": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -604,45 +633,171 @@ For internal load balancing, a URL to a HealthCheck resource must be specified i
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"EXTERNAL", "INTERNAL_SELF_MANAGED", ""}, false),
+				ValidateFunc: validateEnum([]string{"EXTERNAL", "INTERNAL_SELF_MANAGED", "EXTERNAL_MANAGED", ""}),
 				Description: `Indicates whether the backend service will be used with internal or
 external load balancing. A backend service created for one type of
-load balancing cannot be used with the other. Default value: "EXTERNAL" Possible values: ["EXTERNAL", "INTERNAL_SELF_MANAGED"]`,
+load balancing cannot be used with the other. For more information, refer to
+[Choosing a load balancer](https://cloud.google.com/load-balancing/docs/backend-service). Default value: "EXTERNAL" Possible values: ["EXTERNAL", "INTERNAL_SELF_MANAGED", "EXTERNAL_MANAGED"]`,
 				Default: "EXTERNAL",
 			},
-			"locality_lb_policy": {
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ROUND_ROBIN", "LEAST_REQUEST", "RING_HASH", "RANDOM", "ORIGINAL_DESTINATION", "MAGLEV", ""}, false),
-				Description: `The load balancing algorithm used within the scope of the locality.
-The possible values are -
+			"locality_lb_policies": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Description: `A list of locality load balancing policies to be used in order of
+preference. Either the policy or the customPolicy field should be set.
+Overrides any value set in the localityLbPolicy field.
 
-* ROUND_ROBIN - This is a simple policy in which each healthy backend
+localityLbPolicies is only supported when the BackendService is referenced
+by a URL Map that is referenced by a target gRPC proxy that has the
+validateForProxyless field set to true.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"custom_policy": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `The configuration for a custom policy implemented by the user and
+deployed with the client.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Type:     schema.TypeString,
+										Required: true,
+										Description: `Identifies the custom policy.
+
+The value should match the type the custom implementation is registered
+with on the gRPC clients. It should follow protocol buffer
+message naming conventions and include the full path (e.g.
+myorg.CustomLbPolicy). The maximum length is 256 characters.
+
+Note that specifying the same custom policy more than once for a
+backend is not a valid configuration and will be rejected.`,
+									},
+									"data": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `An optional, arbitrary JSON object with configuration data, understood
+by a locally installed custom policy implementation.`,
+									},
+								},
+							},
+							ExactlyOneOf: []string{},
+						},
+						"policy": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `The configuration for a built-in load balancing policy.`,
+							MaxItems:    1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"name": {
+										Type:         schema.TypeString,
+										Required:     true,
+										ValidateFunc: validateEnum([]string{"ROUND_ROBIN", "LEAST_REQUEST", "RING_HASH", "RANDOM", "ORIGINAL_DESTINATION", "MAGLEV"}),
+										Description: `The name of a locality load balancer policy to be used. The value
+should be one of the predefined ones as supported by localityLbPolicy,
+although at the moment only ROUND_ROBIN is supported.
+
+This field should only be populated when the customPolicy field is not
+used.
+
+Note that specifying the same policy more than once for a backend is
+not a valid configuration and will be rejected.
+
+The possible values are:
+
+* 'ROUND_ROBIN': This is a simple policy in which each healthy backend
                 is selected in round robin order.
 
-* LEAST_REQUEST - An O(1) algorithm which selects two random healthy
+* 'LEAST_REQUEST': An O(1) algorithm which selects two random healthy
                   hosts and picks the host which has fewer active requests.
 
-* RING_HASH - The ring/modulo hash load balancer implements consistent
+* 'RING_HASH': The ring/modulo hash load balancer implements consistent
               hashing to backends. The algorithm has the property that the
               addition/removal of a host from a set of N hosts only affects
               1/N of the requests.
 
-* RANDOM - The load balancer selects a random healthy host.
+* 'RANDOM': The load balancer selects a random healthy host.
 
-* ORIGINAL_DESTINATION - Backend host is selected based on the client
-                         connection metadata, i.e., connections are opened
-                         to the same address as the destination address of
-                         the incoming connection before the connection
-                         was redirected to the load balancer.
+* 'ORIGINAL_DESTINATION': Backend host is selected based on the client
+                          connection metadata, i.e., connections are opened
+                          to the same address as the destination address of
+                          the incoming connection before the connection
+                          was redirected to the load balancer.
 
-* MAGLEV - used as a drop in replacement for the ring hash load balancer.
-           Maglev is not as stable as ring hash but has faster table lookup
-           build times and host selection times. For more information about
-           Maglev, refer to https://ai.google/research/pubs/pub44824
+* 'MAGLEV': used as a drop in replacement for the ring hash load balancer.
+            Maglev is not as stable as ring hash but has faster table lookup
+            build times and host selection times. For more information about
+            Maglev, refer to https://ai.google/research/pubs/pub44824 Possible values: ["ROUND_ROBIN", "LEAST_REQUEST", "RING_HASH", "RANDOM", "ORIGINAL_DESTINATION", "MAGLEV"]`,
+									},
+								},
+							},
+							ExactlyOneOf: []string{},
+						},
+					},
+				},
+			},
+			"locality_lb_policy": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ValidateFunc: validateEnum([]string{"ROUND_ROBIN", "LEAST_REQUEST", "RING_HASH", "RANDOM", "ORIGINAL_DESTINATION", "MAGLEV", "WEIGHTED_MAGLEV", ""}),
+				Description: `The load balancing algorithm used within the scope of the locality.
+The possible values are:
 
-This field is applicable only when the load_balancing_scheme is set to
-INTERNAL_SELF_MANAGED. Possible values: ["ROUND_ROBIN", "LEAST_REQUEST", "RING_HASH", "RANDOM", "ORIGINAL_DESTINATION", "MAGLEV"]`,
+* 'ROUND_ROBIN': This is a simple policy in which each healthy backend
+                 is selected in round robin order.
+
+* 'LEAST_REQUEST': An O(1) algorithm which selects two random healthy
+                   hosts and picks the host which has fewer active requests.
+
+* 'RING_HASH': The ring/modulo hash load balancer implements consistent
+               hashing to backends. The algorithm has the property that the
+               addition/removal of a host from a set of N hosts only affects
+               1/N of the requests.
+
+* 'RANDOM': The load balancer selects a random healthy host.
+
+* 'ORIGINAL_DESTINATION': Backend host is selected based on the client
+                          connection metadata, i.e., connections are opened
+                          to the same address as the destination address of
+                          the incoming connection before the connection
+                          was redirected to the load balancer.
+
+* 'MAGLEV': used as a drop in replacement for the ring hash load balancer.
+            Maglev is not as stable as ring hash but has faster table lookup
+            build times and host selection times. For more information about
+            Maglev, refer to https://ai.google/research/pubs/pub44824
+
+* 'WEIGHTED_MAGLEV': Per-instance weighted Load Balancing via health check
+                     reported weights. If set, the Backend Service must
+                     configure a non legacy HTTP-based Health Check, and
+                     health check replies are expected to contain
+                     non-standard HTTP response header field
+                     X-Load-Balancing-Endpoint-Weight to specify the
+                     per-instance weights. If set, Load Balancing is weight
+                     based on the per-instance weights reported in the last
+                     processed health check replies, as long as every
+                     instance either reported a valid weight or had
+                     UNAVAILABLE_WEIGHT. Otherwise, Load Balancing remains
+                     equal-weight.
+
+
+This field is applicable to either:
+
+* A regional backend service with the service_protocol set to HTTP, HTTPS, or HTTP2,
+  and loadBalancingScheme set to INTERNAL_MANAGED.
+* A global backend service with the load_balancing_scheme set to INTERNAL_SELF_MANAGED.
+* A regional backend service with loadBalancingScheme set to EXTERNAL (External Network
+  Load Balancing). Only MAGLEV and WEIGHTED_MAGLEV values are possible for External
+  Network Load Balancing. The default is MAGLEV.
+
+
+If session_affinity is not NONE, and this field is not set to MAGLEV, WEIGHTED_MAGLEV,
+or RING_HASH, session affinity settings will not take effect.
+
+Only ROUND_ROBIN and RING_HASH are supported when the backend service is referenced
+by a URL map that is bound to target gRPC proxy that has validate_for_proxyless
+field set to true. Possible values: ["ROUND_ROBIN", "LEAST_REQUEST", "RING_HASH", "RANDOM", "ORIGINAL_DESTINATION", "MAGLEV", "WEIGHTED_MAGLEV"]`,
 			},
 			"log_config": {
 				Type:     schema.TypeList,
@@ -833,7 +988,7 @@ scheme is EXTERNAL.`,
 				Type:         schema.TypeString,
 				Computed:     true,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"HTTP", "HTTPS", "HTTP2", "TCP", "SSL", "GRPC", ""}, false),
+				ValidateFunc: validateEnum([]string{"HTTP", "HTTPS", "HTTP2", "TCP", "SSL", "GRPC", ""}),
 				Description: `The protocol this BackendService uses to communicate with backends.
 The default is HTTP. **NOTE**: HTTP2 is only valid for beta HTTP/2 load balancer
 types and may result in errors if used with the GA API. Possible values: ["HTTP", "HTTPS", "HTTP2", "TCP", "SSL", "GRPC"]`,
@@ -844,11 +999,42 @@ types and may result in errors if used with the GA API. Possible values: ["HTTP"
 				DiffSuppressFunc: compareSelfLinkOrResourceName,
 				Description:      `The security policy associated with this backend service.`,
 			},
+			"security_settings": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Description: `The security settings that apply to this backend service. This field is applicable to either
+a regional backend service with the service_protocol set to HTTP, HTTPS, or HTTP2, and
+load_balancing_scheme set to INTERNAL_MANAGED; or a global backend service with the
+load_balancing_scheme set to INTERNAL_SELF_MANAGED.`,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"client_tls_policy": {
+							Type:             schema.TypeString,
+							Required:         true,
+							DiffSuppressFunc: compareSelfLinkOrResourceName,
+							Description: `ClientTlsPolicy is a resource that specifies how a client should authenticate
+connections to backends of a service. This resource itself does not affect
+configuration unless it is attached to a backend service resource.`,
+						},
+						"subject_alt_names": {
+							Type:     schema.TypeList,
+							Required: true,
+							Description: `A list of alternate names to verify the subject identity in the certificate.
+If specified, the client will verify that the server certificate's subject
+alt name matches one of the specified values.`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+					},
+				},
+			},
 			"session_affinity": {
 				Type:         schema.TypeString,
 				Computed:     true,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"NONE", "CLIENT_IP", "CLIENT_IP_PORT_PROTO", "CLIENT_IP_PROTO", "GENERATED_COOKIE", "HEADER_FIELD", "HTTP_COOKIE", ""}, false),
+				ValidateFunc: validateEnum([]string{"NONE", "CLIENT_IP", "CLIENT_IP_PORT_PROTO", "CLIENT_IP_PROTO", "GENERATED_COOKIE", "HEADER_FIELD", "HTTP_COOKIE", ""}),
 				Description: `Type of session affinity to use. The default is NONE. Session affinity is
 not applicable if the protocol is UDP. Possible values: ["NONE", "CLIENT_IP", "CLIENT_IP_PORT_PROTO", "CLIENT_IP_PROTO", "GENERATED_COOKIE", "HEADER_FIELD", "HTTP_COOKIE"]`,
 			},
@@ -869,6 +1055,11 @@ failed request. Default is 30 seconds. Valid range is [1, 86400].`,
 				Computed: true,
 				Description: `Fingerprint of this resource. A hash of the contents stored in this
 object. This field is used in optimistic locking.`,
+			},
+			"generated_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: `The unique identifier for the resource. This identifier is defined by the server.`,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -913,12 +1104,15 @@ partial URL.`,
 			"balancing_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"UTILIZATION", "RATE", "CONNECTION", ""}, false),
+				ValidateFunc: validateEnum([]string{"UTILIZATION", "RATE", "CONNECTION", ""}),
 				Description: `Specifies the balancing mode for this backend.
 
 For global HTTP(S) or TCP/SSL load balancing, the default is
 UTILIZATION. Valid values are UTILIZATION, RATE (for HTTP(S))
-and CONNECTION (for TCP/SSL). Default value: "UTILIZATION" Possible values: ["UTILIZATION", "RATE", "CONNECTION"]`,
+and CONNECTION (for TCP/SSL).
+
+See the [Backend Services Overview](https://cloud.google.com/load-balancing/docs/backend-service#balancing-mode)
+for an explanation of load balancing modes. Default value: "UTILIZATION" Possible values: ["UTILIZATION", "RATE", "CONNECTION"]`,
 				Default: "UTILIZATION",
 			},
 			"capacity_scaler": {
@@ -1016,7 +1210,7 @@ CPU utilization target for the group. Valid range is [0.0, 1.0].`,
 
 func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1039,6 +1233,12 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 		return err
 	} else if v, ok := d.GetOkExists("circuit_breakers"); !isEmptyValue(reflect.ValueOf(circuitBreakersProp)) && (ok || !reflect.DeepEqual(v, circuitBreakersProp)) {
 		obj["circuitBreakers"] = circuitBreakersProp
+	}
+	compressionModeProp, err := expandComputeBackendServiceCompressionMode(d.Get("compression_mode"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("compression_mode"); !isEmptyValue(reflect.ValueOf(compressionModeProp)) && (ok || !reflect.DeepEqual(v, compressionModeProp)) {
+		obj["compressionMode"] = compressionModeProp
 	}
 	consistentHashProp, err := expandComputeBackendServiceConsistentHash(d.Get("consistent_hash"), d, config)
 	if err != nil {
@@ -1112,6 +1312,12 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("locality_lb_policy"); !isEmptyValue(reflect.ValueOf(localityLbPolicyProp)) && (ok || !reflect.DeepEqual(v, localityLbPolicyProp)) {
 		obj["localityLbPolicy"] = localityLbPolicyProp
 	}
+	localityLbPoliciesProp, err := expandComputeBackendServiceLocalityLbPolicies(d.Get("locality_lb_policies"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("locality_lb_policies"); !isEmptyValue(reflect.ValueOf(localityLbPoliciesProp)) && (ok || !reflect.DeepEqual(v, localityLbPoliciesProp)) {
+		obj["localityLbPolicies"] = localityLbPoliciesProp
+	}
 	nameProp, err := expandComputeBackendServiceName(d.Get("name"), d, config)
 	if err != nil {
 		return err
@@ -1141,6 +1347,18 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 		return err
 	} else if v, ok := d.GetOkExists("security_policy"); !isEmptyValue(reflect.ValueOf(securityPolicyProp)) && (ok || !reflect.DeepEqual(v, securityPolicyProp)) {
 		obj["securityPolicy"] = securityPolicyProp
+	}
+	edgeSecurityPolicyProp, err := expandComputeBackendServiceEdgeSecurityPolicy(d.Get("edge_security_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("edge_security_policy"); !isEmptyValue(reflect.ValueOf(edgeSecurityPolicyProp)) && (ok || !reflect.DeepEqual(v, edgeSecurityPolicyProp)) {
+		obj["edgeSecurityPolicy"] = edgeSecurityPolicyProp
+	}
+	securitySettingsProp, err := expandComputeBackendServiceSecuritySettings(d.Get("security_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("security_settings"); !isEmptyValue(reflect.ValueOf(securitySettingsProp)) && (ok || !reflect.DeepEqual(v, securitySettingsProp)) {
+		obj["securitySettings"] = securitySettingsProp
 	}
 	sessionAffinityProp, err := expandComputeBackendServiceSessionAffinity(d.Get("session_affinity"), d, config)
 	if err != nil {
@@ -1185,7 +1403,7 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating BackendService: %s", err)
 	}
@@ -1197,7 +1415,7 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating BackendService", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -1221,7 +1439,26 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 			return errwrap.Wrapf("Error setting Backend Service security policy: {{err}}", err)
 		}
 		// This uses the create timeout for simplicity, though technically this code appears in both create and update
-		waitErr := computeOperationWaitTime(config, op, project, "Setting Backend Service Security Policy", userAgent, d.Timeout(schema.TimeoutCreate))
+		waitErr := ComputeOperationWaitTime(config, op, project, "Setting Backend Service Security Policy", userAgent, d.Timeout(schema.TimeoutCreate))
+		if waitErr != nil {
+			return waitErr
+		}
+	}
+	// edge security_policy isn't set by Create / Update
+	if o, n := d.GetChange("edge_security_policy"); o.(string) != n.(string) {
+		pol, err := ParseSecurityPolicyFieldValue(n.(string), d, config)
+		if err != nil {
+			return errwrap.Wrapf("Error parsing Backend Service edge security policy: {{err}}", err)
+		}
+
+		spr := emptySecurityPolicyReference()
+		spr.SecurityPolicy = pol.RelativeLink()
+		op, err := config.NewComputeClient(userAgent).BackendServices.SetEdgeSecurityPolicy(project, obj["name"].(string), spr).Do()
+		if err != nil {
+			return errwrap.Wrapf("Error setting Backend Service edge security policy: {{err}}", err)
+		}
+		// This uses the create timeout for simplicity, though technically this code appears in both create and update
+		waitErr := ComputeOperationWaitTime(config, op, project, "Setting Backend Service Edge Security Policy", userAgent, d.Timeout(schema.TimeoutCreate))
 		if waitErr != nil {
 			return waitErr
 		}
@@ -1234,7 +1471,7 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 
 func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1257,7 +1494,7 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeBackendService %q", d.Id()))
 	}
@@ -1285,6 +1522,9 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
 	if err := d.Set("circuit_breakers", flattenComputeBackendServiceCircuitBreakers(res["circuitBreakers"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackendService: %s", err)
+	}
+	if err := d.Set("compression_mode", flattenComputeBackendServiceCompressionMode(res["compressionMode"], d, config)); err != nil {
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
 	if err := d.Set("consistent_hash", flattenComputeBackendServiceConsistentHash(res["consistentHash"], d, config)); err != nil {
@@ -1329,6 +1569,9 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 	if err := d.Set("health_checks", flattenComputeBackendServiceHealthChecks(res["healthChecks"], d, config)); err != nil {
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
+	if err := d.Set("generated_id", flattenComputeBackendServiceGeneratedId(res["id"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackendService: %s", err)
+	}
 	if err := d.Set("iap", flattenComputeBackendServiceIap(res["iap"], d, config)); err != nil {
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
@@ -1336,6 +1579,9 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
 	if err := d.Set("locality_lb_policy", flattenComputeBackendServiceLocalityLbPolicy(res["localityLbPolicy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackendService: %s", err)
+	}
+	if err := d.Set("locality_lb_policies", flattenComputeBackendServiceLocalityLbPolicies(res["localityLbPolicies"], d, config)); err != nil {
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
 	if err := d.Set("name", flattenComputeBackendServiceName(res["name"], d, config)); err != nil {
@@ -1351,6 +1597,12 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
 	if err := d.Set("security_policy", flattenComputeBackendServiceSecurityPolicy(res["securityPolicy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackendService: %s", err)
+	}
+	if err := d.Set("edge_security_policy", flattenComputeBackendServiceEdgeSecurityPolicy(res["edgeSecurityPolicy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading BackendService: %s", err)
+	}
+	if err := d.Set("security_settings", flattenComputeBackendServiceSecuritySettings(res["securitySettings"], d, config)); err != nil {
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
 	if err := d.Set("session_affinity", flattenComputeBackendServiceSessionAffinity(res["sessionAffinity"], d, config)); err != nil {
@@ -1371,7 +1623,7 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 
 func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1402,6 +1654,12 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 		return err
 	} else if v, ok := d.GetOkExists("circuit_breakers"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, circuitBreakersProp)) {
 		obj["circuitBreakers"] = circuitBreakersProp
+	}
+	compressionModeProp, err := expandComputeBackendServiceCompressionMode(d.Get("compression_mode"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("compression_mode"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, compressionModeProp)) {
+		obj["compressionMode"] = compressionModeProp
 	}
 	consistentHashProp, err := expandComputeBackendServiceConsistentHash(d.Get("consistent_hash"), d, config)
 	if err != nil {
@@ -1475,6 +1733,12 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("locality_lb_policy"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, localityLbPolicyProp)) {
 		obj["localityLbPolicy"] = localityLbPolicyProp
 	}
+	localityLbPoliciesProp, err := expandComputeBackendServiceLocalityLbPolicies(d.Get("locality_lb_policies"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("locality_lb_policies"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, localityLbPoliciesProp)) {
+		obj["localityLbPolicies"] = localityLbPoliciesProp
+	}
 	nameProp, err := expandComputeBackendServiceName(d.Get("name"), d, config)
 	if err != nil {
 		return err
@@ -1504,6 +1768,18 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 		return err
 	} else if v, ok := d.GetOkExists("security_policy"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, securityPolicyProp)) {
 		obj["securityPolicy"] = securityPolicyProp
+	}
+	edgeSecurityPolicyProp, err := expandComputeBackendServiceEdgeSecurityPolicy(d.Get("edge_security_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("edge_security_policy"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, edgeSecurityPolicyProp)) {
+		obj["edgeSecurityPolicy"] = edgeSecurityPolicyProp
+	}
+	securitySettingsProp, err := expandComputeBackendServiceSecuritySettings(d.Get("security_settings"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("security_settings"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, securitySettingsProp)) {
+		obj["securitySettings"] = securitySettingsProp
 	}
 	sessionAffinityProp, err := expandComputeBackendServiceSessionAffinity(d.Get("session_affinity"), d, config)
 	if err != nil {
@@ -1541,7 +1817,7 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating BackendService %q: %s", d.Id(), err)
@@ -1549,7 +1825,7 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 		log.Printf("[DEBUG] Finished updating BackendService %q: %#v", d.Id(), res)
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Updating BackendService", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -1571,7 +1847,26 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 			return errwrap.Wrapf("Error setting Backend Service security policy: {{err}}", err)
 		}
 		// This uses the create timeout for simplicity, though technically this code appears in both create and update
-		waitErr := computeOperationWaitTime(config, op, project, "Setting Backend Service Security Policy", userAgent, d.Timeout(schema.TimeoutCreate))
+		waitErr := ComputeOperationWaitTime(config, op, project, "Setting Backend Service Security Policy", userAgent, d.Timeout(schema.TimeoutCreate))
+		if waitErr != nil {
+			return waitErr
+		}
+	}
+	// edge security_policy isn't set by Create / Update
+	if o, n := d.GetChange("edge_security_policy"); o.(string) != n.(string) {
+		pol, err := ParseSecurityPolicyFieldValue(n.(string), d, config)
+		if err != nil {
+			return errwrap.Wrapf("Error parsing Backend Service edge security policy: {{err}}", err)
+		}
+
+		spr := emptySecurityPolicyReference()
+		spr.SecurityPolicy = pol.RelativeLink()
+		op, err := config.NewComputeClient(userAgent).BackendServices.SetEdgeSecurityPolicy(project, obj["name"].(string), spr).Do()
+		if err != nil {
+			return errwrap.Wrapf("Error setting Backend Service edge security policy: {{err}}", err)
+		}
+		// This uses the create timeout for simplicity, though technically this code appears in both create and update
+		waitErr := ComputeOperationWaitTime(config, op, project, "Setting Backend Service Edge Security Policy", userAgent, d.Timeout(schema.TimeoutCreate))
 		if waitErr != nil {
 			return waitErr
 		}
@@ -1581,7 +1876,7 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 
 func resourceComputeBackendServiceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1607,12 +1902,12 @@ func resourceComputeBackendServiceDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "BackendService")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting BackendService", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -1647,7 +1942,7 @@ func resourceComputeBackendServiceImport(d *schema.ResourceData, meta interface{
 func flattenComputeBackendServiceAffinityCookieTtlSec(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1711,7 +2006,7 @@ func flattenComputeBackendServiceBackendGroup(v interface{}, d *schema.ResourceD
 func flattenComputeBackendServiceBackendMaxConnections(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1728,7 +2023,7 @@ func flattenComputeBackendServiceBackendMaxConnections(v interface{}, d *schema.
 func flattenComputeBackendServiceBackendMaxConnectionsPerInstance(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1745,7 +2040,7 @@ func flattenComputeBackendServiceBackendMaxConnectionsPerInstance(v interface{},
 func flattenComputeBackendServiceBackendMaxConnectionsPerEndpoint(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1762,7 +2057,7 @@ func flattenComputeBackendServiceBackendMaxConnectionsPerEndpoint(v interface{},
 func flattenComputeBackendServiceBackendMaxRate(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1812,7 +2107,7 @@ func flattenComputeBackendServiceCircuitBreakers(v interface{}, d *schema.Resour
 func flattenComputeBackendServiceCircuitBreakersMaxRequestsPerConnection(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1829,7 +2124,7 @@ func flattenComputeBackendServiceCircuitBreakersMaxRequestsPerConnection(v inter
 func flattenComputeBackendServiceCircuitBreakersMaxConnections(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1846,7 +2141,7 @@ func flattenComputeBackendServiceCircuitBreakersMaxConnections(v interface{}, d 
 func flattenComputeBackendServiceCircuitBreakersMaxPendingRequests(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1863,7 +2158,7 @@ func flattenComputeBackendServiceCircuitBreakersMaxPendingRequests(v interface{}
 func flattenComputeBackendServiceCircuitBreakersMaxRequests(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1880,7 +2175,7 @@ func flattenComputeBackendServiceCircuitBreakersMaxRequests(v interface{}, d *sc
 func flattenComputeBackendServiceCircuitBreakersMaxRetries(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1892,6 +2187,10 @@ func flattenComputeBackendServiceCircuitBreakersMaxRetries(v interface{}, d *sch
 	}
 
 	return v // let terraform core handle it otherwise
+}
+
+func flattenComputeBackendServiceCompressionMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
 }
 
 func flattenComputeBackendServiceConsistentHash(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -1946,7 +2245,7 @@ func flattenComputeBackendServiceConsistentHashHttpCookieTtl(v interface{}, d *s
 func flattenComputeBackendServiceConsistentHashHttpCookieTtlSeconds(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1963,7 +2262,7 @@ func flattenComputeBackendServiceConsistentHashHttpCookieTtlSeconds(v interface{
 func flattenComputeBackendServiceConsistentHashHttpCookieTtlNanos(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1992,7 +2291,7 @@ func flattenComputeBackendServiceConsistentHashHttpHeaderName(v interface{}, d *
 func flattenComputeBackendServiceConsistentHashMinimumRingSize(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2054,6 +2353,10 @@ func flattenComputeBackendServiceCdnPolicyCacheKeyPolicy(v interface{}, d *schem
 		flattenComputeBackendServiceCdnPolicyCacheKeyPolicyQueryStringBlacklist(original["queryStringBlacklist"], d, config)
 	transformed["query_string_whitelist"] =
 		flattenComputeBackendServiceCdnPolicyCacheKeyPolicyQueryStringWhitelist(original["queryStringWhitelist"], d, config)
+	transformed["include_http_headers"] =
+		flattenComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeHttpHeaders(original["includeHttpHeaders"], d, config)
+	transformed["include_named_cookies"] =
+		flattenComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeNamedCookies(original["includeNamedCookies"], d, config)
 	return []interface{}{transformed}
 }
 func flattenComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeHost(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -2082,10 +2385,18 @@ func flattenComputeBackendServiceCdnPolicyCacheKeyPolicyQueryStringWhitelist(v i
 	return schema.NewSet(schema.HashString, v.([]interface{}))
 }
 
+func flattenComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeHttpHeaders(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeNamedCookies(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenComputeBackendServiceCdnPolicySignedUrlCacheMaxAgeSec(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2102,7 +2413,7 @@ func flattenComputeBackendServiceCdnPolicySignedUrlCacheMaxAgeSec(v interface{},
 func flattenComputeBackendServiceCdnPolicyDefaultTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2119,7 +2430,7 @@ func flattenComputeBackendServiceCdnPolicyDefaultTtl(v interface{}, d *schema.Re
 func flattenComputeBackendServiceCdnPolicyMaxTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2136,7 +2447,7 @@ func flattenComputeBackendServiceCdnPolicyMaxTtl(v interface{}, d *schema.Resour
 func flattenComputeBackendServiceCdnPolicyClientTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2176,7 +2487,7 @@ func flattenComputeBackendServiceCdnPolicyNegativeCachingPolicy(v interface{}, d
 func flattenComputeBackendServiceCdnPolicyNegativeCachingPolicyCode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2193,7 +2504,7 @@ func flattenComputeBackendServiceCdnPolicyNegativeCachingPolicyCode(v interface{
 func flattenComputeBackendServiceCdnPolicyNegativeCachingPolicyTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2214,7 +2525,7 @@ func flattenComputeBackendServiceCdnPolicyCacheMode(v interface{}, d *schema.Res
 func flattenComputeBackendServiceCdnPolicyServeWhileStale(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2244,7 +2555,7 @@ func flattenComputeBackendServiceConnectionDraining(v interface{}, d *schema.Res
 func flattenComputeBackendServiceConnectionDrainingConnectionDrainingTimeoutSec(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2295,6 +2606,23 @@ func flattenComputeBackendServiceHealthChecks(v interface{}, d *schema.ResourceD
 	return convertAndMapStringArr(v.([]interface{}), ConvertSelfLinkToV1)
 }
 
+func flattenComputeBackendServiceGeneratedId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
 func flattenComputeBackendServiceIap(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	if v == nil {
 		return nil
@@ -2329,6 +2657,65 @@ func flattenComputeBackendServiceLoadBalancingScheme(v interface{}, d *schema.Re
 }
 
 func flattenComputeBackendServiceLocalityLbPolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendServiceLocalityLbPolicies(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"policy":        flattenComputeBackendServiceLocalityLbPoliciesPolicy(original["policy"], d, config),
+			"custom_policy": flattenComputeBackendServiceLocalityLbPoliciesCustomPolicy(original["customPolicy"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenComputeBackendServiceLocalityLbPoliciesPolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["name"] =
+		flattenComputeBackendServiceLocalityLbPoliciesPolicyName(original["name"], d, config)
+	return []interface{}{transformed}
+}
+func flattenComputeBackendServiceLocalityLbPoliciesPolicyName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendServiceLocalityLbPoliciesCustomPolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["name"] =
+		flattenComputeBackendServiceLocalityLbPoliciesCustomPolicyName(original["name"], d, config)
+	transformed["data"] =
+		flattenComputeBackendServiceLocalityLbPoliciesCustomPolicyData(original["data"], d, config)
+	return []interface{}{transformed}
+}
+func flattenComputeBackendServiceLocalityLbPoliciesCustomPolicyName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendServiceLocalityLbPoliciesCustomPolicyData(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -2387,7 +2774,7 @@ func flattenComputeBackendServiceOutlierDetectionBaseEjectionTime(v interface{},
 func flattenComputeBackendServiceOutlierDetectionBaseEjectionTimeSeconds(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2404,7 +2791,7 @@ func flattenComputeBackendServiceOutlierDetectionBaseEjectionTimeSeconds(v inter
 func flattenComputeBackendServiceOutlierDetectionBaseEjectionTimeNanos(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2421,7 +2808,7 @@ func flattenComputeBackendServiceOutlierDetectionBaseEjectionTimeNanos(v interfa
 func flattenComputeBackendServiceOutlierDetectionConsecutiveErrors(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2438,7 +2825,7 @@ func flattenComputeBackendServiceOutlierDetectionConsecutiveErrors(v interface{}
 func flattenComputeBackendServiceOutlierDetectionConsecutiveGatewayFailure(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2455,7 +2842,7 @@ func flattenComputeBackendServiceOutlierDetectionConsecutiveGatewayFailure(v int
 func flattenComputeBackendServiceOutlierDetectionEnforcingConsecutiveErrors(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2472,7 +2859,7 @@ func flattenComputeBackendServiceOutlierDetectionEnforcingConsecutiveErrors(v in
 func flattenComputeBackendServiceOutlierDetectionEnforcingConsecutiveGatewayFailure(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2489,7 +2876,7 @@ func flattenComputeBackendServiceOutlierDetectionEnforcingConsecutiveGatewayFail
 func flattenComputeBackendServiceOutlierDetectionEnforcingSuccessRate(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2521,7 +2908,7 @@ func flattenComputeBackendServiceOutlierDetectionInterval(v interface{}, d *sche
 func flattenComputeBackendServiceOutlierDetectionIntervalSeconds(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2538,7 +2925,7 @@ func flattenComputeBackendServiceOutlierDetectionIntervalSeconds(v interface{}, 
 func flattenComputeBackendServiceOutlierDetectionIntervalNanos(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2555,7 +2942,7 @@ func flattenComputeBackendServiceOutlierDetectionIntervalNanos(v interface{}, d 
 func flattenComputeBackendServiceOutlierDetectionMaxEjectionPercent(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2572,7 +2959,7 @@ func flattenComputeBackendServiceOutlierDetectionMaxEjectionPercent(v interface{
 func flattenComputeBackendServiceOutlierDetectionSuccessRateMinimumHosts(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2589,7 +2976,7 @@ func flattenComputeBackendServiceOutlierDetectionSuccessRateMinimumHosts(v inter
 func flattenComputeBackendServiceOutlierDetectionSuccessRateRequestVolume(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2606,7 +2993,7 @@ func flattenComputeBackendServiceOutlierDetectionSuccessRateRequestVolume(v inte
 func flattenComputeBackendServiceOutlierDetectionSuccessRateStdevFactor(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2632,6 +3019,36 @@ func flattenComputeBackendServiceSecurityPolicy(v interface{}, d *schema.Resourc
 	return v
 }
 
+func flattenComputeBackendServiceEdgeSecurityPolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeBackendServiceSecuritySettings(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["client_tls_policy"] =
+		flattenComputeBackendServiceSecuritySettingsClientTlsPolicy(original["clientTlsPolicy"], d, config)
+	transformed["subject_alt_names"] =
+		flattenComputeBackendServiceSecuritySettingsSubjectAltNames(original["subjectAltNames"], d, config)
+	return []interface{}{transformed}
+}
+func flattenComputeBackendServiceSecuritySettingsClientTlsPolicy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return ConvertSelfLinkToV1(v.(string))
+}
+
+func flattenComputeBackendServiceSecuritySettingsSubjectAltNames(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenComputeBackendServiceSessionAffinity(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
@@ -2639,7 +3056,7 @@ func flattenComputeBackendServiceSessionAffinity(v interface{}, d *schema.Resour
 func flattenComputeBackendServiceTimeoutSec(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -2884,6 +3301,10 @@ func expandComputeBackendServiceCircuitBreakersMaxRetries(v interface{}, d Terra
 	return v, nil
 }
 
+func expandComputeBackendServiceCompressionMode(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandComputeBackendServiceConsistentHash(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -3119,6 +3540,20 @@ func expandComputeBackendServiceCdnPolicyCacheKeyPolicy(v interface{}, d Terrafo
 		transformed["queryStringWhitelist"] = transformedQueryStringWhitelist
 	}
 
+	transformedIncludeHttpHeaders, err := expandComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeHttpHeaders(original["include_http_headers"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["includeHttpHeaders"] = transformedIncludeHttpHeaders
+	}
+
+	transformedIncludeNamedCookies, err := expandComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeNamedCookies(original["include_named_cookies"], d, config)
+	if err != nil {
+		return nil, err
+	} else {
+		transformed["includeNamedCookies"] = transformedIncludeNamedCookies
+	}
+
 	return transformed, nil
 }
 
@@ -3141,6 +3576,14 @@ func expandComputeBackendServiceCdnPolicyCacheKeyPolicyQueryStringBlacklist(v in
 
 func expandComputeBackendServiceCdnPolicyCacheKeyPolicyQueryStringWhitelist(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	v = v.(*schema.Set).List()
+	return v, nil
+}
+
+func expandComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeHttpHeaders(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceCdnPolicyCacheKeyPolicyIncludeNamedCookies(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -3302,6 +3745,92 @@ func expandComputeBackendServiceLoadBalancingScheme(v interface{}, d TerraformRe
 }
 
 func expandComputeBackendServiceLocalityLbPolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceLocalityLbPolicies(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedPolicy, err := expandComputeBackendServiceLocalityLbPoliciesPolicy(original["policy"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedPolicy); val.IsValid() && !isEmptyValue(val) {
+			transformed["policy"] = transformedPolicy
+		}
+
+		transformedCustomPolicy, err := expandComputeBackendServiceLocalityLbPoliciesCustomPolicy(original["custom_policy"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedCustomPolicy); val.IsValid() && !isEmptyValue(val) {
+			transformed["customPolicy"] = transformedCustomPolicy
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandComputeBackendServiceLocalityLbPoliciesPolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedName, err := expandComputeBackendServiceLocalityLbPoliciesPolicyName(original["name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedName); val.IsValid() && !isEmptyValue(val) {
+		transformed["name"] = transformedName
+	}
+
+	return transformed, nil
+}
+
+func expandComputeBackendServiceLocalityLbPoliciesPolicyName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceLocalityLbPoliciesCustomPolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedName, err := expandComputeBackendServiceLocalityLbPoliciesCustomPolicyName(original["name"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedName); val.IsValid() && !isEmptyValue(val) {
+		transformed["name"] = transformedName
+	}
+
+	transformedData, err := expandComputeBackendServiceLocalityLbPoliciesCustomPolicyData(original["data"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedData); val.IsValid() && !isEmptyValue(val) {
+		transformed["data"] = transformedData
+	}
+
+	return transformed, nil
+}
+
+func expandComputeBackendServiceLocalityLbPoliciesCustomPolicyName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceLocalityLbPoliciesCustomPolicyData(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -3511,6 +4040,48 @@ func expandComputeBackendServiceProtocol(v interface{}, d TerraformResourceData,
 }
 
 func expandComputeBackendServiceSecurityPolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceEdgeSecurityPolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeBackendServiceSecuritySettings(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedClientTlsPolicy, err := expandComputeBackendServiceSecuritySettingsClientTlsPolicy(original["client_tls_policy"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedClientTlsPolicy); val.IsValid() && !isEmptyValue(val) {
+		transformed["clientTlsPolicy"] = transformedClientTlsPolicy
+	}
+
+	transformedSubjectAltNames, err := expandComputeBackendServiceSecuritySettingsSubjectAltNames(original["subject_alt_names"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSubjectAltNames); val.IsValid() && !isEmptyValue(val) {
+		transformed["subjectAltNames"] = transformedSubjectAltNames
+	}
+
+	return transformed, nil
+}
+
+func expandComputeBackendServiceSecuritySettingsClientTlsPolicy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	f, err := parseGlobalFieldValue("regions", v.(string), "project", d, config, true)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid value for client_tls_policy: %s", err)
+	}
+	return f.RelativeLink(), nil
+}
+
+func expandComputeBackendServiceSecuritySettingsSubjectAltNames(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

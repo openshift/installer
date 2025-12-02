@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -116,9 +116,13 @@ func mapEntry(fetch map[string]interface{}, item string) (interface{}, error) {
 			return nil, fmt.Errorf("could not find %q in %v", item, fetch)
 		}
 
+		if f == nil {
+			return nil, &AttemptToIndexNilArray{FieldName: field}
+		}
+
 		fetch, ok := f.([]interface{})
 		if !ok {
-			return nil, fmt.Errorf("field %s is not an array", field)
+			return nil, fmt.Errorf("field %s is a %T, not an array", field, f)
 		}
 
 		if len(fetch) < index {
@@ -318,14 +322,12 @@ func ValueFromRegexOnField(fieldName string, val *string, containerVal *string, 
 	if containerVal != nil && *containerVal != "" {
 		r := re.MustCompile(regex)
 		m := r.FindStringSubmatch(*containerVal)
-		if m == nil {
+		if m != nil && len(m) >= 2 {
+			containerGroupedVal = String(m[1])
+		} else if val == nil || *val == "" {
+			// The regex didn't match and the value doesn't exist.
 			return nil, fmt.Errorf("%s field parent has no matching values from regex %s in value %s", fieldName, regex, *containerVal)
 		}
-
-		if len(m) < 2 {
-			return nil, fmt.Errorf("%s field parent has no matching values from regex %s in value %s", fieldName, regex, *containerVal)
-		}
-		containerGroupedVal = String(m[1])
 	}
 
 	// If value exists + different from what's in container, error.
@@ -335,47 +337,10 @@ func ValueFromRegexOnField(fieldName string, val *string, containerVal *string, 
 		}
 	}
 
-	// If everything is unset, error.
-	if (val == nil || *val == "") && (containerGroupedVal == nil || *containerGroupedVal == "") {
-		return nil, fmt.Errorf("%s field is unset", fieldName)
-	}
-
 	// If value does not exist, use the value in container.
 	if val == nil || *val == "" {
 		return containerGroupedVal, nil
 	}
 
 	return val, nil
-}
-
-// ValueFromOptionalString takes an optional object and returns it primitive.
-func ValueFromOptionalString(i *OptionalString) string {
-	if i.IsUnset() {
-		return ""
-	}
-	return *i.Value
-}
-
-// ValueFromOptionalInt64 takes an optional object and returns it primitive.
-func ValueFromOptionalInt64(i *OptionalInt64) int64 {
-	if i.IsUnset() {
-		return 0
-	}
-	return *i.Value
-}
-
-// ValueFromOptionalFloat64 takes an optional object and returns it primitive.
-func ValueFromOptionalFloat64(i *OptionalFloat64) float64 {
-	if i.IsUnset() {
-		return 0.0
-	}
-	return *i.Value
-}
-
-// ValueFromOptionalBool takes an optional object and returns it primitive.
-func ValueFromOptionalBool(i *OptionalBool) bool {
-	if i.IsUnset() {
-		return false
-	}
-	return *i.Value
 }

@@ -2,10 +2,11 @@ package google
 
 import (
 	"fmt"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleComputeInstanceSerialPort() *schema.Resource {
+func DataSourceGoogleComputeInstanceSerialPort() *schema.Resource {
 	return &schema.Resource{
 		Read: computeInstanceSerialPortRead,
 		Schema: map[string]*schema.Schema{
@@ -37,7 +38,7 @@ func dataSourceGoogleComputeInstanceSerialPort() *schema.Resource {
 
 func computeInstanceSerialPortRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

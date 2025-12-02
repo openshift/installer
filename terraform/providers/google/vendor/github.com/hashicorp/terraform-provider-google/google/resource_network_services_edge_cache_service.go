@@ -22,10 +22,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceNetworkServicesEdgeCacheService() *schema.Resource {
+func ResourceNetworkServicesEdgeCacheService() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceNetworkServicesEdgeCacheServiceCreate,
 		Read:   resourceNetworkServicesEdgeCacheServiceRead,
@@ -63,7 +62,7 @@ and all following characters must be a dash, underscore, letter or digit.`,
 							Required:    true,
 							Description: `The list of hostRules to match against. These rules define which hostnames the EdgeCacheService will match against, and which route configurations apply.`,
 							MinItems:    1,
-							MaxItems:    5,
+							MaxItems:    10,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"hosts": {
@@ -71,10 +70,22 @@ and all following characters must be a dash, underscore, letter or digit.`,
 										Required: true,
 										Description: `The list of host patterns to match.
 
-Host patterns must be valid hostnames with optional port numbers in the format host:port. * matches any string of ([a-z0-9-.]*).
-The only accepted ports are :80 and :443.
+Host patterns must be valid hostnames. Ports are not allowed. Wildcard hosts are supported in the suffix or prefix form. * matches any string of ([a-z0-9-.]*). It does not match the empty string.
 
-Hosts are matched against the HTTP Host header, or for HTTP/2 and HTTP/3, the ":authority" header, from the incoming request.`,
+When multiple hosts are specified, hosts are matched in the following priority:
+
+  1. Exact domain names: ''www.foo.com''.
+  2. Suffix domain wildcards: ''*.foo.com'' or ''*-bar.foo.com''.
+  3. Prefix domain wildcards: ''foo.*'' or ''foo-*''.
+  4. Special wildcard ''*'' matching any domain.
+
+  Notes:
+
+    The wildcard will not match the empty string. e.g. ''*-bar.foo.com'' will match ''baz-bar.foo.com'' but not ''-bar.foo.com''. The longest wildcards match first. Only a single host in the entire service can match on ''*''. A domain must be unique across all configured hosts within a service.
+
+    Hosts are matched against the HTTP Host header, or for HTTP/2 and HTTP/3, the ":authority" header, from the incoming request.
+
+    You may specify up to 10 hosts.`,
 										MinItems: 1,
 										MaxItems: 10,
 										Elem: &schema.Schema{
@@ -112,7 +123,7 @@ Hosts are matched against the HTTP Host header, or for HTTP/2 and HTTP/3, the ":
 										Required:    true,
 										Description: `The routeRules to match against. routeRules support advanced routing behaviour, and can match on paths, headers and query parameters, as well as status codes and HTTP methods.`,
 										MinItems:    1,
-										MaxItems:    64,
+										MaxItems:    200,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"match_rule": {
@@ -252,7 +263,7 @@ to which you could add rules numbered from 6 to 8, 10 to 11, and 13 to 15 in the
 																Optional:    true,
 																Description: `Describes a header to add.`,
 																MinItems:    1,
-																MaxItems:    5,
+																MaxItems:    25,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"header_name": {
@@ -279,7 +290,7 @@ to which you could add rules numbered from 6 to 8, 10 to 11, and 13 to 15 in the
 																Optional:    true,
 																Description: `A list of header names for headers that need to be removed from the request prior to forwarding the request to the origin.`,
 																MinItems:    1,
-																MaxItems:    10,
+																MaxItems:    25,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"header_name": {
@@ -297,7 +308,7 @@ to which you could add rules numbered from 6 to 8, 10 to 11, and 13 to 15 in the
 
 Response headers are only sent to the client, and do not have an effect on the cache serving the response.`,
 																MinItems: 1,
-																MaxItems: 5,
+																MaxItems: 25,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"header_name": {
@@ -324,7 +335,7 @@ Response headers are only sent to the client, and do not have an effect on the c
 																Optional:    true,
 																Description: `A list of header names for headers that need to be removed from the request prior to forwarding the request to the origin.`,
 																MinItems:    1,
-																MaxItems:    10,
+																MaxItems:    25,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
 																		"header_name": {
@@ -362,6 +373,90 @@ Only one of origin or urlRedirect can be set.`,
 																MaxItems:    1,
 																Elem: &schema.Resource{
 																	Schema: map[string]*schema.Schema{
+																		"add_signatures": {
+																			Type:     schema.TypeList,
+																			Optional: true,
+																			Description: `Enable signature generation or propagation on this route.
+
+This field may only be specified when signedRequestMode is set to REQUIRE_TOKENS.`,
+																			MaxItems: 1,
+																			Elem: &schema.Resource{
+																				Schema: map[string]*schema.Schema{
+																					"actions": {
+																						Type:        schema.TypeList,
+																						Required:    true,
+																						Description: `The actions to take to add signatures to responses. Possible values: ["GENERATE_COOKIE", "GENERATE_TOKEN_HLS_COOKIELESS", "PROPAGATE_TOKEN_HLS_COOKIELESS"]`,
+																						MaxItems:    1,
+																						Elem: &schema.Schema{
+																							Type:         schema.TypeString,
+																							ValidateFunc: validateEnum([]string{"GENERATE_COOKIE", "GENERATE_TOKEN_HLS_COOKIELESS", "PROPAGATE_TOKEN_HLS_COOKIELESS"}),
+																						},
+																					},
+																					"copied_parameters": {
+																						Type:     schema.TypeList,
+																						Optional: true,
+																						Description: `The parameters to copy from the verified token to the generated token.
+
+Only the following parameters may be copied:
+
+  * 'PathGlobs'
+  * 'paths'
+  * 'acl'
+  * 'URLPrefix'
+  * 'IPRanges'
+  * 'SessionID'
+  * 'id'
+  * 'Data'
+  * 'data'
+  * 'payload'
+  * 'Headers'
+
+You may specify up to 6 parameters to copy.  A given parameter is be copied only if the parameter exists in the verified token.  Parameter names are matched exactly as specified.  The order of the parameters does not matter.  Duplicates are not allowed.
+
+This field may only be specified when the GENERATE_COOKIE or GENERATE_TOKEN_HLS_COOKIELESS actions are specified.`,
+																						Elem: &schema.Schema{
+																							Type: schema.TypeString,
+																						},
+																					},
+																					"keyset": {
+																						Type:     schema.TypeString,
+																						Optional: true,
+																						Description: `The keyset to use for signature generation.
+
+The following are both valid paths to an EdgeCacheKeyset resource:
+
+  * 'projects/project/locations/global/edgeCacheKeysets/yourKeyset'
+  * 'yourKeyset'
+
+This must be specified when the GENERATE_COOKIE or GENERATE_TOKEN_HLS_COOKIELESS actions are specified.  This field may not be specified otherwise.`,
+																					},
+																					"token_query_parameter": {
+																						Type:     schema.TypeString,
+																						Optional: true,
+																						Description: `The query parameter in which to put the generated token.
+
+If not specified, defaults to 'edge-cache-token'.
+
+If specified, the name must be 1-64 characters long and match the regular expression '[a-zA-Z]([a-zA-Z0-9_-])*' which means the first character must be a letter, and all following characters must be a dash, underscore, letter or digit.
+
+This field may only be set when the GENERATE_TOKEN_HLS_COOKIELESS or PROPAGATE_TOKEN_HLS_COOKIELESS actions are specified.`,
+																					},
+																					"token_ttl": {
+																						Type:     schema.TypeString,
+																						Optional: true,
+																						Description: `The duration the token is valid starting from the moment the token is first generated.
+
+Defaults to '86400s' (1 day).
+
+The TTL must be >= 0 and <= 604,800 seconds (1 week).
+
+This field may only be specified when the GENERATE_COOKIE or GENERATE_TOKEN_HLS_COOKIELESS actions are specified.
+
+A duration in seconds with up to nine fractional digits, terminated by 's'. Example: "3.5s".`,
+																					},
+																				},
+																			},
+																		},
 																		"cache_key_policy": {
 																			Type:        schema.TypeList,
 																			Optional:    true,
@@ -375,7 +470,7 @@ Only one of origin or urlRedirect can be set.`,
 																						Optional: true,
 																						Description: `If true, requests to different hosts will be cached separately.
 
-Note: this should only be enabled if hosts share the same origin and content Removing the host from the cache key may inadvertently result in different objects being cached than intended, depending on which route the first user matched.`,
+Note: this should only be enabled if hosts share the same origin and content. Removing the host from the cache key may inadvertently result in different objects being cached than intended, depending on which route the first user matched.`,
 																					},
 																					"exclude_query_string": {
 																						Type:     schema.TypeBool,
@@ -404,6 +499,24 @@ Either specify includedQueryParameters or excludedQueryParameters, not both. '&'
 																						Computed:    true,
 																						Optional:    true,
 																						Description: `If true, http and https requests will be cached separately.`,
+																					},
+																					"included_cookie_names": {
+																						Type:     schema.TypeList,
+																						Optional: true,
+																						Description: `Names of Cookies to include in cache keys.  The cookie name and cookie value of each cookie named will be used as part of the cache key.
+
+Cookie names:
+  - must be valid RFC 6265 "cookie-name" tokens
+  - are case sensitive
+  - cannot start with "Edge-Cache-" (case insensitive)
+
+  Note that specifying several cookies, and/or cookies that have a large range of values (e.g., per-user) will dramatically impact the cache hit rate, and may result in a higher eviction rate and reduced performance.
+
+  You may specify up to three cookie names.`,
+																						MaxItems: 3,
+																						Elem: &schema.Schema{
+																							Type: schema.TypeString,
+																						},
 																					},
 																					"included_header_names": {
 																						Type:     schema.TypeList,
@@ -438,7 +551,7 @@ Either specify includedQueryParameters or excludedQueryParameters, not both. '&'
 																			Type:         schema.TypeString,
 																			Computed:     true,
 																			Optional:     true,
-																			ValidateFunc: validation.StringInSlice([]string{"CACHE_ALL_STATIC", "USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "BYPASS_CACHE", ""}, false),
+																			ValidateFunc: validateEnum([]string{"CACHE_ALL_STATIC", "USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "BYPASS_CACHE", ""}),
 																			Description: `Cache modes allow users to control the behaviour of the cache, what content it should cache automatically, whether to respect origin headers, or whether to unconditionally cache all responses.
 
 For all cache modes, Cache-Control headers will be passed to the client. Use clientTtl to override what is sent to the client. Possible values: ["CACHE_ALL_STATIC", "USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", "BYPASS_CACHE"]`,
@@ -451,10 +564,11 @@ For all cache modes, Cache-Control headers will be passed to the client. Use cli
 - The TTL must be > 0 and <= 86400s (1 day)
 - The clientTtl cannot be larger than the defaultTtl (if set)
 - Fractions of a second are not allowed.
-- Omit this field to use the defaultTtl, or the max-age set by the origin, as the client-facing TTL.
+
+Omit this field to use the defaultTtl, or the max-age set by the origin, as the client-facing TTL.
 
 When the cache mode is set to "USE_ORIGIN_HEADERS" or "BYPASS_CACHE", you must omit this field.
-A duration in seconds with up to nine fractional digits, terminated by 's'. Example: "3.5s".`,
+A duration in seconds terminated by 's'. Example: "3s".`,
 																		},
 																		"default_ttl": {
 																			Type:     schema.TypeString,
@@ -464,7 +578,7 @@ A duration in seconds with up to nine fractional digits, terminated by 's'. Exam
 
 Defaults to 3600s (1 hour).
 
-- The TTL must be >= 0 and <= 2592000s (1 month)
+- The TTL must be >= 0 and <= 31,536,000 seconds (1 year)
 - Setting a TTL of "0" means "always revalidate" (equivalent to must-revalidate)
 - The value of defaultTTL cannot be set to a value greater than that of maxTTL.
 - Fractions of a second are not allowed.
@@ -474,7 +588,7 @@ Note that infrequently accessed objects may be evicted from the cache before the
 
 When the cache mode is set to "USE_ORIGIN_HEADERS" or "BYPASS_CACHE", you must omit this field.
 
-A duration in seconds with up to nine fractional digits, terminated by 's'. Example: "3.5s".`,
+A duration in seconds terminated by 's'. Example: "3s".`,
 																		},
 																		"max_ttl": {
 																			Type:     schema.TypeString,
@@ -486,13 +600,14 @@ Defaults to 86400s (1 day).
 
 Cache directives that attempt to set a max-age or s-maxage higher than this, or an Expires header more than maxTtl seconds in the future will be capped at the value of maxTTL, as if it were the value of an s-maxage Cache-Control directive.
 
-- The TTL must be >= 0 and <= 2592000s (1 month)
+- The TTL must be >= 0 and <= 31,536,000 seconds (1 year)
 - Setting a TTL of "0" means "always revalidate"
 - The value of maxTtl must be equal to or greater than defaultTtl.
 - Fractions of a second are not allowed.
-- When the cache mode is set to "USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", or "BYPASS_CACHE", you must omit this field.
 
-A duration in seconds with up to nine fractional digits, terminated by 's'. Example: "3.5s".`,
+When the cache mode is set to "USE_ORIGIN_HEADERS", "FORCE_CACHE_ALL", or "BYPASS_CACHE", you must omit this field.
+
+A duration in seconds terminated by 's'. Example: "3s".`,
 																		},
 																		"negative_caching": {
 																			Type:     schema.TypeBool,
@@ -524,16 +639,63 @@ Note that when specifying an explicit negativeCachingPolicy, you should take car
 																			Optional:    true,
 																			Description: `The EdgeCacheKeyset containing the set of public keys used to validate signed requests at the edge.`,
 																		},
+																		"signed_request_maximum_expiration_ttl": {
+																			Type:     schema.TypeString,
+																			Optional: true,
+																			Description: `Limit how far into the future the expiration time of a signed request may be.
+
+When set, a signed request is rejected if its expiration time is later than now + signedRequestMaximumExpirationTtl, where now is the time at which the signed request is first handled by the CDN.
+
+- The TTL must be > 0.
+- Fractions of a second are not allowed.
+
+By default, signedRequestMaximumExpirationTtl is not set and the expiration time of a signed request may be arbitrarily far into future.`,
+																		},
 																		"signed_request_mode": {
 																			Type:         schema.TypeString,
 																			Computed:     true,
 																			Optional:     true,
-																			ValidateFunc: validation.StringInSlice([]string{"DISABLED", "REQUIRE_SIGNATURES", ""}, false),
+																			ValidateFunc: validateEnum([]string{"DISABLED", "REQUIRE_SIGNATURES", "REQUIRE_TOKENS", ""}),
 																			Description: `Whether to enforce signed requests. The default value is DISABLED, which means all content is public, and does not authorize access.
 
 You must also set a signedRequestKeyset to enable signed requests.
 
-When set to REQUIRE_SIGNATURES, all matching requests will have their signature validated. Requests that were not signed with the corresponding private key, or that are otherwise invalid (expired, do not match the signature, IP address, or header) will be rejected with a HTTP 403 and (if enabled) logged. Possible values: ["DISABLED", "REQUIRE_SIGNATURES"]`,
+When set to REQUIRE_SIGNATURES, all matching requests will have their signature validated. Requests that were not signed with the corresponding private key, or that are otherwise invalid (expired, do not match the signature, IP address, or header) will be rejected with a HTTP 403 and (if enabled) logged. Possible values: ["DISABLED", "REQUIRE_SIGNATURES", "REQUIRE_TOKENS"]`,
+																		},
+																		"signed_token_options": {
+																			Type:     schema.TypeList,
+																			Optional: true,
+																			Description: `Additional options for signed tokens.
+
+signedTokenOptions may only be specified when signedRequestMode is REQUIRE_TOKENS.`,
+																			MaxItems: 1,
+																			Elem: &schema.Resource{
+																				Schema: map[string]*schema.Schema{
+																					"allowed_signature_algorithms": {
+																						Type:     schema.TypeList,
+																						Optional: true,
+																						Description: `The allowed signature algorithms to use.
+
+Defaults to using only ED25519.
+
+You may specify up to 3 signature algorithms to use. Possible values: ["ED25519", "HMAC_SHA_256", "HMAC_SHA1"]`,
+																						MaxItems: 3,
+																						Elem: &schema.Schema{
+																							Type:         schema.TypeString,
+																							ValidateFunc: validateEnum([]string{"ED25519", "HMAC_SHA_256", "HMAC_SHA1"}),
+																						},
+																					},
+																					"token_query_parameter": {
+																						Type:     schema.TypeString,
+																						Optional: true,
+																						Description: `The query parameter in which to find the token.
+
+The name must be 1-64 characters long and match the regular expression '[a-zA-Z]([a-zA-Z0-9_-])*' which means the first character must be a letter, and all following characters must be a dash, underscore, letter or digit.
+
+Defaults to 'edge-cache-token'.`,
+																					},
+																				},
+																			},
 																		},
 																	},
 																},
@@ -567,7 +729,7 @@ This translates to the Access-Control-Allow-Credentials response header.`,
 																			Type:        schema.TypeList,
 																			Optional:    true,
 																			Description: `Specifies the content for the Access-Control-Allow-Headers response header.`,
-																			MaxItems:    5,
+																			MaxItems:    25,
 																			Elem: &schema.Schema{
 																				Type: schema.TypeString,
 																			},
@@ -587,7 +749,7 @@ This translates to the Access-Control-Allow-Credentials response header.`,
 																			Description: `Specifies the list of origins that will be allowed to do CORS requests.
 
 This translates to the Access-Control-Allow-Origin response header.`,
-																			MaxItems: 5,
+																			MaxItems: 25,
 																			Elem: &schema.Schema{
 																				Type: schema.TypeString,
 																			},
@@ -601,7 +763,7 @@ This translates to the Access-Control-Allow-Origin response header.`,
 																			Type:        schema.TypeList,
 																			Optional:    true,
 																			Description: `Specifies the content for the Access-Control-Allow-Headers response header.`,
-																			MaxItems:    5,
+																			MaxItems:    25,
 																			Elem: &schema.Schema{
 																				Type: schema.TypeString,
 																			},
@@ -690,7 +852,7 @@ prefixRedirect cannot be supplied together with pathRedirect. Supply one alone o
 																Type:         schema.TypeString,
 																Computed:     true,
 																Optional:     true,
-																ValidateFunc: validation.StringInSlice([]string{"MOVED_PERMANENTLY_DEFAULT", "FOUND", "SEE_OTHER", "TEMPORARY_REDIRECT", "PERMANENT_REDIRECT", ""}, false),
+																ValidateFunc: validateEnum([]string{"MOVED_PERMANENTLY_DEFAULT", "FOUND", "SEE_OTHER", "TEMPORARY_REDIRECT", "PERMANENT_REDIRECT", ""}),
 																Description: `The HTTP Status code to use for this RedirectAction.
 
 The supported values are:
@@ -728,6 +890,15 @@ The supported values are:
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: `A human-readable description of the resource.`,
+			},
+			"disable_http2": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: `Disables HTTP/2.
+
+HTTP/2 (h2) is enabled by default and recommended for performance. HTTP/2 improves connection re-use and reduces connection setup overhead by sending multiple streams over the same connection.
+
+Some legacy HTTP clients may have issues with HTTP/2 connections due to broken HTTP/2 implementations. Setting this to true will prevent HTTP/2 from being advertised and negotiated.`,
 			},
 			"disable_quic": {
 				Type:        schema.TypeBool,
@@ -825,7 +996,7 @@ If not set, the EdgeCacheService has no SSL policy configured, and will default 
 
 func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -848,6 +1019,12 @@ func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta 
 		return err
 	} else if v, ok := d.GetOkExists("disable_quic"); !isEmptyValue(reflect.ValueOf(disableQuicProp)) && (ok || !reflect.DeepEqual(v, disableQuicProp)) {
 		obj["disableQuic"] = disableQuicProp
+	}
+	disableHttp2Prop, err := expandNetworkServicesEdgeCacheServiceDisableHttp2(d.Get("disable_http2"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("disable_http2"); !isEmptyValue(reflect.ValueOf(disableHttp2Prop)) && (ok || !reflect.DeepEqual(v, disableHttp2Prop)) {
+		obj["disableHttp2"] = disableHttp2Prop
 	}
 	requireTlsProp, err := expandNetworkServicesEdgeCacheServiceRequireTls(d.Get("require_tls"), d, config)
 	if err != nil {
@@ -905,7 +1082,7 @@ func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating EdgeCacheService: %s", err)
 	}
@@ -917,7 +1094,7 @@ func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta 
 	}
 	d.SetId(id)
 
-	err = networkServicesOperationWaitTime(
+	err = NetworkServicesOperationWaitTime(
 		config, res, project, "Creating EdgeCacheService", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -934,7 +1111,7 @@ func resourceNetworkServicesEdgeCacheServiceCreate(d *schema.ResourceData, meta 
 
 func resourceNetworkServicesEdgeCacheServiceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -957,7 +1134,7 @@ func resourceNetworkServicesEdgeCacheServiceRead(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("NetworkServicesEdgeCacheService %q", d.Id()))
 	}
@@ -973,6 +1150,9 @@ func resourceNetworkServicesEdgeCacheServiceRead(d *schema.ResourceData, meta in
 		return fmt.Errorf("Error reading EdgeCacheService: %s", err)
 	}
 	if err := d.Set("disable_quic", flattenNetworkServicesEdgeCacheServiceDisableQuic(res["disableQuic"], d, config)); err != nil {
+		return fmt.Errorf("Error reading EdgeCacheService: %s", err)
+	}
+	if err := d.Set("disable_http2", flattenNetworkServicesEdgeCacheServiceDisableHttp2(res["disableHttp2"], d, config)); err != nil {
 		return fmt.Errorf("Error reading EdgeCacheService: %s", err)
 	}
 	if err := d.Set("require_tls", flattenNetworkServicesEdgeCacheServiceRequireTls(res["requireTls"], d, config)); err != nil {
@@ -1005,7 +1185,7 @@ func resourceNetworkServicesEdgeCacheServiceRead(d *schema.ResourceData, meta in
 
 func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1036,6 +1216,12 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 		return err
 	} else if v, ok := d.GetOkExists("disable_quic"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, disableQuicProp)) {
 		obj["disableQuic"] = disableQuicProp
+	}
+	disableHttp2Prop, err := expandNetworkServicesEdgeCacheServiceDisableHttp2(d.Get("disable_http2"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("disable_http2"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, disableHttp2Prop)) {
+		obj["disableHttp2"] = disableHttp2Prop
 	}
 	requireTlsProp, err := expandNetworkServicesEdgeCacheServiceRequireTls(d.Get("require_tls"), d, config)
 	if err != nil {
@@ -1094,6 +1280,10 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 		updateMask = append(updateMask, "disableQuic")
 	}
 
+	if d.HasChange("disable_http2") {
+		updateMask = append(updateMask, "disableHttp2")
+	}
+
 	if d.HasChange("require_tls") {
 		updateMask = append(updateMask, "requireTls")
 	}
@@ -1129,7 +1319,7 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating EdgeCacheService %q: %s", d.Id(), err)
@@ -1137,7 +1327,7 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 		log.Printf("[DEBUG] Finished updating EdgeCacheService %q: %#v", d.Id(), res)
 	}
 
-	err = networkServicesOperationWaitTime(
+	err = NetworkServicesOperationWaitTime(
 		config, res, project, "Updating EdgeCacheService", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -1150,7 +1340,7 @@ func resourceNetworkServicesEdgeCacheServiceUpdate(d *schema.ResourceData, meta 
 
 func resourceNetworkServicesEdgeCacheServiceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1176,12 +1366,12 @@ func resourceNetworkServicesEdgeCacheServiceDelete(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "EdgeCacheService")
 	}
 
-	err = networkServicesOperationWaitTime(
+	err = NetworkServicesOperationWaitTime(
 		config, res, project, "Deleting EdgeCacheService", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -1222,6 +1412,10 @@ func flattenNetworkServicesEdgeCacheServiceLabels(v interface{}, d *schema.Resou
 }
 
 func flattenNetworkServicesEdgeCacheServiceDisableQuic(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceDisableHttp2(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1641,6 +1835,12 @@ func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActio
 		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedRequestMode(original["signedRequestMode"], d, config)
 	transformed["signed_request_keyset"] =
 		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedRequestKeyset(original["signedRequestKeyset"], d, config)
+	transformed["signed_token_options"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptions(original["signedTokenOptions"], d, config)
+	transformed["add_signatures"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignatures(original["addSignatures"], d, config)
+	transformed["signed_request_maximum_expiration_ttl"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedRequestMaximumExpirationTtl(original["signedRequestMaximumExpirationTtl"], d, config)
 	return []interface{}{transformed}
 }
 func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyCacheMode(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -1680,6 +1880,8 @@ func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActio
 		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyCacheKeyPolicyExcludedQueryParameters(original["excludedQueryParameters"], d, config)
 	transformed["included_header_names"] =
 		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyCacheKeyPolicyIncludedHeaderNames(original["includedHeaderNames"], d, config)
+	transformed["included_cookie_names"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyCacheKeyPolicyIncludedCookieNames(original["includedCookieNames"], d, config)
 	return []interface{}{transformed}
 }
 func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyCacheKeyPolicyIncludeProtocol(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -1706,6 +1908,10 @@ func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActio
 	return v
 }
 
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyCacheKeyPolicyIncludedCookieNames(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyNegativeCaching(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
@@ -1719,6 +1925,74 @@ func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActio
 }
 
 func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedRequestKeyset(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptions(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["token_query_parameter"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptionsTokenQueryParameter(original["tokenQueryParameter"], d, config)
+	transformed["allowed_signature_algorithms"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptionsAllowedSignatureAlgorithms(original["allowedSignatureAlgorithms"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptionsTokenQueryParameter(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptionsAllowedSignatureAlgorithms(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignatures(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["actions"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesActions(original["actions"], d, config)
+	transformed["keyset"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesKeyset(original["keyset"], d, config)
+	transformed["token_ttl"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesTokenTtl(original["tokenTtl"], d, config)
+	transformed["token_query_parameter"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesTokenQueryParameter(original["tokenQueryParameter"], d, config)
+	transformed["copied_parameters"] =
+		flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesCopiedParameters(original["copiedParameters"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesActions(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesKeyset(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesTokenTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesTokenQueryParameter(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesCopiedParameters(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedRequestMaximumExpirationTtl(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1898,6 +2172,10 @@ func expandNetworkServicesEdgeCacheServiceLabels(v interface{}, d TerraformResou
 }
 
 func expandNetworkServicesEdgeCacheServiceDisableQuic(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceDisableHttp2(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -2598,6 +2876,27 @@ func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteAction
 		transformed["signedRequestKeyset"] = transformedSignedRequestKeyset
 	}
 
+	transformedSignedTokenOptions, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptions(original["signed_token_options"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSignedTokenOptions); val.IsValid() && !isEmptyValue(val) {
+		transformed["signedTokenOptions"] = transformedSignedTokenOptions
+	}
+
+	transformedAddSignatures, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignatures(original["add_signatures"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAddSignatures); val.IsValid() && !isEmptyValue(val) {
+		transformed["addSignatures"] = transformedAddSignatures
+	}
+
+	transformedSignedRequestMaximumExpirationTtl, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedRequestMaximumExpirationTtl(original["signed_request_maximum_expiration_ttl"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedSignedRequestMaximumExpirationTtl); val.IsValid() && !isEmptyValue(val) {
+		transformed["signedRequestMaximumExpirationTtl"] = transformedSignedRequestMaximumExpirationTtl
+	}
+
 	return transformed, nil
 }
 
@@ -2668,6 +2967,13 @@ func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteAction
 		transformed["includedHeaderNames"] = transformedIncludedHeaderNames
 	}
 
+	transformedIncludedCookieNames, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyCacheKeyPolicyIncludedCookieNames(original["included_cookie_names"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedIncludedCookieNames); val.IsValid() && !isEmptyValue(val) {
+		transformed["includedCookieNames"] = transformedIncludedCookieNames
+	}
+
 	return transformed, nil
 }
 
@@ -2695,6 +3001,10 @@ func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteAction
 	return v, nil
 }
 
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyCacheKeyPolicyIncludedCookieNames(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyNegativeCaching(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
@@ -2715,6 +3025,111 @@ func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteAction
 }
 
 func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedRequestKeyset(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptions(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedTokenQueryParameter, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptionsTokenQueryParameter(original["token_query_parameter"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTokenQueryParameter); val.IsValid() && !isEmptyValue(val) {
+		transformed["tokenQueryParameter"] = transformedTokenQueryParameter
+	}
+
+	transformedAllowedSignatureAlgorithms, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptionsAllowedSignatureAlgorithms(original["allowed_signature_algorithms"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowedSignatureAlgorithms); val.IsValid() && !isEmptyValue(val) {
+		transformed["allowedSignatureAlgorithms"] = transformedAllowedSignatureAlgorithms
+	}
+
+	return transformed, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptionsTokenQueryParameter(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedTokenOptionsAllowedSignatureAlgorithms(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignatures(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedActions, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesActions(original["actions"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedActions); val.IsValid() && !isEmptyValue(val) {
+		transformed["actions"] = transformedActions
+	}
+
+	transformedKeyset, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesKeyset(original["keyset"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKeyset); val.IsValid() && !isEmptyValue(val) {
+		transformed["keyset"] = transformedKeyset
+	}
+
+	transformedTokenTtl, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesTokenTtl(original["token_ttl"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTokenTtl); val.IsValid() && !isEmptyValue(val) {
+		transformed["tokenTtl"] = transformedTokenTtl
+	}
+
+	transformedTokenQueryParameter, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesTokenQueryParameter(original["token_query_parameter"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTokenQueryParameter); val.IsValid() && !isEmptyValue(val) {
+		transformed["tokenQueryParameter"] = transformedTokenQueryParameter
+	}
+
+	transformedCopiedParameters, err := expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesCopiedParameters(original["copied_parameters"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCopiedParameters); val.IsValid() && !isEmptyValue(val) {
+		transformed["copiedParameters"] = transformedCopiedParameters
+	}
+
+	return transformed, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesActions(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesKeyset(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesTokenTtl(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesTokenQueryParameter(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicyAddSignaturesCopiedParameters(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetworkServicesEdgeCacheServiceRoutingPathMatcherRouteRuleRouteActionCdnPolicySignedRequestMaximumExpirationTtl(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

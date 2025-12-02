@@ -18,15 +18,13 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceHealthcareFhirStore() *schema.Resource {
+func ResourceHealthcareFhirStore() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceHealthcareFhirStoreCreate,
 		Read:   resourceHealthcareFhirStoreRead,
@@ -38,9 +36,9 @@ func resourceHealthcareFhirStore() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -64,7 +62,7 @@ func resourceHealthcareFhirStore() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"DSTU2", "STU3", "R4"}, false),
+				ValidateFunc: validateEnum([]string{"DSTU2", "STU3", "R4"}),
 				Description:  `The FHIR specification version. Possible values: ["DSTU2", "STU3", "R4"]`,
 			},
 			"disable_referential_integrity": {
@@ -196,10 +194,12 @@ value 2. The maximum depth allowed is 5.`,
 												"schema_type": {
 													Type:         schema.TypeString,
 													Optional:     true,
-													ValidateFunc: validation.StringInSlice([]string{"ANALYTICS", ""}, false),
-													Description: `Specifies the output schema type. Only ANALYTICS is supported at this time.
+													ValidateFunc: validateEnum([]string{"ANALYTICS", "ANALYTICS_V2", "LOSSLESS", ""}),
+													Description: `Specifies the output schema type.
  * ANALYTICS: Analytics schema defined by the FHIR community.
-  See https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md. Default value: "ANALYTICS" Possible values: ["ANALYTICS"]`,
+  See https://github.com/FHIR/sql-on-fhir/blob/master/sql-on-fhir.md.
+ * ANALYTICS_V2: Analytics V2, similar to schema defined by the FHIR community, with added support for extensions with one or more occurrences and contained resources in stringified JSON.
+ * LOSSLESS: A data-driven schema generated from the fields present in the FHIR data being exported, with no additional simplification. Default value: "ANALYTICS" Possible values: ["ANALYTICS", "ANALYTICS_V2", "LOSSLESS"]`,
 													Default: "ANALYTICS",
 												},
 											},
@@ -233,7 +233,7 @@ an empty list as an intent to stream all the supported resource types in this FH
 
 func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -307,7 +307,7 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating FhirStore: %s", err)
 	}
@@ -326,7 +326,7 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 
 func resourceHealthcareFhirStoreRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -343,7 +343,7 @@ func resourceHealthcareFhirStoreRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("HealthcareFhirStore %q", d.Id()))
 	}
@@ -393,7 +393,7 @@ func resourceHealthcareFhirStoreRead(d *schema.ResourceData, meta interface{}) e
 
 func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -461,7 +461,7 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating FhirStore %q: %s", d.Id(), err)
@@ -474,7 +474,7 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 
 func resourceHealthcareFhirStoreDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -494,7 +494,7 @@ func resourceHealthcareFhirStoreDelete(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "FhirStore")
 	}
@@ -631,7 +631,7 @@ func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigSchem
 func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigRecursiveStructureDepth(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -801,10 +801,14 @@ func expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigRecurs
 }
 
 func resourceHealthcareFhirStoreDecoder(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
-	// Modify the name to be the user specified form.
+	// Take the returned long form of the name and use it as `self_link`.
+	// Then modify the name to be the user specified form.
 	// We can't just ignore_read on `name` as the linter will
 	// complain that the returned `res` is never used afterwards.
 	// Some field needs to be actually set, and we chose `name`.
+	if err := d.Set("self_link", res["name"].(string)); err != nil {
+		return nil, fmt.Errorf("Error setting self_link: %s", err)
+	}
 	res["name"] = d.Get("name").(string)
 	return res, nil
 }

@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -247,8 +247,8 @@ func (r *InterconnectAttachmentPrivateInterconnectInfo) UnmarshalJSON(data []byt
 }
 
 // This object is used to assert a desired state where this InterconnectAttachmentPrivateInterconnectInfo is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInterconnectAttachmentPrivateInterconnectInfo *InterconnectAttachmentPrivateInterconnectInfo = &InterconnectAttachmentPrivateInterconnectInfo{empty: true}
 
 func (r *InterconnectAttachmentPrivateInterconnectInfo) Empty() bool {
@@ -299,8 +299,8 @@ func (r *InterconnectAttachmentPartnerMetadata) UnmarshalJSON(data []byte) error
 }
 
 // This object is used to assert a desired state where this InterconnectAttachmentPartnerMetadata is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyInterconnectAttachmentPartnerMetadata *InterconnectAttachmentPartnerMetadata = &InterconnectAttachmentPartnerMetadata{empty: true}
 
 func (r *InterconnectAttachmentPartnerMetadata) Empty() bool {
@@ -334,33 +334,33 @@ func (r *InterconnectAttachment) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"description":             dcl.ValueOrEmptyString(nr.Description),
-		"selfLink":                dcl.ValueOrEmptyString(nr.SelfLink),
-		"id":                      dcl.ValueOrEmptyString(nr.Id),
-		"name":                    dcl.ValueOrEmptyString(nr.Name),
-		"interconnect":            dcl.ValueOrEmptyString(nr.Interconnect),
-		"router":                  dcl.ValueOrEmptyString(nr.Router),
-		"region":                  dcl.ValueOrEmptyString(nr.Region),
-		"mtu":                     dcl.ValueOrEmptyString(nr.Mtu),
-		"privateInterconnectInfo": dcl.ValueOrEmptyString(nr.PrivateInterconnectInfo),
-		"operationalStatus":       dcl.ValueOrEmptyString(nr.OperationalStatus),
-		"cloudRouterIPAddress":    dcl.ValueOrEmptyString(nr.CloudRouterIPAddress),
-		"customerRouterIPAddress": dcl.ValueOrEmptyString(nr.CustomerRouterIPAddress),
-		"type":                    dcl.ValueOrEmptyString(nr.Type),
-		"pairingKey":              dcl.ValueOrEmptyString(nr.PairingKey),
-		"adminEnabled":            dcl.ValueOrEmptyString(nr.AdminEnabled),
-		"vlanTag8021q":            dcl.ValueOrEmptyString(nr.VlanTag8021q),
-		"edgeAvailabilityDomain":  dcl.ValueOrEmptyString(nr.EdgeAvailabilityDomain),
-		"candidateSubnets":        dcl.ValueOrEmptyString(nr.CandidateSubnets),
-		"bandwidth":               dcl.ValueOrEmptyString(nr.Bandwidth),
-		"partnerMetadata":         dcl.ValueOrEmptyString(nr.PartnerMetadata),
-		"state":                   dcl.ValueOrEmptyString(nr.State),
-		"partnerAsn":              dcl.ValueOrEmptyString(nr.PartnerAsn),
-		"encryption":              dcl.ValueOrEmptyString(nr.Encryption),
-		"ipsecInternalAddresses":  dcl.ValueOrEmptyString(nr.IpsecInternalAddresses),
-		"dataplaneVersion":        dcl.ValueOrEmptyString(nr.DataplaneVersion),
-		"satisfiesPzs":            dcl.ValueOrEmptyString(nr.SatisfiesPzs),
-		"project":                 dcl.ValueOrEmptyString(nr.Project),
+		"description":                dcl.ValueOrEmptyString(nr.Description),
+		"self_link":                  dcl.ValueOrEmptyString(nr.SelfLink),
+		"id":                         dcl.ValueOrEmptyString(nr.Id),
+		"name":                       dcl.ValueOrEmptyString(nr.Name),
+		"interconnect":               dcl.ValueOrEmptyString(nr.Interconnect),
+		"router":                     dcl.ValueOrEmptyString(nr.Router),
+		"region":                     dcl.ValueOrEmptyString(nr.Region),
+		"mtu":                        dcl.ValueOrEmptyString(nr.Mtu),
+		"private_interconnect_info":  dcl.ValueOrEmptyString(nr.PrivateInterconnectInfo),
+		"operational_status":         dcl.ValueOrEmptyString(nr.OperationalStatus),
+		"cloud_router_ip_address":    dcl.ValueOrEmptyString(nr.CloudRouterIPAddress),
+		"customer_router_ip_address": dcl.ValueOrEmptyString(nr.CustomerRouterIPAddress),
+		"type":                       dcl.ValueOrEmptyString(nr.Type),
+		"pairing_key":                dcl.ValueOrEmptyString(nr.PairingKey),
+		"admin_enabled":              dcl.ValueOrEmptyString(nr.AdminEnabled),
+		"vlan_tag8021q":              dcl.ValueOrEmptyString(nr.VlanTag8021q),
+		"edge_availability_domain":   dcl.ValueOrEmptyString(nr.EdgeAvailabilityDomain),
+		"candidate_subnets":          dcl.ValueOrEmptyString(nr.CandidateSubnets),
+		"bandwidth":                  dcl.ValueOrEmptyString(nr.Bandwidth),
+		"partner_metadata":           dcl.ValueOrEmptyString(nr.PartnerMetadata),
+		"state":                      dcl.ValueOrEmptyString(nr.State),
+		"partner_asn":                dcl.ValueOrEmptyString(nr.PartnerAsn),
+		"encryption":                 dcl.ValueOrEmptyString(nr.Encryption),
+		"ipsec_internal_addresses":   dcl.ValueOrEmptyString(nr.IpsecInternalAddresses),
+		"dataplane_version":          dcl.ValueOrEmptyString(nr.DataplaneVersion),
+		"satisfies_pzs":              dcl.ValueOrEmptyString(nr.SatisfiesPzs),
+		"project":                    dcl.ValueOrEmptyString(nr.Project),
 	}
 	return dcl.Nprintf("projects/{{project}}/regions/{{region}}/interconnectAttachments/{{name}}", params), nil
 }
@@ -447,7 +447,7 @@ func (c *Client) GetInterconnectAttachment(ctx context.Context, r *InterconnectA
 		}
 		return nil, err
 	}
-	result, err := unmarshalInterconnectAttachment(b, c)
+	result, err := unmarshalInterconnectAttachment(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -604,7 +604,7 @@ func applyInterconnectAttachmentHelper(c *Client, ctx context.Context, rawDesire
 func applyInterconnectAttachmentDiff(c *Client, ctx context.Context, desired *InterconnectAttachment, rawDesired *InterconnectAttachment, ops []interconnectAttachmentApiOperation, opts ...dcl.ApplyOption) (*InterconnectAttachment, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetInterconnectAttachment(ctx, desired.urlNormalized())
+	rawNew, err := c.GetInterconnectAttachment(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -617,7 +617,7 @@ func applyInterconnectAttachmentDiff(c *Client, ctx context.Context, desired *In
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapInterconnectAttachment(r, c)
+				fullResp, err := unmarshalMapInterconnectAttachment(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

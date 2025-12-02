@@ -15,6 +15,7 @@ import (
 	grpc_logrus "github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/logging"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 
@@ -30,7 +31,7 @@ import (
 	"google.golang.org/api/cloudiot/v1"
 	"google.golang.org/api/cloudkms/v1"
 	"google.golang.org/api/cloudresourcemanager/v1"
-	resourceManagerV2 "google.golang.org/api/cloudresourcemanager/v2"
+	resourceManagerV3 "google.golang.org/api/cloudresourcemanager/v3"
 	"google.golang.org/api/composer/v1"
 	"google.golang.org/api/compute/v1"
 	"google.golang.org/api/container/v1"
@@ -42,6 +43,7 @@ import (
 	iamcredentials "google.golang.org/api/iamcredentials/v1"
 	cloudlogging "google.golang.org/api/logging/v2"
 	"google.golang.org/api/pubsub/v1"
+	runadminv2 "google.golang.org/api/run/v2"
 	"google.golang.org/api/servicemanagement/v1"
 	"google.golang.org/api/servicenetworking/v1"
 	"google.golang.org/api/serviceusage/v1"
@@ -66,10 +68,20 @@ type Formatter struct {
 // Borrowed logic from https://github.com/sirupsen/logrus/blob/master/json_formatter.go and https://github.com/t-tomalak/logrus-easy-formatter/blob/master/formatter.go
 func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 	// Suppress logs if TF_LOG is not DEBUG or TRACE
-	// also suppress frequent transport spam
-	if !logging.IsDebugOrHigher() || strings.Contains(entry.Message, "transport is closing") {
+	if !logging.IsDebugOrHigher() {
 		return nil, nil
 	}
+
+	// Also suppress based on log content
+	// - frequent transport spam
+	// - ListenSocket logs from gRPC
+	isTransportSpam := strings.Contains(entry.Message, "transport is closing")
+	listenSocketRegex := regexp.MustCompile(`\[Server #\d+( ListenSocket #\d+)*\]`) // Match patterns like `[Server #00]` or `[Server #00 ListenSocket #00]`
+	isListenSocketLog := listenSocketRegex.MatchString(entry.Message)
+	if isTransportSpam || isListenSocketLog {
+		return nil, nil
+	}
+
 	output := f.LogFormat
 	entry.Level = logrus.DebugLevel // Force Entries to be Debug
 
@@ -136,6 +148,7 @@ func (f *Formatter) Format(entry *logrus.Entry) ([]byte, error) {
 // Config is the configuration structure used to instantiate the Google
 // provider.
 type Config struct {
+	DCLConfig
 	AccessToken                        string
 	Credentials                        string
 	ImpersonateServiceAccount          string
@@ -153,9 +166,9 @@ type Config struct {
 	// It controls the interval at which we poll for successful operations
 	PollInterval time.Duration
 
-	client             *http.Client
+	Client             *http.Client
 	context            context.Context
-	userAgent          string
+	UserAgent          string
 	gRPCLoggingOptions []option.ClientOption
 
 	tokenSource oauth2.TokenSource
@@ -163,38 +176,58 @@ type Config struct {
 	AccessApprovalBasePath       string
 	AccessContextManagerBasePath string
 	ActiveDirectoryBasePath      string
+	AlloydbBasePath              string
 	ApigeeBasePath               string
 	AppEngineBasePath            string
+	ArtifactRegistryBasePath     string
+	BeyondcorpBasePath           string
 	BigQueryBasePath             string
+	BigqueryAnalyticsHubBasePath string
+	BigqueryConnectionBasePath   string
+	BigqueryDatapolicyBasePath   string
 	BigqueryDataTransferBasePath string
 	BigqueryReservationBasePath  string
 	BigtableBasePath             string
 	BillingBasePath              string
 	BinaryAuthorizationBasePath  string
+	CertificateManagerBasePath   string
 	CloudAssetBasePath           string
 	CloudBuildBasePath           string
 	CloudFunctionsBasePath       string
+	Cloudfunctions2BasePath      string
 	CloudIdentityBasePath        string
+	CloudIdsBasePath             string
 	CloudIotBasePath             string
 	CloudRunBasePath             string
+	CloudRunV2BasePath           string
 	CloudSchedulerBasePath       string
 	CloudTasksBasePath           string
 	ComputeBasePath              string
 	ContainerAnalysisBasePath    string
+	ContainerAttachedBasePath    string
 	DataCatalogBasePath          string
+	DataFusionBasePath           string
 	DataLossPreventionBasePath   string
+	DataplexBasePath             string
 	DataprocBasePath             string
+	DataprocMetastoreBasePath    string
 	DatastoreBasePath            string
+	DatastreamBasePath           string
 	DeploymentManagerBasePath    string
 	DialogflowBasePath           string
 	DialogflowCXBasePath         string
 	DNSBasePath                  string
+	DocumentAIBasePath           string
 	EssentialContactsBasePath    string
 	FilestoreBasePath            string
 	FirestoreBasePath            string
 	GameServicesBasePath         string
+	GKEBackupBasePath            string
 	GKEHubBasePath               string
 	HealthcareBasePath           string
+	IAM2BasePath                 string
+	IAMBetaBasePath              string
+	IAMWorkforcePoolBasePath     string
 	IapBasePath                  string
 	IdentityPlatformBasePath     string
 	KMSBasePath                  string
@@ -220,6 +253,7 @@ type Config struct {
 	SpannerBasePath              string
 	SQLBasePath                  string
 	StorageBasePath              string
+	StorageTransferBasePath      string
 	TagsBasePath                 string
 	TPUBasePath                  string
 	VertexAIBasePath             string
@@ -231,65 +265,76 @@ type Config struct {
 	ContainerBasePath         string
 	DataflowBasePath          string
 	IamCredentialsBasePath    string
-	ResourceManagerV2BasePath string
+	ResourceManagerV3BasePath string
 	IAMBasePath               string
 	CloudIoTBasePath          string
 	ServiceNetworkingBasePath string
-	StorageTransferBasePath   string
 	BigtableAdminBasePath     string
+	TagsLocationBasePath      string
 
-	requestBatcherServiceUsage *RequestBatcher
+	// dcl
+	ContainerAwsBasePath   string
+	ContainerAzureBasePath string
+
+	RequestBatcherServiceUsage *RequestBatcher
 	requestBatcherIam          *RequestBatcher
-
-	// start DCLBasePaths
-	// dataprocBasePath is implemented in mm
-	AssuredWorkloadsBasePath     string
-	CloudResourceManagerBasePath string
-	EventarcBasePath             string
-	GkeHubBasePath               string
-	ContainerAzureBasePath       string
-	ContainerAwsBasePath         string
-	OrgPolicyBasePath            string
-	RecaptchaEnterpriseBasePath  string
-	// CloudBuild WorkerPool uses a different endpoint (v1beta1) than any other CloudBuild resources
-	CloudBuildWorkerPoolBasePath string
 }
 
 const AccessApprovalBasePathKey = "AccessApproval"
 const AccessContextManagerBasePathKey = "AccessContextManager"
 const ActiveDirectoryBasePathKey = "ActiveDirectory"
+const AlloydbBasePathKey = "Alloydb"
 const ApigeeBasePathKey = "Apigee"
 const AppEngineBasePathKey = "AppEngine"
+const ArtifactRegistryBasePathKey = "ArtifactRegistry"
+const BeyondcorpBasePathKey = "Beyondcorp"
 const BigQueryBasePathKey = "BigQuery"
+const BigqueryAnalyticsHubBasePathKey = "BigqueryAnalyticsHub"
+const BigqueryConnectionBasePathKey = "BigqueryConnection"
+const BigqueryDatapolicyBasePathKey = "BigqueryDatapolicy"
 const BigqueryDataTransferBasePathKey = "BigqueryDataTransfer"
 const BigqueryReservationBasePathKey = "BigqueryReservation"
 const BigtableBasePathKey = "Bigtable"
 const BillingBasePathKey = "Billing"
 const BinaryAuthorizationBasePathKey = "BinaryAuthorization"
+const CertificateManagerBasePathKey = "CertificateManager"
 const CloudAssetBasePathKey = "CloudAsset"
 const CloudBuildBasePathKey = "CloudBuild"
 const CloudFunctionsBasePathKey = "CloudFunctions"
+const Cloudfunctions2BasePathKey = "Cloudfunctions2"
 const CloudIdentityBasePathKey = "CloudIdentity"
+const CloudIdsBasePathKey = "CloudIds"
 const CloudIotBasePathKey = "CloudIot"
 const CloudRunBasePathKey = "CloudRun"
+const CloudRunV2BasePathKey = "CloudRunV2"
 const CloudSchedulerBasePathKey = "CloudScheduler"
 const CloudTasksBasePathKey = "CloudTasks"
 const ComputeBasePathKey = "Compute"
 const ContainerAnalysisBasePathKey = "ContainerAnalysis"
+const ContainerAttachedBasePathKey = "ContainerAttached"
 const DataCatalogBasePathKey = "DataCatalog"
+const DataFusionBasePathKey = "DataFusion"
 const DataLossPreventionBasePathKey = "DataLossPrevention"
+const DataplexBasePathKey = "Dataplex"
 const DataprocBasePathKey = "Dataproc"
+const DataprocMetastoreBasePathKey = "DataprocMetastore"
 const DatastoreBasePathKey = "Datastore"
+const DatastreamBasePathKey = "Datastream"
 const DeploymentManagerBasePathKey = "DeploymentManager"
 const DialogflowBasePathKey = "Dialogflow"
 const DialogflowCXBasePathKey = "DialogflowCX"
 const DNSBasePathKey = "DNS"
+const DocumentAIBasePathKey = "DocumentAI"
 const EssentialContactsBasePathKey = "EssentialContacts"
 const FilestoreBasePathKey = "Filestore"
 const FirestoreBasePathKey = "Firestore"
 const GameServicesBasePathKey = "GameServices"
+const GKEBackupBasePathKey = "GKEBackup"
 const GKEHubBasePathKey = "GKEHub"
 const HealthcareBasePathKey = "Healthcare"
+const IAM2BasePathKey = "IAM2"
+const IAMBetaBasePathKey = "IAMBeta"
+const IAMWorkforcePoolBasePathKey = "IAMWorkforcePool"
 const IapBasePathKey = "Iap"
 const IdentityPlatformBasePathKey = "IdentityPlatform"
 const KMSBasePathKey = "KMS"
@@ -315,6 +360,7 @@ const SourceRepoBasePathKey = "SourceRepo"
 const SpannerBasePathKey = "Spanner"
 const SQLBasePathKey = "SQL"
 const StorageBasePathKey = "Storage"
+const StorageTransferBasePathKey = "StorageTransfer"
 const TagsBasePathKey = "Tags"
 const TPUBasePathKey = "TPU"
 const VertexAIBasePathKey = "VertexAI"
@@ -326,51 +372,70 @@ const ContainerBasePathKey = "Container"
 const DataflowBasePathKey = "Dataflow"
 const IAMBasePathKey = "IAM"
 const IamCredentialsBasePathKey = "IamCredentials"
-const ResourceManagerV2BasePathKey = "ResourceManagerV2"
+const ResourceManagerV3BasePathKey = "ResourceManagerV3"
 const ServiceNetworkingBasePathKey = "ServiceNetworking"
-const StorageTransferBasePathKey = "StorageTransfer"
 const BigtableAdminBasePathKey = "BigtableAdmin"
-const GkeHubFeatureBasePathKey = "GkeHubFeature"
 const ContainerAwsBasePathKey = "ContainerAws"
 const ContainerAzureBasePathKey = "ContainerAzure"
+const TagsLocationBasePathKey = "TagsLocation"
 
 // Generated product base paths
 var DefaultBasePaths = map[string]string{
 	AccessApprovalBasePathKey:       "https://accessapproval.googleapis.com/v1/",
 	AccessContextManagerBasePathKey: "https://accesscontextmanager.googleapis.com/v1/",
 	ActiveDirectoryBasePathKey:      "https://managedidentities.googleapis.com/v1/",
+	AlloydbBasePathKey:              "https://alloydb.googleapis.com/v1/",
 	ApigeeBasePathKey:               "https://apigee.googleapis.com/v1/",
 	AppEngineBasePathKey:            "https://appengine.googleapis.com/v1/",
+	ArtifactRegistryBasePathKey:     "https://artifactregistry.googleapis.com/v1/",
+	BeyondcorpBasePathKey:           "https://beyondcorp.googleapis.com/v1/",
 	BigQueryBasePathKey:             "https://bigquery.googleapis.com/bigquery/v2/",
+	BigqueryAnalyticsHubBasePathKey: "https://analyticshub.googleapis.com/v1/",
+	BigqueryConnectionBasePathKey:   "https://bigqueryconnection.googleapis.com/v1/",
+	BigqueryDatapolicyBasePathKey:   "https://bigquerydatapolicy.googleapis.com/v1/",
 	BigqueryDataTransferBasePathKey: "https://bigquerydatatransfer.googleapis.com/v1/",
 	BigqueryReservationBasePathKey:  "https://bigqueryreservation.googleapis.com/v1/",
 	BigtableBasePathKey:             "https://bigtableadmin.googleapis.com/v2/",
 	BillingBasePathKey:              "https://billingbudgets.googleapis.com/v1/",
 	BinaryAuthorizationBasePathKey:  "https://binaryauthorization.googleapis.com/v1/",
+	CertificateManagerBasePathKey:   "https://certificatemanager.googleapis.com/v1/",
 	CloudAssetBasePathKey:           "https://cloudasset.googleapis.com/v1/",
 	CloudBuildBasePathKey:           "https://cloudbuild.googleapis.com/v1/",
 	CloudFunctionsBasePathKey:       "https://cloudfunctions.googleapis.com/v1/",
+	Cloudfunctions2BasePathKey:      "https://cloudfunctions.googleapis.com/v2/",
 	CloudIdentityBasePathKey:        "https://cloudidentity.googleapis.com/v1/",
+	CloudIdsBasePathKey:             "https://ids.googleapis.com/v1/",
 	CloudIotBasePathKey:             "https://cloudiot.googleapis.com/v1/",
 	CloudRunBasePathKey:             "https://{{location}}-run.googleapis.com/",
+	CloudRunV2BasePathKey:           "https://run.googleapis.com/v2/",
 	CloudSchedulerBasePathKey:       "https://cloudscheduler.googleapis.com/v1/",
 	CloudTasksBasePathKey:           "https://cloudtasks.googleapis.com/v2/",
 	ComputeBasePathKey:              "https://compute.googleapis.com/compute/v1/",
 	ContainerAnalysisBasePathKey:    "https://containeranalysis.googleapis.com/v1/",
+	ContainerAttachedBasePathKey:    "https://{{location}}-gkemulticloud.googleapis.com/v1/",
 	DataCatalogBasePathKey:          "https://datacatalog.googleapis.com/v1/",
+	DataFusionBasePathKey:           "https://datafusion.googleapis.com/v1/",
 	DataLossPreventionBasePathKey:   "https://dlp.googleapis.com/v2/",
+	DataplexBasePathKey:             "https://dataplex.googleapis.com/v1/",
 	DataprocBasePathKey:             "https://dataproc.googleapis.com/v1/",
+	DataprocMetastoreBasePathKey:    "https://metastore.googleapis.com/v1/",
 	DatastoreBasePathKey:            "https://datastore.googleapis.com/v1/",
+	DatastreamBasePathKey:           "https://datastream.googleapis.com/v1/",
 	DeploymentManagerBasePathKey:    "https://www.googleapis.com/deploymentmanager/v2/",
 	DialogflowBasePathKey:           "https://dialogflow.googleapis.com/v2/",
-	DialogflowCXBasePathKey:         "https://dialogflow.googleapis.com/v3/",
+	DialogflowCXBasePathKey:         "https://{{location}}-dialogflow.googleapis.com/v3/",
 	DNSBasePathKey:                  "https://dns.googleapis.com/dns/v1/",
+	DocumentAIBasePathKey:           "https://{{location}}-documentai.googleapis.com/v1/",
 	EssentialContactsBasePathKey:    "https://essentialcontacts.googleapis.com/v1/",
 	FilestoreBasePathKey:            "https://file.googleapis.com/v1/",
 	FirestoreBasePathKey:            "https://firestore.googleapis.com/v1/",
 	GameServicesBasePathKey:         "https://gameservices.googleapis.com/v1/",
+	GKEBackupBasePathKey:            "https://gkebackup.googleapis.com/v1/",
 	GKEHubBasePathKey:               "https://gkehub.googleapis.com/v1/",
 	HealthcareBasePathKey:           "https://healthcare.googleapis.com/v1/",
+	IAM2BasePathKey:                 "https://iam.googleapis.com/v2/",
+	IAMBetaBasePathKey:              "https://iam.googleapis.com/v1/",
+	IAMWorkforcePoolBasePathKey:     "https://iam.googleapis.com/v1/",
 	IapBasePathKey:                  "https://iap.googleapis.com/v1/",
 	IdentityPlatformBasePathKey:     "https://identitytoolkit.googleapis.com/v2/",
 	KMSBasePathKey:                  "https://cloudkms.googleapis.com/v1/",
@@ -396,6 +461,7 @@ var DefaultBasePaths = map[string]string{
 	SpannerBasePathKey:              "https://spanner.googleapis.com/v1/",
 	SQLBasePathKey:                  "https://sqladmin.googleapis.com/sql/v1beta4/",
 	StorageBasePathKey:              "https://storage.googleapis.com/storage/v1/",
+	StorageTransferBasePathKey:      "https://storagetransfer.googleapis.com/v1/",
 	TagsBasePathKey:                 "https://cloudresourcemanager.googleapis.com/v3/",
 	TPUBasePathKey:                  "https://tpu.googleapis.com/v1/",
 	VertexAIBasePathKey:             "https://{{region}}-aiplatform.googleapis.com/v1/",
@@ -407,18 +473,576 @@ var DefaultBasePaths = map[string]string{
 	DataflowBasePathKey:             "https://dataflow.googleapis.com/v1b3/",
 	IAMBasePathKey:                  "https://iam.googleapis.com/v1/",
 	IamCredentialsBasePathKey:       "https://iamcredentials.googleapis.com/v1/",
-	ResourceManagerV2BasePathKey:    "https://cloudresourcemanager.googleapis.com/v2/",
+	ResourceManagerV3BasePathKey:    "https://cloudresourcemanager.googleapis.com/v3/",
 	ServiceNetworkingBasePathKey:    "https://servicenetworking.googleapis.com/v1/",
-	StorageTransferBasePathKey:      "https://storagetransfer.googleapis.com/v1/",
 	BigtableAdminBasePathKey:        "https://bigtableadmin.googleapis.com/v2/",
-	GkeHubFeatureBasePathKey:        "https://gkehub.googleapis.com/v1beta/",
 	ContainerAwsBasePathKey:         "https://{{location}}-gkemulticloud.googleapis.com/v1/",
 	ContainerAzureBasePathKey:       "https://{{location}}-gkemulticloud.googleapis.com/v1/",
+	TagsLocationBasePathKey:         "https://{{location}}-cloudresourcemanager.googleapis.com/v3/",
 }
 
 var DefaultClientScopes = []string{
 	"https://www.googleapis.com/auth/cloud-platform",
 	"https://www.googleapis.com/auth/userinfo.email",
+}
+
+func HandleSDKDefaults(d *schema.ResourceData) error {
+	if d.Get("impersonate_service_account") == "" {
+		d.Set("impersonate_service_account", MultiEnvDefault([]string{
+			"GOOGLE_IMPERSONATE_SERVICE_ACCOUNT",
+		}, nil))
+	}
+
+	if d.Get("project") == "" {
+		d.Set("project", MultiEnvDefault([]string{
+			"GOOGLE_PROJECT",
+			"GOOGLE_CLOUD_PROJECT",
+			"GCLOUD_PROJECT",
+			"CLOUDSDK_CORE_PROJECT",
+		}, nil))
+	}
+
+	if d.Get("billing_project") == "" {
+		d.Set("billing_project", MultiEnvDefault([]string{
+			"GOOGLE_BILLING_PROJECT",
+		}, nil))
+	}
+
+	if d.Get("region") == "" {
+		d.Set("region", MultiEnvDefault([]string{
+			"GOOGLE_REGION",
+			"GCLOUD_REGION",
+			"CLOUDSDK_COMPUTE_REGION",
+		}, nil))
+	}
+
+	if d.Get("zone") == "" {
+		d.Set("zone", MultiEnvDefault([]string{
+			"GOOGLE_ZONE",
+			"GCLOUD_ZONE",
+			"CLOUDSDK_COMPUTE_ZONE",
+		}, nil))
+	}
+
+	if _, ok := d.GetOkExists("user_project_override"); !ok {
+		override := MultiEnvDefault([]string{
+			"USER_PROJECT_OVERRIDE",
+		}, nil)
+
+		if override != nil {
+			b, err := strconv.ParseBool(override.(string))
+			if err != nil {
+				return err
+			}
+			d.Set("user_project_override", b)
+		}
+	}
+
+	if d.Get("request_reason") == "" {
+		d.Set("request_reason", MultiEnvDefault([]string{
+			"CLOUDSDK_CORE_REQUEST_REASON",
+		}, nil))
+	}
+
+	// Generated Products
+	if d.Get("access_approval_custom_endpoint") == "" {
+		d.Set("access_approval_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_ACCESS_APPROVAL_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[AccessApprovalBasePathKey]))
+	}
+	if d.Get("access_context_manager_custom_endpoint") == "" {
+		d.Set("access_context_manager_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_ACCESS_CONTEXT_MANAGER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[AccessContextManagerBasePathKey]))
+	}
+	if d.Get("active_directory_custom_endpoint") == "" {
+		d.Set("active_directory_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_ACTIVE_DIRECTORY_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ActiveDirectoryBasePathKey]))
+	}
+	if d.Get("alloydb_custom_endpoint") == "" {
+		d.Set("alloydb_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_ALLOYDB_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[AlloydbBasePathKey]))
+	}
+	if d.Get("apigee_custom_endpoint") == "" {
+		d.Set("apigee_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_APIGEE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ApigeeBasePathKey]))
+	}
+	if d.Get("app_engine_custom_endpoint") == "" {
+		d.Set("app_engine_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_APP_ENGINE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[AppEngineBasePathKey]))
+	}
+	if d.Get("artifact_registry_custom_endpoint") == "" {
+		d.Set("artifact_registry_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_ARTIFACT_REGISTRY_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ArtifactRegistryBasePathKey]))
+	}
+	if d.Get("beyondcorp_custom_endpoint") == "" {
+		d.Set("beyondcorp_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BEYONDCORP_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BeyondcorpBasePathKey]))
+	}
+	if d.Get("big_query_custom_endpoint") == "" {
+		d.Set("big_query_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BIG_QUERY_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BigQueryBasePathKey]))
+	}
+	if d.Get("bigquery_analytics_hub_custom_endpoint") == "" {
+		d.Set("bigquery_analytics_hub_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BIGQUERY_ANALYTICS_HUB_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BigqueryAnalyticsHubBasePathKey]))
+	}
+	if d.Get("bigquery_connection_custom_endpoint") == "" {
+		d.Set("bigquery_connection_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BIGQUERY_CONNECTION_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BigqueryConnectionBasePathKey]))
+	}
+	if d.Get("bigquery_datapolicy_custom_endpoint") == "" {
+		d.Set("bigquery_datapolicy_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BIGQUERY_DATAPOLICY_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BigqueryDatapolicyBasePathKey]))
+	}
+	if d.Get("bigquery_data_transfer_custom_endpoint") == "" {
+		d.Set("bigquery_data_transfer_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BIGQUERY_DATA_TRANSFER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BigqueryDataTransferBasePathKey]))
+	}
+	if d.Get("bigquery_reservation_custom_endpoint") == "" {
+		d.Set("bigquery_reservation_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BIGQUERY_RESERVATION_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BigqueryReservationBasePathKey]))
+	}
+	if d.Get("bigtable_custom_endpoint") == "" {
+		d.Set("bigtable_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BIGTABLE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BigtableBasePathKey]))
+	}
+	if d.Get("billing_custom_endpoint") == "" {
+		d.Set("billing_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BILLING_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BillingBasePathKey]))
+	}
+	if d.Get("binary_authorization_custom_endpoint") == "" {
+		d.Set("binary_authorization_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_BINARY_AUTHORIZATION_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[BinaryAuthorizationBasePathKey]))
+	}
+	if d.Get("certificate_manager_custom_endpoint") == "" {
+		d.Set("certificate_manager_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CERTIFICATE_MANAGER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CertificateManagerBasePathKey]))
+	}
+	if d.Get("cloud_asset_custom_endpoint") == "" {
+		d.Set("cloud_asset_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_ASSET_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudAssetBasePathKey]))
+	}
+	if d.Get("cloud_build_custom_endpoint") == "" {
+		d.Set("cloud_build_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_BUILD_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudBuildBasePathKey]))
+	}
+	if d.Get("cloud_functions_custom_endpoint") == "" {
+		d.Set("cloud_functions_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_FUNCTIONS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudFunctionsBasePathKey]))
+	}
+	if d.Get("cloudfunctions2_custom_endpoint") == "" {
+		d.Set("cloudfunctions2_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUDFUNCTIONS2_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[Cloudfunctions2BasePathKey]))
+	}
+	if d.Get("cloud_identity_custom_endpoint") == "" {
+		d.Set("cloud_identity_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_IDENTITY_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudIdentityBasePathKey]))
+	}
+	if d.Get("cloud_ids_custom_endpoint") == "" {
+		d.Set("cloud_ids_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_IDS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudIdsBasePathKey]))
+	}
+	if d.Get("cloud_iot_custom_endpoint") == "" {
+		d.Set("cloud_iot_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_IOT_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudIotBasePathKey]))
+	}
+	if d.Get("cloud_run_custom_endpoint") == "" {
+		d.Set("cloud_run_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_RUN_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudRunBasePathKey]))
+	}
+	if d.Get("cloud_run_v2_custom_endpoint") == "" {
+		d.Set("cloud_run_v2_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_RUN_V2_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudRunV2BasePathKey]))
+	}
+	if d.Get("cloud_scheduler_custom_endpoint") == "" {
+		d.Set("cloud_scheduler_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_SCHEDULER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudSchedulerBasePathKey]))
+	}
+	if d.Get("cloud_tasks_custom_endpoint") == "" {
+		d.Set("cloud_tasks_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_TASKS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudTasksBasePathKey]))
+	}
+	if d.Get("compute_custom_endpoint") == "" {
+		d.Set("compute_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_COMPUTE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ComputeBasePathKey]))
+	}
+	if d.Get("container_analysis_custom_endpoint") == "" {
+		d.Set("container_analysis_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CONTAINER_ANALYSIS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ContainerAnalysisBasePathKey]))
+	}
+	if d.Get("container_attached_custom_endpoint") == "" {
+		d.Set("container_attached_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_CONTAINER_ATTACHED_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ContainerAttachedBasePathKey]))
+	}
+	if d.Get("data_catalog_custom_endpoint") == "" {
+		d.Set("data_catalog_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DATA_CATALOG_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DataCatalogBasePathKey]))
+	}
+	if d.Get("data_fusion_custom_endpoint") == "" {
+		d.Set("data_fusion_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DATA_FUSION_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DataFusionBasePathKey]))
+	}
+	if d.Get("data_loss_prevention_custom_endpoint") == "" {
+		d.Set("data_loss_prevention_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DATA_LOSS_PREVENTION_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DataLossPreventionBasePathKey]))
+	}
+	if d.Get("dataplex_custom_endpoint") == "" {
+		d.Set("dataplex_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DATAPLEX_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DataplexBasePathKey]))
+	}
+	if d.Get("dataproc_custom_endpoint") == "" {
+		d.Set("dataproc_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DATAPROC_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DataprocBasePathKey]))
+	}
+	if d.Get("dataproc_metastore_custom_endpoint") == "" {
+		d.Set("dataproc_metastore_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DATAPROC_METASTORE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DataprocMetastoreBasePathKey]))
+	}
+	if d.Get("datastore_custom_endpoint") == "" {
+		d.Set("datastore_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DATASTORE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DatastoreBasePathKey]))
+	}
+	if d.Get("datastream_custom_endpoint") == "" {
+		d.Set("datastream_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DATASTREAM_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DatastreamBasePathKey]))
+	}
+	if d.Get("deployment_manager_custom_endpoint") == "" {
+		d.Set("deployment_manager_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DEPLOYMENT_MANAGER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DeploymentManagerBasePathKey]))
+	}
+	if d.Get("dialogflow_custom_endpoint") == "" {
+		d.Set("dialogflow_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DIALOGFLOW_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DialogflowBasePathKey]))
+	}
+	if d.Get("dialogflow_cx_custom_endpoint") == "" {
+		d.Set("dialogflow_cx_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DIALOGFLOW_CX_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DialogflowCXBasePathKey]))
+	}
+	if d.Get("dns_custom_endpoint") == "" {
+		d.Set("dns_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DNS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DNSBasePathKey]))
+	}
+	if d.Get("document_ai_custom_endpoint") == "" {
+		d.Set("document_ai_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_DOCUMENT_AI_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DocumentAIBasePathKey]))
+	}
+	if d.Get("essential_contacts_custom_endpoint") == "" {
+		d.Set("essential_contacts_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_ESSENTIAL_CONTACTS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[EssentialContactsBasePathKey]))
+	}
+	if d.Get("filestore_custom_endpoint") == "" {
+		d.Set("filestore_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_FILESTORE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[FilestoreBasePathKey]))
+	}
+	if d.Get("firestore_custom_endpoint") == "" {
+		d.Set("firestore_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_FIRESTORE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[FirestoreBasePathKey]))
+	}
+	if d.Get("game_services_custom_endpoint") == "" {
+		d.Set("game_services_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_GAME_SERVICES_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[GameServicesBasePathKey]))
+	}
+	if d.Get("gke_backup_custom_endpoint") == "" {
+		d.Set("gke_backup_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_GKE_BACKUP_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[GKEBackupBasePathKey]))
+	}
+	if d.Get("gke_hub_custom_endpoint") == "" {
+		d.Set("gke_hub_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_GKE_HUB_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[GKEHubBasePathKey]))
+	}
+	if d.Get("healthcare_custom_endpoint") == "" {
+		d.Set("healthcare_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_HEALTHCARE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[HealthcareBasePathKey]))
+	}
+	if d.Get("iam2_custom_endpoint") == "" {
+		d.Set("iam2_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_IAM2_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[IAM2BasePathKey]))
+	}
+	if d.Get("iam_beta_custom_endpoint") == "" {
+		d.Set("iam_beta_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_IAM_BETA_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[IAMBetaBasePathKey]))
+	}
+	if d.Get("iam_workforce_pool_custom_endpoint") == "" {
+		d.Set("iam_workforce_pool_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_IAM_WORKFORCE_POOL_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[IAMWorkforcePoolBasePathKey]))
+	}
+	if d.Get("iap_custom_endpoint") == "" {
+		d.Set("iap_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_IAP_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[IapBasePathKey]))
+	}
+	if d.Get("identity_platform_custom_endpoint") == "" {
+		d.Set("identity_platform_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_IDENTITY_PLATFORM_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[IdentityPlatformBasePathKey]))
+	}
+	if d.Get("kms_custom_endpoint") == "" {
+		d.Set("kms_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_KMS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[KMSBasePathKey]))
+	}
+	if d.Get("logging_custom_endpoint") == "" {
+		d.Set("logging_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_LOGGING_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[LoggingBasePathKey]))
+	}
+	if d.Get("memcache_custom_endpoint") == "" {
+		d.Set("memcache_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_MEMCACHE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[MemcacheBasePathKey]))
+	}
+	if d.Get("ml_engine_custom_endpoint") == "" {
+		d.Set("ml_engine_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_ML_ENGINE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[MLEngineBasePathKey]))
+	}
+	if d.Get("monitoring_custom_endpoint") == "" {
+		d.Set("monitoring_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_MONITORING_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[MonitoringBasePathKey]))
+	}
+	if d.Get("network_management_custom_endpoint") == "" {
+		d.Set("network_management_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_NETWORK_MANAGEMENT_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[NetworkManagementBasePathKey]))
+	}
+	if d.Get("network_services_custom_endpoint") == "" {
+		d.Set("network_services_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_NETWORK_SERVICES_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[NetworkServicesBasePathKey]))
+	}
+	if d.Get("notebooks_custom_endpoint") == "" {
+		d.Set("notebooks_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_NOTEBOOKS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[NotebooksBasePathKey]))
+	}
+	if d.Get("os_config_custom_endpoint") == "" {
+		d.Set("os_config_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_OS_CONFIG_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[OSConfigBasePathKey]))
+	}
+	if d.Get("os_login_custom_endpoint") == "" {
+		d.Set("os_login_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_OS_LOGIN_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[OSLoginBasePathKey]))
+	}
+	if d.Get("privateca_custom_endpoint") == "" {
+		d.Set("privateca_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_PRIVATECA_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[PrivatecaBasePathKey]))
+	}
+	if d.Get("pubsub_custom_endpoint") == "" {
+		d.Set("pubsub_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_PUBSUB_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[PubsubBasePathKey]))
+	}
+	if d.Get("pubsub_lite_custom_endpoint") == "" {
+		d.Set("pubsub_lite_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_PUBSUB_LITE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[PubsubLiteBasePathKey]))
+	}
+	if d.Get("redis_custom_endpoint") == "" {
+		d.Set("redis_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_REDIS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[RedisBasePathKey]))
+	}
+	if d.Get("resource_manager_custom_endpoint") == "" {
+		d.Set("resource_manager_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_RESOURCE_MANAGER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ResourceManagerBasePathKey]))
+	}
+	if d.Get("secret_manager_custom_endpoint") == "" {
+		d.Set("secret_manager_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SECRET_MANAGER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SecretManagerBasePathKey]))
+	}
+	if d.Get("security_center_custom_endpoint") == "" {
+		d.Set("security_center_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SECURITY_CENTER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SecurityCenterBasePathKey]))
+	}
+	if d.Get("service_management_custom_endpoint") == "" {
+		d.Set("service_management_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SERVICE_MANAGEMENT_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ServiceManagementBasePathKey]))
+	}
+	if d.Get("service_usage_custom_endpoint") == "" {
+		d.Set("service_usage_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SERVICE_USAGE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ServiceUsageBasePathKey]))
+	}
+	if d.Get("source_repo_custom_endpoint") == "" {
+		d.Set("source_repo_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SOURCE_REPO_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SourceRepoBasePathKey]))
+	}
+	if d.Get("spanner_custom_endpoint") == "" {
+		d.Set("spanner_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SPANNER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SpannerBasePathKey]))
+	}
+	if d.Get("sql_custom_endpoint") == "" {
+		d.Set("sql_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SQL_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SQLBasePathKey]))
+	}
+	if d.Get("storage_custom_endpoint") == "" {
+		d.Set("storage_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_STORAGE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[StorageBasePathKey]))
+	}
+	if d.Get("storage_transfer_custom_endpoint") == "" {
+		d.Set("storage_transfer_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_STORAGE_TRANSFER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[StorageTransferBasePathKey]))
+	}
+	if d.Get("tags_custom_endpoint") == "" {
+		d.Set("tags_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_TAGS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[TagsBasePathKey]))
+	}
+	if d.Get("tpu_custom_endpoint") == "" {
+		d.Set("tpu_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_TPU_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[TPUBasePathKey]))
+	}
+	if d.Get("vertex_ai_custom_endpoint") == "" {
+		d.Set("vertex_ai_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_VERTEX_AI_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[VertexAIBasePathKey]))
+	}
+	if d.Get("vpc_access_custom_endpoint") == "" {
+		d.Set("vpc_access_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_VPC_ACCESS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[VPCAccessBasePathKey]))
+	}
+	if d.Get("workflows_custom_endpoint") == "" {
+		d.Set("workflows_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_WORKFLOWS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[WorkflowsBasePathKey]))
+	}
+
+	if d.Get(CloudBillingCustomEndpointEntryKey) == "" {
+		d.Set(CloudBillingCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_CLOUD_BILLING_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[CloudBillingBasePathKey]))
+	}
+
+	if d.Get(ComposerCustomEndpointEntryKey) == "" {
+		d.Set(ComposerCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_COMPOSER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ComposerBasePathKey]))
+	}
+
+	if d.Get(ContainerCustomEndpointEntryKey) == "" {
+		d.Set(ContainerCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_CONTAINER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ContainerBasePathKey]))
+	}
+
+	if d.Get(DataflowCustomEndpointEntryKey) == "" {
+		d.Set(DataflowCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_DATAFLOW_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[DataflowBasePathKey]))
+	}
+
+	if d.Get(IamCredentialsCustomEndpointEntryKey) == "" {
+		d.Set(IamCredentialsCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_IAM_CREDENTIALS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[IamCredentialsBasePathKey]))
+	}
+
+	if d.Get(ResourceManagerV3CustomEndpointEntryKey) == "" {
+		d.Set(ResourceManagerV3CustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_RESOURCE_MANAGER_V3_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ResourceManagerV3BasePathKey]))
+	}
+
+	if d.Get(IAMCustomEndpointEntryKey) == "" {
+		d.Set(IAMCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_IAM_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[IAMBasePathKey]))
+	}
+
+	if d.Get(ServiceNetworkingCustomEndpointEntryKey) == "" {
+		d.Set(ServiceNetworkingCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_SERVICE_NETWORKING_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ServiceNetworkingBasePathKey]))
+	}
+
+	if d.Get(TagsLocationCustomEndpointEntryKey) == "" {
+		d.Set(TagsLocationCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_TAGS_LOCATION_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[TagsLocationBasePathKey]))
+	}
+
+	if d.Get(ContainerAwsCustomEndpointEntryKey) == "" {
+		d.Set(ContainerAwsCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_CONTAINERAWS_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ContainerAwsBasePathKey]))
+	}
+
+	if d.Get(ContainerAzureCustomEndpointEntryKey) == "" {
+		d.Set(ContainerAzureCustomEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_CONTAINERAZURE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[ContainerAzureBasePathKey]))
+	}
+
+	return nil
 }
 
 func (c *Config) LoadAndValidate(ctx context.Context) error {
@@ -477,10 +1101,10 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	// This timeout is a timeout per HTTP request, not per logical operation.
 	client.Timeout = c.synchronousTimeout()
 
-	c.client = client
+	c.Client = client
 	c.context = ctx
 	c.Region = GetRegionFromRegionSelfLink(c.Region)
-	c.requestBatcherServiceUsage = NewRequestBatcher("Service Usage", ctx, c.BatchingConfig)
+	c.RequestBatcherServiceUsage = NewRequestBatcher("Service Usage", ctx, c.BatchingConfig)
 	c.requestBatcherIam = NewRequestBatcher("IAM", ctx, c.BatchingConfig)
 	c.PollInterval = 10 * time.Second
 
@@ -506,10 +1130,10 @@ func (c *Config) LoadAndValidate(ctx context.Context) error {
 	return nil
 }
 
-func expandProviderBatchingConfig(v interface{}) (*batchingConfig, error) {
+func ExpandProviderBatchingConfig(v interface{}) (*batchingConfig, error) {
 	config := &batchingConfig{
-		sendAfter:      time.Second * defaultBatchSendIntervalSec,
-		enableBatching: true,
+		SendAfter:      time.Second * DefaultBatchSendIntervalSec,
+		EnableBatching: true,
 	}
 
 	if v == nil {
@@ -522,15 +1146,15 @@ func expandProviderBatchingConfig(v interface{}) (*batchingConfig, error) {
 
 	cfgV := ls[0].(map[string]interface{})
 	if sendAfterV, ok := cfgV["send_after"]; ok {
-		sendAfter, err := time.ParseDuration(sendAfterV.(string))
+		SendAfter, err := time.ParseDuration(sendAfterV.(string))
 		if err != nil {
 			return nil, fmt.Errorf("unable to parse duration from 'send_after' value %q", sendAfterV)
 		}
-		config.sendAfter = sendAfter
+		config.SendAfter = SendAfter
 	}
 
 	if enable, ok := cfgV["enable_batching"]; ok {
-		config.enableBatching = enable.(bool)
+		config.EnableBatching = enable.(bool)
 	}
 
 	return config, nil
@@ -551,9 +1175,9 @@ func (c *Config) logGoogleIdentities() error {
 		if err != nil {
 			return err
 		}
-		c.client = oauth2.NewClient(c.context, tokenSource) // c.client isn't initialised fully when this code is called.
+		c.Client = oauth2.NewClient(c.context, tokenSource) // c.Client isn't initialised fully when this code is called.
 
-		email, err := GetCurrentUserEmail(c, c.userAgent)
+		email, err := GetCurrentUserEmail(c, c.UserAgent)
 		if err != nil {
 			log.Printf("[INFO] error retrieving userinfo for your provider credentials. have you enabled the 'https://www.googleapis.com/auth/userinfo.email' scope? error: %s", err)
 		}
@@ -570,9 +1194,9 @@ func (c *Config) logGoogleIdentities() error {
 	if err != nil {
 		return err
 	}
-	c.client = oauth2.NewClient(c.context, tokenSource) // c.client isn't initialised fully when this code is called.
+	c.Client = oauth2.NewClient(c.context, tokenSource) // c.Client isn't initialised fully when this code is called.
 
-	email, err := GetCurrentUserEmail(c, c.userAgent)
+	email, err := GetCurrentUserEmail(c, c.UserAgent)
 	if err != nil {
 		log.Printf("[INFO] error retrieving userinfo for your provider credentials. have you enabled the 'https://www.googleapis.com/auth/userinfo.email' scope? error: %s", err)
 	}
@@ -585,7 +1209,7 @@ func (c *Config) logGoogleIdentities() error {
 	if err != nil {
 		return err
 	}
-	c.client = oauth2.NewClient(c.context, tokenSource) // c.client isn't initialised fully when this code is called.
+	c.Client = oauth2.NewClient(c.context, tokenSource) // c.Client isn't initialised fully when this code is called.
 
 	return nil
 }
@@ -608,7 +1232,7 @@ func (c *Config) getTokenSource(clientScopes []string, initialCredentialsOnly bo
 // the basePath value in the client library file.
 func (c *Config) NewComputeClient(userAgent string) *compute.Service {
 	log.Printf("[INFO] Instantiating GCE client for path %s", c.ComputeBasePath)
-	clientCompute, err := compute.NewService(c.context, option.WithHTTPClient(c.client))
+	clientCompute, err := compute.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client compute: %s", err)
 		return nil
@@ -620,9 +1244,9 @@ func (c *Config) NewComputeClient(userAgent string) *compute.Service {
 }
 
 func (c *Config) NewContainerClient(userAgent string) *container.Service {
-	containerClientBasePath := removeBasePathVersion(c.ContainerBasePath)
+	containerClientBasePath := RemoveBasePathVersion(c.ContainerBasePath)
 	log.Printf("[INFO] Instantiating GKE client for path %s", containerClientBasePath)
-	clientContainer, err := container.NewService(c.context, option.WithHTTPClient(c.client))
+	clientContainer, err := container.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client container: %s", err)
 		return nil
@@ -634,10 +1258,10 @@ func (c *Config) NewContainerClient(userAgent string) *container.Service {
 }
 
 func (c *Config) NewDnsClient(userAgent string) *dns.Service {
-	dnsClientBasePath := removeBasePathVersion(c.DNSBasePath)
+	dnsClientBasePath := RemoveBasePathVersion(c.DNSBasePath)
 	dnsClientBasePath = strings.ReplaceAll(dnsClientBasePath, "/dns/", "")
 	log.Printf("[INFO] Instantiating Google Cloud DNS client for path %s", dnsClientBasePath)
-	clientDns, err := dns.NewService(c.context, option.WithHTTPClient(c.client))
+	clientDns, err := dns.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client dns: %s", err)
 		return nil
@@ -649,9 +1273,9 @@ func (c *Config) NewDnsClient(userAgent string) *dns.Service {
 }
 
 func (c *Config) NewKmsClientWithCtx(ctx context.Context, userAgent string) *cloudkms.Service {
-	kmsClientBasePath := removeBasePathVersion(c.KMSBasePath)
+	kmsClientBasePath := RemoveBasePathVersion(c.KMSBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud KMS client for path %s", kmsClientBasePath)
-	clientKms, err := cloudkms.NewService(ctx, option.WithHTTPClient(c.client))
+	clientKms, err := cloudkms.NewService(ctx, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client kms: %s", err)
 		return nil
@@ -667,9 +1291,9 @@ func (c *Config) NewKmsClient(userAgent string) *cloudkms.Service {
 }
 
 func (c *Config) NewLoggingClient(userAgent string) *cloudlogging.Service {
-	loggingClientBasePath := removeBasePathVersion(c.LoggingBasePath)
+	loggingClientBasePath := RemoveBasePathVersion(c.LoggingBasePath)
 	log.Printf("[INFO] Instantiating Google Stackdriver Logging client for path %s", loggingClientBasePath)
-	clientLogging, err := cloudlogging.NewService(c.context, option.WithHTTPClient(c.client))
+	clientLogging, err := cloudlogging.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client logging: %s", err)
 		return nil
@@ -683,7 +1307,7 @@ func (c *Config) NewLoggingClient(userAgent string) *cloudlogging.Service {
 func (c *Config) NewStorageClient(userAgent string) *storage.Service {
 	storageClientBasePath := c.StorageBasePath
 	log.Printf("[INFO] Instantiating Google Storage client for path %s", storageClientBasePath)
-	clientStorage, err := storage.NewService(c.context, option.WithHTTPClient(c.client))
+	clientStorage, err := storage.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client storage: %s", err)
 		return nil
@@ -702,9 +1326,9 @@ func (c *Config) NewStorageClientWithTimeoutOverride(userAgent string, timeout t
 	// We have to do this because otherwise we will accidentally change the timeout for all other
 	// synchronous operations, which would not be desirable.
 	httpClient := &http.Client{
-		Transport:     c.client.Transport,
-		CheckRedirect: c.client.CheckRedirect,
-		Jar:           c.client.Jar,
+		Transport:     c.Client.Transport,
+		CheckRedirect: c.Client.CheckRedirect,
+		Jar:           c.Client.Jar,
 		Timeout:       timeout,
 	}
 	clientStorage, err := storage.NewService(c.context, option.WithHTTPClient(httpClient))
@@ -719,9 +1343,9 @@ func (c *Config) NewStorageClientWithTimeoutOverride(userAgent string, timeout t
 }
 
 func (c *Config) NewSqlAdminClient(userAgent string) *sqladmin.Service {
-	sqlClientBasePath := removeBasePathVersion(removeBasePathVersion(c.SQLBasePath))
+	sqlClientBasePath := RemoveBasePathVersion(RemoveBasePathVersion(c.SQLBasePath))
 	log.Printf("[INFO] Instantiating Google SqlAdmin client for path %s", sqlClientBasePath)
-	clientSqlAdmin, err := sqladmin.NewService(c.context, option.WithHTTPClient(c.client))
+	clientSqlAdmin, err := sqladmin.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client storage: %s", err)
 		return nil
@@ -733,9 +1357,9 @@ func (c *Config) NewSqlAdminClient(userAgent string) *sqladmin.Service {
 }
 
 func (c *Config) NewPubsubClient(userAgent string) *pubsub.Service {
-	pubsubClientBasePath := removeBasePathVersion(c.PubsubBasePath)
+	pubsubClientBasePath := RemoveBasePathVersion(c.PubsubBasePath)
 	log.Printf("[INFO] Instantiating Google Pubsub client for path %s", pubsubClientBasePath)
-	wrappedPubsubClient := ClientWithAdditionalRetries(c.client, pubsubTopicProjectNotReady)
+	wrappedPubsubClient := ClientWithAdditionalRetries(c.Client, pubsubTopicProjectNotReady)
 	clientPubsub, err := pubsub.NewService(c.context, option.WithHTTPClient(wrappedPubsubClient))
 	if err != nil {
 		log.Printf("[WARN] Error creating client pubsub: %s", err)
@@ -748,9 +1372,9 @@ func (c *Config) NewPubsubClient(userAgent string) *pubsub.Service {
 }
 
 func (c *Config) NewDataflowClient(userAgent string) *dataflow.Service {
-	dataflowClientBasePath := removeBasePathVersion(c.DataflowBasePath)
+	dataflowClientBasePath := RemoveBasePathVersion(c.DataflowBasePath)
 	log.Printf("[INFO] Instantiating Google Dataflow client for path %s", dataflowClientBasePath)
-	clientDataflow, err := dataflow.NewService(c.context, option.WithHTTPClient(c.client))
+	clientDataflow, err := dataflow.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client dataflow: %s", err)
 		return nil
@@ -762,9 +1386,9 @@ func (c *Config) NewDataflowClient(userAgent string) *dataflow.Service {
 }
 
 func (c *Config) NewResourceManagerClient(userAgent string) *cloudresourcemanager.Service {
-	resourceManagerBasePath := removeBasePathVersion(c.ResourceManagerBasePath)
+	resourceManagerBasePath := RemoveBasePathVersion(c.ResourceManagerBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud ResourceManager client for path %s", resourceManagerBasePath)
-	clientResourceManager, err := cloudresourcemanager.NewService(c.context, option.WithHTTPClient(c.client))
+	clientResourceManager, err := cloudresourcemanager.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client resource manager: %s", err)
 		return nil
@@ -775,24 +1399,24 @@ func (c *Config) NewResourceManagerClient(userAgent string) *cloudresourcemanage
 	return clientResourceManager
 }
 
-func (c *Config) NewResourceManagerV2Client(userAgent string) *resourceManagerV2.Service {
-	resourceManagerV2BasePath := removeBasePathVersion(c.ResourceManagerV2BasePath)
-	log.Printf("[INFO] Instantiating Google Cloud ResourceManager V client for path %s", resourceManagerV2BasePath)
-	clientResourceManagerV2, err := resourceManagerV2.NewService(c.context, option.WithHTTPClient(c.client))
+func (c *Config) NewResourceManagerV3Client(userAgent string) *resourceManagerV3.Service {
+	resourceManagerV3BasePath := RemoveBasePathVersion(c.ResourceManagerV3BasePath)
+	log.Printf("[INFO] Instantiating Google Cloud ResourceManager V3 client for path %s", resourceManagerV3BasePath)
+	clientResourceManagerV3, err := resourceManagerV3.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
-		log.Printf("[WARN] Error creating client resource manager v2: %s", err)
+		log.Printf("[WARN] Error creating client resource manager v3: %s", err)
 		return nil
 	}
-	clientResourceManagerV2.UserAgent = userAgent
-	clientResourceManagerV2.BasePath = resourceManagerV2BasePath
+	clientResourceManagerV3.UserAgent = userAgent
+	clientResourceManagerV3.BasePath = resourceManagerV3BasePath
 
-	return clientResourceManagerV2
+	return clientResourceManagerV3
 }
 
 func (c *Config) NewIamClient(userAgent string) *iam.Service {
-	iamClientBasePath := removeBasePathVersion(c.IAMBasePath)
+	iamClientBasePath := RemoveBasePathVersion(c.IAMBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud IAM client for path %s", iamClientBasePath)
-	clientIAM, err := iam.NewService(c.context, option.WithHTTPClient(c.client))
+	clientIAM, err := iam.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client iam: %s", err)
 		return nil
@@ -804,9 +1428,9 @@ func (c *Config) NewIamClient(userAgent string) *iam.Service {
 }
 
 func (c *Config) NewIamCredentialsClient(userAgent string) *iamcredentials.Service {
-	iamCredentialsClientBasePath := removeBasePathVersion(c.IamCredentialsBasePath)
+	iamCredentialsClientBasePath := RemoveBasePathVersion(c.IamCredentialsBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud IAMCredentials client for path %s", iamCredentialsClientBasePath)
-	clientIamCredentials, err := iamcredentials.NewService(c.context, option.WithHTTPClient(c.client))
+	clientIamCredentials, err := iamcredentials.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client iam credentials: %s", err)
 		return nil
@@ -818,9 +1442,9 @@ func (c *Config) NewIamCredentialsClient(userAgent string) *iamcredentials.Servi
 }
 
 func (c *Config) NewServiceManClient(userAgent string) *servicemanagement.APIService {
-	serviceManagementClientBasePath := removeBasePathVersion(c.ServiceManagementBasePath)
+	serviceManagementClientBasePath := RemoveBasePathVersion(c.ServiceManagementBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Service Management client for path %s", serviceManagementClientBasePath)
-	clientServiceMan, err := servicemanagement.NewService(c.context, option.WithHTTPClient(c.client))
+	clientServiceMan, err := servicemanagement.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client service management: %s", err)
 		return nil
@@ -832,9 +1456,9 @@ func (c *Config) NewServiceManClient(userAgent string) *servicemanagement.APISer
 }
 
 func (c *Config) NewServiceUsageClient(userAgent string) *serviceusage.Service {
-	serviceUsageClientBasePath := removeBasePathVersion(c.ServiceUsageBasePath)
+	serviceUsageClientBasePath := RemoveBasePathVersion(c.ServiceUsageBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Service Usage client for path %s", serviceUsageClientBasePath)
-	clientServiceUsage, err := serviceusage.NewService(c.context, option.WithHTTPClient(c.client))
+	clientServiceUsage, err := serviceusage.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client service usage: %s", err)
 		return nil
@@ -846,9 +1470,9 @@ func (c *Config) NewServiceUsageClient(userAgent string) *serviceusage.Service {
 }
 
 func (c *Config) NewBillingClient(userAgent string) *cloudbilling.APIService {
-	cloudBillingClientBasePath := removeBasePathVersion(c.CloudBillingBasePath)
+	cloudBillingClientBasePath := RemoveBasePathVersion(c.CloudBillingBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Billing client for path %s", cloudBillingClientBasePath)
-	clientBilling, err := cloudbilling.NewService(c.context, option.WithHTTPClient(c.client))
+	clientBilling, err := cloudbilling.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client billing: %s", err)
 		return nil
@@ -860,9 +1484,9 @@ func (c *Config) NewBillingClient(userAgent string) *cloudbilling.APIService {
 }
 
 func (c *Config) NewBuildClient(userAgent string) *cloudbuild.Service {
-	cloudBuildClientBasePath := removeBasePathVersion(c.CloudBuildBasePath)
+	cloudBuildClientBasePath := RemoveBasePathVersion(c.CloudBuildBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Build client for path %s", cloudBuildClientBasePath)
-	clientBuild, err := cloudbuild.NewService(c.context, option.WithHTTPClient(c.client))
+	clientBuild, err := cloudbuild.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client build: %s", err)
 		return nil
@@ -874,9 +1498,9 @@ func (c *Config) NewBuildClient(userAgent string) *cloudbuild.Service {
 }
 
 func (c *Config) NewCloudFunctionsClient(userAgent string) *cloudfunctions.Service {
-	cloudFunctionsClientBasePath := removeBasePathVersion(c.CloudFunctionsBasePath)
+	cloudFunctionsClientBasePath := RemoveBasePathVersion(c.CloudFunctionsBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud CloudFunctions Client for path %s", cloudFunctionsClientBasePath)
-	clientCloudFunctions, err := cloudfunctions.NewService(c.context, option.WithHTTPClient(c.client))
+	clientCloudFunctions, err := cloudfunctions.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client cloud functions: %s", err)
 		return nil
@@ -888,9 +1512,9 @@ func (c *Config) NewCloudFunctionsClient(userAgent string) *cloudfunctions.Servi
 }
 
 func (c *Config) NewSourceRepoClient(userAgent string) *sourcerepo.Service {
-	sourceRepoClientBasePath := removeBasePathVersion(c.SourceRepoBasePath)
+	sourceRepoClientBasePath := RemoveBasePathVersion(c.SourceRepoBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Source Repo client for path %s", sourceRepoClientBasePath)
-	clientSourceRepo, err := sourcerepo.NewService(c.context, option.WithHTTPClient(c.client))
+	clientSourceRepo, err := sourcerepo.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client source repo: %s", err)
 		return nil
@@ -904,7 +1528,7 @@ func (c *Config) NewSourceRepoClient(userAgent string) *sourcerepo.Service {
 func (c *Config) NewBigQueryClient(userAgent string) *bigquery.Service {
 	bigQueryClientBasePath := c.BigQueryBasePath
 	log.Printf("[INFO] Instantiating Google Cloud BigQuery client for path %s", bigQueryClientBasePath)
-	wrappedBigQueryClient := ClientWithAdditionalRetries(c.client, iamMemberMissing)
+	wrappedBigQueryClient := ClientWithAdditionalRetries(c.Client, iamMemberMissing)
 	clientBigQuery, err := bigquery.NewService(c.context, option.WithHTTPClient(wrappedBigQueryClient))
 	if err != nil {
 		log.Printf("[WARN] Error creating client big query: %s", err)
@@ -917,9 +1541,9 @@ func (c *Config) NewBigQueryClient(userAgent string) *bigquery.Service {
 }
 
 func (c *Config) NewSpannerClient(userAgent string) *spanner.Service {
-	spannerClientBasePath := removeBasePathVersion(c.SpannerBasePath)
+	spannerClientBasePath := RemoveBasePathVersion(c.SpannerBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Spanner client for path %s", spannerClientBasePath)
-	clientSpanner, err := spanner.NewService(c.context, option.WithHTTPClient(c.client))
+	clientSpanner, err := spanner.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client source repo: %s", err)
 		return nil
@@ -931,9 +1555,9 @@ func (c *Config) NewSpannerClient(userAgent string) *spanner.Service {
 }
 
 func (c *Config) NewDataprocClient(userAgent string) *dataproc.Service {
-	dataprocClientBasePath := removeBasePathVersion(c.DataprocBasePath)
+	dataprocClientBasePath := RemoveBasePathVersion(c.DataprocBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Dataproc client for path %s", dataprocClientBasePath)
-	clientDataproc, err := dataproc.NewService(c.context, option.WithHTTPClient(c.client))
+	clientDataproc, err := dataproc.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client dataproc: %s", err)
 		return nil
@@ -945,9 +1569,9 @@ func (c *Config) NewDataprocClient(userAgent string) *dataproc.Service {
 }
 
 func (c *Config) NewCloudIoTClient(userAgent string) *cloudiot.Service {
-	cloudIoTClientBasePath := removeBasePathVersion(c.CloudIoTBasePath)
+	cloudIoTClientBasePath := RemoveBasePathVersion(c.CloudIoTBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud IoT Core client for path %s", cloudIoTClientBasePath)
-	clientCloudIoT, err := cloudiot.NewService(c.context, option.WithHTTPClient(c.client))
+	clientCloudIoT, err := cloudiot.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client cloud iot: %s", err)
 		return nil
@@ -959,9 +1583,9 @@ func (c *Config) NewCloudIoTClient(userAgent string) *cloudiot.Service {
 }
 
 func (c *Config) NewAppEngineClient(userAgent string) *appengine.APIService {
-	appEngineClientBasePath := removeBasePathVersion(c.AppEngineBasePath)
+	appEngineClientBasePath := RemoveBasePathVersion(c.AppEngineBasePath)
 	log.Printf("[INFO] Instantiating App Engine client for path %s", appEngineClientBasePath)
-	clientAppEngine, err := appengine.NewService(c.context, option.WithHTTPClient(c.client))
+	clientAppEngine, err := appengine.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client appengine: %s", err)
 		return nil
@@ -973,9 +1597,9 @@ func (c *Config) NewAppEngineClient(userAgent string) *appengine.APIService {
 }
 
 func (c *Config) NewComposerClient(userAgent string) *composer.Service {
-	composerClientBasePath := removeBasePathVersion(c.ComposerBasePath)
+	composerClientBasePath := RemoveBasePathVersion(c.ComposerBasePath)
 	log.Printf("[INFO] Instantiating Cloud Composer client for path %s", composerClientBasePath)
-	clientComposer, err := composer.NewService(c.context, option.WithHTTPClient(c.client))
+	clientComposer, err := composer.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client composer: %s", err)
 		return nil
@@ -987,9 +1611,9 @@ func (c *Config) NewComposerClient(userAgent string) *composer.Service {
 }
 
 func (c *Config) NewServiceNetworkingClient(userAgent string) *servicenetworking.APIService {
-	serviceNetworkingClientBasePath := removeBasePathVersion(c.ServiceNetworkingBasePath)
+	serviceNetworkingClientBasePath := RemoveBasePathVersion(c.ServiceNetworkingBasePath)
 	log.Printf("[INFO] Instantiating Service Networking client for path %s", serviceNetworkingClientBasePath)
-	clientServiceNetworking, err := servicenetworking.NewService(c.context, option.WithHTTPClient(c.client))
+	clientServiceNetworking, err := servicenetworking.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client service networking: %s", err)
 		return nil
@@ -1001,9 +1625,9 @@ func (c *Config) NewServiceNetworkingClient(userAgent string) *servicenetworking
 }
 
 func (c *Config) NewStorageTransferClient(userAgent string) *storagetransfer.Service {
-	storageTransferClientBasePath := removeBasePathVersion(c.StorageTransferBasePath)
+	storageTransferClientBasePath := RemoveBasePathVersion(c.StorageTransferBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Storage Transfer client for path %s", storageTransferClientBasePath)
-	clientStorageTransfer, err := storagetransfer.NewService(c.context, option.WithHTTPClient(c.client))
+	clientStorageTransfer, err := storagetransfer.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client storage transfer: %s", err)
 		return nil
@@ -1015,9 +1639,9 @@ func (c *Config) NewStorageTransferClient(userAgent string) *storagetransfer.Ser
 }
 
 func (c *Config) NewHealthcareClient(userAgent string) *healthcare.Service {
-	healthcareClientBasePath := removeBasePathVersion(c.HealthcareBasePath)
+	healthcareClientBasePath := RemoveBasePathVersion(c.HealthcareBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud Healthcare client for path %s", healthcareClientBasePath)
-	clientHealthcare, err := healthcare.NewService(c.context, option.WithHTTPClient(c.client))
+	clientHealthcare, err := healthcare.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client healthcare: %s", err)
 		return nil
@@ -1029,9 +1653,9 @@ func (c *Config) NewHealthcareClient(userAgent string) *healthcare.Service {
 }
 
 func (c *Config) NewCloudIdentityClient(userAgent string) *cloudidentity.Service {
-	cloudidentityClientBasePath := removeBasePathVersion(c.CloudIdentityBasePath)
+	cloudidentityClientBasePath := RemoveBasePathVersion(c.CloudIdentityBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud CloudIdentity client for path %s", cloudidentityClientBasePath)
-	clientCloudIdentity, err := cloudidentity.NewService(c.context, option.WithHTTPClient(c.client))
+	clientCloudIdentity, err := cloudidentity.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client cloud identity: %s", err)
 		return nil
@@ -1060,9 +1684,9 @@ func (c *Config) BigTableClientFactory(userAgent string) *BigtableClientFactory 
 // we expose those directly instead of providing the `Service` object
 // as a factory.
 func (c *Config) NewBigTableProjectsInstancesClient(userAgent string) *bigtableadmin.ProjectsInstancesService {
-	bigtableAdminBasePath := removeBasePathVersion(c.BigtableAdminBasePath)
+	bigtableAdminBasePath := RemoveBasePathVersion(c.BigtableAdminBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud BigtableAdmin for path %s", bigtableAdminBasePath)
-	clientBigtable, err := bigtableadmin.NewService(c.context, option.WithHTTPClient(c.client))
+	clientBigtable, err := bigtableadmin.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client big table projects instances: %s", err)
 		return nil
@@ -1075,9 +1699,9 @@ func (c *Config) NewBigTableProjectsInstancesClient(userAgent string) *bigtablea
 }
 
 func (c *Config) NewBigTableProjectsInstancesTablesClient(userAgent string) *bigtableadmin.ProjectsInstancesTablesService {
-	bigtableAdminBasePath := removeBasePathVersion(c.BigtableAdminBasePath)
+	bigtableAdminBasePath := RemoveBasePathVersion(c.BigtableAdminBasePath)
 	log.Printf("[INFO] Instantiating Google Cloud BigtableAdmin for path %s", bigtableAdminBasePath)
-	clientBigtable, err := bigtableadmin.NewService(c.context, option.WithHTTPClient(c.client))
+	clientBigtable, err := bigtableadmin.NewService(c.context, option.WithHTTPClient(c.Client))
 	if err != nil {
 		log.Printf("[WARN] Error creating client projects instances tables: %s", err)
 		return nil
@@ -1087,6 +1711,20 @@ func (c *Config) NewBigTableProjectsInstancesTablesClient(userAgent string) *big
 	clientBigtableProjectsInstancesTables := bigtableadmin.NewProjectsInstancesTablesService(clientBigtable)
 
 	return clientBigtableProjectsInstancesTables
+}
+
+func (c *Config) NewCloudRunV2Client(userAgent string) *runadminv2.Service {
+	runAdminV2ClientBasePath := RemoveBasePathVersion(RemoveBasePathVersion(c.CloudRunV2BasePath))
+	log.Printf("[INFO] Instantiating Google Cloud Run Admin v2 client for path %s", runAdminV2ClientBasePath)
+	clientRunAdminV2, err := runadminv2.NewService(c.context, option.WithHTTPClient(c.Client))
+	if err != nil {
+		log.Printf("[WARN] Error creating client run admin: %s", err)
+		return nil
+	}
+	clientRunAdminV2.UserAgent = userAgent
+	clientRunAdminV2.BasePath = runAdminV2ClientBasePath
+
+	return clientRunAdminV2
 }
 
 // staticTokenSource is used to be able to identify static token sources without reflection.
@@ -1169,7 +1807,7 @@ func (c *Config) GetCredentials(clientScopes []string, initialCredentialsOnly bo
 }
 
 // Remove the `/{{version}}/` from a base path if present.
-func removeBasePathVersion(url string) string {
+func RemoveBasePathVersion(url string) string {
 	re := regexp.MustCompile(`(?P<base>http[s]://.*)(?P<version>/[^/]+?/$)`)
 	return re.ReplaceAllString(url, "$1/")
 }
@@ -1182,38 +1820,58 @@ func ConfigureBasePaths(c *Config) {
 	c.AccessApprovalBasePath = DefaultBasePaths[AccessApprovalBasePathKey]
 	c.AccessContextManagerBasePath = DefaultBasePaths[AccessContextManagerBasePathKey]
 	c.ActiveDirectoryBasePath = DefaultBasePaths[ActiveDirectoryBasePathKey]
+	c.AlloydbBasePath = DefaultBasePaths[AlloydbBasePathKey]
 	c.ApigeeBasePath = DefaultBasePaths[ApigeeBasePathKey]
 	c.AppEngineBasePath = DefaultBasePaths[AppEngineBasePathKey]
+	c.ArtifactRegistryBasePath = DefaultBasePaths[ArtifactRegistryBasePathKey]
+	c.BeyondcorpBasePath = DefaultBasePaths[BeyondcorpBasePathKey]
 	c.BigQueryBasePath = DefaultBasePaths[BigQueryBasePathKey]
+	c.BigqueryAnalyticsHubBasePath = DefaultBasePaths[BigqueryAnalyticsHubBasePathKey]
+	c.BigqueryConnectionBasePath = DefaultBasePaths[BigqueryConnectionBasePathKey]
+	c.BigqueryDatapolicyBasePath = DefaultBasePaths[BigqueryDatapolicyBasePathKey]
 	c.BigqueryDataTransferBasePath = DefaultBasePaths[BigqueryDataTransferBasePathKey]
 	c.BigqueryReservationBasePath = DefaultBasePaths[BigqueryReservationBasePathKey]
 	c.BigtableBasePath = DefaultBasePaths[BigtableBasePathKey]
 	c.BillingBasePath = DefaultBasePaths[BillingBasePathKey]
 	c.BinaryAuthorizationBasePath = DefaultBasePaths[BinaryAuthorizationBasePathKey]
+	c.CertificateManagerBasePath = DefaultBasePaths[CertificateManagerBasePathKey]
 	c.CloudAssetBasePath = DefaultBasePaths[CloudAssetBasePathKey]
 	c.CloudBuildBasePath = DefaultBasePaths[CloudBuildBasePathKey]
 	c.CloudFunctionsBasePath = DefaultBasePaths[CloudFunctionsBasePathKey]
+	c.Cloudfunctions2BasePath = DefaultBasePaths[Cloudfunctions2BasePathKey]
 	c.CloudIdentityBasePath = DefaultBasePaths[CloudIdentityBasePathKey]
+	c.CloudIdsBasePath = DefaultBasePaths[CloudIdsBasePathKey]
 	c.CloudIotBasePath = DefaultBasePaths[CloudIotBasePathKey]
 	c.CloudRunBasePath = DefaultBasePaths[CloudRunBasePathKey]
+	c.CloudRunV2BasePath = DefaultBasePaths[CloudRunV2BasePathKey]
 	c.CloudSchedulerBasePath = DefaultBasePaths[CloudSchedulerBasePathKey]
 	c.CloudTasksBasePath = DefaultBasePaths[CloudTasksBasePathKey]
 	c.ComputeBasePath = DefaultBasePaths[ComputeBasePathKey]
 	c.ContainerAnalysisBasePath = DefaultBasePaths[ContainerAnalysisBasePathKey]
+	c.ContainerAttachedBasePath = DefaultBasePaths[ContainerAttachedBasePathKey]
 	c.DataCatalogBasePath = DefaultBasePaths[DataCatalogBasePathKey]
+	c.DataFusionBasePath = DefaultBasePaths[DataFusionBasePathKey]
 	c.DataLossPreventionBasePath = DefaultBasePaths[DataLossPreventionBasePathKey]
+	c.DataplexBasePath = DefaultBasePaths[DataplexBasePathKey]
 	c.DataprocBasePath = DefaultBasePaths[DataprocBasePathKey]
+	c.DataprocMetastoreBasePath = DefaultBasePaths[DataprocMetastoreBasePathKey]
 	c.DatastoreBasePath = DefaultBasePaths[DatastoreBasePathKey]
+	c.DatastreamBasePath = DefaultBasePaths[DatastreamBasePathKey]
 	c.DeploymentManagerBasePath = DefaultBasePaths[DeploymentManagerBasePathKey]
 	c.DialogflowBasePath = DefaultBasePaths[DialogflowBasePathKey]
 	c.DialogflowCXBasePath = DefaultBasePaths[DialogflowCXBasePathKey]
 	c.DNSBasePath = DefaultBasePaths[DNSBasePathKey]
+	c.DocumentAIBasePath = DefaultBasePaths[DocumentAIBasePathKey]
 	c.EssentialContactsBasePath = DefaultBasePaths[EssentialContactsBasePathKey]
 	c.FilestoreBasePath = DefaultBasePaths[FilestoreBasePathKey]
 	c.FirestoreBasePath = DefaultBasePaths[FirestoreBasePathKey]
 	c.GameServicesBasePath = DefaultBasePaths[GameServicesBasePathKey]
+	c.GKEBackupBasePath = DefaultBasePaths[GKEBackupBasePathKey]
 	c.GKEHubBasePath = DefaultBasePaths[GKEHubBasePathKey]
 	c.HealthcareBasePath = DefaultBasePaths[HealthcareBasePathKey]
+	c.IAM2BasePath = DefaultBasePaths[IAM2BasePathKey]
+	c.IAMBetaBasePath = DefaultBasePaths[IAMBetaBasePathKey]
+	c.IAMWorkforcePoolBasePath = DefaultBasePaths[IAMWorkforcePoolBasePathKey]
 	c.IapBasePath = DefaultBasePaths[IapBasePathKey]
 	c.IdentityPlatformBasePath = DefaultBasePaths[IdentityPlatformBasePathKey]
 	c.KMSBasePath = DefaultBasePaths[KMSBasePathKey]
@@ -1239,6 +1897,7 @@ func ConfigureBasePaths(c *Config) {
 	c.SpannerBasePath = DefaultBasePaths[SpannerBasePathKey]
 	c.SQLBasePath = DefaultBasePaths[SQLBasePathKey]
 	c.StorageBasePath = DefaultBasePaths[StorageBasePathKey]
+	c.StorageTransferBasePath = DefaultBasePaths[StorageTransferBasePathKey]
 	c.TagsBasePath = DefaultBasePaths[TagsBasePathKey]
 	c.TPUBasePath = DefaultBasePaths[TPUBasePathKey]
 	c.VertexAIBasePath = DefaultBasePaths[VertexAIBasePathKey]
@@ -1252,10 +1911,10 @@ func ConfigureBasePaths(c *Config) {
 	c.DataprocBasePath = DefaultBasePaths[DataprocBasePathKey]
 	c.DataflowBasePath = DefaultBasePaths[DataflowBasePathKey]
 	c.IamCredentialsBasePath = DefaultBasePaths[IamCredentialsBasePathKey]
-	c.ResourceManagerV2BasePath = DefaultBasePaths[ResourceManagerV2BasePathKey]
+	c.ResourceManagerV3BasePath = DefaultBasePaths[ResourceManagerV3BasePathKey]
 	c.IAMBasePath = DefaultBasePaths[IAMBasePathKey]
 	c.ServiceNetworkingBasePath = DefaultBasePaths[ServiceNetworkingBasePathKey]
 	c.BigQueryBasePath = DefaultBasePaths[BigQueryBasePathKey]
-	c.StorageTransferBasePath = DefaultBasePaths[StorageTransferBasePathKey]
 	c.BigtableAdminBasePath = DefaultBasePaths[BigtableAdminBasePathKey]
+	c.TagsLocationBasePath = DefaultBasePaths[TagsLocationBasePathKey]
 }

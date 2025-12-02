@@ -27,7 +27,7 @@ import (
 	compute "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/compute"
 )
 
-func resourceComputeGlobalForwardingRule() *schema.Resource {
+func ResourceComputeGlobalForwardingRule() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeGlobalForwardingRuleCreate,
 		Read:   resourceComputeGlobalForwardingRuleRead,
@@ -39,9 +39,9 @@ func resourceComputeGlobalForwardingRule() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -102,7 +102,7 @@ func resourceComputeGlobalForwardingRule() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Specifies the forwarding rule type.\n\n*   `EXTERNAL` is used for:\n    *   Classic Cloud VPN gateways\n    *   Protocol forwarding to VMs from an external IP address\n    *   The following load balancers: HTTP(S), SSL Proxy, TCP Proxy, and Network TCP/UDP\n*   `INTERNAL` is used for:\n    *   Protocol forwarding to VMs from an internal IP address\n    *   Internal TCP/UDP load balancers\n*   `INTERNAL_MANAGED` is used for:\n    *   Internal HTTP(S) load balancers\n*   `INTERNAL_SELF_MANAGED` is used for:\n    *   Traffic Director\n\nFor more information about forwarding rules, refer to [Forwarding rule concepts](/load-balancing/docs/forwarding-rule-concepts). Possible values: INVALID, INTERNAL, INTERNAL_MANAGED, INTERNAL_SELF_MANAGED, EXTERNAL",
+				Description: "Specifies the forwarding rule type.\n\n*   `EXTERNAL` is used for:\n    *   Classic Cloud VPN gateways\n    *   Protocol forwarding to VMs from an external IP address\n    *   The following load balancers: HTTP(S), SSL Proxy, TCP Proxy, and Network TCP/UDP\n*   `INTERNAL` is used for:\n    *   Protocol forwarding to VMs from an internal IP address\n    *   Internal TCP/UDP load balancers\n*   `INTERNAL_MANAGED` is used for:\n    *   Internal HTTP(S) load balancers\n*   `INTERNAL_SELF_MANAGED` is used for:\n    *   Traffic Director\n*   `EXTERNAL_MANAGED` is used for:\n    *   Global external HTTP(S) load balancers \n\nFor more information about forwarding rules, refer to [Forwarding rule concepts](/load-balancing/docs/forwarding-rule-concepts). Possible values: INVALID, INTERNAL, INTERNAL_MANAGED, INTERNAL_SELF_MANAGED, EXTERNAL, EXTERNAL_MANAGED",
 				Default:     "EXTERNAL",
 			},
 
@@ -144,6 +144,18 @@ func resourceComputeGlobalForwardingRule() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: "Used internally during label updates.",
+			},
+
+			"psc_connection_id": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The PSC connection id of the PSC Forwarding Rule.",
+			},
+
+			"psc_connection_status": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: "The PSC connection status of the PSC Forwarding Rule. Possible values: STATUS_UNSPECIFIED, PENDING, ACCEPTED, REJECTED, CLOSED",
 			},
 
 			"self_link": {
@@ -220,13 +232,13 @@ func resourceComputeGlobalForwardingRuleCreate(d *schema.ResourceData, meta inte
 		Project:             dcl.String(project),
 	}
 
-	id, err := replaceVarsForId(d, config, "projects/{{project}}/global/forwardingRules/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -242,7 +254,7 @@ func resourceComputeGlobalForwardingRuleCreate(d *schema.ResourceData, meta inte
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyForwardingRule(context.Background(), obj, createDirective...)
+	res, err := client.ApplyForwardingRule(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -279,7 +291,7 @@ func resourceComputeGlobalForwardingRuleRead(d *schema.ResourceData, meta interf
 		Project:             dcl.String(project),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -340,6 +352,12 @@ func resourceComputeGlobalForwardingRuleRead(d *schema.ResourceData, meta interf
 	if err = d.Set("label_fingerprint", res.LabelFingerprint); err != nil {
 		return fmt.Errorf("error setting label_fingerprint in state: %s", err)
 	}
+	if err = d.Set("psc_connection_id", res.PscConnectionId); err != nil {
+		return fmt.Errorf("error setting psc_connection_id in state: %s", err)
+	}
+	if err = d.Set("psc_connection_status", res.PscConnectionStatus); err != nil {
+		return fmt.Errorf("error setting psc_connection_status in state: %s", err)
+	}
 	if err = d.Set("self_link", res.SelfLink); err != nil {
 		return fmt.Errorf("error setting self_link in state: %s", err)
 	}
@@ -368,7 +386,7 @@ func resourceComputeGlobalForwardingRuleUpdate(d *schema.ResourceData, meta inte
 		Project:             dcl.String(project),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -423,7 +441,7 @@ func resourceComputeGlobalForwardingRuleDelete(d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[DEBUG] Deleting ForwardingRule %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -449,6 +467,7 @@ func resourceComputeGlobalForwardingRuleDelete(d *schema.ResourceData, meta inte
 
 func resourceComputeGlobalForwardingRuleImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/global/forwardingRules/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<name>[^/]+)",
@@ -473,7 +492,7 @@ func expandComputeGlobalForwardingRuleMetadataFilterArray(o interface{}) []compu
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]compute.ForwardingRuleMetadataFilter, 0)
 	}
 
@@ -530,7 +549,7 @@ func expandComputeGlobalForwardingRuleMetadataFilterFilterLabelArray(o interface
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]compute.ForwardingRuleMetadataFilterFilterLabel, 0)
 	}
 

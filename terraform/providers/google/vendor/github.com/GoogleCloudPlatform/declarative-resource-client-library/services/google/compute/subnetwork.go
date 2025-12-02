@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -185,8 +185,8 @@ func (r *SubnetworkSecondaryIPRanges) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this SubnetworkSecondaryIPRanges is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptySubnetworkSecondaryIPRanges *SubnetworkSecondaryIPRanges = &SubnetworkSecondaryIPRanges{empty: true}
 
 func (r *SubnetworkSecondaryIPRanges) Empty() bool {
@@ -237,8 +237,8 @@ func (r *SubnetworkLogConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this SubnetworkLogConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptySubnetworkLogConfig *SubnetworkLogConfig = &SubnetworkLogConfig{empty: true}
 
 func (r *SubnetworkLogConfig) Empty() bool {
@@ -272,22 +272,22 @@ func (r *Subnetwork) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"creationTimestamp":     dcl.ValueOrEmptyString(nr.CreationTimestamp),
-		"description":           dcl.ValueOrEmptyString(nr.Description),
-		"gatewayAddress":        dcl.ValueOrEmptyString(nr.GatewayAddress),
-		"iPCidrRange":           dcl.ValueOrEmptyString(nr.IPCidrRange),
-		"name":                  dcl.ValueOrEmptyString(nr.Name),
-		"network":               dcl.ValueOrEmptyString(nr.Network),
-		"fingerprint":           dcl.ValueOrEmptyString(nr.Fingerprint),
-		"purpose":               dcl.ValueOrEmptyString(nr.Purpose),
-		"role":                  dcl.ValueOrEmptyString(nr.Role),
-		"secondaryIPRanges":     dcl.ValueOrEmptyString(nr.SecondaryIPRanges),
-		"privateIPGoogleAccess": dcl.ValueOrEmptyString(nr.PrivateIPGoogleAccess),
-		"region":                dcl.ValueOrEmptyString(nr.Region),
-		"logConfig":             dcl.ValueOrEmptyString(nr.LogConfig),
-		"project":               dcl.ValueOrEmptyString(nr.Project),
-		"selfLink":              dcl.ValueOrEmptyString(nr.SelfLink),
-		"enableFlowLogs":        dcl.ValueOrEmptyString(nr.EnableFlowLogs),
+		"creation_timestamp":       dcl.ValueOrEmptyString(nr.CreationTimestamp),
+		"description":              dcl.ValueOrEmptyString(nr.Description),
+		"gateway_address":          dcl.ValueOrEmptyString(nr.GatewayAddress),
+		"ip_cidr_range":            dcl.ValueOrEmptyString(nr.IPCidrRange),
+		"name":                     dcl.ValueOrEmptyString(nr.Name),
+		"network":                  dcl.ValueOrEmptyString(nr.Network),
+		"fingerprint":              dcl.ValueOrEmptyString(nr.Fingerprint),
+		"purpose":                  dcl.ValueOrEmptyString(nr.Purpose),
+		"role":                     dcl.ValueOrEmptyString(nr.Role),
+		"secondary_ip_ranges":      dcl.ValueOrEmptyString(nr.SecondaryIPRanges),
+		"private_ip_google_access": dcl.ValueOrEmptyString(nr.PrivateIPGoogleAccess),
+		"region":                   dcl.ValueOrEmptyString(nr.Region),
+		"log_config":               dcl.ValueOrEmptyString(nr.LogConfig),
+		"project":                  dcl.ValueOrEmptyString(nr.Project),
+		"self_link":                dcl.ValueOrEmptyString(nr.SelfLink),
+		"enable_flow_logs":         dcl.ValueOrEmptyString(nr.EnableFlowLogs),
 	}
 	return dcl.Nprintf("projects/{{project}}/regions/{{region}}/subnetworks/{{name}}", params), nil
 }
@@ -388,7 +388,7 @@ func (c *Client) GetSubnetwork(ctx context.Context, r *Subnetwork) (*Subnetwork,
 		}
 		return nil, err
 	}
-	result, err := unmarshalSubnetwork(b, c)
+	result, err := unmarshalSubnetwork(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -559,7 +559,7 @@ func applySubnetworkHelper(c *Client, ctx context.Context, rawDesired *Subnetwor
 func applySubnetworkDiff(c *Client, ctx context.Context, desired *Subnetwork, rawDesired *Subnetwork, ops []subnetworkApiOperation, opts ...dcl.ApplyOption) (*Subnetwork, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetSubnetwork(ctx, desired.urlNormalized())
+	rawNew, err := c.GetSubnetwork(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -572,7 +572,7 @@ func applySubnetworkDiff(c *Client, ctx context.Context, desired *Subnetwork, ra
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapSubnetwork(r, c)
+				fullResp, err := unmarshalMapSubnetwork(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

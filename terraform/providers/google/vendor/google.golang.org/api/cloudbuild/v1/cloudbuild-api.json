@@ -105,6 +105,65 @@
   },
   "protocol": "rest",
   "resources": {
+    "githubDotComWebhook": {
+      "methods": {
+        "receive": {
+          "description": "ReceiveGitHubDotComWebhook is called when the API receives a github.com webhook.",
+          "flatPath": "v1/githubDotComWebhook:receive",
+          "httpMethod": "POST",
+          "id": "cloudbuild.githubDotComWebhook.receive",
+          "parameterOrder": [],
+          "parameters": {
+            "webhookKey": {
+              "description": "For GitHub Enterprise webhooks, this key is used to associate the webhook request with the GitHubEnterpriseConfig to use for validation.",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "v1/githubDotComWebhook:receive",
+          "request": {
+            "$ref": "HttpBody"
+          },
+          "response": {
+            "$ref": "Empty"
+          }
+        }
+      }
+    },
+    "locations": {
+      "methods": {
+        "regionalWebhook": {
+          "description": "ReceiveRegionalWebhook is called when the API receives a regional GitHub webhook.",
+          "flatPath": "v1/locations/{locationsId}/regionalWebhook",
+          "httpMethod": "POST",
+          "id": "cloudbuild.locations.regionalWebhook",
+          "parameterOrder": [
+            "location"
+          ],
+          "parameters": {
+            "location": {
+              "description": "Required. The location where the webhook should be sent.",
+              "location": "path",
+              "pattern": "^locations/[^/]+$",
+              "required": true,
+              "type": "string"
+            },
+            "webhookKey": {
+              "description": "For GitHub Enterprise webhooks, this key is used to associate the webhook request with the GitHubEnterpriseConfig to use for validation.",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "v1/{+location}/regionalWebhook",
+          "request": {
+            "$ref": "HttpBody"
+          },
+          "response": {
+            "$ref": "Empty"
+          }
+        }
+      }
+    },
     "operations": {
       "methods": {
         "cancel": {
@@ -322,7 +381,7 @@
                   "type": "string"
                 },
                 "parent": {
-                  "description": "The parent of the collection of `Builds`. Format: `projects/{project}/locations/location`",
+                  "description": "The parent of the collection of `Builds`. Format: `projects/{project}/locations/{location}`",
                   "location": "query",
                   "type": "string"
                 },
@@ -389,7 +448,7 @@
               ],
               "parameters": {
                 "gheConfigId": {
-                  "description": "Optional. The ID to use for the GithubEnterpriseConfig, which will become the final component of the GithubEnterpriseConfig’s resource name. ghe_config_id must meet the following requirements: + They must contain only alphanumeric characters and dashes. + They can be 1-64 characters long. + They must begin and end with an alphanumeric character",
+                  "description": "Optional. The ID to use for the GithubEnterpriseConfig, which will become the final component of the GithubEnterpriseConfig's resource name. ghe_config_id must meet the following requirements: + They must contain only alphanumeric characters and dashes. + They can be 1-64 characters long. + They must begin and end with an alphanumeric character",
                   "location": "query",
                   "type": "string"
                 },
@@ -432,7 +491,7 @@
                   "type": "string"
                 },
                 "name": {
-                  "description": "This field should contain the name of the enterprise config resource. For example: \"projects/{$project_id}/githubEnterpriseConfigs/{$config_id}\"",
+                  "description": "This field should contain the name of the enterprise config resource. For example: \"projects/{$project_id}/locations/{$location_id}/githubEnterpriseConfigs/{$config_id}\"",
                   "location": "path",
                   "pattern": "^projects/[^/]+/githubEnterpriseConfigs/[^/]+$",
                   "required": true,
@@ -467,7 +526,7 @@
                   "type": "string"
                 },
                 "name": {
-                  "description": "This field should contain the name of the enterprise config resource. For example: \"projects/{$project_id}/githubEnterpriseConfigs/{$config_id}\"",
+                  "description": "This field should contain the name of the enterprise config resource. For example: \"projects/{$project_id}/locations/{$location_id}/githubEnterpriseConfigs/{$config_id}\"",
                   "location": "path",
                   "pattern": "^projects/[^/]+/githubEnterpriseConfigs/[^/]+$",
                   "required": true,
@@ -527,7 +586,7 @@
               ],
               "parameters": {
                 "name": {
-                  "description": "Optional. The full resource name for the GitHubEnterpriseConfig For example: \"projects/{$project_id}/githubEnterpriseConfigs/{$config_id}\"",
+                  "description": "Optional. The full resource name for the GitHubEnterpriseConfig For example: \"projects/{$project_id}/locations/{$location_id}/githubEnterpriseConfigs/{$config_id}\"",
                   "location": "path",
                   "pattern": "^projects/[^/]+/githubEnterpriseConfigs/[^/]+$",
                   "required": true,
@@ -555,6 +614,265 @@
         },
         "locations": {
           "resources": {
+            "bitbucketServerConfigs": {
+              "methods": {
+                "create": {
+                  "description": "Creates a new `BitbucketServerConfig`. This API is experimental.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/bitbucketServerConfigs",
+                  "httpMethod": "POST",
+                  "id": "cloudbuild.projects.locations.bitbucketServerConfigs.create",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "bitbucketServerConfigId": {
+                      "description": "Optional. The ID to use for the BitbucketServerConfig, which will become the final component of the BitbucketServerConfig's resource name. bitbucket_server_config_id must meet the following requirements: + They must contain only alphanumeric characters and dashes. + They can be 1-64 characters long. + They must begin and end with an alphanumeric character.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. Name of the parent resource.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+parent}/bitbucketServerConfigs",
+                  "request": {
+                    "$ref": "BitbucketServerConfig"
+                  },
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "delete": {
+                  "description": "Delete a `BitbucketServerConfig`. This API is experimental.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/bitbucketServerConfigs/{bitbucketServerConfigsId}",
+                  "httpMethod": "DELETE",
+                  "id": "cloudbuild.projects.locations.bitbucketServerConfigs.delete",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The config resource name.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/bitbucketServerConfigs/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "get": {
+                  "description": "Retrieve a `BitbucketServerConfig`. This API is experimental.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/bitbucketServerConfigs/{bitbucketServerConfigsId}",
+                  "httpMethod": "GET",
+                  "id": "cloudbuild.projects.locations.bitbucketServerConfigs.get",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The config resource name.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/bitbucketServerConfigs/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "response": {
+                    "$ref": "BitbucketServerConfig"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "list": {
+                  "description": "List all `BitbucketServerConfigs` for a given project. This API is experimental.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/bitbucketServerConfigs",
+                  "httpMethod": "GET",
+                  "id": "cloudbuild.projects.locations.bitbucketServerConfigs.list",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "pageSize": {
+                      "description": "The maximum number of configs to return. The service may return fewer than this value. If unspecified, at most 50 configs will be returned. The maximum value is 1000; values above 1000 will be coerced to 1000.",
+                      "format": "int32",
+                      "location": "query",
+                      "type": "integer"
+                    },
+                    "pageToken": {
+                      "description": "A page token, received from a previous `ListBitbucketServerConfigsRequest` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListBitbucketServerConfigsRequest` must match the call that provided the page token.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. Name of the parent resource.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+parent}/bitbucketServerConfigs",
+                  "response": {
+                    "$ref": "ListBitbucketServerConfigsResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "patch": {
+                  "description": "Updates an existing `BitbucketServerConfig`. This API is experimental.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/bitbucketServerConfigs/{bitbucketServerConfigsId}",
+                  "httpMethod": "PATCH",
+                  "id": "cloudbuild.projects.locations.bitbucketServerConfigs.patch",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "The resource name for the config.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/bitbucketServerConfigs/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "updateMask": {
+                      "description": "Update mask for the resource. If this is set, the server will only update the fields specified in the field mask. Otherwise, a full update of the mutable resource fields will be performed.",
+                      "format": "google-fieldmask",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "request": {
+                    "$ref": "BitbucketServerConfig"
+                  },
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "removeBitbucketServerConnectedRepository": {
+                  "description": "Remove a Bitbucket Server repository from a given BitbucketServerConfig's connected repositories. This API is experimental.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/bitbucketServerConfigs/{bitbucketServerConfigsId}:removeBitbucketServerConnectedRepository",
+                  "httpMethod": "POST",
+                  "id": "cloudbuild.projects.locations.bitbucketServerConfigs.removeBitbucketServerConnectedRepository",
+                  "parameterOrder": [
+                    "config"
+                  ],
+                  "parameters": {
+                    "config": {
+                      "description": "Required. The name of the `BitbucketServerConfig` to remove a connected repository. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{config}`",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/bitbucketServerConfigs/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+config}:removeBitbucketServerConnectedRepository",
+                  "request": {
+                    "$ref": "RemoveBitbucketServerConnectedRepositoryRequest"
+                  },
+                  "response": {
+                    "$ref": "Empty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                }
+              },
+              "resources": {
+                "connectedRepositories": {
+                  "methods": {
+                    "batchCreate": {
+                      "description": "Batch connecting Bitbucket Server repositories to Cloud Build.",
+                      "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/bitbucketServerConfigs/{bitbucketServerConfigsId}/connectedRepositories:batchCreate",
+                      "httpMethod": "POST",
+                      "id": "cloudbuild.projects.locations.bitbucketServerConfigs.connectedRepositories.batchCreate",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "parent": {
+                          "description": "The name of the `BitbucketServerConfig` that added connected repository. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{config}`",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/bitbucketServerConfigs/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1/{+parent}/connectedRepositories:batchCreate",
+                      "request": {
+                        "$ref": "BatchCreateBitbucketServerConnectedRepositoriesRequest"
+                      },
+                      "response": {
+                        "$ref": "Operation"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    }
+                  }
+                },
+                "repos": {
+                  "methods": {
+                    "list": {
+                      "description": "List all repositories for a given `BitbucketServerConfig`. This API is experimental.",
+                      "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/bitbucketServerConfigs/{bitbucketServerConfigsId}/repos",
+                      "httpMethod": "GET",
+                      "id": "cloudbuild.projects.locations.bitbucketServerConfigs.repos.list",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "pageSize": {
+                          "description": "The maximum number of configs to return. The service may return fewer than this value. The maximum value is 1000; values above 1000 will be coerced to 1000.",
+                          "format": "int32",
+                          "location": "query",
+                          "type": "integer"
+                        },
+                        "pageToken": {
+                          "description": "A page token, received from a previous `ListBitbucketServerRepositoriesRequest` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListBitbucketServerConfigsRequest` must match the call that provided the page token.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "parent": {
+                          "description": "Required. Name of the parent resource.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/bitbucketServerConfigs/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1/{+parent}/repos",
+                      "response": {
+                        "$ref": "ListBitbucketServerRepositoriesResponse"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
             "builds": {
               "methods": {
                 "approve": {
@@ -707,7 +1025,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "The parent of the collection of `Builds`. Format: `projects/{project}/locations/location`",
+                      "description": "The parent of the collection of `Builds`. Format: `projects/{project}/locations/{location}`",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -757,6 +1075,265 @@
                 }
               }
             },
+            "gitLabConfigs": {
+              "methods": {
+                "create": {
+                  "description": "Creates a new `GitLabConfig`. This API is experimental",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/gitLabConfigs",
+                  "httpMethod": "POST",
+                  "id": "cloudbuild.projects.locations.gitLabConfigs.create",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "gitlabConfigId": {
+                      "description": "Optional. The ID to use for the GitLabConfig, which will become the final component of the GitLabConfig’s resource name. gitlab_config_id must meet the following requirements: + They must contain only alphanumeric characters and dashes. + They can be 1-64 characters long. + They must begin and end with an alphanumeric character",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. Name of the parent resource.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+parent}/gitLabConfigs",
+                  "request": {
+                    "$ref": "GitLabConfig"
+                  },
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "delete": {
+                  "description": "Delete a `GitLabConfig`. This API is experimental",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/gitLabConfigs/{gitLabConfigsId}",
+                  "httpMethod": "DELETE",
+                  "id": "cloudbuild.projects.locations.gitLabConfigs.delete",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The config resource name.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/gitLabConfigs/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "get": {
+                  "description": "Retrieves a `GitLabConfig`. This API is experimental",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/gitLabConfigs/{gitLabConfigsId}",
+                  "httpMethod": "GET",
+                  "id": "cloudbuild.projects.locations.gitLabConfigs.get",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "Required. The config resource name.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/gitLabConfigs/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "response": {
+                    "$ref": "GitLabConfig"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "list": {
+                  "description": "List all `GitLabConfigs` for a given project. This API is experimental",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/gitLabConfigs",
+                  "httpMethod": "GET",
+                  "id": "cloudbuild.projects.locations.gitLabConfigs.list",
+                  "parameterOrder": [
+                    "parent"
+                  ],
+                  "parameters": {
+                    "pageSize": {
+                      "description": "The maximum number of configs to return. The service may return fewer than this value. If unspecified, at most 50 configs will be returned. The maximum value is 1000;, values above 1000 will be coerced to 1000.",
+                      "format": "int32",
+                      "location": "query",
+                      "type": "integer"
+                    },
+                    "pageToken": {
+                      "description": "A page token, received from a previous ‘ListGitlabConfigsRequest’ call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to ‘ListGitlabConfigsRequest’ must match the call that provided the page token.",
+                      "location": "query",
+                      "type": "string"
+                    },
+                    "parent": {
+                      "description": "Required. Name of the parent resource",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+parent}/gitLabConfigs",
+                  "response": {
+                    "$ref": "ListGitLabConfigsResponse"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "patch": {
+                  "description": "Updates an existing `GitLabConfig`. This API is experimental",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/gitLabConfigs/{gitLabConfigsId}",
+                  "httpMethod": "PATCH",
+                  "id": "cloudbuild.projects.locations.gitLabConfigs.patch",
+                  "parameterOrder": [
+                    "name"
+                  ],
+                  "parameters": {
+                    "name": {
+                      "description": "The resource name for the config.",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/gitLabConfigs/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    },
+                    "updateMask": {
+                      "description": "Update mask for the resource. If this is set, the server will only update the fields specified in the field mask. Otherwise, a full update of the mutable resource fields will be performed.",
+                      "format": "google-fieldmask",
+                      "location": "query",
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+name}",
+                  "request": {
+                    "$ref": "GitLabConfig"
+                  },
+                  "response": {
+                    "$ref": "Operation"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                },
+                "removeGitLabConnectedRepository": {
+                  "description": "Remove a GitLab repository from a given GitLabConfig's connected repositories. This API is experimental.",
+                  "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/gitLabConfigs/{gitLabConfigsId}:removeGitLabConnectedRepository",
+                  "httpMethod": "POST",
+                  "id": "cloudbuild.projects.locations.gitLabConfigs.removeGitLabConnectedRepository",
+                  "parameterOrder": [
+                    "config"
+                  ],
+                  "parameters": {
+                    "config": {
+                      "description": "Required. The name of the `GitLabConfig` to remove a connected repository. Format: `projects/{project}/locations/{location}/gitLabConfigs/{config}`",
+                      "location": "path",
+                      "pattern": "^projects/[^/]+/locations/[^/]+/gitLabConfigs/[^/]+$",
+                      "required": true,
+                      "type": "string"
+                    }
+                  },
+                  "path": "v1/{+config}:removeGitLabConnectedRepository",
+                  "request": {
+                    "$ref": "RemoveGitLabConnectedRepositoryRequest"
+                  },
+                  "response": {
+                    "$ref": "Empty"
+                  },
+                  "scopes": [
+                    "https://www.googleapis.com/auth/cloud-platform"
+                  ]
+                }
+              },
+              "resources": {
+                "connectedRepositories": {
+                  "methods": {
+                    "batchCreate": {
+                      "description": "Batch connecting GitLab repositories to Cloud Build. This API is experimental.",
+                      "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/gitLabConfigs/{gitLabConfigsId}/connectedRepositories:batchCreate",
+                      "httpMethod": "POST",
+                      "id": "cloudbuild.projects.locations.gitLabConfigs.connectedRepositories.batchCreate",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "parent": {
+                          "description": "The name of the `GitLabConfig` that adds connected repositories. Format: `projects/{project}/locations/{location}/gitLabConfigs/{config}`",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/gitLabConfigs/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1/{+parent}/connectedRepositories:batchCreate",
+                      "request": {
+                        "$ref": "BatchCreateGitLabConnectedRepositoriesRequest"
+                      },
+                      "response": {
+                        "$ref": "Operation"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    }
+                  }
+                },
+                "repos": {
+                  "methods": {
+                    "list": {
+                      "description": "List all repositories for a given `GitLabConfig`. This API is experimental",
+                      "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/gitLabConfigs/{gitLabConfigsId}/repos",
+                      "httpMethod": "GET",
+                      "id": "cloudbuild.projects.locations.gitLabConfigs.repos.list",
+                      "parameterOrder": [
+                        "parent"
+                      ],
+                      "parameters": {
+                        "pageSize": {
+                          "description": "The maximum number of repositories to return. The service may return fewer than this value.",
+                          "format": "int32",
+                          "location": "query",
+                          "type": "integer"
+                        },
+                        "pageToken": {
+                          "description": "A page token, received from a previous ListGitLabRepositoriesRequest` call. Provide this to retrieve the subsequent page. When paginating, all other parameters provided to `ListGitLabRepositoriesRequest` must match the call that provided the page token.",
+                          "location": "query",
+                          "type": "string"
+                        },
+                        "parent": {
+                          "description": "Required. Name of the parent resource.",
+                          "location": "path",
+                          "pattern": "^projects/[^/]+/locations/[^/]+/gitLabConfigs/[^/]+$",
+                          "required": true,
+                          "type": "string"
+                        }
+                      },
+                      "path": "v1/{+parent}/repos",
+                      "response": {
+                        "$ref": "ListGitLabRepositoriesResponse"
+                      },
+                      "scopes": [
+                        "https://www.googleapis.com/auth/cloud-platform"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
             "githubEnterpriseConfigs": {
               "methods": {
                 "create": {
@@ -769,7 +1346,7 @@
                   ],
                   "parameters": {
                     "gheConfigId": {
-                      "description": "Optional. The ID to use for the GithubEnterpriseConfig, which will become the final component of the GithubEnterpriseConfig’s resource name. ghe_config_id must meet the following requirements: + They must contain only alphanumeric characters and dashes. + They can be 1-64 characters long. + They must begin and end with an alphanumeric character",
+                      "description": "Optional. The ID to use for the GithubEnterpriseConfig, which will become the final component of the GithubEnterpriseConfig's resource name. ghe_config_id must meet the following requirements: + They must contain only alphanumeric characters and dashes. + They can be 1-64 characters long. + They must begin and end with an alphanumeric character",
                       "location": "query",
                       "type": "string"
                     },
@@ -812,7 +1389,7 @@
                       "type": "string"
                     },
                     "name": {
-                      "description": "This field should contain the name of the enterprise config resource. For example: \"projects/{$project_id}/githubEnterpriseConfigs/{$config_id}\"",
+                      "description": "This field should contain the name of the enterprise config resource. For example: \"projects/{$project_id}/locations/{$location_id}/githubEnterpriseConfigs/{$config_id}\"",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/githubEnterpriseConfigs/[^/]+$",
                       "required": true,
@@ -847,7 +1424,7 @@
                       "type": "string"
                     },
                     "name": {
-                      "description": "This field should contain the name of the enterprise config resource. For example: \"projects/{$project_id}/githubEnterpriseConfigs/{$config_id}\"",
+                      "description": "This field should contain the name of the enterprise config resource. For example: \"projects/{$project_id}/locations/{$location_id}/githubEnterpriseConfigs/{$config_id}\"",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/githubEnterpriseConfigs/[^/]+$",
                       "required": true,
@@ -907,7 +1484,7 @@
                   ],
                   "parameters": {
                     "name": {
-                      "description": "Optional. The full resource name for the GitHubEnterpriseConfig For example: \"projects/{$project_id}/githubEnterpriseConfigs/{$config_id}\"",
+                      "description": "Optional. The full resource name for the GitHubEnterpriseConfig For example: \"projects/{$project_id}/locations/{$location_id}/githubEnterpriseConfigs/{$config_id}\"",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/githubEnterpriseConfigs/[^/]+$",
                       "required": true,
@@ -1175,7 +1752,7 @@
                   ]
                 },
                 "run": {
-                  "description": "Runs a `BuildTrigger` at a particular source revision.",
+                  "description": "Runs a `BuildTrigger` at a particular source revision. To run a regional or global trigger, use the POST request that includes the location endpoint in the path (ex. v1/projects/{projectId}/locations/{region}/triggers/{triggerId}:run). The POST request that does not include the location endpoint in the path can only be used when running global triggers.",
                   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/triggers/{triggersId}:run",
                   "httpMethod": "POST",
                   "id": "cloudbuild.projects.locations.triggers.run",
@@ -1304,7 +1881,7 @@
                       "type": "string"
                     },
                     "name": {
-                      "description": "Required. The name of the `WorkerPool` to delete. Format: `projects/{project}/locations/{workerPool}/workerPools/{workerPool}`.",
+                      "description": "Required. The name of the `WorkerPool` to delete. Format: `projects/{project}/locations/{location}/workerPools/{workerPool}`.",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+/workerPools/[^/]+$",
                       "required": true,
@@ -1609,7 +2186,7 @@
               ]
             },
             "run": {
-              "description": "Runs a `BuildTrigger` at a particular source revision.",
+              "description": "Runs a `BuildTrigger` at a particular source revision. To run a regional or global trigger, use the POST request that includes the location endpoint in the path (ex. v1/projects/{projectId}/locations/{region}/triggers/{triggerId}:run). The POST request that does not include the location endpoint in the path can only be used when running global triggers.",
               "flatPath": "v1/projects/{projectId}/triggers/{triggerId}:run",
               "httpMethod": "POST",
               "id": "cloudbuild.projects.triggers.run",
@@ -1718,7 +2295,7 @@
       }
     }
   },
-  "revision": "20211109",
+  "revision": "20230312",
   "rootUrl": "https://cloudbuild.googleapis.com/",
   "schemas": {
     "ApprovalConfig": {
@@ -1835,9 +2412,51 @@
           },
           "type": "array"
         },
+        "mavenArtifacts": {
+          "description": "A list of Maven artifacts to be uploaded to Artifact Registry upon successful completion of all build steps. Artifacts in the workspace matching specified paths globs will be uploaded to the specified Artifact Registry repository using the builder service account's credentials. If any artifacts fail to be pushed, the build is marked FAILURE.",
+          "items": {
+            "$ref": "MavenArtifact"
+          },
+          "type": "array"
+        },
         "objects": {
           "$ref": "ArtifactObjects",
           "description": "A list of objects to be uploaded to Cloud Storage upon successful completion of all build steps. Files in the workspace matching specified paths globs will be uploaded to the specified Cloud Storage location using the builder service account's credentials. The location and generation of the uploaded objects will be stored in the Build resource's results field. If any objects fail to be pushed, the build is marked FAILURE."
+        },
+        "pythonPackages": {
+          "description": "A list of Python packages to be uploaded to Artifact Registry upon successful completion of all build steps. The build service account credentials will be used to perform the upload. If any objects fail to be pushed, the build is marked FAILURE.",
+          "items": {
+            "$ref": "PythonPackage"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "BatchCreateBitbucketServerConnectedRepositoriesRequest": {
+      "description": "RPC request object accepted by BatchCreateBitbucketServerConnectedRepositories RPC method.",
+      "id": "BatchCreateBitbucketServerConnectedRepositoriesRequest",
+      "properties": {
+        "requests": {
+          "description": "Required. Requests to connect Bitbucket Server repositories.",
+          "items": {
+            "$ref": "CreateBitbucketServerConnectedRepositoryRequest"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "BatchCreateBitbucketServerConnectedRepositoriesResponse": {
+      "description": "Response of BatchCreateBitbucketServerConnectedRepositories RPC method including all successfully connected Bitbucket Server repositories.",
+      "id": "BatchCreateBitbucketServerConnectedRepositoriesResponse",
+      "properties": {
+        "bitbucketServerConnectedRepositories": {
+          "description": "The connected Bitbucket Server repositories.",
+          "items": {
+            "$ref": "BitbucketServerConnectedRepository"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -1858,6 +2477,227 @@
         "createTime": {
           "description": "Time the operation was created.",
           "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BatchCreateGitLabConnectedRepositoriesRequest": {
+      "description": "RPC request object accepted by BatchCreateGitLabConnectedRepositories RPC method.",
+      "id": "BatchCreateGitLabConnectedRepositoriesRequest",
+      "properties": {
+        "requests": {
+          "description": "Required. Requests to connect GitLab repositories.",
+          "items": {
+            "$ref": "CreateGitLabConnectedRepositoryRequest"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "BatchCreateGitLabConnectedRepositoriesResponse": {
+      "description": "Response of BatchCreateGitLabConnectedRepositories RPC method.",
+      "id": "BatchCreateGitLabConnectedRepositoriesResponse",
+      "properties": {
+        "gitlabConnectedRepositories": {
+          "description": "The GitLab connected repository requests' responses.",
+          "items": {
+            "$ref": "GitLabConnectedRepository"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
+    "BatchCreateGitLabConnectedRepositoriesResponseMetadata": {
+      "description": "Metadata for `BatchCreateGitLabConnectedRepositories` operation.",
+      "id": "BatchCreateGitLabConnectedRepositoriesResponseMetadata",
+      "properties": {
+        "completeTime": {
+          "description": "Time the operation was completed.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "config": {
+          "description": "The name of the `GitLabConfig` that added connected repositories. Format: `projects/{project}/locations/{location}/gitLabConfigs/{config}`",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Time the operation was created.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BitbucketServerConfig": {
+      "description": "BitbucketServerConfig represents the configuration for a Bitbucket Server.",
+      "id": "BitbucketServerConfig",
+      "properties": {
+        "apiKey": {
+          "description": "Required. Immutable. API Key that will be attached to webhook. Once this field has been set, it cannot be changed. If you need to change it, please create another BitbucketServerConfig.",
+          "type": "string"
+        },
+        "connectedRepositories": {
+          "description": "Output only. Connected Bitbucket Server repositories for this config.",
+          "items": {
+            "$ref": "BitbucketServerRepositoryId"
+          },
+          "readOnly": true,
+          "type": "array"
+        },
+        "createTime": {
+          "description": "Time when the config was created.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "hostUri": {
+          "description": "Required. Immutable. The URI of the Bitbucket Server host. Once this field has been set, it cannot be changed. If you need to change it, please create another BitbucketServerConfig.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The resource name for the config.",
+          "type": "string"
+        },
+        "peeredNetwork": {
+          "description": "Optional. The network to be used when reaching out to the Bitbucket Server instance. The VPC network must be enabled for private service connection. This should be set if the Bitbucket Server instance is hosted on-premises and not reachable by public internet. If this field is left empty, no network peering will occur and calls to the Bitbucket Server instance will be made over the public internet. Must be in the format `projects/{project}/global/networks/{network}`, where {project} is a project number or id and {network} is the name of a VPC network in the project.",
+          "type": "string"
+        },
+        "secrets": {
+          "$ref": "BitbucketServerSecrets",
+          "description": "Required. Secret Manager secrets needed by the config."
+        },
+        "sslCa": {
+          "description": "Optional. SSL certificate to use for requests to Bitbucket Server. The format should be PEM format but the extension can be one of .pem, .cer, or .crt.",
+          "type": "string"
+        },
+        "username": {
+          "description": "Username of the account Cloud Build will use on Bitbucket Server.",
+          "type": "string"
+        },
+        "webhookKey": {
+          "description": "Output only. UUID included in webhook requests. The UUID is used to look up the corresponding config.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BitbucketServerConnectedRepository": {
+      "description": "/ BitbucketServerConnectedRepository represents a connected Bitbucket Server / repository.",
+      "id": "BitbucketServerConnectedRepository",
+      "properties": {
+        "parent": {
+          "description": "The name of the `BitbucketServerConfig` that added connected repository. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{config}`",
+          "type": "string"
+        },
+        "repo": {
+          "$ref": "BitbucketServerRepositoryId",
+          "description": "The Bitbucket Server repositories to connect."
+        },
+        "status": {
+          "$ref": "Status",
+          "description": "Output only. The status of the repo connection request.",
+          "readOnly": true
+        }
+      },
+      "type": "object"
+    },
+    "BitbucketServerRepository": {
+      "description": "BitbucketServerRepository represents a repository hosted on a Bitbucket Server.",
+      "id": "BitbucketServerRepository",
+      "properties": {
+        "browseUri": {
+          "description": "Link to the browse repo page on the Bitbucket Server instance.",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description of the repository.",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "Display name of the repository.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The resource name of the repository.",
+          "type": "string"
+        },
+        "repoId": {
+          "$ref": "BitbucketServerRepositoryId",
+          "description": "Identifier for a repository hosted on a Bitbucket Server."
+        }
+      },
+      "type": "object"
+    },
+    "BitbucketServerRepositoryId": {
+      "description": "BitbucketServerRepositoryId identifies a specific repository hosted on a Bitbucket Server.",
+      "id": "BitbucketServerRepositoryId",
+      "properties": {
+        "projectKey": {
+          "description": "Required. Identifier for the project storing the repository.",
+          "type": "string"
+        },
+        "repoSlug": {
+          "description": "Required. Identifier for the repository.",
+          "type": "string"
+        },
+        "webhookId": {
+          "description": "Output only. The ID of the webhook that was created for receiving events from this repo. We only create and manage a single webhook for each repo.",
+          "format": "int32",
+          "readOnly": true,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "BitbucketServerSecrets": {
+      "description": "BitbucketServerSecrets represents the secrets in Secret Manager for a Bitbucket Server.",
+      "id": "BitbucketServerSecrets",
+      "properties": {
+        "adminAccessTokenVersionName": {
+          "description": "Required. The resource name for the admin access token's secret version.",
+          "type": "string"
+        },
+        "readAccessTokenVersionName": {
+          "description": "Required. The resource name for the read access token's secret version.",
+          "type": "string"
+        },
+        "webhookSecretVersionName": {
+          "description": "Required. Immutable. The resource name for the webhook secret's secret version. Once this field has been set, it cannot be changed. If you need to change it, please create another BitbucketServerConfig.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "BitbucketServerTriggerConfig": {
+      "description": "BitbucketServerTriggerConfig describes the configuration of a trigger that creates a build whenever a Bitbucket Server event is received.",
+      "id": "BitbucketServerTriggerConfig",
+      "properties": {
+        "bitbucketServerConfig": {
+          "$ref": "BitbucketServerConfig",
+          "description": "Output only. The BitbucketServerConfig specified in the bitbucket_server_config_resource field.",
+          "readOnly": true
+        },
+        "bitbucketServerConfigResource": {
+          "description": "Required. The Bitbucket server config resource that this trigger config maps to.",
+          "type": "string"
+        },
+        "projectKey": {
+          "description": "Required. Key of the project that the repo is in. For example: The key for https://mybitbucket.server/projects/TEST/repos/test-repo is \"TEST\".",
+          "type": "string"
+        },
+        "pullRequest": {
+          "$ref": "PullRequestFilter",
+          "description": "Filter to match changes in pull requests."
+        },
+        "push": {
+          "$ref": "PushFilter",
+          "description": "Filter to match changes in refs like branches, tags."
+        },
+        "repoSlug": {
+          "description": "Required. Slug of the repository. A repository slug is a URL-friendly version of a repository name, automatically generated by Bitbucket for use in the URL. For example, if the repository name is 'test repo', in the URL it would become 'test-repo' as in https://mybitbucket.server/projects/TEST/repos/test-repo.",
           "type": "string"
         }
       },
@@ -2029,7 +2869,7 @@
           "type": "array"
         },
         "timeout": {
-          "description": "Amount of time that this build should be allowed to run, to second granularity. If this amount of time elapses, work on the build will cease and the build status will be `TIMEOUT`. `timeout` starts ticking from `startTime`. Default time is ten minutes.",
+          "description": "Amount of time that this build should be allowed to run, to second granularity. If this amount of time elapses, work on the build will cease and the build status will be `TIMEOUT`. `timeout` starts ticking from `startTime`. Default time is 60 minutes.",
           "format": "google-duration",
           "type": "string"
         },
@@ -2037,7 +2877,7 @@
           "additionalProperties": {
             "$ref": "TimeSpan"
           },
-          "description": "Output only. Stores timing information for phases of the build. Valid keys are: * BUILD: time to execute all build steps. * PUSH: time to push all specified images. * FETCHSOURCE: time to fetch source. * SETUPBUILD: time to set up build. If the build does not specify source or images, these keys will not be included.",
+          "description": "Output only. Stores timing information for phases of the build. Valid keys are: * BUILD: time to execute all build steps. * PUSH: time to push all artifacts including docker images and non docker artifacts. * FETCHSOURCE: time to fetch source. * SETUPBUILD: time to set up build. If the build does not specify source or images, these keys will not be included.",
           "readOnly": true,
           "type": "object"
         },
@@ -2103,8 +2943,20 @@
       "description": "Optional arguments to enable specific features of builds.",
       "id": "BuildOptions",
       "properties": {
+        "defaultLogsBucketBehavior": {
+          "description": "Optional. Option to specify how default logs buckets are setup.",
+          "enum": [
+            "DEFAULT_LOGS_BUCKET_BEHAVIOR_UNSPECIFIED",
+            "REGIONAL_USER_OWNED_BUCKET"
+          ],
+          "enumDescriptions": [
+            "Unspecified.",
+            "Bucket is located in user-owned project in the same region as the build. The builder service account must have access to create and write to GCS buckets in the build project."
+          ],
+          "type": "string"
+        },
         "diskSizeGb": {
-          "description": "Requested disk size for the VM that runs the build. Note that this is *NOT* \"disk free\"; some of the space will be used by the operating system and build utilities. Also note that this is the minimum disk size that will be allocated for the build -- the build may run with a larger disk than requested. At present, the maximum disk size is 1000GB; builds that request more than the maximum are rejected with an error.",
+          "description": "Requested disk size for the VM that runs the build. Note that this is *NOT* \"disk free\"; some of the space will be used by the operating system and build utilities. Also note that this is the minimum disk size that will be allocated for the build -- the build may run with a larger disk than requested. At present, the maximum disk size is 2000GB; builds that request more than the maximum are rejected with an error.",
           "format": "int64",
           "type": "string"
         },
@@ -2182,8 +3034,8 @@
             "VERIFIED"
           ],
           "enumDescriptions": [
-            "Not a verifiable build. (default)",
-            "Verified build."
+            "Not a verifiable build (the default).",
+            "Build must be verified."
           ],
           "type": "string"
         },
@@ -2241,6 +3093,18 @@
       "description": "A step in the build pipeline.",
       "id": "BuildStep",
       "properties": {
+        "allowExitCodes": {
+          "description": "Allow this build step to fail without failing the entire build if and only if the exit code is one of the specified codes. If allow_failure is also specified, this field will take precedence.",
+          "items": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "type": "array"
+        },
+        "allowFailure": {
+          "description": "Allow this build step to fail without failing the entire build. If false, the entire build will fail if this step fails. Otherwise, the build will succeed, but this step will still have a failure status. Error information will be reported in the failure_detail field.",
+          "type": "boolean"
+        },
         "args": {
           "description": "A list of arguments that will be presented to the step when it is started. If the image used to run the step's container has an entrypoint, the `args` are used as arguments to that entrypoint. If the image does not define an entrypoint, the first element in args is used as the entrypoint, and the remainder will be used as arguments.",
           "items": {
@@ -2262,6 +3126,12 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "exitCode": {
+          "description": "Output only. Return code from running the step.",
+          "format": "int32",
+          "readOnly": true,
+          "type": "integer"
         },
         "id": {
           "description": "Unique identifier for this build step, used in `wait_for` to reference this build step as a dependency.",
@@ -2355,6 +3225,10 @@
           "description": "Autodetect build configuration. The following precedence is used (case insensitive): 1. cloudbuild.yaml 2. cloudbuild.yml 3. cloudbuild.json 4. Dockerfile Currently only available for GitHub App Triggers.",
           "type": "boolean"
         },
+        "bitbucketServerTriggerConfig": {
+          "$ref": "BitbucketServerTriggerConfig",
+          "description": "BitbucketServerTriggerConfig describes the configuration of a trigger that creates a build whenever a Bitbucket Server event is received."
+        },
         "build": {
           "$ref": "Build",
           "description": "Contents of the build template."
@@ -2374,7 +3248,7 @@
           "type": "boolean"
         },
         "eventType": {
-          "description": "Optional. EventType allows the user to explicitly set the type of event to which this BuildTrigger should respond. This field is optional but will be validated against the rest of the configuration if it is set.",
+          "description": "EventType allows the user to explicitly set the type of event to which this BuildTrigger should respond. This field will be validated against the rest of the configuration if it is set.",
           "enum": [
             "EVENT_TYPE_UNSPECIFIED",
             "REPO",
@@ -2407,6 +3281,10 @@
           "$ref": "GitHubEventsConfig",
           "description": "GitHubEventsConfig describes the configuration of a trigger that creates a build whenever a GitHub event is received. Mutually exclusive with `trigger_template`."
         },
+        "gitlabEnterpriseEventsConfig": {
+          "$ref": "GitLabEventsConfig",
+          "description": "GitLabEnterpriseEventsConfig describes the configuration of a trigger that creates a build whenever a GitLab Enterprise event is received."
+        },
         "id": {
           "description": "Output only. Unique identifier of the trigger.",
           "readOnly": true,
@@ -2418,6 +3296,18 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "includeBuildLogs": {
+          "description": "If set to INCLUDE_BUILD_LOGS_WITH_STATUS, log url will be shown on GitHub page when build status is final. Setting this field to INCLUDE_BUILD_LOGS_WITH_STATUS for non GitHub triggers results in INVALID_ARGUMENT error.",
+          "enum": [
+            "INCLUDE_BUILD_LOGS_UNSPECIFIED",
+            "INCLUDE_BUILD_LOGS_WITH_STATUS"
+          ],
+          "enumDescriptions": [
+            "Build logs will not be shown on GitHub.",
+            "Build logs will be shown on GitHub."
+          ],
+          "type": "string"
         },
         "includedFiles": {
           "description": "If any of the files altered in the commit pass the ignored_files filter and included_files is empty, then as far as this filter is concerned, we should trigger the build. If any of the files altered in the commit pass the ignored_files filter and included_files is not empty, then we make sure that at least one of those files matches a included_files glob. If not, then we do not trigger a build.",
@@ -2433,6 +3323,10 @@
         "pubsubConfig": {
           "$ref": "PubsubConfig",
           "description": "PubsubConfig describes the configuration of a trigger that creates a build whenever a Pub/Sub message is published."
+        },
+        "repositoryEventConfig": {
+          "$ref": "RepositoryEventConfig",
+          "description": "The configuration of a trigger that creates a build whenever an event from Repo API is received."
         },
         "resourceName": {
           "description": "The `Trigger` name with format: `projects/{project}/locations/{location}/triggers/{trigger}`, where {trigger} is a unique identifier generated by the service.",
@@ -2516,6 +3410,42 @@
       "properties": {},
       "type": "object"
     },
+    "CreateBitbucketServerConfigOperationMetadata": {
+      "description": "Metadata for `CreateBitbucketServerConfig` operation.",
+      "id": "CreateBitbucketServerConfigOperationMetadata",
+      "properties": {
+        "bitbucketServerConfig": {
+          "description": "The resource name of the BitbucketServerConfig to be created. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{id}`.",
+          "type": "string"
+        },
+        "completeTime": {
+          "description": "Time the operation was completed.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Time the operation was created.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "CreateBitbucketServerConnectedRepositoryRequest": {
+      "description": "Request to connect a repository from a connected Bitbucket Server host.",
+      "id": "CreateBitbucketServerConnectedRepositoryRequest",
+      "properties": {
+        "bitbucketServerConnectedRepository": {
+          "$ref": "BitbucketServerConnectedRepository",
+          "description": "Required. The Bitbucket Server repository to connect."
+        },
+        "parent": {
+          "description": "Required. The name of the `BitbucketServerConfig` that added connected repository. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{config}`",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "CreateGitHubEnterpriseConfigOperationMetadata": {
       "description": "Metadata for `CreateGithubEnterpriseConfig` operation.",
       "id": "CreateGitHubEnterpriseConfigOperationMetadata",
@@ -2532,6 +3462,42 @@
         },
         "githubEnterpriseConfig": {
           "description": "The resource name of the GitHubEnterprise to be created. Format: `projects/{project}/locations/{location}/githubEnterpriseConfigs/{id}`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "CreateGitLabConfigOperationMetadata": {
+      "description": "Metadata for `CreateGitLabConfig` operation.",
+      "id": "CreateGitLabConfigOperationMetadata",
+      "properties": {
+        "completeTime": {
+          "description": "Time the operation was completed.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Time the operation was created.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "gitlabConfig": {
+          "description": "The resource name of the GitLabConfig to be created. Format: `projects/{project}/locations/{location}/gitlabConfigs/{id}`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "CreateGitLabConnectedRepositoryRequest": {
+      "description": "Request to connect a repository from a connected GitLab host.",
+      "id": "CreateGitLabConnectedRepositoryRequest",
+      "properties": {
+        "gitlabConnectedRepository": {
+          "$ref": "GitLabConnectedRepository",
+          "description": "Required. The GitLab repository to connect."
+        },
+        "parent": {
+          "description": "Required. The name of the `GitLabConfig` that adds connected repository. Format: `projects/{project}/locations/{location}/gitLabConfigs/{config}`",
           "type": "string"
         }
       },
@@ -2558,6 +3524,27 @@
       },
       "type": "object"
     },
+    "DeleteBitbucketServerConfigOperationMetadata": {
+      "description": "Metadata for `DeleteBitbucketServerConfig` operation.",
+      "id": "DeleteBitbucketServerConfigOperationMetadata",
+      "properties": {
+        "bitbucketServerConfig": {
+          "description": "The resource name of the BitbucketServerConfig to be deleted. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{id}`.",
+          "type": "string"
+        },
+        "completeTime": {
+          "description": "Time the operation was completed.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Time the operation was created.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "DeleteGitHubEnterpriseConfigOperationMetadata": {
       "description": "Metadata for `DeleteGitHubEnterpriseConfig` operation.",
       "id": "DeleteGitHubEnterpriseConfigOperationMetadata",
@@ -2574,6 +3561,27 @@
         },
         "githubEnterpriseConfig": {
           "description": "The resource name of the GitHubEnterprise to be deleted. Format: `projects/{project}/locations/{location}/githubEnterpriseConfigs/{id}`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "DeleteGitLabConfigOperationMetadata": {
+      "description": "Metadata for `DeleteGitLabConfig` operation.",
+      "id": "DeleteGitLabConfigOperationMetadata",
+      "properties": {
+        "completeTime": {
+          "description": "Time the operation was completed.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Time the operation was created.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "gitlabConfig": {
+          "description": "The resource name of the GitLabConfig to be created. Format: `projects/{project}/locations/{location}/gitlabConfigs/{id}`.",
           "type": "string"
         }
       },
@@ -2601,7 +3609,7 @@
       "type": "object"
     },
     "Empty": {
-      "description": "A generic empty message that you can re-use to avoid defining duplicated empty messages in your APIs. A typical example is to use it as the request or the response type of an API method. For instance: service Foo { rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty); } The JSON representation for `Empty` is empty JSON object `{}`.",
+      "description": "A generic empty message that you can re-use to avoid defining duplicated empty messages in your APIs. A typical example is to use it as the request or the response type of an API method. For instance: service Foo { rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty); }",
       "id": "Empty",
       "properties": {},
       "type": "object"
@@ -2657,6 +3665,14 @@
       "description": "GitFileSource describes a file within a (possibly remote) code repository.",
       "id": "GitFileSource",
       "properties": {
+        "bitbucketServerConfig": {
+          "description": "The full resource name of the bitbucket server config. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{id}`.",
+          "type": "string"
+        },
+        "githubEnterpriseConfig": {
+          "description": "The full resource name of the github enterprise config. Format: `projects/{project}/locations/{location}/githubEnterpriseConfigs/{id}`. `projects/{project}/githubEnterpriseConfigs/{id}`.",
+          "type": "string"
+        },
         "path": {
           "description": "The path of the file, with the repo root as the root of the path.",
           "type": "string"
@@ -2666,12 +3682,16 @@
           "enum": [
             "UNKNOWN",
             "CLOUD_SOURCE_REPOSITORIES",
-            "GITHUB"
+            "GITHUB",
+            "BITBUCKET_SERVER",
+            "GITLAB"
           ],
           "enumDescriptions": [
             "The default, unknown repo type.",
             "A Google Cloud Source Repositories-hosted repo.",
-            "A GitHub-hosted repo not necessarily on \"github.com\" (i.e. GitHub Enterprise)."
+            "A GitHub-hosted repo not necessarily on \"github.com\" (i.e. GitHub Enterprise).",
+            "A Bitbucket Server-hosted repo.",
+            "A GitLab-hosted repo."
           ],
           "type": "string"
         },
@@ -2680,7 +3700,7 @@
           "type": "string"
         },
         "uri": {
-          "description": "The URI of the repo (optional). If unspecified, the repo from which the trigger invocation originated is assumed to be the repo from which to read the specified path.",
+          "description": "The URI of the repo. Either uri or repository can be specified. If unspecified, the repo from which the trigger invocation originated is assumed to be the repo from which to read the specified path.",
           "type": "string"
         }
       },
@@ -2710,7 +3730,7 @@
           "type": "string"
         },
         "name": {
-          "description": "Optional. The full resource name for the GitHubEnterpriseConfig For example: \"projects/{$project_id}/githubEnterpriseConfigs/{$config_id}\"",
+          "description": "Optional. The full resource name for the GitHubEnterpriseConfig For example: \"projects/{$project_id}/locations/{$location_id}/githubEnterpriseConfigs/{$config_id}\"",
           "type": "string"
         },
         "peeredNetwork": {
@@ -2776,7 +3796,7 @@
       "id": "GitHubEventsConfig",
       "properties": {
         "enterpriseConfigResourceName": {
-          "description": "Optional. The resource name of the github enterprise config that should be applied to this installation. For example: \"projects/{$project_id}/githubEnterpriseConfigs/{$config_id}\"",
+          "description": "Optional. The resource name of the github enterprise config that should be applied to this installation. For example: \"projects/{$project_id}/locations/{$location_id}/githubEnterpriseConfigs/{$config_id}\"",
           "type": "string"
         },
         "installationId": {
@@ -2803,10 +3823,193 @@
       },
       "type": "object"
     },
+    "GitLabConfig": {
+      "description": "GitLabConfig represents the configuration for a GitLab integration.",
+      "id": "GitLabConfig",
+      "properties": {
+        "connectedRepositories": {
+          "description": "Connected GitLab.com or GitLabEnterprise repositories for this config.",
+          "items": {
+            "$ref": "GitLabRepositoryId"
+          },
+          "type": "array"
+        },
+        "createTime": {
+          "description": "Output only. Time when the config was created.",
+          "format": "google-datetime",
+          "readOnly": true,
+          "type": "string"
+        },
+        "enterpriseConfig": {
+          "$ref": "GitLabEnterpriseConfig",
+          "description": "Optional. GitLabEnterprise config."
+        },
+        "name": {
+          "description": "The resource name for the config.",
+          "type": "string"
+        },
+        "secrets": {
+          "$ref": "GitLabSecrets",
+          "description": "Required. Secret Manager secrets needed by the config."
+        },
+        "username": {
+          "description": "Username of the GitLab.com or GitLab Enterprise account Cloud Build will use.",
+          "type": "string"
+        },
+        "webhookKey": {
+          "description": "Output only. UUID included in webhook requests. The UUID is used to look up the corresponding config.",
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GitLabConnectedRepository": {
+      "description": "GitLabConnectedRepository represents a GitLab connected repository request response.",
+      "id": "GitLabConnectedRepository",
+      "properties": {
+        "parent": {
+          "description": "The name of the `GitLabConfig` that added connected repository. Format: `projects/{project}/locations/{location}/gitLabConfigs/{config}`",
+          "type": "string"
+        },
+        "repo": {
+          "$ref": "GitLabRepositoryId",
+          "description": "The GitLab repositories to connect."
+        },
+        "status": {
+          "$ref": "Status",
+          "description": "Output only. The status of the repo connection request.",
+          "readOnly": true
+        }
+      },
+      "type": "object"
+    },
+    "GitLabEnterpriseConfig": {
+      "description": "GitLabEnterpriseConfig represents the configuration for a GitLabEnterprise integration.",
+      "id": "GitLabEnterpriseConfig",
+      "properties": {
+        "hostUri": {
+          "description": "Immutable. The URI of the GitlabEnterprise host.",
+          "type": "string"
+        },
+        "serviceDirectoryConfig": {
+          "$ref": "ServiceDirectoryConfig",
+          "description": "The Service Directory configuration to be used when reaching out to the GitLab Enterprise instance."
+        },
+        "sslCa": {
+          "description": "The SSL certificate to use in requests to GitLab Enterprise instances.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "GitLabEventsConfig": {
+      "description": "GitLabEventsConfig describes the configuration of a trigger that creates a build whenever a GitLab event is received.",
+      "id": "GitLabEventsConfig",
+      "properties": {
+        "gitlabConfig": {
+          "$ref": "GitLabConfig",
+          "description": "Output only. The GitLabConfig specified in the gitlab_config_resource field.",
+          "readOnly": true
+        },
+        "gitlabConfigResource": {
+          "description": "The GitLab config resource that this trigger config maps to.",
+          "type": "string"
+        },
+        "projectNamespace": {
+          "description": "Namespace of the GitLab project.",
+          "type": "string"
+        },
+        "pullRequest": {
+          "$ref": "PullRequestFilter",
+          "description": "Filter to match changes in pull requests."
+        },
+        "push": {
+          "$ref": "PushFilter",
+          "description": "Filter to match changes in refs like branches, tags."
+        }
+      },
+      "type": "object"
+    },
+    "GitLabRepository": {
+      "description": "Proto Representing a GitLabRepository",
+      "id": "GitLabRepository",
+      "properties": {
+        "browseUri": {
+          "description": "Link to the browse repo page on the GitLab instance",
+          "type": "string"
+        },
+        "description": {
+          "description": "Description of the repository",
+          "type": "string"
+        },
+        "displayName": {
+          "description": "Display name of the repository",
+          "type": "string"
+        },
+        "name": {
+          "description": "The resource name of the repository",
+          "type": "string"
+        },
+        "repositoryId": {
+          "$ref": "GitLabRepositoryId",
+          "description": "Identifier for a repository"
+        }
+      },
+      "type": "object"
+    },
+    "GitLabRepositoryId": {
+      "description": "GitLabRepositoryId identifies a specific repository hosted on GitLab.com or GitLabEnterprise",
+      "id": "GitLabRepositoryId",
+      "properties": {
+        "id": {
+          "description": "Required. Identifier for the repository. example: \"namespace/project-slug\", namespace is usually the username or group ID",
+          "type": "string"
+        },
+        "webhookId": {
+          "description": "Output only. The ID of the webhook that was created for receiving events from this repo. We only create and manage a single webhook for each repo.",
+          "format": "int32",
+          "readOnly": true,
+          "type": "integer"
+        }
+      },
+      "type": "object"
+    },
+    "GitLabSecrets": {
+      "description": "GitLabSecrets represents the secrets in Secret Manager for a GitLab integration.",
+      "id": "GitLabSecrets",
+      "properties": {
+        "apiAccessTokenVersion": {
+          "description": "Required. The resource name for the api access token’s secret version",
+          "type": "string"
+        },
+        "apiKeyVersion": {
+          "description": "Required. Immutable. API Key that will be attached to webhook requests from GitLab to Cloud Build.",
+          "type": "string"
+        },
+        "readAccessTokenVersion": {
+          "description": "Required. The resource name for the read access token’s secret version",
+          "type": "string"
+        },
+        "webhookSecretVersion": {
+          "description": "Required. Immutable. The resource name for the webhook secret’s secret version. Once this field has been set, it cannot be changed. If you need to change it, please create another GitLabConfig.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "GitRepoSource": {
       "description": "GitRepoSource describes a repo and ref of a code repository.",
       "id": "GitRepoSource",
       "properties": {
+        "bitbucketServerConfig": {
+          "description": "The full resource name of the bitbucket server config. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{id}`.",
+          "type": "string"
+        },
+        "githubEnterpriseConfig": {
+          "description": "The full resource name of the github enterprise config. Format: `projects/{project}/locations/{location}/githubEnterpriseConfigs/{id}`. `projects/{project}/githubEnterpriseConfigs/{id}`.",
+          "type": "string"
+        },
         "ref": {
           "description": "The branch or tag to use. Must start with \"refs/\" (required).",
           "type": "string"
@@ -2816,72 +4019,21 @@
           "enum": [
             "UNKNOWN",
             "CLOUD_SOURCE_REPOSITORIES",
-            "GITHUB"
+            "GITHUB",
+            "BITBUCKET_SERVER",
+            "GITLAB"
           ],
           "enumDescriptions": [
             "The default, unknown repo type.",
             "A Google Cloud Source Repositories-hosted repo.",
-            "A GitHub-hosted repo not necessarily on \"github.com\" (i.e. GitHub Enterprise)."
+            "A GitHub-hosted repo not necessarily on \"github.com\" (i.e. GitHub Enterprise).",
+            "A Bitbucket Server-hosted repo.",
+            "A GitLab-hosted repo."
           ],
           "type": "string"
         },
         "uri": {
-          "description": "The URI of the repo (required).",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "GoogleDevtoolsCloudbuildV2OperationMetadata": {
-      "description": "Represents the metadata of the long-running operation.",
-      "id": "GoogleDevtoolsCloudbuildV2OperationMetadata",
-      "properties": {
-        "apiVersion": {
-          "description": "Output only. API version used to start the operation.",
-          "readOnly": true,
-          "type": "string"
-        },
-        "createTime": {
-          "description": "Output only. The time the operation was created.",
-          "format": "google-datetime",
-          "readOnly": true,
-          "type": "string"
-        },
-        "endTime": {
-          "description": "Output only. The time the operation finished running.",
-          "format": "google-datetime",
-          "readOnly": true,
-          "type": "string"
-        },
-        "requestedCancellation": {
-          "description": "Output only. Identifies whether the user has requested cancellation of the operation. Operations that have successfully been cancelled have Operation.error value with a google.rpc.Status.code of 1, corresponding to `Code.CANCELLED`.",
-          "readOnly": true,
-          "type": "boolean"
-        },
-        "statusMessage": {
-          "description": "Output only. Human-readable status of the operation, if any.",
-          "readOnly": true,
-          "type": "string"
-        },
-        "target": {
-          "description": "Output only. Server-defined resource path for the target of the operation.",
-          "readOnly": true,
-          "type": "string"
-        },
-        "verb": {
-          "description": "Output only. Name of the verb executed by the operation.",
-          "readOnly": true,
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "HTTPDelivery": {
-      "description": "HTTPDelivery is the delivery configuration for an HTTP notification.",
-      "id": "HTTPDelivery",
-      "properties": {
-        "uri": {
-          "description": "The URI to which JSON-containing HTTP POST requests should be sent.",
+          "description": "The URI of the repo. Either uri or repository can be specified and is required.",
           "type": "string"
         }
       },
@@ -2959,6 +4111,42 @@
       },
       "type": "object"
     },
+    "ListBitbucketServerConfigsResponse": {
+      "description": "RPC response object returned by ListBitbucketServerConfigs RPC method.",
+      "id": "ListBitbucketServerConfigsResponse",
+      "properties": {
+        "bitbucketServerConfigs": {
+          "description": "A list of BitbucketServerConfigs",
+          "items": {
+            "$ref": "BitbucketServerConfig"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "A token that can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ListBitbucketServerRepositoriesResponse": {
+      "description": "RPC response object returned by the ListBitbucketServerRepositories RPC method.",
+      "id": "ListBitbucketServerRepositoriesResponse",
+      "properties": {
+        "bitbucketServerRepositories": {
+          "description": "List of Bitbucket Server repositories.",
+          "items": {
+            "$ref": "BitbucketServerRepository"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "A token that can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "ListBuildTriggersResponse": {
       "description": "Response containing existing `BuildTriggers`.",
       "id": "ListBuildTriggersResponse",
@@ -2990,6 +4178,42 @@
         },
         "nextPageToken": {
           "description": "Token to receive the next page of results. This will be absent if the end of the response list has been reached.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ListGitLabConfigsResponse": {
+      "description": "RPC response object returned by ListGitLabConfigs RPC method.",
+      "id": "ListGitLabConfigsResponse",
+      "properties": {
+        "gitlabConfigs": {
+          "description": "A list of GitLabConfigs",
+          "items": {
+            "$ref": "GitLabConfig"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "A token that can be sent as `page_token` to retrieve the next page If this field is omitted, there are no subsequent pages.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "ListGitLabRepositoriesResponse": {
+      "description": "RPC response object returned by the ListGitLabRepositories RPC method.",
+      "id": "ListGitLabRepositoriesResponse",
+      "properties": {
+        "gitlabRepositories": {
+          "description": "List of GitLab repositories",
+          "items": {
+            "$ref": "GitLabRepository"
+          },
+          "type": "array"
+        },
+        "nextPageToken": {
+          "description": "A token that can be sent as `page_token` to retrieve the next page. If this field is omitted, there are no subsequent pages.",
           "type": "string"
         }
       },
@@ -3027,6 +4251,33 @@
       },
       "type": "object"
     },
+    "MavenArtifact": {
+      "description": "A Maven artifact to upload to Artifact Registry upon successful completion of all build steps.",
+      "id": "MavenArtifact",
+      "properties": {
+        "artifactId": {
+          "description": "Maven `artifactId` value used when uploading the artifact to Artifact Registry.",
+          "type": "string"
+        },
+        "groupId": {
+          "description": "Maven `groupId` value used when uploading the artifact to Artifact Registry.",
+          "type": "string"
+        },
+        "path": {
+          "description": "Path to an artifact in the build's workspace to be uploaded to Artifact Registry. This can be either an absolute path, e.g. /workspace/my-app/target/my-app-1.0.SNAPSHOT.jar or a relative path from /workspace, e.g. my-app/target/my-app-1.0.SNAPSHOT.jar.",
+          "type": "string"
+        },
+        "repository": {
+          "description": "Artifact Registry repository, in the form \"https://$REGION-maven.pkg.dev/$PROJECT/$REPOSITORY\" Artifact in the workspace specified by path will be uploaded to Artifact Registry with this location as a prefix.",
+          "type": "string"
+        },
+        "version": {
+          "description": "Maven `version` value used when uploading the artifact to Artifact Registry.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "NetworkConfig": {
       "description": "Defines the network configuration for the pool.",
       "id": "NetworkConfig",
@@ -3048,119 +4299,10 @@
         "peeredNetwork": {
           "description": "Required. Immutable. The network definition that the workers are peered to. If this section is left empty, the workers will be peered to `WorkerPool.project_id` on the service producer network. Must be in the format `projects/{project}/global/networks/{network}`, where `{project}` is a project number, such as `12345`, and `{network}` is the name of a VPC network in the project. See [Understanding network configuration options](https://cloud.google.com/build/docs/private-pools/set-up-private-pool-environment)",
           "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "Notification": {
-      "description": "Notification is the container which holds the data that is relevant to this particular notification.",
-      "id": "Notification",
-      "properties": {
-        "filter": {
-          "description": "The filter string to use for notification filtering. Currently, this is assumed to be a CEL program. See https://opensource.google/projects/cel for more.",
+        },
+        "peeredNetworkIpRange": {
+          "description": "Immutable. Subnet IP range within the peered network. This is specified in CIDR notation with a slash and the subnet prefix size. You can optionally specify an IP address before the subnet prefix value. e.g. `192.168.0.0/29` would specify an IP range starting at 192.168.0.0 with a prefix size of 29 bits. `/16` would specify a prefix size of 16 bits, with an automatically determined IP within the peered VPC. If unspecified, a value of `/24` will be used.",
           "type": "string"
-        },
-        "httpDelivery": {
-          "$ref": "HTTPDelivery",
-          "description": "Configuration for HTTP delivery."
-        },
-        "slackDelivery": {
-          "$ref": "SlackDelivery",
-          "description": "Configuration for Slack delivery."
-        },
-        "smtpDelivery": {
-          "$ref": "SMTPDelivery",
-          "description": "Configuration for SMTP (email) delivery."
-        },
-        "structDelivery": {
-          "additionalProperties": {
-            "description": "Properties of the object.",
-            "type": "any"
-          },
-          "description": "Escape hatch for users to supply custom delivery configs.",
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    "NotifierConfig": {
-      "description": "NotifierConfig is the top-level configuration message.",
-      "id": "NotifierConfig",
-      "properties": {
-        "apiVersion": {
-          "description": "The API version of this configuration format.",
-          "type": "string"
-        },
-        "kind": {
-          "description": "The type of notifier to use (e.g. SMTPNotifier).",
-          "type": "string"
-        },
-        "metadata": {
-          "$ref": "NotifierMetadata",
-          "description": "Metadata for referring to/handling/deploying this notifier."
-        },
-        "spec": {
-          "$ref": "NotifierSpec",
-          "description": "The actual configuration for this notifier."
-        }
-      },
-      "type": "object"
-    },
-    "NotifierMetadata": {
-      "description": "NotifierMetadata contains the data which can be used to reference or describe this notifier.",
-      "id": "NotifierMetadata",
-      "properties": {
-        "name": {
-          "description": "The human-readable and user-given name for the notifier. For example: \"repo-merge-email-notifier\".",
-          "type": "string"
-        },
-        "notifier": {
-          "description": "The string representing the name and version of notifier to deploy. Expected to be of the form of \"/:\". For example: \"gcr.io/my-project/notifiers/smtp:1.2.34\".",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "NotifierSecret": {
-      "description": "NotifierSecret is the container that maps a secret name (reference) to its Google Cloud Secret Manager resource path.",
-      "id": "NotifierSecret",
-      "properties": {
-        "name": {
-          "description": "Name is the local name of the secret, such as the verbatim string \"my-smtp-password\".",
-          "type": "string"
-        },
-        "value": {
-          "description": "Value is interpreted to be a resource path for fetching the actual (versioned) secret data for this secret. For example, this would be a Google Cloud Secret Manager secret version resource path like: \"projects/my-project/secrets/my-secret/versions/latest\".",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "NotifierSecretRef": {
-      "description": "NotifierSecretRef contains the reference to a secret stored in the corresponding NotifierSpec.",
-      "id": "NotifierSecretRef",
-      "properties": {
-        "secretRef": {
-          "description": "The value of `secret_ref` should be a `name` that is registered in a `Secret` in the `secrets` list of the `Spec`.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "NotifierSpec": {
-      "description": "NotifierSpec is the configuration container for notifications.",
-      "id": "NotifierSpec",
-      "properties": {
-        "notification": {
-          "$ref": "Notification",
-          "description": "The configuration of this particular notifier."
-        },
-        "secrets": {
-          "description": "Configurations for secret resources used by this particular notifier.",
-          "items": {
-            "$ref": "NotifierSecret"
-          },
-          "type": "array"
         }
       },
       "type": "object"
@@ -3377,10 +4519,50 @@
       },
       "type": "object"
     },
+    "PythonPackage": {
+      "description": "Python package to upload to Artifact Registry upon successful completion of all build steps. A package can encapsulate multiple objects to be uploaded to a single repository.",
+      "id": "PythonPackage",
+      "properties": {
+        "paths": {
+          "description": "Path globs used to match files in the build's workspace. For Python/ Twine, this is usually `dist/*`, and sometimes additionally an `.asc` file.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "repository": {
+          "description": "Artifact Registry repository, in the form \"https://$REGION-python.pkg.dev/$PROJECT/$REPOSITORY\" Files in the workspace matching any path pattern will be uploaded to Artifact Registry with this location as a prefix.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "ReceiveTriggerWebhookResponse": {
       "description": "ReceiveTriggerWebhookResponse [Experimental] is the response object for the ReceiveTriggerWebhook method.",
       "id": "ReceiveTriggerWebhookResponse",
       "properties": {},
+      "type": "object"
+    },
+    "RemoveBitbucketServerConnectedRepositoryRequest": {
+      "description": "RPC request object accepted by RemoveBitbucketServerConnectedRepository RPC method.",
+      "id": "RemoveBitbucketServerConnectedRepositoryRequest",
+      "properties": {
+        "connectedRepository": {
+          "$ref": "BitbucketServerRepositoryId",
+          "description": "The connected repository to remove."
+        }
+      },
+      "type": "object"
+    },
+    "RemoveGitLabConnectedRepositoryRequest": {
+      "description": "RPC request object accepted by RemoveGitLabConnectedRepository RPC method.",
+      "id": "RemoveGitLabConnectedRepositoryRequest",
+      "properties": {
+        "connectedRepository": {
+          "$ref": "GitLabRepositoryId",
+          "description": "The connected repository to remove."
+        }
+      },
       "type": "object"
     },
     "RepoSource": {
@@ -3425,17 +4607,53 @@
       },
       "type": "object"
     },
+    "RepositoryEventConfig": {
+      "description": "The configuration of a trigger that creates a build whenever an event from Repo API is received.",
+      "id": "RepositoryEventConfig",
+      "properties": {
+        "pullRequest": {
+          "$ref": "PullRequestFilter",
+          "description": "Filter to match changes in pull requests."
+        },
+        "push": {
+          "$ref": "PushFilter",
+          "description": "Filter to match changes in refs like branches, tags."
+        },
+        "repository": {
+          "description": "The resource name of the Repo API resource.",
+          "type": "string"
+        },
+        "repositoryType": {
+          "description": "Output only. The type of the SCM vendor the repository points to.",
+          "enum": [
+            "REPOSITORY_TYPE_UNSPECIFIED",
+            "GITHUB",
+            "GITHUB_ENTERPRISE",
+            "GITLAB_ENTERPRISE"
+          ],
+          "enumDescriptions": [
+            "If unspecified, RepositoryType defaults to GITHUB.",
+            "The SCM repo is GITHUB.",
+            "The SCM repo is GITHUB Enterprise.",
+            "The SCM repo is GITLAB Enterprise."
+          ],
+          "readOnly": true,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "Results": {
       "description": "Artifacts created by the build pipeline.",
       "id": "Results",
       "properties": {
         "artifactManifest": {
-          "description": "Path to the artifact manifest. Only populated when artifacts are uploaded.",
+          "description": "Path to the artifact manifest for non-container artifacts uploaded to Cloud Storage. Only populated when artifacts are uploaded to Cloud Storage.",
           "type": "string"
         },
         "artifactTiming": {
           "$ref": "TimeSpan",
-          "description": "Time to push all non-container artifacts."
+          "description": "Time to push all non-container artifacts to Cloud Storage."
         },
         "buildStepImages": {
           "description": "List of build step digests, in the order corresponding to build step indices.",
@@ -3459,10 +4677,24 @@
           },
           "type": "array"
         },
+        "mavenArtifacts": {
+          "description": "Maven artifacts uploaded to Artifact Registry at the end of the build.",
+          "items": {
+            "$ref": "UploadedMavenArtifact"
+          },
+          "type": "array"
+        },
         "numArtifacts": {
-          "description": "Number of artifacts uploaded. Only populated when artifacts are uploaded.",
+          "description": "Number of non-container artifacts uploaded to Cloud Storage. Only populated when artifacts are uploaded to Cloud Storage.",
           "format": "int64",
           "type": "string"
+        },
+        "pythonPackages": {
+          "description": "Python artifacts uploaded to Artifact Registry at the end of the build.",
+          "items": {
+            "$ref": "UploadedPythonPackage"
+          },
+          "type": "array"
         }
       },
       "type": "object"
@@ -3496,44 +4728,10 @@
         },
         "source": {
           "$ref": "RepoSource",
-          "description": "Source to build against this trigger."
+          "description": "Source to build against this trigger. Branch and tag names cannot consist of regular expressions."
         },
         "triggerId": {
           "description": "Required. ID of the trigger.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "SMTPDelivery": {
-      "description": "SMTPDelivery is the delivery configuration for an SMTP (email) notification.",
-      "id": "SMTPDelivery",
-      "properties": {
-        "fromAddress": {
-          "description": "This is the SMTP account/email that appears in the `From:` of the email. If empty, it is assumed to be sender.",
-          "type": "string"
-        },
-        "password": {
-          "$ref": "NotifierSecretRef",
-          "description": "The SMTP sender's password."
-        },
-        "port": {
-          "description": "The SMTP port of the server.",
-          "type": "string"
-        },
-        "recipientAddresses": {
-          "description": "This is the list of addresses to which we send the email (i.e. in the `To:` of the email).",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "senderAddress": {
-          "description": "This is the SMTP account/email that is used to send the message.",
-          "type": "string"
-        },
-        "server": {
-          "description": "The address of the SMTP server.",
           "type": "string"
         }
       },
@@ -3594,13 +4792,13 @@
       },
       "type": "object"
     },
-    "SlackDelivery": {
-      "description": "SlackDelivery is the delivery configuration for delivering Slack messages via webhooks. See Slack webhook documentation at: https://api.slack.com/messaging/webhooks.",
-      "id": "SlackDelivery",
+    "ServiceDirectoryConfig": {
+      "description": "ServiceDirectoryConfig represents Service Directory configuration for a SCM host connection.",
+      "id": "ServiceDirectoryConfig",
       "properties": {
-        "webhookUri": {
-          "$ref": "NotifierSecretRef",
-          "description": "The secret reference for the Slack webhook URI for sending messages to a channel."
+        "service": {
+          "description": "The Service Directory service name. Format: projects/{project}/locations/{location}/namespaces/{namespace}/services/{service}.",
+          "type": "string"
         }
       },
       "type": "object"
@@ -3735,6 +4933,27 @@
       },
       "type": "object"
     },
+    "UpdateBitbucketServerConfigOperationMetadata": {
+      "description": "Metadata for `UpdateBitbucketServerConfig` operation.",
+      "id": "UpdateBitbucketServerConfigOperationMetadata",
+      "properties": {
+        "bitbucketServerConfig": {
+          "description": "The resource name of the BitbucketServerConfig to be updated. Format: `projects/{project}/locations/{location}/bitbucketServerConfigs/{id}`.",
+          "type": "string"
+        },
+        "completeTime": {
+          "description": "Time the operation was completed.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Time the operation was created.",
+          "format": "google-datetime",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "UpdateGitHubEnterpriseConfigOperationMetadata": {
       "description": "Metadata for `UpdateGitHubEnterpriseConfig` operation.",
       "id": "UpdateGitHubEnterpriseConfigOperationMetadata",
@@ -3756,6 +4975,27 @@
       },
       "type": "object"
     },
+    "UpdateGitLabConfigOperationMetadata": {
+      "description": "Metadata for `UpdateGitLabConfig` operation.",
+      "id": "UpdateGitLabConfigOperationMetadata",
+      "properties": {
+        "completeTime": {
+          "description": "Time the operation was completed.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "createTime": {
+          "description": "Time the operation was created.",
+          "format": "google-datetime",
+          "type": "string"
+        },
+        "gitlabConfig": {
+          "description": "The resource name of the GitLabConfig to be created. Format: `projects/{project}/locations/{location}/gitlabConfigs/{id}`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "UpdateWorkerPoolOperationMetadata": {
       "description": "Metadata for the `UpdateWorkerPool` operation.",
       "id": "UpdateWorkerPoolOperationMetadata",
@@ -3772,6 +5012,46 @@
         },
         "workerPool": {
           "description": "The resource name of the `WorkerPool` being updated. Format: `projects/{project}/locations/{location}/workerPools/{worker_pool}`.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "UploadedMavenArtifact": {
+      "description": "A Maven artifact uploaded using the MavenArtifact directive.",
+      "id": "UploadedMavenArtifact",
+      "properties": {
+        "fileHashes": {
+          "$ref": "FileHashes",
+          "description": "Hash types and values of the Maven Artifact."
+        },
+        "pushTiming": {
+          "$ref": "TimeSpan",
+          "description": "Output only. Stores timing information for pushing the specified artifact.",
+          "readOnly": true
+        },
+        "uri": {
+          "description": "URI of the uploaded artifact.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "UploadedPythonPackage": {
+      "description": "Artifact uploaded using the PythonPackage directive.",
+      "id": "UploadedPythonPackage",
+      "properties": {
+        "fileHashes": {
+          "$ref": "FileHashes",
+          "description": "Hash types and values of the Python Artifact."
+        },
+        "pushTiming": {
+          "$ref": "TimeSpan",
+          "description": "Output only. Stores timing information for pushing the specified artifact.",
+          "readOnly": true
+        },
+        "uri": {
+          "description": "URI of the uploaded artifact.",
           "type": "string"
         }
       },
@@ -3849,7 +5129,7 @@
       "id": "WorkerConfig",
       "properties": {
         "diskSizeGb": {
-          "description": "Size of the disk attached to the worker, in GB. See [Worker pool config file](https://cloud.google.com/build/docs/private-pools/worker-pool-config-file-schema). Specify a value of up to 1000. If `0` is specified, Cloud Build will use a standard disk size.",
+          "description": "Size of the disk attached to the worker, in GB. See [Worker pool config file](https://cloud.google.com/build/docs/private-pools/worker-pool-config-file-schema). Specify a value of up to 2000. If `0` is specified, Cloud Build will use a standard disk size.",
           "format": "int64",
           "type": "string"
         },
@@ -3899,7 +5179,7 @@
         },
         "privatePoolV1Config": {
           "$ref": "PrivatePoolV1Config",
-          "description": "Private Pool using a v1 configuration."
+          "description": "Legacy Private Pool configuration."
         },
         "state": {
           "description": "Output only. `WorkerPool` state.",
@@ -3908,14 +5188,16 @@
             "CREATING",
             "RUNNING",
             "DELETING",
-            "DELETED"
+            "DELETED",
+            "UPDATING"
           ],
           "enumDescriptions": [
             "State of the `WorkerPool` is unknown.",
             "`WorkerPool` is being created.",
             "`WorkerPool` is running.",
             "`WorkerPool` is being deleted: cancelling builds and draining workers.",
-            "`WorkerPool` is deleted."
+            "`WorkerPool` is deleted.",
+            "`WorkerPool` is being updated; new builds cannot be run."
           ],
           "readOnly": true,
           "type": "string"

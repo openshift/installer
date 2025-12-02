@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 func customDiffDeploymentManagerDeployment(_ context.Context, d *schema.ResourceDiff, meta interface{}) error {
@@ -50,7 +49,7 @@ func customDiffDeploymentManagerDeployment(_ context.Context, d *schema.Resource
 	return nil
 }
 
-func resourceDeploymentManagerDeployment() *schema.Resource {
+func ResourceDeploymentManagerDeployment() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceDeploymentManagerDeploymentCreate,
 		Read:   resourceDeploymentManagerDeploymentRead,
@@ -128,7 +127,7 @@ configuration.`,
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ACQUIRE", "CREATE_OR_ACQUIRE", ""}, false),
+				ValidateFunc: validateEnum([]string{"ACQUIRE", "CREATE_OR_ACQUIRE", ""}),
 				Description: `Set the policy to use for creating new resources. Only used on
 create and update. Valid values are 'CREATE_OR_ACQUIRE' (default) or
 'ACQUIRE'. If set to 'ACQUIRE' and resources do not already exist,
@@ -140,7 +139,7 @@ actually affect the deployment, just how it is updated. Default value: "CREATE_O
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"ABANDON", "DELETE", ""}, false),
+				ValidateFunc: validateEnum([]string{"ABANDON", "DELETE", ""}),
 				Description: `Set the policy to use for deleting new resources on update/delete.
 Valid values are 'DELETE' (default) or 'ABANDON'. If 'DELETE',
 resource is deleted after removal from Deployment Manager. If
@@ -220,7 +219,7 @@ func deploymentmanagerDeploymentLabelsSchema() *schema.Resource {
 
 func resourceDeploymentManagerDeploymentCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -270,7 +269,7 @@ func resourceDeploymentManagerDeploymentCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Deployment: %s", err)
 	}
@@ -282,7 +281,7 @@ func resourceDeploymentManagerDeploymentCreate(d *schema.ResourceData, meta inte
 	}
 	d.SetId(id)
 
-	err = deploymentManagerOperationWaitTime(
+	err = DeploymentManagerOperationWaitTime(
 		config, res, project, "Creating Deployment", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -300,7 +299,7 @@ func resourceDeploymentManagerDeploymentCreate(d *schema.ResourceData, meta inte
 
 func resourceDeploymentManagerDeploymentRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -323,7 +322,7 @@ func resourceDeploymentManagerDeploymentRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("DeploymentManagerDeployment %q", d.Id()))
 	}
@@ -356,7 +355,7 @@ func resourceDeploymentManagerDeploymentRead(d *schema.ResourceData, meta interf
 
 func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -384,7 +383,7 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 			billingProject = bp
 		}
 
-		getRes, err := sendRequest(config, "GET", billingProject, getUrl, userAgent, nil)
+		getRes, err := SendRequest(config, "GET", billingProject, getUrl, userAgent, nil)
 		if err != nil {
 			return handleNotFoundError(err, d, fmt.Sprintf("DeploymentManagerDeployment %q", d.Id()))
 		}
@@ -401,14 +400,14 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 			billingProject = bp
 		}
 
-		res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error updating Deployment %q: %s", d.Id(), err)
 		} else {
 			log.Printf("[DEBUG] Finished updating Deployment %q: %#v", d.Id(), res)
 		}
 
-		err = deploymentManagerOperationWaitTime(
+		err = DeploymentManagerOperationWaitTime(
 			config, res, project, "Updating Deployment", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
@@ -428,7 +427,7 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 			billingProject = bp
 		}
 
-		getRes, err := sendRequest(config, "GET", billingProject, getUrl, userAgent, nil)
+		getRes, err := SendRequest(config, "GET", billingProject, getUrl, userAgent, nil)
 		if err != nil {
 			return handleNotFoundError(err, d, fmt.Sprintf("DeploymentManagerDeployment %q", d.Id()))
 		}
@@ -464,14 +463,14 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 			billingProject = bp
 		}
 
-		res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error updating Deployment %q: %s", d.Id(), err)
 		} else {
 			log.Printf("[DEBUG] Finished updating Deployment %q: %#v", d.Id(), res)
 		}
 
-		err = deploymentManagerOperationWaitTime(
+		err = DeploymentManagerOperationWaitTime(
 			config, res, project, "Updating Deployment", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
@@ -486,7 +485,7 @@ func resourceDeploymentManagerDeploymentUpdate(d *schema.ResourceData, meta inte
 
 func resourceDeploymentManagerDeploymentDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -512,12 +511,12 @@ func resourceDeploymentManagerDeploymentDelete(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Deployment")
 	}
 
-	err = deploymentManagerOperationWaitTime(
+	err = DeploymentManagerOperationWaitTime(
 		config, res, project, "Deleting Deployment", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

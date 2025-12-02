@@ -17,7 +17,7 @@ import (
 const (
 	composerEnvironmentEnvVariablesRegexp          = "[a-zA-Z_][a-zA-Z0-9_]*."
 	composerEnvironmentReservedAirflowEnvVarRegexp = "AIRFLOW__[A-Z0-9_]+__[A-Z0-9_]+"
-	composerEnvironmentVersionRegexp               = `composer-([0-9]+\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?|latest)-airflow-([0-9]+\.[0-9]+(\.[0-9]+.*)?)`
+	composerEnvironmentVersionRegexp               = `composer-(([0-9]+)(\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?)?|latest)-airflow-(([0-9]+)((\.[0-9]+)(\.[0-9]+)?)?)`
 )
 
 var composerEnvironmentReservedEnvVar = map[string]struct{}{
@@ -50,7 +50,26 @@ var (
 		"config.0.node_count",
 		"config.0.node_config",
 		"config.0.software_config",
+		"config.0.recovery_config",
 		"config.0.private_environment_config",
+		"config.0.web_server_network_access_control",
+		"config.0.database_config",
+		"config.0.web_server_config",
+		"config.0.encryption_config",
+		"config.0.maintenance_window",
+		"config.0.workloads_config",
+		"config.0.environment_size",
+		"config.0.master_authorized_networks_config",
+	}
+
+	recoveryConfigKeys = []string{
+		"config.0.recovery_config.0.scheduled_snapshots_config",
+	}
+
+	workloadsConfigKeys = []string{
+		"config.0.workloads_config.0.scheduler",
+		"config.0.workloads_config.0.web_server",
+		"config.0.workloads_config.0.worker",
 	}
 
 	composerPrivateEnvironmentConfig = []string{
@@ -58,6 +77,9 @@ var (
 		"config.0.private_environment_config.0.master_ipv4_cidr_block",
 		"config.0.private_environment_config.0.cloud_sql_ipv4_cidr_block",
 		"config.0.private_environment_config.0.web_server_ipv4_cidr_block",
+		"config.0.private_environment_config.0.cloud_composer_network_ipv4_cidr_block",
+		"config.0.private_environment_config.0.enable_privately_used_public_ips",
+		"config.0.private_environment_config.0.cloud_composer_connection_subnetwork",
 	}
 
 	composerIpAllocationPolicyKeys = []string{
@@ -67,9 +89,39 @@ var (
 		"config.0.node_config.0.ip_allocation_policy.0.cluster_ipv4_cidr_block",
 		"config.0.node_config.0.ip_allocation_policy.0.services_ipv4_cidr_block",
 	}
+
+	allowedIpRangesConfig = &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"value": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: `IP address or range, defined using CIDR notation, of requests that this rule applies to. Examples: 192.168.1.1 or 192.168.0.0/16 or 2001:db8::/32 or 2001:0db8:0000:0042:0000:8a2e:0370:7334. IP range prefixes should be properly truncated. For example, 1.2.3.4/24 should be truncated to 1.2.3.0/24. Similarly, for IPv6, 2001:db8::1/32 should be truncated to 2001:db8::/32.`,
+			},
+			"description": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `A description of this ip range.`,
+			},
+		},
+	}
+
+	cidrBlocks = &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"display_name": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `display_name is a field for users to identify CIDR blocks.`,
+			},
+			"cidr_block": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: `cidr_block must be specified in CIDR notation.`,
+			},
+		},
+	}
 )
 
-func resourceComposerEnvironment() *schema.Resource {
+func ResourceComposerEnvironment() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComposerEnvironmentCreate,
 		Read:   resourceComposerEnvironmentRead,
@@ -92,11 +144,12 @@ func resourceComposerEnvironment() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateGCPName,
+				ValidateFunc: validateGCEName,
 				Description:  `Name of the environment.`,
 			},
 			"region": {
 				Type:        schema.TypeString,
+				Computed:    true,
 				Optional:    true,
 				ForceNew:    true,
 				Description: `The location or Compute Engine region for the environment.`,
@@ -191,6 +244,14 @@ func resourceComposerEnvironment() *schema.Resource {
 										DiffSuppressFunc: compareServiceAccountEmailToLink,
 										Description:      `The Google Cloud Platform Service Account to be used by the node VMs. If a service account is not specified, the "default" Compute Engine service account is used. Cannot be updated. If given, note that the service account must have roles/composer.worker for any GCP resources created under the Cloud Composer Environment.`,
 									},
+									"enable_ip_masq_agent": {
+										Type:        schema.TypeBool,
+										Computed:    true,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `Deploys 'ip-masq-agent' daemon set in the GKE cluster and defines nonMasqueradeCIDRs equals to pod IP range so IP masquerading is used for all destination addresses, except between pods traffic. See: https://cloud.google.com/kubernetes-engine/docs/how-to/ip-masquerade-agent`,
+									},
+
 									"tags": {
 										Type:     schema.TypeSet,
 										Optional: true,
@@ -199,7 +260,7 @@ func resourceComposerEnvironment() *schema.Resource {
 											Type: schema.TypeString,
 										},
 										Set:         schema.HashString,
-										Description: `The list of instance tags applied to all node VMs. Tags are used to identify valid sources or targets for network firewalls. Each tag within the list must comply with RFC1035. Cannot be updated. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.`,
+										Description: `The list of instance tags applied to all node VMs. Tags are used to identify valid sources or targets for network firewalls. Each tag within the list must comply with RFC1035. Cannot be updated.`,
 									},
 									"ip_allocation_policy": {
 										Type:        schema.TypeList,
@@ -258,6 +319,48 @@ func resourceComposerEnvironment() *schema.Resource {
 								},
 							},
 						},
+						"recovery_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							AtLeastOneOf: composerConfigKeys,
+							MaxItems:     1,
+							Description:  `The recovery configuration settings for the Cloud Composer environment`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"scheduled_snapshots_config": {
+										Type:         schema.TypeList,
+										Optional:     true,
+										AtLeastOneOf: recoveryConfigKeys,
+										Description:  `The configuration settings for scheduled snapshots.`,
+										MaxItems:     1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"enabled": {
+													Type:        schema.TypeBool,
+													Required:    true,
+													Description: `When enabled, Cloud Composer periodically saves snapshots of your environment to a Cloud Storage bucket.`,
+												},
+												"snapshot_location": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `the URI of a bucket folder where to save the snapshot.`,
+												},
+												"snapshot_creation_schedule": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `Snapshot schedule, in the unix-cron format.`,
+												},
+												"time_zone": {
+													Type:        schema.TypeString,
+													Optional:    true,
+													Description: `A time zone for the schedule. This value is a time offset and does not take into account daylight saving time changes. Valid values are from UTC-12 to UTC+12. Examples: UTC, UTC-01, UTC+03.`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						"software_config": {
 							Type:         schema.TypeList,
 							Optional:     true,
@@ -288,16 +391,17 @@ func resourceComposerEnvironment() *schema.Resource {
 										AtLeastOneOf: composerSoftwareConfigKeys,
 										Elem:         &schema.Schema{Type: schema.TypeString},
 										ValidateFunc: validateComposerEnvironmentEnvVariables,
-										Description:  `Additional environment variables to provide to the Apache Airflow schedulerf, worker, and webserver processes. Environment variable names must match the regular expression [a-zA-Z_][a-zA-Z0-9_]*. They cannot specify Apache Airflow software configuration overrides (they cannot match the regular expression AIRFLOW__[A-Z0-9_]+__[A-Z0-9_]+), and they cannot match any of the following reserved names: AIRFLOW_HOME C_FORCE_ROOT CONTAINER_NAME DAGS_FOLDER GCP_PROJECT GCS_BUCKET GKE_CLUSTER_NAME SQL_DATABASE SQL_INSTANCE SQL_PASSWORD SQL_PROJECT SQL_REGION SQL_USER.`,
+										Description:  `Additional environment variables to provide to the Apache Airflow scheduler, worker, and webserver processes. Environment variable names must match the regular expression [a-zA-Z_][a-zA-Z0-9_]*. They cannot specify Apache Airflow software configuration overrides (they cannot match the regular expression AIRFLOW__[A-Z0-9_]+__[A-Z0-9_]+), and they cannot match any of the following reserved names: AIRFLOW_HOME C_FORCE_ROOT CONTAINER_NAME DAGS_FOLDER GCP_PROJECT GCS_BUCKET GKE_CLUSTER_NAME SQL_DATABASE SQL_INSTANCE SQL_PASSWORD SQL_PROJECT SQL_REGION SQL_USER.`,
 									},
 									"image_version": {
 										Type:             schema.TypeString,
 										Computed:         true,
 										Optional:         true,
+										ForceNew:         true,
 										AtLeastOneOf:     composerSoftwareConfigKeys,
 										ValidateFunc:     validateRegexp(composerEnvironmentVersionRegexp),
 										DiffSuppressFunc: composerImageVersionDiffSuppress,
-										Description:      `The version of the software running in the environment. This encapsulates both the version of Cloud Composer functionality and the version of Apache Airflow. It must match the regular expression composer-[0-9]+\.[0-9]+(\.[0-9]+)?-airflow-[0-9]+\.[0-9]+(\.[0-9]+.*)?. The Cloud Composer portion of the version is a semantic version. The portion of the image version following 'airflow-' is an official Apache Airflow repository release name. See documentation for allowed release names.`,
+										Description:      `The version of the software running in the environment. This encapsulates both the version of Cloud Composer functionality and the version of Apache Airflow. It must match the regular expression composer-([0-9]+(\.[0-9]+\.[0-9]+(-preview\.[0-9]+)?)?|latest)-airflow-([0-9]+(\.[0-9]+(\.[0-9]+)?)?). The Cloud Composer portion of the image version is a full semantic version, or an alias in the form of major version number or 'latest'. The Apache Airflow portion of the image version is a full semantic version that points to one of the supported Apache Airflow versions, or an alias in the form of only major or major.minor versions specified. See documentation for more details and version list.`,
 									},
 									"python_version": {
 										Type:         schema.TypeString,
@@ -359,6 +463,295 @@ func resourceComposerEnvironment() *schema.Resource {
 										ForceNew:     true,
 										Description:  `The CIDR block from which IP range in tenant project will be reserved for Cloud SQL. Needs to be disjoint from web_server_ipv4_cidr_block.`,
 									},
+									"cloud_composer_network_ipv4_cidr_block": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										AtLeastOneOf: composerPrivateEnvironmentConfig,
+										ForceNew:     true,
+										Description:  `The CIDR block from which IP range for Cloud Composer Network in tenant project will be reserved. Needs to be disjoint from private_cluster_config.master_ipv4_cidr_block and cloud_sql_ipv4_cidr_block. This field is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.`,
+									},
+									"enable_privately_used_public_ips": {
+										Type:         schema.TypeBool,
+										Optional:     true,
+										Computed:     true,
+										AtLeastOneOf: composerPrivateEnvironmentConfig,
+										ForceNew:     true,
+										Description:  `When enabled, IPs from public (non-RFC1918) ranges can be used for ip_allocation_policy.cluster_ipv4_cidr_block and ip_allocation_policy.service_ipv4_cidr_block.`,
+									},
+									"cloud_composer_connection_subnetwork": {
+										Type:             schema.TypeString,
+										Optional:         true,
+										Computed:         true,
+										AtLeastOneOf:     composerPrivateEnvironmentConfig,
+										ForceNew:         true,
+										DiffSuppressFunc: compareSelfLinkRelativePaths,
+										Description:      `When specified, the environment will use Private Service Connect instead of VPC peerings to connect to Cloud SQL in the Tenant Project, and the PSC endpoint in the Customer Project will use an IP address from this subnetwork. This field is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.`,
+									},
+								},
+							},
+						},
+						"web_server_network_access_control": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							AtLeastOneOf: composerConfigKeys,
+							MaxItems:     1,
+							Description:  `The network-level access control policy for the Airflow web server. If unspecified, no network-level access restrictions will be applied. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"allowed_ip_range": {
+										Type:        schema.TypeSet,
+										Computed:    true,
+										Optional:    true,
+										Elem:        allowedIpRangesConfig,
+										Description: `A collection of allowed IP ranges with descriptions.`,
+									},
+								},
+							},
+						},
+						"database_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							AtLeastOneOf: composerConfigKeys,
+							MaxItems:     1,
+							Description:  `The configuration of Cloud SQL instance that is used by the Apache Airflow software. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"machine_type": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `Optional. Cloud SQL machine type used by Airflow database. It has to be one of: db-n1-standard-2, db-n1-standard-4, db-n1-standard-8 or db-n1-standard-16. If not specified, db-n1-standard-2 will be used.`,
+									},
+								},
+							},
+						},
+						"web_server_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							AtLeastOneOf: composerConfigKeys,
+							MaxItems:     1,
+							Description:  `The configuration settings for the Airflow web server App Engine instance. This field is supported for Cloud Composer environments in versions composer-1.*.*-airflow-*.*.*.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"machine_type": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `Optional. Machine type on which Airflow web server is running. It has to be one of: composer-n1-webserver-2, composer-n1-webserver-4 or composer-n1-webserver-8. If not specified, composer-n1-webserver-2 will be used. Value custom is returned only in response, if Airflow web server parameters were manually changed to a non-standard values.`,
+									},
+								},
+							},
+						},
+						"encryption_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							AtLeastOneOf: composerConfigKeys,
+							MaxItems:     1,
+							Description:  `The encryption options for the Composer environment and its dependencies.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"kms_key_name": {
+										Type:        schema.TypeString,
+										Required:    true,
+										ForceNew:    true,
+										Description: `Optional. Customer-managed Encryption Key available through Google's Key Management Service. Cannot be updated.`,
+									},
+								},
+							},
+						},
+						"maintenance_window": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							AtLeastOneOf: composerConfigKeys,
+							MaxItems:     1,
+							Description:  `The configuration for Cloud Composer maintenance window.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"start_time": {
+										Type:        schema.TypeString,
+										Required:    true,
+										ForceNew:    false,
+										Description: `Start time of the first recurrence of the maintenance window.`,
+									},
+									"end_time": {
+										Type:        schema.TypeString,
+										Required:    true,
+										ForceNew:    false,
+										Description: `Maintenance window end time. It is used only to calculate the duration of the maintenance window. The value for end-time must be in the future, relative to 'start_time'.`,
+									},
+									"recurrence": {
+										Type:        schema.TypeString,
+										Required:    true,
+										ForceNew:    false,
+										Description: `Maintenance window recurrence. Format is a subset of RFC-5545 (https://tools.ietf.org/html/rfc5545) 'RRULE'. The only allowed values for 'FREQ' field are 'FREQ=DAILY' and 'FREQ=WEEKLY;BYDAY=...'. Example values: 'FREQ=WEEKLY;BYDAY=TU,WE', 'FREQ=DAILY'.`,
+									},
+								},
+							},
+						},
+						"workloads_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							AtLeastOneOf: composerConfigKeys,
+							MaxItems:     1,
+							Description:  `The workloads configuration settings for the GKE cluster associated with the Cloud Composer environment. Supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"scheduler": {
+										Type:         schema.TypeList,
+										Optional:     true,
+										AtLeastOneOf: workloadsConfigKeys,
+										ForceNew:     false,
+										Description:  `Configuration for resources used by Airflow schedulers.`,
+										MaxItems:     1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"cpu": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `CPU request and limit for a single Airflow scheduler replica`,
+												},
+												"memory_gb": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `Memory (GB) request and limit for a single Airflow scheduler replica.`,
+												},
+												"storage_gb": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `Storage (GB) request and limit for a single Airflow scheduler replica.`,
+												},
+												"count": {
+													Type:         schema.TypeInt,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.IntAtLeast(0),
+													Description:  `The number of schedulers.`,
+												},
+											},
+										},
+									},
+									"web_server": {
+										Type:         schema.TypeList,
+										Optional:     true,
+										AtLeastOneOf: workloadsConfigKeys,
+										ForceNew:     false,
+										Description:  `Configuration for resources used by Airflow web server.`,
+										MaxItems:     1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"cpu": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `CPU request and limit for Airflow web server.`,
+												},
+												"memory_gb": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `Memory (GB) request and limit for Airflow web server.`,
+												},
+												"storage_gb": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `Storage (GB) request and limit for Airflow web server.`,
+												},
+											},
+										},
+									},
+									"worker": {
+										Type:         schema.TypeList,
+										Optional:     true,
+										AtLeastOneOf: workloadsConfigKeys,
+										ForceNew:     false,
+										Description:  `Configuration for resources used by Airflow workers.`,
+										MaxItems:     1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"cpu": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `CPU request and limit for a single Airflow worker replica.`,
+												},
+												"memory_gb": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `Memory (GB) request and limit for a single Airflow worker replica.`,
+												},
+												"storage_gb": {
+													Type:         schema.TypeFloat,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.FloatAtLeast(0),
+													Description:  `Storage (GB) request and limit for a single Airflow worker replica.`,
+												},
+												"min_count": {
+													Type:         schema.TypeInt,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.IntAtLeast(0),
+													Description:  `Minimum number of workers for autoscaling.`,
+												},
+												"max_count": {
+													Type:         schema.TypeInt,
+													Optional:     true,
+													ForceNew:     false,
+													ValidateFunc: validation.IntAtLeast(0),
+													Description:  `Maximum number of workers for autoscaling.`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+						"environment_size": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							Computed:     true,
+							ForceNew:     false,
+							AtLeastOneOf: composerConfigKeys,
+							ValidateFunc: validation.StringInSlice([]string{"ENVIRONMENT_SIZE_SMALL", "ENVIRONMENT_SIZE_MEDIUM", "ENVIRONMENT_SIZE_LARGE"}, false),
+							Description:  `The size of the Cloud Composer environment. This field is supported for Cloud Composer environments in versions composer-2.*.*-airflow-*.*.* and newer.`,
+						},
+						"master_authorized_networks_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							AtLeastOneOf: composerConfigKeys,
+							MaxItems:     1,
+							Description:  `Configuration options for the master authorized networks feature. Enabled master authorized networks will disallow all external traffic to access Kubernetes master through HTTPS except traffic from the given CIDR blocks, Google Compute Engine Public IPs and Google Prod IPs.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enabled": {
+										Type:        schema.TypeBool,
+										Required:    true,
+										Description: `Whether or not master authorized networks is enabled.`,
+									},
+									"cidr_blocks": {
+										Type:        schema.TypeSet,
+										Optional:    true,
+										Elem:        cidrBlocks,
+										Description: `cidr_blocks define up to 50 external networks that could access Kubernetes master through HTTPS.`,
+									},
 								},
 							},
 						},
@@ -393,7 +786,7 @@ func resourceComposerEnvironment() *schema.Resource {
 
 func resourceComposerEnvironmentCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -430,7 +823,7 @@ func resourceComposerEnvironmentCreate(d *schema.ResourceData, meta interface{})
 	}
 	d.SetId(id)
 
-	waitErr := composerOperationWaitTime(
+	waitErr := ComposerOperationWaitTime(
 		config, op, envName.Project, "Creating Environment", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -459,7 +852,7 @@ func resourceComposerEnvironmentCreate(d *schema.ResourceData, meta interface{})
 
 func resourceComposerEnvironmentRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -496,7 +889,7 @@ func resourceComposerEnvironmentRead(d *schema.ResourceData, meta interface{}) e
 
 func resourceComposerEnvironmentUpdate(d *schema.ResourceData, meta interface{}) error {
 	tfConfig := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, tfConfig.userAgent)
+	userAgent, err := generateUserAgentString(d, tfConfig.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -513,16 +906,16 @@ func resourceComposerEnvironmentUpdate(d *schema.ResourceData, meta interface{})
 			return err
 		}
 
-		if d.HasChange("config.0.software_config.0.image_version") {
+		if d.HasChange("config.0.software_config.0.scheduler_count") {
 			patchObj := &composer.Environment{
 				Config: &composer.EnvironmentConfig{
 					SoftwareConfig: &composer.SoftwareConfig{},
 				},
 			}
 			if config != nil && config.SoftwareConfig != nil {
-				patchObj.Config.SoftwareConfig.ImageVersion = config.SoftwareConfig.ImageVersion
+				patchObj.Config.SoftwareConfig.SchedulerCount = config.SoftwareConfig.SchedulerCount
 			}
-			err = resourceComposerEnvironmentPatchField("config.softwareConfig.imageVersion", userAgent, patchObj, d, tfConfig)
+			err = resourceComposerEnvironmentPatchField("config.softwareConfig.schedulerCount", userAgent, patchObj, d, tfConfig)
 			if err != nil {
 				return err
 			}
@@ -607,6 +1000,81 @@ func resourceComposerEnvironmentUpdate(d *schema.ResourceData, meta interface{})
 			}
 		}
 
+		if d.HasChange("config.0.database_config.0.machine_type") {
+			patchObj := &composer.Environment{Config: &composer.EnvironmentConfig{}}
+			if config != nil {
+				patchObj.Config.DatabaseConfig = config.DatabaseConfig
+			}
+			err = resourceComposerEnvironmentPatchField("config.databaseConfig.machineType", userAgent, patchObj, d, tfConfig)
+			if err != nil {
+				return err
+			}
+		}
+
+		if d.HasChange("config.0.web_server_config.0.machine_type") {
+			patchObj := &composer.Environment{Config: &composer.EnvironmentConfig{}}
+			if config != nil {
+				patchObj.Config.WebServerConfig = config.WebServerConfig
+			}
+			err = resourceComposerEnvironmentPatchField("config.webServerConfig.machineType", userAgent, patchObj, d, tfConfig)
+			if err != nil {
+				return err
+			}
+		}
+
+		if d.HasChange("config.0.maintenance_window") {
+			patchObj := &composer.Environment{Config: &composer.EnvironmentConfig{}}
+			if config != nil {
+				patchObj.Config.MaintenanceWindow = config.MaintenanceWindow
+			}
+			err = resourceComposerEnvironmentPatchField("config.maintenanceWindow", userAgent, patchObj, d, tfConfig)
+			if err != nil {
+				return err
+			}
+		}
+
+		if d.HasChange("config.0.workloads_config") {
+			patchObj := &composer.Environment{Config: &composer.EnvironmentConfig{}}
+			if config != nil {
+				patchObj.Config.WorkloadsConfig = config.WorkloadsConfig
+			}
+			err = resourceComposerEnvironmentPatchField("config.WorkloadsConfig", userAgent, patchObj, d, tfConfig)
+			if err != nil {
+				return err
+			}
+		}
+
+		if d.HasChange("config.0.recovery_config.0.scheduled_snapshots_config") {
+			patchObj := &composer.Environment{Config: &composer.EnvironmentConfig{}}
+			if config != nil {
+				patchObj.Config.RecoveryConfig = config.RecoveryConfig
+			}
+			err = resourceComposerEnvironmentPatchField("config.RecoveryConfig.ScheduledSnapshotsConfig", userAgent, patchObj, d, tfConfig)
+			if err != nil {
+				return err
+			}
+		}
+
+		if d.HasChange("config.0.environment_size") {
+			patchObj := &composer.Environment{Config: &composer.EnvironmentConfig{}}
+			if config != nil {
+				patchObj.Config.EnvironmentSize = config.EnvironmentSize
+			}
+			err = resourceComposerEnvironmentPatchField("config.EnvironmentSize", userAgent, patchObj, d, tfConfig)
+			if err != nil {
+				return err
+			}
+		}
+		if d.HasChange("config.0.master_authorized_networks_config") {
+			patchObj := &composer.Environment{Config: &composer.EnvironmentConfig{}}
+			if config != nil {
+				patchObj.Config.MasterAuthorizedNetworksConfig = config.MasterAuthorizedNetworksConfig
+			}
+			err = resourceComposerEnvironmentPatchField("config.MasterAuthorizedNetworksConfig", userAgent, patchObj, d, tfConfig)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if d.HasChange("labels") {
@@ -626,8 +1094,6 @@ func resourceComposerEnvironmentPostCreateUpdate(updateEnv *composer.Environment
 		return nil
 	}
 
-	d.Partial(true)
-
 	if updateEnv.Config != nil && updateEnv.Config.SoftwareConfig != nil && len(updateEnv.Config.SoftwareConfig.PypiPackages) > 0 {
 		log.Printf("[DEBUG] Running post-create update for Environment %q", d.Id())
 		err := resourceComposerEnvironmentPatchField("config.softwareConfig.pypiPackages", userAgent, updateEnv, d, cfg)
@@ -637,7 +1103,7 @@ func resourceComposerEnvironmentPostCreateUpdate(updateEnv *composer.Environment
 
 		log.Printf("[DEBUG] Finish update to Environment %q post create for update only fields", d.Id())
 	}
-	d.Partial(false)
+
 	return resourceComposerEnvironmentRead(d, cfg)
 }
 
@@ -656,7 +1122,7 @@ func resourceComposerEnvironmentPatchField(updateMask, userAgent string, env *co
 		return err
 	}
 
-	waitErr := composerOperationWaitTime(
+	waitErr := ComposerOperationWaitTime(
 		config, op, envName.Project, "Updating newly created Environment", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if waitErr != nil {
@@ -670,7 +1136,7 @@ func resourceComposerEnvironmentPatchField(updateMask, userAgent string, env *co
 
 func resourceComposerEnvironmentDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -686,7 +1152,7 @@ func resourceComposerEnvironmentDelete(d *schema.ResourceData, meta interface{})
 		return err
 	}
 
-	err = composerOperationWaitTime(
+	err = ComposerOperationWaitTime(
 		config, op, envName.Project, "Deleting Environment", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 	if err != nil {
@@ -725,6 +1191,153 @@ func flattenComposerEnvironmentConfig(envCfg *composer.EnvironmentConfig) interf
 	transformed["node_config"] = flattenComposerEnvironmentConfigNodeConfig(envCfg.NodeConfig)
 	transformed["software_config"] = flattenComposerEnvironmentConfigSoftwareConfig(envCfg.SoftwareConfig)
 	transformed["private_environment_config"] = flattenComposerEnvironmentConfigPrivateEnvironmentConfig(envCfg.PrivateEnvironmentConfig)
+	transformed["web_server_network_access_control"] = flattenComposerEnvironmentConfigWebServerNetworkAccessControl(envCfg.WebServerNetworkAccessControl)
+	transformed["database_config"] = flattenComposerEnvironmentConfigDatabaseConfig(envCfg.DatabaseConfig)
+	transformed["web_server_config"] = flattenComposerEnvironmentConfigWebServerConfig(envCfg.WebServerConfig)
+	transformed["encryption_config"] = flattenComposerEnvironmentConfigEncryptionConfig(envCfg.EncryptionConfig)
+	transformed["maintenance_window"] = flattenComposerEnvironmentConfigMaintenanceWindow(envCfg.MaintenanceWindow)
+	transformed["workloads_config"] = flattenComposerEnvironmentConfigWorkloadsConfig(envCfg.WorkloadsConfig)
+	transformed["recovery_config"] = flattenComposerEnvironmentConfigRecoveryConfig(envCfg.RecoveryConfig)
+	transformed["environment_size"] = envCfg.EnvironmentSize
+	transformed["master_authorized_networks_config"] = flattenComposerEnvironmentConfigMasterAuthorizedNetworksConfig(envCfg.MasterAuthorizedNetworksConfig)
+	return []interface{}{transformed}
+}
+
+func flattenComposerEnvironmentConfigWebServerNetworkAccessControl(accessControl *composer.WebServerNetworkAccessControl) interface{} {
+	if accessControl == nil || accessControl.AllowedIpRanges == nil {
+		return nil
+	}
+
+	transformed := make([]interface{}, 0, len(accessControl.AllowedIpRanges))
+	for _, ipRange := range accessControl.AllowedIpRanges {
+		data := map[string]interface{}{
+			"value":       ipRange.Value,
+			"description": ipRange.Description,
+		}
+		transformed = append(transformed, data)
+	}
+
+	webServerNetworkAccessControl := make(map[string]interface{})
+
+	webServerNetworkAccessControl["allowed_ip_range"] = schema.NewSet(schema.HashResource(allowedIpRangesConfig), transformed)
+
+	return []interface{}{webServerNetworkAccessControl}
+}
+
+func flattenComposerEnvironmentConfigDatabaseConfig(databaseCfg *composer.DatabaseConfig) interface{} {
+	if databaseCfg == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	transformed["machine_type"] = databaseCfg.MachineType
+
+	return []interface{}{transformed}
+}
+
+func flattenComposerEnvironmentConfigWebServerConfig(webServerCfg *composer.WebServerConfig) interface{} {
+	if webServerCfg == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	transformed["machine_type"] = webServerCfg.MachineType
+
+	return []interface{}{transformed}
+}
+
+func flattenComposerEnvironmentConfigEncryptionConfig(encryptionCfg *composer.EncryptionConfig) interface{} {
+	if encryptionCfg == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	transformed["kms_key_name"] = encryptionCfg.KmsKeyName
+
+	return []interface{}{transformed}
+}
+
+func flattenComposerEnvironmentConfigRecoveryConfig(recoveryCfg *composer.RecoveryConfig) interface{} {
+	if recoveryCfg == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	transformedScheduledSnapshotsConfig := make(map[string]interface{})
+
+	scheduledSnapshotsConfig := recoveryCfg.ScheduledSnapshotsConfig
+
+	if scheduledSnapshotsConfig == nil {
+		transformedScheduledSnapshotsConfig = nil
+	} else {
+		transformedScheduledSnapshotsConfig["enabled"] = scheduledSnapshotsConfig.Enabled
+		transformedScheduledSnapshotsConfig["snapshot_location"] = scheduledSnapshotsConfig.SnapshotLocation
+		transformedScheduledSnapshotsConfig["time_zone"] = scheduledSnapshotsConfig.TimeZone
+		transformedScheduledSnapshotsConfig["snapshot_creation_schedule"] = scheduledSnapshotsConfig.SnapshotCreationSchedule
+	}
+
+	transformed["scheduled_snapshots_config"] = []interface{}{transformedScheduledSnapshotsConfig}
+
+	return []interface{}{transformed}
+}
+
+func flattenComposerEnvironmentConfigMaintenanceWindow(maintenanceWindow *composer.MaintenanceWindow) interface{} {
+	if maintenanceWindow == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	transformed["start_time"] = maintenanceWindow.StartTime
+	transformed["end_time"] = maintenanceWindow.EndTime
+	transformed["recurrence"] = maintenanceWindow.Recurrence
+
+	return []interface{}{transformed}
+}
+
+func flattenComposerEnvironmentConfigWorkloadsConfig(workloadsConfig *composer.WorkloadsConfig) interface{} {
+	if workloadsConfig == nil {
+		return nil
+	}
+
+	transformed := make(map[string]interface{})
+	transformedScheduler := make(map[string]interface{})
+	transformedWebServer := make(map[string]interface{})
+	transformedWorker := make(map[string]interface{})
+
+	wlCfgScheduler := workloadsConfig.Scheduler
+	wlCfgWebServer := workloadsConfig.WebServer
+	wlCfgWorker := workloadsConfig.Worker
+
+	if wlCfgScheduler == nil {
+		transformedScheduler = nil
+	} else {
+		transformedScheduler["cpu"] = wlCfgScheduler.Cpu
+		transformedScheduler["memory_gb"] = wlCfgScheduler.MemoryGb
+		transformedScheduler["storage_gb"] = wlCfgScheduler.StorageGb
+		transformedScheduler["count"] = wlCfgScheduler.Count
+	}
+
+	if wlCfgWebServer == nil {
+		transformedWebServer = nil
+	} else {
+		transformedWebServer["cpu"] = wlCfgWebServer.Cpu
+		transformedWebServer["memory_gb"] = wlCfgWebServer.MemoryGb
+		transformedWebServer["storage_gb"] = wlCfgWebServer.StorageGb
+	}
+
+	if wlCfgWorker == nil {
+		transformedWorker = nil
+	} else {
+		transformedWorker["cpu"] = wlCfgWorker.Cpu
+		transformedWorker["memory_gb"] = wlCfgWorker.MemoryGb
+		transformedWorker["storage_gb"] = wlCfgWorker.StorageGb
+		transformedWorker["min_count"] = wlCfgWorker.MinCount
+		transformedWorker["max_count"] = wlCfgWorker.MaxCount
+	}
+
+	transformed["scheduler"] = []interface{}{transformedScheduler}
+	transformed["web_server"] = []interface{}{transformedWebServer}
+	transformed["worker"] = []interface{}{transformedWorker}
 
 	return []interface{}{transformed}
 }
@@ -739,6 +1352,9 @@ func flattenComposerEnvironmentConfigPrivateEnvironmentConfig(envCfg *composer.P
 	transformed["master_ipv4_cidr_block"] = envCfg.PrivateClusterConfig.MasterIpv4CidrBlock
 	transformed["cloud_sql_ipv4_cidr_block"] = envCfg.CloudSqlIpv4CidrBlock
 	transformed["web_server_ipv4_cidr_block"] = envCfg.WebServerIpv4CidrBlock
+	transformed["cloud_composer_network_ipv4_cidr_block"] = envCfg.CloudComposerNetworkIpv4CidrBlock
+	transformed["enable_privately_used_public_ips"] = envCfg.EnablePrivatelyUsedPublicIps
+	transformed["cloud_composer_connection_subnetwork"] = envCfg.CloudComposerConnectionSubnetwork
 
 	return []interface{}{transformed}
 }
@@ -755,6 +1371,7 @@ func flattenComposerEnvironmentConfigNodeConfig(nodeCfg *composer.NodeConfig) in
 	transformed["disk_size_gb"] = nodeCfg.DiskSizeGb
 	transformed["service_account"] = nodeCfg.ServiceAccount
 	transformed["oauth_scopes"] = flattenComposerEnvironmentConfigNodeConfigOauthScopes(nodeCfg.OauthScopes)
+	transformed["enable_ip_masq_agent"] = nodeCfg.EnableIpMasqAgent
 	transformed["tags"] = flattenComposerEnvironmentConfigNodeConfigTags(nodeCfg.Tags)
 	transformed["ip_allocation_policy"] = flattenComposerEnvironmentConfigNodeConfigIPAllocationPolicy(nodeCfg.IpAllocationPolicy)
 	return []interface{}{transformed}
@@ -802,6 +1419,27 @@ func flattenComposerEnvironmentConfigSoftwareConfig(softwareCfg *composer.Softwa
 	return []interface{}{transformed}
 }
 
+func flattenComposerEnvironmentConfigMasterAuthorizedNetworksConfig(masterAuthNetsCfg *composer.MasterAuthorizedNetworksConfig) interface{} {
+	if masterAuthNetsCfg == nil {
+		return nil
+	}
+
+	transformed := make([]interface{}, 0, len(masterAuthNetsCfg.CidrBlocks))
+	for _, cidrBlock := range masterAuthNetsCfg.CidrBlocks {
+		data := map[string]interface{}{
+			"display_name": cidrBlock.DisplayName,
+			"cidr_block":   cidrBlock.CidrBlock,
+		}
+		transformed = append(transformed, data)
+	}
+
+	masterAuthorizedNetworksConfig := make(map[string]interface{})
+	masterAuthorizedNetworksConfig["enabled"] = masterAuthNetsCfg.Enabled
+	masterAuthorizedNetworksConfig["cidr_blocks"] = schema.NewSet(schema.HashResource(cidrBlocks), transformed)
+
+	return []interface{}{masterAuthorizedNetworksConfig}
+}
+
 func expandComposerEnvironmentConfig(v interface{}, d *schema.ResourceData, config *Config) (*composer.EnvironmentConfig, error) {
 	l := v.([]interface{})
 	if len(l) == 0 {
@@ -836,6 +1474,58 @@ func expandComposerEnvironmentConfig(v interface{}, d *schema.ResourceData, conf
 	}
 	transformed.PrivateEnvironmentConfig = transformedPrivateEnvironmentConfig
 
+	transformedWebServerNetworkAccessControl, err := expandComposerEnvironmentConfigWebServerNetworkAccessControl(original["web_server_network_access_control"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.WebServerNetworkAccessControl = transformedWebServerNetworkAccessControl
+
+	transformedDatabaseConfig, err := expandComposerEnvironmentConfigDatabaseConfig(original["database_config"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.DatabaseConfig = transformedDatabaseConfig
+
+	transformedWebServerConfig, err := expandComposerEnvironmentConfigWebServerConfig(original["web_server_config"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.WebServerConfig = transformedWebServerConfig
+
+	transformedEncryptionConfig, err := expandComposerEnvironmentConfigEncryptionConfig(original["encryption_config"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.EncryptionConfig = transformedEncryptionConfig
+
+	transformedMaintenanceWindow, err := expandComposerEnvironmentConfigMaintenanceWindow(original["maintenance_window"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.MaintenanceWindow = transformedMaintenanceWindow
+	transformedWorkloadsConfig, err := expandComposerEnvironmentConfigWorkloadsConfig(original["workloads_config"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.WorkloadsConfig = transformedWorkloadsConfig
+
+	transformedEnvironmentSize, err := expandComposerEnvironmentConfigEnvironmentSize(original["environment_size"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.EnvironmentSize = transformedEnvironmentSize
+	transformedMasterAuthorizedNetworksConfig, err := expandComposerEnvironmentConfigMasterAuthorizedNetworksConfig(original["master_authorized_networks_config"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.MasterAuthorizedNetworksConfig = transformedMasterAuthorizedNetworksConfig
+
+	transformedRecoveryConfig, err := expandComposerEnvironmentConfigRecoveryConfig(original["recovery_config"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed.RecoveryConfig = transformedRecoveryConfig
+
 	return transformed, nil
 }
 
@@ -844,6 +1534,207 @@ func expandComposerEnvironmentConfigNodeCount(v interface{}, d *schema.ResourceD
 		return 0, nil
 	}
 	return int64(v.(int)), nil
+}
+
+func expandComposerEnvironmentConfigWebServerNetworkAccessControl(v interface{}, d *schema.ResourceData, config *Config) (*composer.WebServerNetworkAccessControl, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	allowedIpRangesRaw := original["allowed_ip_range"].(*schema.Set).List()
+	if len(allowedIpRangesRaw) == 0 {
+		return nil, nil
+	}
+
+	transformed := &composer.WebServerNetworkAccessControl{}
+	allowedIpRanges := make([]*composer.AllowedIpRange, 0, len(original))
+
+	for _, originalIpRange := range allowedIpRangesRaw {
+		originalRangeRaw := originalIpRange.(map[string]interface{})
+		transformedRange := &composer.AllowedIpRange{Value: originalRangeRaw["value"].(string)}
+		if v, ok := originalRangeRaw["description"]; ok {
+			transformedRange.Description = v.(string)
+		}
+		allowedIpRanges = append(allowedIpRanges, transformedRange)
+	}
+
+	transformed.AllowedIpRanges = allowedIpRanges
+	return transformed, nil
+}
+
+func expandComposerEnvironmentConfigMasterAuthorizedNetworksConfig(v interface{}, d *schema.ResourceData, config *Config) (*composer.MasterAuthorizedNetworksConfig, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	cidrBlocksRaw := original["cidr_blocks"].(*schema.Set).List()
+
+	transformed := &composer.MasterAuthorizedNetworksConfig{}
+	cidrBlocks := make([]*composer.CidrBlock, 0, len(original))
+
+	for _, originalCidrBlock := range cidrBlocksRaw {
+		originalCidrBlockRaw := originalCidrBlock.(map[string]interface{})
+		transformedCidrBlock := &composer.CidrBlock{}
+		if v, ok := originalCidrBlockRaw["display_name"]; ok {
+			transformedCidrBlock.DisplayName = v.(string)
+		}
+		transformedCidrBlock.CidrBlock = originalCidrBlockRaw["cidr_block"].(string)
+		cidrBlocks = append(cidrBlocks, transformedCidrBlock)
+	}
+	transformed.Enabled = original["enabled"].(bool)
+	transformed.CidrBlocks = cidrBlocks
+	return transformed, nil
+}
+
+func expandComposerEnvironmentConfigDatabaseConfig(v interface{}, d *schema.ResourceData, config *Config) (*composer.DatabaseConfig, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	transformed := &composer.DatabaseConfig{}
+	transformed.MachineType = original["machine_type"].(string)
+
+	return transformed, nil
+}
+
+func expandComposerEnvironmentConfigWebServerConfig(v interface{}, d *schema.ResourceData, config *Config) (*composer.WebServerConfig, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	transformed := &composer.WebServerConfig{}
+	transformed.MachineType = original["machine_type"].(string)
+
+	return transformed, nil
+}
+
+func expandComposerEnvironmentConfigEncryptionConfig(v interface{}, d *schema.ResourceData, config *Config) (*composer.EncryptionConfig, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+
+	transformed := &composer.EncryptionConfig{}
+	transformed.KmsKeyName = original["kms_key_name"].(string)
+
+	return transformed, nil
+}
+
+func expandComposerEnvironmentConfigMaintenanceWindow(v interface{}, d *schema.ResourceData, config *Config) (*composer.MaintenanceWindow, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := &composer.MaintenanceWindow{}
+
+	if v, ok := original["start_time"]; ok {
+		transformed.StartTime = v.(string)
+	}
+
+	if v, ok := original["end_time"]; ok {
+		transformed.EndTime = v.(string)
+	}
+
+	if v, ok := original["recurrence"]; ok {
+		transformed.Recurrence = v.(string)
+	}
+
+	return transformed, nil
+}
+
+func expandComposerEnvironmentConfigWorkloadsConfig(v interface{}, d *schema.ResourceData, config *Config) (*composer.WorkloadsConfig, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := &composer.WorkloadsConfig{}
+
+	if v, ok := original["scheduler"]; ok {
+		if len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
+			transformedScheduler := &composer.SchedulerResource{}
+			originalSchedulerRaw := v.([]interface{})[0].(map[string]interface{})
+			transformedScheduler.Count = int64(originalSchedulerRaw["count"].(int))
+			transformedScheduler.Cpu = originalSchedulerRaw["cpu"].(float64)
+			transformedScheduler.MemoryGb = originalSchedulerRaw["memory_gb"].(float64)
+			transformedScheduler.StorageGb = originalSchedulerRaw["storage_gb"].(float64)
+			transformed.Scheduler = transformedScheduler
+		}
+	}
+
+	if v, ok := original["web_server"]; ok {
+		if len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
+			transformedWebServer := &composer.WebServerResource{}
+			originalWebServerRaw := v.([]interface{})[0].(map[string]interface{})
+			transformedWebServer.Cpu = originalWebServerRaw["cpu"].(float64)
+			transformedWebServer.MemoryGb = originalWebServerRaw["memory_gb"].(float64)
+			transformedWebServer.StorageGb = originalWebServerRaw["storage_gb"].(float64)
+			transformed.WebServer = transformedWebServer
+		}
+	}
+
+	if v, ok := original["worker"]; ok {
+		if len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
+			transformedWorker := &composer.WorkerResource{}
+			originalWorkerRaw := v.([]interface{})[0].(map[string]interface{})
+			transformedWorker.Cpu = originalWorkerRaw["cpu"].(float64)
+			transformedWorker.MemoryGb = originalWorkerRaw["memory_gb"].(float64)
+			transformedWorker.StorageGb = originalWorkerRaw["storage_gb"].(float64)
+			transformedWorker.MinCount = int64(originalWorkerRaw["min_count"].(int))
+			transformedWorker.MaxCount = int64(originalWorkerRaw["max_count"].(int))
+			transformed.Worker = transformedWorker
+		}
+	}
+
+	return transformed, nil
+}
+
+func expandComposerEnvironmentConfigRecoveryConfig(v interface{}, d *schema.ResourceData, config *Config) (*composer.RecoveryConfig, error) {
+	l := v.([]interface{})
+	if len(l) == 0 {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := &composer.RecoveryConfig{}
+
+	if v, ok := original["scheduled_snapshots_config"]; ok {
+		if len(v.([]interface{})) > 0 && v.([]interface{})[0] != nil {
+			transformedScheduledSnapshotsConfig := &composer.ScheduledSnapshotsConfig{}
+			originalScheduledSnapshotsConfigRaw := v.([]interface{})[0].(map[string]interface{})
+			transformedScheduledSnapshotsConfig.Enabled = originalScheduledSnapshotsConfigRaw["enabled"].(bool)
+			transformedScheduledSnapshotsConfig.SnapshotLocation = originalScheduledSnapshotsConfigRaw["snapshot_location"].(string)
+			transformedScheduledSnapshotsConfig.TimeZone = originalScheduledSnapshotsConfigRaw["time_zone"].(string)
+			transformedScheduledSnapshotsConfig.SnapshotCreationSchedule = originalScheduledSnapshotsConfigRaw["snapshot_creation_schedule"].(string)
+			transformed.ScheduledSnapshotsConfig = transformedScheduledSnapshotsConfig
+		}
+	}
+
+	return transformed, nil
+}
+
+func expandComposerEnvironmentConfigEnvironmentSize(v interface{}, d *schema.ResourceData, config *Config) (string, error) {
+	if v == nil {
+		return "", nil
+	}
+	return v.(string), nil
 }
 
 func expandComposerEnvironmentConfigPrivateEnvironmentConfig(v interface{}, d *schema.ResourceData, config *Config) (*composer.PrivateEnvironmentConfig, error) {
@@ -875,6 +1766,16 @@ func expandComposerEnvironmentConfigPrivateEnvironmentConfig(v interface{}, d *s
 		transformed.WebServerIpv4CidrBlock = v.(string)
 	}
 
+	if v, ok := original["cloud_composer_network_ipv4_cidr_block"]; ok {
+		transformed.CloudComposerNetworkIpv4CidrBlock = v.(string)
+	}
+	if v, ok := original["enable_privately_used_public_ips"]; ok {
+		transformed.EnablePrivatelyUsedPublicIps = v.(bool)
+	}
+	if v, ok := original["cloud_composer_connection_subnetwork"]; ok {
+		transformed.CloudComposerConnectionSubnetwork = v.(string)
+	}
+
 	transformed.PrivateClusterConfig = subBlock
 
 	return transformed, nil
@@ -899,6 +1800,10 @@ func expandComposerEnvironmentConfigNodeConfig(v interface{}, d *schema.Resource
 			return nil, err
 		}
 		transformed.ServiceAccount = transformedServiceAccount
+	}
+
+	if transformedEnableIpMasqAgent, ok := original["enable_ip_masq_agent"]; ok {
+		transformed.EnableIpMasqAgent = transformedEnableIpMasqAgent.(bool)
 	}
 
 	var nodeConfigZone string
@@ -957,7 +1862,7 @@ func expandComposerEnvironmentConfigNodeConfig(v interface{}, d *schema.Resource
 
 func expandComposerEnvironmentIPAllocationPolicy(v interface{}, d *schema.ResourceData, config *Config) (*composer.IPAllocationPolicy, error) {
 	l := v.([]interface{})
-	if len(l) == 0 {
+	if len(l) == 0 || l[0] == nil {
 		return nil, nil
 	}
 	raw := l[0]
@@ -1079,6 +1984,7 @@ func expandComposerEnvironmentConfigSoftwareConfig(v interface{}, d *schema.Reso
 	transformed.PypiPackages = expandComposerEnvironmentConfigSoftwareConfigStringMap(original, "pypi_packages")
 	transformed.EnvVariables = expandComposerEnvironmentConfigSoftwareConfigStringMap(original, "env_variables")
 	transformed.SchedulerCount = int64(original["scheduler_count"].(int))
+
 	return transformed, nil
 }
 
@@ -1130,7 +2036,7 @@ func validateComposerEnvironmentEnvVariables(v interface{}, k string) (ws []stri
 }
 
 func handleComposerEnvironmentCreationOpFailure(id string, envName *composerEnvironmentName, d *schema.ResourceData, config *Config) error {
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1157,7 +2063,7 @@ func handleComposerEnvironmentCreationOpFailure(id string, envName *composerEnvi
 		return fmt.Errorf("Could not delete the invalid created environment with state %q: %s", env.State, err)
 	}
 
-	waitErr := composerOperationWaitTime(
+	waitErr := ComposerOperationWaitTime(
 		config, op, envName.Project,
 		fmt.Sprintf("Deleting invalid created Environment with state %q", env.State), userAgent,
 		d.Timeout(schema.TimeoutCreate))
@@ -1250,48 +2156,87 @@ func composerImageVersionDiffSuppress(_, old, new string, _ *schema.ResourceData
 	versionRe := regexp.MustCompile(composerEnvironmentVersionRegexp)
 	oldVersions := versionRe.FindStringSubmatch(old)
 	newVersions := versionRe.FindStringSubmatch(new)
-	if oldVersions == nil || len(oldVersions) < 4 {
+	if oldVersions == nil || len(oldVersions) < 10 {
 		// Somehow one of the versions didn't match the regexp or didn't
 		// have values in the capturing groups. In that case, fall back to
 		// an equality check.
 		if old != "" {
-			log.Printf("[WARN] Composer version didn't match regexp: %s", old)
+			log.Printf("[WARN] Image version didn't match regexp: %s", old)
 		}
 		return old == new
 	}
-	if newVersions == nil || len(newVersions) < 3 {
+	if newVersions == nil || len(newVersions) < 10 {
 		// Somehow one of the versions didn't match the regexp or didn't
 		// have values in the capturing groups. In that case, fall back to
 		// an equality check.
 		if new != "" {
-			log.Printf("[WARN] Composer version didn't match regexp: %s", new)
+			log.Printf("[WARN] Image version didn't match regexp: %s", new)
 		}
 		return old == new
 	}
 
-	// Check airflow version using the version package to account for
-	// diffs like 1.10 and 1.10.0
-	eq, err := versionsEqual(oldVersions[3], newVersions[3])
-	if err != nil {
-		log.Printf("[WARN] Could not parse airflow version, %s", err)
-	}
-	if !eq {
-		return false
+	oldAirflow := oldVersions[5]
+	oldAirflowMajor := oldVersions[6]
+	oldAirflowMajorMinor := oldVersions[6] + oldVersions[8]
+	newAirflow := newVersions[5]
+	newAirflowMajor := newVersions[6]
+	newAirflowMajorMinor := newVersions[6] + newVersions[8]
+	// Check Airflow versions.
+	if oldAirflow == oldAirflowMajor || newAirflow == newAirflowMajor {
+		// If one of the Airflow versions specifies only major version
+		// (like 1), we can only compare major versions.
+		eq, err := versionsEqual(oldAirflowMajor, newAirflowMajor)
+		if err != nil {
+			log.Printf("[WARN] Could not parse airflow version, %s", err)
+		}
+		if !eq {
+			return false
+		}
+	} else if oldAirflow == oldAirflowMajorMinor || newAirflow == newAirflowMajorMinor {
+		// If one of the Airflow versions specifies only major and minor version
+		// (like 1.10), we can only compare major and minor versions.
+		eq, err := versionsEqual(oldAirflowMajorMinor, newAirflowMajorMinor)
+		if err != nil {
+			log.Printf("[WARN] Could not parse airflow version, %s", err)
+		}
+		if !eq {
+			return false
+		}
+	} else {
+		// Otherwise, we compare the full Airflow versions (like 1.10.15).
+		eq, err := versionsEqual(oldAirflow, newAirflow)
+		if err != nil {
+			log.Printf("[WARN] Could not parse airflow version, %s", err)
+		}
+		if !eq {
+			return false
+		}
 	}
 
-	// Check composer version. Assume that "latest" means we should
-	// suppress the diff, because we don't have any other way of
-	// knowing what the latest version actually is.
-	if oldVersions[1] == "latest" || newVersions[1] == "latest" {
+	oldComposer := oldVersions[1]
+	oldComposerMajor := oldVersions[2]
+	newComposer := newVersions[1]
+	newComposerMajor := newVersions[2]
+	// Check Composer versions.
+	if oldComposer == "latest" || newComposer == "latest" {
+		// We don't know what the latest version is so we suppress the diff.
 		return true
+	} else if oldComposer == oldComposerMajor || newComposer == newComposerMajor {
+		// If one of the Composer versions specifies only major version
+		// (like 1), we can only compare major versions.
+		eq, err := versionsEqual(oldComposerMajor, newComposerMajor)
+		if err != nil {
+			log.Printf("[WARN] Could not parse composer version, %s", err)
+		}
+		return eq
+	} else {
+		// Otherwise, we compare the full Composer versions (like 1.18.1).
+		eq, err := versionsEqual(oldComposer, newComposer)
+		if err != nil {
+			log.Printf("[WARN] Could not parse composer version, %s", err)
+		}
+		return eq
 	}
-	// If neither version is "latest", check them using the version
-	// package like we did for airflow.
-	eq, err = versionsEqual(oldVersions[1], newVersions[1])
-	if err != nil {
-		log.Printf("[WARN] Could not parse composer version, %s", err)
-	}
-	return eq
 }
 
 func versionsEqual(old, new string) (bool, error) {

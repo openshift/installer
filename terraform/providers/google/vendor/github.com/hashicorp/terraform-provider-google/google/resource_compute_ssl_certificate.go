@@ -18,14 +18,13 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceComputeSslCertificate() *schema.Resource {
+func ResourceComputeSslCertificate() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeSslCertificateCreate,
 		Read:   resourceComputeSslCertificateRead,
@@ -36,8 +35,8 @@ func resourceComputeSslCertificate() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -69,7 +68,7 @@ The chain must include at least one intermediate cert.`,
 				Computed:     true,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validateGCPName,
+				ValidateFunc: validateGCEName,
 				Description: `Name of the resource. Provided by the client when the resource is
 created. The name must be 1-63 characters long, and comply with
 RFC1035. Specifically, the name must be 1-63 characters long and match
@@ -90,6 +89,11 @@ These are in the same namespace as the managed SSL certificates.`,
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Creation timestamp in RFC3339 text format.`,
+			},
+			"expire_time": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Expire time of the certificate in RFC3339 text format.`,
 			},
 			"name_prefix": {
 				Type:          schema.TypeString,
@@ -126,7 +130,7 @@ These are in the same namespace as the managed SSL certificates.`,
 
 func resourceComputeSslCertificateCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -176,7 +180,7 @@ func resourceComputeSslCertificateCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating SslCertificate: %s", err)
 	}
@@ -188,7 +192,7 @@ func resourceComputeSslCertificateCreate(d *schema.ResourceData, meta interface{
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating SslCertificate", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -205,7 +209,7 @@ func resourceComputeSslCertificateCreate(d *schema.ResourceData, meta interface{
 
 func resourceComputeSslCertificateRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -228,7 +232,7 @@ func resourceComputeSslCertificateRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeSslCertificate %q", d.Id()))
 	}
@@ -246,6 +250,9 @@ func resourceComputeSslCertificateRead(d *schema.ResourceData, meta interface{})
 	if err := d.Set("description", flattenComputeSslCertificateDescription(res["description"], d, config)); err != nil {
 		return fmt.Errorf("Error reading SslCertificate: %s", err)
 	}
+	if err := d.Set("expire_time", flattenComputeSslCertificateExpireTime(res["expireTime"], d, config)); err != nil {
+		return fmt.Errorf("Error reading SslCertificate: %s", err)
+	}
 	if err := d.Set("certificate_id", flattenComputeSslCertificateCertificateId(res["id"], d, config)); err != nil {
 		return fmt.Errorf("Error reading SslCertificate: %s", err)
 	}
@@ -261,7 +268,7 @@ func resourceComputeSslCertificateRead(d *schema.ResourceData, meta interface{})
 
 func resourceComputeSslCertificateDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -287,12 +294,12 @@ func resourceComputeSslCertificateDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "SslCertificate")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting SslCertificate", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -336,10 +343,14 @@ func flattenComputeSslCertificateDescription(v interface{}, d *schema.ResourceDa
 	return v
 }
 
+func flattenComputeSslCertificateExpireTime(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenComputeSslCertificateCertificateId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}

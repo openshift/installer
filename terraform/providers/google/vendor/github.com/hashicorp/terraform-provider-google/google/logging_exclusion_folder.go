@@ -27,7 +27,7 @@ type FolderLoggingExclusionUpdater struct {
 func NewFolderLoggingExclusionUpdater(d *schema.ResourceData, config *Config) (ResourceLoggingExclusionUpdater, error) {
 	folder := parseFolderId(d.Get("folder"))
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func NewFolderLoggingExclusionUpdater(d *schema.ResourceData, config *Config) (R
 	}, nil
 }
 
-func folderLoggingExclusionIdParseFunc(d *schema.ResourceData, _ *Config) error {
+func FolderLoggingExclusionIdParseFunc(d *schema.ResourceData, _ *Config) error {
 	loggingExclusionId, err := parseLoggingExclusionId(d.Id())
 	if err != nil {
 		return err

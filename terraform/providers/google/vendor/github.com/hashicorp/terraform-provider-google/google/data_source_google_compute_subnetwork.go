@@ -7,7 +7,7 @@ import (
 	"google.golang.org/api/compute/v1"
 )
 
-func dataSourceGoogleComputeSubnetwork() *schema.Resource {
+func DataSourceGoogleComputeSubnetwork() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleComputeSubnetworkRead,
 
@@ -74,7 +74,7 @@ func dataSourceGoogleComputeSubnetwork() *schema.Resource {
 
 func dataSourceGoogleComputeSubnetworkRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

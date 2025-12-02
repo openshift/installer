@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -25,7 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceDialogflowCXFlow() *schema.Resource {
+func ResourceDialogflowCXFlow() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceDialogflowCXFlowCreate,
 		Read:   resourceDialogflowCXFlowRead,
@@ -39,7 +40,7 @@ func resourceDialogflowCXFlow() *schema.Resource {
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(40 * time.Minute),
 			Update: schema.DefaultTimeout(40 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -72,13 +73,13 @@ Unlike transitionRoutes, these handlers are evaluated on a first-match basis. Th
 						"target_flow": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Description: `The target flow to transition to. 
+							Description: `The target flow to transition to.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/flows/<Flow ID>.`,
 						},
 						"target_page": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Description: `The target page to transition to. 
+							Description: `The target page to transition to.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/flows/<Flow ID>/pages/<Page ID>.`,
 						},
 						"trigger_fulfillment": {
@@ -167,13 +168,13 @@ If not specified, the agent's default language is used. Many languages are suppo
 						"classification_threshold": {
 							Type:     schema.TypeFloat,
 							Optional: true,
-							Description: `To filter out false positive results and still get variety in matched natural language inputs for your agent, you can tune the machine learning classification threshold. 
+							Description: `To filter out false positive results and still get variety in matched natural language inputs for your agent, you can tune the machine learning classification threshold.
 If the returned score value is less than the threshold value, then a no-match event will be triggered. The score values range from 0.0 (completely uncertain) to 1.0 (completely certain). If set to 0.0, the default of 0.3 is used.`,
 						},
 						"model_training_mode": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"MODEL_TRAINING_MODE_AUTOMATIC", "MODEL_TRAINING_MODE_MANUAL", ""}, false),
+							ValidateFunc: validateEnum([]string{"MODEL_TRAINING_MODE_AUTOMATIC", "MODEL_TRAINING_MODE_MANUAL", ""}),
 							Description: `Indicates NLU model training mode.
 * MODEL_TRAINING_MODE_AUTOMATIC: NLU model training is automatically triggered when a flow gets modified. User can also manually trigger model training in this mode.
 * MODEL_TRAINING_MODE_MANUAL: User needs to manually trigger NLU model training. Best for large flows whose models take long time to train. Possible values: ["MODEL_TRAINING_MODE_AUTOMATIC", "MODEL_TRAINING_MODE_MANUAL"]`,
@@ -181,7 +182,7 @@ If the returned score value is less than the threshold value, then a no-match ev
 						"model_type": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"MODEL_TYPE_STANDARD", "MODEL_TYPE_ADVANCED", ""}, false),
+							ValidateFunc: validateEnum([]string{"MODEL_TYPE_STANDARD", "MODEL_TYPE_ADVANCED", ""}),
 							Description: `Indicates the type of NLU model.
 * MODEL_TYPE_STANDARD: Use standard NLU model.
 * MODEL_TYPE_ADVANCED: Use advanced NLU model. Possible values: ["MODEL_TYPE_STANDARD", "MODEL_TYPE_ADVANCED"]`,
@@ -193,7 +194,7 @@ If the returned score value is less than the threshold value, then a no-match ev
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Description: `The agent to create a flow for. 
+				Description: `The agent to create a flow for.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>.`,
 			},
 			"transition_route_groups": {
@@ -213,7 +214,7 @@ Format:projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/flows/<Fl
 				Description: `A flow's transition routes serve two purposes:
 They are responsible for matching the user's first utterances in the flow.
 They are inherited by every page's [transition routes][Page.transition_routes] and can support use cases such as the user saying "help" or "can I talk to a human?", which can be handled in a common way regardless of the current page. Transition routes defined in the page have higher priority than those defined in the flow.
-  
+
 TransitionRoutes are evalauted in the following order:
   TransitionRoutes with intent specified.
   TransitionRoutes with only condition specified.
@@ -229,19 +230,19 @@ At least one of intent or condition must be specified. When both intent and cond
 						"intent": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Description: `The unique identifier of an Intent. 
+							Description: `The unique identifier of an Intent.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/intents/<Intent ID>. Indicates that the transition can only happen when the given intent is matched. At least one of intent or condition must be specified. When both intent and condition are specified, the transition can only happen when both are fulfilled.`,
 						},
 						"target_flow": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Description: `The target flow to transition to. 
+							Description: `The target flow to transition to.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/flows/<Flow ID>.`,
 						},
 						"target_page": {
 							Type:     schema.TypeString,
 							Optional: true,
-							Description: `The target page to transition to. 
+							Description: `The target page to transition to.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/flows/<Flow ID>/pages/<Page ID>.`,
 						},
 						"trigger_fulfillment": {
@@ -312,7 +313,7 @@ Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/flows/<F
 			"name": {
 				Type:     schema.TypeString,
 				Computed: true,
-				Description: `The unique identifier of the flow. 
+				Description: `The unique identifier of the flow.
 Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/flows/<Flow ID>.`,
 			},
 		},
@@ -322,7 +323,7 @@ Format: projects/<Project ID>/locations/<Location ID>/agents/<Agent ID>/flows/<F
 
 func resourceDialogflowCXFlowCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -384,7 +385,21 @@ func resourceDialogflowCXFlowCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	// extract location from the parent
+	location := ""
+
+	if parts := regexp.MustCompile(`locations\/([^\/]*)\/`).FindStringSubmatch(d.Get("parent").(string)); parts != nil {
+		location = parts[1]
+	} else {
+		return fmt.Errorf(
+			"Saw %s when the parent is expected to contains location %s",
+			d.Get("parent"),
+			"projects/{{project}}/locations/{{location}}/...",
+		)
+	}
+
+	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Flow: %s", err)
 	}
@@ -406,7 +421,7 @@ func resourceDialogflowCXFlowCreate(d *schema.ResourceData, meta interface{}) er
 
 func resourceDialogflowCXFlowRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -423,7 +438,21 @@ func resourceDialogflowCXFlowRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	// extract location from the parent
+	location := ""
+
+	if parts := regexp.MustCompile(`locations\/([^\/]*)\/`).FindStringSubmatch(d.Get("parent").(string)); parts != nil {
+		location = parts[1]
+	} else {
+		return fmt.Errorf(
+			"Saw %s when the parent is expected to contains location %s",
+			d.Get("parent"),
+			"projects/{{project}}/locations/{{location}}/...",
+		)
+	}
+
+	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("DialogflowCXFlow %q", d.Id()))
 	}
@@ -458,7 +487,7 @@ func resourceDialogflowCXFlowRead(d *schema.ResourceData, meta interface{}) erro
 
 func resourceDialogflowCXFlowUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -541,12 +570,27 @@ func resourceDialogflowCXFlowUpdate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
+	// extract location from the parent
+	location := ""
+
+	if parts := regexp.MustCompile(`locations\/([^\/]*)\/`).FindStringSubmatch(d.Get("parent").(string)); parts != nil {
+		location = parts[1]
+	} else {
+		return fmt.Errorf(
+			"Saw %s when the parent is expected to contains location %s",
+			d.Get("parent"),
+			"projects/{{project}}/locations/{{location}}/...",
+		)
+	}
+
+	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
+
 	// err == nil indicates that the billing_project value was found
 	if bp, err := getBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Flow %q: %s", d.Id(), err)
@@ -559,7 +603,7 @@ func resourceDialogflowCXFlowUpdate(d *schema.ResourceData, meta interface{}) er
 
 func resourceDialogflowCXFlowDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -572,6 +616,21 @@ func resourceDialogflowCXFlowDelete(d *schema.ResourceData, meta interface{}) er
 	}
 
 	var obj map[string]interface{}
+
+	// extract location from the parent
+	location := ""
+
+	if parts := regexp.MustCompile(`locations\/([^\/]*)\/`).FindStringSubmatch(d.Get("parent").(string)); parts != nil {
+		location = parts[1]
+	} else {
+		return fmt.Errorf(
+			"Saw %s when the parent is expected to contains location %s",
+			d.Get("parent"),
+			"projects/{{project}}/locations/{{location}}/...",
+		)
+	}
+
+	url = strings.Replace(url, "-dialogflow", fmt.Sprintf("%s-dialogflow", location), 1)
 	log.Printf("[DEBUG] Deleting Flow %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
@@ -579,7 +638,7 @@ func resourceDialogflowCXFlowDelete(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Flow")
 	}

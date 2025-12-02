@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC.
+// Copyright 2023 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,35 +8,35 @@
 //
 // For product documentation, see: https://cloud.google.com/appengine/docs/admin-api/
 //
-// Creating a client
+// # Creating a client
 //
 // Usage example:
 //
-//   import "google.golang.org/api/appengine/v1"
-//   ...
-//   ctx := context.Background()
-//   appengineService, err := appengine.NewService(ctx)
+//	import "google.golang.org/api/appengine/v1"
+//	...
+//	ctx := context.Background()
+//	appengineService, err := appengine.NewService(ctx)
 //
 // In this example, Google Application Default Credentials are used for authentication.
 //
 // For information on how to create and obtain Application Default Credentials, see https://developers.google.com/identity/protocols/application-default-credentials.
 //
-// Other authentication options
+// # Other authentication options
 //
 // By default, all available scopes (see "Constants") are used to authenticate. To restrict scopes, use option.WithScopes:
 //
-//   appengineService, err := appengine.NewService(ctx, option.WithScopes(appengine.CloudPlatformReadOnlyScope))
+//	appengineService, err := appengine.NewService(ctx, option.WithScopes(appengine.CloudPlatformReadOnlyScope))
 //
 // To use an API key for authentication (note: some APIs do not support API keys), use option.WithAPIKey:
 //
-//   appengineService, err := appengine.NewService(ctx, option.WithAPIKey("AIza..."))
+//	appengineService, err := appengine.NewService(ctx, option.WithAPIKey("AIza..."))
 //
 // To use an OAuth token (e.g., a user token obtained via a three-legged OAuth flow), use option.WithTokenSource:
 //
-//   config := &oauth2.Config{...}
-//   // ...
-//   token, err := config.Exchange(ctx, ...)
-//   appengineService, err := appengine.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, token)))
+//	config := &oauth2.Config{...}
+//	// ...
+//	token, err := config.Exchange(ctx, ...)
+//	appengineService, err := appengine.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, token)))
 //
 // See https://godoc.org/google.golang.org/api/option/ for details on options.
 package appengine // import "google.golang.org/api/appengine/v1"
@@ -54,6 +54,7 @@ import (
 	"strings"
 
 	googleapi "google.golang.org/api/googleapi"
+	internal "google.golang.org/api/internal"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
 	internaloption "google.golang.org/api/option/internaloption"
@@ -97,7 +98,7 @@ const (
 
 // NewService creates a new APIService.
 func NewService(ctx context.Context, opts ...option.ClientOption) (*APIService, error) {
-	scopesOption := option.WithScopes(
+	scopesOption := internaloption.WithDefaultScopes(
 		"https://www.googleapis.com/auth/appengine.admin",
 		"https://www.googleapis.com/auth/cloud-platform",
 		"https://www.googleapis.com/auth/cloud-platform.read-only",
@@ -131,6 +132,7 @@ func New(client *http.Client) (*APIService, error) {
 	}
 	s := &APIService{client: client, BasePath: basePath}
 	s.Apps = NewAppsService(s)
+	s.Projects = NewProjectsService(s)
 	return s, nil
 }
 
@@ -140,6 +142,8 @@ type APIService struct {
 	UserAgent string // optional additional User-Agent fragment
 
 	Apps *AppsService
+
+	Projects *ProjectsService
 }
 
 func (s *APIService) userAgent() string {
@@ -278,9 +282,41 @@ type AppsServicesVersionsInstancesService struct {
 	s *APIService
 }
 
+func NewProjectsService(s *APIService) *ProjectsService {
+	rs := &ProjectsService{s: s}
+	rs.Locations = NewProjectsLocationsService(s)
+	return rs
+}
+
+type ProjectsService struct {
+	s *APIService
+
+	Locations *ProjectsLocationsService
+}
+
+func NewProjectsLocationsService(s *APIService) *ProjectsLocationsService {
+	rs := &ProjectsLocationsService{s: s}
+	rs.Applications = NewProjectsLocationsApplicationsService(s)
+	return rs
+}
+
+type ProjectsLocationsService struct {
+	s *APIService
+
+	Applications *ProjectsLocationsApplicationsService
+}
+
+func NewProjectsLocationsApplicationsService(s *APIService) *ProjectsLocationsApplicationsService {
+	rs := &ProjectsLocationsApplicationsService{s: s}
+	return rs
+}
+
+type ProjectsLocationsApplicationsService struct {
+	s *APIService
+}
+
 // ApiConfigHandler: Google Cloud Endpoints
-// (https://cloud.google.com/appengine/docs/python/endpoints/)
-// configuration for API handlers.
+// (https://cloud.google.com/endpoints) configuration for API handlers.
 type ApiConfigHandler struct {
 	// AuthFailAction: Action to take when users access resources that
 	// require authentication. Defaults to redirect.
@@ -1219,15 +1255,14 @@ func (s *DomainMapping) MarshalJSON() ([]byte, error) {
 // duplicated empty messages in your APIs. A typical example is to use
 // it as the request or the response type of an API method. For
 // instance: service Foo { rpc Bar(google.protobuf.Empty) returns
-// (google.protobuf.Empty); } The JSON representation for Empty is empty
-// JSON object {}.
+// (google.protobuf.Empty); }
 type Empty struct {
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
 }
 
-// EndpointsApiService: Cloud Endpoints
+// EndpointsApiService: Google Cloud Endpoints
 // (https://cloud.google.com/endpoints) configuration. The Endpoints API
 // Service provides tooling for serving Open API and gRPC endpoints via
 // an NGINX proxy. Only valid for App Engine Flexible environment
@@ -1500,6 +1535,40 @@ type FirewallRule struct {
 
 func (s *FirewallRule) MarshalJSON() ([]byte, error) {
 	type NoMethod FirewallRule
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// FlexibleRuntimeSettings: Runtime settings for the App Engine flexible
+// environment.
+type FlexibleRuntimeSettings struct {
+	// OperatingSystem: The operating system of the application runtime.
+	OperatingSystem string `json:"operatingSystem,omitempty"`
+
+	// RuntimeVersion: The runtime version of an App Engine flexible
+	// application.
+	RuntimeVersion string `json:"runtimeVersion,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "OperatingSystem") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "OperatingSystem") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *FlexibleRuntimeSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod FlexibleRuntimeSettings
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2387,6 +2456,17 @@ type Network struct {
 	// App Engine flexible environment.
 	ForwardedPorts []string `json:"forwardedPorts,omitempty"`
 
+	// InstanceIpMode: The IP mode for instances. Only applicable in the App
+	// Engine flexible environment.
+	//
+	// Possible values:
+	//   "INSTANCE_IP_MODE_UNSPECIFIED" - Unspecified is treated as
+	// EXTERNAL.
+	//   "EXTERNAL" - Instances are created with both internal and external
+	// IP addresses.
+	//   "INTERNAL" - Instances are created with internal IP addresses only.
+	InstanceIpMode string `json:"instanceIpMode,omitempty"`
+
 	// InstanceTag: Tag to apply to the instance during creation. Only
 	// applicable in the App Engine flexible environment.
 	InstanceTag string `json:"instanceTag,omitempty"`
@@ -2747,6 +2827,200 @@ func (s *OperationMetadataV1Beta) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ProjectEvent: The request sent to CLHs during project events.
+type ProjectEvent struct {
+	// EventId: The unique ID for this project event. CLHs can use this
+	// value to dedup repeated calls. required
+	EventId string `json:"eventId,omitempty"`
+
+	// Possible values:
+	//   "UNKNOWN"
+	//   "BEFORE_RESOURCE_HANDLING"
+	//   "AFTER_RESOURCE_HANDLING"
+	Phase string `json:"phase,omitempty"`
+
+	// ProjectMetadata: The projects metadata for this project. required
+	ProjectMetadata *ProjectsMetadata `json:"projectMetadata,omitempty"`
+
+	// State: The state of the project that led to this event.
+	State *ProjectState `json:"state,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "EventId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EventId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ProjectEvent) MarshalJSON() ([]byte, error) {
+	type NoMethod ProjectEvent
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ProjectState: ProjectState contains the externally-visible project
+// state that is used to communicate the state and reasoning for that
+// state to the CLH. This data is not persisted by CCFE, but is instead
+// derived from CCFE's internal representation of the project state.
+type ProjectState struct {
+	CurrentReasons *Reasons `json:"currentReasons,omitempty"`
+
+	// PreviousReasons: The previous and current reasons for a project state
+	// will be sent for a project event. CLHs that need to know the signal
+	// that caused the project event to trigger (edges) as opposed to just
+	// knowing the state can act upon differences in the previous and
+	// current reasons.Reasons will be provided for every system: service
+	// management, data governance, abuse, and billing.If this is a
+	// CCFE-triggered event used for reconciliation then the current reasons
+	// will be set to their *_CONTROL_PLANE_SYNC state. The previous reasons
+	// will contain the last known set of non-unknown non-control_plane_sync
+	// reasons for the state.Reasons fields are deprecated. New tenants
+	// should only use the state field. If you must know the reason(s)
+	// behind a specific state, please consult with CCFE team first
+	// (cloud-ccfe-discuss@google.com).
+	PreviousReasons *Reasons `json:"previousReasons,omitempty"`
+
+	// State: The current state of the project. This state is the
+	// culmination of all of the opinions from external systems that CCFE
+	// knows about of the project.
+	//
+	// Possible values:
+	//   "UNKNOWN_STATE" - A project should never be in an unknown state.
+	// Receipt of a project with this state is an error.
+	//   "ON" - CCFE considers the project to be serving or transitioning
+	// into serving.
+	//   "OFF" - CCFE considers the project to be in an OFF state. This
+	// could occur due to various factors. The state could be triggered by
+	// Google-internal audits (ex. abuse suspension, billing closed) or
+	// cleanups trigged by compliance systems (ex. data governance hide).
+	// User-initiated events such as service management deactivation trigger
+	// a project to an OFF state.CLHs might choose to do nothing in this
+	// case or to turn off costly resources. CLHs need to consider the
+	// customer experience if an ON/OFF/ON sequence of state transitions
+	// occurs vs. the cost of deleting resources, keeping metadata about
+	// resources, or even keeping resources live for a period of time.CCFE
+	// will not send any new customer requests to the CLH when the project
+	// is in an OFF state. However, CCFE will allow all previous customer
+	// requests relayed to CLH to complete.
+	//   "DELETED" - This state indicates that the project has been (or is
+	// being) completely removed. This is often due to a data governance
+	// purge request and therefore resources should be deleted when this
+	// state is reached.
+	State string `json:"state,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CurrentReasons") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CurrentReasons") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ProjectState) MarshalJSON() ([]byte, error) {
+	type NoMethod ProjectState
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ProjectsMetadata: ProjectsMetadata is the metadata CCFE stores about
+// the all the relevant projects (tenant, consumer, producer).
+type ProjectsMetadata struct {
+	// ConsumerProjectId: The consumer project id.
+	ConsumerProjectId string `json:"consumerProjectId,omitempty"`
+
+	// ConsumerProjectNumber: The consumer project number.
+	ConsumerProjectNumber int64 `json:"consumerProjectNumber,omitempty,string"`
+
+	// ConsumerProjectState: The CCFE state of the consumer project. It is
+	// the same state that is communicated to the CLH during project events.
+	// Notice that this field is not set in the DB, it is only set in this
+	// proto when communicated to CLH in the side channel.
+	//
+	// Possible values:
+	//   "UNKNOWN_STATE" - A project should never be in an unknown state.
+	// Receipt of a project with this state is an error.
+	//   "ON" - CCFE considers the project to be serving or transitioning
+	// into serving.
+	//   "OFF" - CCFE considers the project to be in an OFF state. This
+	// could occur due to various factors. The state could be triggered by
+	// Google-internal audits (ex. abuse suspension, billing closed) or
+	// cleanups trigged by compliance systems (ex. data governance hide).
+	// User-initiated events such as service management deactivation trigger
+	// a project to an OFF state.CLHs might choose to do nothing in this
+	// case or to turn off costly resources. CLHs need to consider the
+	// customer experience if an ON/OFF/ON sequence of state transitions
+	// occurs vs. the cost of deleting resources, keeping metadata about
+	// resources, or even keeping resources live for a period of time.CCFE
+	// will not send any new customer requests to the CLH when the project
+	// is in an OFF state. However, CCFE will allow all previous customer
+	// requests relayed to CLH to complete.
+	//   "DELETED" - This state indicates that the project has been (or is
+	// being) completely removed. This is often due to a data governance
+	// purge request and therefore resources should be deleted when this
+	// state is reached.
+	ConsumerProjectState string `json:"consumerProjectState,omitempty"`
+
+	// P4ServiceAccount: The service account authorized to operate on the
+	// consumer project. Note: CCFE only propagates P4SA with default tag to
+	// CLH.
+	P4ServiceAccount string `json:"p4ServiceAccount,omitempty"`
+
+	// ProducerProjectId: The producer project id.
+	ProducerProjectId string `json:"producerProjectId,omitempty"`
+
+	// ProducerProjectNumber: The producer project number.
+	ProducerProjectNumber int64 `json:"producerProjectNumber,omitempty,string"`
+
+	// TenantProjectId: The tenant project id.
+	TenantProjectId string `json:"tenantProjectId,omitempty"`
+
+	// TenantProjectNumber: The tenant project number.
+	TenantProjectNumber int64 `json:"tenantProjectNumber,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "ConsumerProjectId")
+	// to unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ConsumerProjectId") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ProjectsMetadata) MarshalJSON() ([]byte, error) {
+	type NoMethod ProjectsMetadata
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ReadinessCheck: Readiness checking configuration for VM instances.
 // Unhealthy instances are removed from traffic rotation.
 type ReadinessCheck struct {
@@ -2796,6 +3070,115 @@ type ReadinessCheck struct {
 
 func (s *ReadinessCheck) MarshalJSON() ([]byte, error) {
 	type NoMethod ReadinessCheck
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Reasons: Projects transition between and within states based on
+// reasons sent from various systems. CCFE will provide the CLH with
+// reasons for the current state per system.The current systems that
+// CCFE supports are: Service Management (Inception) Data Governance
+// (Wipeout) Abuse (Ares) Billing (Internal Cloud Billing API)
+type Reasons struct {
+	// Possible values:
+	//   "ABUSE_UNKNOWN_REASON" - An unknown reason indicates that the abuse
+	// system has not sent a signal for this project.
+	//   "ABUSE_CONTROL_PLANE_SYNC" - Due to various reasons CCFE might
+	// proactively restate a project state to a CLH to ensure that the CLH
+	// and CCFE are both aware of the project state. This reason can be tied
+	// to any of the states.
+	//   "SUSPEND" - If a project is deemed abusive we receive a suspend
+	// signal. Suspend is a reason to put the project into an INTERNAL_OFF
+	// state.
+	//   "REINSTATE" - Projects that were once considered abusive can later
+	// be deemed non-abusive. When this happens we must reinstate the
+	// project. Reinstate is a reason to put the project into an ON state.
+	Abuse string `json:"abuse,omitempty"`
+
+	// Possible values:
+	//   "BILLING_UNKNOWN_REASON" - An unknown reason indicates that the
+	// billing system has not sent a signal for this project.
+	//   "BILLING_CONTROL_PLANE_SYNC" - Due to various reasons CCFE might
+	// proactively restate a project state to a CLH to ensure that the CLH
+	// and CCFE are both aware of the project state. This reason can be tied
+	// to any of the states.
+	//   "PROBATION" - Minor infractions cause a probation signal to be
+	// sent. Probation is a reason to put the project into a ON state even
+	// though it is a negative signal. CCFE will block mutations for this
+	// project while it is on billing probation, but the CLH is expected to
+	// serve non-mutation requests.
+	//   "CLOSE" - When a billing account is closed, it is a stronger signal
+	// about non-payment. Close is a reason to put the project into an
+	// INTERNAL_OFF state.
+	//   "OPEN" - Consumers can re-open billing accounts and update accounts
+	// to pull them out of probation. When this happens, we get a signal
+	// that the account is open. Open is a reason to put the project into an
+	// ON state.
+	Billing string `json:"billing,omitempty"`
+
+	// Possible values:
+	//   "DATA_GOVERNANCE_UNKNOWN_REASON" - An unknown reason indicates that
+	// data governance has not sent a signal for this project.
+	//   "DATA_GOVERNANCE_CONTROL_PLANE_SYNC" - Due to various reasons CCFE
+	// might proactively restate a project state to a CLH to ensure that the
+	// CLH and CCFE are both aware of the project state. This reason can be
+	// tied to any of the states.
+	//   "HIDE" - When a project is deleted we retain some data for a period
+	// of time to allow the consumer to change their mind. Data governance
+	// sends a signal to hide the data when this occurs. Hide is a reason to
+	// put the project in an INTERNAL_OFF state.
+	//   "UNHIDE" - The decision to un-delete a project can be made. When
+	// this happens data governance tells us to unhide any hidden data.
+	// Unhide is a reason to put the project in an ON state.
+	//   "PURGE" - After a period of time data must be completely removed
+	// from our systems. When data governance sends a purge signal we need
+	// to remove data. Purge is a reason to put the project in a DELETED
+	// state. Purge is the only event that triggers a delete mutation. All
+	// other events have update semantics.
+	DataGovernance string `json:"dataGovernance,omitempty"`
+
+	// Possible values:
+	//   "SERVICE_MANAGEMENT_UNKNOWN_REASON" - An unknown reason indicates
+	// that we have not received a signal from service management about this
+	// project. Since projects are created by request of service management,
+	// this reason should never be set.
+	//   "SERVICE_MANAGEMENT_CONTROL_PLANE_SYNC" - Due to various reasons
+	// CCFE might proactively restate a project state to a CLH to ensure
+	// that the CLH and CCFE are both aware of the project state. This
+	// reason can be tied to any of the states.
+	//   "ACTIVATION" - When a customer activates an API CCFE notifies the
+	// CLH and sets the project to the ON state.
+	//   "PREPARE_DEACTIVATION" - When a customer deactivates and API
+	// service management starts a two-step process to perform the
+	// deactivation. The first step is to prepare. Prepare is a reason to
+	// put the project in a EXTERNAL_OFF state.
+	//   "ABORT_DEACTIVATION" - If the deactivation is cancelled, service
+	// managed needs to abort the deactivation. Abort is a reason to put the
+	// project in an ON state.
+	//   "COMMIT_DEACTIVATION" - If the deactivation is followed through
+	// with, service management needs to finish deactivation. Commit is a
+	// reason to put the project in a DELETED state.
+	ServiceManagement string `json:"serviceManagement,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Abuse") to
+	// unconditionally include in API requests. By default, fields with
+	// empty or default values are omitted from API requests. However, any
+	// non-pointer, non-interface field appearing in ForceSendFields will be
+	// sent to the server regardless of whether the field is empty or not.
+	// This may be used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Abuse") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Reasons) MarshalJSON() ([]byte, error) {
+	type NoMethod Reasons
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3462,9 +3845,13 @@ func (s *UrlMap) MarshalJSON() ([]byte, error) {
 // configuration files that are deployed into a service.
 type Version struct {
 	// ApiConfig: Serving configuration for Google Cloud Endpoints
-	// (https://cloud.google.com/appengine/docs/python/endpoints/).Only
-	// returned in GET requests if view=FULL is set.
+	// (https://cloud.google.com/endpoints).Only returned in GET requests if
+	// view=FULL is set.
 	ApiConfig *ApiConfigHandler `json:"apiConfig,omitempty"`
+
+	// AppEngineApis: Allows App Engine second generation runtimes to access
+	// the legacy bundled services.
+	AppEngineApis bool `json:"appEngineApis,omitempty"`
 
 	// AutomaticScaling: Automatic scaling is based on request rate,
 	// response latencies, and other application metrics. Instances are
@@ -3529,6 +3916,9 @@ type Version struct {
 	// ErrorHandlers: Custom static error pages. Limited to 10KB per
 	// page.Only returned in GET requests if view=FULL is set.
 	ErrorHandlers []*ErrorHandler `json:"errorHandlers,omitempty"`
+
+	// FlexibleRuntimeSettings: Settings for App Engine flexible runtimes.
+	FlexibleRuntimeSettings *FlexibleRuntimeSettings `json:"flexibleRuntimeSettings,omitempty"`
 
 	// Handlers: An ordered list of URL-matching patterns that should be
 	// applied to incoming requests. The first matching URL handles the
@@ -3870,7 +4260,7 @@ func (c *AppsCreateCall) Header() http.Header {
 
 func (c *AppsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3907,17 +4297,17 @@ func (c *AppsCreateCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -3964,8 +4354,8 @@ type AppsGetCall struct {
 
 // Get: Gets information about an application.
 //
-// - appsId: Part of `name`. Name of the Application resource to get.
-//   Example: apps/myapp.
+//   - appsId: Part of `name`. Name of the Application resource to get.
+//     Example: apps/myapp.
 func (r *AppsService) Get(appsId string) *AppsGetCall {
 	c := &AppsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -4009,7 +4399,7 @@ func (c *AppsGetCall) Header() http.Header {
 
 func (c *AppsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4047,17 +4437,17 @@ func (c *AppsGetCall) Do(opts ...googleapi.CallOption) (*Application, error) {
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Application{
 		ServerResponse: googleapi.ServerResponse{
@@ -4116,8 +4506,8 @@ type AppsPatchCall struct {
 // - Cookie expiration policy for the application. iap - Identity-Aware
 // Proxy properties for the application.
 //
-// - appsId: Part of `name`. Name of the Application resource to update.
-//   Example: apps/myapp.
+//   - appsId: Part of `name`. Name of the Application resource to update.
+//     Example: apps/myapp.
 func (r *AppsService) Patch(appsId string, application *Application) *AppsPatchCall {
 	c := &AppsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -4159,7 +4549,7 @@ func (c *AppsPatchCall) Header() http.Header {
 
 func (c *AppsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4199,17 +4589,17 @@ func (c *AppsPatchCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -4280,8 +4670,8 @@ type AppsRepairCall struct {
 // . If the deletion was recent, the numeric ID can be found in the
 // Cloud Console Activity Log.
 //
-// - appsId: Part of `name`. Name of the application to repair. Example:
-//   apps/myapp.
+//   - appsId: Part of `name`. Name of the application to repair. Example:
+//     apps/myapp.
 func (r *AppsService) Repair(appsId string, repairapplicationrequest *RepairApplicationRequest) *AppsRepairCall {
 	c := &AppsRepairCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -4316,7 +4706,7 @@ func (c *AppsRepairCall) Header() http.Header {
 
 func (c *AppsRepairCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4356,17 +4746,17 @@ func (c *AppsRepairCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -4422,8 +4812,8 @@ type AppsAuthorizedCertificatesCreateCall struct {
 
 // Create: Uploads the specified SSL certificate.
 //
-// - appsId: Part of `parent`. Name of the parent Application resource.
-//   Example: apps/myapp.
+//   - appsId: Part of `parent`. Name of the parent Application resource.
+//     Example: apps/myapp.
 func (r *AppsAuthorizedCertificatesService) Create(appsId string, authorizedcertificate *AuthorizedCertificate) *AppsAuthorizedCertificatesCreateCall {
 	c := &AppsAuthorizedCertificatesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -4458,7 +4848,7 @@ func (c *AppsAuthorizedCertificatesCreateCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4498,17 +4888,17 @@ func (c *AppsAuthorizedCertificatesCreateCall) Do(opts ...googleapi.CallOption) 
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &AuthorizedCertificate{
 		ServerResponse: googleapi.ServerResponse{
@@ -4564,10 +4954,10 @@ type AppsAuthorizedCertificatesDeleteCall struct {
 
 // Delete: Deletes the specified SSL certificate.
 //
-// - appsId: Part of `name`. Name of the resource to delete. Example:
-//   apps/myapp/authorizedCertificates/12345.
-// - authorizedCertificatesId: Part of `name`. See documentation of
-//   `appsId`.
+//   - appsId: Part of `name`. Name of the resource to delete. Example:
+//     apps/myapp/authorizedCertificates/12345.
+//   - authorizedCertificatesId: Part of `name`. See documentation of
+//     `appsId`.
 func (r *AppsAuthorizedCertificatesService) Delete(appsId string, authorizedCertificatesId string) *AppsAuthorizedCertificatesDeleteCall {
 	c := &AppsAuthorizedCertificatesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -4602,7 +4992,7 @@ func (c *AppsAuthorizedCertificatesDeleteCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4638,17 +5028,17 @@ func (c *AppsAuthorizedCertificatesDeleteCall) Do(opts ...googleapi.CallOption) 
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Empty{
 		ServerResponse: googleapi.ServerResponse{
@@ -4709,10 +5099,10 @@ type AppsAuthorizedCertificatesGetCall struct {
 
 // Get: Gets the specified SSL certificate.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/authorizedCertificates/12345.
-// - authorizedCertificatesId: Part of `name`. See documentation of
-//   `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/authorizedCertificates/12345.
+//   - authorizedCertificatesId: Part of `name`. See documentation of
+//     `appsId`.
 func (r *AppsAuthorizedCertificatesService) Get(appsId string, authorizedCertificatesId string) *AppsAuthorizedCertificatesGetCall {
 	c := &AppsAuthorizedCertificatesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -4724,9 +5114,13 @@ func (r *AppsAuthorizedCertificatesService) Get(appsId string, authorizedCertifi
 // returned in the GET response.
 //
 // Possible values:
-//   "BASIC_CERTIFICATE" - Basic certificate information, including
+//
+//	"BASIC_CERTIFICATE" - Basic certificate information, including
+//
 // applicable domains and expiration date.
-//   "FULL_CERTIFICATE" - The information from BASIC_CERTIFICATE, plus
+//
+//	"FULL_CERTIFICATE" - The information from BASIC_CERTIFICATE, plus
+//
 // detailed information on the domain mappings that have this
 // certificate mapped.
 func (c *AppsAuthorizedCertificatesGetCall) View(view string) *AppsAuthorizedCertificatesGetCall {
@@ -4771,7 +5165,7 @@ func (c *AppsAuthorizedCertificatesGetCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4810,17 +5204,17 @@ func (c *AppsAuthorizedCertificatesGetCall) Do(opts ...googleapi.CallOption) (*A
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &AuthorizedCertificate{
 		ServerResponse: googleapi.ServerResponse{
@@ -4896,8 +5290,8 @@ type AppsAuthorizedCertificatesListCall struct {
 // List: Lists all SSL certificates the user is authorized to
 // administer.
 //
-// - appsId: Part of `parent`. Name of the parent Application resource.
-//   Example: apps/myapp.
+//   - appsId: Part of `parent`. Name of the parent Application resource.
+//     Example: apps/myapp.
 func (r *AppsAuthorizedCertificatesService) List(appsId string) *AppsAuthorizedCertificatesListCall {
 	c := &AppsAuthorizedCertificatesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -4922,9 +5316,13 @@ func (c *AppsAuthorizedCertificatesListCall) PageToken(pageToken string) *AppsAu
 // returned in the LIST response.
 //
 // Possible values:
-//   "BASIC_CERTIFICATE" - Basic certificate information, including
+//
+//	"BASIC_CERTIFICATE" - Basic certificate information, including
+//
 // applicable domains and expiration date.
-//   "FULL_CERTIFICATE" - The information from BASIC_CERTIFICATE, plus
+//
+//	"FULL_CERTIFICATE" - The information from BASIC_CERTIFICATE, plus
+//
 // detailed information on the domain mappings that have this
 // certificate mapped.
 func (c *AppsAuthorizedCertificatesListCall) View(view string) *AppsAuthorizedCertificatesListCall {
@@ -4969,7 +5367,7 @@ func (c *AppsAuthorizedCertificatesListCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5008,17 +5406,17 @@ func (c *AppsAuthorizedCertificatesListCall) Do(opts ...googleapi.CallOption) (*
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListAuthorizedCertificatesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -5123,10 +5521,10 @@ type AppsAuthorizedCertificatesPatchCall struct {
 // same domains as the original certificate. The certificate
 // display_name may also be updated.
 //
-// - appsId: Part of `name`. Name of the resource to update. Example:
-//   apps/myapp/authorizedCertificates/12345.
-// - authorizedCertificatesId: Part of `name`. See documentation of
-//   `appsId`.
+//   - appsId: Part of `name`. Name of the resource to update. Example:
+//     apps/myapp/authorizedCertificates/12345.
+//   - authorizedCertificatesId: Part of `name`. See documentation of
+//     `appsId`.
 func (r *AppsAuthorizedCertificatesService) Patch(appsId string, authorizedCertificatesId string, authorizedcertificate *AuthorizedCertificate) *AppsAuthorizedCertificatesPatchCall {
 	c := &AppsAuthorizedCertificatesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -5170,7 +5568,7 @@ func (c *AppsAuthorizedCertificatesPatchCall) Header() http.Header {
 
 func (c *AppsAuthorizedCertificatesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5211,17 +5609,17 @@ func (c *AppsAuthorizedCertificatesPatchCall) Do(opts ...googleapi.CallOption) (
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &AuthorizedCertificate{
 		ServerResponse: googleapi.ServerResponse{
@@ -5290,8 +5688,8 @@ type AppsAuthorizedDomainsListCall struct {
 
 // List: Lists all domains the user is authorized to administer.
 //
-// - appsId: Part of `parent`. Name of the parent Application resource.
-//   Example: apps/myapp.
+//   - appsId: Part of `parent`. Name of the parent Application resource.
+//     Example: apps/myapp.
 func (r *AppsAuthorizedDomainsService) List(appsId string) *AppsAuthorizedDomainsListCall {
 	c := &AppsAuthorizedDomainsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -5349,7 +5747,7 @@ func (c *AppsAuthorizedDomainsListCall) Header() http.Header {
 
 func (c *AppsAuthorizedDomainsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5387,17 +5785,17 @@ func (c *AppsAuthorizedDomainsListCall) Do(opts ...googleapi.CallOption) (*ListA
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListAuthorizedDomainsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -5487,8 +5885,8 @@ type AppsDomainMappingsCreateCall struct {
 // of available authorized domains, see
 // AuthorizedDomains.ListAuthorizedDomains.
 //
-// - appsId: Part of `parent`. Name of the parent Application resource.
-//   Example: apps/myapp.
+//   - appsId: Part of `parent`. Name of the parent Application resource.
+//     Example: apps/myapp.
 func (r *AppsDomainMappingsService) Create(appsId string, domainmapping *DomainMapping) *AppsDomainMappingsCreateCall {
 	c := &AppsDomainMappingsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -5501,12 +5899,18 @@ func (r *AppsDomainMappingsService) Create(appsId string, domainmapping *DomainM
 // this domain. By default, overrides are rejected.
 //
 // Possible values:
-//   "UNSPECIFIED_DOMAIN_OVERRIDE_STRATEGY" - Strategy unspecified.
+//
+//	"UNSPECIFIED_DOMAIN_OVERRIDE_STRATEGY" - Strategy unspecified.
+//
 // Defaults to STRICT.
-//   "STRICT" - Overrides not allowed. If a mapping already exists for
+//
+//	"STRICT" - Overrides not allowed. If a mapping already exists for
+//
 // the specified domain, the request will return an ALREADY_EXISTS
 // (409).
-//   "OVERRIDE" - Overrides allowed. If a mapping already exists for the
+//
+//	"OVERRIDE" - Overrides allowed. If a mapping already exists for the
+//
 // specified domain, the request will overwrite it. Note that this might
 // stop another Google product from serving. For example, if the domain
 // is mapped to another App Engine application, that app will no longer
@@ -5543,7 +5947,7 @@ func (c *AppsDomainMappingsCreateCall) Header() http.Header {
 
 func (c *AppsDomainMappingsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5583,17 +5987,17 @@ func (c *AppsDomainMappingsCreateCall) Do(opts ...googleapi.CallOption) (*Operat
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -5666,9 +6070,9 @@ type AppsDomainMappingsDeleteCall struct {
 // authorized to administer the associated domain in order to delete a
 // DomainMapping resource.
 //
-// - appsId: Part of `name`. Name of the resource to delete. Example:
-//   apps/myapp/domainMappings/example.com.
-// - domainMappingsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource to delete. Example:
+//     apps/myapp/domainMappings/example.com.
+//   - domainMappingsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsDomainMappingsService) Delete(appsId string, domainMappingsId string) *AppsDomainMappingsDeleteCall {
 	c := &AppsDomainMappingsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -5703,7 +6107,7 @@ func (c *AppsDomainMappingsDeleteCall) Header() http.Header {
 
 func (c *AppsDomainMappingsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5739,17 +6143,17 @@ func (c *AppsDomainMappingsDeleteCall) Do(opts ...googleapi.CallOption) (*Operat
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -5810,9 +6214,9 @@ type AppsDomainMappingsGetCall struct {
 
 // Get: Gets the specified domain mapping.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/domainMappings/example.com.
-// - domainMappingsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/domainMappings/example.com.
+//   - domainMappingsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsDomainMappingsService) Get(appsId string, domainMappingsId string) *AppsDomainMappingsGetCall {
 	c := &AppsDomainMappingsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -5857,7 +6261,7 @@ func (c *AppsDomainMappingsGetCall) Header() http.Header {
 
 func (c *AppsDomainMappingsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5896,17 +6300,17 @@ func (c *AppsDomainMappingsGetCall) Do(opts ...googleapi.CallOption) (*DomainMap
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &DomainMapping{
 		ServerResponse: googleapi.ServerResponse{
@@ -5968,8 +6372,8 @@ type AppsDomainMappingsListCall struct {
 
 // List: Lists the domain mappings on an application.
 //
-// - appsId: Part of `parent`. Name of the parent Application resource.
-//   Example: apps/myapp.
+//   - appsId: Part of `parent`. Name of the parent Application resource.
+//     Example: apps/myapp.
 func (r *AppsDomainMappingsService) List(appsId string) *AppsDomainMappingsListCall {
 	c := &AppsDomainMappingsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -6027,7 +6431,7 @@ func (c *AppsDomainMappingsListCall) Header() http.Header {
 
 func (c *AppsDomainMappingsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6065,17 +6469,17 @@ func (c *AppsDomainMappingsListCall) Do(opts ...googleapi.CallOption) (*ListDoma
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListDomainMappingsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -6167,9 +6571,9 @@ type AppsDomainMappingsPatchCall struct {
 // administer the associated domain in order to update a DomainMapping
 // resource.
 //
-// - appsId: Part of `name`. Name of the resource to update. Example:
-//   apps/myapp/domainMappings/example.com.
-// - domainMappingsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource to update. Example:
+//     apps/myapp/domainMappings/example.com.
+//   - domainMappingsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsDomainMappingsService) Patch(appsId string, domainMappingsId string, domainmapping *DomainMapping) *AppsDomainMappingsPatchCall {
 	c := &AppsDomainMappingsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -6212,7 +6616,7 @@ func (c *AppsDomainMappingsPatchCall) Header() http.Header {
 
 func (c *AppsDomainMappingsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6253,17 +6657,17 @@ func (c *AppsDomainMappingsPatchCall) Do(opts ...googleapi.CallOption) (*Operati
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -6336,8 +6740,8 @@ type AppsFirewallIngressRulesBatchUpdateCall struct {
 // with the '*' wildcard IP range, then an "allow all" rule is
 // explicitly added to the end of the list.
 //
-// - appsId: Part of `name`. Name of the Firewall collection to set.
-//   Example: apps/myapp/firewall/ingressRules.
+//   - appsId: Part of `name`. Name of the Firewall collection to set.
+//     Example: apps/myapp/firewall/ingressRules.
 func (r *AppsFirewallIngressRulesService) BatchUpdate(appsId string, batchupdateingressrulesrequest *BatchUpdateIngressRulesRequest) *AppsFirewallIngressRulesBatchUpdateCall {
 	c := &AppsFirewallIngressRulesBatchUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -6372,7 +6776,7 @@ func (c *AppsFirewallIngressRulesBatchUpdateCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesBatchUpdateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6412,17 +6816,17 @@ func (c *AppsFirewallIngressRulesBatchUpdateCall) Do(opts ...googleapi.CallOptio
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &BatchUpdateIngressRulesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -6478,9 +6882,9 @@ type AppsFirewallIngressRulesCreateCall struct {
 
 // Create: Creates a firewall rule for the application.
 //
-// - appsId: Part of `parent`. Name of the parent Firewall collection in
-//   which to create a new rule. Example:
-//   apps/myapp/firewall/ingressRules.
+//   - appsId: Part of `parent`. Name of the parent Firewall collection in
+//     which to create a new rule. Example:
+//     apps/myapp/firewall/ingressRules.
 func (r *AppsFirewallIngressRulesService) Create(appsId string, firewallrule *FirewallRule) *AppsFirewallIngressRulesCreateCall {
 	c := &AppsFirewallIngressRulesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -6515,7 +6919,7 @@ func (c *AppsFirewallIngressRulesCreateCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6555,17 +6959,17 @@ func (c *AppsFirewallIngressRulesCreateCall) Do(opts ...googleapi.CallOption) (*
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &FirewallRule{
 		ServerResponse: googleapi.ServerResponse{
@@ -6621,9 +7025,9 @@ type AppsFirewallIngressRulesDeleteCall struct {
 
 // Delete: Deletes the specified firewall rule.
 //
-// - appsId: Part of `name`. Name of the Firewall resource to delete.
-//   Example: apps/myapp/firewall/ingressRules/100.
-// - ingressRulesId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the Firewall resource to delete.
+//     Example: apps/myapp/firewall/ingressRules/100.
+//   - ingressRulesId: Part of `name`. See documentation of `appsId`.
 func (r *AppsFirewallIngressRulesService) Delete(appsId string, ingressRulesId string) *AppsFirewallIngressRulesDeleteCall {
 	c := &AppsFirewallIngressRulesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -6658,7 +7062,7 @@ func (c *AppsFirewallIngressRulesDeleteCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6694,17 +7098,17 @@ func (c *AppsFirewallIngressRulesDeleteCall) Do(opts ...googleapi.CallOption) (*
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Empty{
 		ServerResponse: googleapi.ServerResponse{
@@ -6765,9 +7169,9 @@ type AppsFirewallIngressRulesGetCall struct {
 
 // Get: Gets the specified firewall rule.
 //
-// - appsId: Part of `name`. Name of the Firewall resource to retrieve.
-//   Example: apps/myapp/firewall/ingressRules/100.
-// - ingressRulesId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the Firewall resource to retrieve.
+//     Example: apps/myapp/firewall/ingressRules/100.
+//   - ingressRulesId: Part of `name`. See documentation of `appsId`.
 func (r *AppsFirewallIngressRulesService) Get(appsId string, ingressRulesId string) *AppsFirewallIngressRulesGetCall {
 	c := &AppsFirewallIngressRulesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -6812,7 +7216,7 @@ func (c *AppsFirewallIngressRulesGetCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -6851,17 +7255,17 @@ func (c *AppsFirewallIngressRulesGetCall) Do(opts ...googleapi.CallOption) (*Fir
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &FirewallRule{
 		ServerResponse: googleapi.ServerResponse{
@@ -6923,8 +7327,8 @@ type AppsFirewallIngressRulesListCall struct {
 
 // List: Lists the firewall rules of an application.
 //
-// - appsId: Part of `parent`. Name of the Firewall collection to
-//   retrieve. Example: apps/myapp/firewall/ingressRules.
+//   - appsId: Part of `parent`. Name of the Firewall collection to
+//     retrieve. Example: apps/myapp/firewall/ingressRules.
 func (r *AppsFirewallIngressRulesService) List(appsId string) *AppsFirewallIngressRulesListCall {
 	c := &AppsFirewallIngressRulesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -6991,7 +7395,7 @@ func (c *AppsFirewallIngressRulesListCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7029,17 +7433,17 @@ func (c *AppsFirewallIngressRulesListCall) Do(opts ...googleapi.CallOption) (*Li
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListIngressRulesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -7132,9 +7536,9 @@ type AppsFirewallIngressRulesPatchCall struct {
 
 // Patch: Updates the specified firewall rule.
 //
-// - appsId: Part of `name`. Name of the Firewall resource to update.
-//   Example: apps/myapp/firewall/ingressRules/100.
-// - ingressRulesId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the Firewall resource to update.
+//     Example: apps/myapp/firewall/ingressRules/100.
+//   - ingressRulesId: Part of `name`. See documentation of `appsId`.
 func (r *AppsFirewallIngressRulesService) Patch(appsId string, ingressRulesId string, firewallrule *FirewallRule) *AppsFirewallIngressRulesPatchCall {
 	c := &AppsFirewallIngressRulesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -7177,7 +7581,7 @@ func (c *AppsFirewallIngressRulesPatchCall) Header() http.Header {
 
 func (c *AppsFirewallIngressRulesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7218,17 +7622,17 @@ func (c *AppsFirewallIngressRulesPatchCall) Do(opts ...googleapi.CallOption) (*F
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &FirewallRule{
 		ServerResponse: googleapi.ServerResponse{
@@ -7344,7 +7748,7 @@ func (c *AppsLocationsGetCall) Header() http.Header {
 
 func (c *AppsLocationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7383,17 +7787,17 @@ func (c *AppsLocationsGetCall) Do(opts ...googleapi.CallOption) (*Location, erro
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Location{
 		ServerResponse: googleapi.ServerResponse{
@@ -7456,8 +7860,8 @@ type AppsLocationsListCall struct {
 // List: Lists information about the supported locations for this
 // service.
 //
-// - appsId: Part of `name`. The resource that owns the locations
-//   collection, if applicable.
+//   - appsId: Part of `name`. The resource that owns the locations
+//     collection, if applicable.
 func (r *AppsLocationsService) List(appsId string) *AppsLocationsListCall {
 	c := &AppsLocationsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -7525,7 +7929,7 @@ func (c *AppsLocationsListCall) Header() http.Header {
 
 func (c *AppsLocationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7563,17 +7967,17 @@ func (c *AppsLocationsListCall) Do(opts ...googleapi.CallOption) (*ListLocations
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListLocationsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -7714,7 +8118,7 @@ func (c *AppsOperationsGetCall) Header() http.Header {
 
 func (c *AppsOperationsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7753,17 +8157,17 @@ func (c *AppsOperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, er
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -7825,17 +8229,10 @@ type AppsOperationsListCall struct {
 
 // List: Lists operations that match the specified filter in the
 // request. If the server doesn't support this method, it returns
-// UNIMPLEMENTED.NOTE: the name binding allows API services to override
-// the binding to use different resource name schemes, such as
-// users/*/operations. To override the binding, API services can add a
-// binding such as "/v1/{name=users/*}/operations" to their service
-// configuration. For backwards compatibility, the default name includes
-// the operations collection id, however overriding users must ensure
-// the name binding is the parent resource, without the operations
-// collection id.
+// UNIMPLEMENTED.
 //
-// - appsId: Part of `name`. The name of the operation's parent
-//   resource.
+//   - appsId: Part of `name`. The name of the operation's parent
+//     resource.
 func (r *AppsOperationsService) List(appsId string) *AppsOperationsListCall {
 	c := &AppsOperationsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -7900,7 +8297,7 @@ func (c *AppsOperationsListCall) Header() http.Header {
 
 func (c *AppsOperationsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -7938,17 +8335,17 @@ func (c *AppsOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperatio
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListOperationsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -7962,7 +8359,7 @@ func (c *AppsOperationsListCall) Do(opts ...googleapi.CallOption) (*ListOperatio
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as \"/v1/{name=users/*}/operations\" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
+	//   "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.",
 	//   "flatPath": "v1/apps/{appsId}/operations",
 	//   "httpMethod": "GET",
 	//   "id": "appengine.apps.operations.list",
@@ -8040,9 +8437,9 @@ type AppsServicesDeleteCall struct {
 
 // Delete: Deletes the specified service and all enclosed versions.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/services/default.
-// - servicesId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/services/default.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesService) Delete(appsId string, servicesId string) *AppsServicesDeleteCall {
 	c := &AppsServicesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -8077,7 +8474,7 @@ func (c *AppsServicesDeleteCall) Header() http.Header {
 
 func (c *AppsServicesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8113,17 +8510,17 @@ func (c *AppsServicesDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, e
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -8184,9 +8581,9 @@ type AppsServicesGetCall struct {
 
 // Get: Gets the current configuration of the specified service.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/services/default.
-// - servicesId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/services/default.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesService) Get(appsId string, servicesId string) *AppsServicesGetCall {
 	c := &AppsServicesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -8231,7 +8628,7 @@ func (c *AppsServicesGetCall) Header() http.Header {
 
 func (c *AppsServicesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8270,17 +8667,17 @@ func (c *AppsServicesGetCall) Do(opts ...googleapi.CallOption) (*Service, error)
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Service{
 		ServerResponse: googleapi.ServerResponse{
@@ -8342,8 +8739,8 @@ type AppsServicesListCall struct {
 
 // List: Lists all the services in the application.
 //
-// - appsId: Part of `parent`. Name of the parent Application resource.
-//   Example: apps/myapp.
+//   - appsId: Part of `parent`. Name of the parent Application resource.
+//     Example: apps/myapp.
 func (r *AppsServicesService) List(appsId string) *AppsServicesListCall {
 	c := &AppsServicesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -8401,7 +8798,7 @@ func (c *AppsServicesListCall) Header() http.Header {
 
 func (c *AppsServicesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8439,17 +8836,17 @@ func (c *AppsServicesListCall) Do(opts ...googleapi.CallOption) (*ListServicesRe
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListServicesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -8537,9 +8934,9 @@ type AppsServicesPatchCall struct {
 
 // Patch: Updates the configuration of the specified service.
 //
-// - appsId: Part of `name`. Name of the resource to update. Example:
-//   apps/myapp/services/default.
-// - servicesId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource to update. Example:
+//     apps/myapp/services/default.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesService) Patch(appsId string, servicesId string, service *Service) *AppsServicesPatchCall {
 	c := &AppsServicesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -8601,7 +8998,7 @@ func (c *AppsServicesPatchCall) Header() http.Header {
 
 func (c *AppsServicesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8642,17 +9039,17 @@ func (c *AppsServicesPatchCall) Do(opts ...googleapi.CallOption) (*Operation, er
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -8727,9 +9124,9 @@ type AppsServicesVersionsCreateCall struct {
 
 // Create: Deploys code and resource files to a new version.
 //
-// - appsId: Part of `parent`. Name of the parent resource to create
-//   this version under. Example: apps/myapp/services/default.
-// - servicesId: Part of `parent`. See documentation of `appsId`.
+//   - appsId: Part of `parent`. Name of the parent resource to create
+//     this version under. Example: apps/myapp/services/default.
+//   - servicesId: Part of `parent`. See documentation of `appsId`.
 func (r *AppsServicesVersionsService) Create(appsId string, servicesId string, version *Version) *AppsServicesVersionsCreateCall {
 	c := &AppsServicesVersionsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -8765,7 +9162,7 @@ func (c *AppsServicesVersionsCreateCall) Header() http.Header {
 
 func (c *AppsServicesVersionsCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8806,17 +9203,17 @@ func (c *AppsServicesVersionsCreateCall) Do(opts ...googleapi.CallOption) (*Oper
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -8880,10 +9277,10 @@ type AppsServicesVersionsDeleteCall struct {
 
 // Delete: Deletes an existing Version resource.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/services/default/versions/v1.
-// - servicesId: Part of `name`. See documentation of `appsId`.
-// - versionsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/services/default/versions/v1.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
+//   - versionsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesVersionsService) Delete(appsId string, servicesId string, versionsId string) *AppsServicesVersionsDeleteCall {
 	c := &AppsServicesVersionsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -8919,7 +9316,7 @@ func (c *AppsServicesVersionsDeleteCall) Header() http.Header {
 
 func (c *AppsServicesVersionsDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -8956,17 +9353,17 @@ func (c *AppsServicesVersionsDeleteCall) Do(opts ...googleapi.CallOption) (*Oper
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -9037,10 +9434,10 @@ type AppsServicesVersionsGetCall struct {
 // BASIC_VIEW will be returned. Specify the FULL_VIEW parameter to get
 // the full resource.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/services/default/versions/v1.
-// - servicesId: Part of `name`. See documentation of `appsId`.
-// - versionsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/services/default/versions/v1.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
+//   - versionsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesVersionsService) Get(appsId string, servicesId string, versionsId string) *AppsServicesVersionsGetCall {
 	c := &AppsServicesVersionsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -9053,9 +9450,13 @@ func (r *AppsServicesVersionsService) Get(appsId string, servicesId string, vers
 // returned in the Get response.
 //
 // Possible values:
-//   "BASIC" - Basic version information including scaling and inbound
+//
+//	"BASIC" - Basic version information including scaling and inbound
+//
 // services, but not detailed deployment information.
-//   "FULL" - The information from BASIC, plus detailed information
+//
+//	"FULL" - The information from BASIC, plus detailed information
+//
 // about the deployment. This format is required when creating
 // resources, but is not returned in Get or List by default.
 func (c *AppsServicesVersionsGetCall) View(view string) *AppsServicesVersionsGetCall {
@@ -9100,7 +9501,7 @@ func (c *AppsServicesVersionsGetCall) Header() http.Header {
 
 func (c *AppsServicesVersionsGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9140,17 +9541,17 @@ func (c *AppsServicesVersionsGetCall) Do(opts ...googleapi.CallOption) (*Version
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Version{
 		ServerResponse: googleapi.ServerResponse{
@@ -9233,9 +9634,9 @@ type AppsServicesVersionsListCall struct {
 
 // List: Lists the versions of a service.
 //
-// - appsId: Part of `parent`. Name of the parent Service resource.
-//   Example: apps/myapp/services/default.
-// - servicesId: Part of `parent`. See documentation of `appsId`.
+//   - appsId: Part of `parent`. Name of the parent Service resource.
+//     Example: apps/myapp/services/default.
+//   - servicesId: Part of `parent`. See documentation of `appsId`.
 func (r *AppsServicesVersionsService) List(appsId string, servicesId string) *AppsServicesVersionsListCall {
 	c := &AppsServicesVersionsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -9261,9 +9662,13 @@ func (c *AppsServicesVersionsListCall) PageToken(pageToken string) *AppsServices
 // returned in the List response.
 //
 // Possible values:
-//   "BASIC" - Basic version information including scaling and inbound
+//
+//	"BASIC" - Basic version information including scaling and inbound
+//
 // services, but not detailed deployment information.
-//   "FULL" - The information from BASIC, plus detailed information
+//
+//	"FULL" - The information from BASIC, plus detailed information
+//
 // about the deployment. This format is required when creating
 // resources, but is not returned in Get or List by default.
 func (c *AppsServicesVersionsListCall) View(view string) *AppsServicesVersionsListCall {
@@ -9308,7 +9713,7 @@ func (c *AppsServicesVersionsListCall) Header() http.Header {
 
 func (c *AppsServicesVersionsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9347,17 +9752,17 @@ func (c *AppsServicesVersionsListCall) Do(opts ...googleapi.CallOption) (*ListVe
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListVersionsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -9501,10 +9906,10 @@ type AppsServicesVersionsPatchCall struct {
 // scaling in the flexible environment: manual_scaling.instances
 // (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions#manualscaling)
 //
-// - appsId: Part of `name`. Name of the resource to update. Example:
-//   apps/myapp/services/default/versions/1.
-// - servicesId: Part of `name`. See documentation of `appsId`.
-// - versionsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource to update. Example:
+//     apps/myapp/services/default/versions/1.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
+//   - versionsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesVersionsService) Patch(appsId string, servicesId string, versionsId string, version *Version) *AppsServicesVersionsPatchCall {
 	c := &AppsServicesVersionsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -9548,7 +9953,7 @@ func (c *AppsServicesVersionsPatchCall) Header() http.Header {
 
 func (c *AppsServicesVersionsPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9590,17 +9995,17 @@ func (c *AppsServicesVersionsPatchCall) Do(opts ...googleapi.CallOption) (*Opera
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -9685,11 +10090,11 @@ type AppsServicesVersionsInstancesDebugCall struct {
 // instance should be started.Only applicable for instances in App
 // Engine flexible environment.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/services/default/versions/v1/instances/instance-1.
-// - instancesId: Part of `name`. See documentation of `appsId`.
-// - servicesId: Part of `name`. See documentation of `appsId`.
-// - versionsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/services/default/versions/v1/instances/instance-1.
+//   - instancesId: Part of `name`. See documentation of `appsId`.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
+//   - versionsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesVersionsInstancesService) Debug(appsId string, servicesId string, versionsId string, instancesId string, debuginstancerequest *DebugInstanceRequest) *AppsServicesVersionsInstancesDebugCall {
 	c := &AppsServicesVersionsInstancesDebugCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -9727,7 +10132,7 @@ func (c *AppsServicesVersionsInstancesDebugCall) Header() http.Header {
 
 func (c *AppsServicesVersionsInstancesDebugCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9770,17 +10175,17 @@ func (c *AppsServicesVersionsInstancesDebugCall) Do(opts ...googleapi.CallOption
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -9870,11 +10275,11 @@ type AppsServicesVersionsInstancesDeleteCall struct {
 // (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1/apps.services.versions/patch)
 // method.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/services/default/versions/v1/instances/instance-1.
-// - instancesId: Part of `name`. See documentation of `appsId`.
-// - servicesId: Part of `name`. See documentation of `appsId`.
-// - versionsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/services/default/versions/v1/instances/instance-1.
+//   - instancesId: Part of `name`. See documentation of `appsId`.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
+//   - versionsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesVersionsInstancesService) Delete(appsId string, servicesId string, versionsId string, instancesId string) *AppsServicesVersionsInstancesDeleteCall {
 	c := &AppsServicesVersionsInstancesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -9911,7 +10316,7 @@ func (c *AppsServicesVersionsInstancesDeleteCall) Header() http.Header {
 
 func (c *AppsServicesVersionsInstancesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -9949,17 +10354,17 @@ func (c *AppsServicesVersionsInstancesDeleteCall) Do(opts ...googleapi.CallOptio
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Operation{
 		ServerResponse: googleapi.ServerResponse{
@@ -10036,11 +10441,11 @@ type AppsServicesVersionsInstancesGetCall struct {
 
 // Get: Gets instance information.
 //
-// - appsId: Part of `name`. Name of the resource requested. Example:
-//   apps/myapp/services/default/versions/v1/instances/instance-1.
-// - instancesId: Part of `name`. See documentation of `appsId`.
-// - servicesId: Part of `name`. See documentation of `appsId`.
-// - versionsId: Part of `name`. See documentation of `appsId`.
+//   - appsId: Part of `name`. Name of the resource requested. Example:
+//     apps/myapp/services/default/versions/v1/instances/instance-1.
+//   - instancesId: Part of `name`. See documentation of `appsId`.
+//   - servicesId: Part of `name`. See documentation of `appsId`.
+//   - versionsId: Part of `name`. See documentation of `appsId`.
 func (r *AppsServicesVersionsInstancesService) Get(appsId string, servicesId string, versionsId string, instancesId string) *AppsServicesVersionsInstancesGetCall {
 	c := &AppsServicesVersionsInstancesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -10087,7 +10492,7 @@ func (c *AppsServicesVersionsInstancesGetCall) Header() http.Header {
 
 func (c *AppsServicesVersionsInstancesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10128,17 +10533,17 @@ func (c *AppsServicesVersionsInstancesGetCall) Do(opts ...googleapi.CallOption) 
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Instance{
 		ServerResponse: googleapi.ServerResponse{
@@ -10218,10 +10623,10 @@ type AppsServicesVersionsInstancesListCall struct {
 // about instances over time, see the Stackdriver Monitoring API
 // (https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.timeSeries/list).
 //
-// - appsId: Part of `parent`. Name of the parent Version resource.
-//   Example: apps/myapp/services/default/versions/v1.
-// - servicesId: Part of `parent`. See documentation of `appsId`.
-// - versionsId: Part of `parent`. See documentation of `appsId`.
+//   - appsId: Part of `parent`. Name of the parent Version resource.
+//     Example: apps/myapp/services/default/versions/v1.
+//   - servicesId: Part of `parent`. See documentation of `appsId`.
+//   - versionsId: Part of `parent`. See documentation of `appsId`.
 func (r *AppsServicesVersionsInstancesService) List(appsId string, servicesId string, versionsId string) *AppsServicesVersionsInstancesListCall {
 	c := &AppsServicesVersionsInstancesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -10281,7 +10686,7 @@ func (c *AppsServicesVersionsInstancesListCall) Header() http.Header {
 
 func (c *AppsServicesVersionsInstancesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -10321,17 +10726,17 @@ func (c *AppsServicesVersionsInstancesListCall) Do(opts ...googleapi.CallOption)
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListInstancesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -10417,4 +10822,174 @@ func (c *AppsServicesVersionsInstancesListCall) Pages(ctx context.Context, f fun
 		}
 		c.PageToken(x.NextPageToken)
 	}
+}
+
+// method id "appengine.projects.locations.applications.get":
+
+type ProjectsLocationsApplicationsGetCall struct {
+	s              *APIService
+	projectsId     string
+	locationsId    string
+	applicationsId string
+	urlParams_     gensupport.URLParams
+	ifNoneMatch_   string
+	ctx_           context.Context
+	header_        http.Header
+}
+
+// Get: Gets information about an application.
+//
+//   - applicationsId: Part of `name`. See documentation of `projectsId`.
+//   - locationsId: Part of `name`. See documentation of `projectsId`.
+//   - projectsId: Part of `name`. Name of the Application resource to
+//     get. Example: apps/myapp.
+func (r *ProjectsLocationsApplicationsService) Get(projectsId string, locationsId string, applicationsId string) *ProjectsLocationsApplicationsGetCall {
+	c := &ProjectsLocationsApplicationsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.projectsId = projectsId
+	c.locationsId = locationsId
+	c.applicationsId = applicationsId
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsLocationsApplicationsGetCall) Fields(s ...googleapi.Field) *ProjectsLocationsApplicationsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsLocationsApplicationsGetCall) IfNoneMatch(entityTag string) *ProjectsLocationsApplicationsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsLocationsApplicationsGetCall) Context(ctx context.Context) *ProjectsLocationsApplicationsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsLocationsApplicationsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsApplicationsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/projects/{projectsId}/locations/{locationsId}/applications/{applicationsId}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"projectsId":     c.projectsId,
+		"locationsId":    c.locationsId,
+		"applicationsId": c.applicationsId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "appengine.projects.locations.applications.get" call.
+// Exactly one of *Application or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *Application.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ProjectsLocationsApplicationsGetCall) Do(opts ...googleapi.CallOption) (*Application, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Application{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets information about an application.",
+	//   "flatPath": "v1/projects/{projectsId}/locations/{locationsId}/applications/{applicationsId}",
+	//   "httpMethod": "GET",
+	//   "id": "appengine.projects.locations.applications.get",
+	//   "parameterOrder": [
+	//     "projectsId",
+	//     "locationsId",
+	//     "applicationsId"
+	//   ],
+	//   "parameters": {
+	//     "applicationsId": {
+	//       "description": "Part of `name`. See documentation of `projectsId`.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "locationsId": {
+	//       "description": "Part of `name`. See documentation of `projectsId`.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "projectsId": {
+	//       "description": "Part of `name`. Name of the Application resource to get. Example: apps/myapp.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/projects/{projectsId}/locations/{locationsId}/applications/{applicationsId}",
+	//   "response": {
+	//     "$ref": "Application"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/appengine.admin",
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only"
+	//   ]
+	// }
+
 }

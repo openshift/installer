@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import (
 	"strings"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
+	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
 )
 
 func (r *FirewallPolicy) validate() error {
@@ -84,6 +85,8 @@ type firewallPolicyApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateFirewallPolicyPatchRequest(ctx context.Context, f *FirewallPolicy, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Description; !dcl.IsEmptyValueIndirect(v) {
 		req["description"] = v
@@ -126,6 +129,45 @@ type updateFirewallPolicyPatchOperation struct {
 // do creates a request and sends it to the appropriate URL. In most operations,
 // do will transcribe a subset of the resource into a request object and send a
 // PUT request to a single URL.
+
+func (op *updateFirewallPolicyPatchOperation) do(ctx context.Context, r *FirewallPolicy, c *Client) error {
+	_, err := c.GetFirewallPolicy(ctx, r)
+	if err != nil {
+		return err
+	}
+
+	u, err := r.updateURL(c.Config.BasePath, "Patch")
+	if err != nil {
+		return err
+	}
+
+	req, err := newUpdateFirewallPolicyPatchRequest(ctx, r, c)
+	if err != nil {
+		return err
+	}
+
+	c.Config.Logger.InfoWithContextf(ctx, "Created update: %#v", req)
+	body, err := marshalUpdateFirewallPolicyPatchRequest(c, req)
+	if err != nil {
+		return err
+	}
+	resp, err := dcl.SendRequest(ctx, c.Config, "PATCH", u, bytes.NewBuffer(body), c.Config.RetryProvider)
+	if err != nil {
+		return err
+	}
+
+	var o operations.ComputeOperation
+	if err := dcl.ParseResponse(resp.Response, &o); err != nil {
+		return err
+	}
+	err = o.Wait(context.WithValue(ctx, dcl.DoNotLogRequestsKey, true), c.Config, r.basePath(), "GET")
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
 
 func (c *Client) listFirewallPolicyRaw(ctx context.Context, r *FirewallPolicy, pageToken string, pageSize int32) ([]byte, error) {
 	u, err := r.urlNormalized().listURL(c.Config.BasePath)
@@ -172,7 +214,7 @@ func (c *Client) listFirewallPolicy(ctx context.Context, r *FirewallPolicy, page
 
 	var l []*FirewallPolicy
 	for _, v := range m.Items {
-		res, err := unmarshalMapFirewallPolicy(v, c)
+		res, err := unmarshalMapFirewallPolicy(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -202,6 +244,55 @@ func (c *Client) deleteAllFirewallPolicy(ctx context.Context, f func(*FirewallPo
 }
 
 type deleteFirewallPolicyOperation struct{}
+
+func (op *deleteFirewallPolicyOperation) do(ctx context.Context, r *FirewallPolicy, c *Client) error {
+	r, err := c.GetFirewallPolicy(ctx, r)
+	if err != nil {
+		if dcl.IsNotFound(err) {
+			c.Config.Logger.InfoWithContextf(ctx, "FirewallPolicy not found, returning. Original error: %v", err)
+			return nil
+		}
+		c.Config.Logger.WarningWithContextf(ctx, "GetFirewallPolicy checking for existence. error: %v", err)
+		return err
+	}
+
+	u, err := r.deleteURL(c.Config.BasePath)
+	if err != nil {
+		return err
+	}
+
+	// Delete should never have a body
+	body := &bytes.Buffer{}
+	resp, err := dcl.SendRequest(ctx, c.Config, "DELETE", u, body, c.Config.RetryProvider)
+	if err != nil {
+		return err
+	}
+
+	// wait for object to be deleted.
+	var o operations.ComputeOperation
+	if err := dcl.ParseResponse(resp.Response, &o); err != nil {
+		return err
+	}
+	if err := o.Wait(context.WithValue(ctx, dcl.DoNotLogRequestsKey, true), c.Config, r.basePath(), "GET"); err != nil {
+		return err
+	}
+
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetFirewallPolicy(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
+		}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
+	return nil
+}
 
 // Create operations are similar to Update operations, although they do not have
 // specific request objects. The Create request object is the json encoding of
@@ -269,6 +360,11 @@ func (c *Client) firewallPolicyDiffsForRawDesired(ctx context.Context, rawDesire
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for FirewallPolicy: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for FirewallPolicy: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractFirewallPolicyFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeFirewallPolicyInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -309,7 +405,8 @@ func canonicalizeFirewallPolicyDesiredState(rawDesired, rawInitial *FirewallPoli
 		return rawDesired, nil
 	}
 	canonicalDesired := &FirewallPolicy{}
-	if dcl.IsZeroValue(rawDesired.Name) {
+	if dcl.IsZeroValue(rawDesired.Name) || (dcl.IsEmptyValueIndirect(rawDesired.Name) && dcl.IsEmptyValueIndirect(rawInitial.Name)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Name = rawInitial.Name
 	} else {
 		canonicalDesired.Name = rawDesired.Name
@@ -329,18 +426,17 @@ func canonicalizeFirewallPolicyDesiredState(rawDesired, rawInitial *FirewallPoli
 	} else {
 		canonicalDesired.Parent = rawDesired.Parent
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeFirewallPolicyNewState(c *Client, rawNew, rawDesired *FirewallPolicy) (*FirewallPolicy, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Id) && dcl.IsNotReturnedByServer(rawDesired.Id) {
+	if dcl.IsEmptyValueIndirect(rawNew.Id) && dcl.IsEmptyValueIndirect(rawDesired.Id) {
 		rawNew.Id = rawDesired.Id
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Id, rawNew.Id) {
@@ -348,7 +444,7 @@ func canonicalizeFirewallPolicyNewState(c *Client, rawNew, rawDesired *FirewallP
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CreationTimestamp) && dcl.IsNotReturnedByServer(rawDesired.CreationTimestamp) {
+	if dcl.IsEmptyValueIndirect(rawNew.CreationTimestamp) && dcl.IsEmptyValueIndirect(rawDesired.CreationTimestamp) {
 		rawNew.CreationTimestamp = rawDesired.CreationTimestamp
 	} else {
 		if dcl.StringCanonicalize(rawDesired.CreationTimestamp, rawNew.CreationTimestamp) {
@@ -356,7 +452,7 @@ func canonicalizeFirewallPolicyNewState(c *Client, rawNew, rawDesired *FirewallP
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Description) && dcl.IsNotReturnedByServer(rawDesired.Description) {
+	if dcl.IsEmptyValueIndirect(rawNew.Description) && dcl.IsEmptyValueIndirect(rawDesired.Description) {
 		rawNew.Description = rawDesired.Description
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Description, rawNew.Description) {
@@ -364,7 +460,7 @@ func canonicalizeFirewallPolicyNewState(c *Client, rawNew, rawDesired *FirewallP
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Fingerprint) && dcl.IsNotReturnedByServer(rawDesired.Fingerprint) {
+	if dcl.IsEmptyValueIndirect(rawNew.Fingerprint) && dcl.IsEmptyValueIndirect(rawDesired.Fingerprint) {
 		rawNew.Fingerprint = rawDesired.Fingerprint
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Fingerprint, rawNew.Fingerprint) {
@@ -372,7 +468,7 @@ func canonicalizeFirewallPolicyNewState(c *Client, rawNew, rawDesired *FirewallP
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.SelfLink) && dcl.IsNotReturnedByServer(rawDesired.SelfLink) {
+	if dcl.IsEmptyValueIndirect(rawNew.SelfLink) && dcl.IsEmptyValueIndirect(rawDesired.SelfLink) {
 		rawNew.SelfLink = rawDesired.SelfLink
 	} else {
 		if dcl.StringCanonicalize(rawDesired.SelfLink, rawNew.SelfLink) {
@@ -380,7 +476,7 @@ func canonicalizeFirewallPolicyNewState(c *Client, rawNew, rawDesired *FirewallP
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.SelfLinkWithId) && dcl.IsNotReturnedByServer(rawDesired.SelfLinkWithId) {
+	if dcl.IsEmptyValueIndirect(rawNew.SelfLinkWithId) && dcl.IsEmptyValueIndirect(rawDesired.SelfLinkWithId) {
 		rawNew.SelfLinkWithId = rawDesired.SelfLinkWithId
 	} else {
 		if dcl.StringCanonicalize(rawDesired.SelfLinkWithId, rawNew.SelfLinkWithId) {
@@ -388,12 +484,12 @@ func canonicalizeFirewallPolicyNewState(c *Client, rawNew, rawDesired *FirewallP
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.RuleTupleCount) && dcl.IsNotReturnedByServer(rawDesired.RuleTupleCount) {
+	if dcl.IsEmptyValueIndirect(rawNew.RuleTupleCount) && dcl.IsEmptyValueIndirect(rawDesired.RuleTupleCount) {
 		rawNew.RuleTupleCount = rawDesired.RuleTupleCount
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ShortName) && dcl.IsNotReturnedByServer(rawDesired.ShortName) {
+	if dcl.IsEmptyValueIndirect(rawNew.ShortName) && dcl.IsEmptyValueIndirect(rawDesired.ShortName) {
 		rawNew.ShortName = rawDesired.ShortName
 	} else {
 		if dcl.StringCanonicalize(rawDesired.ShortName, rawNew.ShortName) {
@@ -401,7 +497,7 @@ func canonicalizeFirewallPolicyNewState(c *Client, rawNew, rawDesired *FirewallP
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Parent) && dcl.IsNotReturnedByServer(rawDesired.Parent) {
+	if dcl.IsEmptyValueIndirect(rawNew.Parent) && dcl.IsEmptyValueIndirect(rawDesired.Parent) {
 		rawNew.Parent = rawDesired.Parent
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Parent, rawNew.Parent) {
@@ -430,76 +526,79 @@ func diffFirewallPolicy(c *Client, desired, actual *FirewallPolicy, opts ...dcl.
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CreationTimestamp, actual.CreationTimestamp, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreationTimestamp")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CreationTimestamp, actual.CreationTimestamp, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreationTimestamp")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.TriggersOperation("updateFirewallPolicyPatchOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateFirewallPolicyPatchOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Fingerprint, actual.Fingerprint, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Fingerprint")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Fingerprint, actual.Fingerprint, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Fingerprint")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SelfLinkWithId, actual.SelfLinkWithId, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLinkWithId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SelfLinkWithId, actual.SelfLinkWithId, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLinkWithId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RuleTupleCount, actual.RuleTupleCount, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RuleTupleCount")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RuleTupleCount, actual.RuleTupleCount, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RuleTupleCount")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ShortName, actual.ShortName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ShortName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ShortName, actual.ShortName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ShortName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Parent, actual.Parent, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Parent")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Parent, actual.Parent, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Parent")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 
@@ -546,17 +645,17 @@ func (r *FirewallPolicy) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalFirewallPolicy decodes JSON responses into the FirewallPolicy resource schema.
-func unmarshalFirewallPolicy(b []byte, c *Client) (*FirewallPolicy, error) {
+func unmarshalFirewallPolicy(b []byte, c *Client, res *FirewallPolicy) (*FirewallPolicy, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapFirewallPolicy(m, c)
+	return unmarshalMapFirewallPolicy(m, c, res)
 }
 
-func unmarshalMapFirewallPolicy(m map[string]interface{}, c *Client) (*FirewallPolicy, error) {
+func unmarshalMapFirewallPolicy(m map[string]interface{}, c *Client, res *FirewallPolicy) (*FirewallPolicy, error) {
 
-	flattened := flattenFirewallPolicy(c, m)
+	flattened := flattenFirewallPolicy(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -566,6 +665,8 @@ func unmarshalMapFirewallPolicy(m map[string]interface{}, c *Client) (*FirewallP
 // expandFirewallPolicy expands FirewallPolicy into a JSON request object.
 func expandFirewallPolicy(c *Client, f *FirewallPolicy) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v := f.Name; dcl.ValueShouldBeSent(v) {
 		m["name"] = v
 	}
@@ -584,7 +685,7 @@ func expandFirewallPolicy(c *Client, f *FirewallPolicy) (map[string]interface{},
 
 // flattenFirewallPolicy flattens FirewallPolicy from a JSON request object into the
 // FirewallPolicy type.
-func flattenFirewallPolicy(c *Client, i interface{}) *FirewallPolicy {
+func flattenFirewallPolicy(c *Client, i interface{}, res *FirewallPolicy) *FirewallPolicy {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -593,19 +694,19 @@ func flattenFirewallPolicy(c *Client, i interface{}) *FirewallPolicy {
 		return nil
 	}
 
-	res := &FirewallPolicy{}
-	res.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
-	res.Id = dcl.FlattenString(m["id"])
-	res.CreationTimestamp = dcl.FlattenString(m["creationTimestamp"])
-	res.Description = dcl.FlattenString(m["description"])
-	res.Fingerprint = dcl.FlattenString(m["fingerprint"])
-	res.SelfLink = dcl.FlattenString(m["selfLink"])
-	res.SelfLinkWithId = dcl.FlattenString(m["selfLinkWithId"])
-	res.RuleTupleCount = dcl.FlattenInteger(m["ruleTupleCount"])
-	res.ShortName = dcl.FlattenString(m["shortName"])
-	res.Parent = dcl.FlattenString(m["parent"])
+	resultRes := &FirewallPolicy{}
+	resultRes.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
+	resultRes.Id = dcl.FlattenString(m["id"])
+	resultRes.CreationTimestamp = dcl.FlattenString(m["creationTimestamp"])
+	resultRes.Description = dcl.FlattenString(m["description"])
+	resultRes.Fingerprint = dcl.FlattenString(m["fingerprint"])
+	resultRes.SelfLink = dcl.FlattenString(m["selfLink"])
+	resultRes.SelfLinkWithId = dcl.FlattenString(m["selfLinkWithId"])
+	resultRes.RuleTupleCount = dcl.FlattenInteger(m["ruleTupleCount"])
+	resultRes.ShortName = dcl.FlattenString(m["shortName"])
+	resultRes.Parent = dcl.FlattenString(m["parent"])
 
-	return res
+	return resultRes
 }
 
 // This function returns a matcher that checks whether a serialized resource matches this resource
@@ -613,7 +714,7 @@ func flattenFirewallPolicy(c *Client, i interface{}) *FirewallPolicy {
 // identity).  This is useful in extracting the element from a List call.
 func (r *FirewallPolicy) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalFirewallPolicy(b, c)
+		cr, err := unmarshalFirewallPolicy(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -638,6 +739,7 @@ type firewallPolicyDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         firewallPolicyApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToFirewallPolicyDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]firewallPolicyDiff, error) {
@@ -657,7 +759,8 @@ func convertFieldDiffsToFirewallPolicyDiffs(config *dcl.Config, fds []*dcl.Field
 	var diffs []firewallPolicyDiff
 	// For each operation name, create a firewallPolicyDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := firewallPolicyDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := firewallPolicyDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {

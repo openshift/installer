@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceComputeRegionDiskResourcePolicyAttachment() *schema.Resource {
+func ResourceComputeRegionDiskResourcePolicyAttachment() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeRegionDiskResourcePolicyAttachmentCreate,
 		Read:   resourceComputeRegionDiskResourcePolicyAttachmentRead,
@@ -34,8 +34,8 @@ func resourceComputeRegionDiskResourcePolicyAttachment() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -74,7 +74,7 @@ creation. Do not specify the self link.`,
 
 func resourceComputeRegionDiskResourcePolicyAttachmentCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func resourceComputeRegionDiskResourcePolicyAttachmentCreate(d *schema.ResourceD
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating RegionDiskResourcePolicyAttachment: %s", err)
 	}
@@ -123,7 +123,7 @@ func resourceComputeRegionDiskResourcePolicyAttachmentCreate(d *schema.ResourceD
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating RegionDiskResourcePolicyAttachment", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -140,7 +140,7 @@ func resourceComputeRegionDiskResourcePolicyAttachmentCreate(d *schema.ResourceD
 
 func resourceComputeRegionDiskResourcePolicyAttachmentRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -163,7 +163,7 @@ func resourceComputeRegionDiskResourcePolicyAttachmentRead(d *schema.ResourceDat
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeRegionDiskResourcePolicyAttachment %q", d.Id()))
 	}
@@ -205,7 +205,7 @@ func resourceComputeRegionDiskResourcePolicyAttachmentRead(d *schema.ResourceDat
 
 func resourceComputeRegionDiskResourcePolicyAttachmentDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -247,12 +247,12 @@ func resourceComputeRegionDiskResourcePolicyAttachmentDelete(d *schema.ResourceD
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "RegionDiskResourcePolicyAttachment")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting RegionDiskResourcePolicyAttachment", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

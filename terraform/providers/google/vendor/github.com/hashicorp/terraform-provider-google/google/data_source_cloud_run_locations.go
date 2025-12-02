@@ -8,7 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleCloudRunLocations() *schema.Resource {
+func DataSourceGoogleCloudRunLocations() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleCloudRunLocationsRead,
 		Schema: map[string]*schema.Schema{
@@ -28,7 +28,7 @@ func dataSourceGoogleCloudRunLocations() *schema.Resource {
 
 func dataSourceGoogleCloudRunLocationsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func dataSourceGoogleCloudRunLocationsRead(d *schema.ResourceData, meta interfac
 		return err
 	}
 
-	res, err := sendRequest(config, "GET", project, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", project, url, userAgent, nil)
 	if err != nil {
 		return fmt.Errorf("Error listing Cloud Run Locations : %s", err)
 	}

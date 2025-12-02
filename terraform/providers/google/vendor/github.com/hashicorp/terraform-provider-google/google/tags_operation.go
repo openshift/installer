@@ -11,6 +11,7 @@
 //     .github/CONTRIBUTING.md.
 //
 // ----------------------------------------------------------------------------
+
 package google
 
 import (
@@ -30,9 +31,9 @@ func (w *TagsOperationWaiter) QueryOp() (interface{}, error) {
 		return nil, fmt.Errorf("Cannot query operation, it's unset or nil.")
 	}
 	// Returns the proper get.
-	url := fmt.Sprintf("https://cloudresourcemanager.googleapis.com/v3/%s", w.CommonOperationWaiter.Op.Name)
+	url := fmt.Sprintf("%s%s", w.Config.TagsBasePath, w.CommonOperationWaiter.Op.Name)
 
-	return sendRequest(w.Config, "GET", "", url, w.UserAgent, nil)
+	return SendRequest(w.Config, "GET", "", url, w.UserAgent, nil)
 }
 
 func createTagsWaiter(config *Config, op map[string]interface{}, activity, userAgent string) (*TagsOperationWaiter, error) {
@@ -47,7 +48,7 @@ func createTagsWaiter(config *Config, op map[string]interface{}, activity, userA
 }
 
 // nolint: deadcode,unused
-func tagsOperationWaitTimeWithResponse(config *Config, op map[string]interface{}, response *map[string]interface{}, activity, userAgent string, timeout time.Duration) error {
+func TagsOperationWaitTimeWithResponse(config *Config, op map[string]interface{}, response *map[string]interface{}, activity, userAgent string, timeout time.Duration) error {
 	w, err := createTagsWaiter(config, op, activity, userAgent)
 	if err != nil {
 		return err
@@ -58,7 +59,7 @@ func tagsOperationWaitTimeWithResponse(config *Config, op map[string]interface{}
 	return json.Unmarshal([]byte(w.CommonOperationWaiter.Op.Response), response)
 }
 
-func tagsOperationWaitTime(config *Config, op map[string]interface{}, activity, userAgent string, timeout time.Duration) error {
+func TagsOperationWaitTime(config *Config, op map[string]interface{}, activity, userAgent string, timeout time.Duration) error {
 	if val, ok := op["name"]; !ok || val == "" {
 		// This was a synchronous call - there is no operation to wait for.
 		return nil

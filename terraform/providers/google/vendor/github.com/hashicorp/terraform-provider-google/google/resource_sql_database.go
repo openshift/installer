@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceSQLDatabase() *schema.Resource {
+func ResourceSQLDatabase() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceSQLDatabaseCreate,
 		Read:   resourceSQLDatabaseRead,
@@ -35,9 +35,9 @@ func resourceSQLDatabase() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(15 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -76,6 +76,15 @@ and Postgres' [Collation Support](https://www.postgresql.org/docs/9.6/static/col
 for more details and supported values. Postgres databases only support
 a value of 'en_US.UTF8' at creation time.`,
 			},
+			"deletion_policy": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Default:  "DELETE",
+				Description: `The deletion policy for the database. Setting ABANDON allows the resource 
+to be abandoned rather than deleted. This is useful for Postgres, where databases cannot be 
+deleted from the API if there are users other than cloudsqlsuperuser with access. Possible 
+values are: "ABANDON", "DELETE". Defaults to "DELETE".`,
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -93,7 +102,7 @@ a value of 'en_US.UTF8' at creation time.`,
 
 func resourceSQLDatabaseCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -150,7 +159,7 @@ func resourceSQLDatabaseCreate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Database: %s", err)
 	}
@@ -162,7 +171,7 @@ func resourceSQLDatabaseCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(id)
 
-	err = sqlAdminOperationWaitTime(
+	err = SqlAdminOperationWaitTime(
 		config, res, project, "Creating Database", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -179,7 +188,7 @@ func resourceSQLDatabaseCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceSQLDatabaseRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -202,11 +211,17 @@ func resourceSQLDatabaseRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(transformSQLDatabaseReadError(err), d, fmt.Sprintf("SQLDatabase %q", d.Id()))
 	}
 
+	// Explicitly set virtual fields to default values if unset
+	if _, ok := d.GetOkExists("deletion_policy"); !ok {
+		if err := d.Set("deletion_policy", "DELETE"); err != nil {
+			return fmt.Errorf("Error setting deletion_policy: %s", err)
+		}
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Database: %s", err)
 	}
@@ -232,7 +247,7 @@ func resourceSQLDatabaseRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceSQLDatabaseUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -290,7 +305,7 @@ func resourceSQLDatabaseUpdate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PUT", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Database %q: %s", d.Id(), err)
@@ -298,7 +313,7 @@ func resourceSQLDatabaseUpdate(d *schema.ResourceData, meta interface{}) error {
 		log.Printf("[DEBUG] Finished updating Database %q: %#v", d.Id(), res)
 	}
 
-	err = sqlAdminOperationWaitTime(
+	err = SqlAdminOperationWaitTime(
 		config, res, project, "Updating Database", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -311,7 +326,7 @@ func resourceSQLDatabaseUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceSQLDatabaseDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -337,6 +352,11 @@ func resourceSQLDatabaseDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	var obj map[string]interface{}
+	if deletionPolicy := d.Get("deletion_policy"); deletionPolicy == "ABANDON" {
+		// Allows for database to be abandoned without deletion to avoid deletion failing
+		// for Postgres databases in some circumstances due to existing SQL users
+		return nil
+	}
 	log.Printf("[DEBUG] Deleting Database %q", d.Id())
 
 	// err == nil indicates that the billing_project value was found
@@ -344,12 +364,12 @@ func resourceSQLDatabaseDelete(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Database")
 	}
 
-	err = sqlAdminOperationWaitTime(
+	err = SqlAdminOperationWaitTime(
 		config, res, project, "Deleting Database", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -379,6 +399,11 @@ func resourceSQLDatabaseImport(d *schema.ResourceData, meta interface{}) ([]*sch
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	// Explicitly set virtual fields to default values on import
+	if err := d.Set("deletion_policy", "DELETE"); err != nil {
+		return nil, fmt.Errorf("Error setting deletion_policy: %s", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }

@@ -22,10 +22,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceAppEngineServiceNetworkSettings() *schema.Resource {
+func ResourceAppEngineServiceNetworkSettings() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAppEngineServiceNetworkSettingsCreate,
 		Read:   resourceAppEngineServiceNetworkSettingsRead,
@@ -37,9 +36,9 @@ func resourceAppEngineServiceNetworkSettings() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -53,7 +52,7 @@ func resourceAppEngineServiceNetworkSettings() *schema.Resource {
 						"ingress_traffic_allowed": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"INGRESS_TRAFFIC_ALLOWED_UNSPECIFIED", "INGRESS_TRAFFIC_ALLOWED_ALL", "INGRESS_TRAFFIC_ALLOWED_INTERNAL_ONLY", "INGRESS_TRAFFIC_ALLOWED_INTERNAL_AND_LB", ""}, false),
+							ValidateFunc: validateEnum([]string{"INGRESS_TRAFFIC_ALLOWED_UNSPECIFIED", "INGRESS_TRAFFIC_ALLOWED_ALL", "INGRESS_TRAFFIC_ALLOWED_INTERNAL_ONLY", "INGRESS_TRAFFIC_ALLOWED_INTERNAL_AND_LB", ""}),
 							Description:  `The ingress settings for version or service. Default value: "INGRESS_TRAFFIC_ALLOWED_UNSPECIFIED" Possible values: ["INGRESS_TRAFFIC_ALLOWED_UNSPECIFIED", "INGRESS_TRAFFIC_ALLOWED_ALL", "INGRESS_TRAFFIC_ALLOWED_INTERNAL_ONLY", "INGRESS_TRAFFIC_ALLOWED_INTERNAL_AND_LB"]`,
 							Default:      "INGRESS_TRAFFIC_ALLOWED_UNSPECIFIED",
 						},
@@ -78,7 +77,7 @@ func resourceAppEngineServiceNetworkSettings() *schema.Resource {
 
 func resourceAppEngineServiceNetworkSettingsCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -123,7 +122,7 @@ func resourceAppEngineServiceNetworkSettingsCreate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating ServiceNetworkSettings: %s", err)
 	}
@@ -135,7 +134,7 @@ func resourceAppEngineServiceNetworkSettingsCreate(d *schema.ResourceData, meta 
 	}
 	d.SetId(id)
 
-	err = appEngineOperationWaitTime(
+	err = AppEngineOperationWaitTime(
 		config, res, project, "Creating ServiceNetworkSettings", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -152,7 +151,7 @@ func resourceAppEngineServiceNetworkSettingsCreate(d *schema.ResourceData, meta 
 
 func resourceAppEngineServiceNetworkSettingsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -175,7 +174,7 @@ func resourceAppEngineServiceNetworkSettingsRead(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AppEngineServiceNetworkSettings %q", d.Id()))
 	}
@@ -196,7 +195,7 @@ func resourceAppEngineServiceNetworkSettingsRead(d *schema.ResourceData, meta in
 
 func resourceAppEngineServiceNetworkSettingsUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -257,7 +256,7 @@ func resourceAppEngineServiceNetworkSettingsUpdate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating ServiceNetworkSettings %q: %s", d.Id(), err)
@@ -265,7 +264,7 @@ func resourceAppEngineServiceNetworkSettingsUpdate(d *schema.ResourceData, meta 
 		log.Printf("[DEBUG] Finished updating ServiceNetworkSettings %q: %#v", d.Id(), res)
 	}
 
-	err = appEngineOperationWaitTime(
+	err = AppEngineOperationWaitTime(
 		config, res, project, "Updating ServiceNetworkSettings", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 

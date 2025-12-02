@@ -27,7 +27,7 @@ import (
 	containeraws "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/containeraws"
 )
 
-func resourceContainerAwsNodePool() *schema.Resource {
+func ResourceContainerAwsNodePool() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceContainerAwsNodePoolCreate,
 		Read:   resourceContainerAwsNodePoolRead,
@@ -39,17 +39,16 @@ func resourceContainerAwsNodePool() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
 			"autoscaling": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Autoscaler configuration for this node pool.",
+				Description: "Autoscaler configuration for this node pool.",
 				MaxItems:    1,
 				Elem:        ContainerAwsNodePoolAutoscalingSchema(),
 			},
@@ -65,8 +64,7 @@ func resourceContainerAwsNodePool() *schema.Resource {
 			"config": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The configuration of the node pool.",
+				Description: "The configuration of the node pool.",
 				MaxItems:    1,
 				Elem:        ContainerAwsNodePoolConfigSchema(),
 			},
@@ -82,7 +80,7 @@ func resourceContainerAwsNodePool() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The constraint on the maximum number of pods that can be run simultaneously on a node in the node pool.",
+				Description: "The constraint on the maximum number of pods that can be run simultaneously on a node in the node pool.",
 				MaxItems:    1,
 				Elem:        ContainerAwsNodePoolMaxPodsConstraintSchema(),
 			},
@@ -98,14 +96,13 @@ func resourceContainerAwsNodePool() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The subnet where the node pool node run.",
+				Description: "The subnet where the node pool node run.",
 			},
 
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The Kubernetes version to run on this node pool (e.g. `1.19.10-gke.1000`). You can list all supported versions on a given Google Cloud region by calling GetAwsServerConfig.",
+				Description: "The Kubernetes version to run on this node pool (e.g. `1.19.10-gke.1000`). You can list all supported versions on a given Google Cloud region by calling GetAwsServerConfig.",
 			},
 
 			"annotations": {
@@ -169,15 +166,13 @@ func ContainerAwsNodePoolAutoscalingSchema() *schema.Resource {
 			"max_node_count": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Maximum number of nodes in the NodePool. Must be >= min_node_count.",
+				Description: "Maximum number of nodes in the NodePool. Must be >= min_node_count.",
 			},
 
 			"min_node_count": {
 				Type:        schema.TypeInt,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Minimum number of nodes in the NodePool. Must be >= 1 and <= max_node_count.",
+				Description: "Minimum number of nodes in the NodePool. Must be >= 1 and <= max_node_count.",
 			},
 		},
 	}
@@ -189,8 +184,7 @@ func ContainerAwsNodePoolConfigSchema() *schema.Resource {
 			"config_encryption": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The ARN of the AWS KMS key used to encrypt node pool configuration.",
+				Description: "The ARN of the AWS KMS key used to encrypt node pool configuration.",
 				MaxItems:    1,
 				Elem:        ContainerAwsNodePoolConfigConfigEncryptionSchema(),
 			},
@@ -198,8 +192,15 @@ func ContainerAwsNodePoolConfigSchema() *schema.Resource {
 			"iam_instance_profile": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The name of the AWS IAM role assigned to nodes in the pool.",
+				Description: "The name of the AWS IAM role assigned to nodes in the pool.",
+			},
+
+			"autoscaling_metrics_collection": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Optional. Configuration related to CloudWatch metrics collection on the Auto Scaling group of the node pool. When unspecified, metrics collection is disabled.",
+				MaxItems:    1,
+				Elem:        ContainerAwsNodePoolConfigAutoscalingMetricsCollectionSchema(),
 			},
 
 			"instance_type": {
@@ -207,7 +208,7 @@ func ContainerAwsNodePoolConfigSchema() *schema.Resource {
 				Computed:    true,
 				Optional:    true,
 				ForceNew:    true,
-				Description: "Optional. The AWS instance type. When unspecified, it defaults to `t3.medium`.",
+				Description: "Optional. The AWS instance type. When unspecified, it defaults to `m5.large`.",
 			},
 
 			"labels": {
@@ -218,11 +219,18 @@ func ContainerAwsNodePoolConfigSchema() *schema.Resource {
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
+			"proxy_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "Proxy configuration for outbound HTTP(S) traffic.",
+				MaxItems:    1,
+				Elem:        ContainerAwsNodePoolConfigProxyConfigSchema(),
+			},
+
 			"root_volume": {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. Template for the root volume provisioned for node pool nodes. Volumes will be provisioned in the availability zone assigned to the node pool subnet. When unspecified, it defaults to 32 GiB with the GP2 volume type.",
 				MaxItems:    1,
 				Elem:        ContainerAwsNodePoolConfigRootVolumeSchema(),
@@ -231,7 +239,6 @@ func ContainerAwsNodePoolConfigSchema() *schema.Resource {
 			"security_group_ids": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The IDs of additional security groups to add to nodes in this pool. The manager will automatically create security groups with minimum rules needed for a functioning cluster.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -239,7 +246,6 @@ func ContainerAwsNodePoolConfigSchema() *schema.Resource {
 			"ssh_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The SSH configuration.",
 				MaxItems:    1,
 				Elem:        ContainerAwsNodePoolConfigSshConfigSchema(),
@@ -248,7 +254,6 @@ func ContainerAwsNodePoolConfigSchema() *schema.Resource {
 			"tags": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. Key/value metadata to assign to each underlying AWS resource. Specify at most 50 pairs containing alphanumerics, spaces, and symbols (.+-=_:@/). Keys can be up to 127 Unicode characters. Values can be up to 255 Unicode characters.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -270,8 +275,44 @@ func ContainerAwsNodePoolConfigConfigEncryptionSchema() *schema.Resource {
 			"kms_key_arn": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The ARN of the AWS KMS key used to encrypt node pool configuration.",
+				Description: "The ARN of the AWS KMS key used to encrypt node pool configuration.",
+			},
+		},
+	}
+}
+
+func ContainerAwsNodePoolConfigAutoscalingMetricsCollectionSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"granularity": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The frequency at which EC2 Auto Scaling sends aggregated data to AWS CloudWatch. The only valid value is \"1Minute\".",
+			},
+
+			"metrics": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: "The metrics to enable. For a list of valid metrics, see https://docs.aws.amazon.com/autoscaling/ec2/APIReference/API_EnableMetricsCollection.html. If you specify granularity and don't specify any metrics, all metrics are enabled.",
+				Elem:        &schema.Schema{Type: schema.TypeString},
+			},
+		},
+	}
+}
+
+func ContainerAwsNodePoolConfigProxyConfigSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"secret_arn": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The ARN of the AWS Secret Manager secret that contains the HTTP(S) proxy configuration.",
+			},
+
+			"secret_version": {
+				Type:        schema.TypeString,
+				Required:    true,
+				Description: "The version string of the AWS Secret Manager secret that contains the HTTP(S) proxy configuration.",
 			},
 		},
 	}
@@ -284,14 +325,12 @@ func ContainerAwsNodePoolConfigRootVolumeSchema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The number of I/O operations per second (IOPS) to provision for GP3 volume.",
 			},
 
 			"kms_key_arn": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The Amazon Resource Name (ARN) of the Customer Managed Key (CMK) used to encrypt AWS EBS volumes. If not specified, the default Amazon managed key associated to the AWS region where this cluster runs will be used.",
 			},
 
@@ -299,7 +338,6 @@ func ContainerAwsNodePoolConfigRootVolumeSchema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The size of the volume, in GiBs. When unspecified, a default value is provided. See the specific reference in the parent resource.",
 			},
 
@@ -307,7 +345,6 @@ func ContainerAwsNodePoolConfigRootVolumeSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. Type of the EBS volume. When unspecified, it defaults to GP2 volume. Possible values: VOLUME_TYPE_UNSPECIFIED, GP2, GP3",
 			},
 		},
@@ -320,8 +357,7 @@ func ContainerAwsNodePoolConfigSshConfigSchema() *schema.Resource {
 			"ec2_key_pair": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The name of the EC2 key pair used to login into cluster machines.",
+				Description: "The name of the EC2 key pair used to login into cluster machines.",
 			},
 		},
 	}
@@ -334,21 +370,21 @@ func ContainerAwsNodePoolConfigTaintsSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The taint effect. Possible values: EFFECT_UNSPECIFIED, NO_SCHEDULE, PREFER_NO_SCHEDULE, NO_EXECUTE",
+				Description: "The taint effect. Possible values: EFFECT_UNSPECIFIED, NO_SCHEDULE, PREFER_NO_SCHEDULE, NO_EXECUTE",
 			},
 
 			"key": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. Key for the taint.",
+				Description: "Key for the taint.",
 			},
 
 			"value": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. Value for the taint.",
+				Description: "Value for the taint.",
 			},
 		},
 	}
@@ -361,7 +397,7 @@ func ContainerAwsNodePoolMaxPodsConstraintSchema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The maximum number of pods to schedule on a single node.",
+				Description: "The maximum number of pods to schedule on a single node.",
 			},
 		},
 	}
@@ -387,13 +423,13 @@ func resourceContainerAwsNodePoolCreate(d *schema.ResourceData, meta interface{}
 		Project:           dcl.String(project),
 	}
 
-	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/awsClusters/{{cluster}}/awsNodePools/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -409,7 +445,7 @@ func resourceContainerAwsNodePoolCreate(d *schema.ResourceData, meta interface{}
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyNodePool(context.Background(), obj, createDirective...)
+	res, err := client.ApplyNodePool(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -444,7 +480,7 @@ func resourceContainerAwsNodePoolRead(d *schema.ResourceData, meta interface{}) 
 		Project:           dcl.String(project),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -537,7 +573,7 @@ func resourceContainerAwsNodePoolUpdate(d *schema.ResourceData, meta interface{}
 		Project:           dcl.String(project),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -590,7 +626,7 @@ func resourceContainerAwsNodePoolDelete(d *schema.ResourceData, meta interface{}
 	}
 
 	log.Printf("[DEBUG] Deleting NodePool %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -616,6 +652,7 @@ func resourceContainerAwsNodePoolDelete(d *schema.ResourceData, meta interface{}
 
 func resourceContainerAwsNodePoolImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/awsClusters/(?P<cluster>[^/]+)/awsNodePools/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<cluster>[^/]+)/(?P<name>[^/]+)",
@@ -639,7 +676,7 @@ func expandContainerAwsNodePoolAutoscaling(o interface{}) *containeraws.NodePool
 		return containeraws.EmptyNodePoolAutoscaling
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyNodePoolAutoscaling
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -667,20 +704,22 @@ func expandContainerAwsNodePoolConfig(o interface{}) *containeraws.NodePoolConfi
 		return containeraws.EmptyNodePoolConfig
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyNodePoolConfig
 	}
 	obj := objArr[0].(map[string]interface{})
 	return &containeraws.NodePoolConfig{
-		ConfigEncryption:   expandContainerAwsNodePoolConfigConfigEncryption(obj["config_encryption"]),
-		IamInstanceProfile: dcl.String(obj["iam_instance_profile"].(string)),
-		InstanceType:       dcl.StringOrNil(obj["instance_type"].(string)),
-		Labels:             checkStringMap(obj["labels"]),
-		RootVolume:         expandContainerAwsNodePoolConfigRootVolume(obj["root_volume"]),
-		SecurityGroupIds:   expandStringArray(obj["security_group_ids"]),
-		SshConfig:          expandContainerAwsNodePoolConfigSshConfig(obj["ssh_config"]),
-		Tags:               checkStringMap(obj["tags"]),
-		Taints:             expandContainerAwsNodePoolConfigTaintsArray(obj["taints"]),
+		ConfigEncryption:             expandContainerAwsNodePoolConfigConfigEncryption(obj["config_encryption"]),
+		IamInstanceProfile:           dcl.String(obj["iam_instance_profile"].(string)),
+		AutoscalingMetricsCollection: expandContainerAwsNodePoolConfigAutoscalingMetricsCollection(obj["autoscaling_metrics_collection"]),
+		InstanceType:                 dcl.StringOrNil(obj["instance_type"].(string)),
+		Labels:                       checkStringMap(obj["labels"]),
+		ProxyConfig:                  expandContainerAwsNodePoolConfigProxyConfig(obj["proxy_config"]),
+		RootVolume:                   expandContainerAwsNodePoolConfigRootVolume(obj["root_volume"]),
+		SecurityGroupIds:             expandStringArray(obj["security_group_ids"]),
+		SshConfig:                    expandContainerAwsNodePoolConfigSshConfig(obj["ssh_config"]),
+		Tags:                         checkStringMap(obj["tags"]),
+		Taints:                       expandContainerAwsNodePoolConfigTaintsArray(obj["taints"]),
 	}
 }
 
@@ -689,15 +728,17 @@ func flattenContainerAwsNodePoolConfig(obj *containeraws.NodePoolConfig) interfa
 		return nil
 	}
 	transformed := map[string]interface{}{
-		"config_encryption":    flattenContainerAwsNodePoolConfigConfigEncryption(obj.ConfigEncryption),
-		"iam_instance_profile": obj.IamInstanceProfile,
-		"instance_type":        obj.InstanceType,
-		"labels":               obj.Labels,
-		"root_volume":          flattenContainerAwsNodePoolConfigRootVolume(obj.RootVolume),
-		"security_group_ids":   obj.SecurityGroupIds,
-		"ssh_config":           flattenContainerAwsNodePoolConfigSshConfig(obj.SshConfig),
-		"tags":                 obj.Tags,
-		"taints":               flattenContainerAwsNodePoolConfigTaintsArray(obj.Taints),
+		"config_encryption":              flattenContainerAwsNodePoolConfigConfigEncryption(obj.ConfigEncryption),
+		"iam_instance_profile":           obj.IamInstanceProfile,
+		"autoscaling_metrics_collection": flattenContainerAwsNodePoolConfigAutoscalingMetricsCollection(obj.AutoscalingMetricsCollection),
+		"instance_type":                  obj.InstanceType,
+		"labels":                         obj.Labels,
+		"proxy_config":                   flattenContainerAwsNodePoolConfigProxyConfig(obj.ProxyConfig),
+		"root_volume":                    flattenContainerAwsNodePoolConfigRootVolume(obj.RootVolume),
+		"security_group_ids":             obj.SecurityGroupIds,
+		"ssh_config":                     flattenContainerAwsNodePoolConfigSshConfig(obj.SshConfig),
+		"tags":                           obj.Tags,
+		"taints":                         flattenContainerAwsNodePoolConfigTaintsArray(obj.Taints),
 	}
 
 	return []interface{}{transformed}
@@ -709,7 +750,7 @@ func expandContainerAwsNodePoolConfigConfigEncryption(o interface{}) *containera
 		return containeraws.EmptyNodePoolConfigConfigEncryption
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyNodePoolConfigConfigEncryption
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -730,12 +771,68 @@ func flattenContainerAwsNodePoolConfigConfigEncryption(obj *containeraws.NodePoo
 
 }
 
+func expandContainerAwsNodePoolConfigAutoscalingMetricsCollection(o interface{}) *containeraws.NodePoolConfigAutoscalingMetricsCollection {
+	if o == nil {
+		return containeraws.EmptyNodePoolConfigAutoscalingMetricsCollection
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return containeraws.EmptyNodePoolConfigAutoscalingMetricsCollection
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &containeraws.NodePoolConfigAutoscalingMetricsCollection{
+		Granularity: dcl.String(obj["granularity"].(string)),
+		Metrics:     expandStringArray(obj["metrics"]),
+	}
+}
+
+func flattenContainerAwsNodePoolConfigAutoscalingMetricsCollection(obj *containeraws.NodePoolConfigAutoscalingMetricsCollection) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"granularity": obj.Granularity,
+		"metrics":     obj.Metrics,
+	}
+
+	return []interface{}{transformed}
+
+}
+
+func expandContainerAwsNodePoolConfigProxyConfig(o interface{}) *containeraws.NodePoolConfigProxyConfig {
+	if o == nil {
+		return containeraws.EmptyNodePoolConfigProxyConfig
+	}
+	objArr := o.([]interface{})
+	if len(objArr) == 0 || objArr[0] == nil {
+		return containeraws.EmptyNodePoolConfigProxyConfig
+	}
+	obj := objArr[0].(map[string]interface{})
+	return &containeraws.NodePoolConfigProxyConfig{
+		SecretArn:     dcl.String(obj["secret_arn"].(string)),
+		SecretVersion: dcl.String(obj["secret_version"].(string)),
+	}
+}
+
+func flattenContainerAwsNodePoolConfigProxyConfig(obj *containeraws.NodePoolConfigProxyConfig) interface{} {
+	if obj == nil || obj.Empty() {
+		return nil
+	}
+	transformed := map[string]interface{}{
+		"secret_arn":     obj.SecretArn,
+		"secret_version": obj.SecretVersion,
+	}
+
+	return []interface{}{transformed}
+
+}
+
 func expandContainerAwsNodePoolConfigRootVolume(o interface{}) *containeraws.NodePoolConfigRootVolume {
 	if o == nil {
 		return nil
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return nil
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -767,7 +864,7 @@ func expandContainerAwsNodePoolConfigSshConfig(o interface{}) *containeraws.Node
 		return containeraws.EmptyNodePoolConfigSshConfig
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyNodePoolConfigSshConfig
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -793,7 +890,7 @@ func expandContainerAwsNodePoolConfigTaintsArray(o interface{}) []containeraws.N
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]containeraws.NodePoolConfigTaints, 0)
 	}
 
@@ -852,7 +949,7 @@ func expandContainerAwsNodePoolMaxPodsConstraint(o interface{}) *containeraws.No
 		return containeraws.EmptyNodePoolMaxPodsConstraint
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyNodePoolMaxPodsConstraint
 	}
 	obj := objArr[0].(map[string]interface{})

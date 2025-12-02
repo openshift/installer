@@ -15,19 +15,46 @@
 package google
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourcePrivatecaCertificateAuthority() *schema.Resource {
+func resourcePrivateCaCACustomDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
+	if diff.HasChange("desired_state") {
+		_, new := diff.GetChange("desired_state")
+
+		if isNewResource(diff) {
+			if diff.Get("type").(string) == "SUBORDINATE" {
+				return fmt.Errorf("`desired_state` can not be specified when creating a SUBORDINATE CA")
+			}
+			if new.(string) != "STAGED" && new.(string) != "ENABLED" {
+				return fmt.Errorf("`desired_state` can only be set to `STAGED` or `ENABLED` when creating a new CA")
+			}
+		} else {
+			if new == "STAGED" && diff.Get("state") != new {
+				return fmt.Errorf("Field `desired_state` can only be set to `STAGED` when creating a new CA")
+			}
+		}
+	}
+	return nil
+}
+
+func isNewResource(diff TerraformResourceDiff) bool {
+	name := diff.Get("name")
+	return name.(string) == ""
+}
+
+func ResourcePrivatecaCertificateAuthority() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePrivatecaCertificateAuthorityCreate,
 		Read:   resourcePrivatecaCertificateAuthorityRead,
+		Update: resourcePrivatecaCertificateAuthorityUpdate,
 		Delete: resourcePrivatecaCertificateAuthorityDelete,
 
 		Importer: &schema.ResourceImporter{
@@ -35,9 +62,12 @@ func resourcePrivatecaCertificateAuthority() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
+
+		CustomizeDiff: resourcePrivateCaCACustomDiff,
 
 		Schema: map[string]*schema.Schema{
 			"certificate_authority_id": {
@@ -202,7 +232,8 @@ func resourcePrivatecaCertificateAuthority() *schema.Resource {
 													Optional: true,
 													ForceNew: true,
 													Description: `Refers to the "path length constraint" in Basic Constraints extension. For a CA certificate, this value describes the depth of
-subordinate CA certificates that are allowed. If this value is less than 0, the request will fail.`,
+subordinate CA certificates that are allowed. If this value is less than 0, the request will fail. Setting the value to 0
+requires setting 'zero_max_issuer_path_length = true'.`,
 												},
 												"non_ca": {
 													Type:     schema.TypeBool,
@@ -216,7 +247,7 @@ If both 'is_ca' and 'non_ca' are unset, the extension will be omitted from the C
 													Optional: true,
 													ForceNew: true,
 													Description: `When true, the "path length constraint" in Basic Constraints extension will be set to 0.
-if both 'max_issuer_path_length' and 'zero_max_issuer_path_length' are unset,
+If both 'max_issuer_path_length' and 'zero_max_issuer_path_length' are unset,
 the max path length will be omitted from the CA certificate.`,
 												},
 											},
@@ -417,6 +448,119 @@ handle this extension, the client should consider this to be an error).`,
 											Type: schema.TypeString,
 										},
 									},
+									"name_constraints": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `Describes the X.509 name constraints extension.`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"critical": {
+													Type:        schema.TypeBool,
+													Required:    true,
+													ForceNew:    true,
+													Description: `Indicates whether or not the name constraints are marked critical.`,
+												},
+												"excluded_dns_names": {
+													Type:     schema.TypeList,
+													Optional: true,
+													ForceNew: true,
+													Description: `Contains excluded DNS names. Any DNS name that can be
+constructed by simply adding zero or more labels to
+the left-hand side of the name satisfies the name constraint.
+For example, 'example.com', 'www.example.com', 'www.sub.example.com'
+would satisfy 'example.com' while 'example1.com' does not.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"excluded_email_addresses": {
+													Type:     schema.TypeList,
+													Optional: true,
+													ForceNew: true,
+													Description: `Contains the excluded email addresses. The value can be a particular
+email address, a hostname to indicate all email addresses on that host or
+a domain with a leading period (e.g. '.example.com') to indicate
+all email addresses in that domain.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"excluded_ip_ranges": {
+													Type:     schema.TypeList,
+													Optional: true,
+													ForceNew: true,
+													Description: `Contains the excluded IP ranges. For IPv4 addresses, the ranges
+are expressed using CIDR notation as specified in RFC 4632.
+For IPv6 addresses, the ranges are expressed in similar encoding as IPv4
+addresses.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"excluded_uris": {
+													Type:     schema.TypeList,
+													Optional: true,
+													ForceNew: true,
+													Description: `Contains the excluded URIs that apply to the host part of the name.
+The value can be a hostname or a domain with a
+leading period (like '.example.com')`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"permitted_dns_names": {
+													Type:     schema.TypeList,
+													Optional: true,
+													ForceNew: true,
+													Description: `Contains permitted DNS names. Any DNS name that can be
+constructed by simply adding zero or more labels to
+the left-hand side of the name satisfies the name constraint.
+For example, 'example.com', 'www.example.com', 'www.sub.example.com'
+would satisfy 'example.com' while 'example1.com' does not.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"permitted_email_addresses": {
+													Type:     schema.TypeList,
+													Optional: true,
+													ForceNew: true,
+													Description: `Contains the permitted email addresses. The value can be a particular
+email address, a hostname to indicate all email addresses on that host or
+a domain with a leading period (e.g. '.example.com') to indicate
+all email addresses in that domain.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"permitted_ip_ranges": {
+													Type:     schema.TypeList,
+													Optional: true,
+													ForceNew: true,
+													Description: `Contains the permitted IP ranges. For IPv4 addresses, the ranges
+are expressed using CIDR notation as specified in RFC 4632.
+For IPv6 addresses, the ranges are expressed in similar encoding as IPv4
+addresses.`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+												"permitted_uris": {
+													Type:     schema.TypeList,
+													Optional: true,
+													ForceNew: true,
+													Description: `Contains the permitted URIs that apply to the host part of the name.
+The value can be a hostname or a domain with a
+leading period (like '.example.com')`,
+													Elem: &schema.Schema{
+														Type: schema.TypeString,
+													},
+												},
+											},
+										},
+									},
 									"policy_ids": {
 										Type:        schema.TypeList,
 										Optional:    true,
@@ -456,7 +600,7 @@ certificate. Otherwise, it is used to sign a CSR.`,
 							Type:         schema.TypeString,
 							Optional:     true,
 							ForceNew:     true,
-							ValidateFunc: validation.StringInSlice([]string{"SIGN_HASH_ALGORITHM_UNSPECIFIED", "RSA_PSS_2048_SHA256", "RSA_PSS_3072_SHA256", "RSA_PSS_4096_SHA256", "RSA_PKCS1_2048_SHA256", "RSA_PKCS1_3072_SHA256", "RSA_PKCS1_4096_SHA256", "EC_P256_SHA256", "EC_P384_SHA384", ""}, false),
+							ValidateFunc: validateEnum([]string{"SIGN_HASH_ALGORITHM_UNSPECIFIED", "RSA_PSS_2048_SHA256", "RSA_PSS_3072_SHA256", "RSA_PSS_4096_SHA256", "RSA_PKCS1_2048_SHA256", "RSA_PKCS1_3072_SHA256", "RSA_PKCS1_4096_SHA256", "EC_P256_SHA256", "EC_P384_SHA384", ""}),
 							Description: `The algorithm to use for creating a managed Cloud KMS key for a for a simplified
 experience. All managed keys will be have their ProtectionLevel as HSM. Possible values: ["SIGN_HASH_ALGORITHM_UNSPECIFIED", "RSA_PSS_2048_SHA256", "RSA_PSS_3072_SHA256", "RSA_PSS_4096_SHA256", "RSA_PKCS1_2048_SHA256", "RSA_PKCS1_3072_SHA256", "RSA_PKCS1_4096_SHA256", "EC_P256_SHA256", "EC_P384_SHA384"]`,
 							ExactlyOneOf: []string{"key_spec.0.cloud_kms_key_version", "key_spec.0.algorithm"},
@@ -498,7 +642,6 @@ created.`,
 			"ignore_active_certificates_on_deletion": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				ForceNew: true,
 				Description: `This field allows the CA to be deleted even if the CA has active certs. Active certs include both unrevoked and unexpired certs.
 Use with care. Defaults to 'false'.`,
 				Default: false,
@@ -506,7 +649,6 @@ Use with care. Defaults to 'false'.`,
 			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
-				ForceNew: true,
 				Description: `Labels with user-defined metadata.
 
 An object containing a list of "key": value pairs. Example: { "name": "wrench", "mass":
@@ -522,16 +664,70 @@ An object containing a list of "key": value pairs. Example: { "name": "wrench", 
 fractional digits, terminated by 's'. Example: "3.5s".`,
 				Default: "315360000s",
 			},
+			"pem_ca_certificate": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `The signed CA certificate issued from the subordinated CA's CSR. This is needed when activating the subordiante CA with a third party issuer.`,
+			},
+			"skip_grace_period": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: `If this flag is set, the Certificate Authority will be deleted as soon as
+possible without a 30-day grace period where undeletion would have been
+allowed. If you proceed, there will be no way to recover this CA.
+Use with care. Defaults to 'false'.`,
+				Default: false,
+			},
+			"subordinate_config": {
+				Type:     schema.TypeList,
+				Optional: true,
+				Description: `If this is a subordinate CertificateAuthority, this field will be set
+with the subordinate configuration, which describes its issuers.`,
+				MaxItems: 1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"certificate_authority": {
+							Type:             schema.TypeString,
+							Optional:         true,
+							DiffSuppressFunc: compareResourceNames,
+							Description: `This can refer to a CertificateAuthority that was used to create a
+subordinate CertificateAuthority. This field is used for information
+and usability purposes only. The resource name is in the format
+'projects/*/locations/*/caPools/*/certificateAuthorities/*'.`,
+							ExactlyOneOf: []string{"subordinate_config.0.certificate_authority", "subordinate_config.0.pem_issuer_chain"},
+						},
+						"pem_issuer_chain": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `Contains the PEM certificate chain for the issuers of this CertificateAuthority, 
+but not pem certificate for this CA itself.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"pem_certificates": {
+										Type:        schema.TypeList,
+										Optional:    true,
+										Description: `Expected to be in leaf-to-root order according to RFC 5246.`,
+										Elem: &schema.Schema{
+											Type: schema.TypeString,
+										},
+									},
+								},
+							},
+							ExactlyOneOf: []string{"subordinate_config.0.certificate_authority", "subordinate_config.0.pem_issuer_chain"},
+						},
+					},
+				},
+			},
 			"type": {
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"SELF_SIGNED", "SUBORDINATE", ""}, false),
+				ValidateFunc: validateEnum([]string{"SELF_SIGNED", "SUBORDINATE", ""}),
 				Description: `The Type of this CertificateAuthority.
 
 ~> **Note:** For 'SUBORDINATE' Certificate Authorities, they need to
-be manually activated (via Cloud Console of 'gcloud') before they can
-issue certificates. Default value: "SELF_SIGNED" Possible values: ["SELF_SIGNED", "SUBORDINATE"]`,
+be activated before they can issue certificates. Default value: "SELF_SIGNED" Possible values: ["SELF_SIGNED", "SUBORDINATE"]`,
 				Default: "SELF_SIGNED",
 			},
 			"access_urls": {
@@ -596,6 +792,18 @@ CertificateAuthority's certificate.`,
 A timestamp in RFC3339 UTC "Zulu" format, with nanosecond resolution and up to nine
 fractional digits. Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
 			},
+			"deletion_protection": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Default:  true,
+				Description: `Whether or not to allow Terraform to destroy the CertificateAuthority. Unless this field is set to false
+in Terraform state, a 'terraform destroy' or 'terraform apply' that would delete the instance will fail.`,
+			},
+			"desired_state": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				Description: `Desired state of the CertificateAuthority. Set this field to 'STAGED' to create a 'STAGED' root CA.`,
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -609,7 +817,7 @@ fractional digits. Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045
 
 func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -638,6 +846,12 @@ func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta in
 		return err
 	} else if v, ok := d.GetOkExists("key_spec"); !isEmptyValue(reflect.ValueOf(keySpecProp)) && (ok || !reflect.DeepEqual(v, keySpecProp)) {
 		obj["keySpec"] = keySpecProp
+	}
+	subordinateConfigProp, err := expandPrivatecaCertificateAuthoritySubordinateConfig(d.Get("subordinate_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("subordinate_config"); !isEmptyValue(reflect.ValueOf(subordinateConfigProp)) && (ok || !reflect.DeepEqual(v, subordinateConfigProp)) {
+		obj["subordinateConfig"] = subordinateConfigProp
 	}
 	gcsBucketProp, err := expandPrivatecaCertificateAuthorityGcsBucket(d.Get("gcs_bucket"), d, config)
 	if err != nil {
@@ -671,7 +885,10 @@ func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	// Drop `subordinateConfig` as it can not be set during CA creation.
+	// It can be used to activate CA during post_create or pre_update.
+	delete(obj, "subordinateConfig")
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating CertificateAuthority: %s", err)
 	}
@@ -686,12 +903,13 @@ func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta in
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = privatecaOperationWaitTimeWithResponse(
+	err = PrivatecaOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating CertificateAuthority", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create CertificateAuthority: %s", err)
 	}
 
@@ -714,24 +932,27 @@ func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta in
 	}
 	d.SetId(id)
 
-	if d.Get("type").(string) != "SUBORDINATE" {
-		url, err = replaceVars(d, config, "{{PrivatecaBasePath}}projects/{{project}}/locations/{{location}}/caPools/{{pool}}/certificateAuthorities/{{certificate_authority_id}}:enable")
-		if err != nil {
-			return err
+	staged := d.Get("type").(string) == "SELF_SIGNED"
+
+	if d.Get("type").(string) == "SUBORDINATE" {
+		if _, ok := d.GetOk("subordinate_config"); ok {
+			// First party issuer
+			log.Printf("[DEBUG] Activating CertificateAuthority with first party issuer")
+			if err := activateSubCAWithFirstPartyIssuer(config, d, project, billingProject, userAgent); err != nil {
+				return fmt.Errorf("Error activating subordinate CA with first party issuer: %v", err)
+			}
+			staged = true
+			log.Printf("[DEBUG] CertificateAuthority activated")
 		}
+	}
 
-		log.Printf("[DEBUG] Enabling CertificateAuthority: %#v", obj)
-
-		res, err = sendRequest(config, "POST", billingProject, url, userAgent, nil)
-		if err != nil {
-			return fmt.Errorf("Error enabling CertificateAuthority: %s", err)
-		}
-
-		err = privatecaOperationWaitTimeWithResponse(
-			config, res, &opRes, project, "Enabling CertificateAuthority", userAgent,
-			d.Timeout(schema.TimeoutCreate))
-		if err != nil {
-			return fmt.Errorf("Error waiting to enable CertificateAuthority: %s", err)
+	// Enable the CA if `desired_state` is unspecified or specified as `ENABLED`.
+	if p, ok := d.GetOk("desired_state"); !ok || p.(string) == "ENABLED" {
+		// Skip enablement on SUBORDINATE CA for backward compatible.
+		if staged {
+			if err := enableCA(config, d, project, billingProject, userAgent); err != nil {
+				return fmt.Errorf("Error enabling CertificateAuthority: %v", err)
+			}
 		}
 	}
 
@@ -742,7 +963,7 @@ func resourcePrivatecaCertificateAuthorityCreate(d *schema.ResourceData, meta in
 
 func resourcePrivatecaCertificateAuthorityRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -765,7 +986,7 @@ func resourcePrivatecaCertificateAuthorityRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("PrivatecaCertificateAuthority %q", d.Id()))
 	}
@@ -782,6 +1003,12 @@ func resourcePrivatecaCertificateAuthorityRead(d *schema.ResourceData, meta inte
 		return nil
 	}
 
+	// Explicitly set virtual fields to default values if unset
+	if _, ok := d.GetOkExists("deletion_protection"); !ok {
+		if err := d.Set("deletion_protection", true); err != nil {
+			return fmt.Errorf("Error setting deletion_protection: %s", err)
+		}
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading CertificateAuthority: %s", err)
 	}
@@ -799,6 +1026,9 @@ func resourcePrivatecaCertificateAuthorityRead(d *schema.ResourceData, meta inte
 		return fmt.Errorf("Error reading CertificateAuthority: %s", err)
 	}
 	if err := d.Set("key_spec", flattenPrivatecaCertificateAuthorityKeySpec(res["keySpec"], d, config)); err != nil {
+		return fmt.Errorf("Error reading CertificateAuthority: %s", err)
+	}
+	if err := d.Set("subordinate_config", flattenPrivatecaCertificateAuthoritySubordinateConfig(res["subordinateConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading CertificateAuthority: %s", err)
 	}
 	if err := d.Set("state", flattenPrivatecaCertificateAuthorityState(res["state"], d, config)); err != nil {
@@ -826,9 +1056,9 @@ func resourcePrivatecaCertificateAuthorityRead(d *schema.ResourceData, meta inte
 	return nil
 }
 
-func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta interface{}) error {
+func resourcePrivatecaCertificateAuthorityUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -841,12 +1071,134 @@ func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta in
 	}
 	billingProject = project
 
-	url, err := replaceVars(d, config, "{{PrivatecaBasePath}}projects/{{project}}/locations/{{location}}/caPools/{{pool}}/certificateAuthorities/{{certificate_authority_id}}?ignoreActiveCertificates={{ignore_active_certificates_on_deletion}}")
+	obj := make(map[string]interface{})
+	subordinateConfigProp, err := expandPrivatecaCertificateAuthoritySubordinateConfig(d.Get("subordinate_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("subordinate_config"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, subordinateConfigProp)) {
+		obj["subordinateConfig"] = subordinateConfigProp
+	}
+	labelsProp, err := expandPrivatecaCertificateAuthorityLabels(d.Get("labels"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("labels"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		obj["labels"] = labelsProp
+	}
+
+	url, err := replaceVars(d, config, "{{PrivatecaBasePath}}projects/{{project}}/locations/{{location}}/caPools/{{pool}}/certificateAuthorities/{{certificate_authority_id}}")
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] Updating CertificateAuthority %q: %#v", d.Id(), obj)
+	updateMask := []string{}
+
+	if d.HasChange("subordinate_config") {
+		updateMask = append(updateMask, "subordinateConfig")
+	}
+
+	if d.HasChange("labels") {
+		updateMask = append(updateMask, "labels")
+	}
+	// updateMask is a URL parameter but not present in the schema, so replaceVars
+	// won't set it
+	url, err = addQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
+	if err != nil {
+		return err
+	}
+	if d.HasChange("subordinate_config") {
+		if d.Get("type").(string) != "SUBORDINATE" {
+			return fmt.Errorf("`subordinate_config` can only be configured on subordinate CA")
+		}
+
+		// Activate subordinate CA in `AWAITING_USER_ACTIVATION` state.
+		if d.Get("state") == "AWAITING_USER_ACTIVATION" {
+			if _, ok := d.GetOk("pem_ca_certificate"); ok {
+				// Third party issuer
+				log.Printf("[DEBUG] Activating CertificateAuthority with third party issuer")
+				if err := activateSubCAWithThirdPartyIssuer(config, d, project, billingProject, userAgent); err != nil {
+					return fmt.Errorf("Error activating subordinate CA with third party issuer: %v", err)
+				}
+			} else {
+				// First party issuer
+				log.Printf("[DEBUG] Activating CertificateAuthority with first party issuer")
+				if err := activateSubCAWithFirstPartyIssuer(config, d, project, billingProject, userAgent); err != nil {
+					return fmt.Errorf("Error activating subordinate CA with first party issuer: %v", err)
+				}
+			}
+			log.Printf("[DEBUG] CertificateAuthority activated")
+		}
+	}
+
+	log.Printf("[DEBUG] checking desired_state")
+	if d.HasChange("desired_state") {
+		// Currently, most CA state update operations are not idempotent.
+		// Try to change state only if the current `state` does not match the `desired_state`.
+		if p, ok := d.GetOk("desired_state"); ok && p.(string) != d.Get("state").(string) {
+			switch p.(string) {
+			case "ENABLED":
+				if err := enableCA(config, d, project, billingProject, userAgent); err != nil {
+					return fmt.Errorf("Error enabling CertificateAuthority: %v", err)
+				}
+			case "DISABLED":
+				if err := disableCA(config, d, project, billingProject, userAgent); err != nil {
+					return fmt.Errorf("Error disabling CertificateAuthority: %v", err)
+				}
+			default:
+				return fmt.Errorf("Unsupported value in field `desired_state`")
+			}
+		}
+	}
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := getBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+
+	if err != nil {
+		return fmt.Errorf("Error updating CertificateAuthority %q: %s", d.Id(), err)
+	} else {
+		log.Printf("[DEBUG] Finished updating CertificateAuthority %q: %#v", d.Id(), res)
+	}
+
+	err = PrivatecaOperationWaitTime(
+		config, res, project, "Updating CertificateAuthority", userAgent,
+		d.Timeout(schema.TimeoutUpdate))
+
+	if err != nil {
+		return err
+	}
+
+	return resourcePrivatecaCertificateAuthorityRead(d, meta)
+}
+
+func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta interface{}) error {
+	config := meta.(*Config)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
+	if err != nil {
+		return err
+	}
+
+	billingProject := ""
+
+	project, err := getProject(d, config)
+	if err != nil {
+		return fmt.Errorf("Error fetching project for CertificateAuthority: %s", err)
+	}
+	billingProject = project
+
+	url, err := replaceVars(d, config, "{{PrivatecaBasePath}}projects/{{project}}/locations/{{location}}/caPools/{{pool}}/certificateAuthorities/{{certificate_authority_id}}?ignoreActiveCertificates={{ignore_active_certificates_on_deletion}}&skipGracePeriod={{skip_grace_period}}")
 	if err != nil {
 		return err
 	}
 
 	var obj map[string]interface{}
+	if d.Get("deletion_protection").(bool) {
+		return fmt.Errorf("cannot destroy CertificateAuthority without setting deletion_protection=false and running `terraform apply`")
+	}
+
 	if d.Get("state").(string) == "ENABLED" {
 		disableUrl, err := replaceVars(d, config, "{{PrivatecaBasePath}}projects/{{project}}/locations/{{location}}/caPools/{{pool}}/certificateAuthorities/{{certificate_authority_id}}:disable")
 		if err != nil {
@@ -855,13 +1207,13 @@ func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta in
 
 		log.Printf("[DEBUG] Disabling CertificateAuthority: %#v", obj)
 
-		dRes, err := sendRequest(config, "POST", billingProject, disableUrl, userAgent, nil)
+		dRes, err := SendRequest(config, "POST", billingProject, disableUrl, userAgent, nil)
 		if err != nil {
 			return fmt.Errorf("Error disabling CertificateAuthority: %s", err)
 		}
 
 		var opRes map[string]interface{}
-		err = privatecaOperationWaitTimeWithResponse(
+		err = PrivatecaOperationWaitTimeWithResponse(
 			config, dRes, &opRes, project, "Disabling CertificateAuthority", userAgent,
 			d.Timeout(schema.TimeoutDelete))
 		if err != nil {
@@ -875,12 +1227,12 @@ func resourcePrivatecaCertificateAuthorityDelete(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "CertificateAuthority")
 	}
 
-	err = privatecaOperationWaitTime(
+	err = PrivatecaOperationWaitTime(
 		config, res, project, "Deleting CertificateAuthority", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -909,6 +1261,10 @@ func resourcePrivatecaCertificateAuthorityImport(d *schema.ResourceData, meta in
 	}
 	d.SetId(id)
 
+	// Explicitly set virtual fields to default values on import
+	if err := d.Set("deletion_protection", true); err != nil {
+		return nil, fmt.Errorf("Error setting deletion_protection: %s", err)
+	}
 	if err := d.Set("ignore_active_certificates_on_deletion", false); err != nil {
 		return nil, err
 	}
@@ -955,6 +1311,8 @@ func flattenPrivatecaCertificateAuthorityConfigX509Config(v interface{}, d *sche
 		flattenPrivatecaCertificateConfigX509ConfigCaOptions(original["caOptions"], d, config)
 	transformed["key_usage"] =
 		flattenPrivatecaCertificateConfigX509ConfigKeyUsage(original["keyUsage"], d, config)
+	transformed["name_constraints"] =
+		flattenPrivatecaCertificateConfigX509ConfigNameConstraints(original["nameConstraints"], d, config)
 	return []interface{}{transformed}
 }
 
@@ -1094,6 +1452,42 @@ func flattenPrivatecaCertificateAuthorityKeySpecAlgorithm(v interface{}, d *sche
 	return v
 }
 
+func flattenPrivatecaCertificateAuthoritySubordinateConfig(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["certificate_authority"] =
+		flattenPrivatecaCertificateAuthoritySubordinateConfigCertificateAuthority(original["certificateAuthority"], d, config)
+	transformed["pem_issuer_chain"] =
+		flattenPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChain(original["pemIssuerChain"], d, config)
+	return []interface{}{transformed}
+}
+func flattenPrivatecaCertificateAuthoritySubordinateConfigCertificateAuthority(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChain(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["pem_certificates"] =
+		flattenPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChainPemCertificates(original["pemCertificates"], d, config)
+	return []interface{}{transformed}
+}
+func flattenPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChainPemCertificates(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenPrivatecaCertificateAuthorityState(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
@@ -1216,6 +1610,11 @@ func expandPrivatecaCertificateAuthorityConfigX509Config(v interface{}, d Terraf
 	}
 	transformed["additionalExtensions"] = addExts
 
+	nameConstraints, err := expandPrivatecaCertificateConfigX509ConfigNameConstraints(original["name_constraints"], d, config)
+	if err != nil {
+		return nil, err
+	}
+	transformed["nameConstraints"] = nameConstraints
 	return transformed, nil
 }
 
@@ -1436,6 +1835,59 @@ func expandPrivatecaCertificateAuthorityKeySpecCloudKmsKeyVersion(v interface{},
 }
 
 func expandPrivatecaCertificateAuthorityKeySpecAlgorithm(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandPrivatecaCertificateAuthoritySubordinateConfig(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedCertificateAuthority, err := expandPrivatecaCertificateAuthoritySubordinateConfigCertificateAuthority(original["certificate_authority"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCertificateAuthority); val.IsValid() && !isEmptyValue(val) {
+		transformed["certificateAuthority"] = transformedCertificateAuthority
+	}
+
+	transformedPemIssuerChain, err := expandPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChain(original["pem_issuer_chain"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPemIssuerChain); val.IsValid() && !isEmptyValue(val) {
+		transformed["pemIssuerChain"] = transformedPemIssuerChain
+	}
+
+	return transformed, nil
+}
+
+func expandPrivatecaCertificateAuthoritySubordinateConfigCertificateAuthority(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChain(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedPemCertificates, err := expandPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChainPemCertificates(original["pem_certificates"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPemCertificates); val.IsValid() && !isEmptyValue(val) {
+		transformed["pemCertificates"] = transformedPemCertificates
+	}
+
+	return transformed, nil
+}
+
+func expandPrivatecaCertificateAuthoritySubordinateConfigPemIssuerChainPemCertificates(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

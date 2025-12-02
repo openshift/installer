@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -40,13 +40,6 @@ func (r *Project) getURL(userBasePath string) (string, error) {
 		"name": dcl.ValueOrEmptyString(nr.Name),
 	}
 	return dcl.URL("v1/projects/{{name}}", nr.basePath(), userBasePath, params), nil
-}
-
-func (r *Project) listURL(userBasePath string) (string, error) {
-	nr := r.urlNormalized()
-	params := map[string]interface{}{}
-	return dcl.URL("v1/projects", nr.basePath(), userBasePath, params), nil
-
 }
 
 func (r *Project) createURL(userBasePath string) (string, error) {
@@ -99,6 +92,8 @@ type projectApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateProjectUpdateProjectRequest(ctx context.Context, f *Project, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Labels; !dcl.IsEmptyValueIndirect(v) {
 		req["labels"] = v
@@ -192,8 +187,8 @@ func (c *Client) listProjectRaw(ctx context.Context, r *Project, pageToken strin
 }
 
 type listProjectOperation struct {
-	Items []map[string]interface{} `json:"items"`
-	Token string                   `json:"nextPageToken"`
+	Projects []map[string]interface{} `json:"projects"`
+	Token    string                   `json:"nextPageToken"`
 }
 
 func (c *Client) listProject(ctx context.Context, r *Project, pageToken string, pageSize int32) ([]*Project, string, error) {
@@ -208,11 +203,12 @@ func (c *Client) listProject(ctx context.Context, r *Project, pageToken string, 
 	}
 
 	var l []*Project
-	for _, v := range m.Items {
-		res, err := unmarshalMapProject(v, c)
+	for _, v := range m.Projects {
+		res, err := unmarshalMapProject(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
+		res.Parent = r.Parent
 		l = append(l, res)
 	}
 
@@ -363,6 +359,11 @@ func (c *Client) projectDiffsForRawDesired(ctx context.Context, rawDesired *Proj
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for Project: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for Project: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractProjectFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeProjectInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -403,7 +404,8 @@ func canonicalizeProjectDesiredState(rawDesired, rawInitial *Project, opts ...dc
 		return rawDesired, nil
 	}
 	canonicalDesired := &Project{}
-	if dcl.IsZeroValue(rawDesired.Labels) {
+	if dcl.IsZeroValue(rawDesired.Labels) || (dcl.IsEmptyValueIndirect(rawDesired.Labels) && dcl.IsEmptyValueIndirect(rawInitial.Labels)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Labels = rawInitial.Labels
 	} else {
 		canonicalDesired.Labels = rawDesired.Labels
@@ -423,23 +425,22 @@ func canonicalizeProjectDesiredState(rawDesired, rawInitial *Project, opts ...dc
 	} else {
 		canonicalDesired.Name = rawDesired.Name
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeProjectNewState(c *Client, rawNew, rawDesired *Project) (*Project, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Labels) && dcl.IsNotReturnedByServer(rawDesired.Labels) {
+	if dcl.IsEmptyValueIndirect(rawNew.Labels) && dcl.IsEmptyValueIndirect(rawDesired.Labels) {
 		rawNew.Labels = rawDesired.Labels
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.LifecycleState) && dcl.IsNotReturnedByServer(rawDesired.LifecycleState) {
+	if dcl.IsEmptyValueIndirect(rawNew.LifecycleState) && dcl.IsEmptyValueIndirect(rawDesired.LifecycleState) {
 		rawNew.LifecycleState = rawDesired.LifecycleState
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.DisplayName) && dcl.IsNotReturnedByServer(rawDesired.DisplayName) {
+	if dcl.IsEmptyValueIndirect(rawNew.DisplayName) && dcl.IsEmptyValueIndirect(rawDesired.DisplayName) {
 		rawNew.DisplayName = rawDesired.DisplayName
 	} else {
 		if dcl.StringCanonicalize(rawDesired.DisplayName, rawNew.DisplayName) {
@@ -447,7 +448,7 @@ func canonicalizeProjectNewState(c *Client, rawNew, rawDesired *Project) (*Proje
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Parent) && dcl.IsNotReturnedByServer(rawDesired.Parent) {
+	if dcl.IsEmptyValueIndirect(rawNew.Parent) && dcl.IsEmptyValueIndirect(rawDesired.Parent) {
 		rawNew.Parent = rawDesired.Parent
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Parent, rawNew.Parent) {
@@ -455,7 +456,7 @@ func canonicalizeProjectNewState(c *Client, rawNew, rawDesired *Project) (*Proje
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Name, rawNew.Name) {
@@ -463,7 +464,7 @@ func canonicalizeProjectNewState(c *Client, rawNew, rawDesired *Project) (*Proje
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ProjectNumber) && dcl.IsNotReturnedByServer(rawDesired.ProjectNumber) {
+	if dcl.IsEmptyValueIndirect(rawNew.ProjectNumber) && dcl.IsEmptyValueIndirect(rawDesired.ProjectNumber) {
 		rawNew.ProjectNumber = rawDesired.ProjectNumber
 	} else {
 	}
@@ -489,48 +490,51 @@ func diffProject(c *Client, desired, actual *Project, opts ...dcl.ApplyOption) (
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.Info{OperationSelector: dcl.TriggersOperation("updateProjectUpdateProjectOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateProjectUpdateProjectOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.LifecycleState, actual.LifecycleState, dcl.Info{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("LifecycleState")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.LifecycleState, actual.LifecycleState, dcl.DiffInfo{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("LifecycleState")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.DisplayName, actual.DisplayName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Parent, actual.Parent, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Parent")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Parent, actual.Parent, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Parent")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ProjectId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ProjectId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ProjectNumber, actual.ProjectNumber, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ProjectNumber")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ProjectNumber, actual.ProjectNumber, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ProjectNumber")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 
@@ -540,7 +544,7 @@ func diffProject(c *Client, desired, actual *Project, opts ...dcl.ApplyOption) (
 func (r *Project) urlNormalized() *Project {
 	normalized := dcl.Copy(*r).(Project)
 	normalized.DisplayName = dcl.SelfLinkToName(r.DisplayName)
-	normalized.Parent = dcl.SelfLinkToName(r.Parent)
+	normalized.Parent = r.Parent
 	normalized.Name = dcl.SelfLinkToName(r.Name)
 	return &normalized
 }
@@ -571,17 +575,17 @@ func (r *Project) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalProject decodes JSON responses into the Project resource schema.
-func unmarshalProject(b []byte, c *Client) (*Project, error) {
+func unmarshalProject(b []byte, c *Client, res *Project) (*Project, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapProject(m, c)
+	return unmarshalMapProject(m, c, res)
 }
 
-func unmarshalMapProject(m map[string]interface{}, c *Client) (*Project, error) {
+func unmarshalMapProject(m map[string]interface{}, c *Client, res *Project) (*Project, error) {
 
-	flattened := flattenProject(c, m)
+	flattened := flattenProject(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -591,15 +595,17 @@ func unmarshalMapProject(m map[string]interface{}, c *Client) (*Project, error) 
 // expandProject expands Project into a JSON request object.
 func expandProject(c *Client, f *Project) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v := f.Labels; dcl.ValueShouldBeSent(v) {
 		m["labels"] = v
 	}
 	if v := f.DisplayName; dcl.ValueShouldBeSent(v) {
 		m["name"] = v
 	}
-	if v, err := expandProjectParent(f, f.Parent); err != nil {
+	if v, err := expandProjectParent(c, f.Parent, res); err != nil {
 		return nil, fmt.Errorf("error expanding Parent into parent: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["parent"] = v
 	}
 	if v := f.Name; dcl.ValueShouldBeSent(v) {
@@ -611,7 +617,7 @@ func expandProject(c *Client, f *Project) (map[string]interface{}, error) {
 
 // flattenProject flattens Project from a JSON request object into the
 // Project type.
-func flattenProject(c *Client, i interface{}) *Project {
+func flattenProject(c *Client, i interface{}, res *Project) *Project {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -620,20 +626,20 @@ func flattenProject(c *Client, i interface{}) *Project {
 		return nil
 	}
 
-	res := &Project{}
-	res.Labels = dcl.FlattenKeyValuePairs(m["labels"])
-	res.LifecycleState = flattenProjectLifecycleStateEnum(m["lifecycleState"])
-	res.DisplayName = dcl.FlattenString(m["name"])
-	res.Parent = flattenProjectParent(c, m["parent"])
-	res.Name = dcl.FlattenString(m["projectId"])
-	res.ProjectNumber = dcl.FlattenInteger(m["projectNumber"])
+	resultRes := &Project{}
+	resultRes.Labels = dcl.FlattenKeyValuePairs(m["labels"])
+	resultRes.LifecycleState = flattenProjectLifecycleStateEnum(m["lifecycleState"])
+	resultRes.DisplayName = dcl.FlattenString(m["name"])
+	resultRes.Parent = flattenProjectParent(c, m["parent"], res)
+	resultRes.Name = dcl.FlattenString(m["projectId"])
+	resultRes.ProjectNumber = dcl.FlattenInteger(m["projectNumber"])
 
-	return res
+	return resultRes
 }
 
 // flattenProjectLifecycleStateEnumMap flattens the contents of ProjectLifecycleStateEnum from a JSON
 // response object.
-func flattenProjectLifecycleStateEnumMap(c *Client, i interface{}) map[string]ProjectLifecycleStateEnum {
+func flattenProjectLifecycleStateEnumMap(c *Client, i interface{}, res *Project) map[string]ProjectLifecycleStateEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ProjectLifecycleStateEnum{}
@@ -653,7 +659,7 @@ func flattenProjectLifecycleStateEnumMap(c *Client, i interface{}) map[string]Pr
 
 // flattenProjectLifecycleStateEnumSlice flattens the contents of ProjectLifecycleStateEnum from a JSON
 // response object.
-func flattenProjectLifecycleStateEnumSlice(c *Client, i interface{}) []ProjectLifecycleStateEnum {
+func flattenProjectLifecycleStateEnumSlice(c *Client, i interface{}, res *Project) []ProjectLifecycleStateEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ProjectLifecycleStateEnum{}
@@ -676,7 +682,7 @@ func flattenProjectLifecycleStateEnumSlice(c *Client, i interface{}) []ProjectLi
 func flattenProjectLifecycleStateEnum(i interface{}) *ProjectLifecycleStateEnum {
 	s, ok := i.(string)
 	if !ok {
-		return ProjectLifecycleStateEnumRef("")
+		return nil
 	}
 
 	return ProjectLifecycleStateEnumRef(s)
@@ -687,7 +693,7 @@ func flattenProjectLifecycleStateEnum(i interface{}) *ProjectLifecycleStateEnum 
 // identity).  This is useful in extracting the element from a List call.
 func (r *Project) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalProject(b, c)
+		cr, err := unmarshalProject(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -712,6 +718,7 @@ type projectDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         projectApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToProjectDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]projectDiff, error) {
@@ -731,7 +738,8 @@ func convertFieldDiffsToProjectDiffs(config *dcl.Config, fds []*dcl.FieldDiff, o
 	var diffs []projectDiff
 	// For each operation name, create a projectDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := projectDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := projectDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {

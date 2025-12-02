@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -190,8 +190,8 @@ func (r *CertificateConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CertificateConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfig *CertificateConfig = &CertificateConfig{empty: true}
 
 func (r *CertificateConfig) Empty() bool {
@@ -239,8 +239,8 @@ func (r *CertificateConfigSubjectConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CertificateConfigSubjectConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigSubjectConfig *CertificateConfigSubjectConfig = &CertificateConfigSubjectConfig{empty: true}
 
 func (r *CertificateConfigSubjectConfig) Empty() bool {
@@ -306,8 +306,8 @@ func (r *CertificateConfigSubjectConfigSubject) UnmarshalJSON(data []byte) error
 }
 
 // This object is used to assert a desired state where this CertificateConfigSubjectConfigSubject is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigSubjectConfigSubject *CertificateConfigSubjectConfigSubject = &CertificateConfigSubjectConfigSubject{empty: true}
 
 func (r *CertificateConfigSubjectConfigSubject) Empty() bool {
@@ -361,8 +361,8 @@ func (r *CertificateConfigSubjectConfigSubjectAltName) UnmarshalJSON(data []byte
 }
 
 // This object is used to assert a desired state where this CertificateConfigSubjectConfigSubjectAltName is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigSubjectConfigSubjectAltName *CertificateConfigSubjectConfigSubjectAltName = &CertificateConfigSubjectConfigSubjectAltName{empty: true}
 
 func (r *CertificateConfigSubjectConfigSubjectAltName) Empty() bool {
@@ -419,8 +419,8 @@ func (r *CertificateConfigX509Config) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509Config is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509Config *CertificateConfigX509Config = &CertificateConfigX509Config{empty: true}
 
 func (r *CertificateConfigX509Config) Empty() bool {
@@ -471,8 +471,8 @@ func (r *CertificateConfigX509ConfigKeyUsage) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509ConfigKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509ConfigKeyUsage *CertificateConfigX509ConfigKeyUsage = &CertificateConfigX509ConfigKeyUsage{empty: true}
 
 func (r *CertificateConfigX509ConfigKeyUsage) Empty() bool {
@@ -541,8 +541,8 @@ func (r *CertificateConfigX509ConfigKeyUsageBaseKeyUsage) UnmarshalJSON(data []b
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509ConfigKeyUsageBaseKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509ConfigKeyUsageBaseKeyUsage *CertificateConfigX509ConfigKeyUsageBaseKeyUsage = &CertificateConfigX509ConfigKeyUsageBaseKeyUsage{empty: true}
 
 func (r *CertificateConfigX509ConfigKeyUsageBaseKeyUsage) Empty() bool {
@@ -602,8 +602,8 @@ func (r *CertificateConfigX509ConfigKeyUsageExtendedKeyUsage) UnmarshalJSON(data
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509ConfigKeyUsageExtendedKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509ConfigKeyUsageExtendedKeyUsage *CertificateConfigX509ConfigKeyUsageExtendedKeyUsage = &CertificateConfigX509ConfigKeyUsageExtendedKeyUsage{empty: true}
 
 func (r *CertificateConfigX509ConfigKeyUsageExtendedKeyUsage) Empty() bool {
@@ -648,8 +648,8 @@ func (r *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages) UnmarshalJ
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages = &CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages{empty: true}
 
 func (r *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages) Empty() bool {
@@ -668,9 +668,11 @@ func (r *CertificateConfigX509ConfigKeyUsageUnknownExtendedKeyUsages) HashCode()
 }
 
 type CertificateConfigX509ConfigCaOptions struct {
-	empty               bool   `json:"-"`
-	IsCa                *bool  `json:"isCa"`
-	MaxIssuerPathLength *int64 `json:"maxIssuerPathLength"`
+	empty                   bool   `json:"-"`
+	IsCa                    *bool  `json:"isCa"`
+	NonCa                   *bool  `json:"nonCa"`
+	MaxIssuerPathLength     *int64 `json:"maxIssuerPathLength"`
+	ZeroMaxIssuerPathLength *bool  `json:"zeroMaxIssuerPathLength"`
 }
 
 type jsonCertificateConfigX509ConfigCaOptions CertificateConfigX509ConfigCaOptions
@@ -690,15 +692,19 @@ func (r *CertificateConfigX509ConfigCaOptions) UnmarshalJSON(data []byte) error 
 
 		r.IsCa = res.IsCa
 
+		r.NonCa = res.NonCa
+
 		r.MaxIssuerPathLength = res.MaxIssuerPathLength
+
+		r.ZeroMaxIssuerPathLength = res.ZeroMaxIssuerPathLength
 
 	}
 	return nil
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509ConfigCaOptions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509ConfigCaOptions *CertificateConfigX509ConfigCaOptions = &CertificateConfigX509ConfigCaOptions{empty: true}
 
 func (r *CertificateConfigX509ConfigCaOptions) Empty() bool {
@@ -743,8 +749,8 @@ func (r *CertificateConfigX509ConfigPolicyIds) UnmarshalJSON(data []byte) error 
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509ConfigPolicyIds is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509ConfigPolicyIds *CertificateConfigX509ConfigPolicyIds = &CertificateConfigX509ConfigPolicyIds{empty: true}
 
 func (r *CertificateConfigX509ConfigPolicyIds) Empty() bool {
@@ -795,8 +801,8 @@ func (r *CertificateConfigX509ConfigAdditionalExtensions) UnmarshalJSON(data []b
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509ConfigAdditionalExtensions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509ConfigAdditionalExtensions *CertificateConfigX509ConfigAdditionalExtensions = &CertificateConfigX509ConfigAdditionalExtensions{empty: true}
 
 func (r *CertificateConfigX509ConfigAdditionalExtensions) Empty() bool {
@@ -841,8 +847,8 @@ func (r *CertificateConfigX509ConfigAdditionalExtensionsObjectId) UnmarshalJSON(
 }
 
 // This object is used to assert a desired state where this CertificateConfigX509ConfigAdditionalExtensionsObjectId is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigX509ConfigAdditionalExtensionsObjectId *CertificateConfigX509ConfigAdditionalExtensionsObjectId = &CertificateConfigX509ConfigAdditionalExtensionsObjectId{empty: true}
 
 func (r *CertificateConfigX509ConfigAdditionalExtensionsObjectId) Empty() bool {
@@ -890,8 +896,8 @@ func (r *CertificateConfigPublicKey) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CertificateConfigPublicKey is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateConfigPublicKey *CertificateConfigPublicKey = &CertificateConfigPublicKey{empty: true}
 
 func (r *CertificateConfigPublicKey) Empty() bool {
@@ -939,8 +945,8 @@ func (r *CertificateRevocationDetails) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CertificateRevocationDetails is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateRevocationDetails *CertificateRevocationDetails = &CertificateRevocationDetails{empty: true}
 
 func (r *CertificateRevocationDetails) Empty() bool {
@@ -1006,8 +1012,8 @@ func (r *CertificateCertificateDescription) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescription is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescription *CertificateCertificateDescription = &CertificateCertificateDescription{empty: true}
 
 func (r *CertificateCertificateDescription) Empty() bool {
@@ -1067,8 +1073,8 @@ func (r *CertificateCertificateDescriptionSubjectDescription) UnmarshalJSON(data
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionSubjectDescription is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionSubjectDescription *CertificateCertificateDescriptionSubjectDescription = &CertificateCertificateDescriptionSubjectDescription{empty: true}
 
 func (r *CertificateCertificateDescriptionSubjectDescription) Empty() bool {
@@ -1134,8 +1140,8 @@ func (r *CertificateCertificateDescriptionSubjectDescriptionSubject) UnmarshalJS
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionSubjectDescriptionSubject is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionSubjectDescriptionSubject *CertificateCertificateDescriptionSubjectDescriptionSubject = &CertificateCertificateDescriptionSubjectDescriptionSubject{empty: true}
 
 func (r *CertificateCertificateDescriptionSubjectDescriptionSubject) Empty() bool {
@@ -1192,8 +1198,8 @@ func (r *CertificateCertificateDescriptionSubjectDescriptionSubjectAltName) Unma
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionSubjectDescriptionSubjectAltName is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltName *CertificateCertificateDescriptionSubjectDescriptionSubjectAltName = &CertificateCertificateDescriptionSubjectDescriptionSubjectAltName{empty: true}
 
 func (r *CertificateCertificateDescriptionSubjectDescriptionSubjectAltName) Empty() bool {
@@ -1244,8 +1250,8 @@ func (r *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustom
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans = &CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans{empty: true}
 
 func (r *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSans) Empty() bool {
@@ -1290,8 +1296,8 @@ func (r *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustom
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId = &CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId{empty: true}
 
 func (r *CertificateCertificateDescriptionSubjectDescriptionSubjectAltNameCustomSansObjectId) Empty() bool {
@@ -1348,8 +1354,8 @@ func (r *CertificateCertificateDescriptionX509Description) UnmarshalJSON(data []
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509Description is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509Description *CertificateCertificateDescriptionX509Description = &CertificateCertificateDescriptionX509Description{empty: true}
 
 func (r *CertificateCertificateDescriptionX509Description) Empty() bool {
@@ -1400,8 +1406,8 @@ func (r *CertificateCertificateDescriptionX509DescriptionKeyUsage) UnmarshalJSON
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509DescriptionKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509DescriptionKeyUsage *CertificateCertificateDescriptionX509DescriptionKeyUsage = &CertificateCertificateDescriptionX509DescriptionKeyUsage{empty: true}
 
 func (r *CertificateCertificateDescriptionX509DescriptionKeyUsage) Empty() bool {
@@ -1470,8 +1476,8 @@ func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage) U
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage *CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage = &CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage{empty: true}
 
 func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageBaseKeyUsage) Empty() bool {
@@ -1531,8 +1537,8 @@ func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsag
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage *CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage = &CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage{empty: true}
 
 func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageExtendedKeyUsage) Empty() bool {
@@ -1577,8 +1583,8 @@ func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtended
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages = &CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages{empty: true}
 
 func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtendedKeyUsages) Empty() bool {
@@ -1597,9 +1603,9 @@ func (r *CertificateCertificateDescriptionX509DescriptionKeyUsageUnknownExtended
 }
 
 type CertificateCertificateDescriptionX509DescriptionCaOptions struct {
-	empty               bool              `json:"-"`
-	IsCa                *dcl.OptionalBool `json:"isCa"`
-	MaxIssuerPathLength *int64            `json:"maxIssuerPathLength"`
+	empty               bool   `json:"-"`
+	IsCa                *bool  `json:"isCa"`
+	MaxIssuerPathLength *int64 `json:"maxIssuerPathLength"`
 }
 
 type jsonCertificateCertificateDescriptionX509DescriptionCaOptions CertificateCertificateDescriptionX509DescriptionCaOptions
@@ -1626,8 +1632,8 @@ func (r *CertificateCertificateDescriptionX509DescriptionCaOptions) UnmarshalJSO
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509DescriptionCaOptions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509DescriptionCaOptions *CertificateCertificateDescriptionX509DescriptionCaOptions = &CertificateCertificateDescriptionX509DescriptionCaOptions{empty: true}
 
 func (r *CertificateCertificateDescriptionX509DescriptionCaOptions) Empty() bool {
@@ -1672,8 +1678,8 @@ func (r *CertificateCertificateDescriptionX509DescriptionPolicyIds) UnmarshalJSO
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509DescriptionPolicyIds is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509DescriptionPolicyIds *CertificateCertificateDescriptionX509DescriptionPolicyIds = &CertificateCertificateDescriptionX509DescriptionPolicyIds{empty: true}
 
 func (r *CertificateCertificateDescriptionX509DescriptionPolicyIds) Empty() bool {
@@ -1724,8 +1730,8 @@ func (r *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions) U
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509DescriptionAdditionalExtensions is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509DescriptionAdditionalExtensions *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions = &CertificateCertificateDescriptionX509DescriptionAdditionalExtensions{empty: true}
 
 func (r *CertificateCertificateDescriptionX509DescriptionAdditionalExtensions) Empty() bool {
@@ -1770,8 +1776,8 @@ func (r *CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObj
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId *CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId = &CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId{empty: true}
 
 func (r *CertificateCertificateDescriptionX509DescriptionAdditionalExtensionsObjectId) Empty() bool {
@@ -1819,8 +1825,8 @@ func (r *CertificateCertificateDescriptionPublicKey) UnmarshalJSON(data []byte) 
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionPublicKey is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionPublicKey *CertificateCertificateDescriptionPublicKey = &CertificateCertificateDescriptionPublicKey{empty: true}
 
 func (r *CertificateCertificateDescriptionPublicKey) Empty() bool {
@@ -1865,8 +1871,8 @@ func (r *CertificateCertificateDescriptionSubjectKeyId) UnmarshalJSON(data []byt
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionSubjectKeyId is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionSubjectKeyId *CertificateCertificateDescriptionSubjectKeyId = &CertificateCertificateDescriptionSubjectKeyId{empty: true}
 
 func (r *CertificateCertificateDescriptionSubjectKeyId) Empty() bool {
@@ -1911,8 +1917,8 @@ func (r *CertificateCertificateDescriptionAuthorityKeyId) UnmarshalJSON(data []b
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionAuthorityKeyId is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionAuthorityKeyId *CertificateCertificateDescriptionAuthorityKeyId = &CertificateCertificateDescriptionAuthorityKeyId{empty: true}
 
 func (r *CertificateCertificateDescriptionAuthorityKeyId) Empty() bool {
@@ -1957,8 +1963,8 @@ func (r *CertificateCertificateDescriptionCertFingerprint) UnmarshalJSON(data []
 }
 
 // This object is used to assert a desired state where this CertificateCertificateDescriptionCertFingerprint is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyCertificateCertificateDescriptionCertFingerprint *CertificateCertificateDescriptionCertFingerprint = &CertificateCertificateDescriptionCertFingerprint{empty: true}
 
 func (r *CertificateCertificateDescriptionCertFingerprint) Empty() bool {
@@ -1992,24 +1998,24 @@ func (r *Certificate) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":                       dcl.ValueOrEmptyString(nr.Name),
-		"pemCsr":                     dcl.ValueOrEmptyString(nr.PemCsr),
-		"config":                     dcl.ValueOrEmptyString(nr.Config),
-		"issuerCertificateAuthority": dcl.ValueOrEmptyString(nr.IssuerCertificateAuthority),
-		"lifetime":                   dcl.ValueOrEmptyString(nr.Lifetime),
-		"certificateTemplate":        dcl.ValueOrEmptyString(nr.CertificateTemplate),
-		"subjectMode":                dcl.ValueOrEmptyString(nr.SubjectMode),
-		"revocationDetails":          dcl.ValueOrEmptyString(nr.RevocationDetails),
-		"pemCertificate":             dcl.ValueOrEmptyString(nr.PemCertificate),
-		"certificateDescription":     dcl.ValueOrEmptyString(nr.CertificateDescription),
-		"pemCertificateChain":        dcl.ValueOrEmptyString(nr.PemCertificateChain),
-		"createTime":                 dcl.ValueOrEmptyString(nr.CreateTime),
-		"updateTime":                 dcl.ValueOrEmptyString(nr.UpdateTime),
-		"labels":                     dcl.ValueOrEmptyString(nr.Labels),
-		"project":                    dcl.ValueOrEmptyString(nr.Project),
-		"location":                   dcl.ValueOrEmptyString(nr.Location),
-		"caPool":                     dcl.ValueOrEmptyString(nr.CaPool),
-		"certificateAuthority":       dcl.ValueOrEmptyString(nr.CertificateAuthority),
+		"name":                         dcl.ValueOrEmptyString(nr.Name),
+		"pem_csr":                      dcl.ValueOrEmptyString(nr.PemCsr),
+		"config":                       dcl.ValueOrEmptyString(nr.Config),
+		"issuer_certificate_authority": dcl.ValueOrEmptyString(nr.IssuerCertificateAuthority),
+		"lifetime":                     dcl.ValueOrEmptyString(nr.Lifetime),
+		"certificate_template":         dcl.ValueOrEmptyString(nr.CertificateTemplate),
+		"subject_mode":                 dcl.ValueOrEmptyString(nr.SubjectMode),
+		"revocation_details":           dcl.ValueOrEmptyString(nr.RevocationDetails),
+		"pem_certificate":              dcl.ValueOrEmptyString(nr.PemCertificate),
+		"certificate_description":      dcl.ValueOrEmptyString(nr.CertificateDescription),
+		"pem_certificate_chain":        dcl.ValueOrEmptyString(nr.PemCertificateChain),
+		"create_time":                  dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":                  dcl.ValueOrEmptyString(nr.UpdateTime),
+		"labels":                       dcl.ValueOrEmptyString(nr.Labels),
+		"project":                      dcl.ValueOrEmptyString(nr.Project),
+		"location":                     dcl.ValueOrEmptyString(nr.Location),
+		"ca_pool":                      dcl.ValueOrEmptyString(nr.CaPool),
+		"certificate_authority":        dcl.ValueOrEmptyString(nr.CertificateAuthority),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/caPools/{{ca_pool}}/certificates/{{name}}", params), nil
 }
@@ -2097,7 +2103,7 @@ func (c *Client) GetCertificate(ctx context.Context, r *Certificate) (*Certifica
 		}
 		return nil, err
 	}
-	result, err := unmarshalCertificate(b, c)
+	result, err := unmarshalCertificate(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -2255,7 +2261,7 @@ func applyCertificateHelper(c *Client, ctx context.Context, rawDesired *Certific
 func applyCertificateDiff(c *Client, ctx context.Context, desired *Certificate, rawDesired *Certificate, ops []certificateApiOperation, opts ...dcl.ApplyOption) (*Certificate, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetCertificate(ctx, desired.urlNormalized())
+	rawNew, err := c.GetCertificate(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -2268,7 +2274,7 @@ func applyCertificateDiff(c *Client, ctx context.Context, desired *Certificate, 
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapCertificate(r, c)
+				fullResp, err := unmarshalMapCertificate(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

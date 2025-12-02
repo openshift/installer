@@ -25,12 +25,12 @@ import (
 
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/grpclog"
+	"google.golang.org/grpc/internal/balancergroup"
 	internalgrpclog "google.golang.org/grpc/internal/grpclog"
 	"google.golang.org/grpc/internal/hierarchy"
 	"google.golang.org/grpc/internal/pretty"
 	"google.golang.org/grpc/resolver"
 	"google.golang.org/grpc/serviceconfig"
-	"google.golang.org/grpc/xds/internal/balancer/balancergroup"
 )
 
 const balancerName = "xds_cluster_manager_experimental"
@@ -46,7 +46,7 @@ func (bb) Build(cc balancer.ClientConn, opts balancer.BuildOptions) balancer.Bal
 	b.logger = prefixLogger(b)
 	b.stateAggregator = newBalancerStateAggregator(cc, b.logger)
 	b.stateAggregator.start()
-	b.bg = balancergroup.New(cc, opts, b.stateAggregator, nil, b.logger)
+	b.bg = balancergroup.New(cc, opts, b.stateAggregator, b.logger)
 	b.bg.Start()
 	b.logger.Infof("Created")
 	return b
@@ -93,6 +93,11 @@ func (b *bal) updateChildren(s balancer.ClientConnState, newConfig *lbConfig) {
 			b.stateAggregator.add(name)
 			// Then add to the balancer group.
 			b.bg.Add(name, balancer.Get(newT.ChildPolicy.Name))
+		} else {
+			// Already present, check for type change and if so send down a new builder.
+			if newT.ChildPolicy.Name != b.children[name].ChildPolicy.Name {
+				b.bg.UpdateBuilder(name, balancer.Get(newT.ChildPolicy.Name))
+			}
 		}
 		// TODO: handle error? How to aggregate errors and return?
 		_ = b.bg.UpdateClientConnState(name, balancer.ClientConnState{
@@ -118,6 +123,8 @@ func (b *bal) UpdateClientConnState(s balancer.ClientConnState) error {
 	}
 	b.logger.Infof("update with config %+v, resolver state %+v", pretty.ToJSON(s.BalancerConfig), s.ResolverState)
 
+	b.stateAggregator.pauseStateUpdates()
+	defer b.stateAggregator.resumeStateUpdates()
 	b.updateChildren(s, newConfig)
 	return nil
 }
@@ -134,6 +141,10 @@ func (b *bal) Close() {
 	b.stateAggregator.close()
 	b.bg.Close()
 	b.logger.Infof("Shutdown")
+}
+
+func (b *bal) ExitIdle() {
+	b.bg.ExitIdle()
 }
 
 const prefix = "[xds-cluster-manager-lb %p] "

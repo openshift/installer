@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -54,11 +54,11 @@ func (e *StandardGCPOperationError) String() string {
 	}
 	var b strings.Builder
 	for _, err := range e.Errors {
-		fmt.Fprintf(&b, "error code %q, message: %s\n", err.Code, err.Message)
+		fmt.Fprintf(&b, "error code %q, message: %s, details: %+v\n", err.Code, err.Message, err.Details)
 	}
 
 	if e.Code != "" {
-		fmt.Fprintf(&b, "error code %q, message: %s\n", e.Code, e.Message)
+		fmt.Fprintf(&b, "error code %q, message: %s, details: %+v\n", e.Code, e.Message, e.Details)
 	}
 
 	return b.String()
@@ -66,13 +66,14 @@ func (e *StandardGCPOperationError) String() string {
 
 // StandardGCPOperationErrorError is a singular error in a GCP operation.
 type StandardGCPOperationErrorError struct {
-	Code    json.Number `json:"code"`
-	Message string      `json:"message"`
+	Code    json.Number              `json:"code"`
+	Message string                   `json:"message"`
+	Details []map[string]interface{} `json:"details"`
 }
 
 // Wait waits for an StandardGCPOperation to complete by fetching the operation until it completes.
 func (op *StandardGCPOperation) Wait(ctx context.Context, c *dcl.Config, basePath, verb string) error {
-	c.Logger.Infof("Waiting on: %v", op)
+	c.Logger.Infof("Waiting on operation: %v", op)
 	op.config = c
 	op.basePath = basePath
 	op.verb = verb
@@ -81,10 +82,13 @@ func (op *StandardGCPOperation) Wait(ctx context.Context, c *dcl.Config, basePat
 		op.response = op.Response
 	}
 	if op.Done {
+		c.Logger.Infof("Completed operation: %v", op)
 		return nil
 	}
 
-	return dcl.Do(ctx, op.operate, c.RetryProvider)
+	err := dcl.Do(ctx, op.operate, c.RetryProvider)
+	c.Logger.Infof("Completed operation: %v", op)
+	return err
 }
 
 func (op *StandardGCPOperation) operate(ctx context.Context) (*dcl.RetryDetails, error) {
@@ -108,7 +112,7 @@ func (op *StandardGCPOperation) operate(ctx context.Context) (*dcl.RetryDetails,
 	}
 
 	if op.Error != nil {
-		return nil, fmt.Errorf("operation received error: %+v", op.Error)
+		return nil, fmt.Errorf("operation received error: %+v details: %v", op.Error, op.Response)
 	}
 
 	if len(op.response) == 0 && len(op.Response) != 0 {

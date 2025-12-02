@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleComputeGlobalAddress() *schema.Resource {
+func DataSourceGoogleComputeGlobalAddress() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleComputeGlobalAddressRead,
 
@@ -17,6 +17,41 @@ func dataSourceGoogleComputeGlobalAddress() *schema.Resource {
 			},
 
 			"address": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"address_type": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"network": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"network_tier": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"prefix_length": {
+				Type:     schema.TypeInt,
+				Computed: true,
+			},
+
+			"purpose": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"subnetwork": {
+				Type:     schema.TypeString,
+				Computed: true,
+			},
+
+			"users": {
 				Type:     schema.TypeString,
 				Computed: true,
 			},
@@ -42,7 +77,7 @@ func dataSourceGoogleComputeGlobalAddress() *schema.Resource {
 
 func dataSourceGoogleComputeGlobalAddressRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -59,6 +94,24 @@ func dataSourceGoogleComputeGlobalAddressRead(d *schema.ResourceData, meta inter
 
 	if err := d.Set("address", address.Address); err != nil {
 		return fmt.Errorf("Error setting address: %s", err)
+	}
+	if err := d.Set("address_type", address.AddressType); err != nil {
+		return fmt.Errorf("Error setting address_type: %s", err)
+	}
+	if err := d.Set("network", address.Network); err != nil {
+		return fmt.Errorf("Error setting network: %s", err)
+	}
+	if err := d.Set("network_tier", address.NetworkTier); err != nil {
+		return fmt.Errorf("Error setting network_tier: %s", err)
+	}
+	if err := d.Set("prefix_length", address.PrefixLength); err != nil {
+		return fmt.Errorf("Error setting prefix_length: %s", err)
+	}
+	if err := d.Set("purpose", address.Purpose); err != nil {
+		return fmt.Errorf("Error setting purpose: %s", err)
+	}
+	if err := d.Set("subnetwork", address.Subnetwork); err != nil {
+		return fmt.Errorf("Error setting subnetwork: %s", err)
 	}
 	if err := d.Set("status", address.Status); err != nil {
 		return fmt.Errorf("Error setting status: %s", err)

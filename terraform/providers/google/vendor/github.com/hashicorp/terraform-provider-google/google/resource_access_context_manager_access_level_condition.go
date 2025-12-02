@@ -21,19 +21,17 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"google.golang.org/api/googleapi"
 )
 
-func resourceAccessContextManagerAccessLevelCondition() *schema.Resource {
+func ResourceAccessContextManagerAccessLevelCondition() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAccessContextManagerAccessLevelConditionCreate,
 		Read:   resourceAccessContextManagerAccessLevelConditionRead,
 		Delete: resourceAccessContextManagerAccessLevelConditionDelete,
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -62,7 +60,7 @@ allowed.`,
 An empty list allows all management levels. Possible values: ["MANAGEMENT_UNSPECIFIED", "NONE", "BASIC", "COMPLETE"]`,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validation.StringInSlice([]string{"MANAGEMENT_UNSPECIFIED", "NONE", "BASIC", "COMPLETE"}, false),
+								ValidateFunc: validateEnum([]string{"MANAGEMENT_UNSPECIFIED", "NONE", "BASIC", "COMPLETE"}),
 							},
 						},
 						"allowed_encryption_statuses": {
@@ -73,7 +71,7 @@ An empty list allows all management levels. Possible values: ["MANAGEMENT_UNSPEC
 An empty list allows all statuses. Possible values: ["ENCRYPTION_UNSPECIFIED", "ENCRYPTION_UNSUPPORTED", "UNENCRYPTED", "ENCRYPTED"]`,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validation.StringInSlice([]string{"ENCRYPTION_UNSPECIFIED", "ENCRYPTION_UNSUPPORTED", "UNENCRYPTED", "ENCRYPTED"}, false),
+								ValidateFunc: validateEnum([]string{"ENCRYPTION_UNSPECIFIED", "ENCRYPTION_UNSUPPORTED", "UNENCRYPTED", "ENCRYPTED"}),
 							},
 						},
 						"os_constraints": {
@@ -88,7 +86,7 @@ An empty list allows all types and all versions.`,
 										Type:         schema.TypeString,
 										Required:     true,
 										ForceNew:     true,
-										ValidateFunc: validation.StringInSlice([]string{"OS_UNSPECIFIED", "DESKTOP_MAC", "DESKTOP_WINDOWS", "DESKTOP_LINUX", "DESKTOP_CHROME_OS", "ANDROID", "IOS"}, false),
+										ValidateFunc: validateEnum([]string{"OS_UNSPECIFIED", "DESKTOP_MAC", "DESKTOP_WINDOWS", "DESKTOP_LINUX", "DESKTOP_CHROME_OS", "ANDROID", "IOS"}),
 										Description:  `The operating system type of the device. Possible values: ["OS_UNSPECIFIED", "DESKTOP_MAC", "DESKTOP_WINDOWS", "DESKTOP_LINUX", "DESKTOP_CHROME_OS", "ANDROID", "IOS"]`,
 									},
 									"minimum_version": {
@@ -197,7 +195,7 @@ Format: accessPolicies/{policy_id}/accessLevels/{short_name}`,
 
 func resourceAccessContextManagerAccessLevelConditionCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -269,7 +267,7 @@ func resourceAccessContextManagerAccessLevelConditionCreate(d *schema.ResourceDa
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating AccessLevelCondition: %s", err)
 	}
@@ -307,12 +305,12 @@ func resourceAccessContextManagerAccessLevelConditionPollRead(d *schema.Resource
 			billingProject = bp
 		}
 
-		userAgent, err := generateUserAgentString(d, config.userAgent)
+		userAgent, err := generateUserAgentString(d, config.UserAgent)
 		if err != nil {
 			return nil, err
 		}
 
-		res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+		res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 		if err != nil {
 			return res, err
 		}
@@ -322,11 +320,7 @@ func resourceAccessContextManagerAccessLevelConditionPollRead(d *schema.Resource
 		}
 
 		if res == nil {
-			// Nested object not found, spoof a 404 error for poll
-			return nil, &googleapi.Error{
-				Code:    404,
-				Message: "nested object AccessContextManagerAccessLevelCondition not found",
-			}
+			return nil, fake404("nested", "AccessContextManagerAccessLevelCondition")
 		}
 
 		return res, nil
@@ -335,7 +329,7 @@ func resourceAccessContextManagerAccessLevelConditionPollRead(d *schema.Resource
 
 func resourceAccessContextManagerAccessLevelConditionRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -352,7 +346,7 @@ func resourceAccessContextManagerAccessLevelConditionRead(d *schema.ResourceData
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerAccessLevelCondition %q", d.Id()))
 	}
@@ -393,7 +387,7 @@ func resourceAccessContextManagerAccessLevelConditionRead(d *schema.ResourceData
 
 func resourceAccessContextManagerAccessLevelConditionDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -429,7 +423,7 @@ func resourceAccessContextManagerAccessLevelConditionDelete(d *schema.ResourceDa
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "AccessLevelCondition")
 	}
@@ -816,10 +810,7 @@ func resourceAccessContextManagerAccessLevelConditionPatchDeleteEncoder(d *schem
 	}
 	if item == nil {
 		// Spoof 404 error for proper handling by Delete (i.e. no-op)
-		return nil, &googleapi.Error{
-			Code:    404,
-			Message: "AccessLevelCondition not found in list",
-		}
+		return nil, fake404("nested", "AccessContextManagerAccessLevelCondition")
 	}
 
 	updatedItems := append(currItems[:idx], currItems[idx+1:]...)
@@ -843,12 +834,12 @@ func resourceAccessContextManagerAccessLevelConditionListForPatch(d *schema.Reso
 		return nil, err
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := sendRequest(config, "GET", "", url, userAgent, nil)
+	res, err := SendRequest(config, "GET", "", url, userAgent, nil)
 	if err != nil {
 		return nil, err
 	}

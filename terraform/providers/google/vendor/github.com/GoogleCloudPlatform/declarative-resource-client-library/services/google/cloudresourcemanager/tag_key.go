@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,16 +83,16 @@ func (r *TagKey) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":           dcl.ValueOrEmptyString(nr.Name),
-		"parent":         dcl.ValueOrEmptyString(nr.Parent),
-		"shortName":      dcl.ValueOrEmptyString(nr.ShortName),
-		"namespacedName": dcl.ValueOrEmptyString(nr.NamespacedName),
-		"description":    dcl.ValueOrEmptyString(nr.Description),
-		"createTime":     dcl.ValueOrEmptyString(nr.CreateTime),
-		"updateTime":     dcl.ValueOrEmptyString(nr.UpdateTime),
-		"etag":           dcl.ValueOrEmptyString(nr.Etag),
-		"purpose":        dcl.ValueOrEmptyString(nr.Purpose),
-		"purposeData":    dcl.ValueOrEmptyString(nr.PurposeData),
+		"name":            dcl.ValueOrEmptyString(nr.Name),
+		"parent":          dcl.ValueOrEmptyString(nr.Parent),
+		"short_name":      dcl.ValueOrEmptyString(nr.ShortName),
+		"namespaced_name": dcl.ValueOrEmptyString(nr.NamespacedName),
+		"description":     dcl.ValueOrEmptyString(nr.Description),
+		"create_time":     dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time":     dcl.ValueOrEmptyString(nr.UpdateTime),
+		"etag":            dcl.ValueOrEmptyString(nr.Etag),
+		"purpose":         dcl.ValueOrEmptyString(nr.Purpose),
+		"purpose_data":    dcl.ValueOrEmptyString(nr.PurposeData),
 	}
 	return dcl.Nprintf("tagKeys/{{name}}", params), nil
 }
@@ -127,7 +127,7 @@ func (c *Client) GetTagKey(ctx context.Context, r *TagKey) (*TagKey, error) {
 		}
 		return nil, err
 	}
-	result, err := unmarshalTagKey(b, c)
+	result, err := unmarshalTagKey(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -258,7 +258,7 @@ func applyTagKeyHelper(c *Client, ctx context.Context, rawDesired *TagKey, opts 
 func applyTagKeyDiff(c *Client, ctx context.Context, desired *TagKey, rawDesired *TagKey, ops []tagKeyApiOperation, opts ...dcl.ApplyOption) (*TagKey, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetTagKey(ctx, desired.urlNormalized())
+	rawNew, err := c.GetTagKey(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -271,7 +271,7 @@ func applyTagKeyDiff(c *Client, ctx context.Context, desired *TagKey, rawDesired
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapTagKey(r, c)
+				fullResp, err := unmarshalMapTagKey(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

@@ -19,11 +19,9 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
 // customizeDiff func for additional checks on google_compute_router properties:
@@ -44,7 +42,7 @@ func resourceComputeRouterCustomDiff(_ context.Context, diff *schema.ResourceDif
 	return nil
 }
 
-func resourceComputeRouter() *schema.Resource {
+func ResourceComputeRouter() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeRouterCreate,
 		Read:   resourceComputeRouterRead,
@@ -56,9 +54,9 @@ func resourceComputeRouter() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		CustomizeDiff: resourceComputeRouterCustomDiff,
@@ -68,7 +66,7 @@ func resourceComputeRouter() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: validateGCPName,
+				ValidateFunc: validateGCEName,
 				Description: `Name of the resource. The name must be 1-63 characters long, and
 comply with RFC1035. Specifically, the name must be 1-63 characters
 long and match the regular expression '[a-z]([-a-z0-9]*[a-z0-9])?'
@@ -102,7 +100,7 @@ will have the same local ASN.`,
 						"advertise_mode": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"DEFAULT", "CUSTOM", ""}, false),
+							ValidateFunc: validateEnum([]string{"DEFAULT", "CUSTOM", ""}),
 							Description:  `User-specified flag to indicate which mode to use for advertisement. Default value: "DEFAULT" Possible values: ["DEFAULT", "CUSTOM"]`,
 							Default:      "DEFAULT",
 						},
@@ -144,6 +142,21 @@ CIDR-formatted string.`,
 								},
 							},
 						},
+						"keepalive_interval": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							Description: `The interval in seconds between BGP keepalive messages that are sent
+to the peer. Hold time is three times the interval at which keepalive
+messages are sent, and the hold time is the maximum number of seconds
+allowed to elapse between successive keepalive messages that BGP
+receives from a peer.
+
+BGP will use the smaller of either the local hold time value or the
+peer's hold time value as the hold time for the BGP connection
+between the two peers. If set, this value must be between 20 and 60.
+The default is 20.`,
+							Default: 20,
+						},
 					},
 				},
 			},
@@ -156,10 +169,8 @@ CIDR-formatted string.`,
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
-				Description: `Field to indicate if a router is dedicated to use with encrypted
-Interconnect Attachment (IPsec-encrypted Cloud Interconnect feature).
-
-Not currently available publicly.`,
+				Description: `Indicates if a router is dedicated for use with encrypted VLAN
+attachments (interconnectAttachments).`,
 			},
 			"region": {
 				Type:             schema.TypeString,
@@ -191,7 +202,7 @@ Not currently available publicly.`,
 
 func resourceComputeRouterCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -260,7 +271,7 @@ func resourceComputeRouterCreate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Router: %s", err)
 	}
@@ -272,7 +283,7 @@ func resourceComputeRouterCreate(d *schema.ResourceData, meta interface{}) error
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating Router", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -289,7 +300,7 @@ func resourceComputeRouterCreate(d *schema.ResourceData, meta interface{}) error
 
 func resourceComputeRouterRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -312,7 +323,7 @@ func resourceComputeRouterRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeRouter %q", d.Id()))
 	}
@@ -351,7 +362,7 @@ func resourceComputeRouterRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceComputeRouterUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -397,7 +408,7 @@ func resourceComputeRouterUpdate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating Router %q: %s", d.Id(), err)
@@ -405,7 +416,7 @@ func resourceComputeRouterUpdate(d *schema.ResourceData, meta interface{}) error
 		log.Printf("[DEBUG] Finished updating Router %q: %#v", d.Id(), res)
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Updating Router", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -418,7 +429,7 @@ func resourceComputeRouterUpdate(d *schema.ResourceData, meta interface{}) error
 
 func resourceComputeRouterDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -451,12 +462,12 @@ func resourceComputeRouterDelete(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Router")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting Router", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -525,12 +536,14 @@ func flattenComputeRouterBgp(v interface{}, d *schema.ResourceData, config *Conf
 		flattenComputeRouterBgpAdvertisedGroups(original["advertisedGroups"], d, config)
 	transformed["advertised_ip_ranges"] =
 		flattenComputeRouterBgpAdvertisedIpRanges(original["advertisedIpRanges"], d, config)
+	transformed["keepalive_interval"] =
+		flattenComputeRouterBgpKeepaliveInterval(original["keepaliveInterval"], d, config)
 	return []interface{}{transformed}
 }
 func flattenComputeRouterBgpAsn(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -577,6 +590,23 @@ func flattenComputeRouterBgpAdvertisedIpRangesRange(v interface{}, d *schema.Res
 
 func flattenComputeRouterBgpAdvertisedIpRangesDescription(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
+}
+
+func flattenComputeRouterBgpKeepaliveInterval(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
 func flattenComputeRouterEncryptedInterconnectRouter(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -643,6 +673,13 @@ func expandComputeRouterBgp(v interface{}, d TerraformResourceData, config *Conf
 		transformed["advertisedIpRanges"] = transformedAdvertisedIpRanges
 	}
 
+	transformedKeepaliveInterval, err := expandComputeRouterBgpKeepaliveInterval(original["keepalive_interval"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKeepaliveInterval); val.IsValid() && !isEmptyValue(val) {
+		transformed["keepaliveInterval"] = transformedKeepaliveInterval
+	}
+
 	return transformed, nil
 }
 
@@ -692,6 +729,10 @@ func expandComputeRouterBgpAdvertisedIpRangesRange(v interface{}, d TerraformRes
 }
 
 func expandComputeRouterBgpAdvertisedIpRangesDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeRouterBgpKeepaliveInterval(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

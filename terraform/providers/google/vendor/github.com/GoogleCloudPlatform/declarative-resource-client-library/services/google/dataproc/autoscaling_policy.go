@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -67,8 +67,8 @@ func (r *AutoscalingPolicyBasicAlgorithm) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this AutoscalingPolicyBasicAlgorithm is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyAutoscalingPolicyBasicAlgorithm *AutoscalingPolicyBasicAlgorithm = &AutoscalingPolicyBasicAlgorithm{empty: true}
 
 func (r *AutoscalingPolicyBasicAlgorithm) Empty() bool {
@@ -125,8 +125,8 @@ func (r *AutoscalingPolicyBasicAlgorithmYarnConfig) UnmarshalJSON(data []byte) e
 }
 
 // This object is used to assert a desired state where this AutoscalingPolicyBasicAlgorithmYarnConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyAutoscalingPolicyBasicAlgorithmYarnConfig *AutoscalingPolicyBasicAlgorithmYarnConfig = &AutoscalingPolicyBasicAlgorithmYarnConfig{empty: true}
 
 func (r *AutoscalingPolicyBasicAlgorithmYarnConfig) Empty() bool {
@@ -177,8 +177,8 @@ func (r *AutoscalingPolicyWorkerConfig) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this AutoscalingPolicyWorkerConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyAutoscalingPolicyWorkerConfig *AutoscalingPolicyWorkerConfig = &AutoscalingPolicyWorkerConfig{empty: true}
 
 func (r *AutoscalingPolicyWorkerConfig) Empty() bool {
@@ -229,8 +229,8 @@ func (r *AutoscalingPolicySecondaryWorkerConfig) UnmarshalJSON(data []byte) erro
 }
 
 // This object is used to assert a desired state where this AutoscalingPolicySecondaryWorkerConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyAutoscalingPolicySecondaryWorkerConfig *AutoscalingPolicySecondaryWorkerConfig = &AutoscalingPolicySecondaryWorkerConfig{empty: true}
 
 func (r *AutoscalingPolicySecondaryWorkerConfig) Empty() bool {
@@ -264,12 +264,12 @@ func (r *AutoscalingPolicy) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":                  dcl.ValueOrEmptyString(nr.Name),
-		"basicAlgorithm":        dcl.ValueOrEmptyString(nr.BasicAlgorithm),
-		"workerConfig":          dcl.ValueOrEmptyString(nr.WorkerConfig),
-		"secondaryWorkerConfig": dcl.ValueOrEmptyString(nr.SecondaryWorkerConfig),
-		"project":               dcl.ValueOrEmptyString(nr.Project),
-		"location":              dcl.ValueOrEmptyString(nr.Location),
+		"name":                    dcl.ValueOrEmptyString(nr.Name),
+		"basic_algorithm":         dcl.ValueOrEmptyString(nr.BasicAlgorithm),
+		"worker_config":           dcl.ValueOrEmptyString(nr.WorkerConfig),
+		"secondary_worker_config": dcl.ValueOrEmptyString(nr.SecondaryWorkerConfig),
+		"project":                 dcl.ValueOrEmptyString(nr.Project),
+		"location":                dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/autoscalingPolicies/{{name}}", params), nil
 }
@@ -356,7 +356,7 @@ func (c *Client) GetAutoscalingPolicy(ctx context.Context, r *AutoscalingPolicy)
 		}
 		return nil, err
 	}
-	result, err := unmarshalAutoscalingPolicy(b, c)
+	result, err := unmarshalAutoscalingPolicy(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -513,7 +513,7 @@ func applyAutoscalingPolicyHelper(c *Client, ctx context.Context, rawDesired *Au
 func applyAutoscalingPolicyDiff(c *Client, ctx context.Context, desired *AutoscalingPolicy, rawDesired *AutoscalingPolicy, ops []autoscalingPolicyApiOperation, opts ...dcl.ApplyOption) (*AutoscalingPolicy, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetAutoscalingPolicy(ctx, desired.urlNormalized())
+	rawNew, err := c.GetAutoscalingPolicy(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -526,7 +526,7 @@ func applyAutoscalingPolicyDiff(c *Client, ctx context.Context, desired *Autosca
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapAutoscalingPolicy(r, c)
+				fullResp, err := unmarshalMapAutoscalingPolicy(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

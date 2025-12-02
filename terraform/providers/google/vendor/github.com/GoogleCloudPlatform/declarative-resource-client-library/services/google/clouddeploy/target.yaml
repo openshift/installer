@@ -1,0 +1,264 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Clouddeploy/Target
+  description: The Cloud Deploy `Target` resource
+  x-dcl-struct-name: Target
+  x-dcl-has-iam: false
+  x-dcl-ref:
+    text: REST API
+    url: https://cloud.google.com/deploy/docs/api/reference/rest/v1/projects.locations.targets
+paths:
+  get:
+    description: The function used to get information about a Target
+    parameters:
+    - name: target
+      required: true
+      description: A full instance of a Target
+  apply:
+    description: The function used to apply information about a Target
+    parameters:
+    - name: target
+      required: true
+      description: A full instance of a Target
+  delete:
+    description: The function used to delete a Target
+    parameters:
+    - name: target
+      required: true
+      description: A full instance of a Target
+  deleteAll:
+    description: The function used to delete all Target
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Target
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: location
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Target:
+      title: Target
+      x-dcl-id: projects/{{project}}/locations/{{location}}/targets/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - project
+      - location
+      properties:
+        annotations:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: Annotations
+          description: Optional. User annotations. These attributes can only be set
+            and used by the user, and not by Google Cloud Deploy. See https://google.aip.dev/128#annotations
+            for more details such as format and size limitations.
+        anthosCluster:
+          type: object
+          x-dcl-go-name: AnthosCluster
+          x-dcl-go-type: TargetAnthosCluster
+          description: Information specifying an Anthos Cluster.
+          x-dcl-conflicts:
+          - gke
+          properties:
+            membership:
+              type: string
+              x-dcl-go-name: Membership
+              description: Membership of the GKE Hub-registered cluster to which to
+                apply the Skaffold configuration. Format is `projects/{project}/locations/{location}/memberships/{membership_name}`.
+              x-dcl-references:
+              - resource: Gkehub/Membership
+                field: selfLink
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. Time at which the `Target` was created.
+          x-kubernetes-immutable: true
+        description:
+          type: string
+          x-dcl-go-name: Description
+          description: Optional. Description of the `Target`. Max length is 255 characters.
+        etag:
+          type: string
+          x-dcl-go-name: Etag
+          readOnly: true
+          description: Optional. This checksum is computed by the server based on
+            the value of other fields, and may be sent on update and delete requests
+            to ensure the client has an up-to-date value before proceeding.
+          x-kubernetes-immutable: true
+        executionConfigs:
+          type: array
+          x-dcl-go-name: ExecutionConfigs
+          description: Configurations for all execution that relates to this `Target`.
+            Each `ExecutionEnvironmentUsage` value may only be used in a single configuration;
+            using the same value multiple times is an error. When one or more configurations
+            are specified, they must include the `RENDER` and `DEPLOY` `ExecutionEnvironmentUsage`
+            values. When no configurations are specified, execution will use the default
+            specified in `DefaultPool`.
+          x-dcl-server-default: true
+          x-dcl-send-empty: true
+          x-dcl-list-type: list
+          items:
+            type: object
+            x-dcl-go-type: TargetExecutionConfigs
+            required:
+            - usages
+            properties:
+              artifactStorage:
+                type: string
+                x-dcl-go-name: ArtifactStorage
+                description: Optional. Cloud Storage location in which to store execution
+                  outputs. This can either be a bucket ("gs://my-bucket") or a path
+                  within a bucket ("gs://my-bucket/my-dir"). If unspecified, a default
+                  bucket located in the same region will be used.
+                x-dcl-server-default: true
+              executionTimeout:
+                type: string
+                x-dcl-go-name: ExecutionTimeout
+                description: Optional. Execution timeout for a Cloud Build Execution.
+                  This must be between 10m and 24h in seconds format. If unspecified,
+                  a default timeout of 1h is used.
+                x-dcl-server-default: true
+              serviceAccount:
+                type: string
+                x-dcl-go-name: ServiceAccount
+                description: Optional. Google service account to use for execution.
+                  If unspecified, the project execution service account (-compute@developer.gserviceaccount.com)
+                  is used.
+                x-dcl-server-default: true
+              usages:
+                type: array
+                x-dcl-go-name: Usages
+                description: Required. Usages when this configuration should be applied.
+                x-dcl-send-empty: true
+                x-dcl-list-type: list
+                items:
+                  type: string
+                  x-dcl-go-type: TargetExecutionConfigsUsagesEnum
+                  enum:
+                  - EXECUTION_ENVIRONMENT_USAGE_UNSPECIFIED
+                  - RENDER
+                  - DEPLOY
+              workerPool:
+                type: string
+                x-dcl-go-name: WorkerPool
+                description: Optional. The resource name of the `WorkerPool`, with
+                  the format `projects/{project}/locations/{location}/workerPools/{worker_pool}`.
+                  If this optional field is unspecified, the default Cloud Build pool
+                  will be used.
+                x-dcl-references:
+                - resource: Cloudbuild/WorkerPool
+                  field: selfLink
+        gke:
+          type: object
+          x-dcl-go-name: Gke
+          x-dcl-go-type: TargetGke
+          description: Information specifying a GKE Cluster.
+          x-dcl-conflicts:
+          - anthosCluster
+          properties:
+            cluster:
+              type: string
+              x-dcl-go-name: Cluster
+              description: Information specifying a GKE Cluster. Format is `projects/{project_id}/locations/{location_id}/clusters/{cluster_id}.
+              x-dcl-references:
+              - resource: Container/Cluster
+                field: selfLink
+            internalIP:
+              type: boolean
+              x-dcl-go-name: InternalIP
+              description: Optional. If true, `cluster` is accessed using the private
+                IP address of the control plane endpoint. Otherwise, the default IP
+                address of the control plane endpoint is used. The default IP address
+                is the private IP address for clusters with private control-plane
+                endpoints and the public IP address otherwise. Only specify this option
+                when `cluster` is a [private GKE cluster](https://cloud.google.com/kubernetes-engine/docs/concepts/private-cluster-concept).
+        labels:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: Labels
+          description: 'Optional. Labels are attributes that can be set and used by
+            both the user and by Google Cloud Deploy. Labels must meet the following
+            constraints: * Keys and values can contain only lowercase letters, numeric
+            characters, underscores, and dashes. * All characters must use UTF-8 encoding,
+            and international characters are allowed. * Keys must start with a lowercase
+            letter or international character. * Each resource is limited to a maximum
+            of 64 labels. Both keys and values are additionally constrained to be
+            <= 128 bytes.'
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: The location for the resource
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: Name of the `Target`. Format is [a-z][a-z0-9\-]{0,62}.
+          x-kubernetes-immutable: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        requireApproval:
+          type: boolean
+          x-dcl-go-name: RequireApproval
+          description: Optional. Whether or not the `Target` requires approval.
+        targetId:
+          type: string
+          x-dcl-go-name: TargetId
+          readOnly: true
+          description: Output only. Resource id of the `Target`.
+          x-kubernetes-immutable: true
+        uid:
+          type: string
+          x-dcl-go-name: Uid
+          readOnly: true
+          description: Output only. Unique identifier of the `Target`.
+          x-kubernetes-immutable: true
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. Most recent time at which the `Target` was updated.
+          x-kubernetes-immutable: true

@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -103,8 +103,8 @@ func (r *FirewallPolicyRuleMatch) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this FirewallPolicyRuleMatch is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyFirewallPolicyRuleMatch *FirewallPolicyRuleMatch = &FirewallPolicyRuleMatch{empty: true}
 
 func (r *FirewallPolicyRuleMatch) Empty() bool {
@@ -152,8 +152,8 @@ func (r *FirewallPolicyRuleMatchLayer4Configs) UnmarshalJSON(data []byte) error 
 }
 
 // This object is used to assert a desired state where this FirewallPolicyRuleMatchLayer4Configs is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyFirewallPolicyRuleMatchLayer4Configs *FirewallPolicyRuleMatchLayer4Configs = &FirewallPolicyRuleMatchLayer4Configs{empty: true}
 
 func (r *FirewallPolicyRuleMatchLayer4Configs) Empty() bool {
@@ -187,18 +187,18 @@ func (r *FirewallPolicyRule) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"description":           dcl.ValueOrEmptyString(nr.Description),
-		"priority":              dcl.ValueOrEmptyString(nr.Priority),
-		"match":                 dcl.ValueOrEmptyString(nr.Match),
-		"action":                dcl.ValueOrEmptyString(nr.Action),
-		"direction":             dcl.ValueOrEmptyString(nr.Direction),
-		"targetResources":       dcl.ValueOrEmptyString(nr.TargetResources),
-		"enableLogging":         dcl.ValueOrEmptyString(nr.EnableLogging),
-		"ruleTupleCount":        dcl.ValueOrEmptyString(nr.RuleTupleCount),
-		"targetServiceAccounts": dcl.ValueOrEmptyString(nr.TargetServiceAccounts),
-		"disabled":              dcl.ValueOrEmptyString(nr.Disabled),
-		"kind":                  dcl.ValueOrEmptyString(nr.Kind),
-		"firewallPolicy":        dcl.ValueOrEmptyString(nr.FirewallPolicy),
+		"description":             dcl.ValueOrEmptyString(nr.Description),
+		"priority":                dcl.ValueOrEmptyString(nr.Priority),
+		"match":                   dcl.ValueOrEmptyString(nr.Match),
+		"action":                  dcl.ValueOrEmptyString(nr.Action),
+		"direction":               dcl.ValueOrEmptyString(nr.Direction),
+		"target_resources":        dcl.ValueOrEmptyString(nr.TargetResources),
+		"enable_logging":          dcl.ValueOrEmptyString(nr.EnableLogging),
+		"rule_tuple_count":        dcl.ValueOrEmptyString(nr.RuleTupleCount),
+		"target_service_accounts": dcl.ValueOrEmptyString(nr.TargetServiceAccounts),
+		"disabled":                dcl.ValueOrEmptyString(nr.Disabled),
+		"kind":                    dcl.ValueOrEmptyString(nr.Kind),
+		"firewall_policy":         dcl.ValueOrEmptyString(nr.FirewallPolicy),
 	}
 	return dcl.Nprintf("locations/global/firewallPolicies/{{firewall_policy}}/rules/{{priority}}", params), nil
 }
@@ -284,7 +284,7 @@ func (c *Client) GetFirewallPolicyRule(ctx context.Context, r *FirewallPolicyRul
 		}
 		return nil, err
 	}
-	result, err := unmarshalFirewallPolicyRule(b, c)
+	result, err := unmarshalFirewallPolicyRule(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -440,7 +440,7 @@ func applyFirewallPolicyRuleHelper(c *Client, ctx context.Context, rawDesired *F
 func applyFirewallPolicyRuleDiff(c *Client, ctx context.Context, desired *FirewallPolicyRule, rawDesired *FirewallPolicyRule, ops []firewallPolicyRuleApiOperation, opts ...dcl.ApplyOption) (*FirewallPolicyRule, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetFirewallPolicyRule(ctx, desired.urlNormalized())
+	rawNew, err := c.GetFirewallPolicyRule(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -453,7 +453,7 @@ func applyFirewallPolicyRuleDiff(c *Client, ctx context.Context, desired *Firewa
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapFirewallPolicyRule(r, c)
+				fullResp, err := unmarshalMapFirewallPolicyRule(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

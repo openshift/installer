@@ -27,7 +27,7 @@ import (
 	containeraws "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/containeraws"
 )
 
-func resourceContainerAwsCluster() *schema.Resource {
+func ResourceContainerAwsCluster() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceContainerAwsClusterCreate,
 		Read:   resourceContainerAwsClusterRead,
@@ -39,17 +39,16 @@ func resourceContainerAwsCluster() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
 			"authorization": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Configuration related to the cluster RBAC settings.",
+				Description: "Configuration related to the cluster RBAC settings.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterAuthorizationSchema(),
 			},
@@ -58,13 +57,13 @@ func resourceContainerAwsCluster() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The AWS region where the cluster runs. Each Google Cloud region supports a subset of nearby AWS regions. You can call to list all supported AWS regions within a given Google Cloud region.",
+				Description: "The AWS region where the cluster runs. Each Google Cloud region supports a subset of nearby AWS regions. You can call to list all supported AWS regions within a given Google Cloud region.",
 			},
 
 			"control_plane": {
 				Type:        schema.TypeList,
 				Required:    true,
-				Description: "Required. Configuration related to the cluster control plane.",
+				Description: "Configuration related to the cluster control plane.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterControlPlaneSchema(),
 			},
@@ -96,7 +95,7 @@ func resourceContainerAwsCluster() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. Cluster-wide networking configuration.",
+				Description: "Cluster-wide networking configuration.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterNetworkingSchema(),
 			},
@@ -181,8 +180,7 @@ func ContainerAwsClusterAuthorizationSchema() *schema.Resource {
 			"admin_users": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Users to perform operations as a cluster admin. A managed ClusterRoleBinding will be created to grant the `cluster-admin` ClusterRole to the users. At most one user can be specified. For more info on RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
+				Description: "Users to perform operations as a cluster admin. A managed ClusterRoleBinding will be created to grant the `cluster-admin` ClusterRole to the users. Up to ten admin users can be provided. For more info on RBAC, see https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles",
 				Elem:        ContainerAwsClusterAuthorizationAdminUsersSchema(),
 			},
 		},
@@ -195,8 +193,7 @@ func ContainerAwsClusterAuthorizationAdminUsersSchema() *schema.Resource {
 			"username": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The name of the user, e.g. `my-gcp-id@gmail.com`.",
+				Description: "The name of the user, e.g. `my-gcp-id@gmail.com`.",
 			},
 		},
 	}
@@ -208,8 +205,7 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 			"aws_services_authentication": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. Authentication configuration for management of AWS resources.",
+				Description: "Authentication configuration for management of AWS resources.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterControlPlaneAwsServicesAuthenticationSchema(),
 			},
@@ -217,8 +213,7 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 			"config_encryption": {
 				Type:        schema.TypeList,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The ARN of the AWS KMS key used to encrypt cluster configuration.",
+				Description: "The ARN of the AWS KMS key used to encrypt cluster configuration.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterControlPlaneConfigEncryptionSchema(),
 			},
@@ -227,7 +222,7 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The ARN of the AWS KMS key used to encrypt cluster secrets.",
+				Description: "The ARN of the AWS KMS key used to encrypt cluster secrets.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterControlPlaneDatabaseEncryptionSchema(),
 			},
@@ -235,30 +230,28 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 			"iam_instance_profile": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The name of the AWS IAM instance pofile to assign to each control plane replica.",
+				Description: "The name of the AWS IAM instance pofile to assign to each control plane replica.",
 			},
 
 			"subnet_ids": {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The list of subnets where control plane replicas will run. A replica will be provisioned on each subnet and up to three values can be provided. Each subnet must be in a different AWS Availability Zone (AZ).",
+				Description: "The list of subnets where control plane replicas will run. A replica will be provisioned on each subnet and up to three values can be provided. Each subnet must be in a different AWS Availability Zone (AZ).",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
 			"version": {
 				Type:        schema.TypeString,
 				Required:    true,
-				Description: "Required. The Kubernetes version to run on control plane replicas (e.g. `1.19.10-gke.1000`). You can list all supported versions on a given Google Cloud region by calling .",
+				Description: "The Kubernetes version to run on control plane replicas (e.g. `1.19.10-gke.1000`). You can list all supported versions on a given Google Cloud region by calling .",
 			},
 
 			"instance_type": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
-				Description: "Optional. The AWS instance type. When unspecified, it defaults to `t3.medium`.",
+				Description: "Optional. The AWS instance type. When unspecified, it defaults to `m5.large`.",
 			},
 
 			"main_volume": {
@@ -274,7 +267,6 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 			"proxy_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Proxy configuration for outbound HTTP(S) traffic.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterControlPlaneProxyConfigSchema(),
@@ -284,7 +276,6 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 				Type:        schema.TypeList,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. Configuration related to the root volume provisioned for each control plane replica. Volumes will be provisioned in the availability zone associated with the corresponding subnet. When unspecified, it defaults to 32 GiB with the GP2 volume type.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterControlPlaneRootVolumeSchema(),
@@ -293,7 +284,6 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 			"security_group_ids": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The IDs of additional security groups to add to control plane replicas. The Anthos Multi-Cloud API will automatically create and manage security groups with the minimum rules needed for a functioning cluster.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -301,7 +291,6 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 			"ssh_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. SSH configuration for how to access the underlying control plane machines.",
 				MaxItems:    1,
 				Elem:        ContainerAwsClusterControlPlaneSshConfigSchema(),
@@ -310,7 +299,6 @@ func ContainerAwsClusterControlPlaneSchema() *schema.Resource {
 			"tags": {
 				Type:        schema.TypeMap,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. A set of AWS resource tags to propagate to all underlying managed AWS resources. Specify at most 50 pairs containing alphanumerics, spaces, and symbols (.+-=_:@/). Keys can be up to 127 Unicode characters. Values can be up to 255 Unicode characters.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -324,15 +312,13 @@ func ContainerAwsClusterControlPlaneAwsServicesAuthenticationSchema() *schema.Re
 			"role_arn": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The Amazon Resource Name (ARN) of the role that the Anthos Multi-Cloud API will assume when managing AWS resources on your account.",
+				Description: "The Amazon Resource Name (ARN) of the role that the Anthos Multi-Cloud API will assume when managing AWS resources on your account.",
 			},
 
 			"role_session_name": {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. An identifier for the assumed role session. When unspecified, it defaults to `multicloud-service-agent`.",
 			},
 		},
@@ -345,8 +331,7 @@ func ContainerAwsClusterControlPlaneConfigEncryptionSchema() *schema.Resource {
 			"kms_key_arn": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The ARN of the AWS KMS key used to encrypt cluster configuration.",
+				Description: "The ARN of the AWS KMS key used to encrypt cluster configuration.",
 			},
 		},
 	}
@@ -359,7 +344,7 @@ func ContainerAwsClusterControlPlaneDatabaseEncryptionSchema() *schema.Resource 
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The ARN of the AWS KMS key used to encrypt cluster secrets.",
+				Description: "The ARN of the AWS KMS key used to encrypt cluster secrets.",
 			},
 		},
 	}
@@ -408,14 +393,12 @@ func ContainerAwsClusterControlPlaneProxyConfigSchema() *schema.Resource {
 			"secret_arn": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "The ARN of the AWS Secret Manager secret that contains the HTTP(S) proxy configuration.",
 			},
 
 			"secret_version": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
 				Description: "The version string of the AWS Secret Manager secret that contains the HTTP(S) proxy configuration.",
 			},
 		},
@@ -429,14 +412,12 @@ func ContainerAwsClusterControlPlaneRootVolumeSchema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The number of I/O operations per second (IOPS) to provision for GP3 volume.",
 			},
 
 			"kms_key_arn": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The Amazon Resource Name (ARN) of the Customer Managed Key (CMK) used to encrypt AWS EBS volumes. If not specified, the default Amazon managed key associated to the AWS region where this cluster runs will be used.",
 			},
 
@@ -444,7 +425,6 @@ func ContainerAwsClusterControlPlaneRootVolumeSchema() *schema.Resource {
 				Type:        schema.TypeInt,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. The size of the volume, in GiBs. When unspecified, a default value is provided. See the specific reference in the parent resource.",
 			},
 
@@ -452,7 +432,6 @@ func ContainerAwsClusterControlPlaneRootVolumeSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
-				ForceNew:    true,
 				Description: "Optional. Type of the EBS volume. When unspecified, it defaults to GP2 volume. Possible values: VOLUME_TYPE_UNSPECIFIED, GP2, GP3",
 			},
 		},
@@ -465,8 +444,7 @@ func ContainerAwsClusterControlPlaneSshConfigSchema() *schema.Resource {
 			"ec2_key_pair": {
 				Type:        schema.TypeString,
 				Required:    true,
-				ForceNew:    true,
-				Description: "Required. The name of the EC2 key pair used to login into cluster machines.",
+				Description: "The name of the EC2 key pair used to login into cluster machines.",
 			},
 		},
 	}
@@ -500,7 +478,7 @@ func ContainerAwsClusterNetworkingSchema() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. All pods in the cluster are assigned an RFC1918 IPv4 address from these ranges. Only a single range is supported. This field cannot be changed after creation.",
+				Description: "All pods in the cluster are assigned an RFC1918 IPv4 address from these ranges. Only a single range is supported. This field cannot be changed after creation.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -508,7 +486,7 @@ func ContainerAwsClusterNetworkingSchema() *schema.Resource {
 				Type:        schema.TypeList,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. All services in the cluster are assigned an RFC1918 IPv4 address from these ranges. Only a single range is supported. This field cannot be changed after creation.",
+				Description: "All services in the cluster are assigned an RFC1918 IPv4 address from these ranges. Only a single range is supported. This field cannot be changed after creation.",
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
 
@@ -516,7 +494,7 @@ func ContainerAwsClusterNetworkingSchema() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Required. The VPC associated with the cluster. All component clusters (i.e. control plane and node pools) run on a single VPC. This field cannot be changed after creation.",
+				Description: "The VPC associated with the cluster. All component clusters (i.e. control plane and node pools) run on a single VPC. This field cannot be changed after creation.",
 			},
 		},
 	}
@@ -566,13 +544,13 @@ func resourceContainerAwsClusterCreate(d *schema.ResourceData, meta interface{})
 		Project:       dcl.String(project),
 	}
 
-	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/awsClusters/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -588,7 +566,7 @@ func resourceContainerAwsClusterCreate(d *schema.ResourceData, meta interface{})
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyCluster(context.Background(), obj, createDirective...)
+	res, err := client.ApplyCluster(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -623,7 +601,7 @@ func resourceContainerAwsClusterRead(d *schema.ResourceData, meta interface{}) e
 		Project:       dcl.String(project),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -722,7 +700,7 @@ func resourceContainerAwsClusterUpdate(d *schema.ResourceData, meta interface{})
 		Project:       dcl.String(project),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -775,7 +753,7 @@ func resourceContainerAwsClusterDelete(d *schema.ResourceData, meta interface{})
 	}
 
 	log.Printf("[DEBUG] Deleting Cluster %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -801,6 +779,7 @@ func resourceContainerAwsClusterDelete(d *schema.ResourceData, meta interface{})
 
 func resourceContainerAwsClusterImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/awsClusters/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
@@ -824,7 +803,7 @@ func expandContainerAwsClusterAuthorization(o interface{}) *containeraws.Cluster
 		return containeraws.EmptyClusterAuthorization
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterAuthorization
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -850,7 +829,7 @@ func expandContainerAwsClusterAuthorizationAdminUsersArray(o interface{}) []cont
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]containeraws.ClusterAuthorizationAdminUsers, 0)
 	}
 
@@ -905,7 +884,7 @@ func expandContainerAwsClusterControlPlane(o interface{}) *containeraws.ClusterC
 		return containeraws.EmptyClusterControlPlane
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterControlPlane
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -955,7 +934,7 @@ func expandContainerAwsClusterControlPlaneAwsServicesAuthentication(o interface{
 		return containeraws.EmptyClusterControlPlaneAwsServicesAuthentication
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterControlPlaneAwsServicesAuthentication
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -983,7 +962,7 @@ func expandContainerAwsClusterControlPlaneConfigEncryption(o interface{}) *conta
 		return containeraws.EmptyClusterControlPlaneConfigEncryption
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterControlPlaneConfigEncryption
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1009,7 +988,7 @@ func expandContainerAwsClusterControlPlaneDatabaseEncryption(o interface{}) *con
 		return containeraws.EmptyClusterControlPlaneDatabaseEncryption
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterControlPlaneDatabaseEncryption
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1035,7 +1014,7 @@ func expandContainerAwsClusterControlPlaneMainVolume(o interface{}) *containeraw
 		return nil
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return nil
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1067,7 +1046,7 @@ func expandContainerAwsClusterControlPlaneProxyConfig(o interface{}) *containera
 		return containeraws.EmptyClusterControlPlaneProxyConfig
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterControlPlaneProxyConfig
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1095,7 +1074,7 @@ func expandContainerAwsClusterControlPlaneRootVolume(o interface{}) *containeraw
 		return nil
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return nil
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1127,7 +1106,7 @@ func expandContainerAwsClusterControlPlaneSshConfig(o interface{}) *containeraws
 		return containeraws.EmptyClusterControlPlaneSshConfig
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterControlPlaneSshConfig
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1153,7 +1132,7 @@ func expandContainerAwsClusterFleet(o interface{}) *containeraws.ClusterFleet {
 		return containeraws.EmptyClusterFleet
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterFleet
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1180,7 +1159,7 @@ func expandContainerAwsClusterNetworking(o interface{}) *containeraws.ClusterNet
 		return containeraws.EmptyClusterNetworking
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return containeraws.EmptyClusterNetworking
 	}
 	obj := objArr[0].(map[string]interface{})

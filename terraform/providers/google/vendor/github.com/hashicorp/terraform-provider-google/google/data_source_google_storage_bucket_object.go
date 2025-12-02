@@ -8,9 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleStorageBucketObject() *schema.Resource {
+func DataSourceGoogleStorageBucketObject() *schema.Resource {
 
-	dsSchema := datasourceSchemaFromResourceSchema(resourceStorageBucketObject().Schema)
+	dsSchema := datasourceSchemaFromResourceSchema(ResourceStorageBucketObject().Schema)
 
 	addOptionalFieldsToSchema(dsSchema, "bucket")
 	addOptionalFieldsToSchema(dsSchema, "name")
@@ -23,7 +23,7 @@ func dataSourceGoogleStorageBucketObject() *schema.Resource {
 
 func dataSourceGoogleStorageBucketObjectRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -40,7 +40,7 @@ func dataSourceGoogleStorageBucketObjectRead(d *schema.ResourceData, meta interf
 	// Using REST apis because the storage go client doesn't support folders
 	url := fmt.Sprintf("https://www.googleapis.com/storage/v1/b/%s/o/%s", bucket, name)
 
-	res, err := sendRequest(config, "GET", "", url, userAgent, nil)
+	res, err := SendRequest(config, "GET", "", url, userAgent, nil)
 	if err != nil {
 		return fmt.Errorf("Error retrieving storage bucket object: %s", err)
 	}

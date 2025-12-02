@@ -6,14 +6,21 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/errwrap"
+	fwDiags "github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"google.golang.org/api/googleapi"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type TerraformResourceDataChange interface {
@@ -42,6 +49,9 @@ type TerraformResourceDiff interface {
 }
 
 // getRegionFromZone returns the region from a zone for Google cloud.
+// This is by removing the last two chars from the zone name to leave the region
+// If there aren't enough characters in the input string, an empty string is returned
+// e.g. southamerica-west1-a => southamerica-west1
 func getRegionFromZone(zone string) string {
 	if zone != "" && len(zone) > 2 {
 		region := zone[:len(zone)-2]
@@ -91,7 +101,7 @@ func getRouterLockName(region string, router string) string {
 }
 
 func handleNotFoundError(err error, d *schema.ResourceData, resource string) error {
-	if isGoogleApiErrorWithCode(err, 404) {
+	if IsGoogleApiErrorWithCode(err, 404) {
 		log.Printf("[WARN] Removing %s because it's gone", resource)
 		// The resource doesn't exist anymore
 		d.SetId("")
@@ -103,7 +113,7 @@ func handleNotFoundError(err error, d *schema.ResourceData, resource string) err
 		fmt.Sprintf("Error when reading or editing %s: {{err}}", resource), err)
 }
 
-func isGoogleApiErrorWithCode(err error, errCode int) bool {
+func IsGoogleApiErrorWithCode(err error, errCode int) bool {
 	gerr, ok := errwrap.GetType(err, &googleapi.Error{}).(*googleapi.Error)
 	return ok && gerr != nil && gerr.Code == errCode
 }
@@ -154,6 +164,15 @@ func isConflictError(err error) bool {
 		if e.Code == 409 || e.Code == 412 {
 			return true
 		}
+	}
+	return false
+}
+
+// gRPC does not return errors of type *googleapi.Error. Instead the errors returned are *status.Error.
+// See the types of codes returned here (https://pkg.go.dev/google.golang.org/grpc/codes#Code).
+func isNotFoundGrpcError(err error) bool {
+	if errorStatus, ok := status.FromError(err); ok && errorStatus.Code() == codes.NotFound {
+		return true
 	}
 	return false
 }
@@ -310,8 +329,12 @@ func mergeResourceMaps(ms ...map[string]*schema.Resource) (map[string]*schema.Re
 	return merged, err
 }
 
+func StringToFixed64(v string) (int64, error) {
+	return strconv.ParseInt(v, 10, 64)
+}
+
 func extractFirstMapConfig(m []interface{}) map[string]interface{} {
-	if len(m) == 0 {
+	if len(m) == 0 || m[0] == nil {
 		return map[string]interface{}{}
 	}
 
@@ -363,7 +386,7 @@ func serviceAccountFQN(serviceAccount string, d TerraformResourceData, config *C
 }
 
 func paginatedListRequest(project, baseUrl, userAgent string, config *Config, flattener func(map[string]interface{}) []interface{}) ([]interface{}, error) {
-	res, err := sendRequest(config, "GET", project, baseUrl, userAgent, nil)
+	res, err := SendRequest(config, "GET", project, baseUrl, userAgent, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -375,7 +398,7 @@ func paginatedListRequest(project, baseUrl, userAgent string, config *Config, fl
 			break
 		}
 		url := fmt.Sprintf("%s?pageToken=%s", baseUrl, pageToken.(string))
-		res, err = sendRequest(config, "GET", project, url, userAgent, nil)
+		res, err = SendRequest(config, "GET", project, url, userAgent, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -486,7 +509,7 @@ func SnakeToPascalCase(s string) string {
 	return strings.Join(split, "")
 }
 
-func multiEnvSearch(ks []string) string {
+func MultiEnvSearch(ks []string) string {
 	for _, k := range ks {
 		if v := os.Getenv(k); v != "" {
 			return v
@@ -496,11 +519,20 @@ func multiEnvSearch(ks []string) string {
 }
 
 func GetCurrentUserEmail(config *Config, userAgent string) (string, error) {
+	// When environment variables UserProjectOverride and BillingProject are set for the provider,
+	// the header X-Goog-User-Project is set for the API requests.
+	// But it causes an error when calling GetCurrentUserEmail. Set the project to be "NO_BILLING_PROJECT_OVERRIDE".
+	// And then it triggers the header X-Goog-User-Project to be set to empty string.
+
 	// See https://github.com/golang/oauth2/issues/306 for a recommendation to do this from a Go maintainer
 	// URL retrieved from https://accounts.google.com/.well-known/openid-configuration
-	res, err := sendRequest(config, "GET", "", "https://openidconnect.googleapis.com/v1/userinfo", userAgent, nil)
+	res, err := SendRequest(config, "GET", "NO_BILLING_PROJECT_OVERRIDE", "https://openidconnect.googleapis.com/v1/userinfo", userAgent, nil)
+
 	if err != nil {
 		return "", fmt.Errorf("error retrieving userinfo for your provider credentials. have you enabled the 'https://www.googleapis.com/auth/userinfo.email' scope? error: %s", err)
+	}
+	if res["email"] == nil {
+		return "", fmt.Errorf("error retrieving email from userinfo. email was nil in the response.")
 	}
 	return res["email"].(string), nil
 }
@@ -511,4 +543,94 @@ func checkStringMap(v interface{}) map[string]string {
 		return m
 	}
 	return convertStringMap(v.(map[string]interface{}))
+}
+
+// return a fake 404 so requests get retried or nested objects are considered deleted
+func fake404(reasonResourceType, resourceName string) *googleapi.Error {
+	return &googleapi.Error{
+		Code:    404,
+		Message: fmt.Sprintf("%v object %v not found", reasonResourceType, resourceName),
+	}
+}
+
+// validate name of the gcs bucket. Guidelines are located at https://cloud.google.com/storage/docs/naming-buckets
+// this does not attempt to check for IP addresses or close misspellings of "google"
+func checkGCSName(name string) error {
+	if strings.HasPrefix(name, "goog") {
+		return fmt.Errorf("error: bucket name %s cannot start with %q", name, "goog")
+	}
+
+	if strings.Contains(name, "google") {
+		return fmt.Errorf("error: bucket name %s cannot contain %q", name, "google")
+	}
+
+	valid, _ := regexp.MatchString("^[a-z0-9][a-z0-9_.-]{1,220}[a-z0-9]$", name)
+	if !valid {
+		return fmt.Errorf("error: bucket name validation failed %v. See https://cloud.google.com/storage/docs/naming-buckets", name)
+	}
+
+	for _, str := range strings.Split(name, ".") {
+		valid, _ := regexp.MatchString("^[a-z0-9_-]{1,63}$", str)
+		if !valid {
+			return fmt.Errorf("error: bucket name validation failed %v", str)
+		}
+	}
+	return nil
+}
+
+// checkGoogleIamPolicy makes assertions about the contents of a google_iam_policy data source's policy_data attribute
+func checkGoogleIamPolicy(value string) error {
+	if strings.Contains(value, "\"description\":\"\"") {
+		return fmt.Errorf("found an empty description field (should be omitted) in google_iam_policy data source: %s", value)
+	}
+	return nil
+}
+
+// Retries an operation while the canonical error code is FAILED_PRECONDTION
+// which indicates there is an incompatible operation already running on the
+// cluster. This error can be safely retried until the incompatible operation
+// completes, and the newly requested operation can begin.
+func retryWhileIncompatibleOperation(timeout time.Duration, lockKey string, f func() error) error {
+	return resource.Retry(timeout, func() *resource.RetryError {
+		if err := lockedCall(lockKey, f); err != nil {
+			if isFailedPreconditionError(err) {
+				return resource.RetryableError(err)
+			}
+			return resource.NonRetryableError(err)
+		}
+		return nil
+	})
+}
+
+// MultiEnvDefault is a helper function that returns the value of the first
+// environment variable in the given list that returns a non-empty value. If
+// none of the environment variables return a value, the default value is
+// returned.
+func MultiEnvDefault(ks []string, dv interface{}) interface{} {
+	for _, k := range ks {
+		if v := os.Getenv(k); v != "" {
+			return v
+		}
+	}
+	return dv
+}
+
+func frameworkDiagsToSdkDiags(fwD fwDiags.Diagnostics) *diag.Diagnostics {
+	var diags diag.Diagnostics
+	for _, e := range fwD.Errors() {
+		diags = append(diags, diag.Diagnostic{
+			Detail:   e.Detail(),
+			Severity: diag.Error,
+			Summary:  e.Summary(),
+		})
+	}
+	for _, w := range fwD.Warnings() {
+		diags = append(diags, diag.Diagnostic{
+			Detail:   w.Detail(),
+			Severity: diag.Warning,
+			Summary:  w.Summary(),
+		})
+	}
+
+	return &diags
 }

@@ -1,0 +1,119 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Firebaserules/Release
+  description: ""
+  x-dcl-struct-name: Release
+  x-dcl-has-iam: false
+  x-dcl-ref:
+    text: Firebase Rules API Documentation
+    url: https://firebase.google.com/docs/reference/rules/rest#rest-resource:-v1.projects.releases
+  x-dcl-guides:
+  - text: Get started with Firebase Security Rules
+    url: https://firebase.google.com/docs/rules/get-started
+paths:
+  get:
+    description: The function used to get information about a Release
+    parameters:
+    - name: release
+      required: true
+      description: A full instance of a Release
+  apply:
+    description: The function used to apply information about a Release
+    parameters:
+    - name: release
+      required: true
+      description: A full instance of a Release
+  delete:
+    description: The function used to delete a Release
+    parameters:
+    - name: release
+      required: true
+      description: A full instance of a Release
+  deleteAll:
+    description: The function used to delete all Release
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many Release
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    Release:
+      title: Release
+      x-dcl-id: projects/{{project}}/releases/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - rulesetName
+      - project
+      properties:
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Output only. Time the release was created.
+          x-kubernetes-immutable: true
+        disabled:
+          type: boolean
+          x-dcl-go-name: Disabled
+          readOnly: true
+          description: Disable the release to keep it from being served. The response
+            code of NOT_FOUND will be given for executables generated from this Release.
+          x-kubernetes-immutable: true
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: 'Format: `projects/{project_id}/releases/{release_id}`\Firestore
+            Rules Releases will **always** have the name ''cloud.firestore'''
+          x-kubernetes-immutable: true
+          x-dcl-forward-slash-allowed: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        rulesetName:
+          type: string
+          x-dcl-go-name: RulesetName
+          description: Name of the `Ruleset` referred to by this `Release`. The `Ruleset`
+            must exist for the `Release` to be created.
+          x-dcl-references:
+          - resource: Firebaserules/Ruleset
+            field: name
+        updateTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: UpdateTime
+          readOnly: true
+          description: Output only. Time the release was updated.
+          x-kubernetes-immutable: true

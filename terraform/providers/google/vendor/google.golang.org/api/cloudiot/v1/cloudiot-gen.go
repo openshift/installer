@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC.
+// Copyright 2023 Google LLC.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -8,35 +8,35 @@
 //
 // For product documentation, see: https://cloud.google.com/iot
 //
-// Creating a client
+// # Creating a client
 //
 // Usage example:
 //
-//   import "google.golang.org/api/cloudiot/v1"
-//   ...
-//   ctx := context.Background()
-//   cloudiotService, err := cloudiot.NewService(ctx)
+//	import "google.golang.org/api/cloudiot/v1"
+//	...
+//	ctx := context.Background()
+//	cloudiotService, err := cloudiot.NewService(ctx)
 //
 // In this example, Google Application Default Credentials are used for authentication.
 //
 // For information on how to create and obtain Application Default Credentials, see https://developers.google.com/identity/protocols/application-default-credentials.
 //
-// Other authentication options
+// # Other authentication options
 //
 // By default, all available scopes (see "Constants") are used to authenticate. To restrict scopes, use option.WithScopes:
 //
-//   cloudiotService, err := cloudiot.NewService(ctx, option.WithScopes(cloudiot.CloudiotScope))
+//	cloudiotService, err := cloudiot.NewService(ctx, option.WithScopes(cloudiot.CloudiotScope))
 //
 // To use an API key for authentication (note: some APIs do not support API keys), use option.WithAPIKey:
 //
-//   cloudiotService, err := cloudiot.NewService(ctx, option.WithAPIKey("AIza..."))
+//	cloudiotService, err := cloudiot.NewService(ctx, option.WithAPIKey("AIza..."))
 //
 // To use an OAuth token (e.g., a user token obtained via a three-legged OAuth flow), use option.WithTokenSource:
 //
-//   config := &oauth2.Config{...}
-//   // ...
-//   token, err := config.Exchange(ctx, ...)
-//   cloudiotService, err := cloudiot.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, token)))
+//	config := &oauth2.Config{...}
+//	// ...
+//	token, err := config.Exchange(ctx, ...)
+//	cloudiotService, err := cloudiot.NewService(ctx, option.WithTokenSource(config.TokenSource(ctx, token)))
 //
 // See https://godoc.org/google.golang.org/api/option/ for details on options.
 package cloudiot // import "google.golang.org/api/cloudiot/v1"
@@ -54,6 +54,7 @@ import (
 	"strings"
 
 	googleapi "google.golang.org/api/googleapi"
+	internal "google.golang.org/api/internal"
 	gensupport "google.golang.org/api/internal/gensupport"
 	option "google.golang.org/api/option"
 	internaloption "google.golang.org/api/option/internaloption"
@@ -93,7 +94,7 @@ const (
 
 // NewService creates a new Service.
 func NewService(ctx context.Context, opts ...option.ClientOption) (*Service, error) {
-	scopesOption := option.WithScopes(
+	scopesOption := internaloption.WithDefaultScopes(
 		"https://www.googleapis.com/auth/cloud-platform",
 		"https://www.googleapis.com/auth/cloudiot",
 	)
@@ -290,24 +291,31 @@ type Binding struct {
 	// (https://cloud.google.com/iam/help/conditions/resource-policies).
 	Condition *Expr `json:"condition,omitempty"`
 
-	// Members: Specifies the principals requesting access for a Cloud
-	// Platform resource. `members` can have the following values: *
+	// Members: Specifies the principals requesting access for a Google
+	// Cloud resource. `members` can have the following values: *
 	// `allUsers`: A special identifier that represents anyone who is on the
 	// internet; with or without a Google account. *
 	// `allAuthenticatedUsers`: A special identifier that represents anyone
-	// who is authenticated with a Google account or a service account. *
-	// `user:{emailid}`: An email address that represents a specific Google
-	// account. For example, `alice@example.com` . *
-	// `serviceAccount:{emailid}`: An email address that represents a
-	// service account. For example,
-	// `my-other-app@appspot.gserviceaccount.com`. * `group:{emailid}`: An
-	// email address that represents a Google group. For example,
-	// `admins@example.com`. * `deleted:user:{emailid}?uid={uniqueid}`: An
-	// email address (plus unique identifier) representing a user that has
-	// been recently deleted. For example,
-	// `alice@example.com?uid=123456789012345678901`. If the user is
-	// recovered, this value reverts to `user:{emailid}` and the recovered
-	// user retains the role in the binding. *
+	// who is authenticated with a Google account or a service account. Does
+	// not include identities that come from external identity providers
+	// (IdPs) through identity federation. * `user:{emailid}`: An email
+	// address that represents a specific Google account. For example,
+	// `alice@example.com` . * `serviceAccount:{emailid}`: An email address
+	// that represents a Google service account. For example,
+	// `my-other-app@appspot.gserviceaccount.com`. *
+	// `serviceAccount:{projectid}.svc.id.goog[{namespace}/{kubernetes-sa}]`:
+	//  An identifier for a Kubernetes service account
+	// (https://cloud.google.com/kubernetes-engine/docs/how-to/kubernetes-service-accounts).
+	// For example, `my-project.svc.id.goog[my-namespace/my-kubernetes-sa]`.
+	// * `group:{emailid}`: An email address that represents a Google group.
+	// For example, `admins@example.com`. * `domain:{domain}`: The G Suite
+	// domain (primary) that represents all the users of that domain. For
+	// example, `google.com` or `example.com`. *
+	// `deleted:user:{emailid}?uid={uniqueid}`: An email address (plus
+	// unique identifier) representing a user that has been recently
+	// deleted. For example, `alice@example.com?uid=123456789012345678901`.
+	// If the user is recovered, this value reverts to `user:{emailid}` and
+	// the recovered user retains the role in the binding. *
 	// `deleted:serviceAccount:{emailid}?uid={uniqueid}`: An email address
 	// (plus unique identifier) representing a service account that has been
 	// recently deleted. For example,
@@ -319,9 +327,7 @@ type Binding struct {
 	// that has been recently deleted. For example,
 	// `admins@example.com?uid=123456789012345678901`. If the group is
 	// recovered, this value reverts to `group:{emailid}` and the recovered
-	// group retains the role in the binding. * `domain:{domain}`: The G
-	// Suite domain (primary) that represents all the users of that domain.
-	// For example, `google.com` or `example.com`.
+	// group retains the role in the binding.
 	Members []string `json:"members,omitempty"`
 
 	// Role: Role that is assigned to the list of `members`, or principals.
@@ -719,8 +725,7 @@ func (s *DeviceState) MarshalJSON() ([]byte, error) {
 // duplicated empty messages in your APIs. A typical example is to use
 // it as the request or the response type of an API method. For
 // instance: service Foo { rpc Bar(google.protobuf.Empty) returns
-// (google.protobuf.Empty); } The JSON representation for `Empty` is
-// empty JSON object `{}`.
+// (google.protobuf.Empty); }
 type Empty struct {
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -1495,7 +1500,7 @@ type SendCommandToDeviceResponse struct {
 type SetIamPolicyRequest struct {
 	// Policy: REQUIRED: The complete policy to be applied to the
 	// `resource`. The size of the policy is limited to a few 10s of KB. An
-	// empty policy is a valid policy but certain Cloud Platform services
+	// empty policy is a valid policy but certain Google Cloud services
 	// (such as Projects) might reject them.
 	Policy *Policy `json:"policy,omitempty"`
 
@@ -1601,7 +1606,7 @@ func (s *Status) MarshalJSON() ([]byte, error) {
 // method.
 type TestIamPermissionsRequest struct {
 	// Permissions: The set of permissions to check for the `resource`.
-	// Permissions with wildcards (such as '*' or 'storage.*') are not
+	// Permissions with wildcards (such as `*` or `storage.*`) are not
 	// allowed. For more information see IAM Overview
 	// (https://cloud.google.com/iam/docs/overview#permissions).
 	Permissions []string `json:"permissions,omitempty"`
@@ -1763,9 +1768,9 @@ type ProjectsLocationsRegistriesBindDeviceToGatewayCall struct {
 
 // BindDeviceToGateway: Associates the device with the gateway.
 //
-// - parent: The name of the registry. For example,
-//   `projects/example-project/locations/us-central1/registries/my-regist
-//   ry`.
+//   - parent: The name of the registry. For example,
+//     `projects/example-project/locations/us-central1/registries/my-regist
+//     ry`.
 func (r *ProjectsLocationsRegistriesService) BindDeviceToGateway(parent string, binddevicetogatewayrequest *BindDeviceToGatewayRequest) *ProjectsLocationsRegistriesBindDeviceToGatewayCall {
 	c := &ProjectsLocationsRegistriesBindDeviceToGatewayCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -1800,7 +1805,7 @@ func (c *ProjectsLocationsRegistriesBindDeviceToGatewayCall) Header() http.Heade
 
 func (c *ProjectsLocationsRegistriesBindDeviceToGatewayCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1840,17 +1845,17 @@ func (c *ProjectsLocationsRegistriesBindDeviceToGatewayCall) Do(opts ...googleap
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &BindDeviceToGatewayResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -1908,9 +1913,9 @@ type ProjectsLocationsRegistriesCreateCall struct {
 
 // Create: Creates a device registry that contains devices.
 //
-// - parent: The project and cloud region where this device registry
-//   must be created. For example,
-//   `projects/example-project/locations/us-central1`.
+//   - parent: The project and cloud region where this device registry
+//     must be created. For example,
+//     `projects/example-project/locations/us-central1`.
 func (r *ProjectsLocationsRegistriesService) Create(parent string, deviceregistry *DeviceRegistry) *ProjectsLocationsRegistriesCreateCall {
 	c := &ProjectsLocationsRegistriesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -1945,7 +1950,7 @@ func (c *ProjectsLocationsRegistriesCreateCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -1985,17 +1990,17 @@ func (c *ProjectsLocationsRegistriesCreateCall) Do(opts ...googleapi.CallOption)
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &DeviceRegistry{
 		ServerResponse: googleapi.ServerResponse{
@@ -2052,9 +2057,9 @@ type ProjectsLocationsRegistriesDeleteCall struct {
 
 // Delete: Deletes a device registry configuration.
 //
-// - name: The name of the device registry. For example,
-//   `projects/example-project/locations/us-central1/registries/my-regist
-//   ry`.
+//   - name: The name of the device registry. For example,
+//     `projects/example-project/locations/us-central1/registries/my-regist
+//     ry`.
 func (r *ProjectsLocationsRegistriesService) Delete(name string) *ProjectsLocationsRegistriesDeleteCall {
 	c := &ProjectsLocationsRegistriesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -2088,7 +2093,7 @@ func (c *ProjectsLocationsRegistriesDeleteCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2123,17 +2128,17 @@ func (c *ProjectsLocationsRegistriesDeleteCall) Do(opts ...googleapi.CallOption)
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Empty{
 		ServerResponse: googleapi.ServerResponse{
@@ -2188,9 +2193,9 @@ type ProjectsLocationsRegistriesGetCall struct {
 
 // Get: Gets a device registry configuration.
 //
-// - name: The name of the device registry. For example,
-//   `projects/example-project/locations/us-central1/registries/my-regist
-//   ry`.
+//   - name: The name of the device registry. For example,
+//     `projects/example-project/locations/us-central1/registries/my-regist
+//     ry`.
 func (r *ProjectsLocationsRegistriesService) Get(name string) *ProjectsLocationsRegistriesGetCall {
 	c := &ProjectsLocationsRegistriesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -2234,7 +2239,7 @@ func (c *ProjectsLocationsRegistriesGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2272,17 +2277,17 @@ func (c *ProjectsLocationsRegistriesGetCall) Do(opts ...googleapi.CallOption) (*
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &DeviceRegistry{
 		ServerResponse: googleapi.ServerResponse{
@@ -2339,9 +2344,10 @@ type ProjectsLocationsRegistriesGetIamPolicyCall struct {
 // an empty policy if the resource exists and does not have a policy
 // set.
 //
-// - resource: REQUIRED: The resource for which the policy is being
-//   requested. See the operation documentation for the appropriate
-//   value for this field.
+//   - resource: REQUIRED: The resource for which the policy is being
+//     requested. See Resource names
+//     (https://cloud.google.com/apis/design/resource_names) for the
+//     appropriate value for this field.
 func (r *ProjectsLocationsRegistriesService) GetIamPolicy(resource string, getiampolicyrequest *GetIamPolicyRequest) *ProjectsLocationsRegistriesGetIamPolicyCall {
 	c := &ProjectsLocationsRegistriesGetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -2376,7 +2382,7 @@ func (c *ProjectsLocationsRegistriesGetIamPolicyCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2416,17 +2422,17 @@ func (c *ProjectsLocationsRegistriesGetIamPolicyCall) Do(opts ...googleapi.CallO
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Policy{
 		ServerResponse: googleapi.ServerResponse{
@@ -2449,7 +2455,7 @@ func (c *ProjectsLocationsRegistriesGetIamPolicyCall) Do(opts ...googleapi.CallO
 	//   ],
 	//   "parameters": {
 	//     "resource": {
-	//       "description": "REQUIRED: The resource for which the policy is being requested. See the operation documentation for the appropriate value for this field.",
+	//       "description": "REQUIRED: The resource for which the policy is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+$",
 	//       "required": true,
@@ -2484,8 +2490,8 @@ type ProjectsLocationsRegistriesListCall struct {
 
 // List: Lists device registries.
 //
-// - parent: The project and cloud region path. For example,
-//   `projects/example-project/locations/us-central1`.
+//   - parent: The project and cloud region path. For example,
+//     `projects/example-project/locations/us-central1`.
 func (r *ProjectsLocationsRegistriesService) List(parent string) *ProjectsLocationsRegistriesListCall {
 	c := &ProjectsLocationsRegistriesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -2548,7 +2554,7 @@ func (c *ProjectsLocationsRegistriesListCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2586,17 +2592,17 @@ func (c *ProjectsLocationsRegistriesListCall) Do(opts ...googleapi.CallOption) (
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListDeviceRegistriesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -2683,9 +2689,9 @@ type ProjectsLocationsRegistriesPatchCall struct {
 
 // Patch: Updates a device registry configuration.
 //
-// - name: The resource path name. For example,
-//   `projects/example-project/locations/us-central1/registries/my-regist
-//   ry`.
+//   - name: The resource path name. For example,
+//     `projects/example-project/locations/us-central1/registries/my-regist
+//     ry`.
 func (r *ProjectsLocationsRegistriesService) Patch(name string, deviceregistry *DeviceRegistry) *ProjectsLocationsRegistriesPatchCall {
 	c := &ProjectsLocationsRegistriesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -2731,7 +2737,7 @@ func (c *ProjectsLocationsRegistriesPatchCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2771,17 +2777,17 @@ func (c *ProjectsLocationsRegistriesPatchCall) Do(opts ...googleapi.CallOption) 
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &DeviceRegistry{
 		ServerResponse: googleapi.ServerResponse{
@@ -2846,9 +2852,10 @@ type ProjectsLocationsRegistriesSetIamPolicyCall struct {
 // SetIamPolicy: Sets the access control policy on the specified
 // resource. Replaces any existing policy.
 //
-// - resource: REQUIRED: The resource for which the policy is being
-//   specified. See the operation documentation for the appropriate
-//   value for this field.
+//   - resource: REQUIRED: The resource for which the policy is being
+//     specified. See Resource names
+//     (https://cloud.google.com/apis/design/resource_names) for the
+//     appropriate value for this field.
 func (r *ProjectsLocationsRegistriesService) SetIamPolicy(resource string, setiampolicyrequest *SetIamPolicyRequest) *ProjectsLocationsRegistriesSetIamPolicyCall {
 	c := &ProjectsLocationsRegistriesSetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -2883,7 +2890,7 @@ func (c *ProjectsLocationsRegistriesSetIamPolicyCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -2923,17 +2930,17 @@ func (c *ProjectsLocationsRegistriesSetIamPolicyCall) Do(opts ...googleapi.CallO
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Policy{
 		ServerResponse: googleapi.ServerResponse{
@@ -2956,7 +2963,7 @@ func (c *ProjectsLocationsRegistriesSetIamPolicyCall) Do(opts ...googleapi.CallO
 	//   ],
 	//   "parameters": {
 	//     "resource": {
-	//       "description": "REQUIRED: The resource for which the policy is being specified. See the operation documentation for the appropriate value for this field.",
+	//       "description": "REQUIRED: The resource for which the policy is being specified. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+$",
 	//       "required": true,
@@ -2993,9 +3000,10 @@ type ProjectsLocationsRegistriesTestIamPermissionsCall struct {
 // specified resource. If the resource does not exist, this will return
 // an empty set of permissions, not a NOT_FOUND error.
 //
-// - resource: REQUIRED: The resource for which the policy detail is
-//   being requested. See the operation documentation for the
-//   appropriate value for this field.
+//   - resource: REQUIRED: The resource for which the policy detail is
+//     being requested. See Resource names
+//     (https://cloud.google.com/apis/design/resource_names) for the
+//     appropriate value for this field.
 func (r *ProjectsLocationsRegistriesService) TestIamPermissions(resource string, testiampermissionsrequest *TestIamPermissionsRequest) *ProjectsLocationsRegistriesTestIamPermissionsCall {
 	c := &ProjectsLocationsRegistriesTestIamPermissionsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -3030,7 +3038,7 @@ func (c *ProjectsLocationsRegistriesTestIamPermissionsCall) Header() http.Header
 
 func (c *ProjectsLocationsRegistriesTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3070,17 +3078,17 @@ func (c *ProjectsLocationsRegistriesTestIamPermissionsCall) Do(opts ...googleapi
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &TestIamPermissionsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -3103,7 +3111,7 @@ func (c *ProjectsLocationsRegistriesTestIamPermissionsCall) Do(opts ...googleapi
 	//   ],
 	//   "parameters": {
 	//     "resource": {
-	//       "description": "REQUIRED: The resource for which the policy detail is being requested. See the operation documentation for the appropriate value for this field.",
+	//       "description": "REQUIRED: The resource for which the policy detail is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+$",
 	//       "required": true,
@@ -3139,9 +3147,9 @@ type ProjectsLocationsRegistriesUnbindDeviceFromGatewayCall struct {
 // UnbindDeviceFromGateway: Deletes the association between the device
 // and the gateway.
 //
-// - parent: The name of the registry. For example,
-//   `projects/example-project/locations/us-central1/registries/my-regist
-//   ry`.
+//   - parent: The name of the registry. For example,
+//     `projects/example-project/locations/us-central1/registries/my-regist
+//     ry`.
 func (r *ProjectsLocationsRegistriesService) UnbindDeviceFromGateway(parent string, unbinddevicefromgatewayrequest *UnbindDeviceFromGatewayRequest) *ProjectsLocationsRegistriesUnbindDeviceFromGatewayCall {
 	c := &ProjectsLocationsRegistriesUnbindDeviceFromGatewayCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -3176,7 +3184,7 @@ func (c *ProjectsLocationsRegistriesUnbindDeviceFromGatewayCall) Header() http.H
 
 func (c *ProjectsLocationsRegistriesUnbindDeviceFromGatewayCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3216,17 +3224,17 @@ func (c *ProjectsLocationsRegistriesUnbindDeviceFromGatewayCall) Do(opts ...goog
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &UnbindDeviceFromGatewayResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -3284,10 +3292,10 @@ type ProjectsLocationsRegistriesDevicesCreateCall struct {
 
 // Create: Creates a device in a device registry.
 //
-// - parent: The name of the device registry where this device should be
-//   created. For example,
-//   `projects/example-project/locations/us-central1/registries/my-regist
-//   ry`.
+//   - parent: The name of the device registry where this device should be
+//     created. For example,
+//     `projects/example-project/locations/us-central1/registries/my-regist
+//     ry`.
 func (r *ProjectsLocationsRegistriesDevicesService) Create(parent string, device *Device) *ProjectsLocationsRegistriesDevicesCreateCall {
 	c := &ProjectsLocationsRegistriesDevicesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -3322,7 +3330,7 @@ func (c *ProjectsLocationsRegistriesDevicesCreateCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesDevicesCreateCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3362,17 +3370,17 @@ func (c *ProjectsLocationsRegistriesDevicesCreateCall) Do(opts ...googleapi.Call
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Device{
 		ServerResponse: googleapi.ServerResponse{
@@ -3429,11 +3437,11 @@ type ProjectsLocationsRegistriesDevicesDeleteCall struct {
 
 // Delete: Deletes a device.
 //
-// - name: The name of the device. For example,
-//   `projects/p0/locations/us-central1/registries/registry0/devices/devi
-//   ce0` or
-//   `projects/p0/locations/us-central1/registries/registry0/devices/{num
-//   _id}`.
+//   - name: The name of the device. For example,
+//     `projects/p0/locations/us-central1/registries/registry0/devices/devi
+//     ce0` or
+//     `projects/p0/locations/us-central1/registries/registry0/devices/{num
+//     _id}`.
 func (r *ProjectsLocationsRegistriesDevicesService) Delete(name string) *ProjectsLocationsRegistriesDevicesDeleteCall {
 	c := &ProjectsLocationsRegistriesDevicesDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3467,7 +3475,7 @@ func (c *ProjectsLocationsRegistriesDevicesDeleteCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesDevicesDeleteCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3502,17 +3510,17 @@ func (c *ProjectsLocationsRegistriesDevicesDeleteCall) Do(opts ...googleapi.Call
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Empty{
 		ServerResponse: googleapi.ServerResponse{
@@ -3567,11 +3575,11 @@ type ProjectsLocationsRegistriesDevicesGetCall struct {
 
 // Get: Gets details about a device.
 //
-// - name: The name of the device. For example,
-//   `projects/p0/locations/us-central1/registries/registry0/devices/devi
-//   ce0` or
-//   `projects/p0/locations/us-central1/registries/registry0/devices/{num
-//   _id}`.
+//   - name: The name of the device. For example,
+//     `projects/p0/locations/us-central1/registries/registry0/devices/devi
+//     ce0` or
+//     `projects/p0/locations/us-central1/registries/registry0/devices/{num
+//     _id}`.
 func (r *ProjectsLocationsRegistriesDevicesService) Get(name string) *ProjectsLocationsRegistriesDevicesGetCall {
 	c := &ProjectsLocationsRegistriesDevicesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -3624,7 +3632,7 @@ func (c *ProjectsLocationsRegistriesDevicesGetCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesDevicesGetCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3662,17 +3670,17 @@ func (c *ProjectsLocationsRegistriesDevicesGetCall) Do(opts ...googleapi.CallOpt
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Device{
 		ServerResponse: googleapi.ServerResponse{
@@ -3733,8 +3741,8 @@ type ProjectsLocationsRegistriesDevicesListCall struct {
 
 // List: List devices in a device registry.
 //
-// - parent: The device registry path. Required. For example,
-//   `projects/my-project/locations/us-central1/registries/my-registry`.
+//   - parent: The device registry path. Required. For example,
+//     `projects/my-project/locations/us-central1/registries/my-registry`.
 func (r *ProjectsLocationsRegistriesDevicesService) List(parent string) *ProjectsLocationsRegistriesDevicesListCall {
 	c := &ProjectsLocationsRegistriesDevicesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -3799,10 +3807,13 @@ func (c *ProjectsLocationsRegistriesDevicesListCall) GatewayListOptionsAssociati
 // specified, all devices are returned.
 //
 // Possible values:
-//   "GATEWAY_TYPE_UNSPECIFIED" - If unspecified, the device is
+//
+//	"GATEWAY_TYPE_UNSPECIFIED" - If unspecified, the device is
+//
 // considered a non-gateway device.
-//   "GATEWAY" - The device is a gateway.
-//   "NON_GATEWAY" - The device is not a gateway.
+//
+//	"GATEWAY" - The device is a gateway.
+//	"NON_GATEWAY" - The device is not a gateway.
 func (c *ProjectsLocationsRegistriesDevicesListCall) GatewayListOptionsGatewayType(gatewayListOptionsGatewayType string) *ProjectsLocationsRegistriesDevicesListCall {
 	c.urlParams_.Set("gatewayListOptions.gatewayType", gatewayListOptionsGatewayType)
 	return c
@@ -3864,7 +3875,7 @@ func (c *ProjectsLocationsRegistriesDevicesListCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesDevicesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -3902,17 +3913,17 @@ func (c *ProjectsLocationsRegistriesDevicesListCall) Do(opts ...googleapi.CallOp
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListDevicesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -4045,11 +4056,11 @@ type ProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigCall struct {
 // which is eventually sent from the Cloud IoT Core servers. Returns the
 // modified configuration version and its metadata.
 //
-// - name: The name of the device. For example,
-//   `projects/p0/locations/us-central1/registries/registry0/devices/devi
-//   ce0` or
-//   `projects/p0/locations/us-central1/registries/registry0/devices/{num
-//   _id}`.
+//   - name: The name of the device. For example,
+//     `projects/p0/locations/us-central1/registries/registry0/devices/devi
+//     ce0` or
+//     `projects/p0/locations/us-central1/registries/registry0/devices/{num
+//     _id}`.
 func (r *ProjectsLocationsRegistriesDevicesService) ModifyCloudToDeviceConfig(name string, modifycloudtodeviceconfigrequest *ModifyCloudToDeviceConfigRequest) *ProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigCall {
 	c := &ProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4084,7 +4095,7 @@ func (c *ProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigCall) Header
 
 func (c *ProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4124,17 +4135,17 @@ func (c *ProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigCall) Do(opt
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &DeviceConfig{
 		ServerResponse: googleapi.ServerResponse{
@@ -4192,12 +4203,12 @@ type ProjectsLocationsRegistriesDevicesPatchCall struct {
 
 // Patch: Updates a device.
 //
-// - name: The resource path name. For example,
-//   `projects/p1/locations/us-central1/registries/registry0/devices/dev0
-//   ` or
-//   `projects/p1/locations/us-central1/registries/registry0/devices/{num
-//   _id}`. When `name` is populated as a response from the service, it
-//   always ends in the device numeric ID.
+//   - name: The resource path name. For example,
+//     `projects/p1/locations/us-central1/registries/registry0/devices/dev0
+//     ` or
+//     `projects/p1/locations/us-central1/registries/registry0/devices/{num
+//     _id}`. When `name` is populated as a response from the service, it
+//     always ends in the device numeric ID.
 func (r *ProjectsLocationsRegistriesDevicesService) Patch(name string, device *Device) *ProjectsLocationsRegistriesDevicesPatchCall {
 	c := &ProjectsLocationsRegistriesDevicesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4242,7 +4253,7 @@ func (c *ProjectsLocationsRegistriesDevicesPatchCall) Header() http.Header {
 
 func (c *ProjectsLocationsRegistriesDevicesPatchCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4282,17 +4293,17 @@ func (c *ProjectsLocationsRegistriesDevicesPatchCall) Do(opts ...googleapi.CallO
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Device{
 		ServerResponse: googleapi.ServerResponse{
@@ -4369,11 +4380,11 @@ type ProjectsLocationsRegistriesDevicesSendCommandToDeviceCall struct {
 // subscription is QoS 1, at least once delivery will be guaranteed; for
 // QoS 0, no acknowledgment will be expected from the device.
 //
-// - name: The name of the device. For example,
-//   `projects/p0/locations/us-central1/registries/registry0/devices/devi
-//   ce0` or
-//   `projects/p0/locations/us-central1/registries/registry0/devices/{num
-//   _id}`.
+//   - name: The name of the device. For example,
+//     `projects/p0/locations/us-central1/registries/registry0/devices/devi
+//     ce0` or
+//     `projects/p0/locations/us-central1/registries/registry0/devices/{num
+//     _id}`.
 func (r *ProjectsLocationsRegistriesDevicesService) SendCommandToDevice(name string, sendcommandtodevicerequest *SendCommandToDeviceRequest) *ProjectsLocationsRegistriesDevicesSendCommandToDeviceCall {
 	c := &ProjectsLocationsRegistriesDevicesSendCommandToDeviceCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4408,7 +4419,7 @@ func (c *ProjectsLocationsRegistriesDevicesSendCommandToDeviceCall) Header() htt
 
 func (c *ProjectsLocationsRegistriesDevicesSendCommandToDeviceCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4448,17 +4459,17 @@ func (c *ProjectsLocationsRegistriesDevicesSendCommandToDeviceCall) Do(opts ...g
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &SendCommandToDeviceResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -4517,11 +4528,11 @@ type ProjectsLocationsRegistriesDevicesConfigVersionsListCall struct {
 // List: Lists the last few versions of the device configuration in
 // descending order (i.e.: newest first).
 //
-// - name: The name of the device. For example,
-//   `projects/p0/locations/us-central1/registries/registry0/devices/devi
-//   ce0` or
-//   `projects/p0/locations/us-central1/registries/registry0/devices/{num
-//   _id}`.
+//   - name: The name of the device. For example,
+//     `projects/p0/locations/us-central1/registries/registry0/devices/devi
+//     ce0` or
+//     `projects/p0/locations/us-central1/registries/registry0/devices/{num
+//     _id}`.
 func (r *ProjectsLocationsRegistriesDevicesConfigVersionsService) List(name string) *ProjectsLocationsRegistriesDevicesConfigVersionsListCall {
 	c := &ProjectsLocationsRegistriesDevicesConfigVersionsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4574,7 +4585,7 @@ func (c *ProjectsLocationsRegistriesDevicesConfigVersionsListCall) Header() http
 
 func (c *ProjectsLocationsRegistriesDevicesConfigVersionsListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4612,17 +4623,17 @@ func (c *ProjectsLocationsRegistriesDevicesConfigVersionsListCall) Do(opts ...go
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListDeviceConfigVersionsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -4684,11 +4695,11 @@ type ProjectsLocationsRegistriesDevicesStatesListCall struct {
 // List: Lists the last few versions of the device state in descending
 // order (i.e.: newest first).
 //
-// - name: The name of the device. For example,
-//   `projects/p0/locations/us-central1/registries/registry0/devices/devi
-//   ce0` or
-//   `projects/p0/locations/us-central1/registries/registry0/devices/{num
-//   _id}`.
+//   - name: The name of the device. For example,
+//     `projects/p0/locations/us-central1/registries/registry0/devices/devi
+//     ce0` or
+//     `projects/p0/locations/us-central1/registries/registry0/devices/{num
+//     _id}`.
 func (r *ProjectsLocationsRegistriesDevicesStatesService) List(name string) *ProjectsLocationsRegistriesDevicesStatesListCall {
 	c := &ProjectsLocationsRegistriesDevicesStatesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -4741,7 +4752,7 @@ func (c *ProjectsLocationsRegistriesDevicesStatesListCall) Header() http.Header 
 
 func (c *ProjectsLocationsRegistriesDevicesStatesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4779,17 +4790,17 @@ func (c *ProjectsLocationsRegistriesDevicesStatesListCall) Do(opts ...googleapi.
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListDeviceStatesResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -4852,9 +4863,10 @@ type ProjectsLocationsRegistriesGroupsGetIamPolicyCall struct {
 // an empty policy if the resource exists and does not have a policy
 // set.
 //
-// - resource: REQUIRED: The resource for which the policy is being
-//   requested. See the operation documentation for the appropriate
-//   value for this field.
+//   - resource: REQUIRED: The resource for which the policy is being
+//     requested. See Resource names
+//     (https://cloud.google.com/apis/design/resource_names) for the
+//     appropriate value for this field.
 func (r *ProjectsLocationsRegistriesGroupsService) GetIamPolicy(resource string, getiampolicyrequest *GetIamPolicyRequest) *ProjectsLocationsRegistriesGroupsGetIamPolicyCall {
 	c := &ProjectsLocationsRegistriesGroupsGetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -4889,7 +4901,7 @@ func (c *ProjectsLocationsRegistriesGroupsGetIamPolicyCall) Header() http.Header
 
 func (c *ProjectsLocationsRegistriesGroupsGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -4929,17 +4941,17 @@ func (c *ProjectsLocationsRegistriesGroupsGetIamPolicyCall) Do(opts ...googleapi
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Policy{
 		ServerResponse: googleapi.ServerResponse{
@@ -4962,7 +4974,7 @@ func (c *ProjectsLocationsRegistriesGroupsGetIamPolicyCall) Do(opts ...googleapi
 	//   ],
 	//   "parameters": {
 	//     "resource": {
-	//       "description": "REQUIRED: The resource for which the policy is being requested. See the operation documentation for the appropriate value for this field.",
+	//       "description": "REQUIRED: The resource for which the policy is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+/groups/[^/]+$",
 	//       "required": true,
@@ -4998,9 +5010,10 @@ type ProjectsLocationsRegistriesGroupsSetIamPolicyCall struct {
 // SetIamPolicy: Sets the access control policy on the specified
 // resource. Replaces any existing policy.
 //
-// - resource: REQUIRED: The resource for which the policy is being
-//   specified. See the operation documentation for the appropriate
-//   value for this field.
+//   - resource: REQUIRED: The resource for which the policy is being
+//     specified. See Resource names
+//     (https://cloud.google.com/apis/design/resource_names) for the
+//     appropriate value for this field.
 func (r *ProjectsLocationsRegistriesGroupsService) SetIamPolicy(resource string, setiampolicyrequest *SetIamPolicyRequest) *ProjectsLocationsRegistriesGroupsSetIamPolicyCall {
 	c := &ProjectsLocationsRegistriesGroupsSetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -5035,7 +5048,7 @@ func (c *ProjectsLocationsRegistriesGroupsSetIamPolicyCall) Header() http.Header
 
 func (c *ProjectsLocationsRegistriesGroupsSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5075,17 +5088,17 @@ func (c *ProjectsLocationsRegistriesGroupsSetIamPolicyCall) Do(opts ...googleapi
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &Policy{
 		ServerResponse: googleapi.ServerResponse{
@@ -5108,7 +5121,7 @@ func (c *ProjectsLocationsRegistriesGroupsSetIamPolicyCall) Do(opts ...googleapi
 	//   ],
 	//   "parameters": {
 	//     "resource": {
-	//       "description": "REQUIRED: The resource for which the policy is being specified. See the operation documentation for the appropriate value for this field.",
+	//       "description": "REQUIRED: The resource for which the policy is being specified. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+/groups/[^/]+$",
 	//       "required": true,
@@ -5145,9 +5158,10 @@ type ProjectsLocationsRegistriesGroupsTestIamPermissionsCall struct {
 // specified resource. If the resource does not exist, this will return
 // an empty set of permissions, not a NOT_FOUND error.
 //
-// - resource: REQUIRED: The resource for which the policy detail is
-//   being requested. See the operation documentation for the
-//   appropriate value for this field.
+//   - resource: REQUIRED: The resource for which the policy detail is
+//     being requested. See Resource names
+//     (https://cloud.google.com/apis/design/resource_names) for the
+//     appropriate value for this field.
 func (r *ProjectsLocationsRegistriesGroupsService) TestIamPermissions(resource string, testiampermissionsrequest *TestIamPermissionsRequest) *ProjectsLocationsRegistriesGroupsTestIamPermissionsCall {
 	c := &ProjectsLocationsRegistriesGroupsTestIamPermissionsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.resource = resource
@@ -5182,7 +5196,7 @@ func (c *ProjectsLocationsRegistriesGroupsTestIamPermissionsCall) Header() http.
 
 func (c *ProjectsLocationsRegistriesGroupsTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5222,17 +5236,17 @@ func (c *ProjectsLocationsRegistriesGroupsTestIamPermissionsCall) Do(opts ...goo
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &TestIamPermissionsResponse{
 		ServerResponse: googleapi.ServerResponse{
@@ -5255,7 +5269,7 @@ func (c *ProjectsLocationsRegistriesGroupsTestIamPermissionsCall) Do(opts ...goo
 	//   ],
 	//   "parameters": {
 	//     "resource": {
-	//       "description": "REQUIRED: The resource for which the policy detail is being requested. See the operation documentation for the appropriate value for this field.",
+	//       "description": "REQUIRED: The resource for which the policy detail is being requested. See [Resource names](https://cloud.google.com/apis/design/resource_names) for the appropriate value for this field.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+/groups/[^/]+$",
 	//       "required": true,
@@ -5290,8 +5304,8 @@ type ProjectsLocationsRegistriesGroupsDevicesListCall struct {
 
 // List: List devices in a device registry.
 //
-// - parent: The device registry path. Required. For example,
-//   `projects/my-project/locations/us-central1/registries/my-registry`.
+//   - parent: The device registry path. Required. For example,
+//     `projects/my-project/locations/us-central1/registries/my-registry`.
 func (r *ProjectsLocationsRegistriesGroupsDevicesService) List(parent string) *ProjectsLocationsRegistriesGroupsDevicesListCall {
 	c := &ProjectsLocationsRegistriesGroupsDevicesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -5356,10 +5370,13 @@ func (c *ProjectsLocationsRegistriesGroupsDevicesListCall) GatewayListOptionsAss
 // specified, all devices are returned.
 //
 // Possible values:
-//   "GATEWAY_TYPE_UNSPECIFIED" - If unspecified, the device is
+//
+//	"GATEWAY_TYPE_UNSPECIFIED" - If unspecified, the device is
+//
 // considered a non-gateway device.
-//   "GATEWAY" - The device is a gateway.
-//   "NON_GATEWAY" - The device is not a gateway.
+//
+//	"GATEWAY" - The device is a gateway.
+//	"NON_GATEWAY" - The device is not a gateway.
 func (c *ProjectsLocationsRegistriesGroupsDevicesListCall) GatewayListOptionsGatewayType(gatewayListOptionsGatewayType string) *ProjectsLocationsRegistriesGroupsDevicesListCall {
 	c.urlParams_.Set("gatewayListOptions.gatewayType", gatewayListOptionsGatewayType)
 	return c
@@ -5421,7 +5438,7 @@ func (c *ProjectsLocationsRegistriesGroupsDevicesListCall) Header() http.Header 
 
 func (c *ProjectsLocationsRegistriesGroupsDevicesListCall) doRequest(alt string) (*http.Response, error) {
 	reqHeaders := make(http.Header)
-	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/20211201")
+	reqHeaders.Set("x-goog-api-client", "gl-go/"+gensupport.GoVersion()+" gdcl/"+internal.Version)
 	for k, v := range c.header_ {
 		reqHeaders[k] = v
 	}
@@ -5459,17 +5476,17 @@ func (c *ProjectsLocationsRegistriesGroupsDevicesListCall) Do(opts ...googleapi.
 		if res.Body != nil {
 			res.Body.Close()
 		}
-		return nil, &googleapi.Error{
+		return nil, gensupport.WrapError(&googleapi.Error{
 			Code:   res.StatusCode,
 			Header: res.Header,
-		}
+		})
 	}
 	if err != nil {
 		return nil, err
 	}
 	defer googleapi.CloseBody(res)
 	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
+		return nil, gensupport.WrapError(err)
 	}
 	ret := &ListDevicesResponse{
 		ServerResponse: googleapi.ServerResponse{

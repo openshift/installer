@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -76,6 +75,8 @@ type tagKeyApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateTagKeyUpdateTagKeyRequest(ctx context.Context, f *TagKey, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Description; !dcl.IsEmptyValueIndirect(v) {
 		req["description"] = v
@@ -215,20 +216,20 @@ func (op *deleteTagKeyOperation) do(ctx context.Context, r *TagKey, c *Client) e
 		return err
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetTagKey(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetTagKey(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -254,6 +255,10 @@ func (op *createTagKeyOperation) do(ctx context.Context, r *TagKey, c *Client) e
 	if err != nil {
 		return err
 	}
+	if r.Name != nil {
+		// Allowing creation to continue with Name set could result in a TagKey with the wrong Name.
+		return fmt.Errorf("server-generated parameter Name was specified by user as %v, should be unspecified", dcl.ValueOrEmptyString(r.Name))
+	}
 	resp, err := dcl.SendRequest(ctx, c.Config, "POST", u, bytes.NewBuffer(req), c.Config.RetryProvider)
 	if err != nil {
 		return err
@@ -271,11 +276,8 @@ func (op *createTagKeyOperation) do(ctx context.Context, r *TagKey, c *Client) e
 	op.response, _ = o.FirstResponse()
 
 	// Include Name in URL substitution for initial GET request.
-	name, ok := op.response["name"].(string)
-	if !ok {
-		return fmt.Errorf("expected name to be a string in %v, was %T", op.response, op.response["name"])
-	}
-	r.Name = &name
+	m := op.response
+	r.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
 
 	if _, err := c.GetTagKey(ctx, r); err != nil {
 		c.Config.Logger.WarningWithContextf(ctx, "get returned error: %v", err)
@@ -340,6 +342,11 @@ func (c *Client) tagKeyDiffsForRawDesired(ctx context.Context, rawDesired *TagKe
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for TagKey: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for TagKey: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractTagKeyFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeTagKeyInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -380,7 +387,8 @@ func canonicalizeTagKeyDesiredState(rawDesired, rawInitial *TagKey, opts ...dcl.
 		return rawDesired, nil
 	}
 	canonicalDesired := &TagKey{}
-	if dcl.IsZeroValue(rawDesired.Name) {
+	if dcl.IsZeroValue(rawDesired.Name) || (dcl.IsEmptyValueIndirect(rawDesired.Name) && dcl.IsEmptyValueIndirect(rawInitial.Name)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Name = rawInitial.Name
 	} else {
 		canonicalDesired.Name = rawDesired.Name
@@ -400,28 +408,29 @@ func canonicalizeTagKeyDesiredState(rawDesired, rawInitial *TagKey, opts ...dcl.
 	} else {
 		canonicalDesired.Description = rawDesired.Description
 	}
-	if dcl.IsZeroValue(rawDesired.Purpose) {
+	if dcl.IsZeroValue(rawDesired.Purpose) || (dcl.IsEmptyValueIndirect(rawDesired.Purpose) && dcl.IsEmptyValueIndirect(rawInitial.Purpose)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Purpose = rawInitial.Purpose
 	} else {
 		canonicalDesired.Purpose = rawDesired.Purpose
 	}
-	if dcl.IsZeroValue(rawDesired.PurposeData) {
+	if dcl.IsZeroValue(rawDesired.PurposeData) || (dcl.IsEmptyValueIndirect(rawDesired.PurposeData) && dcl.IsEmptyValueIndirect(rawInitial.PurposeData)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.PurposeData = rawInitial.PurposeData
 	} else {
 		canonicalDesired.PurposeData = rawDesired.PurposeData
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeTagKeyNewState(c *Client, rawNew, rawDesired *TagKey) (*TagKey, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Parent) && dcl.IsNotReturnedByServer(rawDesired.Parent) {
+	if dcl.IsEmptyValueIndirect(rawNew.Parent) && dcl.IsEmptyValueIndirect(rawDesired.Parent) {
 		rawNew.Parent = rawDesired.Parent
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Parent, rawNew.Parent) {
@@ -429,7 +438,7 @@ func canonicalizeTagKeyNewState(c *Client, rawNew, rawDesired *TagKey) (*TagKey,
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ShortName) && dcl.IsNotReturnedByServer(rawDesired.ShortName) {
+	if dcl.IsEmptyValueIndirect(rawNew.ShortName) && dcl.IsEmptyValueIndirect(rawDesired.ShortName) {
 		rawNew.ShortName = rawDesired.ShortName
 	} else {
 		if dcl.StringCanonicalize(rawDesired.ShortName, rawNew.ShortName) {
@@ -437,7 +446,7 @@ func canonicalizeTagKeyNewState(c *Client, rawNew, rawDesired *TagKey) (*TagKey,
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NamespacedName) && dcl.IsNotReturnedByServer(rawDesired.NamespacedName) {
+	if dcl.IsEmptyValueIndirect(rawNew.NamespacedName) && dcl.IsEmptyValueIndirect(rawDesired.NamespacedName) {
 		rawNew.NamespacedName = rawDesired.NamespacedName
 	} else {
 		if dcl.StringCanonicalize(rawDesired.NamespacedName, rawNew.NamespacedName) {
@@ -445,7 +454,7 @@ func canonicalizeTagKeyNewState(c *Client, rawNew, rawDesired *TagKey) (*TagKey,
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Description) && dcl.IsNotReturnedByServer(rawDesired.Description) {
+	if dcl.IsEmptyValueIndirect(rawNew.Description) && dcl.IsEmptyValueIndirect(rawDesired.Description) {
 		rawNew.Description = rawDesired.Description
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Description, rawNew.Description) {
@@ -453,17 +462,17 @@ func canonicalizeTagKeyNewState(c *Client, rawNew, rawDesired *TagKey) (*TagKey,
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CreateTime) && dcl.IsNotReturnedByServer(rawDesired.CreateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.CreateTime) && dcl.IsEmptyValueIndirect(rawDesired.CreateTime) {
 		rawNew.CreateTime = rawDesired.CreateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.UpdateTime) && dcl.IsNotReturnedByServer(rawDesired.UpdateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.UpdateTime) && dcl.IsEmptyValueIndirect(rawDesired.UpdateTime) {
 		rawNew.UpdateTime = rawDesired.UpdateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Etag) && dcl.IsNotReturnedByServer(rawDesired.Etag) {
+	if dcl.IsEmptyValueIndirect(rawNew.Etag) && dcl.IsEmptyValueIndirect(rawDesired.Etag) {
 		rawNew.Etag = rawDesired.Etag
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Etag, rawNew.Etag) {
@@ -471,12 +480,12 @@ func canonicalizeTagKeyNewState(c *Client, rawNew, rawDesired *TagKey) (*TagKey,
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Purpose) && dcl.IsNotReturnedByServer(rawDesired.Purpose) {
+	if dcl.IsEmptyValueIndirect(rawNew.Purpose) && dcl.IsEmptyValueIndirect(rawDesired.Purpose) {
 		rawNew.Purpose = rawDesired.Purpose
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PurposeData) && dcl.IsNotReturnedByServer(rawDesired.PurposeData) {
+	if dcl.IsEmptyValueIndirect(rawNew.PurposeData) && dcl.IsEmptyValueIndirect(rawDesired.PurposeData) {
 		rawNew.PurposeData = rawDesired.PurposeData
 	} else {
 	}
@@ -502,76 +511,79 @@ func diffTagKey(c *Client, desired, actual *TagKey, opts ...dcl.ApplyOption) ([]
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Parent, actual.Parent, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Parent")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Parent, actual.Parent, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Parent")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ShortName, actual.ShortName, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ShortName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ShortName, actual.ShortName, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ShortName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NamespacedName, actual.NamespacedName, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NamespacedName")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NamespacedName, actual.NamespacedName, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("NamespacedName")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.TriggersOperation("updateTagKeyUpdateTagKeyOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateTagKeyUpdateTagKeyOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.UpdateTime, actual.UpdateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UpdateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.UpdateTime, actual.UpdateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UpdateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Etag, actual.Etag, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Etag")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Etag, actual.Etag, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Etag")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Purpose, actual.Purpose, dcl.Info{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Purpose")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Purpose, actual.Purpose, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Purpose")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PurposeData, actual.PurposeData, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PurposeData")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PurposeData, actual.PurposeData, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PurposeData")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 
@@ -602,17 +614,17 @@ func (r *TagKey) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalTagKey decodes JSON responses into the TagKey resource schema.
-func unmarshalTagKey(b []byte, c *Client) (*TagKey, error) {
+func unmarshalTagKey(b []byte, c *Client, res *TagKey) (*TagKey, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapTagKey(m, c)
+	return unmarshalMapTagKey(m, c, res)
 }
 
-func unmarshalMapTagKey(m map[string]interface{}, c *Client) (*TagKey, error) {
+func unmarshalMapTagKey(m map[string]interface{}, c *Client, res *TagKey) (*TagKey, error) {
 
-	flattened := flattenTagKey(c, m)
+	flattened := flattenTagKey(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -622,9 +634,11 @@ func unmarshalMapTagKey(m map[string]interface{}, c *Client) (*TagKey, error) {
 // expandTagKey expands TagKey into a JSON request object.
 func expandTagKey(c *Client, f *TagKey) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v, err := dcl.DeriveField("tagKeys/%s", f.Name, dcl.SelfLinkToName(f.Name)); err != nil {
 		return nil, fmt.Errorf("error expanding Name into name: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["name"] = v
 	}
 	if v := f.Parent; dcl.ValueShouldBeSent(v) {
@@ -648,7 +662,7 @@ func expandTagKey(c *Client, f *TagKey) (map[string]interface{}, error) {
 
 // flattenTagKey flattens TagKey from a JSON request object into the
 // TagKey type.
-func flattenTagKey(c *Client, i interface{}) *TagKey {
+func flattenTagKey(c *Client, i interface{}, res *TagKey) *TagKey {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -657,24 +671,24 @@ func flattenTagKey(c *Client, i interface{}) *TagKey {
 		return nil
 	}
 
-	res := &TagKey{}
-	res.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
-	res.Parent = dcl.FlattenString(m["parent"])
-	res.ShortName = dcl.FlattenString(m["shortName"])
-	res.NamespacedName = dcl.FlattenString(m["namespacedName"])
-	res.Description = dcl.FlattenString(m["description"])
-	res.CreateTime = dcl.FlattenString(m["createTime"])
-	res.UpdateTime = dcl.FlattenString(m["updateTime"])
-	res.Etag = dcl.FlattenString(m["etag"])
-	res.Purpose = flattenTagKeyPurposeEnum(m["purpose"])
-	res.PurposeData = dcl.FlattenKeyValuePairs(m["purposeData"])
+	resultRes := &TagKey{}
+	resultRes.Name = dcl.SelfLinkToName(dcl.FlattenString(m["name"]))
+	resultRes.Parent = dcl.FlattenString(m["parent"])
+	resultRes.ShortName = dcl.FlattenString(m["shortName"])
+	resultRes.NamespacedName = dcl.FlattenString(m["namespacedName"])
+	resultRes.Description = dcl.FlattenString(m["description"])
+	resultRes.CreateTime = dcl.FlattenString(m["createTime"])
+	resultRes.UpdateTime = dcl.FlattenString(m["updateTime"])
+	resultRes.Etag = dcl.FlattenString(m["etag"])
+	resultRes.Purpose = flattenTagKeyPurposeEnum(m["purpose"])
+	resultRes.PurposeData = dcl.FlattenKeyValuePairs(m["purposeData"])
 
-	return res
+	return resultRes
 }
 
 // flattenTagKeyPurposeEnumMap flattens the contents of TagKeyPurposeEnum from a JSON
 // response object.
-func flattenTagKeyPurposeEnumMap(c *Client, i interface{}) map[string]TagKeyPurposeEnum {
+func flattenTagKeyPurposeEnumMap(c *Client, i interface{}, res *TagKey) map[string]TagKeyPurposeEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]TagKeyPurposeEnum{}
@@ -694,7 +708,7 @@ func flattenTagKeyPurposeEnumMap(c *Client, i interface{}) map[string]TagKeyPurp
 
 // flattenTagKeyPurposeEnumSlice flattens the contents of TagKeyPurposeEnum from a JSON
 // response object.
-func flattenTagKeyPurposeEnumSlice(c *Client, i interface{}) []TagKeyPurposeEnum {
+func flattenTagKeyPurposeEnumSlice(c *Client, i interface{}, res *TagKey) []TagKeyPurposeEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []TagKeyPurposeEnum{}
@@ -717,7 +731,7 @@ func flattenTagKeyPurposeEnumSlice(c *Client, i interface{}) []TagKeyPurposeEnum
 func flattenTagKeyPurposeEnum(i interface{}) *TagKeyPurposeEnum {
 	s, ok := i.(string)
 	if !ok {
-		return TagKeyPurposeEnumRef("")
+		return nil
 	}
 
 	return TagKeyPurposeEnumRef(s)
@@ -728,7 +742,7 @@ func flattenTagKeyPurposeEnum(i interface{}) *TagKeyPurposeEnum {
 // identity).  This is useful in extracting the element from a List call.
 func (r *TagKey) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalTagKey(b, c)
+		cr, err := unmarshalTagKey(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -753,6 +767,7 @@ type tagKeyDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         tagKeyApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToTagKeyDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]tagKeyDiff, error) {
@@ -772,7 +787,8 @@ func convertFieldDiffsToTagKeyDiffs(config *dcl.Config, fds []*dcl.FieldDiff, op
 	var diffs []tagKeyDiff
 	// For each operation name, create a tagKeyDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := tagKeyDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := tagKeyDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {

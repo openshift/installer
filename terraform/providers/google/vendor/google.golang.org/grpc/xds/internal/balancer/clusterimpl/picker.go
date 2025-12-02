@@ -19,7 +19,6 @@
 package clusterimpl
 
 import (
-	orcapb "github.com/cncf/udpa/go/udpa/data/orca/v1"
 	"google.golang.org/grpc/balancer"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/connectivity"
@@ -27,6 +26,8 @@ import (
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/xds/internal/xdsclient"
 	"google.golang.org/grpc/xds/internal/xdsclient/load"
+
+	v3orcapb "github.com/cncf/xds/go/xds/data/orca/v3"
 )
 
 // NewRandomWRR is used when calculating drops. It's exported so that tests can
@@ -102,17 +103,15 @@ func newPicker(s balancer.State, config *dropConfigs, loadStore load.PerClusterR
 func (d *picker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 	// Don't drop unless the inner picker is READY. Similar to
 	// https://github.com/grpc/grpc-go/issues/2622.
-	if d.s.ConnectivityState != connectivity.Ready {
-		return d.s.Picker.Pick(info)
-	}
-
-	// Check if this RPC should be dropped by category.
-	for _, dp := range d.drops {
-		if dp.drop() {
-			if d.loadStore != nil {
-				d.loadStore.CallDropped(dp.category)
+	if d.s.ConnectivityState == connectivity.Ready {
+		// Check if this RPC should be dropped by category.
+		for _, dp := range d.drops {
+			if dp.drop() {
+				if d.loadStore != nil {
+					d.loadStore.CallDropped(dp.category)
+				}
+				return balancer.PickResult{}, status.Errorf(codes.Unavailable, "RPC is dropped")
 			}
-			return balancer.PickResult{}, status.Errorf(codes.Unavailable, "RPC is dropped")
 		}
 	}
 
@@ -160,7 +159,7 @@ func (d *picker) Pick(info balancer.PickInfo) (balancer.PickResult, error) {
 			}
 			d.loadStore.CallFinished(lIDStr, info.Err)
 
-			load, ok := info.ServerLoad.(*orcapb.OrcaLoadReport)
+			load, ok := info.ServerLoad.(*v3orcapb.OrcaLoadReport)
 			if !ok {
 				return
 			}

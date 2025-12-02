@@ -22,10 +22,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceComputeTargetInstance() *schema.Resource {
+func ResourceComputeTargetInstance() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeTargetInstanceCreate,
 		Read:   resourceComputeTargetInstanceRead,
@@ -36,8 +35,8 @@ func resourceComputeTargetInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -75,7 +74,7 @@ character, which cannot be a dash.`,
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"NO_NAT", ""}, false),
+				ValidateFunc: validateEnum([]string{"NO_NAT", ""}),
 				Description: `NAT option controlling how IPs are NAT'ed to the instance.
 Currently only NO_NAT (default value) is supported. Default value: "NO_NAT" Possible values: ["NO_NAT"]`,
 				Default: "NO_NAT",
@@ -110,7 +109,7 @@ Currently only NO_NAT (default value) is supported. Default value: "NO_NAT" Poss
 
 func resourceComputeTargetInstanceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -166,7 +165,7 @@ func resourceComputeTargetInstanceCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating TargetInstance: %s", err)
 	}
@@ -178,7 +177,7 @@ func resourceComputeTargetInstanceCreate(d *schema.ResourceData, meta interface{
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating TargetInstance", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -195,7 +194,7 @@ func resourceComputeTargetInstanceCreate(d *schema.ResourceData, meta interface{
 
 func resourceComputeTargetInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -218,7 +217,7 @@ func resourceComputeTargetInstanceRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeTargetInstance %q", d.Id()))
 	}
@@ -254,7 +253,7 @@ func resourceComputeTargetInstanceRead(d *schema.ResourceData, meta interface{})
 
 func resourceComputeTargetInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -280,12 +279,12 @@ func resourceComputeTargetInstanceDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "TargetInstance")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting TargetInstance", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

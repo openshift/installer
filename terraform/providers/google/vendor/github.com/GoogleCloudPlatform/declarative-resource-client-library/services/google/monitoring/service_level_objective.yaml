@@ -1,0 +1,705 @@
+# Copyright 2023 Google LLC. All Rights Reserved.
+# 
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+# 
+#     http://www.apache.org/licenses/LICENSE-2.0
+# 
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+info:
+  title: Monitoring/ServiceLevelObjective
+  description: The Monitoring ServiceLevelObjective resource
+  x-dcl-struct-name: ServiceLevelObjective
+  x-dcl-has-iam: false
+paths:
+  get:
+    description: The function used to get information about a ServiceLevelObjective
+    parameters:
+    - name: serviceLevelObjective
+      required: true
+      description: A full instance of a ServiceLevelObjective
+  apply:
+    description: The function used to apply information about a ServiceLevelObjective
+    parameters:
+    - name: serviceLevelObjective
+      required: true
+      description: A full instance of a ServiceLevelObjective
+  delete:
+    description: The function used to delete a ServiceLevelObjective
+    parameters:
+    - name: serviceLevelObjective
+      required: true
+      description: A full instance of a ServiceLevelObjective
+  deleteAll:
+    description: The function used to delete all ServiceLevelObjective
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: service
+      required: true
+      schema:
+        type: string
+  list:
+    description: The function used to list information about many ServiceLevelObjective
+    parameters:
+    - name: project
+      required: true
+      schema:
+        type: string
+    - name: service
+      required: true
+      schema:
+        type: string
+components:
+  schemas:
+    ServiceLevelObjective:
+      title: ServiceLevelObjective
+      x-dcl-id: projects/{{project}}/services/{{service}}/serviceLevelObjectives/{{name}}
+      x-dcl-parent-container: project
+      x-dcl-labels: userLabels
+      x-dcl-has-create: true
+      x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
+      type: object
+      required:
+      - name
+      - goal
+      - project
+      - service
+      properties:
+        calendarPeriod:
+          type: string
+          x-dcl-go-name: CalendarPeriod
+          x-dcl-go-type: ServiceLevelObjectiveCalendarPeriodEnum
+          description: 'A calendar period, semantically "since the start of the current
+            ``". At this time, only `DAY`, `WEEK`, `FORTNIGHT`, and `MONTH` are supported.
+            Possible values: CALENDAR_PERIOD_UNSPECIFIED, DAY, WEEK, FORTNIGHT, MONTH,
+            QUARTER, HALF, YEAR'
+          x-dcl-conflicts:
+          - rollingPeriod
+          enum:
+          - CALENDAR_PERIOD_UNSPECIFIED
+          - DAY
+          - WEEK
+          - FORTNIGHT
+          - MONTH
+          - QUARTER
+          - HALF
+          - YEAR
+        createTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: CreateTime
+          readOnly: true
+          description: Time stamp of the `Create` or most recent `Update` command
+            on this `Slo`.
+          x-kubernetes-immutable: true
+        deleteTime:
+          type: string
+          format: date-time
+          x-dcl-go-name: DeleteTime
+          readOnly: true
+          description: Time stamp of the `Update` or `Delete` command that made this
+            no longer a current `Slo`. This field is not populated in `ServiceLevelObjective`s
+            returned from calls to `GetServiceLevelObjective` and `ListServiceLevelObjectives`,
+            because it is always empty in the current version. It is populated in
+            `ServiceLevelObjective`s representing previous versions in the output
+            of `ListServiceLevelObjectiveVersions`. Because all old configuration
+            versions are stored, `Update` operations mark the obsoleted version as
+            deleted.
+          x-kubernetes-immutable: true
+        displayName:
+          type: string
+          x-dcl-go-name: DisplayName
+          description: Name used for UI elements listing this SLO.
+        goal:
+          type: number
+          format: double
+          x-dcl-go-name: Goal
+          description: The fraction of service that must be good in order for this
+            objective to be met. `0 < goal <= 0.999`.
+        name:
+          type: string
+          x-dcl-go-name: Name
+          description: 'Resource name for this `ServiceLevelObjective`. The format
+            is: projects/[PROJECT_ID_OR_NUMBER]/services/[SERVICE_ID]/serviceLevelObjectives/[SLO_NAME]'
+          x-kubernetes-immutable: true
+        project:
+          type: string
+          x-dcl-go-name: Project
+          description: The project for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Cloudresourcemanager/Project
+            field: name
+            parent: true
+        rollingPeriod:
+          type: string
+          x-dcl-go-name: RollingPeriod
+          description: A rolling time period, semantically "in the past ``". Must
+            be an integer multiple of 1 day no larger than 30 days.
+          x-dcl-conflicts:
+          - calendarPeriod
+        service:
+          type: string
+          x-dcl-go-name: Service
+          description: The service for the resource
+          x-kubernetes-immutable: true
+          x-dcl-references:
+          - resource: Monitoring/Service
+            field: name
+            parent: true
+        serviceLevelIndicator:
+          type: object
+          x-dcl-go-name: ServiceLevelIndicator
+          x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicator
+          description: The definition of good service, used to measure and calculate
+            the quality of the `Service`'s performance with respect to a single aspect
+            of service quality.
+          properties:
+            basicSli:
+              type: object
+              x-dcl-go-name: BasicSli
+              x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorBasicSli
+              description: Basic SLI on a well-known service type.
+              x-dcl-conflicts:
+              - requestBased
+              - windowsBased
+              properties:
+                availability:
+                  type: object
+                  x-dcl-go-name: Availability
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorBasicSliAvailability
+                  description: Good service is defined to be the count of requests
+                    made to this service that return successfully.
+                  x-dcl-conflicts:
+                  - latency
+                  - operationAvailability
+                  - operationLatency
+                latency:
+                  type: object
+                  x-dcl-go-name: Latency
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorBasicSliLatency
+                  description: Good service is defined to be the count of requests
+                    made to this service that are fast enough with respect to `latency.threshold`.
+                  x-dcl-conflicts:
+                  - availability
+                  - operationAvailability
+                  - operationLatency
+                  properties:
+                    experience:
+                      type: string
+                      x-dcl-go-name: Experience
+                      x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorBasicSliLatencyExperienceEnum
+                      description: 'A description of the experience associated with
+                        failing requests. Possible values: LATENCY_EXPERIENCE_UNSPECIFIED,
+                        DELIGHTING, SATISFYING, ANNOYING'
+                      enum:
+                      - LATENCY_EXPERIENCE_UNSPECIFIED
+                      - DELIGHTING
+                      - SATISFYING
+                      - ANNOYING
+                    threshold:
+                      type: string
+                      x-dcl-go-name: Threshold
+                      description: Good service is defined to be the count of requests
+                        made to this service that return in no more than `threshold`.
+                location:
+                  type: array
+                  x-dcl-go-name: Location
+                  description: 'OPTIONAL: The set of locations to which this SLI is
+                    relevant. Telemetry from other locations will not be used to calculate
+                    performance for this SLI. If omitted, this SLI applies to all
+                    locations in which the Service has activity. For service types
+                    that don''t support breaking down by location, setting this field
+                    will result in an error.'
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: string
+                    x-dcl-go-type: string
+                method:
+                  type: array
+                  x-dcl-go-name: Method
+                  description: 'OPTIONAL: The set of RPCs to which this SLI is relevant.
+                    Telemetry from other methods will not be used to calculate performance
+                    for this SLI. If omitted, this SLI applies to all the Service''s
+                    methods. For service types that don''t support breaking down by
+                    method, setting this field will result in an error.'
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: string
+                    x-dcl-go-type: string
+                operationAvailability:
+                  type: object
+                  x-dcl-go-name: OperationAvailability
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorBasicSliOperationAvailability
+                  description: Good service is defined to be the count of operations
+                    performed by this service that return successfully
+                  x-dcl-conflicts:
+                  - availability
+                  - latency
+                  - operationLatency
+                operationLatency:
+                  type: object
+                  x-dcl-go-name: OperationLatency
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorBasicSliOperationLatency
+                  description: Good service is defined to be the count of operations
+                    performed by this service that are fast enough with respect to
+                    `operation_latency.threshold`.
+                  x-dcl-conflicts:
+                  - availability
+                  - latency
+                  - operationAvailability
+                  properties:
+                    experience:
+                      type: string
+                      x-dcl-go-name: Experience
+                      x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorBasicSliOperationLatencyExperienceEnum
+                      description: 'A description of the experience associated with
+                        failing requests. Possible values: LATENCY_EXPERIENCE_UNSPECIFIED,
+                        DELIGHTING, SATISFYING, ANNOYING'
+                      enum:
+                      - LATENCY_EXPERIENCE_UNSPECIFIED
+                      - DELIGHTING
+                      - SATISFYING
+                      - ANNOYING
+                    threshold:
+                      type: string
+                      x-dcl-go-name: Threshold
+                      description: Good service is defined to be the count of operations
+                        that are completed in no more than `threshold`.
+                version:
+                  type: array
+                  x-dcl-go-name: Version
+                  description: 'OPTIONAL: The set of API versions to which this SLI
+                    is relevant. Telemetry from other API versions will not be used
+                    to calculate performance for this SLI. If omitted, this SLI applies
+                    to all API versions. For service types that don''t support breaking
+                    down by version, setting this field will result in an error.'
+                  x-dcl-send-empty: true
+                  x-dcl-list-type: list
+                  items:
+                    type: string
+                    x-dcl-go-type: string
+            requestBased:
+              type: object
+              x-dcl-go-name: RequestBased
+              x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorRequestBased
+              description: Request-based SLIs
+              x-dcl-conflicts:
+              - basicSli
+              - windowsBased
+              properties:
+                distributionCut:
+                  type: object
+                  x-dcl-go-name: DistributionCut
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorRequestBasedDistributionCut
+                  description: '`distribution_cut` is used when `good_service` is
+                    a count of values aggregated in a `Distribution` that fall into
+                    a good range. The `total_service` is the total count of all values
+                    aggregated in the `Distribution`.'
+                  x-dcl-conflicts:
+                  - goodTotalRatio
+                  properties:
+                    distributionFilter:
+                      type: string
+                      x-dcl-go-name: DistributionFilter
+                      description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                        specifying a `TimeSeries` aggregating values. Must have `ValueType
+                        = DISTRIBUTION` and `MetricKind = DELTA` or `MetricKind =
+                        CUMULATIVE`.
+                    range:
+                      type: object
+                      x-dcl-go-name: Range
+                      x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorRequestBasedDistributionCutRange
+                      description: Range of values considered "good." For a one-sided
+                        range, set one bound to an infinite value.
+                      properties:
+                        max:
+                          type: number
+                          format: double
+                          x-dcl-go-name: Max
+                          description: Range maximum.
+                        min:
+                          type: number
+                          format: double
+                          x-dcl-go-name: Min
+                          description: Range minimum.
+                goodTotalRatio:
+                  type: object
+                  x-dcl-go-name: GoodTotalRatio
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorRequestBasedGoodTotalRatio
+                  description: '`good_total_ratio` is used when the ratio of `good_service`
+                    to `total_service` is computed from two `TimeSeries`.'
+                  x-dcl-conflicts:
+                  - distributionCut
+                  properties:
+                    badServiceFilter:
+                      type: string
+                      x-dcl-go-name: BadServiceFilter
+                      description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                        specifying a `TimeSeries` quantifying bad service, either
+                        demanded service that was not provided or demanded service
+                        that was of inadequate quality. Must have `ValueType = DOUBLE`
+                        or `ValueType = INT64` and must have `MetricKind = DELTA`
+                        or `MetricKind = CUMULATIVE`.
+                    goodServiceFilter:
+                      type: string
+                      x-dcl-go-name: GoodServiceFilter
+                      description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                        specifying a `TimeSeries` quantifying good service provided.
+                        Must have `ValueType = DOUBLE` or `ValueType = INT64` and
+                        must have `MetricKind = DELTA` or `MetricKind = CUMULATIVE`.
+                    totalServiceFilter:
+                      type: string
+                      x-dcl-go-name: TotalServiceFilter
+                      description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                        specifying a `TimeSeries` quantifying total demanded service.
+                        Must have `ValueType = DOUBLE` or `ValueType = INT64` and
+                        must have `MetricKind = DELTA` or `MetricKind = CUMULATIVE`.
+            windowsBased:
+              type: object
+              x-dcl-go-name: WindowsBased
+              x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBased
+              description: Windows-based SLIs
+              x-dcl-conflicts:
+              - basicSli
+              - requestBased
+              properties:
+                goodBadMetricFilter:
+                  type: string
+                  x-dcl-go-name: GoodBadMetricFilter
+                  description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                    specifying a `TimeSeries` with `ValueType = BOOL`. The window
+                    is good if any `true` values appear in the window.
+                  x-dcl-conflicts:
+                  - goodTotalRatioThreshold
+                  - metricMeanInRange
+                  - metricSumInRange
+                goodTotalRatioThreshold:
+                  type: object
+                  x-dcl-go-name: GoodTotalRatioThreshold
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThreshold
+                  description: A window is good if its `performance` is high enough.
+                  x-dcl-conflicts:
+                  - goodBadMetricFilter
+                  - metricMeanInRange
+                  - metricSumInRange
+                  properties:
+                    basicSliPerformance:
+                      type: object
+                      x-dcl-go-name: BasicSliPerformance
+                      x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdBasicSliPerformance
+                      description: '`BasicSli` to evaluate to judge window quality.'
+                      x-dcl-conflicts:
+                      - performance
+                      properties:
+                        availability:
+                          type: object
+                          x-dcl-go-name: Availability
+                          x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdBasicSliPerformanceAvailability
+                          description: Good service is defined to be the count of
+                            requests made to this service that return successfully.
+                          x-dcl-conflicts:
+                          - latency
+                          - operationAvailability
+                          - operationLatency
+                        latency:
+                          type: object
+                          x-dcl-go-name: Latency
+                          x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdBasicSliPerformanceLatency
+                          description: Good service is defined to be the count of
+                            requests made to this service that are fast enough with
+                            respect to `latency.threshold`.
+                          x-dcl-conflicts:
+                          - availability
+                          - operationAvailability
+                          - operationLatency
+                          properties:
+                            experience:
+                              type: string
+                              x-dcl-go-name: Experience
+                              x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdBasicSliPerformanceLatencyExperienceEnum
+                              description: 'A description of the experience associated
+                                with failing requests. Possible values: LATENCY_EXPERIENCE_UNSPECIFIED,
+                                DELIGHTING, SATISFYING, ANNOYING'
+                              enum:
+                              - LATENCY_EXPERIENCE_UNSPECIFIED
+                              - DELIGHTING
+                              - SATISFYING
+                              - ANNOYING
+                            threshold:
+                              type: string
+                              x-dcl-go-name: Threshold
+                              description: Good service is defined to be the count
+                                of requests made to this service that return in no
+                                more than `threshold`.
+                        location:
+                          type: array
+                          x-dcl-go-name: Location
+                          description: 'OPTIONAL: The set of locations to which this
+                            SLI is relevant. Telemetry from other locations will not
+                            be used to calculate performance for this SLI. If omitted,
+                            this SLI applies to all locations in which the Service
+                            has activity. For service types that don''t support breaking
+                            down by location, setting this field will result in an
+                            error.'
+                          x-dcl-send-empty: true
+                          x-dcl-list-type: list
+                          items:
+                            type: string
+                            x-dcl-go-type: string
+                        method:
+                          type: array
+                          x-dcl-go-name: Method
+                          description: 'OPTIONAL: The set of RPCs to which this SLI
+                            is relevant. Telemetry from other methods will not be
+                            used to calculate performance for this SLI. If omitted,
+                            this SLI applies to all the Service''s methods. For service
+                            types that don''t support breaking down by method, setting
+                            this field will result in an error.'
+                          x-dcl-send-empty: true
+                          x-dcl-list-type: list
+                          items:
+                            type: string
+                            x-dcl-go-type: string
+                        operationAvailability:
+                          type: object
+                          x-dcl-go-name: OperationAvailability
+                          x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdBasicSliPerformanceOperationAvailability
+                          description: Good service is defined to be the count of
+                            operations performed by this service that return successfully
+                          x-dcl-conflicts:
+                          - availability
+                          - latency
+                          - operationLatency
+                        operationLatency:
+                          type: object
+                          x-dcl-go-name: OperationLatency
+                          x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdBasicSliPerformanceOperationLatency
+                          description: Good service is defined to be the count of
+                            operations performed by this service that are fast enough
+                            with respect to `operation_latency.threshold`.
+                          x-dcl-conflicts:
+                          - availability
+                          - latency
+                          - operationAvailability
+                          properties:
+                            experience:
+                              type: string
+                              x-dcl-go-name: Experience
+                              x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdBasicSliPerformanceOperationLatencyExperienceEnum
+                              description: 'A description of the experience associated
+                                with failing requests. Possible values: LATENCY_EXPERIENCE_UNSPECIFIED,
+                                DELIGHTING, SATISFYING, ANNOYING'
+                              enum:
+                              - LATENCY_EXPERIENCE_UNSPECIFIED
+                              - DELIGHTING
+                              - SATISFYING
+                              - ANNOYING
+                            threshold:
+                              type: string
+                              x-dcl-go-name: Threshold
+                              description: Good service is defined to be the count
+                                of operations that are completed in no more than `threshold`.
+                        version:
+                          type: array
+                          x-dcl-go-name: Version
+                          description: 'OPTIONAL: The set of API versions to which
+                            this SLI is relevant. Telemetry from other API versions
+                            will not be used to calculate performance for this SLI.
+                            If omitted, this SLI applies to all API versions. For
+                            service types that don''t support breaking down by version,
+                            setting this field will result in an error.'
+                          x-dcl-send-empty: true
+                          x-dcl-list-type: list
+                          items:
+                            type: string
+                            x-dcl-go-type: string
+                    performance:
+                      type: object
+                      x-dcl-go-name: Performance
+                      x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdPerformance
+                      description: '`RequestBasedSli` to evaluate to judge window
+                        quality.'
+                      x-dcl-conflicts:
+                      - basicSliPerformance
+                      properties:
+                        distributionCut:
+                          type: object
+                          x-dcl-go-name: DistributionCut
+                          x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdPerformanceDistributionCut
+                          description: '`distribution_cut` is used when `good_service`
+                            is a count of values aggregated in a `Distribution` that
+                            fall into a good range. The `total_service` is the total
+                            count of all values aggregated in the `Distribution`.'
+                          x-dcl-conflicts:
+                          - goodTotalRatio
+                          properties:
+                            distributionFilter:
+                              type: string
+                              x-dcl-go-name: DistributionFilter
+                              description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                                specifying a `TimeSeries` aggregating values. Must
+                                have `ValueType = DISTRIBUTION` and `MetricKind =
+                                DELTA` or `MetricKind = CUMULATIVE`.
+                            range:
+                              type: object
+                              x-dcl-go-name: Range
+                              x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdPerformanceDistributionCutRange
+                              description: Range of values considered "good." For
+                                a one-sided range, set one bound to an infinite value.
+                              properties:
+                                max:
+                                  type: number
+                                  format: double
+                                  x-dcl-go-name: Max
+                                  description: Range maximum.
+                                min:
+                                  type: number
+                                  format: double
+                                  x-dcl-go-name: Min
+                                  description: Range minimum.
+                        goodTotalRatio:
+                          type: object
+                          x-dcl-go-name: GoodTotalRatio
+                          x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedGoodTotalRatioThresholdPerformanceGoodTotalRatio
+                          description: '`good_total_ratio` is used when the ratio
+                            of `good_service` to `total_service` is computed from
+                            two `TimeSeries`.'
+                          x-dcl-conflicts:
+                          - distributionCut
+                          properties:
+                            badServiceFilter:
+                              type: string
+                              x-dcl-go-name: BadServiceFilter
+                              description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                                specifying a `TimeSeries` quantifying bad service,
+                                either demanded service that was not provided or demanded
+                                service that was of inadequate quality. Must have
+                                `ValueType = DOUBLE` or `ValueType = INT64` and must
+                                have `MetricKind = DELTA` or `MetricKind = CUMULATIVE`.
+                            goodServiceFilter:
+                              type: string
+                              x-dcl-go-name: GoodServiceFilter
+                              description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                                specifying a `TimeSeries` quantifying good service
+                                provided. Must have `ValueType = DOUBLE` or `ValueType
+                                = INT64` and must have `MetricKind = DELTA` or `MetricKind
+                                = CUMULATIVE`.
+                            totalServiceFilter:
+                              type: string
+                              x-dcl-go-name: TotalServiceFilter
+                              description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                                specifying a `TimeSeries` quantifying total demanded
+                                service. Must have `ValueType = DOUBLE` or `ValueType
+                                = INT64` and must have `MetricKind = DELTA` or `MetricKind
+                                = CUMULATIVE`.
+                    threshold:
+                      type: number
+                      format: double
+                      x-dcl-go-name: Threshold
+                      description: If window `performance >= threshold`, the window
+                        is counted as good.
+                metricMeanInRange:
+                  type: object
+                  x-dcl-go-name: MetricMeanInRange
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedMetricMeanInRange
+                  description: A window is good if the metric's value is in a good
+                    range, averaged across returned streams.
+                  x-dcl-conflicts:
+                  - goodBadMetricFilter
+                  - goodTotalRatioThreshold
+                  - metricSumInRange
+                  properties:
+                    range:
+                      type: object
+                      x-dcl-go-name: Range
+                      x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedMetricMeanInRangeRange
+                      description: Range of values considered "good." For a one-sided
+                        range, set one bound to an infinite value.
+                      properties:
+                        max:
+                          type: number
+                          format: double
+                          x-dcl-go-name: Max
+                          description: Range maximum.
+                        min:
+                          type: number
+                          format: double
+                          x-dcl-go-name: Min
+                          description: Range minimum.
+                    timeSeries:
+                      type: string
+                      x-dcl-go-name: TimeSeries
+                      description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                        specifying the `TimeSeries` to use for evaluating window quality.
+                metricSumInRange:
+                  type: object
+                  x-dcl-go-name: MetricSumInRange
+                  x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedMetricSumInRange
+                  description: A window is good if the metric's value is in a good
+                    range, summed across returned streams.
+                  x-dcl-conflicts:
+                  - goodBadMetricFilter
+                  - goodTotalRatioThreshold
+                  - metricMeanInRange
+                  properties:
+                    range:
+                      type: object
+                      x-dcl-go-name: Range
+                      x-dcl-go-type: ServiceLevelObjectiveServiceLevelIndicatorWindowsBasedMetricSumInRangeRange
+                      description: Range of values considered "good." For a one-sided
+                        range, set one bound to an infinite value.
+                      properties:
+                        max:
+                          type: number
+                          format: double
+                          x-dcl-go-name: Max
+                          description: Range maximum.
+                        min:
+                          type: number
+                          format: double
+                          x-dcl-go-name: Min
+                          description: Range minimum.
+                    timeSeries:
+                      type: string
+                      x-dcl-go-name: TimeSeries
+                      description: A [monitoring filter](https://cloud.google.com/monitoring/api/v3/filters)
+                        specifying the `TimeSeries` to use for evaluating window quality.
+                windowPeriod:
+                  type: string
+                  x-dcl-go-name: WindowPeriod
+                  description: Duration over which window quality is evaluated. Must
+                    be an integer fraction of a day and at least `60s`.
+        serviceManagementOwned:
+          type: boolean
+          x-dcl-go-name: ServiceManagementOwned
+          readOnly: true
+          description: Output only. If set, this SLO is managed at the [Service Management](https://cloud.google.com/service-management/overview)
+            level. Therefore the service yaml file is the source of truth for this
+            SLO, and API `Update` and `Delete` operations are forbidden.
+          x-kubernetes-immutable: true
+        userLabels:
+          type: object
+          additionalProperties:
+            type: string
+          x-dcl-go-name: UserLabels
+          description: Labels which have been used to annotate the service-level objective.
+            Label keys must start with a letter. Label keys and values may contain
+            lowercase letters, numbers, underscores, and dashes. Label keys and values
+            have a maximum length of 63 characters, and must be less than 128 bytes
+            in size. Up to 64 label entries may be stored. For labels which do not
+            have a semantic value, the empty string may be supplied for the label
+            value.
