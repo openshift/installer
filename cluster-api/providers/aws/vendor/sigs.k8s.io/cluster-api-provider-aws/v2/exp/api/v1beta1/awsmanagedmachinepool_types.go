@@ -23,7 +23,7 @@ import (
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	iamv1 "sigs.k8s.io/cluster-api-provider-aws/v2/iam/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // ManagedMachineAMIType specifies which AWS AMI to use for a managed MachinePool.
@@ -52,12 +52,10 @@ const (
 	ManagedMachinePoolCapacityTypeSpot ManagedMachinePoolCapacityType = "spot"
 )
 
-var (
-	// DefaultEKSNodegroupRole is the name of the default IAM role to use for EKS nodegroups
-	// if no other role is supplied in the spec and if iam role creation is not enabled. The default
-	// can be created using clusterawsadm or created manually.
-	DefaultEKSNodegroupRole = fmt.Sprintf("eks-nodegroup%s", iamv1.DefaultNameSuffix)
-)
+// DefaultEKSNodegroupRole is the name of the default IAM role to use for EKS nodegroups
+// if no other role is supplied in the spec and if iam role creation is not enabled. The default
+// can be created using clusterawsadm or created manually.
+var DefaultEKSNodegroupRole = fmt.Sprintf("eks-nodegroup%s", iamv1.DefaultNameSuffix)
 
 // AWSManagedMachinePoolSpec defines the desired state of AWSManagedMachinePool.
 type AWSManagedMachinePoolSpec struct {
@@ -233,7 +231,7 @@ type AWSManagedMachinePoolStatus struct {
 
 	// Conditions defines current service state of the managed machine pool
 	// +optional
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -253,12 +251,12 @@ type AWSManagedMachinePool struct {
 }
 
 // GetConditions returns the observations of the operational state of the AWSManagedMachinePool resource.
-func (r *AWSManagedMachinePool) GetConditions() clusterv1.Conditions {
+func (r *AWSManagedMachinePool) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the AWSManagedMachinePool to the predescribed clusterv1.Conditions.
-func (r *AWSManagedMachinePool) SetConditions(conditions clusterv1.Conditions) {
+// SetConditions sets the underlying service state of the AWSManagedMachinePool to the predescribed clusterv1beta1.Conditions.
+func (r *AWSManagedMachinePool) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

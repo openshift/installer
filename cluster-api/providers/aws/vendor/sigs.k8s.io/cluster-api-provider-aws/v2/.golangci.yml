@@ -139,8 +139,6 @@ linters:
           alias: runtimeserializer
         - pkg: k8s.io/apimachinery/pkg/runtime/serializer/yaml
           alias: yamlserializer
-        - pkg: sigs.k8s.io/cluster-api/api/v1beta1
-          alias: clusterv1
         - pkg: sigs.k8s.io/cluster-api/util/defaulting
           alias: utildefaulting
         - pkg: sigs.k8s.io/controller-runtime
@@ -169,8 +167,14 @@ linters:
           alias: crclient
         - pkg: k8s.io/apimachinery/pkg/types
           alias: apimachinerytypes
-        - pkg: sigs.k8s.io/cluster-api/exp/api/v1beta1
-          alias: expclusterv1
+        - pkg: "sigs.k8s.io/cluster-api/api/core/v1beta2"
+          alias: clusterv1
+        - pkg: "sigs.k8s.io/cluster-api/api/core/v1beta1"
+          alias: clusterv1beta1
+        - pkg: "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+          alias: v1beta1patch
+        - pkg: "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+          alias: v1beta1conditions
       no-unaliased: false
     nolintlint:
       require-specific: true
@@ -212,16 +216,16 @@ linters:
       #   - errcheck
       #   text: Error return value of `outputPrinter.Print` is not checked
       - linters:
-        - gosec
-        text: 'G103: Use of unsafe calls should be audited'
+          - gosec
+        text: "G103: Use of unsafe calls should be audited"
         path: .*(api|types|test)\/.*\/.*conversion.*\.go$
       - linters:
           - staticcheck
-        text: 'QF1008: could remove embedded field .*'
+        text: "QF1008: could remove embedded field .*"
       # TODO: change to use time.Time.Equal
       - linters:
           - staticcheck
-        text: 'QF1009: probably want to use time.Time.Equal instead'
+        text: "QF1009: probably want to use time.Time.Equal instead"
       - linters:
           - revive
         # Ignoring stylistic checks for generated code
@@ -233,13 +237,13 @@ linters:
         # Ignoring stylistic checks for generated code
         path: .*(api|types)\/.*\/.*conversion.*\.go$
         # By convention, receiver names in a method should reflect their identity.
-        text: 'receiver-naming: receiver name (.+) should be consistent with previous receiver name (.+)'
+        text: "receiver-naming: receiver name (.+) should be consistent with previous receiver name (.+)"
       - linters:
           - revive
         # Ignoring stylistic checks for generated code
         path: .*(api|types|test)\/.*\/.*conversion.*\.go$
         # Checking if an error is nil to just after return the error or nil is redundant
-        text: 'if-return: redundant if ...; err != nil check, just return error instead'
+        text: "if-return: redundant if ...; err != nil check, just return error instead"
       - linters:
           - revive
         text: 'exported: exported method .*\.(Reconcile|SetupWithManager|SetupWebhookWithManager) should have comment or be unexported'
@@ -268,7 +272,7 @@ linters:
         text: Error return value of (.+) is not checked
       - linters:
           - gosec
-        text: 'G108: Profiling endpoint is automatically exposed on /debug/pprof'
+        text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
       - linters:
           - godot
         path: (.*)/(v1beta1|v1beta2)/(.*)types.go
@@ -282,17 +286,17 @@ linters:
       - linters:
           - revive
         path: .*/defaults.go
-        text: 'var-naming: don''t use underscores in Go names; func (.+) should be (.+)'
+        text: "var-naming: don't use underscores in Go names; func (.+) should be (.+)"
       - linters:
           - revive
         path: .*/.*(mock|gc_).*/.+\.go
-        text: 'var-naming: don''t use an underscore in package name'
+        text: "var-naming: don't use an underscore in package name"
       - linters:
           - revive
         # Ignoring stylistic checks for generated code
         path: .*(api|types|test)\/.*\/.*conversion.*\.go$
         # This rule warns when initialism, variable or package naming conventions are not followed.
-        text: 'var-naming: don''t use underscores in Go names'
+        text: "var-naming: don't use underscores in Go names"
       - linters:
           - unparam
         text: always receives
@@ -309,20 +313,23 @@ linters:
         text: cyclomatic complexity
       - linters:
           - gocritic
-        text: 'appendAssign: append result not assigned to the same slice'
+        text: "appendAssign: append result not assigned to the same slice"
       - path: (.+)\.go$
         text: (Expect directory permissions to be 0750 or less|Expect file permissions to be 0600 or less)
       - path: (.+)\.go$
-        text: 'exported: (func|type) name will be used as (.+) by other packages, and that stutters; consider calling this (.+)'
+        text: "exported: (func|type) name will be used as (.+) by other packages, and that stutters; consider calling this (.+)"
       - path: (.+)\.go$
         text: (G104|G107|G404|G505|ST1000)
       - path: (.+)\.go$
-        text: 'G108: Profiling endpoint is automatically exposed on /debug/pprof'
+        text: "G108: Profiling endpoint is automatically exposed on /debug/pprof"
       - path: (.+)\.go$
         text: net/http.Get must not be called
       - linters:
           - goconst
         path: (.+)_test\.go
+      - linters:
+          - staticcheck
+        text: 'SA1019: "sigs.k8s.io/cluster-api/(.*)" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
     paths:
       - third_party$
       - builtin$

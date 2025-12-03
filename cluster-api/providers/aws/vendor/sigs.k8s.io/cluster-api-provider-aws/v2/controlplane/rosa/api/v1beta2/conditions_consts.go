@@ -16,23 +16,23 @@ limitations under the License.
 
 package v1beta2
 
-import clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+import clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 
 const (
 	// ROSAControlPlaneReadyCondition condition reports on the successful reconciliation of ROSAControlPlane.
-	ROSAControlPlaneReadyCondition clusterv1.ConditionType = "ROSAControlPlaneReady"
+	ROSAControlPlaneReadyCondition clusterv1beta1.ConditionType = "ROSAControlPlaneReady"
 
 	// ROSAControlPlaneValidCondition condition reports whether ROSAControlPlane configuration is valid.
-	ROSAControlPlaneValidCondition clusterv1.ConditionType = "ROSAControlPlaneValid"
+	ROSAControlPlaneValidCondition clusterv1beta1.ConditionType = "ROSAControlPlaneValid"
 
 	// ROSAControlPlaneUpgradingCondition condition reports whether ROSAControlPlane is upgrading or not.
-	ROSAControlPlaneUpgradingCondition clusterv1.ConditionType = "ROSAControlPlaneUpgrading"
+	ROSAControlPlaneUpgradingCondition clusterv1beta1.ConditionType = "ROSAControlPlaneUpgrading"
 
 	// ExternalAuthConfiguredCondition condition reports whether external auth has beed correctly configured.
-	ExternalAuthConfiguredCondition clusterv1.ConditionType = "ExternalAuthConfigured"
+	ExternalAuthConfiguredCondition clusterv1beta1.ConditionType = "ExternalAuthConfigured"
 
 	// ROSARoleConfigReadyCondition condition reports whether the referenced RosaRoleConfig is ready.
-	ROSARoleConfigReadyCondition clusterv1.ConditionType = "ROSARoleConfigReady"
+	ROSARoleConfigReadyCondition clusterv1beta1.ConditionType = "ROSARoleConfigReady"
 
 	// ReconciliationFailedReason used to report reconciliation failures.
 	ReconciliationFailedReason = "ReconciliationFailed"
