@@ -25,6 +25,9 @@ Volume=/opt/openshift/tls/ironic/:/certs/ironic/:z
 {{ if .PlatformData.BareMetal.BMCVerifyCA }}
 Volume=/opt/openshift/bmc-ca:/certs/ca/bmc:z
 {{ end }}
+# Note we are limited here by conductor.file_url_allowed_paths in the ironic config
+Volume=/run/media/iso/images/pxeboot/vmlinuz:/var/lib/ironic/pxe/vmlinuz:ro
+SecurityLabelDisable=true
 Environment="IRONIC_RAMDISK_SSH_KEY=${IRONIC_RAMDISK_SSH_KEY}"
 Environment="PROVISIONING_INTERFACE=${PROVISIONING_INTERFACE}"
 Environment="OS_CONDUCTOR__HEARTBEAT_TIMEOUT=120"
