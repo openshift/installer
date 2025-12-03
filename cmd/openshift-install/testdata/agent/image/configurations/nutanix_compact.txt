@@ -62,7 +62,7 @@ apiVersion: extensions.hive.openshift.io/v1beta1
 kind: AgentClusterInstall
 metadata:
   annotations:
-    agent-install.openshift.io/install-config-overrides: '{"platform":{"nutanix":{"prismCentral":{"endpoint":{"address":"pc1.test.metalkube.org","port":9440},"username":"testUser","password":"testPassword"},"prismElements":[{"uuid":"00061f7f-44f7-19dc-72gc-7cc25586ee53","endpoint":{"address":"pe1.test.metalkube.org","port":9440}}],"apiVIPs":["192.168.111.5"],"ingressVIPs":["192.168.111.4"],"subnetUUIDs":["a2e46975-2cde-4a49-9dda-815eb4fcd681"]}}}'
+    agent-install.openshift.io/install-config-overrides: '{"platform":{"nutanix":{"prismCentral":{"endpoint":{"address":"pc1.test.metalkube.org","port":9440},"username":"testUser","password":"testPassword"},"prismElements":[{"uuid":"00061f7f-44f7-19dc-72gc-7cc25586ee53","endpoint":{"address":"pe1.test.metalkube.org","port":9440}}],"apiVIPs":["192.168.111.5"],"ingressVIPs":["192.168.111.4"],"subnetUUIDs":["a2e46975-2cde-4a49-9dda-815eb4fcd681"],"dnsRecordsType":"Internal"}}}'
   name: ostest
 spec:
   apiVIPs:

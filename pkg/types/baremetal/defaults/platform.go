@@ -9,6 +9,7 @@ import (
 
 	"github.com/apparentlymart/go-cidr/cidr"
 
+	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -141,5 +142,9 @@ func SetPlatformDefaults(p *baremetal.Platform, c *types.InstallConfig) {
 		sort.SliceStable(p.Hosts, func(i, j int) bool {
 			return p.Hosts[i].CompareByRole(p.Hosts[j])
 		})
+	}
+
+	if p.DNSRecordsType == "" {
+		p.DNSRecordsType = configv1.DNSRecordsTypeInternal
 	}
 }

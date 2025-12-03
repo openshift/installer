@@ -82,6 +82,10 @@ func ValidatePlatform(p *vsphere.Platform, agentBasedInstallation bool, fldPath 
 		}
 	}
 
+	if c.VSphere.DNSRecordsType == configv1.DNSRecordsTypeExternal && (c.VSphere.LoadBalancer == nil || c.VSphere.LoadBalancer.Type != configv1.LoadBalancerTypeUserManaged) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("dnsRecordsType"), c.VSphere.DNSRecordsType, "external DNS records can only be configured with user-managed loadbalancers"))
+	}
+
 	return allErrs
 }
 

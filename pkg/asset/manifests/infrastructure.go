@@ -179,6 +179,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			APIServerInternalIPs: installConfig.Config.Platform.BareMetal.APIVIPs,
 			IngressIPs:           installConfig.Config.Platform.BareMetal.IngressVIPs,
 			LoadBalancer:         installConfig.Config.Platform.BareMetal.LoadBalancer,
+			DNSRecordsType:       installConfig.Config.Platform.BareMetal.DNSRecordsType,
 		}
 		config.Spec.PlatformSpec.BareMetal.APIServerInternalIPs = types.StringsToIPs(installConfig.Config.Platform.BareMetal.APIVIPs)
 		config.Spec.PlatformSpec.BareMetal.IngressIPs = types.StringsToIPs(installConfig.Config.Platform.BareMetal.IngressVIPs)
@@ -262,6 +263,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 			APIServerInternalIPs: installConfig.Config.OpenStack.APIVIPs,
 			IngressIPs:           installConfig.Config.OpenStack.IngressVIPs,
 			LoadBalancer:         installConfig.Config.OpenStack.LoadBalancer,
+			DNSRecordsType:       installConfig.Config.OpenStack.DNSRecordsType,
 		}
 		config.Spec.PlatformSpec.OpenStack.APIServerInternalIPs = types.StringsToIPs(installConfig.Config.Platform.OpenStack.APIVIPs)
 		config.Spec.PlatformSpec.OpenStack.IngressIPs = types.StringsToIPs(installConfig.Config.Platform.OpenStack.IngressVIPs)
@@ -275,6 +277,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 				APIServerInternalIPs: installConfig.Config.VSphere.APIVIPs,
 				IngressIPs:           installConfig.Config.VSphere.IngressVIPs,
 				LoadBalancer:         installConfig.Config.VSphere.LoadBalancer,
+				DNSRecordsType:       installConfig.Config.VSphere.DNSRecordsType,
 			}
 		} else {
 			config.Status.PlatformStatus.VSphere = &configv1.VSpherePlatformStatus{}
@@ -358,6 +361,7 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 				APIServerInternalIPs: installConfig.Config.Nutanix.APIVIPs,
 				IngressIPs:           installConfig.Config.Nutanix.IngressVIPs,
 				LoadBalancer:         installConfig.Config.Nutanix.LoadBalancer,
+				DNSRecordsType:       installConfig.Config.Nutanix.DNSRecordsType,
 			}
 		}
 	default:
