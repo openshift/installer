@@ -74,6 +74,7 @@ func TestValidate(t *testing.T) {
 		subnetsInVPC  *SubnetGroups
 		vpcTags       Tags
 		instanceTypes map[string]InstanceType
+		images        map[string]ImageInfo
 		proxy         string
 		publicOnly    bool
 		expectErr     string
@@ -154,6 +155,206 @@ func TestValidate(t *testing.T) {
 				VpcID:   validVPCID,
 			},
 			expectErr: `^compute\[1\].architecture: Invalid value: "arm64": all compute machine pools must be of the same architecture$`,
+		},
+		{
+			name: "valid instance type and UEFI AMI with enabling SEV-SNP on default platform",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withDefaultMachinePlatformCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withDefaultMachinePlatformAMI("ami-uefi"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+		},
+		{
+			name: "valid instance type and UEFI AMI with enabling SEV-SNP on control plane",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withControlPlanePlatformAMI("ami-uefi"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+		},
+		{
+			name: "valid instance type and UEFI-preferred AMI with enabling SEV-SNP on compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m6a.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}, 0),
+				icBuild.withComputePlatformAMI("ami-uefi-preferred", 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi-preferred": {BootMode: "uefi-preferred"},
+			},
+		},
+		{
+			name: "invalid instance type with enabling SEV-SNP on default platform",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withDefaultMachinePlatformCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withDefaultMachinePlatformAMI("ami-uefi"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+			expectErr: `^\Qplatform.aws.defaultMachinePlatform.type: Invalid value: "m5.xlarge": specified instance type in the specified region doesn't support amd-sev-snp\E$`,
+		},
+		{
+			name: "invalid instance type with enabling SEV-SNP on control plane",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m5.xlarge", "m6a.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withControlPlanePlatformAMI("ami-uefi"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+			expectErr: `^\QcontrolPlane.platform.aws.type: Invalid value: "m5.xlarge": specified instance type in the specified region doesn't support amd-sev-snp\E$`,
+		},
+		{
+			name: "invalid instance type with enabling SEV-SNP on compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m5.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}, 0),
+				icBuild.withComputePlatformAMI("ami-uefi", 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-uefi": {BootMode: "uefi"},
+			},
+			expectErr: `^\Qcompute[0].platform.aws.type: Invalid value: "m5.xlarge": specified instance type in the specified region doesn't support amd-sev-snp\E$`,
+		},
+		{
+			name: "valid instance type with no confidential compute settings",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "valid instance type with disabling confidential compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicyDisabled),
+				}),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name: "invalid legacy-bios AMI with enabling SEV-SNP on default platform",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withDefaultMachinePlatformCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withDefaultMachinePlatformAMI("ami-legacy"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+			expectErr: `^\[platform\.aws\.defaultMachinePlatform\.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios', controlPlane\.platform\.aws\.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios', compute\[0\]\.platform\.aws\.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios'\]$`,
+		},
+		{
+			name: "invalid legacy-bios AMI with enabling SEV-SNP on control plane",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}),
+				icBuild.withControlPlanePlatformAMI("ami-legacy"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+			expectErr: `^\QcontrolPlane.platform.aws.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios'\E$`,
+		},
+		{
+			name: "invalid legacy-bios AMI with enabling SEV-SNP on compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m6a.xlarge", "m6a.xlarge", "m6a.xlarge"),
+				icBuild.withComputeCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicySEVSNP),
+				}, 0),
+				icBuild.withComputePlatformAMI("ami-legacy", 0),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+			expectErr: `^\Qcompute[0].platform.aws.amiID: Invalid value: "ami-legacy": AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got 'legacy-bios'\E$`,
+		},
+		{
+			name: "valid legacy-bios AMI with disabling confidential compute",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withControlPlaneCPUOptions(&aws.CPUOptions{
+					ConfidentialCompute: ptr.To(aws.ConfidentialComputePolicyDisabled),
+				}),
+				icBuild.withControlPlanePlatformAMI("ami-legacy"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
+		},
+		{
+			name: "valid legacy-bios AMI with no confidential compute settings",
+			installConfig: icBuild.build(
+				icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.xlarge"),
+				icBuild.withControlPlanePlatformAMI("ami-legacy"),
+			),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			images: map[string]ImageInfo{
+				"ami-legacy": {BootMode: "legacy-bios"},
+			},
 		},
 		{
 			name: "invalid edge pool, missing zones",
@@ -1232,6 +1433,7 @@ func TestValidate(t *testing.T) {
 					Tags: test.vpcTags,
 				},
 				instanceTypes:   test.instanceTypes,
+				images:          test.images,
 				ProvidedSubnets: test.installConfig.Platform.AWS.VPC.Subnets,
 			}
 
@@ -1252,10 +1454,8 @@ func TestValidate(t *testing.T) {
 			err := Validate(context.TODO(), meta, test.installConfig)
 			if test.expectErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectErr, err.Error())
 			}
 		})
 	}
@@ -1383,10 +1583,8 @@ func TestValidateForProvisioning(t *testing.T) {
 			err := ValidateForProvisioning(route53Client, ic, meta)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectedErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectedErr, err.Error())
 			}
 		})
 	}
@@ -1426,7 +1624,6 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 	route53Client := mock.NewMockAPI(mockCtrl)
 
 	for _, test := range cases {
-
 		t.Run(test.name, func(t *testing.T) {
 			ic := icBuild.build(icBuild.withBaseDomain(test.baseDomain))
 			if test.expectedErr != "" {
@@ -1451,10 +1648,8 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 			_, err := route53Client.GetSubDomainDNSRecords(&validDomainOutput, ic, nil)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
-			} else {
-				if assert.Error(t, err) {
-					assert.Regexp(t, test.expectedErr, err.Error())
-				}
+			} else if assert.Error(t, err) {
+				assert.Regexp(t, test.expectedErr, err.Error())
 			}
 		})
 	}
@@ -1777,6 +1972,12 @@ func validInstanceTypes() map[string]InstanceType {
 			MemInMiB:     16384,
 			Arches:       []string{ec2.ArchitectureTypeArm64},
 		},
+		"m6a.xlarge": {
+			DefaultVCpus: 4,
+			MemInMiB:     16384,
+			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Features:     []string{"amd-sev-snp"},
+		},
 	}
 }
 
@@ -2023,5 +2224,35 @@ func (icBuild icBuildForAWS) withDefaultPlatformMachine(awsMachine aws.MachinePo
 func (icBuild icBuildForAWS) withPublicIPv4Pool(publicIPv4Pool string) icOption {
 	return func(ic *types.InstallConfig) {
 		ic.Platform.AWS.PublicIpv4Pool = publicIPv4Pool
+	}
+}
+
+func (icBuild icBuildForAWS) withDefaultMachinePlatformCPUOptions(cpuOptions *aws.CPUOptions) icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.AWS.DefaultMachinePlatform == nil {
+			icBuild.withDefaultPlatformMachine(aws.MachinePool{})(ic)
+		}
+		ic.Platform.AWS.DefaultMachinePlatform.CPUOptions = cpuOptions
+	}
+}
+
+func (icBuild icBuildForAWS) withDefaultMachinePlatformAMI(amiID string) icOption {
+	return func(ic *types.InstallConfig) {
+		if ic.Platform.AWS.DefaultMachinePlatform == nil {
+			icBuild.withDefaultPlatformMachine(aws.MachinePool{})(ic)
+		}
+		ic.Platform.AWS.DefaultMachinePlatform.AMIID = amiID
+	}
+}
+
+func (icBuild icBuildForAWS) withControlPlaneCPUOptions(cpuOptions *aws.CPUOptions) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.AWS.CPUOptions = cpuOptions
+	}
+}
+
+func (icBuild icBuildForAWS) withComputeCPUOptions(cpuOptions *aws.CPUOptions, index int) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.Compute[index].Platform.AWS.CPUOptions = cpuOptions
 	}
 }
