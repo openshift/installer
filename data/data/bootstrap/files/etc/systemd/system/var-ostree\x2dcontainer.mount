@@ -1,0 +1,10 @@
+[Unit]
+Requires=run-ephemeral.mount
+After=run-ephemeral.mount
+ConditionPathExists=/run/ostree-live
+
+[Mount]
+What=tmpfs
+Where=/var/ostree-container
+Type=tmpfs
+Options=size=4G
