@@ -2,6 +2,7 @@ package clusterapi
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/sirupsen/logrus"
@@ -193,10 +194,18 @@ func (p Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerIn
 	cloud := in.Metadata.OpenStack.Cloud
 	infraID := in.Metadata.InfraID
 
-	// Delete security groups tagged with the cluster ID and bootstrap role
-	if err := postdestroy.SecurityGroups(ctx, cloud, infraID); err != nil {
-		return fmt.Errorf("failed to destroy bootstrap security groups: %w", err)
+	// Best effort approach trying to delete SG even in case FIP fails
+	var errs []error
+
+	// Delete floating IPs tagged with the cluster ID and bootstrap role
+	if err := postdestroy.FloatingIPs(ctx, cloud, infraID); err != nil {
+		errs = append(errs, err)
 	}
 
-	return nil
+	// Delete security groups tagged with the cluster ID and bootstrap role
+	if err := postdestroy.SecurityGroups(ctx, cloud, infraID); err != nil {
+		errs = append(errs, err)
+	}
+
+	return errors.Join(errs...)
 }
