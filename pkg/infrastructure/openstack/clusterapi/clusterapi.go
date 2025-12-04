@@ -193,6 +193,11 @@ func (p Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerIn
 	cloud := in.Metadata.OpenStack.Cloud
 	infraID := in.Metadata.InfraID
 
+	// Delete floating IPs tagged with the cluster ID and bootstrap role
+	if err := postdestroy.FloatingIPs(ctx, cloud, infraID); err != nil {
+		return fmt.Errorf("failed to destroy bootstrap floating IPs: %w", err)
+	}
+
 	// Delete security groups tagged with the cluster ID and bootstrap role
 	if err := postdestroy.SecurityGroups(ctx, cloud, infraID); err != nil {
 		return fmt.Errorf("failed to destroy bootstrap security groups: %w", err)
