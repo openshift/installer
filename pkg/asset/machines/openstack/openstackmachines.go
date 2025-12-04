@@ -175,6 +175,13 @@ func generateMachineSpec(clusterID string, config *types.InstallConfig, mpool *o
 		},
 	}
 
+	// Add bootstrap sec group to bootstrap vm to allow collecting logs using ssh
+	if role == "bootstrap" {
+		securityGroups = append(securityGroups, capo.SecurityGroupParam{
+			Filter: &capo.SecurityGroupFilter{Name: fmt.Sprintf("%s-bootstrap", clusterID)},
+		})
+	}
+
 	for i := range mpool.AdditionalSecurityGroupIDs {
 		securityGroups = append(securityGroups, capo.SecurityGroupParam{ID: &mpool.AdditionalSecurityGroupIDs[i]})
 	}
