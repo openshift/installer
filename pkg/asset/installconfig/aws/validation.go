@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
 
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -466,6 +467,8 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 		}
 	}
 
+	allErrs = append(allErrs, validateHostPlacement(ctx, meta, fldPath, pool)...)
+
 	return allErrs
 }
 
@@ -482,6 +485,54 @@ func translateEC2Arches(arches []string) sets.Set[string] {
 		}
 	}
 	return res
+}
+
+func validateHostPlacement(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if pool.HostPlacement == nil {
+		return allErrs
+	}
+
+	if pool.HostPlacement.Affinity != nil && *pool.HostPlacement.Affinity == awstypes.HostAffinityDedicatedHost {
+		placementPath := fldPath.Child("hostPlacement")
+		if pool.HostPlacement.DedicatedHost != nil {
+			configuredHosts := pool.HostPlacement.DedicatedHost
+
+			// Check to see if all configured hosts exist
+			foundHosts, err := meta.DedicatedHosts(ctx)
+			if err != nil {
+				allErrs = append(allErrs, field.InternalError(placementPath.Child("dedicatedHost"), err))
+			} else {
+				// Check the returned configured hosts to see if the dedicated hosts defined in install-config exists.
+				for idx, host := range configuredHosts {
+					dhPath := placementPath.Child("dedicatedHost").Index(idx)
+
+					// Is host in AWS?
+					foundHost, ok := foundHosts[host.ID]
+					if !ok {
+						errMsg := fmt.Sprintf("dedicated host %s not found", host.ID)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+						continue
+					}
+
+					// Is host valid for pools region and zone config?
+					if !slices.Contains(pool.Zones, foundHost.Zone) {
+						errMsg := fmt.Sprintf("dedicated host %s is not available in pool's zone list", host.ID)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+					}
+
+					// If user configured the zone for the dedicated host, let's check to make sure its correct
+					if host.Zone != "" && host.Zone != foundHost.Zone {
+						errMsg := fmt.Sprintf("dedicated host was configured with zone %v but expected zone %v", host.Zone, foundHost.Zone)
+						allErrs = append(allErrs, field.Invalid(dhPath.Child("zone"), host, errMsg))
+					}
+				}
+			}
+		}
+	}
+
+	return allErrs
 }
 
 func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {

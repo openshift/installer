@@ -37,6 +37,7 @@ type machineProviderInput struct {
 	publicSubnet     bool
 	securityGroupIDs []string
 	cpuOptions       *awstypes.CPUOptions
+	dedicatedHost    string
 }
 
 // Machines returns a list of machines for a machinepool.
@@ -304,6 +305,15 @@ func provider(in *machineProviderInput) (*machineapi.AWSMachineProviderConfig, e
 		config.CPUOptions = &cpuOptions
 	}
 
+	if in.dedicatedHost != "" {
+		config.HostPlacement = &machineapi.HostPlacement{
+			Affinity: ptr.To(machineapi.HostAffinityDedicatedHost),
+			DedicatedHost: &machineapi.DedicatedHost{
+				ID: in.dedicatedHost,
+			},
+		}
+	}
+
 	return config, nil
 }
 
@@ -352,4 +362,19 @@ func ConfigMasters(machines []machineapi.Machine, controlPlane *machinev1.Contro
 
 	providerSpec := controlPlane.Spec.Template.OpenShiftMachineV1Beta1Machine.Spec.ProviderSpec.Value.Object.(*machineapi.AWSMachineProviderConfig)
 	providerSpec.LoadBalancers = lbrefs
+}
+
+// DedicatedHost sets dedicated hosts for the specified zone.
+func DedicatedHost(hosts map[string]aws.Host, placement *awstypes.HostPlacement, zone string) string {
+	// If install-config has HostPlacements configured, lets check the DedicatedHosts to see if one matches our region & zone.
+	if placement != nil {
+		// We only support one host ID currently for an instance.  Need to also get host that matches the zone the machines will be put into.
+		for _, host := range placement.DedicatedHost {
+			hostDetails, found := hosts[host.ID]
+			if found && hostDetails.Zone == zone {
+				return hostDetails.ID
+			}
+		}
+	}
+	return ""
 }

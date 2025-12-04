@@ -56,6 +56,14 @@ type MachinePool struct {
 	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/cpu-options-supported-instances-values.html
 	// +optional
 	CPUOptions *CPUOptions `json:"cpuOptions,omitempty,omitzero"`
+
+	// hostPlacement configures placement on AWS Dedicated Hosts. This allows admins to assign instances to specific host
+	// for a variety of needs including for regulatory compliance, to leverage existing per-socket or per-core software licenses (BYOL),
+	// and to gain visibility and control over instance placement on a physical server.
+	// When omitted, the instance is not constrained to a dedicated host.
+	// +openshift:enable:FeatureGate=AWSDedicatedHosts
+	// +optional
+	HostPlacement *HostPlacement `json:"hostPlacement,omitempty"`
 }
 
 // Set sets the values from `required` to `a`.
@@ -107,6 +115,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.CPUOptions != nil {
 		a.CPUOptions = required.CPUOptions
+	}
+
+	if required.HostPlacement != nil {
+		a.HostPlacement = required.HostPlacement
 	}
 }
 
@@ -177,4 +189,51 @@ type CPUOptions struct {
 	// which is subject to change without notice. The current default is Disabled.
 	// +optional
 	ConfidentialCompute *ConfidentialComputePolicy `json:"confidentialCompute,omitempty"`
+}
+
+// HostPlacement is the type that will be used to configure the placement of AWS instances.
+// This can be configured for default placement (AnyAvailable) and dedicated hosts (DedicatedHost).
+// +kubebuilder:validation:XValidation:rule="has(self.affinity) && self.affinity == 'DedicatedHost' ?  has(self.dedicatedHost) : !has(self.dedicatedHost)",message="dedicatedHost is required when affinity is DedicatedHost, and forbidden otherwise"
+type HostPlacement struct {
+	// affinity specifies the affinity setting for the instance.
+	// Allowed values are AnyAvailable and DedicatedHost.
+	// When Affinity is set to DedicatedHost, an instance started onto a specific host always restarts on the same host if stopped. In this scenario, the `dedicatedHost` field must be set.
+	// When Affinity is set to AnyAvailable, and you stop and restart the instance, it can be restarted on any available host.
+	// +required
+	// +unionDiscriminator
+	Affinity *HostAffinity `json:"affinity,omitempty"`
+
+	// dedicatedHost specifies the exact host that an instance should be restarted on if stopped.
+	// dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise.
+	// +optional
+	// +unionMember
+	DedicatedHost []DedicatedHost `json:"dedicatedHost,omitempty"`
+}
+
+// HostAffinity selects how an instance should be placed on AWS Dedicated Hosts.
+// +kubebuilder:validation:Enum:=DedicatedHost;AnyAvailable
+type HostAffinity string
+
+const (
+	// HostAffinityAnyAvailable lets the platform select any available dedicated host.
+	HostAffinityAnyAvailable HostAffinity = "AnyAvailable"
+
+	// HostAffinityDedicatedHost requires specifying a particular host via dedicatedHost.host.hostID.
+	HostAffinityDedicatedHost HostAffinity = "DedicatedHost"
+)
+
+// DedicatedHost represents the configuration for the usage of dedicated host.
+type DedicatedHost struct {
+	// id identifies the AWS Dedicated Host on which the instance must run.
+	// The value must start with "h-" followed by 17 lowercase hexadecimal characters (0-9 and a-f).
+	// Must be exactly 19 characters in length.
+	// +kubebuilder:validation:XValidation:rule="self.matches('^h-[0-9a-f]{17}$')",message="hostID must start with 'h-' followed by 17 lowercase hexadecimal characters (0-9 and a-f)"
+	// +kubebuilder:validation:MinLength=19
+	// +kubebuilder:validation:MaxLength=19
+	// +required
+	ID string `json:"id,omitempty"`
+
+	// zone is the availability zone that the dedicated host belongs to
+	// +optional
+	Zone string `json:"zone,omitempty"`
 }
