@@ -2,6 +2,8 @@ package defaults
 
 import (
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/aws"
+	awsdefaults "github.com/openshift/installer/pkg/types/aws/defaults"
 	"github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
 	"github.com/openshift/installer/pkg/types/gcp"
@@ -26,6 +28,12 @@ func SetMachinePoolDefaults(p *types.MachinePool, platform *types.Platform) {
 	}
 
 	switch platform.Name() {
+	case aws.Name:
+		if p.Platform.AWS == nil && platform.AWS.DefaultMachinePlatform != nil {
+			p.Platform.AWS = &aws.MachinePool{}
+		}
+		awsdefaults.Apply(platform.AWS.DefaultMachinePlatform, p.Platform.AWS)
+		awsdefaults.SetMachinePoolDefaults(p.Platform.AWS, p.Name)
 	case azure.Name:
 		if p.Platform.Azure == nil && platform.Azure.DefaultMachinePlatform != nil {
 			p.Platform.Azure = &azure.MachinePool{}
