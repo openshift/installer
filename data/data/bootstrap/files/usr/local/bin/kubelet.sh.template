@@ -21,5 +21,4 @@
     --cgroup-driver=systemd \
     --serialize-image-pulls=false \
     --v=2 \
-    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec \
-    --pod-infra-container-image="${MACHINE_CONFIG_INFRA_IMAGE}"
+    --volume-plugin-dir=/etc/kubernetes/kubelet-plugins/volume/exec
