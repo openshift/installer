@@ -77,7 +77,7 @@ func (i *localImage) Import(copier func(io.Reader) error, vol libvirtxml.Storage
 	}
 	// we can skip the upload if the modification times are the same
 	if vol.Target.Timestamps != nil && vol.Target.Timestamps.Mtime != "" {
-		if fi.ModTime() == timeFromEpoch(vol.Target.Timestamps.Mtime) {
+		if fi.ModTime().Equal(timeFromEpoch(vol.Target.Timestamps.Mtime)) {
 			logrus.Info("Modification time is the same: skipping image copy")
 			return nil
 		}
