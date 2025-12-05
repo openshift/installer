@@ -241,7 +241,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if err != nil {
 			return nil, err
 		}
-		dnsServerIP, err = installConfig.PowerVS.GetDNSServerIP(ctx, installConfig.Config.PowerVS.VPC)
+		dnsServerIP, err = installConfig.PowerVS.GetDNSServerIP(ctx, installConfig.Config.PowerVS.VPC, vpcRegion)
 		if err != nil {
 			return nil, fmt.Errorf("unable to find a DNS server for specified VPC: %s %w", installConfig.Config.PowerVS.VPC, err)
 		}
