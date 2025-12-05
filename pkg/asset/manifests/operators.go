@@ -16,6 +16,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 	"sigs.k8s.io/yaml"
 
+	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/rhcos"
@@ -76,6 +77,8 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&ImageDigestMirrorSet{},
 		&tls.RootCA{},
 		&tls.MCSCertKey{},
+		&tls.IRICertKey{},
+		&manifests.InternalReleaseImage{},
 		new(rhcos.Image),
 
 		&bootkube.CVOOverrides{},
@@ -85,6 +88,7 @@ func (m *Manifests) Dependencies() []asset.Asset {
 		&bootkube.MachineConfigServerCAConfigMap{},
 		&bootkube.MachineConfigServerTLSSecret{},
 		&bootkube.OpenshiftConfigSecretPullSecret{},
+		&bootkube.InternalReleaseImageTLSSecret{},
 		&BMCVerifyCAConfigMap{},
 	}
 }
@@ -224,7 +228,40 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 			})
 		}
 	}
+
+	if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateNoRegistryClusterInstall) {
+		iri := &manifests.InternalReleaseImage{}
+		dependencies.Get(iri)
+
+		// Skip if InternalReleaseImage manifest wasn't found.
+		if len(iri.FileList) > 0 {
+			files = append(files, appendIRIcerts(dependencies))
+		}
+	}
+
 	return files
+}
+
+func appendIRIcerts(dependencies asset.Parents) *asset.File {
+	iriCertKey := &tls.IRICertKey{}
+	iriTLSSecret := &bootkube.InternalReleaseImageTLSSecret{}
+	dependencies.Get(iriCertKey, iriTLSSecret)
+
+	f := iriTLSSecret.Files()[0]
+
+	templateData := struct {
+		IriTLSCert string
+		IriTLSKey  string
+	}{
+		IriTLSCert: base64.StdEncoding.EncodeToString(iriCertKey.Cert()),
+		IriTLSKey:  base64.StdEncoding.EncodeToString(iriCertKey.Key()),
+	}
+	fileData := applyTemplateData(f.Data, templateData)
+
+	return &asset.File{
+		Filename: path.Join(manifestDir, strings.TrimSuffix(filepath.Base(f.Filename), ".template")),
+		Data:     fileData,
+	}
 }
 
 func applyTemplateData(data []byte, templateData interface{}) []byte {
