@@ -147,10 +147,9 @@ func ValidateMachinePool(platform *vsphere.Platform, machinePool *types.MachineP
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("zones"), zone, "zone not defined in failureDomains"))
 			}
 		}
-	} else if len(platform.FailureDomains) > 0 {
-		for _, failureDomain := range platform.FailureDomains {
-			vspherePool.Zones = append(vspherePool.Zones, failureDomain.Name)
-		}
 	}
+	// Note: We do NOT populate zones here if they're empty. Zone population should happen
+	// during machine generation (in master.go and worker.go) AFTER merging with defaultMachinePlatform.
+	// This ensures that zones from defaultMachinePlatform are respected.
 	return allErrs
 }
