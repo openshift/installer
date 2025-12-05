@@ -155,7 +155,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		ReleaseImages:             releaseImageList,
 		ReleaseImage:              clusterImageSet.Spec.ReleaseImage,
 		ReleaseImageMirror:        "",
-		HaveMirrorConfig:          false,
+		HaveMirrorConfig:          true,
 		PublicContainerRegistries: "",
 		InfraEnvID:                infraEnvID,
 		OSImage:                   osImage,
