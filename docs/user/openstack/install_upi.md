@@ -675,6 +675,7 @@ As mentioned before due to Nova user data size limit, we will need to create a n
 Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`) with the following contents:
 <!--- e2e-openstack-upi: INCLUDE START --->
 ```${INFRA_ID}-bootstrap-ignition.json
+cat << EOF > $INFRA_ID-bootstrap-ignition.json
 {
   "ignition": {
     "config": {
@@ -693,6 +694,7 @@ Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`
     "version": "3.1.0"
   }
 }
+EOF
 ```
 <!--- e2e-openstack-upi: INCLUDE END --->
 
@@ -835,7 +837,7 @@ If you are in this situation, you can add resolvers to your Neutron subnet (`ope
 For example, if you want to add the following nameservers: `198.51.100.86` and `198.51.100.87`, you can run this command:
 
 ```sh
-$ openstack subnet set --dns-nameserver <198.51.100.86> --dns-nameserver <198.51.100.87> "$INFRA_ID-nodes"
+$ openstack subnet set --dns-nameserver <198.51.100.86> --dns-nameserver <198.51.100.87> "$OS_NET_ID-nodes"
 ```
 
 ## Bootstrap
