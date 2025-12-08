@@ -3074,6 +3074,7 @@ spec:
                 - e880
                 - e980
                 - s1022
+                - s1122
                 - ""
                 type: string
             required:
