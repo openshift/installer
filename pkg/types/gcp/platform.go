@@ -123,8 +123,11 @@ type Platform struct {
 
 	// FirewallRulesManagement specifies the management policy for the cluster. Managed indicates that
 	// the firewall rules will be created and destroyed by the cluster. Unmanaged indicates that the
-	// user should create and destroy the firewall rules.
-	// +default="Managed"
+	// user should create and destroy the firewall rules. If firewall rules management value is unset,
+	// then the OpenShift Installer will determine if the user has the permissions to create
+	// and destroy firewall rules. If the service account has permissions to create and destroy firewall
+	// rules or the networkProjectID is missing, then the value is set to "Managed". If the service account
+	// does not have the permissions to create firewall rules then it will be set to "Unmanaged".
 	// +optional
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
 }
