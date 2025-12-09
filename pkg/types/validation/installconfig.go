@@ -799,9 +799,9 @@ func validateComputeEdge(platform *types.Platform, pName string, fldPath *field.
 
 func validateCompute(platform *types.Platform, control *types.MachinePool, pools []types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	// Multi Arch is enabled by default for AWS and GCP, these are also the only
-	// two valid platforms for multi arch installations.
-	isMultiArchEnabled := platform.AWS != nil || platform.GCP != nil
+	// Multi Arch is enabled by default for AWS, GCP, and Baremetal, these are also the only
+	// three valid platforms for multi arch installations.
+	isMultiArchEnabled := platform.AWS != nil || platform.GCP != nil || platform.BareMetal != nil
 	poolNames := map[string]bool{}
 	for i, p := range pools {
 		poolFldPath := fldPath.Index(i)
@@ -820,6 +820,20 @@ func validateCompute(platform *types.Platform, control *types.MachinePool, pools
 		if control != nil && control.Architecture != p.Architecture && !isMultiArchEnabled {
 			allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "heteregeneous multi-arch is not supported; compute pool architecture must match control plane"))
 		}
+
+		// We only allow multi arch on baremetal when the control plane is x86 and compute is arm64.
+		if control != nil && platform.BareMetal != nil {
+			if control.Architecture != p.Architecture {
+				if control.Architecture != types.ArchitectureAMD64 {
+					allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), control.Architecture, "on multi-arch baremetal, the control plane must be amd64"))
+				}
+
+				if p.Architecture != types.ArchitectureARM64 {
+					allErrs = append(allErrs, field.Invalid(poolFldPath.Child("architecture"), p.Architecture, "on baremetal with amd64 control plane, compute must be amd64 or arm64"))
+				}
+			}
+		}
+
 		allErrs = append(allErrs, ValidateMachinePool(platform, &p, poolFldPath)...)
 
 		if p.Fencing != nil {
