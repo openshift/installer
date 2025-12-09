@@ -674,7 +674,7 @@ As mentioned before due to Nova user data size limit, we will need to create a n
 
 Create a file called `$INFRA_ID-bootstrap-ignition.json` (fill in your `infraID`) with the following contents:
 <!--- e2e-openstack-upi: INCLUDE START --->
-```${INFRA_ID}-bootstrap-ignition.json
+```sh
 cat << EOF > $INFRA_ID-bootstrap-ignition.json
 {
   "ignition": {
