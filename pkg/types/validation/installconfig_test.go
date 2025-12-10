@@ -2888,6 +2888,120 @@ func TestValidateReleaseArchitecture(t *testing.T) {
 	})
 }
 
+func TestValidateArbiter(t *testing.T) {
+	cases := []struct {
+		name        string
+		config      *types.InstallConfig
+		machinePool *types.MachinePool
+		expected    string
+	}{
+		{
+			config: installConfig().
+				PlatformNone().
+				MachinePoolArbiter(
+					machinePool().
+						Name("arbiter").
+						Hyperthreading(types.HyperthreadingEnabled).
+						Architecture(types.ArchitectureAMD64)).
+				MachinePoolCP(machinePool()).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "valid_platform_none",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformExternal().
+				MachinePoolArbiter(
+					machinePool().
+						Name("arbiter").
+						Hyperthreading(types.HyperthreadingEnabled).
+						Architecture(types.ArchitectureAMD64)).
+				MachinePoolCP(machinePool()).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "valid_platform_external",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformNone().
+				MachinePoolArbiter(
+					machinePool().
+						Name("arbiter").
+						Hyperthreading(types.HyperthreadingEnabled).
+						Architecture(types.ArchitectureAMD64)).
+				MachinePoolCP(machinePool()).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "valid_platform_baremetal",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformAWS().
+				MachinePoolArbiter(machinePool().
+					Name("arbiter").
+					Hyperthreading(types.HyperthreadingEnabled).
+					Architecture(types.ArchitectureAMD64)).
+				MachinePoolCP(machinePool()).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "invalid_platform",
+			expected: `supported values: "baremetal", "none", "external"`,
+		},
+		{
+			config: installConfig().
+				PlatformNone().
+				MachinePoolArbiter(machinePool().
+					Hyperthreading(types.HyperthreadingEnabled).
+					Architecture(types.ArchitectureAMD64)).
+				MachinePoolCP(machinePool()).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "invalid_arbiter_machine_pool_name",
+			expected: `arbiter.name: Unsupported value:`,
+		},
+		{
+			config: installConfig().
+				PlatformNone().
+				MachinePoolArbiter(machinePool().
+					Name("arbiter").
+					Hyperthreading(types.HyperthreadingEnabled).
+					Architecture(types.ArchitectureAMD64)).
+				MachinePoolCP(machinePool()).
+				ArbiterReplicas(0).
+				CpReplicas(2).build(),
+			name:     "invalid_arbiter_machine_pool_size",
+			expected: `arbiter.replicas: Invalid value:`,
+		},
+		{
+			config: installConfig().
+				PlatformNone().
+				MachinePoolArbiter(machinePool().
+					Name("arbiter").
+					Hyperthreading(types.HyperthreadingEnabled).
+					Architecture(types.ArchitectureAMD64)).
+				MachinePoolCP(machinePool()).
+				ArbiterReplicas(1).
+				CpReplicas(1).build(),
+			name:     "invalid_master_machine_pool_size",
+			expected: `number of controlPlane replicas must be at least 2`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := validateArbiter(&tc.config.Platform, tc.config.Arbiter, tc.config.ControlPlane, field.NewPath("arbiter")).ToAggregate()
+
+			if tc.expected == "" {
+				assert.NoError(t, err)
+			} else {
+				assert.Regexp(t, tc.expected, err)
+			}
+		})
+	}
+}
+
 func TestValidateTNF(t *testing.T) {
 	cases := []struct {
 		name         string
