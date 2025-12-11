@@ -85,6 +85,8 @@ ostree checkout --repo "${ostree_repo}" ${hardlink} coreos/node-image "${ostree_
 
 # in the assisted-installer case, nuke the temporary repo to save RAM
 if grep -q coreos.liveiso= /proc/cmdline; then
+    df -h "${ostree_repo}"
     echo "Deleting temporary repo"
     rm -rf "${ostree_repo}"
+    df -h "${ostree_checkout}"
 fi
