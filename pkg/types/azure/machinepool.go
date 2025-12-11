@@ -83,6 +83,10 @@ type MachinePool struct {
 	// DataDisk specifies the parameters that are used to add one or more data disks to the machine.
 	// +optional
 	DataDisks []capz.DataDisk `json:"dataDisks,omitempty"`
+	// CapacityReservationGroupID specifies the capacity reservation group resource id that should be
+	// used for allocating the virtual machine.
+	// +optional
+	CapacityReservationGroupID string `json:"capacityReservationGroupID,omitempty"`
 }
 
 // SecuritySettings define the security type and the UEFI settings of the virtual machine.
@@ -238,6 +242,10 @@ func (a *MachinePool) Set(required *MachinePool) {
 
 	if required.DataDisks != nil {
 		a.DataDisks = required.DataDisks
+	}
+
+	if required.CapacityReservationGroupID != "" {
+		a.CapacityReservationGroupID = required.CapacityReservationGroupID
 	}
 }
 
