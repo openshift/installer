@@ -386,6 +386,10 @@ func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, gen, rg,
 				ThirdPartyImage: false,
 			},
 		}
+	case rhcosImg == "":
+		// hive calls the machines function, but may pass an empty
+		// string for rhcos. In which case, allow MAO to choose default.
+		return nil
 	default: // Installer-created image gallery, should only be OKD.
 		// image gallery names cannot have dashes
 		galleryName := strings.ReplaceAll(infraID, "-", "_")
