@@ -151,7 +151,8 @@ func validIPIMultiZoneInstallConfig() *types.InstallConfig {
 
 func TestPermissionValidate(t *testing.T) {
 	ctx := context.TODO()
-	server, err := mock.StartSimulator(true)
+	vs := mock.NewSimulator("8.0.2", "8.0.2", 24321653, 23825572)
+	server, err := vs.StartSimulator()
 	if err != nil {
 		t.Error(err)
 		return
