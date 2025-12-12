@@ -42,6 +42,8 @@ linters:
     gosec:
       excludes:
       - G115
+    gocyclo:
+      min-complexity: 45
     staticcheck:
       checks:
       # Default

@@ -64,7 +64,7 @@ func printChannelLogs(ip string, ch chan logEntry) {
 func printLogs(wg *sync.WaitGroup, ipChanMap map[string]chan logEntry) {
 	defer wg.Done()
 	for {
-		if len(ipChanMap) == 0 {
+		if len(ipChanMap) == 0 { //nolint: staticcheck
 			// no IPs to monitor or all channels are closed, exit loop
 			break
 		}

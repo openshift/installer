@@ -495,13 +495,14 @@ func getSubnet(installConfig *installconfig.InstallConfig, subnetType capz.Subne
 	}
 	ctx := context.TODO()
 
-	if subnetType == capz.SubnetControlPlane {
+	switch subnetType {
+	case capz.SubnetControlPlane:
 		subnet, err = azClient.GetControlPlaneSubnet(ctx,
 			installConfig.Config.Azure.NetworkResourceGroupName,
 			installConfig.Config.Azure.VirtualNetwork,
 			subnetName,
 		)
-	} else if subnetType == capz.SubnetNode {
+	case capz.SubnetNode:
 		subnet, err = azClient.GetComputeSubnet(ctx,
 			installConfig.Config.Azure.NetworkResourceGroupName,
 			installConfig.Config.Azure.VirtualNetwork,
