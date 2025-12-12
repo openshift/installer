@@ -15,6 +15,7 @@ import (
 	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1" //nolint:staticcheck //CORS-3563
 
 	v1 "github.com/openshift/api/config/v1"
+	"github.com/openshift/api/features"
 	machinev1 "github.com/openshift/api/machine/v1"
 	machineapi "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
@@ -146,6 +147,17 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 		if err != nil {
 			return data, err
 		} else if claim != nil && address != nil {
+			// To prevent having to touch many function below, adding logic here to ClusterCAPI issue with v1beta1 vs v1beta2.
+			// If cluster capi operator is enabled, we need to support v1beta2 of the IPAM.  If disabled, we can keep v1beta1.
+			if config.EnabledFeatureGates().Enabled(features.FeatureGateClusterAPIMachineManagement) {
+				fmt.Println("Processing api update")
+				for index := range claim {
+					claim[index].APIVersion = "ipam.cluster.x-k8s.io/v1beta2"
+				}
+				for index := range address {
+					address[index].APIVersion = "ipam.cluster.x-k8s.io/v1beta2"
+				}
+			}
 			data.IPClaims = append(data.IPClaims, claim...)
 			data.IPAddresses = append(data.IPAddresses, address...)
 		}
