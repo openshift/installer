@@ -150,10 +150,6 @@ func ValidatePlatform(p *gcp.Platform, fldPath *field.Path, ic *types.InstallCon
 		if !supportedFirewallRulePolicies.Has(p.FirewallRulesManagement) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("firewallRulesManagement"), p.FirewallRulesManagement, sets.List(supportedFirewallRulePolicies)))
 		}
-
-		if p.FirewallRulesManagement == gcp.UnmanagedFirewallRules && p.Network == "" {
-			allErrs = append(allErrs, field.Required(fldPath.Child("network"), "a network must be specified when firewall rules are unmanaged"))
-		}
 	}
 
 	return allErrs
