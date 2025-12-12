@@ -33,11 +33,6 @@ func (a *AgentWorkflow) Generate(ctx context.Context, dependencies asset.Parents
 	// Set install workflow as a default
 	a.Workflow = AgentWorkflowTypeInstall
 
-	// Extract the workflow type from the context, if available.
-	if w, ok := ctx.Value(WorkflowTypeKey).(string); ok {
-		a.Workflow = AgentWorkflowType(w)
-	}
-
 	a.File = &asset.File{
 		Filename: agentWorkflowFilename,
 		Data:     []byte(a.Workflow),
