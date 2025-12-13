@@ -901,7 +901,7 @@ platform:
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 `,
 			expectedFound: false,
-			expectedError: "invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found, controlPlane.replicas: Unsupported value: 2: supported values: \"3\", \"1\", \"4\", \"5\"]",
+			expectedError: "invalid install-config configuration: controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found",
 		},
 		{
 			name: "invalid platform for SNO cluster",
@@ -1746,6 +1746,456 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
 `,
 			expectedFound: false,
 			expectedError: `invalid install-config configuration: [platform.baremetal.clusterProvisioningIP: Invalid value: "172.22.0.11": "172.22.0.11" overlaps with the allocated DHCP range, platform.baremetal.hosts[2].bmc.address: Duplicate value: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"]`,
+		},
+		{
+			name: "valid TNF cluster with proper fencing on supported platform",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 2
+  fencing:
+    credentials:
+    - hostName: "host1"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
+    - hostName: "host2"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+featureSet: CustomNoUpgrade
+featureGates:
+- DualReplica=true
+platform:
+  external:
+    platformName: oci
+    cloudControllerManager: External
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(2),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+					Fencing: &types.Fencing{
+						Credentials: []*types.Credential{
+							{
+								HostName: "host1",
+								Username: "admin",
+								Password: "password",
+								Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
+							},
+							{
+								HostName: "host2",
+								Username: "admin",
+								Password: "password",
+								Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+							},
+						},
+					},
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform: types.Platform{
+					External: &external.Platform{
+						PlatformName:           "oci",
+						CloudControllerManager: external.CloudControllerManagerTypeExternal,
+					},
+				},
+				PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+				Publish:      types.ExternalPublishingStrategy,
+				FeatureSet:   configv1.CustomNoUpgrade,
+				FeatureGates: []string{"DualReplica=true"},
+			},
+		},
+		{
+			name: "TNF cluster on unsupported platform (aws)",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 2
+  fencing:
+    credentials:
+    - hostName: "host1"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
+    - hostName: "host2"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+featureSet: CustomNoUpgrade
+featureGates:
+- DualReplica=true
+platform:
+  aws:
+    region: us-east-1
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [controlPlane.fencing: Forbidden: fencing is only supported on baremetal, external or none platforms, instead aws platform was found, platform: Unsupported value: "aws": supported values: "baremetal", "vsphere", "nutanix", "none", "external"]`,
+		},
+		{
+			name: "TNF cluster without DualReplica feature gate",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 2
+  fencing:
+    credentials:
+    - hostName: "host1"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
+    - hostName: "host2"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+platform:
+  external:
+    platformName: oci
+    cloudControllerManager: External
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [platform.none.fencingCredentials: Forbidden: this field is protected by the DualReplica feature gate which must be enabled through either the TechPreviewNoUpgrade or CustomNoUpgrade feature set, controlPlane.fencing: Invalid value: "configured": fencing configuration requires FeatureGateDualReplica to be enabled]`,
+		},
+		{
+			name: "TNF cluster without fencing credentials",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 2
+featureSet: CustomNoUpgrade
+featureGates:
+- DualReplica=true
+platform:
+  external:
+    platformName: oci
+    cloudControllerManager: External
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found`,
+		},
+		{
+			name: "TNF cluster with incomplete fencing (should fail)",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 2
+  fencing:
+    credentials:
+    - hostName: "host1"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
+featureSet: CustomNoUpgrade
+featureGates:
+- DualReplica=true
+platform:
+  external:
+    platformName: oci
+    cloudControllerManager: External
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: false,
+			expectedError: `invalid install-config configuration: [controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 1 credentials were found, controlPlane.fencing.credentials: Invalid value: 1: must provide exactly 2 fencing credentials for 2 control plane replicas]`,
+		},
+		{
+			name: "TNF cluster on external platform with proper fencing",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 2
+  fencing:
+    credentials:
+    - hostName: "host1"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
+    - hostName: "host2"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+featureSet: CustomNoUpgrade
+featureGates:
+- DualReplica=true
+platform:
+  external:
+    platformName: oci
+    cloudControllerManager: External
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(2),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+					Fencing: &types.Fencing{
+						Credentials: []*types.Credential{
+							{
+								HostName: "host1",
+								Username: "admin",
+								Password: "password",
+								Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
+							},
+							{
+								HostName: "host2",
+								Username: "admin",
+								Password: "password",
+								Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+							},
+						},
+					},
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform: types.Platform{
+					External: &external.Platform{
+						PlatformName:           "oci",
+						CloudControllerManager: external.CloudControllerManagerTypeExternal,
+					},
+				},
+				PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+				Publish:      types.ExternalPublishingStrategy,
+				FeatureSet:   configv1.CustomNoUpgrade,
+				FeatureGates: []string{"DualReplica=true"},
+			},
+		},
+		{
+			name: "TNF cluster on none platform with proper fencing",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+baseDomain: test-domain
+networking:
+  networkType: OVNKubernetes
+compute:
+- architecture: amd64
+  hyperthreading: Enabled
+  name: worker
+  platform: {}
+  replicas: 0
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  platform: {}
+  replicas: 2
+  fencing:
+    credentials:
+    - hostName: "host1"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234"
+    - hostName: "host2"
+      username: "admin"
+      password: "password"
+      address: "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234"
+featureSet: CustomNoUpgrade
+featureGates:
+- DualReplica=true
+platform:
+  none: {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"c3VwZXItc2VjcmV0Cg==\"}}}"
+`,
+			expectedFound: true,
+			expectedConfig: &types.InstallConfig{
+				TypeMeta: metav1.TypeMeta{
+					APIVersion: types.InstallConfigVersion,
+				},
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "test-cluster",
+				},
+				AdditionalTrustBundlePolicy: types.PolicyProxyOnly,
+				BaseDomain:                  "test-domain",
+				Networking: &types.Networking{
+					MachineNetwork: []types.MachineNetworkEntry{
+						{CIDR: *ipnet.MustParseCIDR("10.0.0.0/16")},
+					},
+					NetworkType:    "OVNKubernetes",
+					ServiceNetwork: []ipnet.IPNet{*ipnet.MustParseCIDR("172.30.0.0/16")},
+					ClusterNetwork: []types.ClusterNetworkEntry{
+						{
+							CIDR:       *ipnet.MustParseCIDR("10.128.0.0/14"),
+							HostPrefix: 23,
+						},
+					},
+				},
+				ControlPlane: &types.MachinePool{
+					Name:           "master",
+					Replicas:       pointer.Int64(2),
+					Hyperthreading: types.HyperthreadingEnabled,
+					Architecture:   types.ArchitectureAMD64,
+					Fencing: &types.Fencing{
+						Credentials: []*types.Credential{
+							{
+								HostName: "host1",
+								Username: "admin",
+								Password: "password",
+								Address:  "redfish+http://10.10.10.1:8000/redfish/v1/Systems/1234",
+							},
+							{
+								HostName: "host2",
+								Username: "admin",
+								Password: "password",
+								Address:  "redfish+http://10.10.10.2:8000/redfish/v1/Systems/1234",
+							},
+						},
+					},
+				},
+				Compute: []types.MachinePool{
+					{
+						Name:           "worker",
+						Replicas:       pointer.Int64(0),
+						Hyperthreading: types.HyperthreadingEnabled,
+						Architecture:   types.ArchitectureAMD64,
+					},
+				},
+				Platform:     types.Platform{None: &none.Platform{}},
+				PullSecret:   `{"auths":{"example.com":{"auth":"c3VwZXItc2VjcmV0Cg=="}}}`,
+				Publish:      types.ExternalPublishingStrategy,
+				FeatureSet:   configv1.CustomNoUpgrade,
+				FeatureGates: []string{"DualReplica=true"},
+			},
 		},
 	}
 	for _, tc := range cases {
