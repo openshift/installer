@@ -13,16 +13,17 @@ import (
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/IBM-Cloud/power-go-client/ibmpisession"
 	"github.com/IBM/go-sdk-core/v5/core"
+	"github.com/IBM/vpc-go-sdk/vpcv1"
 	"github.com/form3tech-oss/jwt-go"
-	"github.com/sirupsen/logrus"
-
 	"github.com/openshift/installer/pkg/types/powervs"
+	"github.com/sirupsen/logrus"
 )
 
 var (
-	defSessionTimeout   time.Duration = 9000000000000000000.0
-	defRegion                         = "us_south"
-	defaultAuthFilePath               = filepath.Join(os.Getenv("HOME"), ".powervs", "config.json")
+	defSessionTimeout                 time.Duration = 9000000000000000000.0
+	defRegion                                       = "us_south"
+	defaultAuthFilePath                             = filepath.Join(os.Getenv("HOME"), ".powervs", "config.json")
+	PowerVSInternalPublishingStrategy bool
 )
 
 // BxClient is struct which provides bluemix session details
@@ -33,6 +34,7 @@ type BxClient struct {
 	PISession            *ibmpisession.IBMPISession
 	User                 *User
 	PowerVSResourceGroup string
+	VPC                  string
 }
 
 // User is struct with user details
@@ -49,6 +51,7 @@ type SessionStore struct {
 	DefaultRegion        string `json:"region,omitempty"`
 	DefaultZone          string `json:"zone,omitempty"`
 	PowerVSResourceGroup string `json:"resourcegroup,omitempty"`
+	VPC                  string `json:"vpcname,omitempty"`
 }
 
 // SessionVars is an object that holds the variables required to create an ibmpisession object.
@@ -58,6 +61,7 @@ type SessionVars struct {
 	Region               string
 	Zone                 string
 	PowerVSResourceGroup string
+	VPC                  string
 }
 
 func authenticateAPIKey(apikey string) (string, error) {
@@ -117,6 +121,7 @@ func NewBxClient(survey bool) (*BxClient, error) {
 	c.Region = sv.Region
 	c.Zone = sv.Zone
 	c.PowerVSResourceGroup = sv.PowerVSResourceGroup
+	c.VPC = sv.VPC
 
 	c.User, err = FetchUserDetails(c.APIKey)
 	if err != nil {
@@ -143,6 +148,7 @@ func getSessionVars(survey bool) (SessionVars, error) {
 	sv.Region = ss.DefaultRegion
 	sv.Zone = ss.DefaultZone
 	sv.PowerVSResourceGroup = ss.PowerVSResourceGroup
+	sv.VPC = ss.VPC
 
 	// Grab variables from the users environment
 	logrus.Debug("Gathering variables from user environment")
@@ -165,6 +171,7 @@ func getSessionVars(survey bool) (SessionVars, error) {
 		ss.DefaultRegion = sv.Region
 		ss.DefaultZone = sv.Zone
 		ss.PowerVSResourceGroup = sv.PowerVSResourceGroup
+		ss.VPC = sv.VPC
 
 		// Save the session store to the disk.
 		err = saveSessionStoreToAuthFile(&ss)
@@ -187,6 +194,7 @@ func getSessionVars(survey bool) (SessionVars, error) {
 	ss.DefaultRegion = sv.Region
 	ss.DefaultZone = sv.Zone
 	ss.PowerVSResourceGroup = sv.PowerVSResourceGroup
+	ss.VPC = sv.VPC
 
 	// Save the session store to the disk.
 	err = saveSessionStoreToAuthFile(&ss)
@@ -337,8 +345,13 @@ func getFirstSessionVarsFromUser(psv *SessionVars, pss *SessionStore) error {
 // APIKey.
 func getSecondSessionVarsFromUser(psv *SessionVars, pss *SessionStore) error {
 	var (
-		client *Client
-		err    error
+		client          *Client
+		err             error
+		options         *vpcv1.ListVpcsOptions
+		response        *core.DetailedResponse
+		resourceGroupID string
+		vpc             vpcv1.VPC
+		vpcCollection   *vpcv1.VPCCollection
 	)
 
 	if psv == nil {
@@ -394,7 +407,50 @@ func getSecondSessionVarsFromUser(psv *SessionVars, pss *SessionStore) error {
 			return fmt.Errorf("survey.ask failed with: %w", err)
 		}
 	}
+	if PowerVSInternalPublishingStrategy == true && len(psv.VPC) == 0 {
+		if client == nil {
+			client, err = NewClient()
+			if err != nil {
+				return fmt.Errorf("failed to powervs.NewClient: %w", err)
+			}
+		}
 
+		ctx, cancel := context.WithTimeout(context.TODO(), 5*time.Minute)
+		defer cancel()
+		vpcNames := []string{}
+		listGroupOptions := client.managementAPI.NewListResourceGroupsOptions()
+		groups, _, err := client.managementAPI.ListResourceGroups(listGroupOptions)
+		if err != nil {
+			return fmt.Errorf("failed to list resource groups: %w", err)
+		}
+		for _, group := range groups.Resources {
+			if *group.Name == psv.PowerVSResourceGroup {
+				resourceGroupID = *group.ID
+			}
+		}
+		options = client.vpcAPI.NewListVpcsOptions()
+		options.SetResourceGroupID(resourceGroupID)
+		vpcCollection, response, err = client.vpcAPI.ListVpcsWithContext(ctx, options)
+		if err != nil {
+			return fmt.Errorf("failed to list vpc: err = %w, response = %v", err, response)
+		}
+		for _, vpc = range vpcCollection.Vpcs {
+			vpcNames = append(vpcNames, *vpc.Name)
+		}
+		err = survey.Ask([]*survey.Question{
+			{
+				Prompt: &survey.Select{
+					Message: "Cluster VPC",
+					Help:    "The VPC of the cluster. If you don't see your intended VPC listed, check whether the VPC belongs to the resource group selected and rerun the installer.",
+					Default: "",
+					Options: vpcNames,
+				},
+			},
+		}, &psv.VPC)
+		if err != nil {
+			return fmt.Errorf("survey.ask failed with: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -447,6 +503,9 @@ func UpdateSessionStoreToAuthFile(update *SessionStore) error {
 	}
 	if update.PowerVSResourceGroup != "" {
 		original.PowerVSResourceGroup = update.PowerVSResourceGroup
+	}
+	if update.VPC != "" {
+		original.VPC = update.VPC
 	}
 
 	return saveSessionStoreToAuthFile(&original)
