@@ -537,16 +537,6 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		}
 
 		sshRuleName := fmt.Sprintf("%s_ssh_in", in.InfraID)
-		if err = addSecurityGroupRule(ctx, &securityGroupInput{
-			resourceGroupName:    p.ResourceGroupName,
-			securityGroupName:    fmt.Sprintf("%s-nsg", in.InfraID),
-			securityRuleName:     sshRuleName,
-			securityRulePort:     "22",
-			securityRulePriority: 220,
-			networkClientFactory: p.NetworkClientFactory,
-		}); err != nil {
-			return fmt.Errorf("failed to add security rule: %w", err)
-		}
 
 		loadBalancerName := in.InfraID
 		frontendIPConfigName := "public-lb-ip-v4"
