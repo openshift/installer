@@ -7,16 +7,18 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/api/googleapi"
 
 	"google.golang.org/api/compute/v1"
 )
 
-func resourceComputeSharedVpcServiceProject() *schema.Resource {
+func ResourceComputeSharedVpcServiceProject() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeSharedVpcServiceProjectCreate,
 		Read:   resourceComputeSharedVpcServiceProjectRead,
 		Delete: resourceComputeSharedVpcServiceProjectDelete,
+		Update: resourceComputeSharedVpcServiceProjectUpdate,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -39,6 +41,14 @@ func resourceComputeSharedVpcServiceProject() *schema.Resource {
 				ForceNew:    true,
 				Description: `The ID of the project that will serve as a Shared VPC service project.`,
 			},
+			"deletion_policy": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: false,
+				Description: `The deletion policy for the shared VPC service. Setting ABANDON allows the resource
+				to be abandoned rather than deleted. Possible values are: "ABANDON".`,
+				ValidateFunc: validation.StringInSlice([]string{"ABANDON", ""}, false),
+			},
 		},
 		UseJSONNumber: true,
 	}
@@ -46,7 +56,7 @@ func resourceComputeSharedVpcServiceProject() *schema.Resource {
 
 func resourceComputeSharedVpcServiceProjectCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -64,7 +74,7 @@ func resourceComputeSharedVpcServiceProjectCreate(d *schema.ResourceData, meta i
 	if err != nil {
 		return err
 	}
-	err = computeOperationWaitTime(config, op, hostProject, "Enabling Shared VPC Resource", userAgent, d.Timeout(schema.TimeoutCreate))
+	err = ComputeOperationWaitTime(config, op, hostProject, "Enabling Shared VPC Resource", userAgent, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return err
 	}
@@ -76,7 +86,7 @@ func resourceComputeSharedVpcServiceProjectCreate(d *schema.ResourceData, meta i
 
 func resourceComputeSharedVpcServiceProjectRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -117,6 +127,12 @@ func resourceComputeSharedVpcServiceProjectDelete(d *schema.ResourceData, meta i
 	hostProject := d.Get("host_project").(string)
 	serviceProject := d.Get("service_project").(string)
 
+	if deletionPolicy := d.Get("deletion_policy"); deletionPolicy == "ABANDON" {
+		log.Printf("[WARN] Shared VPC service project %q deletion_policy is set to 'ABANDON', skip disabling shared VPC service project", d.Id())
+		d.SetId("")
+		return nil
+	}
+
 	if err := disableXpnResource(d, config, hostProject, serviceProject); err != nil {
 		// Don't fail if the service project is already disabled.
 		if !isDisabledXpnResourceError(err) {
@@ -128,7 +144,7 @@ func resourceComputeSharedVpcServiceProjectDelete(d *schema.ResourceData, meta i
 }
 
 func disableXpnResource(d *schema.ResourceData, config *Config, hostProject, project string) error {
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -143,7 +159,7 @@ func disableXpnResource(d *schema.ResourceData, config *Config, hostProject, pro
 	if err != nil {
 		return err
 	}
-	err = computeOperationWaitTime(config, op, hostProject, "Disabling Shared VPC Resource", userAgent, d.Timeout(schema.TimeoutDelete))
+	err = ComputeOperationWaitTime(config, op, hostProject, "Disabling Shared VPC Resource", userAgent, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return err
 	}
@@ -157,4 +173,10 @@ func isDisabledXpnResourceError(err error) bool {
 		}
 	}
 	return false
+}
+
+func resourceComputeSharedVpcServiceProjectUpdate(d *schema.ResourceData, meta interface{}) error {
+	// This update method is no-op because the only updatable fields
+	// are state/config-only, i.e. they aren't sent in requests to the API.
+	return nil
 }

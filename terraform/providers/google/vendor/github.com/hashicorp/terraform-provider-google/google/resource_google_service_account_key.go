@@ -10,7 +10,7 @@ import (
 	"google.golang.org/api/iam/v1"
 )
 
-func resourceGoogleServiceAccountKey() *schema.Resource {
+func ResourceGoogleServiceAccountKey() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceGoogleServiceAccountKeyCreate,
 		Read:   resourceGoogleServiceAccountKeyRead,
@@ -95,7 +95,7 @@ func resourceGoogleServiceAccountKey() *schema.Resource {
 
 func resourceGoogleServiceAccountKeyCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -142,12 +142,18 @@ func resourceGoogleServiceAccountKeyCreate(d *schema.ResourceData, meta interfac
 	if err != nil {
 		return err
 	}
+
+	// We can't guarantee complete consistency even after waiting on
+	// the results, so sleep for some additional time to reduce the
+	// likelihood of eventual consistency failures.
+	time.Sleep(10 * time.Second)
+
 	return resourceGoogleServiceAccountKeyRead(d, meta)
 }
 
 func resourceGoogleServiceAccountKeyRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -161,7 +167,7 @@ func resourceGoogleServiceAccountKeyRead(d *schema.ResourceData, meta interface{
 			return nil
 		} else {
 			// This resource also returns 403 when it's not found.
-			if isGoogleApiErrorWithCode(err, 403) {
+			if IsGoogleApiErrorWithCode(err, 403) {
 				log.Printf("[DEBUG] Got a 403 error trying to read service account key %s, assuming it's gone.", d.Id())
 				d.SetId("")
 				return nil
@@ -185,7 +191,7 @@ func resourceGoogleServiceAccountKeyRead(d *schema.ResourceData, meta interface{
 
 func resourceGoogleServiceAccountKeyDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -197,7 +203,7 @@ func resourceGoogleServiceAccountKeyDelete(d *schema.ResourceData, meta interfac
 			return nil
 		} else {
 			// This resource also returns 403 when it's not found.
-			if isGoogleApiErrorWithCode(err, 403) {
+			if IsGoogleApiErrorWithCode(err, 403) {
 				log.Printf("[DEBUG] Got a 403 error trying to read service account key %s, assuming it's gone.", d.Id())
 				d.SetId("")
 				return nil

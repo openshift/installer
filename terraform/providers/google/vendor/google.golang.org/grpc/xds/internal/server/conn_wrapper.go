@@ -27,23 +27,23 @@ import (
 
 	"google.golang.org/grpc/credentials/tls/certprovider"
 	xdsinternal "google.golang.org/grpc/internal/credentials/xds"
-	"google.golang.org/grpc/xds/internal/xdsclient"
+	"google.golang.org/grpc/xds/internal/xdsclient/xdsresource"
 )
 
 // connWrapper is a thin wrapper around a net.Conn returned by Accept(). It
 // provides the following additional functionality:
-// 1. A way to retrieve the configured deadline. This is required by the
-//    ServerHandshake() method of the xdsCredentials when it attempts to read
-//    key material from the certificate providers.
-// 2. Implements the XDSHandshakeInfo() method used by the xdsCredentials to
-//    retrieve the configured certificate providers.
-// 3. xDS filter_chain matching logic to select appropriate security
-//    configuration for the incoming connection.
+//  1. A way to retrieve the configured deadline. This is required by the
+//     ServerHandshake() method of the xdsCredentials when it attempts to read
+//     key material from the certificate providers.
+//  2. Implements the XDSHandshakeInfo() method used by the xdsCredentials to
+//     retrieve the configured certificate providers.
+//  3. xDS filter_chain matching logic to select appropriate security
+//     configuration for the incoming connection.
 type connWrapper struct {
 	net.Conn
 
 	// The specific filter chain picked for handling this connection.
-	filterChain *xdsclient.FilterChain
+	filterChain *xdsresource.FilterChain
 
 	// A reference fo the listenerWrapper on which this connection was accepted.
 	parent *listenerWrapper
@@ -58,6 +58,15 @@ type connWrapper struct {
 	// completing the HTTP2 handshake.
 	deadlineMu sync.Mutex
 	deadline   time.Time
+
+	// The virtual hosts with matchable routes and instantiated HTTP Filters per
+	// route.
+	virtualHosts []xdsresource.VirtualHostWithInterceptors
+}
+
+// VirtualHosts returns the virtual hosts to be used for server side routing.
+func (c *connWrapper) VirtualHosts() []xdsresource.VirtualHostWithInterceptors {
+	return c.virtualHosts
 }
 
 // SetDeadline makes a copy of the passed in deadline and forwards the call to
@@ -124,6 +133,7 @@ func (c *connWrapper) XDSHandshakeInfo() (*xdsinternal.HandshakeInfo, error) {
 	return xdsHI, nil
 }
 
+// Close closes the providers and the underlying connection.
 func (c *connWrapper) Close() error {
 	if c.identityProvider != nil {
 		c.identityProvider.Close()

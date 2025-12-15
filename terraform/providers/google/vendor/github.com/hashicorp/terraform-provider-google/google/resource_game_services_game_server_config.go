@@ -23,7 +23,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceGameServicesGameServerConfig() *schema.Resource {
+func ResourceGameServicesGameServerConfig() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceGameServicesGameServerConfigCreate,
 		Read:   resourceGameServicesGameServerConfigRead,
@@ -34,8 +34,8 @@ func resourceGameServicesGameServerConfig() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -211,7 +211,7 @@ any of the selector entries.`,
 
 func resourceGameServicesGameServerConfigCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -261,7 +261,7 @@ func resourceGameServicesGameServerConfigCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating GameServerConfig: %s", err)
 	}
@@ -276,12 +276,13 @@ func resourceGameServicesGameServerConfigCreate(d *schema.ResourceData, meta int
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = gameServicesOperationWaitTimeWithResponse(
+	err = GameServicesOperationWaitTimeWithResponse(
 		config, res, &opRes, project, "Creating GameServerConfig", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create GameServerConfig: %s", err)
 	}
 
@@ -303,7 +304,7 @@ func resourceGameServicesGameServerConfigCreate(d *schema.ResourceData, meta int
 
 func resourceGameServicesGameServerConfigRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -326,7 +327,7 @@ func resourceGameServicesGameServerConfigRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("GameServicesGameServerConfig %q", d.Id()))
 	}
@@ -356,7 +357,7 @@ func resourceGameServicesGameServerConfigRead(d *schema.ResourceData, meta inter
 
 func resourceGameServicesGameServerConfigDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -382,12 +383,12 @@ func resourceGameServicesGameServerConfigDelete(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "GameServerConfig")
 	}
 
-	err = gameServicesOperationWaitTime(
+	err = GameServicesOperationWaitTime(
 		config, res, project, "Deleting GameServerConfig", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

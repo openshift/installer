@@ -27,7 +27,7 @@ import (
 	compute "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/compute"
 )
 
-func resourceComputeFirewallPolicyAssociation() *schema.Resource {
+func ResourceComputeFirewallPolicyAssociation() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeFirewallPolicyAssociationCreate,
 		Read:   resourceComputeFirewallPolicyAssociationRead,
@@ -38,8 +38,8 @@ func resourceComputeFirewallPolicyAssociation() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -84,13 +84,13 @@ func resourceComputeFirewallPolicyAssociationCreate(d *schema.ResourceData, meta
 		Name:             dcl.String(d.Get("name").(string)),
 	}
 
-	id, err := replaceVarsForId(d, config, "locations/global/firewallPolicies/{{firewall_policy}}/associations/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -106,7 +106,7 @@ func resourceComputeFirewallPolicyAssociationCreate(d *schema.ResourceData, meta
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyFirewallPolicyAssociation(context.Background(), obj, createDirective...)
+	res, err := client.ApplyFirewallPolicyAssociation(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -130,7 +130,7 @@ func resourceComputeFirewallPolicyAssociationRead(d *schema.ResourceData, meta i
 		Name:             dcl.String(d.Get("name").(string)),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -178,7 +178,7 @@ func resourceComputeFirewallPolicyAssociationDelete(d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] Deleting FirewallPolicyAssociation %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -204,6 +204,7 @@ func resourceComputeFirewallPolicyAssociationDelete(d *schema.ResourceData, meta
 
 func resourceComputeFirewallPolicyAssociationImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"locations/global/firewallPolicies/(?P<firewall_policy>[^/]+)/associations/(?P<name>[^/]+)",
 		"(?P<firewall_policy>[^/]+)/(?P<name>[^/]+)",

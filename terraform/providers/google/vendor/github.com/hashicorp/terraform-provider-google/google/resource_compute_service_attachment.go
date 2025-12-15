@@ -18,13 +18,12 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceComputeServiceAttachment() *schema.Resource {
+func ResourceComputeServiceAttachment() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeServiceAttachmentCreate,
 		Read:   resourceComputeServiceAttachmentRead,
@@ -36,9 +35,9 @@ func resourceComputeServiceAttachment() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -119,6 +118,18 @@ attachment.`,
 				Optional:    true,
 				Description: `An optional description of this resource.`,
 			},
+			"domain_names": {
+				Type:     schema.TypeList,
+				Optional: true,
+				ForceNew: true,
+				Description: `If specified, the domain name will be used during the integration between
+the PSC connected endpoints and the Cloud DNS. For example, this is a
+valid domain name: "p.mycompany.com.". Current max number of domain names
+supported is 1.`,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"region": {
 				Type:             schema.TypeString,
 				Computed:         true,
@@ -171,7 +182,7 @@ updates of this resource.`,
 
 func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -219,6 +230,12 @@ func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interfa
 	} else if v, ok := d.GetOkExists("enable_proxy_protocol"); !isEmptyValue(reflect.ValueOf(enableProxyProtocolProp)) && (ok || !reflect.DeepEqual(v, enableProxyProtocolProp)) {
 		obj["enableProxyProtocol"] = enableProxyProtocolProp
 	}
+	domainNamesProp, err := expandComputeServiceAttachmentDomainNames(d.Get("domain_names"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("domain_names"); !isEmptyValue(reflect.ValueOf(domainNamesProp)) && (ok || !reflect.DeepEqual(v, domainNamesProp)) {
+		obj["domainNames"] = domainNamesProp
+	}
 	consumerRejectListsProp, err := expandComputeServiceAttachmentConsumerRejectLists(d.Get("consumer_reject_lists"), d, config)
 	if err != nil {
 		return err
@@ -257,7 +274,7 @@ func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating ServiceAttachment: %s", err)
 	}
@@ -269,7 +286,7 @@ func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interfa
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating ServiceAttachment", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -286,7 +303,7 @@ func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interfa
 
 func resourceComputeServiceAttachmentRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -309,7 +326,7 @@ func resourceComputeServiceAttachmentRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeServiceAttachment %q", d.Id()))
 	}
@@ -342,6 +359,9 @@ func resourceComputeServiceAttachmentRead(d *schema.ResourceData, meta interface
 	if err := d.Set("enable_proxy_protocol", flattenComputeServiceAttachmentEnableProxyProtocol(res["enableProxyProtocol"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
 	}
+	if err := d.Set("domain_names", flattenComputeServiceAttachmentDomainNames(res["domainNames"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
+	}
 	if err := d.Set("consumer_reject_lists", flattenComputeServiceAttachmentConsumerRejectLists(res["consumerRejectLists"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
 	}
@@ -360,7 +380,7 @@ func resourceComputeServiceAttachmentRead(d *schema.ResourceData, meta interface
 
 func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -428,7 +448,7 @@ func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating ServiceAttachment %q: %s", d.Id(), err)
@@ -436,7 +456,7 @@ func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interfa
 		log.Printf("[DEBUG] Finished updating ServiceAttachment %q: %#v", d.Id(), res)
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Updating ServiceAttachment", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -449,7 +469,7 @@ func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interfa
 
 func resourceComputeServiceAttachmentDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -475,12 +495,12 @@ func resourceComputeServiceAttachmentDelete(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "ServiceAttachment")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting ServiceAttachment", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -574,6 +594,10 @@ func flattenComputeServiceAttachmentEnableProxyProtocol(v interface{}, d *schema
 	return v
 }
 
+func flattenComputeServiceAttachmentDomainNames(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenComputeServiceAttachmentConsumerRejectLists(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
@@ -604,7 +628,7 @@ func flattenComputeServiceAttachmentConsumerAcceptListsProjectIdOrNum(v interfac
 func flattenComputeServiceAttachmentConsumerAcceptListsConnectionLimit(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -666,6 +690,10 @@ func expandComputeServiceAttachmentNatSubnets(v interface{}, d TerraformResource
 }
 
 func expandComputeServiceAttachmentEnableProxyProtocol(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeServiceAttachmentDomainNames(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -107,8 +108,19 @@ func rfc3339TimeDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 // to an empty block. This might occur in situations where removing a block completely
 // is impossible (if it's computed or part of an AtLeastOneOf), so instead the user sets
 // its values to empty.
+// NOTE: Using Optional + Computed is *strongly* preferred to this DSF, as it's
+// more well understood and resilient to API changes.
 func emptyOrUnsetBlockDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 	o, n := d.GetChange(strings.TrimSuffix(k, ".#"))
+	return emptyOrUnsetBlockDiffSuppressLogic(k, old, new, o, n)
+}
+
+// The core logic for emptyOrUnsetBlockDiffSuppress, in a format that is more conducive
+// to unit testing.
+func emptyOrUnsetBlockDiffSuppressLogic(k, old, new string, o, n interface{}) bool {
+	if !strings.HasSuffix(k, ".#") {
+		return false
+	}
 	var l []interface{}
 	if old == "0" && new == "1" {
 		l = n.([]interface{})
@@ -119,7 +131,10 @@ func emptyOrUnsetBlockDiffSuppress(k, old, new string, d *schema.ResourceData) b
 		return false
 	}
 
-	contents := l[0].(map[string]interface{})
+	contents, ok := l[0].(map[string]interface{})
+	if !ok {
+		return false
+	}
 	for _, v := range contents {
 		if !isEmptyValue(reflect.ValueOf(v)) {
 			return false
@@ -204,4 +219,30 @@ func compareOptionalSubnet(_, old, new string, _ *schema.ResourceData) bool {
 	}
 	// otherwise compare as self links
 	return compareSelfLinkOrResourceName("", old, new, nil)
+}
+
+// Suppress diffs in below cases
+// "https://hello-rehvs75zla-uc.a.run.app/" -> "https://hello-rehvs75zla-uc.a.run.app"
+// "https://hello-rehvs75zla-uc.a.run.app" -> "https://hello-rehvs75zla-uc.a.run.app/"
+func lastSlashDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
+	if last := len(new) - 1; last >= 0 && new[last] == '/' {
+		new = new[:last]
+	}
+
+	if last := len(old) - 1; last >= 0 && old[last] == '/' {
+		old = old[:last]
+	}
+	return new == old
+}
+
+// Suppress diffs when the value read from api
+// has the project number instead of the project name
+func projectNumberDiffSuppress(_, old, new string, _ *schema.ResourceData) bool {
+	var a2, b2 string
+	reN := regexp.MustCompile("projects/\\d+")
+	re := regexp.MustCompile("projects/[^/]+")
+	replacement := []byte("projects/equal")
+	a2 = string(reN.ReplaceAll([]byte(old), replacement))
+	b2 = string(re.ReplaceAll([]byte(new), replacement))
+	return a2 == b2
 }

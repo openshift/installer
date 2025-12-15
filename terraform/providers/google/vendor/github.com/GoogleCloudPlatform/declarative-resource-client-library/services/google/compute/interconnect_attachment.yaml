@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a InterconnectAttachment
     parameters:
-    - name: InterconnectAttachment
+    - name: interconnectAttachment
       required: true
       description: A full instance of a InterconnectAttachment
   apply:
     description: The function used to apply information about a InterconnectAttachment
     parameters:
-    - name: InterconnectAttachment
+    - name: interconnectAttachment
       required: true
       description: A full instance of a InterconnectAttachment
   delete:
     description: The function used to delete a InterconnectAttachment
     parameters:
-    - name: InterconnectAttachment
+    - name: interconnectAttachment
       required: true
       description: A full instance of a InterconnectAttachment
   deleteAll:
@@ -65,7 +65,11 @@ components:
       x-dcl-locations:
       - region
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -308,7 +312,6 @@ components:
         region:
           type: string
           x-dcl-go-name: Region
-          readOnly: true
           description: URL of the region where the regional interconnect attachment
             resides. You must specify this field as part of the HTTP request URL.
             It is not settable as a field in the request body.

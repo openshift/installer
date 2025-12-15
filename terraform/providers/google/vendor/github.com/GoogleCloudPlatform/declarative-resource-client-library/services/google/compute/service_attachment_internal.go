@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -121,6 +120,8 @@ type serviceAttachmentApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateServiceAttachmentPatchRequest(ctx context.Context, f *ServiceAttachment, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Description; !dcl.IsEmptyValueIndirect(v) {
 		req["description"] = v
@@ -136,7 +137,7 @@ func newUpdateServiceAttachmentPatchRequest(ctx context.Context, f *ServiceAttac
 	} else if v != nil {
 		req["consumerRejectLists"] = v
 	}
-	if v, err := expandServiceAttachmentConsumerAcceptListsSlice(c, f.ConsumerAcceptLists); err != nil {
+	if v, err := expandServiceAttachmentConsumerAcceptListsSlice(c, f.ConsumerAcceptLists, res); err != nil {
 		return nil, fmt.Errorf("error expanding ConsumerAcceptLists into consumerAcceptLists: %w", err)
 	} else if v != nil {
 		req["consumerAcceptLists"] = v
@@ -266,7 +267,7 @@ func (c *Client) listServiceAttachment(ctx context.Context, r *ServiceAttachment
 
 	var l []*ServiceAttachment
 	for _, v := range m.Items {
-		res, err := unmarshalMapServiceAttachment(v, c)
+		res, err := unmarshalMapServiceAttachment(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -330,20 +331,20 @@ func (op *deleteServiceAttachmentOperation) do(ctx context.Context, r *ServiceAt
 		return err
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetServiceAttachment(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetServiceAttachment(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -442,6 +443,11 @@ func (c *Client) serviceAttachmentDiffsForRawDesired(ctx context.Context, rawDes
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for ServiceAttachment: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for ServiceAttachment: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractServiceAttachmentFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeServiceAttachmentInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -493,12 +499,14 @@ func canonicalizeServiceAttachmentDesiredState(rawDesired, rawInitial *ServiceAt
 	} else {
 		canonicalDesired.Description = rawDesired.Description
 	}
-	if dcl.NameToSelfLink(rawDesired.TargetService, rawInitial.TargetService) {
+	if dcl.IsZeroValue(rawDesired.TargetService) || (dcl.IsEmptyValueIndirect(rawDesired.TargetService) && dcl.IsEmptyValueIndirect(rawInitial.TargetService)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.TargetService = rawInitial.TargetService
 	} else {
 		canonicalDesired.TargetService = rawDesired.TargetService
 	}
-	if dcl.IsZeroValue(rawDesired.ConnectionPreference) {
+	if dcl.IsZeroValue(rawDesired.ConnectionPreference) || (dcl.IsEmptyValueIndirect(rawDesired.ConnectionPreference) && dcl.IsEmptyValueIndirect(rawInitial.ConnectionPreference)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.ConnectionPreference = rawInitial.ConnectionPreference
 	} else {
 		canonicalDesired.ConnectionPreference = rawDesired.ConnectionPreference
@@ -529,18 +537,17 @@ func canonicalizeServiceAttachmentDesiredState(rawDesired, rawInitial *ServiceAt
 	} else {
 		canonicalDesired.Location = rawDesired.Location
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeServiceAttachmentNewState(c *Client, rawNew, rawDesired *ServiceAttachment) (*ServiceAttachment, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Id) && dcl.IsNotReturnedByServer(rawDesired.Id) {
+	if dcl.IsEmptyValueIndirect(rawNew.Id) && dcl.IsEmptyValueIndirect(rawDesired.Id) {
 		rawNew.Id = rawDesired.Id
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Name, rawNew.Name) {
@@ -548,7 +555,7 @@ func canonicalizeServiceAttachmentNewState(c *Client, rawNew, rawDesired *Servic
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Description) && dcl.IsNotReturnedByServer(rawDesired.Description) {
+	if dcl.IsEmptyValueIndirect(rawNew.Description) && dcl.IsEmptyValueIndirect(rawDesired.Description) {
 		rawNew.Description = rawDesired.Description
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Description, rawNew.Description) {
@@ -556,7 +563,7 @@ func canonicalizeServiceAttachmentNewState(c *Client, rawNew, rawDesired *Servic
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.SelfLink) && dcl.IsNotReturnedByServer(rawDesired.SelfLink) {
+	if dcl.IsEmptyValueIndirect(rawNew.SelfLink) && dcl.IsEmptyValueIndirect(rawDesired.SelfLink) {
 		rawNew.SelfLink = rawDesired.SelfLink
 	} else {
 		if dcl.StringCanonicalize(rawDesired.SelfLink, rawNew.SelfLink) {
@@ -564,7 +571,7 @@ func canonicalizeServiceAttachmentNewState(c *Client, rawNew, rawDesired *Servic
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Region) && dcl.IsNotReturnedByServer(rawDesired.Region) {
+	if dcl.IsEmptyValueIndirect(rawNew.Region) && dcl.IsEmptyValueIndirect(rawDesired.Region) {
 		rawNew.Region = rawDesired.Region
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Region, rawNew.Region) {
@@ -572,26 +579,23 @@ func canonicalizeServiceAttachmentNewState(c *Client, rawNew, rawDesired *Servic
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.TargetService) && dcl.IsNotReturnedByServer(rawDesired.TargetService) {
+	if dcl.IsEmptyValueIndirect(rawNew.TargetService) && dcl.IsEmptyValueIndirect(rawDesired.TargetService) {
 		rawNew.TargetService = rawDesired.TargetService
 	} else {
-		if dcl.NameToSelfLink(rawDesired.TargetService, rawNew.TargetService) {
-			rawNew.TargetService = rawDesired.TargetService
-		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ConnectionPreference) && dcl.IsNotReturnedByServer(rawDesired.ConnectionPreference) {
+	if dcl.IsEmptyValueIndirect(rawNew.ConnectionPreference) && dcl.IsEmptyValueIndirect(rawDesired.ConnectionPreference) {
 		rawNew.ConnectionPreference = rawDesired.ConnectionPreference
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ConnectedEndpoints) && dcl.IsNotReturnedByServer(rawDesired.ConnectedEndpoints) {
+	if dcl.IsEmptyValueIndirect(rawNew.ConnectedEndpoints) && dcl.IsEmptyValueIndirect(rawDesired.ConnectedEndpoints) {
 		rawNew.ConnectedEndpoints = rawDesired.ConnectedEndpoints
 	} else {
 		rawNew.ConnectedEndpoints = canonicalizeNewServiceAttachmentConnectedEndpointsSlice(c, rawDesired.ConnectedEndpoints, rawNew.ConnectedEndpoints)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.NatSubnets) && dcl.IsNotReturnedByServer(rawDesired.NatSubnets) {
+	if dcl.IsEmptyValueIndirect(rawNew.NatSubnets) && dcl.IsEmptyValueIndirect(rawDesired.NatSubnets) {
 		rawNew.NatSubnets = rawDesired.NatSubnets
 	} else {
 		if dcl.StringArrayCanonicalize(rawDesired.NatSubnets, rawNew.NatSubnets) {
@@ -599,7 +603,7 @@ func canonicalizeServiceAttachmentNewState(c *Client, rawNew, rawDesired *Servic
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.EnableProxyProtocol) && dcl.IsNotReturnedByServer(rawDesired.EnableProxyProtocol) {
+	if dcl.IsEmptyValueIndirect(rawNew.EnableProxyProtocol) && dcl.IsEmptyValueIndirect(rawDesired.EnableProxyProtocol) {
 		rawNew.EnableProxyProtocol = rawDesired.EnableProxyProtocol
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.EnableProxyProtocol, rawNew.EnableProxyProtocol) {
@@ -607,7 +611,7 @@ func canonicalizeServiceAttachmentNewState(c *Client, rawNew, rawDesired *Servic
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ConsumerRejectLists) && dcl.IsNotReturnedByServer(rawDesired.ConsumerRejectLists) {
+	if dcl.IsEmptyValueIndirect(rawNew.ConsumerRejectLists) && dcl.IsEmptyValueIndirect(rawDesired.ConsumerRejectLists) {
 		rawNew.ConsumerRejectLists = rawDesired.ConsumerRejectLists
 	} else {
 		if dcl.StringArrayCanonicalize(rawDesired.ConsumerRejectLists, rawNew.ConsumerRejectLists) {
@@ -615,19 +619,19 @@ func canonicalizeServiceAttachmentNewState(c *Client, rawNew, rawDesired *Servic
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.ConsumerAcceptLists) && dcl.IsNotReturnedByServer(rawDesired.ConsumerAcceptLists) {
+	if dcl.IsEmptyValueIndirect(rawNew.ConsumerAcceptLists) && dcl.IsEmptyValueIndirect(rawDesired.ConsumerAcceptLists) {
 		rawNew.ConsumerAcceptLists = rawDesired.ConsumerAcceptLists
 	} else {
 		rawNew.ConsumerAcceptLists = canonicalizeNewServiceAttachmentConsumerAcceptListsSlice(c, rawDesired.ConsumerAcceptLists, rawNew.ConsumerAcceptLists)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.PscServiceAttachmentId) && dcl.IsNotReturnedByServer(rawDesired.PscServiceAttachmentId) {
+	if dcl.IsEmptyValueIndirect(rawNew.PscServiceAttachmentId) && dcl.IsEmptyValueIndirect(rawDesired.PscServiceAttachmentId) {
 		rawNew.PscServiceAttachmentId = rawDesired.PscServiceAttachmentId
 	} else {
 		rawNew.PscServiceAttachmentId = canonicalizeNewServiceAttachmentPscServiceAttachmentId(c, rawDesired.PscServiceAttachmentId, rawNew.PscServiceAttachmentId)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Fingerprint) && dcl.IsNotReturnedByServer(rawDesired.Fingerprint) {
+	if dcl.IsEmptyValueIndirect(rawNew.Fingerprint) && dcl.IsEmptyValueIndirect(rawDesired.Fingerprint) {
 		rawNew.Fingerprint = rawDesired.Fingerprint
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Fingerprint, rawNew.Fingerprint) {
@@ -656,12 +660,14 @@ func canonicalizeServiceAttachmentConnectedEndpoints(des, initial *ServiceAttach
 
 	cDes := &ServiceAttachmentConnectedEndpoints{}
 
-	if dcl.IsZeroValue(des.Status) {
+	if dcl.IsZeroValue(des.Status) || (dcl.IsEmptyValueIndirect(des.Status) && dcl.IsEmptyValueIndirect(initial.Status)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Status = initial.Status
 	} else {
 		cDes.Status = des.Status
 	}
-	if dcl.IsZeroValue(des.PscConnectionId) {
+	if dcl.IsZeroValue(des.PscConnectionId) || (dcl.IsEmptyValueIndirect(des.PscConnectionId) && dcl.IsEmptyValueIndirect(initial.PscConnectionId)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.PscConnectionId = initial.PscConnectionId
 	} else {
 		cDes.PscConnectionId = des.PscConnectionId
@@ -676,7 +682,7 @@ func canonicalizeServiceAttachmentConnectedEndpoints(des, initial *ServiceAttach
 }
 
 func canonicalizeServiceAttachmentConnectedEndpointsSlice(des, initial []ServiceAttachmentConnectedEndpoints, opts ...dcl.ApplyOption) []ServiceAttachmentConnectedEndpoints {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -710,7 +716,7 @@ func canonicalizeNewServiceAttachmentConnectedEndpoints(c *Client, des, nw *Serv
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ServiceAttachmentConnectedEndpoints while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -728,23 +734,26 @@ func canonicalizeNewServiceAttachmentConnectedEndpointsSet(c *Client, des, nw []
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ServiceAttachmentConnectedEndpoints
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ServiceAttachmentConnectedEndpoints
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareServiceAttachmentConnectedEndpointsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewServiceAttachmentConnectedEndpoints(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewServiceAttachmentConnectedEndpointsSlice(c *Client, des, nw []ServiceAttachmentConnectedEndpoints) []ServiceAttachmentConnectedEndpoints {
@@ -781,12 +790,14 @@ func canonicalizeServiceAttachmentConsumerAcceptLists(des, initial *ServiceAttac
 
 	cDes := &ServiceAttachmentConsumerAcceptLists{}
 
-	if dcl.NameToSelfLink(des.ProjectIdOrNum, initial.ProjectIdOrNum) || dcl.IsZeroValue(des.ProjectIdOrNum) {
+	if dcl.IsZeroValue(des.ProjectIdOrNum) || (dcl.IsEmptyValueIndirect(des.ProjectIdOrNum) && dcl.IsEmptyValueIndirect(initial.ProjectIdOrNum)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ProjectIdOrNum = initial.ProjectIdOrNum
 	} else {
 		cDes.ProjectIdOrNum = des.ProjectIdOrNum
 	}
-	if dcl.IsZeroValue(des.ConnectionLimit) {
+	if dcl.IsZeroValue(des.ConnectionLimit) || (dcl.IsEmptyValueIndirect(des.ConnectionLimit) && dcl.IsEmptyValueIndirect(initial.ConnectionLimit)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.ConnectionLimit = initial.ConnectionLimit
 	} else {
 		cDes.ConnectionLimit = des.ConnectionLimit
@@ -830,15 +841,11 @@ func canonicalizeNewServiceAttachmentConsumerAcceptLists(c *Client, des, nw *Ser
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ServiceAttachmentConsumerAcceptLists while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
 		return nil
-	}
-
-	if dcl.NameToSelfLink(des.ProjectIdOrNum, nw.ProjectIdOrNum) {
-		nw.ProjectIdOrNum = des.ProjectIdOrNum
 	}
 
 	return nw
@@ -848,23 +855,26 @@ func canonicalizeNewServiceAttachmentConsumerAcceptListsSet(c *Client, des, nw [
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ServiceAttachmentConsumerAcceptLists
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ServiceAttachmentConsumerAcceptLists
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareServiceAttachmentConsumerAcceptListsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewServiceAttachmentConsumerAcceptLists(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewServiceAttachmentConsumerAcceptListsSlice(c *Client, des, nw []ServiceAttachmentConsumerAcceptLists) []ServiceAttachmentConsumerAcceptLists {
@@ -905,7 +915,7 @@ func canonicalizeServiceAttachmentPscServiceAttachmentId(des, initial *ServiceAt
 }
 
 func canonicalizeServiceAttachmentPscServiceAttachmentIdSlice(des, initial []ServiceAttachmentPscServiceAttachmentId, opts ...dcl.ApplyOption) []ServiceAttachmentPscServiceAttachmentId {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -939,7 +949,7 @@ func canonicalizeNewServiceAttachmentPscServiceAttachmentId(c *Client, des, nw *
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for ServiceAttachmentPscServiceAttachmentId while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -953,23 +963,26 @@ func canonicalizeNewServiceAttachmentPscServiceAttachmentIdSet(c *Client, des, n
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []ServiceAttachmentPscServiceAttachmentId
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []ServiceAttachmentPscServiceAttachmentId
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareServiceAttachmentPscServiceAttachmentIdNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewServiceAttachmentPscServiceAttachmentId(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewServiceAttachmentPscServiceAttachmentIdSlice(c *Client, des, nw []ServiceAttachmentPscServiceAttachmentId) []ServiceAttachmentPscServiceAttachmentId {
@@ -1010,118 +1023,121 @@ func diffServiceAttachment(c *Client, desired, actual *ServiceAttachment, opts .
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Id, actual.Id, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Id")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.Info{OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Description, actual.Description, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("Description")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SelfLink, actual.SelfLink, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SelfLink")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Region, actual.Region, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Region")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Region, actual.Region, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Region")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.TargetService, actual.TargetService, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TargetService")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.TargetService, actual.TargetService, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("TargetService")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ConnectionPreference, actual.ConnectionPreference, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ConnectionPreference")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ConnectionPreference, actual.ConnectionPreference, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ConnectionPreference")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ConnectedEndpoints, actual.ConnectedEndpoints, dcl.Info{OutputOnly: true, ObjectFunction: compareServiceAttachmentConnectedEndpointsNewStyle, EmptyObject: EmptyServiceAttachmentConnectedEndpoints, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ConnectedEndpoints")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ConnectedEndpoints, actual.ConnectedEndpoints, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareServiceAttachmentConnectedEndpointsNewStyle, EmptyObject: EmptyServiceAttachmentConnectedEndpoints, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ConnectedEndpoints")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.NatSubnets, actual.NatSubnets, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("NatSubnets")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.NatSubnets, actual.NatSubnets, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("NatSubnets")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.EnableProxyProtocol, actual.EnableProxyProtocol, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EnableProxyProtocol")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.EnableProxyProtocol, actual.EnableProxyProtocol, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("EnableProxyProtocol")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ConsumerRejectLists, actual.ConsumerRejectLists, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ConsumerRejectLists")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ConsumerRejectLists, actual.ConsumerRejectLists, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ConsumerRejectLists")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ConsumerAcceptLists, actual.ConsumerAcceptLists, dcl.Info{ObjectFunction: compareServiceAttachmentConsumerAcceptListsNewStyle, EmptyObject: EmptyServiceAttachmentConsumerAcceptLists, OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ConsumerAcceptLists")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ConsumerAcceptLists, actual.ConsumerAcceptLists, dcl.DiffInfo{ObjectFunction: compareServiceAttachmentConsumerAcceptListsNewStyle, EmptyObject: EmptyServiceAttachmentConsumerAcceptLists, OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ConsumerAcceptLists")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PscServiceAttachmentId, actual.PscServiceAttachmentId, dcl.Info{OutputOnly: true, ObjectFunction: compareServiceAttachmentPscServiceAttachmentIdNewStyle, EmptyObject: EmptyServiceAttachmentPscServiceAttachmentId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PscServiceAttachmentId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PscServiceAttachmentId, actual.PscServiceAttachmentId, dcl.DiffInfo{OutputOnly: true, ObjectFunction: compareServiceAttachmentPscServiceAttachmentIdNewStyle, EmptyObject: EmptyServiceAttachmentPscServiceAttachmentId, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PscServiceAttachmentId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Fingerprint, actual.Fingerprint, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Fingerprint")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Fingerprint, actual.Fingerprint, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Fingerprint")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareServiceAttachmentConnectedEndpointsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -1144,21 +1160,21 @@ func compareServiceAttachmentConnectedEndpointsNewStyle(d, a interface{}, fn dcl
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.Status, actual.Status, dcl.Info{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("Status")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Status, actual.Status, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("Status")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.PscConnectionId, actual.PscConnectionId, dcl.Info{OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("PscConnectionId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.PscConnectionId, actual.PscConnectionId, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("PscConnectionId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Endpoint, actual.Endpoint, dcl.Info{OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("Endpoint")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Endpoint, actual.Endpoint, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("Endpoint")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1187,14 +1203,14 @@ func compareServiceAttachmentConsumerAcceptListsNewStyle(d, a interface{}, fn dc
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.ProjectIdOrNum, actual.ProjectIdOrNum, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ProjectIdOrNum")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ProjectIdOrNum, actual.ProjectIdOrNum, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ProjectIdOrNum")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.ConnectionLimit, actual.ConnectionLimit, dcl.Info{OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ConnectionLimit")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.ConnectionLimit, actual.ConnectionLimit, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateServiceAttachmentPatchOperation")}, fn.AddNest("ConnectionLimit")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1223,14 +1239,14 @@ func compareServiceAttachmentPscServiceAttachmentIdNewStyle(d, a interface{}, fn
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.High, actual.High, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("High")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.High, actual.High, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("High")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Low, actual.Low, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Low")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Low, actual.Low, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Low")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1283,17 +1299,17 @@ func (r *ServiceAttachment) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalServiceAttachment decodes JSON responses into the ServiceAttachment resource schema.
-func unmarshalServiceAttachment(b []byte, c *Client) (*ServiceAttachment, error) {
+func unmarshalServiceAttachment(b []byte, c *Client, res *ServiceAttachment) (*ServiceAttachment, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapServiceAttachment(m, c)
+	return unmarshalMapServiceAttachment(m, c, res)
 }
 
-func unmarshalMapServiceAttachment(m map[string]interface{}, c *Client) (*ServiceAttachment, error) {
+func unmarshalMapServiceAttachment(m map[string]interface{}, c *Client, res *ServiceAttachment) (*ServiceAttachment, error) {
 
-	flattened := flattenServiceAttachment(c, m)
+	flattened := flattenServiceAttachment(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -1303,6 +1319,8 @@ func unmarshalMapServiceAttachment(m map[string]interface{}, c *Client) (*Servic
 // expandServiceAttachment expands ServiceAttachment into a JSON request object.
 func expandServiceAttachment(c *Client, f *ServiceAttachment) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v := f.Name; dcl.ValueShouldBeSent(v) {
 		m["name"] = v
 	}
@@ -1315,28 +1333,30 @@ func expandServiceAttachment(c *Client, f *ServiceAttachment) (map[string]interf
 	if v := f.ConnectionPreference; dcl.ValueShouldBeSent(v) {
 		m["connectionPreference"] = v
 	}
-	m["natSubnets"] = f.NatSubnets
+	if v := f.NatSubnets; v != nil {
+		m["natSubnets"] = v
+	}
 	if v := f.EnableProxyProtocol; dcl.ValueShouldBeSent(v) {
 		m["enableProxyProtocol"] = v
 	}
 	if v, err := dcl.SelfLinkToNameArrayExpander(f.ConsumerRejectLists); err != nil {
 		return nil, fmt.Errorf("error expanding ConsumerRejectLists into consumerRejectLists: %w", err)
-	} else {
+	} else if v != nil {
 		m["consumerRejectLists"] = v
 	}
-	if v, err := expandServiceAttachmentConsumerAcceptListsSlice(c, f.ConsumerAcceptLists); err != nil {
+	if v, err := expandServiceAttachmentConsumerAcceptListsSlice(c, f.ConsumerAcceptLists, res); err != nil {
 		return nil, fmt.Errorf("error expanding ConsumerAcceptLists into consumerAcceptLists: %w", err)
-	} else {
+	} else if v != nil {
 		m["consumerAcceptLists"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Location into location: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["location"] = v
 	}
 
@@ -1345,7 +1365,7 @@ func expandServiceAttachment(c *Client, f *ServiceAttachment) (map[string]interf
 
 // flattenServiceAttachment flattens ServiceAttachment from a JSON request object into the
 // ServiceAttachment type.
-func flattenServiceAttachment(c *Client, i interface{}) *ServiceAttachment {
+func flattenServiceAttachment(c *Client, i interface{}, res *ServiceAttachment) *ServiceAttachment {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1354,37 +1374,37 @@ func flattenServiceAttachment(c *Client, i interface{}) *ServiceAttachment {
 		return nil
 	}
 
-	res := &ServiceAttachment{}
-	res.Id = dcl.FlattenInteger(m["id"])
-	res.Name = dcl.FlattenString(m["name"])
-	res.Description = dcl.FlattenString(m["description"])
-	res.SelfLink = dcl.FlattenString(m["selfLink"])
-	res.Region = dcl.FlattenString(m["region"])
-	res.TargetService = dcl.FlattenString(m["targetService"])
-	res.ConnectionPreference = flattenServiceAttachmentConnectionPreferenceEnum(m["connectionPreference"])
-	res.ConnectedEndpoints = flattenServiceAttachmentConnectedEndpointsSlice(c, m["connectedEndpoints"])
-	res.NatSubnets = dcl.FlattenStringSlice(m["natSubnets"])
-	res.EnableProxyProtocol = dcl.FlattenBool(m["enableProxyProtocol"])
-	res.ConsumerRejectLists = dcl.FlattenStringSlice(m["consumerRejectLists"])
-	res.ConsumerAcceptLists = flattenServiceAttachmentConsumerAcceptListsSlice(c, m["consumerAcceptLists"])
-	res.PscServiceAttachmentId = flattenServiceAttachmentPscServiceAttachmentId(c, m["pscServiceAttachmentId"])
-	res.Fingerprint = dcl.FlattenString(m["fingerprint"])
-	res.Project = dcl.FlattenString(m["project"])
-	res.Location = dcl.FlattenString(m["location"])
+	resultRes := &ServiceAttachment{}
+	resultRes.Id = dcl.FlattenInteger(m["id"])
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.Description = dcl.FlattenString(m["description"])
+	resultRes.SelfLink = dcl.FlattenString(m["selfLink"])
+	resultRes.Region = dcl.FlattenString(m["region"])
+	resultRes.TargetService = dcl.FlattenString(m["targetService"])
+	resultRes.ConnectionPreference = flattenServiceAttachmentConnectionPreferenceEnum(m["connectionPreference"])
+	resultRes.ConnectedEndpoints = flattenServiceAttachmentConnectedEndpointsSlice(c, m["connectedEndpoints"], res)
+	resultRes.NatSubnets = dcl.FlattenStringSlice(m["natSubnets"])
+	resultRes.EnableProxyProtocol = dcl.FlattenBool(m["enableProxyProtocol"])
+	resultRes.ConsumerRejectLists = dcl.FlattenStringSlice(m["consumerRejectLists"])
+	resultRes.ConsumerAcceptLists = flattenServiceAttachmentConsumerAcceptListsSlice(c, m["consumerAcceptLists"], res)
+	resultRes.PscServiceAttachmentId = flattenServiceAttachmentPscServiceAttachmentId(c, m["pscServiceAttachmentId"], res)
+	resultRes.Fingerprint = dcl.FlattenString(m["fingerprint"])
+	resultRes.Project = dcl.FlattenString(m["project"])
+	resultRes.Location = dcl.FlattenString(m["location"])
 
-	return res
+	return resultRes
 }
 
 // expandServiceAttachmentConnectedEndpointsMap expands the contents of ServiceAttachmentConnectedEndpoints into a JSON
 // request object.
-func expandServiceAttachmentConnectedEndpointsMap(c *Client, f map[string]ServiceAttachmentConnectedEndpoints) (map[string]interface{}, error) {
+func expandServiceAttachmentConnectedEndpointsMap(c *Client, f map[string]ServiceAttachmentConnectedEndpoints, res *ServiceAttachment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandServiceAttachmentConnectedEndpoints(c, &item)
+		i, err := expandServiceAttachmentConnectedEndpoints(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1398,14 +1418,14 @@ func expandServiceAttachmentConnectedEndpointsMap(c *Client, f map[string]Servic
 
 // expandServiceAttachmentConnectedEndpointsSlice expands the contents of ServiceAttachmentConnectedEndpoints into a JSON
 // request object.
-func expandServiceAttachmentConnectedEndpointsSlice(c *Client, f []ServiceAttachmentConnectedEndpoints) ([]map[string]interface{}, error) {
+func expandServiceAttachmentConnectedEndpointsSlice(c *Client, f []ServiceAttachmentConnectedEndpoints, res *ServiceAttachment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandServiceAttachmentConnectedEndpoints(c, &item)
+		i, err := expandServiceAttachmentConnectedEndpoints(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1418,7 +1438,7 @@ func expandServiceAttachmentConnectedEndpointsSlice(c *Client, f []ServiceAttach
 
 // flattenServiceAttachmentConnectedEndpointsMap flattens the contents of ServiceAttachmentConnectedEndpoints from a JSON
 // response object.
-func flattenServiceAttachmentConnectedEndpointsMap(c *Client, i interface{}) map[string]ServiceAttachmentConnectedEndpoints {
+func flattenServiceAttachmentConnectedEndpointsMap(c *Client, i interface{}, res *ServiceAttachment) map[string]ServiceAttachmentConnectedEndpoints {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ServiceAttachmentConnectedEndpoints{}
@@ -1430,7 +1450,7 @@ func flattenServiceAttachmentConnectedEndpointsMap(c *Client, i interface{}) map
 
 	items := make(map[string]ServiceAttachmentConnectedEndpoints)
 	for k, item := range a {
-		items[k] = *flattenServiceAttachmentConnectedEndpoints(c, item.(map[string]interface{}))
+		items[k] = *flattenServiceAttachmentConnectedEndpoints(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1438,7 +1458,7 @@ func flattenServiceAttachmentConnectedEndpointsMap(c *Client, i interface{}) map
 
 // flattenServiceAttachmentConnectedEndpointsSlice flattens the contents of ServiceAttachmentConnectedEndpoints from a JSON
 // response object.
-func flattenServiceAttachmentConnectedEndpointsSlice(c *Client, i interface{}) []ServiceAttachmentConnectedEndpoints {
+func flattenServiceAttachmentConnectedEndpointsSlice(c *Client, i interface{}, res *ServiceAttachment) []ServiceAttachmentConnectedEndpoints {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ServiceAttachmentConnectedEndpoints{}
@@ -1450,7 +1470,7 @@ func flattenServiceAttachmentConnectedEndpointsSlice(c *Client, i interface{}) [
 
 	items := make([]ServiceAttachmentConnectedEndpoints, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenServiceAttachmentConnectedEndpoints(c, item.(map[string]interface{})))
+		items = append(items, *flattenServiceAttachmentConnectedEndpoints(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1458,7 +1478,7 @@ func flattenServiceAttachmentConnectedEndpointsSlice(c *Client, i interface{}) [
 
 // expandServiceAttachmentConnectedEndpoints expands an instance of ServiceAttachmentConnectedEndpoints into a JSON
 // request object.
-func expandServiceAttachmentConnectedEndpoints(c *Client, f *ServiceAttachmentConnectedEndpoints) (map[string]interface{}, error) {
+func expandServiceAttachmentConnectedEndpoints(c *Client, f *ServiceAttachmentConnectedEndpoints, res *ServiceAttachment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1479,7 +1499,7 @@ func expandServiceAttachmentConnectedEndpoints(c *Client, f *ServiceAttachmentCo
 
 // flattenServiceAttachmentConnectedEndpoints flattens an instance of ServiceAttachmentConnectedEndpoints from a JSON
 // response object.
-func flattenServiceAttachmentConnectedEndpoints(c *Client, i interface{}) *ServiceAttachmentConnectedEndpoints {
+func flattenServiceAttachmentConnectedEndpoints(c *Client, i interface{}, res *ServiceAttachment) *ServiceAttachmentConnectedEndpoints {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1499,14 +1519,14 @@ func flattenServiceAttachmentConnectedEndpoints(c *Client, i interface{}) *Servi
 
 // expandServiceAttachmentConsumerAcceptListsMap expands the contents of ServiceAttachmentConsumerAcceptLists into a JSON
 // request object.
-func expandServiceAttachmentConsumerAcceptListsMap(c *Client, f map[string]ServiceAttachmentConsumerAcceptLists) (map[string]interface{}, error) {
+func expandServiceAttachmentConsumerAcceptListsMap(c *Client, f map[string]ServiceAttachmentConsumerAcceptLists, res *ServiceAttachment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandServiceAttachmentConsumerAcceptLists(c, &item)
+		i, err := expandServiceAttachmentConsumerAcceptLists(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1520,14 +1540,14 @@ func expandServiceAttachmentConsumerAcceptListsMap(c *Client, f map[string]Servi
 
 // expandServiceAttachmentConsumerAcceptListsSlice expands the contents of ServiceAttachmentConsumerAcceptLists into a JSON
 // request object.
-func expandServiceAttachmentConsumerAcceptListsSlice(c *Client, f []ServiceAttachmentConsumerAcceptLists) ([]map[string]interface{}, error) {
+func expandServiceAttachmentConsumerAcceptListsSlice(c *Client, f []ServiceAttachmentConsumerAcceptLists, res *ServiceAttachment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandServiceAttachmentConsumerAcceptLists(c, &item)
+		i, err := expandServiceAttachmentConsumerAcceptLists(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1540,7 +1560,7 @@ func expandServiceAttachmentConsumerAcceptListsSlice(c *Client, f []ServiceAttac
 
 // flattenServiceAttachmentConsumerAcceptListsMap flattens the contents of ServiceAttachmentConsumerAcceptLists from a JSON
 // response object.
-func flattenServiceAttachmentConsumerAcceptListsMap(c *Client, i interface{}) map[string]ServiceAttachmentConsumerAcceptLists {
+func flattenServiceAttachmentConsumerAcceptListsMap(c *Client, i interface{}, res *ServiceAttachment) map[string]ServiceAttachmentConsumerAcceptLists {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ServiceAttachmentConsumerAcceptLists{}
@@ -1552,7 +1572,7 @@ func flattenServiceAttachmentConsumerAcceptListsMap(c *Client, i interface{}) ma
 
 	items := make(map[string]ServiceAttachmentConsumerAcceptLists)
 	for k, item := range a {
-		items[k] = *flattenServiceAttachmentConsumerAcceptLists(c, item.(map[string]interface{}))
+		items[k] = *flattenServiceAttachmentConsumerAcceptLists(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1560,7 +1580,7 @@ func flattenServiceAttachmentConsumerAcceptListsMap(c *Client, i interface{}) ma
 
 // flattenServiceAttachmentConsumerAcceptListsSlice flattens the contents of ServiceAttachmentConsumerAcceptLists from a JSON
 // response object.
-func flattenServiceAttachmentConsumerAcceptListsSlice(c *Client, i interface{}) []ServiceAttachmentConsumerAcceptLists {
+func flattenServiceAttachmentConsumerAcceptListsSlice(c *Client, i interface{}, res *ServiceAttachment) []ServiceAttachmentConsumerAcceptLists {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ServiceAttachmentConsumerAcceptLists{}
@@ -1572,7 +1592,7 @@ func flattenServiceAttachmentConsumerAcceptListsSlice(c *Client, i interface{}) 
 
 	items := make([]ServiceAttachmentConsumerAcceptLists, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenServiceAttachmentConsumerAcceptLists(c, item.(map[string]interface{})))
+		items = append(items, *flattenServiceAttachmentConsumerAcceptLists(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1580,8 +1600,8 @@ func flattenServiceAttachmentConsumerAcceptListsSlice(c *Client, i interface{}) 
 
 // expandServiceAttachmentConsumerAcceptLists expands an instance of ServiceAttachmentConsumerAcceptLists into a JSON
 // request object.
-func expandServiceAttachmentConsumerAcceptLists(c *Client, f *ServiceAttachmentConsumerAcceptLists) (map[string]interface{}, error) {
-	if dcl.IsEmptyValueIndirect(f) {
+func expandServiceAttachmentConsumerAcceptLists(c *Client, f *ServiceAttachmentConsumerAcceptLists, res *ServiceAttachment) (map[string]interface{}, error) {
+	if f == nil {
 		return nil, nil
 	}
 
@@ -1600,7 +1620,7 @@ func expandServiceAttachmentConsumerAcceptLists(c *Client, f *ServiceAttachmentC
 
 // flattenServiceAttachmentConsumerAcceptLists flattens an instance of ServiceAttachmentConsumerAcceptLists from a JSON
 // response object.
-func flattenServiceAttachmentConsumerAcceptLists(c *Client, i interface{}) *ServiceAttachmentConsumerAcceptLists {
+func flattenServiceAttachmentConsumerAcceptLists(c *Client, i interface{}, res *ServiceAttachment) *ServiceAttachmentConsumerAcceptLists {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1619,14 +1639,14 @@ func flattenServiceAttachmentConsumerAcceptLists(c *Client, i interface{}) *Serv
 
 // expandServiceAttachmentPscServiceAttachmentIdMap expands the contents of ServiceAttachmentPscServiceAttachmentId into a JSON
 // request object.
-func expandServiceAttachmentPscServiceAttachmentIdMap(c *Client, f map[string]ServiceAttachmentPscServiceAttachmentId) (map[string]interface{}, error) {
+func expandServiceAttachmentPscServiceAttachmentIdMap(c *Client, f map[string]ServiceAttachmentPscServiceAttachmentId, res *ServiceAttachment) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandServiceAttachmentPscServiceAttachmentId(c, &item)
+		i, err := expandServiceAttachmentPscServiceAttachmentId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1640,14 +1660,14 @@ func expandServiceAttachmentPscServiceAttachmentIdMap(c *Client, f map[string]Se
 
 // expandServiceAttachmentPscServiceAttachmentIdSlice expands the contents of ServiceAttachmentPscServiceAttachmentId into a JSON
 // request object.
-func expandServiceAttachmentPscServiceAttachmentIdSlice(c *Client, f []ServiceAttachmentPscServiceAttachmentId) ([]map[string]interface{}, error) {
+func expandServiceAttachmentPscServiceAttachmentIdSlice(c *Client, f []ServiceAttachmentPscServiceAttachmentId, res *ServiceAttachment) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandServiceAttachmentPscServiceAttachmentId(c, &item)
+		i, err := expandServiceAttachmentPscServiceAttachmentId(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1660,7 +1680,7 @@ func expandServiceAttachmentPscServiceAttachmentIdSlice(c *Client, f []ServiceAt
 
 // flattenServiceAttachmentPscServiceAttachmentIdMap flattens the contents of ServiceAttachmentPscServiceAttachmentId from a JSON
 // response object.
-func flattenServiceAttachmentPscServiceAttachmentIdMap(c *Client, i interface{}) map[string]ServiceAttachmentPscServiceAttachmentId {
+func flattenServiceAttachmentPscServiceAttachmentIdMap(c *Client, i interface{}, res *ServiceAttachment) map[string]ServiceAttachmentPscServiceAttachmentId {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ServiceAttachmentPscServiceAttachmentId{}
@@ -1672,7 +1692,7 @@ func flattenServiceAttachmentPscServiceAttachmentIdMap(c *Client, i interface{})
 
 	items := make(map[string]ServiceAttachmentPscServiceAttachmentId)
 	for k, item := range a {
-		items[k] = *flattenServiceAttachmentPscServiceAttachmentId(c, item.(map[string]interface{}))
+		items[k] = *flattenServiceAttachmentPscServiceAttachmentId(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1680,7 +1700,7 @@ func flattenServiceAttachmentPscServiceAttachmentIdMap(c *Client, i interface{})
 
 // flattenServiceAttachmentPscServiceAttachmentIdSlice flattens the contents of ServiceAttachmentPscServiceAttachmentId from a JSON
 // response object.
-func flattenServiceAttachmentPscServiceAttachmentIdSlice(c *Client, i interface{}) []ServiceAttachmentPscServiceAttachmentId {
+func flattenServiceAttachmentPscServiceAttachmentIdSlice(c *Client, i interface{}, res *ServiceAttachment) []ServiceAttachmentPscServiceAttachmentId {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ServiceAttachmentPscServiceAttachmentId{}
@@ -1692,7 +1712,7 @@ func flattenServiceAttachmentPscServiceAttachmentIdSlice(c *Client, i interface{
 
 	items := make([]ServiceAttachmentPscServiceAttachmentId, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenServiceAttachmentPscServiceAttachmentId(c, item.(map[string]interface{})))
+		items = append(items, *flattenServiceAttachmentPscServiceAttachmentId(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1700,7 +1720,7 @@ func flattenServiceAttachmentPscServiceAttachmentIdSlice(c *Client, i interface{
 
 // expandServiceAttachmentPscServiceAttachmentId expands an instance of ServiceAttachmentPscServiceAttachmentId into a JSON
 // request object.
-func expandServiceAttachmentPscServiceAttachmentId(c *Client, f *ServiceAttachmentPscServiceAttachmentId) (map[string]interface{}, error) {
+func expandServiceAttachmentPscServiceAttachmentId(c *Client, f *ServiceAttachmentPscServiceAttachmentId, res *ServiceAttachment) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1712,7 +1732,7 @@ func expandServiceAttachmentPscServiceAttachmentId(c *Client, f *ServiceAttachme
 
 // flattenServiceAttachmentPscServiceAttachmentId flattens an instance of ServiceAttachmentPscServiceAttachmentId from a JSON
 // response object.
-func flattenServiceAttachmentPscServiceAttachmentId(c *Client, i interface{}) *ServiceAttachmentPscServiceAttachmentId {
+func flattenServiceAttachmentPscServiceAttachmentId(c *Client, i interface{}, res *ServiceAttachment) *ServiceAttachmentPscServiceAttachmentId {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1731,7 +1751,7 @@ func flattenServiceAttachmentPscServiceAttachmentId(c *Client, i interface{}) *S
 
 // flattenServiceAttachmentConnectionPreferenceEnumMap flattens the contents of ServiceAttachmentConnectionPreferenceEnum from a JSON
 // response object.
-func flattenServiceAttachmentConnectionPreferenceEnumMap(c *Client, i interface{}) map[string]ServiceAttachmentConnectionPreferenceEnum {
+func flattenServiceAttachmentConnectionPreferenceEnumMap(c *Client, i interface{}, res *ServiceAttachment) map[string]ServiceAttachmentConnectionPreferenceEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ServiceAttachmentConnectionPreferenceEnum{}
@@ -1751,7 +1771,7 @@ func flattenServiceAttachmentConnectionPreferenceEnumMap(c *Client, i interface{
 
 // flattenServiceAttachmentConnectionPreferenceEnumSlice flattens the contents of ServiceAttachmentConnectionPreferenceEnum from a JSON
 // response object.
-func flattenServiceAttachmentConnectionPreferenceEnumSlice(c *Client, i interface{}) []ServiceAttachmentConnectionPreferenceEnum {
+func flattenServiceAttachmentConnectionPreferenceEnumSlice(c *Client, i interface{}, res *ServiceAttachment) []ServiceAttachmentConnectionPreferenceEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ServiceAttachmentConnectionPreferenceEnum{}
@@ -1774,7 +1794,7 @@ func flattenServiceAttachmentConnectionPreferenceEnumSlice(c *Client, i interfac
 func flattenServiceAttachmentConnectionPreferenceEnum(i interface{}) *ServiceAttachmentConnectionPreferenceEnum {
 	s, ok := i.(string)
 	if !ok {
-		return ServiceAttachmentConnectionPreferenceEnumRef("")
+		return nil
 	}
 
 	return ServiceAttachmentConnectionPreferenceEnumRef(s)
@@ -1782,7 +1802,7 @@ func flattenServiceAttachmentConnectionPreferenceEnum(i interface{}) *ServiceAtt
 
 // flattenServiceAttachmentConnectedEndpointsStatusEnumMap flattens the contents of ServiceAttachmentConnectedEndpointsStatusEnum from a JSON
 // response object.
-func flattenServiceAttachmentConnectedEndpointsStatusEnumMap(c *Client, i interface{}) map[string]ServiceAttachmentConnectedEndpointsStatusEnum {
+func flattenServiceAttachmentConnectedEndpointsStatusEnumMap(c *Client, i interface{}, res *ServiceAttachment) map[string]ServiceAttachmentConnectedEndpointsStatusEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]ServiceAttachmentConnectedEndpointsStatusEnum{}
@@ -1802,7 +1822,7 @@ func flattenServiceAttachmentConnectedEndpointsStatusEnumMap(c *Client, i interf
 
 // flattenServiceAttachmentConnectedEndpointsStatusEnumSlice flattens the contents of ServiceAttachmentConnectedEndpointsStatusEnum from a JSON
 // response object.
-func flattenServiceAttachmentConnectedEndpointsStatusEnumSlice(c *Client, i interface{}) []ServiceAttachmentConnectedEndpointsStatusEnum {
+func flattenServiceAttachmentConnectedEndpointsStatusEnumSlice(c *Client, i interface{}, res *ServiceAttachment) []ServiceAttachmentConnectedEndpointsStatusEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []ServiceAttachmentConnectedEndpointsStatusEnum{}
@@ -1825,7 +1845,7 @@ func flattenServiceAttachmentConnectedEndpointsStatusEnumSlice(c *Client, i inte
 func flattenServiceAttachmentConnectedEndpointsStatusEnum(i interface{}) *ServiceAttachmentConnectedEndpointsStatusEnum {
 	s, ok := i.(string)
 	if !ok {
-		return ServiceAttachmentConnectedEndpointsStatusEnumRef("")
+		return nil
 	}
 
 	return ServiceAttachmentConnectedEndpointsStatusEnumRef(s)
@@ -1836,7 +1856,7 @@ func flattenServiceAttachmentConnectedEndpointsStatusEnum(i interface{}) *Servic
 // identity).  This is useful in extracting the element from a List call.
 func (r *ServiceAttachment) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalServiceAttachment(b, c)
+		cr, err := unmarshalServiceAttachment(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -1877,6 +1897,7 @@ type serviceAttachmentDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         serviceAttachmentApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToServiceAttachmentDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]serviceAttachmentDiff, error) {
@@ -1896,7 +1917,8 @@ func convertFieldDiffsToServiceAttachmentDiffs(config *dcl.Config, fds []*dcl.Fi
 	var diffs []serviceAttachmentDiff
 	// For each operation name, create a serviceAttachmentDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := serviceAttachmentDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := serviceAttachmentDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -1931,7 +1953,7 @@ func extractServiceAttachmentFields(r *ServiceAttachment) error {
 	if err := extractServiceAttachmentPscServiceAttachmentIdFields(r, vPscServiceAttachmentId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPscServiceAttachmentId) {
+	if !dcl.IsEmptyValueIndirect(vPscServiceAttachmentId) {
 		r.PscServiceAttachmentId = vPscServiceAttachmentId
 	}
 	return nil
@@ -1955,7 +1977,7 @@ func postReadExtractServiceAttachmentFields(r *ServiceAttachment) error {
 	if err := postReadExtractServiceAttachmentPscServiceAttachmentIdFields(r, vPscServiceAttachmentId); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vPscServiceAttachmentId) {
+	if !dcl.IsEmptyValueIndirect(vPscServiceAttachmentId) {
 		r.PscServiceAttachmentId = vPscServiceAttachmentId
 	}
 	return nil

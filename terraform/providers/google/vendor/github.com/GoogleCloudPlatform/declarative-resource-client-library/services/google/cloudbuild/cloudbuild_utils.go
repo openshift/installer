@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,78 +18,75 @@ import (
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 )
 
-func betaWorkerConfigToGaWorkerConfig(r *WorkerPool, c *WorkerPoolWorkerConfig) *WorkerPoolPrivatePoolV1ConfigWorkerConfig {
-	if c == nil {
-		return nil
-	}
-	cfg := &WorkerPoolPrivatePoolV1ConfigWorkerConfig{}
-	cfg.DiskSizeGb = c.DiskSizeGb
-	cfg.MachineType = c.MachineType
-	// we need to *not* send this field, unfortunately.
-	c.DiskSizeGb = nil
-	c.MachineType = nil
-	// Now, a little messy - we are going to IGNORE NoExternalIP.
-	// It stays set to whatever its old value was.  We set
-	// c.empty to true, trusting that a call to the function right below
-	// this one, parsing out the network config, is going to read it.
-	// We don't express an opinion about whether that should happen before
-	// or after this current call.
-
-	c.empty = true
-	return cfg
-}
-
-func betaNetworkConfigToGaNetworkConfig(r *WorkerPool, c *WorkerPoolNetworkConfig) *WorkerPoolPrivatePoolV1ConfigNetworkConfig {
-	if c == nil {
-		return nil
-	}
-	cfg := &WorkerPoolPrivatePoolV1ConfigNetworkConfig{}
-	cfg.PeeredNetwork = c.PeeredNetwork
-	// The counterpart to the messy bit above - we need to translate this boolean in an unrelated
-	// field into a tri-state enum in this field.  Gross!
+// betaToGaPrivatePool is populating GA specific PrivatePoolV1Config values and setting WorkerConfig and NetworkConfig to nil.
+// r.PrivatePoolV1Config and c points to the same object.
+func betaToGaPrivatePool(r *WorkerPool, c *WorkerPoolPrivatePoolV1Config) *WorkerPoolPrivatePoolV1Config {
+	cfgWorkerConfig := &WorkerPoolPrivatePoolV1ConfigWorkerConfig{}
+	cfgNetworkConfig := &WorkerPoolPrivatePoolV1ConfigNetworkConfig{}
 	if r.WorkerConfig != nil {
-		if r.WorkerConfig.NoExternalIP == nil {
-			cfg.EgressOption = WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnumRef("EGRESS_OPTION_UNSPECIFIED")
-		} else if *r.WorkerConfig.NoExternalIP {
-			cfg.EgressOption = WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnumRef("NO_PUBLIC_EGRESS")
-		} else {
-			cfg.EgressOption = WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnumRef("PUBLIC_EGRESS")
-		}
-		r.WorkerConfig.NoExternalIP = nil
+		cfgWorkerConfig.DiskSizeGb = r.WorkerConfig.DiskSizeGb
+		cfgWorkerConfig.MachineType = r.WorkerConfig.MachineType
+		cfgNetworkConfig.EgressOption = noExternalIPEnum(r.WorkerConfig.NoExternalIP)
 	}
-	c.PeeredNetwork = nil
-	c.empty = true
+	if r.NetworkConfig != nil {
+		cfgNetworkConfig.PeeredNetwork = r.NetworkConfig.PeeredNetwork
+		cfgNetworkConfig.PeeredNetworkIPRange = r.NetworkConfig.PeeredNetworkIPRange
+	}
+
+	cfg := &WorkerPoolPrivatePoolV1Config{}
+	cfg.WorkerConfig = cfgWorkerConfig
+	cfg.NetworkConfig = cfgNetworkConfig
+
+	r.WorkerConfig = nil
+	r.NetworkConfig = nil
 	return cfg
 }
 
-func gaNetworkConfigToBetaNetworkConfig(r *WorkerPool, c *WorkerPoolPrivatePoolV1ConfigNetworkConfig) *WorkerPoolNetworkConfig {
+// gaToBetaPrivatePool is populating beta specific values (WorkerConfig and NetworkConfig) and setting PrivatePoolV1Config to nil.
+// r.PrivatePoolV1Config and c points to the same object.
+func gaToBetaPrivatePool(r *WorkerPool, c *WorkerPoolPrivatePoolV1Config) *WorkerPoolPrivatePoolV1Config {
 	if c == nil {
 		return nil
 	}
-	if c.PeeredNetwork == nil {
-		return EmptyWorkerPoolNetworkConfig
-	}
 
-	cfg := &WorkerPoolNetworkConfig{}
-	cfg.PeeredNetwork = c.PeeredNetwork
-	return cfg
-}
+	if c.WorkerConfig != nil && r.WorkerConfig == nil {
+		r.WorkerConfig = &WorkerPoolWorkerConfig{
+			DiskSizeGb:   c.WorkerConfig.DiskSizeGb,
+			MachineType:  c.WorkerConfig.MachineType,
+			NoExternalIP: noExternalIPBoolean(c.NetworkConfig),
+		}
 
-func gaWorkerConfigToBetaWorkerConfig(r *WorkerPool, c *WorkerPoolPrivatePoolV1ConfigWorkerConfig) *WorkerPoolWorkerConfig {
-	if c == nil {
-		return nil
 	}
-	cfg := &WorkerPoolWorkerConfig{}
-	cfg.DiskSizeGb = c.DiskSizeGb
-	cfg.MachineType = c.MachineType
-	if r.PrivatePoolV1Config != nil && r.PrivatePoolV1Config.NetworkConfig != nil {
-		if r.PrivatePoolV1Config.NetworkConfig.EgressOption == nil {
-			cfg.NoExternalIP = nil
-		} else if string(*r.PrivatePoolV1Config.NetworkConfig.EgressOption) == "NO_PUBLIC_EGRESS" {
-			cfg.NoExternalIP = dcl.Bool(true)
-		} else if string(*r.PrivatePoolV1Config.NetworkConfig.EgressOption) == "PUBLIC_EGRESS" {
-			cfg.NoExternalIP = dcl.Bool(false)
+	if c.NetworkConfig != nil && c.NetworkConfig.PeeredNetwork != nil && r.NetworkConfig == nil {
+		r.NetworkConfig = &WorkerPoolNetworkConfig{
+			PeeredNetwork:        c.NetworkConfig.PeeredNetwork,
+			PeeredNetworkIPRange: c.NetworkConfig.PeeredNetworkIPRange,
 		}
 	}
-	return cfg
+
+	r.PrivatePoolV1Config = nil
+	return nil
+}
+
+func noExternalIPBoolean(networkConfig *WorkerPoolPrivatePoolV1ConfigNetworkConfig) *bool {
+	if networkConfig == nil || networkConfig.EgressOption == nil {
+		return nil
+	}
+	if string(*networkConfig.EgressOption) == "NO_PUBLIC_EGRESS" {
+		return dcl.Bool(true)
+	}
+	if string(*networkConfig.EgressOption) == "PUBLIC_EGRESS" {
+		return dcl.Bool(false)
+	}
+	return nil
+}
+
+func noExternalIPEnum(noExternalIP *bool) *WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnum {
+	if noExternalIP == nil {
+		return WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnumRef("EGRESS_OPTION_UNSPECIFIED")
+	}
+	if *noExternalIP {
+		return WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnumRef("NO_PUBLIC_EGRESS")
+	}
+	return WorkerPoolPrivatePoolV1ConfigNetworkConfigEgressOptionEnumRef("PUBLIC_EGRESS")
 }

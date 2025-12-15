@@ -137,7 +137,7 @@ func ResourceIamPolicyDelete(newUpdaterFunc newResourceIamUpdaterFunc) schema.De
 		if v, ok := d.GetOk("etag"); ok {
 			pol.Etag = v.(string)
 		}
-		pol.Version = iamPolicyVersion
+		pol.Version = IamPolicyVersion
 		err = updater.SetResourceIamPolicy(pol)
 		if err != nil {
 			return err
@@ -152,7 +152,7 @@ func setIamPolicyData(d *schema.ResourceData, updater ResourceIamUpdater) error 
 	if err != nil {
 		return fmt.Errorf("'policy_data' is not valid for %s: %s", updater.DescribeResource(), err)
 	}
-	policy.Version = iamPolicyVersion
+	policy.Version = IamPolicyVersion
 
 	err = updater.SetResourceIamPolicy(policy)
 	if err != nil {
@@ -179,9 +179,15 @@ func unmarshalIamPolicy(policyData string) (*cloudresourcemanager.Policy, error)
 }
 
 func validateIamPolicy(i interface{}, k string) (s []string, es []error) {
-	_, err := unmarshalIamPolicy(i.(string))
-	if err != nil {
+	if policy, err := unmarshalIamPolicy(i.(string)); err != nil {
 		es = append(es, err)
+	} else {
+		for i, binding := range policy.Bindings {
+			for j, member := range binding.Members {
+				_, memberErrors := validateIAMMember(member, fmt.Sprintf("bindings.%d.members.%d", i, j))
+				es = append(es, memberErrors...)
+			}
+		}
 	}
 	return
 }

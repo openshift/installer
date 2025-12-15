@@ -18,15 +18,18 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceMonitoringAlertPolicy() *schema.Resource {
+// API does not return a value for REDUCE_NONE
+func crossSeriesReducerDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
+	return (new == "" && old == "REDUCE_NONE") || (new == "REDUCE_NONE" && old == "")
+}
+
+func ResourceMonitoringAlertPolicy() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceMonitoringAlertPolicyCreate,
 		Read:   resourceMonitoringAlertPolicyRead,
@@ -38,16 +41,16 @@ func resourceMonitoringAlertPolicy() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
 			"combiner": {
 				Type:         schema.TypeString,
 				Required:     true,
-				ValidateFunc: validation.StringInSlice([]string{"AND", "OR", "AND_WITH_MATCHING_RESOURCE"}, false),
+				ValidateFunc: validateEnum([]string{"AND", "OR", "AND_WITH_MATCHING_RESOURCE"}),
 				Description: `How to combine the results of multiple conditions to
 determine if an incident should be opened. Possible values: ["AND", "OR", "AND_WITH_MATCHING_RESOURCE"]`,
 			},
@@ -119,9 +122,10 @@ this field must be defined;
 otherwise an error is returned.`,
 												},
 												"cross_series_reducer": {
-													Type:         schema.TypeString,
-													Optional:     true,
-													ValidateFunc: validation.StringInSlice([]string{"REDUCE_NONE", "REDUCE_MEAN", "REDUCE_MIN", "REDUCE_MAX", "REDUCE_SUM", "REDUCE_STDDEV", "REDUCE_COUNT", "REDUCE_COUNT_TRUE", "REDUCE_COUNT_FALSE", "REDUCE_FRACTION_TRUE", "REDUCE_PERCENTILE_99", "REDUCE_PERCENTILE_95", "REDUCE_PERCENTILE_50", "REDUCE_PERCENTILE_05", ""}, false),
+													Type:             schema.TypeString,
+													Optional:         true,
+													ValidateFunc:     validateEnum([]string{"REDUCE_NONE", "REDUCE_MEAN", "REDUCE_MIN", "REDUCE_MAX", "REDUCE_SUM", "REDUCE_STDDEV", "REDUCE_COUNT", "REDUCE_COUNT_TRUE", "REDUCE_COUNT_FALSE", "REDUCE_FRACTION_TRUE", "REDUCE_PERCENTILE_99", "REDUCE_PERCENTILE_95", "REDUCE_PERCENTILE_50", "REDUCE_PERCENTILE_05", ""}),
+													DiffSuppressFunc: crossSeriesReducerDiffSuppress,
 													Description: `The approach to be used to combine
 time series. Not all reducer
 functions may be applied to all
@@ -175,7 +179,7 @@ ignored.`,
 												"per_series_aligner": {
 													Type:         schema.TypeString,
 													Optional:     true,
-													ValidateFunc: validation.StringInSlice([]string{"ALIGN_NONE", "ALIGN_DELTA", "ALIGN_RATE", "ALIGN_INTERPOLATE", "ALIGN_NEXT_OLDER", "ALIGN_MIN", "ALIGN_MAX", "ALIGN_MEAN", "ALIGN_COUNT", "ALIGN_SUM", "ALIGN_STDDEV", "ALIGN_COUNT_TRUE", "ALIGN_COUNT_FALSE", "ALIGN_FRACTION_TRUE", "ALIGN_PERCENTILE_99", "ALIGN_PERCENTILE_95", "ALIGN_PERCENTILE_50", "ALIGN_PERCENTILE_05", "ALIGN_PERCENT_CHANGE", ""}, false),
+													ValidateFunc: validateEnum([]string{"ALIGN_NONE", "ALIGN_DELTA", "ALIGN_RATE", "ALIGN_INTERPOLATE", "ALIGN_NEXT_OLDER", "ALIGN_MIN", "ALIGN_MAX", "ALIGN_MEAN", "ALIGN_COUNT", "ALIGN_SUM", "ALIGN_STDDEV", "ALIGN_COUNT_TRUE", "ALIGN_COUNT_FALSE", "ALIGN_FRACTION_TRUE", "ALIGN_PERCENTILE_99", "ALIGN_PERCENTILE_95", "ALIGN_PERCENTILE_50", "ALIGN_PERCENTILE_05", "ALIGN_PERCENT_CHANGE", ""}),
 													Description: `The approach to be used to align
 individual time series. Not all
 alignment functions may be applied
@@ -245,6 +249,34 @@ condition to be triggered.`,
 								},
 							},
 						},
+						"condition_matched_log": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `A condition that checks for log messages matching given constraints.
+If set, no other conditions can be present.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"filter": {
+										Type:        schema.TypeString,
+										Required:    true,
+										Description: `A logs-based filter.`,
+									},
+									"label_extractors": {
+										Type:     schema.TypeMap,
+										Optional: true,
+										Description: `A map from a label key to an extractor expression, which is used to
+extract the value for this label key. Each entry in this map is
+a specification for how data should be extracted from log entries that
+match filter. Each combination of extracted values is treated as
+a separate rule for the purposes of triggering notifications.
+Label keys and corresponding values can be used in notifications
+generated by this condition.`,
+										Elem: &schema.Schema{Type: schema.TypeString},
+									},
+								},
+							},
+						},
 						"condition_monitoring_query_language": {
 							Type:        schema.TypeList,
 							Optional:    true,
@@ -275,6 +307,14 @@ alerted on quickly.`,
 										Type:        schema.TypeString,
 										Required:    true,
 										Description: `Monitoring Query Language query that outputs a boolean stream.`,
+									},
+									"evaluation_missing_data": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: validateEnum([]string{"EVALUATION_MISSING_DATA_INACTIVE", "EVALUATION_MISSING_DATA_ACTIVE", "EVALUATION_MISSING_DATA_NO_OP", ""}),
+										Description: `A condition control that determines how
+metric-threshold conditions are evaluated when
+data stops arriving. Possible values: ["EVALUATION_MISSING_DATA_INACTIVE", "EVALUATION_MISSING_DATA_ACTIVE", "EVALUATION_MISSING_DATA_NO_OP"]`,
 									},
 									"trigger": {
 										Type:     schema.TypeList,
@@ -321,7 +361,7 @@ threshold.`,
 									"comparison": {
 										Type:         schema.TypeString,
 										Required:     true,
-										ValidateFunc: validation.StringInSlice([]string{"COMPARISON_GT", "COMPARISON_GE", "COMPARISON_LT", "COMPARISON_LE", "COMPARISON_EQ", "COMPARISON_NE"}, false),
+										ValidateFunc: validateEnum([]string{"COMPARISON_GT", "COMPARISON_GE", "COMPARISON_LT", "COMPARISON_LE", "COMPARISON_EQ", "COMPARISON_NE"}),
 										Description: `The comparison to apply between the time
 series (indicated by filter and aggregation)
 and the threshold (indicated by
@@ -387,9 +427,10 @@ this field must be defined;
 otherwise an error is returned.`,
 												},
 												"cross_series_reducer": {
-													Type:         schema.TypeString,
-													Optional:     true,
-													ValidateFunc: validation.StringInSlice([]string{"REDUCE_NONE", "REDUCE_MEAN", "REDUCE_MIN", "REDUCE_MAX", "REDUCE_SUM", "REDUCE_STDDEV", "REDUCE_COUNT", "REDUCE_COUNT_TRUE", "REDUCE_COUNT_FALSE", "REDUCE_FRACTION_TRUE", "REDUCE_PERCENTILE_99", "REDUCE_PERCENTILE_95", "REDUCE_PERCENTILE_50", "REDUCE_PERCENTILE_05", ""}, false),
+													Type:             schema.TypeString,
+													Optional:         true,
+													ValidateFunc:     validateEnum([]string{"REDUCE_NONE", "REDUCE_MEAN", "REDUCE_MIN", "REDUCE_MAX", "REDUCE_SUM", "REDUCE_STDDEV", "REDUCE_COUNT", "REDUCE_COUNT_TRUE", "REDUCE_COUNT_FALSE", "REDUCE_FRACTION_TRUE", "REDUCE_PERCENTILE_99", "REDUCE_PERCENTILE_95", "REDUCE_PERCENTILE_50", "REDUCE_PERCENTILE_05", ""}),
+													DiffSuppressFunc: crossSeriesReducerDiffSuppress,
 													Description: `The approach to be used to combine
 time series. Not all reducer
 functions may be applied to all
@@ -443,7 +484,7 @@ ignored.`,
 												"per_series_aligner": {
 													Type:         schema.TypeString,
 													Optional:     true,
-													ValidateFunc: validation.StringInSlice([]string{"ALIGN_NONE", "ALIGN_DELTA", "ALIGN_RATE", "ALIGN_INTERPOLATE", "ALIGN_NEXT_OLDER", "ALIGN_MIN", "ALIGN_MAX", "ALIGN_MEAN", "ALIGN_COUNT", "ALIGN_SUM", "ALIGN_STDDEV", "ALIGN_COUNT_TRUE", "ALIGN_COUNT_FALSE", "ALIGN_FRACTION_TRUE", "ALIGN_PERCENTILE_99", "ALIGN_PERCENTILE_95", "ALIGN_PERCENTILE_50", "ALIGN_PERCENTILE_05", "ALIGN_PERCENT_CHANGE", ""}, false),
+													ValidateFunc: validateEnum([]string{"ALIGN_NONE", "ALIGN_DELTA", "ALIGN_RATE", "ALIGN_INTERPOLATE", "ALIGN_NEXT_OLDER", "ALIGN_MIN", "ALIGN_MAX", "ALIGN_MEAN", "ALIGN_COUNT", "ALIGN_SUM", "ALIGN_STDDEV", "ALIGN_COUNT_TRUE", "ALIGN_COUNT_FALSE", "ALIGN_FRACTION_TRUE", "ALIGN_PERCENTILE_99", "ALIGN_PERCENTILE_95", "ALIGN_PERCENTILE_50", "ALIGN_PERCENTILE_05", "ALIGN_PERCENT_CHANGE", ""}),
 													Description: `The approach to be used to align
 individual time series. Not all
 alignment functions may be applied
@@ -505,9 +546,10 @@ this field must be defined;
 otherwise an error is returned.`,
 												},
 												"cross_series_reducer": {
-													Type:         schema.TypeString,
-													Optional:     true,
-													ValidateFunc: validation.StringInSlice([]string{"REDUCE_NONE", "REDUCE_MEAN", "REDUCE_MIN", "REDUCE_MAX", "REDUCE_SUM", "REDUCE_STDDEV", "REDUCE_COUNT", "REDUCE_COUNT_TRUE", "REDUCE_COUNT_FALSE", "REDUCE_FRACTION_TRUE", "REDUCE_PERCENTILE_99", "REDUCE_PERCENTILE_95", "REDUCE_PERCENTILE_50", "REDUCE_PERCENTILE_05", ""}, false),
+													Type:             schema.TypeString,
+													Optional:         true,
+													ValidateFunc:     validateEnum([]string{"REDUCE_NONE", "REDUCE_MEAN", "REDUCE_MIN", "REDUCE_MAX", "REDUCE_SUM", "REDUCE_STDDEV", "REDUCE_COUNT", "REDUCE_COUNT_TRUE", "REDUCE_COUNT_FALSE", "REDUCE_FRACTION_TRUE", "REDUCE_PERCENTILE_99", "REDUCE_PERCENTILE_95", "REDUCE_PERCENTILE_50", "REDUCE_PERCENTILE_05", ""}),
+													DiffSuppressFunc: crossSeriesReducerDiffSuppress,
 													Description: `The approach to be used to combine
 time series. Not all reducer
 functions may be applied to all
@@ -561,7 +603,7 @@ ignored.`,
 												"per_series_aligner": {
 													Type:         schema.TypeString,
 													Optional:     true,
-													ValidateFunc: validation.StringInSlice([]string{"ALIGN_NONE", "ALIGN_DELTA", "ALIGN_RATE", "ALIGN_INTERPOLATE", "ALIGN_NEXT_OLDER", "ALIGN_MIN", "ALIGN_MAX", "ALIGN_MEAN", "ALIGN_COUNT", "ALIGN_SUM", "ALIGN_STDDEV", "ALIGN_COUNT_TRUE", "ALIGN_COUNT_FALSE", "ALIGN_FRACTION_TRUE", "ALIGN_PERCENTILE_99", "ALIGN_PERCENTILE_95", "ALIGN_PERCENTILE_50", "ALIGN_PERCENTILE_05", "ALIGN_PERCENT_CHANGE", ""}, false),
+													ValidateFunc: validateEnum([]string{"ALIGN_NONE", "ALIGN_DELTA", "ALIGN_RATE", "ALIGN_INTERPOLATE", "ALIGN_NEXT_OLDER", "ALIGN_MIN", "ALIGN_MAX", "ALIGN_MEAN", "ALIGN_COUNT", "ALIGN_SUM", "ALIGN_STDDEV", "ALIGN_COUNT_TRUE", "ALIGN_COUNT_FALSE", "ALIGN_FRACTION_TRUE", "ALIGN_PERCENTILE_99", "ALIGN_PERCENTILE_95", "ALIGN_PERCENTILE_50", "ALIGN_PERCENTILE_05", "ALIGN_PERCENT_CHANGE", ""}),
 													Description: `The approach to be used to align
 individual time series. Not all
 alignment functions may be applied
@@ -601,6 +643,14 @@ contain restrictions on resource type,
 resource labels, and metric labels. This
 field may not exceed 2048 Unicode characters
 in length.`,
+									},
+									"evaluation_missing_data": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ValidateFunc: validateEnum([]string{"EVALUATION_MISSING_DATA_INACTIVE", "EVALUATION_MISSING_DATA_ACTIVE", "EVALUATION_MISSING_DATA_NO_OP", ""}),
+										Description: `A condition control that determines how
+metric-threshold conditions are evaluated when
+data stops arriving. Possible values: ["EVALUATION_MISSING_DATA_INACTIVE", "EVALUATION_MISSING_DATA_ACTIVE", "EVALUATION_MISSING_DATA_NO_OP"]`,
 									},
 									"filter": {
 										Type:     schema.TypeString,
@@ -678,6 +728,37 @@ policy.`,
 dashboards, notifications, and incidents. To avoid confusion, don't use
 the same display name for multiple policies in the same project. The
 name is limited to 512 Unicode characters.`,
+			},
+			"alert_strategy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Control over how this alert policy's notification channels are notified.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"auto_close": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `If an alert policy that was active has no data for this long, any open incidents will close.`,
+						},
+						"notification_rate_limit": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `Required for alert policies with a LogMatch condition.
+This limit is not implemented for alert policies that are not log-based.`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"period": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `Not more than one notification per period.`,
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 			"documentation": {
 				Type:     schema.TypeList,
@@ -780,7 +861,7 @@ Its syntax is: projects/[PROJECT_ID]/alertPolicies/[ALERT_POLICY_ID]`,
 
 func resourceMonitoringAlertPolicyCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -815,6 +896,12 @@ func resourceMonitoringAlertPolicyCreate(d *schema.ResourceData, meta interface{
 		return err
 	} else if v, ok := d.GetOkExists("notification_channels"); !isEmptyValue(reflect.ValueOf(notificationChannelsProp)) && (ok || !reflect.DeepEqual(v, notificationChannelsProp)) {
 		obj["notificationChannels"] = notificationChannelsProp
+	}
+	alertStrategyProp, err := expandMonitoringAlertPolicyAlertStrategy(d.Get("alert_strategy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("alert_strategy"); !isEmptyValue(reflect.ValueOf(alertStrategyProp)) && (ok || !reflect.DeepEqual(v, alertStrategyProp)) {
+		obj["alertStrategy"] = alertStrategyProp
 	}
 	userLabelsProp, err := expandMonitoringAlertPolicyUserLabels(d.Get("user_labels"), d, config)
 	if err != nil {
@@ -855,7 +942,7 @@ func resourceMonitoringAlertPolicyCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isMonitoringConcurrentEditError)
 	if err != nil {
 		return fmt.Errorf("Error creating AlertPolicy: %s", err)
 	}
@@ -895,7 +982,7 @@ func resourceMonitoringAlertPolicyCreate(d *schema.ResourceData, meta interface{
 
 func resourceMonitoringAlertPolicyRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -918,7 +1005,7 @@ func resourceMonitoringAlertPolicyRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil, isMonitoringConcurrentEditError)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isMonitoringConcurrentEditError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("MonitoringAlertPolicy %q", d.Id()))
 	}
@@ -948,6 +1035,9 @@ func resourceMonitoringAlertPolicyRead(d *schema.ResourceData, meta interface{})
 	if err := d.Set("notification_channels", flattenMonitoringAlertPolicyNotificationChannels(res["notificationChannels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AlertPolicy: %s", err)
 	}
+	if err := d.Set("alert_strategy", flattenMonitoringAlertPolicyAlertStrategy(res["alertStrategy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading AlertPolicy: %s", err)
+	}
 	if err := d.Set("user_labels", flattenMonitoringAlertPolicyUserLabels(res["userLabels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading AlertPolicy: %s", err)
 	}
@@ -960,7 +1050,7 @@ func resourceMonitoringAlertPolicyRead(d *schema.ResourceData, meta interface{})
 
 func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1003,6 +1093,12 @@ func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{
 		return err
 	} else if v, ok := d.GetOkExists("notification_channels"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, notificationChannelsProp)) {
 		obj["notificationChannels"] = notificationChannelsProp
+	}
+	alertStrategyProp, err := expandMonitoringAlertPolicyAlertStrategy(d.Get("alert_strategy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("alert_strategy"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, alertStrategyProp)) {
+		obj["alertStrategy"] = alertStrategyProp
 	}
 	userLabelsProp, err := expandMonitoringAlertPolicyUserLabels(d.Get("user_labels"), d, config)
 	if err != nil {
@@ -1052,6 +1148,10 @@ func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{
 		updateMask = append(updateMask, "notificationChannels")
 	}
 
+	if d.HasChange("alert_strategy") {
+		updateMask = append(updateMask, "alertStrategy")
+	}
+
 	if d.HasChange("user_labels") {
 		updateMask = append(updateMask, "userLabels")
 	}
@@ -1071,7 +1171,7 @@ func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate), isMonitoringConcurrentEditError)
 
 	if err != nil {
 		return fmt.Errorf("Error updating AlertPolicy %q: %s", d.Id(), err)
@@ -1084,7 +1184,7 @@ func resourceMonitoringAlertPolicyUpdate(d *schema.ResourceData, meta interface{
 
 func resourceMonitoringAlertPolicyDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1117,7 +1217,7 @@ func resourceMonitoringAlertPolicyDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isMonitoringConcurrentEditError)
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isMonitoringConcurrentEditError)
 	if err != nil {
 		return handleNotFoundError(err, d, "AlertPolicy")
 	}
@@ -1195,6 +1295,7 @@ func flattenMonitoringAlertPolicyConditions(v interface{}, d *schema.ResourceDat
 			"condition_monitoring_query_language": flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguage(original["conditionMonitoringQueryLanguage"], d, config),
 			"condition_threshold":                 flattenMonitoringAlertPolicyConditionsConditionThreshold(original["conditionThreshold"], d, config),
 			"display_name":                        flattenMonitoringAlertPolicyConditionsDisplayName(original["displayName"], d, config),
+			"condition_matched_log":               flattenMonitoringAlertPolicyConditionsConditionMatchedLog(original["conditionMatchedLog"], d, config),
 		})
 	}
 	return transformed
@@ -1277,7 +1378,7 @@ func flattenMonitoringAlertPolicyConditionsConditionAbsentTriggerPercent(v inter
 func flattenMonitoringAlertPolicyConditionsConditionAbsentTriggerCount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1318,6 +1419,8 @@ func flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguage(v in
 		flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageDuration(original["duration"], d, config)
 	transformed["trigger"] =
 		flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageTrigger(original["trigger"], d, config)
+	transformed["evaluation_missing_data"] =
+		flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageEvaluationMissingData(original["evaluationMissingData"], d, config)
 	return []interface{}{transformed}
 }
 func flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageQuery(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -1350,7 +1453,7 @@ func flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageTrigg
 func flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageTriggerCount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1362,6 +1465,10 @@ func flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageTrigg
 	}
 
 	return v // let terraform core handle it otherwise
+}
+
+func flattenMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageEvaluationMissingData(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
 }
 
 func flattenMonitoringAlertPolicyConditionsConditionThreshold(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -1389,6 +1496,8 @@ func flattenMonitoringAlertPolicyConditionsConditionThreshold(v interface{}, d *
 		flattenMonitoringAlertPolicyConditionsConditionThresholdAggregations(original["aggregations"], d, config)
 	transformed["filter"] =
 		flattenMonitoringAlertPolicyConditionsConditionThresholdFilter(original["filter"], d, config)
+	transformed["evaluation_missing_data"] =
+		flattenMonitoringAlertPolicyConditionsConditionThresholdEvaluationMissingData(original["evaluationMissingData"], d, config)
 	return []interface{}{transformed}
 }
 func flattenMonitoringAlertPolicyConditionsConditionThresholdThresholdValue(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -1466,7 +1575,7 @@ func flattenMonitoringAlertPolicyConditionsConditionThresholdTriggerPercent(v in
 func flattenMonitoringAlertPolicyConditionsConditionThresholdTriggerCount(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1521,11 +1630,74 @@ func flattenMonitoringAlertPolicyConditionsConditionThresholdFilter(v interface{
 	return v
 }
 
+func flattenMonitoringAlertPolicyConditionsConditionThresholdEvaluationMissingData(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenMonitoringAlertPolicyConditionsDisplayName(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
+func flattenMonitoringAlertPolicyConditionsConditionMatchedLog(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["filter"] =
+		flattenMonitoringAlertPolicyConditionsConditionMatchedLogFilter(original["filter"], d, config)
+	transformed["label_extractors"] =
+		flattenMonitoringAlertPolicyConditionsConditionMatchedLogLabelExtractors(original["labelExtractors"], d, config)
+	return []interface{}{transformed}
+}
+func flattenMonitoringAlertPolicyConditionsConditionMatchedLogFilter(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyConditionsConditionMatchedLogLabelExtractors(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func flattenMonitoringAlertPolicyNotificationChannels(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyAlertStrategy(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["notification_rate_limit"] =
+		flattenMonitoringAlertPolicyAlertStrategyNotificationRateLimit(original["notificationRateLimit"], d, config)
+	transformed["auto_close"] =
+		flattenMonitoringAlertPolicyAlertStrategyAutoClose(original["autoClose"], d, config)
+	return []interface{}{transformed}
+}
+func flattenMonitoringAlertPolicyAlertStrategyNotificationRateLimit(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["period"] =
+		flattenMonitoringAlertPolicyAlertStrategyNotificationRateLimitPeriod(original["period"], d, config)
+	return []interface{}{transformed}
+}
+func flattenMonitoringAlertPolicyAlertStrategyNotificationRateLimitPeriod(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenMonitoringAlertPolicyAlertStrategyAutoClose(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1611,6 +1783,13 @@ func expandMonitoringAlertPolicyConditions(v interface{}, d TerraformResourceDat
 			return nil, err
 		} else if val := reflect.ValueOf(transformedDisplayName); val.IsValid() && !isEmptyValue(val) {
 			transformed["displayName"] = transformedDisplayName
+		}
+
+		transformedConditionMatchedLog, err := expandMonitoringAlertPolicyConditionsConditionMatchedLog(original["condition_matched_log"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedConditionMatchedLog); val.IsValid() && !isEmptyValue(val) {
+			transformed["conditionMatchedLog"] = transformedConditionMatchedLog
 		}
 
 		req = append(req, transformed)
@@ -1793,6 +1972,13 @@ func expandMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguage(v int
 		transformed["trigger"] = transformedTrigger
 	}
 
+	transformedEvaluationMissingData, err := expandMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageEvaluationMissingData(original["evaluation_missing_data"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEvaluationMissingData); val.IsValid() && !isEmptyValue(val) {
+		transformed["evaluationMissingData"] = transformedEvaluationMissingData
+	}
+
 	return transformed, nil
 }
 
@@ -1835,6 +2021,10 @@ func expandMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageTrigge
 }
 
 func expandMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageTriggerCount(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionMonitoringQueryLanguageEvaluationMissingData(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1901,6 +2091,13 @@ func expandMonitoringAlertPolicyConditionsConditionThreshold(v interface{}, d Te
 		return nil, err
 	} else if val := reflect.ValueOf(transformedFilter); val.IsValid() && !isEmptyValue(val) {
 		transformed["filter"] = transformedFilter
+	}
+
+	transformedEvaluationMissingData, err := expandMonitoringAlertPolicyConditionsConditionThresholdEvaluationMissingData(original["evaluation_missing_data"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedEvaluationMissingData); val.IsValid() && !isEmptyValue(val) {
+		transformed["evaluationMissingData"] = transformedEvaluationMissingData
 	}
 
 	return transformed, nil
@@ -2078,11 +2275,109 @@ func expandMonitoringAlertPolicyConditionsConditionThresholdFilter(v interface{}
 	return v, nil
 }
 
+func expandMonitoringAlertPolicyConditionsConditionThresholdEvaluationMissingData(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandMonitoringAlertPolicyConditionsDisplayName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
+func expandMonitoringAlertPolicyConditionsConditionMatchedLog(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedFilter, err := expandMonitoringAlertPolicyConditionsConditionMatchedLogFilter(original["filter"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedFilter); val.IsValid() && !isEmptyValue(val) {
+		transformed["filter"] = transformedFilter
+	}
+
+	transformedLabelExtractors, err := expandMonitoringAlertPolicyConditionsConditionMatchedLogLabelExtractors(original["label_extractors"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedLabelExtractors); val.IsValid() && !isEmptyValue(val) {
+		transformed["labelExtractors"] = transformedLabelExtractors
+	}
+
+	return transformed, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionMatchedLogFilter(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyConditionsConditionMatchedLogLabelExtractors(v interface{}, d TerraformResourceData, config *Config) (map[string]string, error) {
+	if v == nil {
+		return map[string]string{}, nil
+	}
+	m := make(map[string]string)
+	for k, val := range v.(map[string]interface{}) {
+		m[k] = val.(string)
+	}
+	return m, nil
+}
+
 func expandMonitoringAlertPolicyNotificationChannels(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyAlertStrategy(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedNotificationRateLimit, err := expandMonitoringAlertPolicyAlertStrategyNotificationRateLimit(original["notification_rate_limit"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedNotificationRateLimit); val.IsValid() && !isEmptyValue(val) {
+		transformed["notificationRateLimit"] = transformedNotificationRateLimit
+	}
+
+	transformedAutoClose, err := expandMonitoringAlertPolicyAlertStrategyAutoClose(original["auto_close"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAutoClose); val.IsValid() && !isEmptyValue(val) {
+		transformed["autoClose"] = transformedAutoClose
+	}
+
+	return transformed, nil
+}
+
+func expandMonitoringAlertPolicyAlertStrategyNotificationRateLimit(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedPeriod, err := expandMonitoringAlertPolicyAlertStrategyNotificationRateLimitPeriod(original["period"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedPeriod); val.IsValid() && !isEmptyValue(val) {
+		transformed["period"] = transformedPeriod
+	}
+
+	return transformed, nil
+}
+
+func expandMonitoringAlertPolicyAlertStrategyNotificationRateLimitPeriod(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandMonitoringAlertPolicyAlertStrategyAutoClose(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 

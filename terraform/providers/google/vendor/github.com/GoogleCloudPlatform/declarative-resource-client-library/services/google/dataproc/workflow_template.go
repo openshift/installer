@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -42,6 +42,168 @@ func (r *WorkflowTemplate) String() string {
 	return dcl.SprintResource(r)
 }
 
+// The enum WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnum.
+type WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnum string
+
+// WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnumRef returns a *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnumRef(s string) *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnum {
+	v := WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnum(s)
+	return &v
+}
+
+func (v WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"PRIVATE_IPV6_GOOGLE_ACCESS_UNSPECIFIED", "INHERIT_FROM_SUBNETWORK", "OUTBOUND", "BIDIRECTIONAL"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnum.
+type WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnum string
+
+// WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnumRef returns a *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnumRef(s string) *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnum {
+	v := WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnum(s)
+	return &v
+}
+
+func (v WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"TYPE_UNSPECIFIED", "NO_RESERVATION", "ANY_RESERVATION", "SPECIFIC_RESERVATION"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnum.
+type WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnum string
+
+// WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnumRef returns a *WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnumRef(s string) *WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnum {
+	v := WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnum(s)
+	return &v
+}
+
+func (v WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"PREEMPTIBILITY_UNSPECIFIED", "NON_PREEMPTIBLE", "PREEMPTIBLE"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnum.
+type WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnum string
+
+// WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnumRef returns a *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnumRef(s string) *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnum {
+	v := WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnum(s)
+	return &v
+}
+
+func (v WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"PREEMPTIBILITY_UNSPECIFIED", "NON_PREEMPTIBLE", "PREEMPTIBLE"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnum.
+type WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnum string
+
+// WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnumRef returns a *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnumRef(s string) *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnum {
+	v := WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnum(s)
+	return &v
+}
+
+func (v WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"PREEMPTIBILITY_UNSPECIFIED", "NON_PREEMPTIBLE", "PREEMPTIBLE"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnum.
+type WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnum string
+
+// WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnumRef returns a *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnumRef(s string) *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnum {
+	v := WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnum(s)
+	return &v
+}
+
+func (v WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"COMPONENT_UNSPECIFIED", "ANACONDA", "DOCKER", "DRUID", "FLINK", "HBASE", "HIVE_WEBHCAT", "JUPYTER", "KERBEROS", "PRESTO", "RANGER", "SOLR", "ZEPPELIN", "ZOOKEEPER"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
 type WorkflowTemplatePlacement struct {
 	empty           bool                                      `json:"-"`
 	ManagedCluster  *WorkflowTemplatePlacementManagedCluster  `json:"managedCluster"`
@@ -72,8 +234,8 @@ func (r *WorkflowTemplatePlacement) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplatePlacement is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplatePlacement *WorkflowTemplatePlacement = &WorkflowTemplatePlacement{empty: true}
 
 func (r *WorkflowTemplatePlacement) Empty() bool {
@@ -92,10 +254,10 @@ func (r *WorkflowTemplatePlacement) HashCode() string {
 }
 
 type WorkflowTemplatePlacementManagedCluster struct {
-	empty       bool                  `json:"-"`
-	ClusterName *string               `json:"clusterName"`
-	Config      *ClusterClusterConfig `json:"config"`
-	Labels      map[string]string     `json:"labels"`
+	empty       bool                                           `json:"-"`
+	ClusterName *string                                        `json:"clusterName"`
+	Config      *WorkflowTemplatePlacementManagedClusterConfig `json:"config"`
+	Labels      map[string]string                              `json:"labels"`
 }
 
 type jsonWorkflowTemplatePlacementManagedCluster WorkflowTemplatePlacementManagedCluster
@@ -124,8 +286,8 @@ func (r *WorkflowTemplatePlacementManagedCluster) UnmarshalJSON(data []byte) err
 }
 
 // This object is used to assert a desired state where this WorkflowTemplatePlacementManagedCluster is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplatePlacementManagedCluster *WorkflowTemplatePlacementManagedCluster = &WorkflowTemplatePlacementManagedCluster{empty: true}
 
 func (r *WorkflowTemplatePlacementManagedCluster) Empty() bool {
@@ -137,6 +299,1417 @@ func (r *WorkflowTemplatePlacementManagedCluster) String() string {
 }
 
 func (r *WorkflowTemplatePlacementManagedCluster) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfig struct {
+	empty                 bool                                                                 `json:"-"`
+	StagingBucket         *string                                                              `json:"stagingBucket"`
+	TempBucket            *string                                                              `json:"tempBucket"`
+	GceClusterConfig      *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig       `json:"gceClusterConfig"`
+	MasterConfig          *WorkflowTemplatePlacementManagedClusterConfigMasterConfig           `json:"masterConfig"`
+	WorkerConfig          *WorkflowTemplatePlacementManagedClusterConfigWorkerConfig           `json:"workerConfig"`
+	SecondaryWorkerConfig *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig  `json:"secondaryWorkerConfig"`
+	SoftwareConfig        *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig         `json:"softwareConfig"`
+	InitializationActions []WorkflowTemplatePlacementManagedClusterConfigInitializationActions `json:"initializationActions"`
+	EncryptionConfig      *WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig       `json:"encryptionConfig"`
+	AutoscalingConfig     *WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig      `json:"autoscalingConfig"`
+	SecurityConfig        *WorkflowTemplatePlacementManagedClusterConfigSecurityConfig         `json:"securityConfig"`
+	LifecycleConfig       *WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig        `json:"lifecycleConfig"`
+	EndpointConfig        *WorkflowTemplatePlacementManagedClusterConfigEndpointConfig         `json:"endpointConfig"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfig WorkflowTemplatePlacementManagedClusterConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfig
+	} else {
+
+		r.StagingBucket = res.StagingBucket
+
+		r.TempBucket = res.TempBucket
+
+		r.GceClusterConfig = res.GceClusterConfig
+
+		r.MasterConfig = res.MasterConfig
+
+		r.WorkerConfig = res.WorkerConfig
+
+		r.SecondaryWorkerConfig = res.SecondaryWorkerConfig
+
+		r.SoftwareConfig = res.SoftwareConfig
+
+		r.InitializationActions = res.InitializationActions
+
+		r.EncryptionConfig = res.EncryptionConfig
+
+		r.AutoscalingConfig = res.AutoscalingConfig
+
+		r.SecurityConfig = res.SecurityConfig
+
+		r.LifecycleConfig = res.LifecycleConfig
+
+		r.EndpointConfig = res.EndpointConfig
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfig *WorkflowTemplatePlacementManagedClusterConfig = &WorkflowTemplatePlacementManagedClusterConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig struct {
+	empty                   bool                                                                                      `json:"-"`
+	Zone                    *string                                                                                   `json:"zone"`
+	Network                 *string                                                                                   `json:"network"`
+	Subnetwork              *string                                                                                   `json:"subnetwork"`
+	InternalIPOnly          *bool                                                                                     `json:"internalIPOnly"`
+	PrivateIPv6GoogleAccess *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigPrivateIPv6GoogleAccessEnum `json:"privateIPv6GoogleAccess"`
+	ServiceAccount          *string                                                                                   `json:"serviceAccount"`
+	ServiceAccountScopes    []string                                                                                  `json:"serviceAccountScopes"`
+	Tags                    []string                                                                                  `json:"tags"`
+	Metadata                map[string]string                                                                         `json:"metadata"`
+	ReservationAffinity     *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity         `json:"reservationAffinity"`
+	NodeGroupAffinity       *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity           `json:"nodeGroupAffinity"`
+	ShieldedInstanceConfig  *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig      `json:"shieldedInstanceConfig"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigGceClusterConfig WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigGceClusterConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigGceClusterConfig
+	} else {
+
+		r.Zone = res.Zone
+
+		r.Network = res.Network
+
+		r.Subnetwork = res.Subnetwork
+
+		r.InternalIPOnly = res.InternalIPOnly
+
+		r.PrivateIPv6GoogleAccess = res.PrivateIPv6GoogleAccess
+
+		r.ServiceAccount = res.ServiceAccount
+
+		r.ServiceAccountScopes = res.ServiceAccountScopes
+
+		r.Tags = res.Tags
+
+		r.Metadata = res.Metadata
+
+		r.ReservationAffinity = res.ReservationAffinity
+
+		r.NodeGroupAffinity = res.NodeGroupAffinity
+
+		r.ShieldedInstanceConfig = res.ShieldedInstanceConfig
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigGceClusterConfig *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig = &WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity struct {
+	empty                  bool                                                                                                        `json:"-"`
+	ConsumeReservationType *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinityConsumeReservationTypeEnum `json:"consumeReservationType"`
+	Key                    *string                                                                                                     `json:"key"`
+	Values                 []string                                                                                                    `json:"values"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity
+	} else {
+
+		r.ConsumeReservationType = res.ConsumeReservationType
+
+		r.Key = res.Key
+
+		r.Values = res.Values
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity = &WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigReservationAffinity) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity struct {
+	empty     bool    `json:"-"`
+	NodeGroup *string `json:"nodeGroup"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity
+	} else {
+
+		r.NodeGroup = res.NodeGroup
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity = &WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigNodeGroupAffinity) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig struct {
+	empty                     bool  `json:"-"`
+	EnableSecureBoot          *bool `json:"enableSecureBoot"`
+	EnableVtpm                *bool `json:"enableVtpm"`
+	EnableIntegrityMonitoring *bool `json:"enableIntegrityMonitoring"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig
+	} else {
+
+		r.EnableSecureBoot = res.EnableSecureBoot
+
+		r.EnableVtpm = res.EnableVtpm
+
+		r.EnableIntegrityMonitoring = res.EnableIntegrityMonitoring
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig = &WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigGceClusterConfigShieldedInstanceConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigMasterConfig struct {
+	empty              bool                                                                         `json:"-"`
+	NumInstances       *int64                                                                       `json:"numInstances"`
+	InstanceNames      []string                                                                     `json:"instanceNames"`
+	Image              *string                                                                      `json:"image"`
+	MachineType        *string                                                                      `json:"machineType"`
+	DiskConfig         *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig         `json:"diskConfig"`
+	IsPreemptible      *bool                                                                        `json:"isPreemptible"`
+	Preemptibility     *WorkflowTemplatePlacementManagedClusterConfigMasterConfigPreemptibilityEnum `json:"preemptibility"`
+	ManagedGroupConfig *WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig `json:"managedGroupConfig"`
+	Accelerators       []WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators      `json:"accelerators"`
+	MinCpuPlatform     *string                                                                      `json:"minCpuPlatform"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigMasterConfig WorkflowTemplatePlacementManagedClusterConfigMasterConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigMasterConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfig
+	} else {
+
+		r.NumInstances = res.NumInstances
+
+		r.InstanceNames = res.InstanceNames
+
+		r.Image = res.Image
+
+		r.MachineType = res.MachineType
+
+		r.DiskConfig = res.DiskConfig
+
+		r.IsPreemptible = res.IsPreemptible
+
+		r.Preemptibility = res.Preemptibility
+
+		r.ManagedGroupConfig = res.ManagedGroupConfig
+
+		r.Accelerators = res.Accelerators
+
+		r.MinCpuPlatform = res.MinCpuPlatform
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigMasterConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfig *WorkflowTemplatePlacementManagedClusterConfigMasterConfig = &WorkflowTemplatePlacementManagedClusterConfigMasterConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig struct {
+	empty          bool    `json:"-"`
+	BootDiskType   *string `json:"bootDiskType"`
+	BootDiskSizeGb *int64  `json:"bootDiskSizeGb"`
+	NumLocalSsds   *int64  `json:"numLocalSsds"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig
+	} else {
+
+		r.BootDiskType = res.BootDiskType
+
+		r.BootDiskSizeGb = res.BootDiskSizeGb
+
+		r.NumLocalSsds = res.NumLocalSsds
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig = &WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigDiskConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig struct {
+	empty                    bool    `json:"-"`
+	InstanceTemplateName     *string `json:"instanceTemplateName"`
+	InstanceGroupManagerName *string `json:"instanceGroupManagerName"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig
+	} else {
+
+		r.InstanceTemplateName = res.InstanceTemplateName
+
+		r.InstanceGroupManagerName = res.InstanceGroupManagerName
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig *WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig = &WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigManagedGroupConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators struct {
+	empty            bool    `json:"-"`
+	AcceleratorType  *string `json:"acceleratorType"`
+	AcceleratorCount *int64  `json:"acceleratorCount"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators
+	} else {
+
+		r.AcceleratorType = res.AcceleratorType
+
+		r.AcceleratorCount = res.AcceleratorCount
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators *WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators = &WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigMasterConfigAccelerators) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigWorkerConfig struct {
+	empty              bool                                                                         `json:"-"`
+	NumInstances       *int64                                                                       `json:"numInstances"`
+	InstanceNames      []string                                                                     `json:"instanceNames"`
+	Image              *string                                                                      `json:"image"`
+	MachineType        *string                                                                      `json:"machineType"`
+	DiskConfig         *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig         `json:"diskConfig"`
+	IsPreemptible      *bool                                                                        `json:"isPreemptible"`
+	Preemptibility     *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigPreemptibilityEnum `json:"preemptibility"`
+	ManagedGroupConfig *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig `json:"managedGroupConfig"`
+	Accelerators       []WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators      `json:"accelerators"`
+	MinCpuPlatform     *string                                                                      `json:"minCpuPlatform"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigWorkerConfig WorkflowTemplatePlacementManagedClusterConfigWorkerConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigWorkerConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfig
+	} else {
+
+		r.NumInstances = res.NumInstances
+
+		r.InstanceNames = res.InstanceNames
+
+		r.Image = res.Image
+
+		r.MachineType = res.MachineType
+
+		r.DiskConfig = res.DiskConfig
+
+		r.IsPreemptible = res.IsPreemptible
+
+		r.Preemptibility = res.Preemptibility
+
+		r.ManagedGroupConfig = res.ManagedGroupConfig
+
+		r.Accelerators = res.Accelerators
+
+		r.MinCpuPlatform = res.MinCpuPlatform
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigWorkerConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfig *WorkflowTemplatePlacementManagedClusterConfigWorkerConfig = &WorkflowTemplatePlacementManagedClusterConfigWorkerConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig struct {
+	empty          bool    `json:"-"`
+	BootDiskType   *string `json:"bootDiskType"`
+	BootDiskSizeGb *int64  `json:"bootDiskSizeGb"`
+	NumLocalSsds   *int64  `json:"numLocalSsds"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig
+	} else {
+
+		r.BootDiskType = res.BootDiskType
+
+		r.BootDiskSizeGb = res.BootDiskSizeGb
+
+		r.NumLocalSsds = res.NumLocalSsds
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig = &WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigDiskConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig struct {
+	empty                    bool    `json:"-"`
+	InstanceTemplateName     *string `json:"instanceTemplateName"`
+	InstanceGroupManagerName *string `json:"instanceGroupManagerName"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig
+	} else {
+
+		r.InstanceTemplateName = res.InstanceTemplateName
+
+		r.InstanceGroupManagerName = res.InstanceGroupManagerName
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig = &WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigManagedGroupConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators struct {
+	empty            bool    `json:"-"`
+	AcceleratorType  *string `json:"acceleratorType"`
+	AcceleratorCount *int64  `json:"acceleratorCount"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators
+	} else {
+
+		r.AcceleratorType = res.AcceleratorType
+
+		r.AcceleratorCount = res.AcceleratorCount
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators = &WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigWorkerConfigAccelerators) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig struct {
+	empty              bool                                                                                  `json:"-"`
+	NumInstances       *int64                                                                                `json:"numInstances"`
+	InstanceNames      []string                                                                              `json:"instanceNames"`
+	Image              *string                                                                               `json:"image"`
+	MachineType        *string                                                                               `json:"machineType"`
+	DiskConfig         *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig         `json:"diskConfig"`
+	IsPreemptible      *bool                                                                                 `json:"isPreemptible"`
+	Preemptibility     *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigPreemptibilityEnum `json:"preemptibility"`
+	ManagedGroupConfig *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig `json:"managedGroupConfig"`
+	Accelerators       []WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators      `json:"accelerators"`
+	MinCpuPlatform     *string                                                                               `json:"minCpuPlatform"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig
+	} else {
+
+		r.NumInstances = res.NumInstances
+
+		r.InstanceNames = res.InstanceNames
+
+		r.Image = res.Image
+
+		r.MachineType = res.MachineType
+
+		r.DiskConfig = res.DiskConfig
+
+		r.IsPreemptible = res.IsPreemptible
+
+		r.Preemptibility = res.Preemptibility
+
+		r.ManagedGroupConfig = res.ManagedGroupConfig
+
+		r.Accelerators = res.Accelerators
+
+		r.MinCpuPlatform = res.MinCpuPlatform
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig = &WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig struct {
+	empty          bool    `json:"-"`
+	BootDiskType   *string `json:"bootDiskType"`
+	BootDiskSizeGb *int64  `json:"bootDiskSizeGb"`
+	NumLocalSsds   *int64  `json:"numLocalSsds"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig
+	} else {
+
+		r.BootDiskType = res.BootDiskType
+
+		r.BootDiskSizeGb = res.BootDiskSizeGb
+
+		r.NumLocalSsds = res.NumLocalSsds
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig = &WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigDiskConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig struct {
+	empty                    bool    `json:"-"`
+	InstanceTemplateName     *string `json:"instanceTemplateName"`
+	InstanceGroupManagerName *string `json:"instanceGroupManagerName"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig
+	} else {
+
+		r.InstanceTemplateName = res.InstanceTemplateName
+
+		r.InstanceGroupManagerName = res.InstanceGroupManagerName
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig = &WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigManagedGroupConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators struct {
+	empty            bool    `json:"-"`
+	AcceleratorType  *string `json:"acceleratorType"`
+	AcceleratorCount *int64  `json:"acceleratorCount"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators
+	} else {
+
+		r.AcceleratorType = res.AcceleratorType
+
+		r.AcceleratorCount = res.AcceleratorCount
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators = &WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecondaryWorkerConfigAccelerators) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig struct {
+	empty              bool                                                                                `json:"-"`
+	ImageVersion       *string                                                                             `json:"imageVersion"`
+	Properties         map[string]string                                                                   `json:"properties"`
+	OptionalComponents []WorkflowTemplatePlacementManagedClusterConfigSoftwareConfigOptionalComponentsEnum `json:"optionalComponents"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigSoftwareConfig WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigSoftwareConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigSoftwareConfig
+	} else {
+
+		r.ImageVersion = res.ImageVersion
+
+		r.Properties = res.Properties
+
+		r.OptionalComponents = res.OptionalComponents
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigSoftwareConfig *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig = &WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSoftwareConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigInitializationActions struct {
+	empty            bool    `json:"-"`
+	ExecutableFile   *string `json:"executableFile"`
+	ExecutionTimeout *string `json:"executionTimeout"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigInitializationActions WorkflowTemplatePlacementManagedClusterConfigInitializationActions
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigInitializationActions) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigInitializationActions
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigInitializationActions
+	} else {
+
+		r.ExecutableFile = res.ExecutableFile
+
+		r.ExecutionTimeout = res.ExecutionTimeout
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigInitializationActions is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigInitializationActions *WorkflowTemplatePlacementManagedClusterConfigInitializationActions = &WorkflowTemplatePlacementManagedClusterConfigInitializationActions{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigInitializationActions) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigInitializationActions) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigInitializationActions) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig struct {
+	empty           bool    `json:"-"`
+	GcePdKmsKeyName *string `json:"gcePdKmsKeyName"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigEncryptionConfig WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigEncryptionConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigEncryptionConfig
+	} else {
+
+		r.GcePdKmsKeyName = res.GcePdKmsKeyName
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigEncryptionConfig *WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig = &WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigEncryptionConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig struct {
+	empty  bool    `json:"-"`
+	Policy *string `json:"policy"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig
+	} else {
+
+		r.Policy = res.Policy
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig *WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig = &WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigAutoscalingConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigSecurityConfig struct {
+	empty          bool                                                                       `json:"-"`
+	KerberosConfig *WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig `json:"kerberosConfig"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigSecurityConfig WorkflowTemplatePlacementManagedClusterConfigSecurityConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigSecurityConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigSecurityConfig
+	} else {
+
+		r.KerberosConfig = res.KerberosConfig
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigSecurityConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigSecurityConfig *WorkflowTemplatePlacementManagedClusterConfigSecurityConfig = &WorkflowTemplatePlacementManagedClusterConfigSecurityConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig struct {
+	empty                         bool    `json:"-"`
+	EnableKerberos                *bool   `json:"enableKerberos"`
+	RootPrincipalPassword         *string `json:"rootPrincipalPassword"`
+	KmsKey                        *string `json:"kmsKey"`
+	Keystore                      *string `json:"keystore"`
+	Truststore                    *string `json:"truststore"`
+	KeystorePassword              *string `json:"keystorePassword"`
+	KeyPassword                   *string `json:"keyPassword"`
+	TruststorePassword            *string `json:"truststorePassword"`
+	CrossRealmTrustRealm          *string `json:"crossRealmTrustRealm"`
+	CrossRealmTrustKdc            *string `json:"crossRealmTrustKdc"`
+	CrossRealmTrustAdminServer    *string `json:"crossRealmTrustAdminServer"`
+	CrossRealmTrustSharedPassword *string `json:"crossRealmTrustSharedPassword"`
+	KdcDbKey                      *string `json:"kdcDbKey"`
+	TgtLifetimeHours              *int64  `json:"tgtLifetimeHours"`
+	Realm                         *string `json:"realm"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig
+	} else {
+
+		r.EnableKerberos = res.EnableKerberos
+
+		r.RootPrincipalPassword = res.RootPrincipalPassword
+
+		r.KmsKey = res.KmsKey
+
+		r.Keystore = res.Keystore
+
+		r.Truststore = res.Truststore
+
+		r.KeystorePassword = res.KeystorePassword
+
+		r.KeyPassword = res.KeyPassword
+
+		r.TruststorePassword = res.TruststorePassword
+
+		r.CrossRealmTrustRealm = res.CrossRealmTrustRealm
+
+		r.CrossRealmTrustKdc = res.CrossRealmTrustKdc
+
+		r.CrossRealmTrustAdminServer = res.CrossRealmTrustAdminServer
+
+		r.CrossRealmTrustSharedPassword = res.CrossRealmTrustSharedPassword
+
+		r.KdcDbKey = res.KdcDbKey
+
+		r.TgtLifetimeHours = res.TgtLifetimeHours
+
+		r.Realm = res.Realm
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig *WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig = &WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigSecurityConfigKerberosConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig struct {
+	empty          bool    `json:"-"`
+	IdleDeleteTtl  *string `json:"idleDeleteTtl"`
+	AutoDeleteTime *string `json:"autoDeleteTime"`
+	AutoDeleteTtl  *string `json:"autoDeleteTtl"`
+	IdleStartTime  *string `json:"idleStartTime"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigLifecycleConfig WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigLifecycleConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigLifecycleConfig
+	} else {
+
+		r.IdleDeleteTtl = res.IdleDeleteTtl
+
+		r.AutoDeleteTime = res.AutoDeleteTime
+
+		r.AutoDeleteTtl = res.AutoDeleteTtl
+
+		r.IdleStartTime = res.IdleStartTime
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigLifecycleConfig *WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig = &WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigLifecycleConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.New().Sum([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
+type WorkflowTemplatePlacementManagedClusterConfigEndpointConfig struct {
+	empty                bool              `json:"-"`
+	HttpPorts            map[string]string `json:"httpPorts"`
+	EnableHttpPortAccess *bool             `json:"enableHttpPortAccess"`
+}
+
+type jsonWorkflowTemplatePlacementManagedClusterConfigEndpointConfig WorkflowTemplatePlacementManagedClusterConfigEndpointConfig
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigEndpointConfig) UnmarshalJSON(data []byte) error {
+	var res jsonWorkflowTemplatePlacementManagedClusterConfigEndpointConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkflowTemplatePlacementManagedClusterConfigEndpointConfig
+	} else {
+
+		r.HttpPorts = res.HttpPorts
+
+		r.EnableHttpPortAccess = res.EnableHttpPortAccess
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkflowTemplatePlacementManagedClusterConfigEndpointConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkflowTemplatePlacementManagedClusterConfigEndpointConfig *WorkflowTemplatePlacementManagedClusterConfigEndpointConfig = &WorkflowTemplatePlacementManagedClusterConfigEndpointConfig{empty: true}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigEndpointConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigEndpointConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkflowTemplatePlacementManagedClusterConfigEndpointConfig) HashCode() string {
 	// Placeholder for a more complex hash method that handles ordering, etc
 	// Hash resource body for easy comparison later
 	hash := sha256.New().Sum([]byte(r.String()))
@@ -173,8 +1746,8 @@ func (r *WorkflowTemplatePlacementClusterSelector) UnmarshalJSON(data []byte) er
 }
 
 // This object is used to assert a desired state where this WorkflowTemplatePlacementClusterSelector is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplatePlacementClusterSelector *WorkflowTemplatePlacementClusterSelector = &WorkflowTemplatePlacementClusterSelector{empty: true}
 
 func (r *WorkflowTemplatePlacementClusterSelector) Empty() bool {
@@ -252,8 +1825,8 @@ func (r *WorkflowTemplateJobs) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobs is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobs *WorkflowTemplateJobs = &WorkflowTemplateJobs{empty: true}
 
 func (r *WorkflowTemplateJobs) Empty() bool {
@@ -319,8 +1892,8 @@ func (r *WorkflowTemplateJobsHadoopJob) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsHadoopJob is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsHadoopJob *WorkflowTemplateJobsHadoopJob = &WorkflowTemplateJobsHadoopJob{empty: true}
 
 func (r *WorkflowTemplateJobsHadoopJob) Empty() bool {
@@ -365,8 +1938,8 @@ func (r *WorkflowTemplateJobsHadoopJobLoggingConfig) UnmarshalJSON(data []byte) 
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsHadoopJobLoggingConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsHadoopJobLoggingConfig *WorkflowTemplateJobsHadoopJobLoggingConfig = &WorkflowTemplateJobsHadoopJobLoggingConfig{empty: true}
 
 func (r *WorkflowTemplateJobsHadoopJobLoggingConfig) Empty() bool {
@@ -432,8 +2005,8 @@ func (r *WorkflowTemplateJobsSparkJob) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsSparkJob is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsSparkJob *WorkflowTemplateJobsSparkJob = &WorkflowTemplateJobsSparkJob{empty: true}
 
 func (r *WorkflowTemplateJobsSparkJob) Empty() bool {
@@ -478,8 +2051,8 @@ func (r *WorkflowTemplateJobsSparkJobLoggingConfig) UnmarshalJSON(data []byte) e
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsSparkJobLoggingConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsSparkJobLoggingConfig *WorkflowTemplateJobsSparkJobLoggingConfig = &WorkflowTemplateJobsSparkJobLoggingConfig{empty: true}
 
 func (r *WorkflowTemplateJobsSparkJobLoggingConfig) Empty() bool {
@@ -545,8 +2118,8 @@ func (r *WorkflowTemplateJobsPysparkJob) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsPysparkJob is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsPysparkJob *WorkflowTemplateJobsPysparkJob = &WorkflowTemplateJobsPysparkJob{empty: true}
 
 func (r *WorkflowTemplateJobsPysparkJob) Empty() bool {
@@ -591,8 +2164,8 @@ func (r *WorkflowTemplateJobsPysparkJobLoggingConfig) UnmarshalJSON(data []byte)
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsPysparkJobLoggingConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsPysparkJobLoggingConfig *WorkflowTemplateJobsPysparkJobLoggingConfig = &WorkflowTemplateJobsPysparkJobLoggingConfig{empty: true}
 
 func (r *WorkflowTemplateJobsPysparkJobLoggingConfig) Empty() bool {
@@ -652,8 +2225,8 @@ func (r *WorkflowTemplateJobsHiveJob) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsHiveJob is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsHiveJob *WorkflowTemplateJobsHiveJob = &WorkflowTemplateJobsHiveJob{empty: true}
 
 func (r *WorkflowTemplateJobsHiveJob) Empty() bool {
@@ -698,8 +2271,8 @@ func (r *WorkflowTemplateJobsHiveJobQueryList) UnmarshalJSON(data []byte) error 
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsHiveJobQueryList is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsHiveJobQueryList *WorkflowTemplateJobsHiveJobQueryList = &WorkflowTemplateJobsHiveJobQueryList{empty: true}
 
 func (r *WorkflowTemplateJobsHiveJobQueryList) Empty() bool {
@@ -762,8 +2335,8 @@ func (r *WorkflowTemplateJobsPigJob) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsPigJob is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsPigJob *WorkflowTemplateJobsPigJob = &WorkflowTemplateJobsPigJob{empty: true}
 
 func (r *WorkflowTemplateJobsPigJob) Empty() bool {
@@ -808,8 +2381,8 @@ func (r *WorkflowTemplateJobsPigJobQueryList) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsPigJobQueryList is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsPigJobQueryList *WorkflowTemplateJobsPigJobQueryList = &WorkflowTemplateJobsPigJobQueryList{empty: true}
 
 func (r *WorkflowTemplateJobsPigJobQueryList) Empty() bool {
@@ -854,8 +2427,8 @@ func (r *WorkflowTemplateJobsPigJobLoggingConfig) UnmarshalJSON(data []byte) err
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsPigJobLoggingConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsPigJobLoggingConfig *WorkflowTemplateJobsPigJobLoggingConfig = &WorkflowTemplateJobsPigJobLoggingConfig{empty: true}
 
 func (r *WorkflowTemplateJobsPigJobLoggingConfig) Empty() bool {
@@ -915,8 +2488,8 @@ func (r *WorkflowTemplateJobsSparkRJob) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsSparkRJob is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsSparkRJob *WorkflowTemplateJobsSparkRJob = &WorkflowTemplateJobsSparkRJob{empty: true}
 
 func (r *WorkflowTemplateJobsSparkRJob) Empty() bool {
@@ -961,8 +2534,8 @@ func (r *WorkflowTemplateJobsSparkRJobLoggingConfig) UnmarshalJSON(data []byte) 
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsSparkRJobLoggingConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsSparkRJobLoggingConfig *WorkflowTemplateJobsSparkRJobLoggingConfig = &WorkflowTemplateJobsSparkRJobLoggingConfig{empty: true}
 
 func (r *WorkflowTemplateJobsSparkRJobLoggingConfig) Empty() bool {
@@ -1022,8 +2595,8 @@ func (r *WorkflowTemplateJobsSparkSqlJob) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsSparkSqlJob is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsSparkSqlJob *WorkflowTemplateJobsSparkSqlJob = &WorkflowTemplateJobsSparkSqlJob{empty: true}
 
 func (r *WorkflowTemplateJobsSparkSqlJob) Empty() bool {
@@ -1068,8 +2641,8 @@ func (r *WorkflowTemplateJobsSparkSqlJobQueryList) UnmarshalJSON(data []byte) er
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsSparkSqlJobQueryList is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsSparkSqlJobQueryList *WorkflowTemplateJobsSparkSqlJobQueryList = &WorkflowTemplateJobsSparkSqlJobQueryList{empty: true}
 
 func (r *WorkflowTemplateJobsSparkSqlJobQueryList) Empty() bool {
@@ -1114,8 +2687,8 @@ func (r *WorkflowTemplateJobsSparkSqlJobLoggingConfig) UnmarshalJSON(data []byte
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsSparkSqlJobLoggingConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsSparkSqlJobLoggingConfig *WorkflowTemplateJobsSparkSqlJobLoggingConfig = &WorkflowTemplateJobsSparkSqlJobLoggingConfig{empty: true}
 
 func (r *WorkflowTemplateJobsSparkSqlJobLoggingConfig) Empty() bool {
@@ -1178,8 +2751,8 @@ func (r *WorkflowTemplateJobsPrestoJob) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsPrestoJob is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsPrestoJob *WorkflowTemplateJobsPrestoJob = &WorkflowTemplateJobsPrestoJob{empty: true}
 
 func (r *WorkflowTemplateJobsPrestoJob) Empty() bool {
@@ -1224,8 +2797,8 @@ func (r *WorkflowTemplateJobsPrestoJobQueryList) UnmarshalJSON(data []byte) erro
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsPrestoJobQueryList is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsPrestoJobQueryList *WorkflowTemplateJobsPrestoJobQueryList = &WorkflowTemplateJobsPrestoJobQueryList{empty: true}
 
 func (r *WorkflowTemplateJobsPrestoJobQueryList) Empty() bool {
@@ -1270,8 +2843,8 @@ func (r *WorkflowTemplateJobsPrestoJobLoggingConfig) UnmarshalJSON(data []byte) 
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsPrestoJobLoggingConfig is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsPrestoJobLoggingConfig *WorkflowTemplateJobsPrestoJobLoggingConfig = &WorkflowTemplateJobsPrestoJobLoggingConfig{empty: true}
 
 func (r *WorkflowTemplateJobsPrestoJobLoggingConfig) Empty() bool {
@@ -1319,8 +2892,8 @@ func (r *WorkflowTemplateJobsScheduling) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateJobsScheduling is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateJobsScheduling *WorkflowTemplateJobsScheduling = &WorkflowTemplateJobsScheduling{empty: true}
 
 func (r *WorkflowTemplateJobsScheduling) Empty() bool {
@@ -1374,8 +2947,8 @@ func (r *WorkflowTemplateParameters) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateParameters is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateParameters *WorkflowTemplateParameters = &WorkflowTemplateParameters{empty: true}
 
 func (r *WorkflowTemplateParameters) Empty() bool {
@@ -1423,8 +2996,8 @@ func (r *WorkflowTemplateParametersValidation) UnmarshalJSON(data []byte) error 
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateParametersValidation is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateParametersValidation *WorkflowTemplateParametersValidation = &WorkflowTemplateParametersValidation{empty: true}
 
 func (r *WorkflowTemplateParametersValidation) Empty() bool {
@@ -1469,8 +3042,8 @@ func (r *WorkflowTemplateParametersValidationRegex) UnmarshalJSON(data []byte) e
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateParametersValidationRegex is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateParametersValidationRegex *WorkflowTemplateParametersValidationRegex = &WorkflowTemplateParametersValidationRegex{empty: true}
 
 func (r *WorkflowTemplateParametersValidationRegex) Empty() bool {
@@ -1515,8 +3088,8 @@ func (r *WorkflowTemplateParametersValidationValues) UnmarshalJSON(data []byte) 
 }
 
 // This object is used to assert a desired state where this WorkflowTemplateParametersValidationValues is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyWorkflowTemplateParametersValidationValues *WorkflowTemplateParametersValidationValues = &WorkflowTemplateParametersValidationValues{empty: true}
 
 func (r *WorkflowTemplateParametersValidationValues) Empty() bool {
@@ -1550,17 +3123,17 @@ func (r *WorkflowTemplate) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"name":       dcl.ValueOrEmptyString(nr.Name),
-		"version":    dcl.ValueOrEmptyString(nr.Version),
-		"createTime": dcl.ValueOrEmptyString(nr.CreateTime),
-		"updateTime": dcl.ValueOrEmptyString(nr.UpdateTime),
-		"labels":     dcl.ValueOrEmptyString(nr.Labels),
-		"placement":  dcl.ValueOrEmptyString(nr.Placement),
-		"jobs":       dcl.ValueOrEmptyString(nr.Jobs),
-		"parameters": dcl.ValueOrEmptyString(nr.Parameters),
-		"dagTimeout": dcl.ValueOrEmptyString(nr.DagTimeout),
-		"project":    dcl.ValueOrEmptyString(nr.Project),
-		"location":   dcl.ValueOrEmptyString(nr.Location),
+		"name":        dcl.ValueOrEmptyString(nr.Name),
+		"version":     dcl.ValueOrEmptyString(nr.Version),
+		"create_time": dcl.ValueOrEmptyString(nr.CreateTime),
+		"update_time": dcl.ValueOrEmptyString(nr.UpdateTime),
+		"labels":      dcl.ValueOrEmptyString(nr.Labels),
+		"placement":   dcl.ValueOrEmptyString(nr.Placement),
+		"jobs":        dcl.ValueOrEmptyString(nr.Jobs),
+		"parameters":  dcl.ValueOrEmptyString(nr.Parameters),
+		"dag_timeout": dcl.ValueOrEmptyString(nr.DagTimeout),
+		"project":     dcl.ValueOrEmptyString(nr.Project),
+		"location":    dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("projects/{{project}}/locations/{{location}}/workflowTemplates/{{name}}", params), nil
 }
@@ -1647,7 +3220,7 @@ func (c *Client) GetWorkflowTemplate(ctx context.Context, r *WorkflowTemplate) (
 		}
 		return nil, err
 	}
-	result, err := unmarshalWorkflowTemplate(b, c)
+	result, err := unmarshalWorkflowTemplate(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -1804,7 +3377,7 @@ func applyWorkflowTemplateHelper(c *Client, ctx context.Context, rawDesired *Wor
 func applyWorkflowTemplateDiff(c *Client, ctx context.Context, desired *WorkflowTemplate, rawDesired *WorkflowTemplate, ops []workflowTemplateApiOperation, opts ...dcl.ApplyOption) (*WorkflowTemplate, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetWorkflowTemplate(ctx, desired.urlNormalized())
+	rawNew, err := c.GetWorkflowTemplate(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -1817,7 +3390,7 @@ func applyWorkflowTemplateDiff(c *Client, ctx context.Context, desired *Workflow
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapWorkflowTemplate(r, c)
+				fullResp, err := unmarshalMapWorkflowTemplate(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

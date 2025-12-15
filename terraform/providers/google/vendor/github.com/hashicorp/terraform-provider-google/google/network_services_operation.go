@@ -11,6 +11,7 @@
 //     .github/CONTRIBUTING.md.
 //
 // ----------------------------------------------------------------------------
+
 package google
 
 import (
@@ -30,9 +31,9 @@ func (w *NetworkServicesOperationWaiter) QueryOp() (interface{}, error) {
 		return nil, fmt.Errorf("Cannot query operation, it's unset or nil.")
 	}
 	// Returns the proper get.
-	url := fmt.Sprintf("https://networkservices.googleapis.com/v1/%s", w.CommonOperationWaiter.Op.Name)
+	url := fmt.Sprintf("%s%s", w.Config.NetworkServicesBasePath, w.CommonOperationWaiter.Op.Name)
 
-	return sendRequest(w.Config, "GET", w.Project, url, w.UserAgent, nil)
+	return SendRequest(w.Config, "GET", w.Project, url, w.UserAgent, nil)
 }
 
 func createNetworkServicesWaiter(config *Config, op map[string]interface{}, project, activity, userAgent string) (*NetworkServicesOperationWaiter, error) {
@@ -47,7 +48,7 @@ func createNetworkServicesWaiter(config *Config, op map[string]interface{}, proj
 	return w, nil
 }
 
-func networkServicesOperationWaitTime(config *Config, op map[string]interface{}, project, activity, userAgent string, timeout time.Duration) error {
+func NetworkServicesOperationWaitTime(config *Config, op map[string]interface{}, project, activity, userAgent string, timeout time.Duration) error {
 	if val, ok := op["name"]; !ok || val == "" {
 		// This was a synchronous call - there is no operation to wait for.
 		return nil
