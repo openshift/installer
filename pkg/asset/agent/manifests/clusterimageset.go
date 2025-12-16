@@ -57,7 +57,7 @@ func (a *ClusterImageSet) Generate(ctx context.Context, dependencies asset.Paren
 	dependencies.Get(releaseImage, installConfig, agentWorkflow, clusterInfo)
 
 	switch agentWorkflow.Workflow {
-	case workflow.AgentWorkflowTypeInstall, workflow.AgentWorkflowTypeInstallInteractiveDisconnected:
+	case workflow.AgentWorkflowTypeInstall:
 		currentVersion, err := version.Version()
 		if err != nil {
 			return err
