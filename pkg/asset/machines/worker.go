@@ -14,7 +14,8 @@ import (
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1" //nolint:staticcheck //CORS-3563
+	//nolint:staticcheck //CORS-3563
+	ipamv2 "sigs.k8s.io/cluster-api/api/ipam/v1beta2"
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -329,8 +330,8 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 	machines := []machinev1beta1.Machine{}
 	machineConfigs := []*mcfgv1.MachineConfig{}
 	machineSets := []runtime.Object{}
-	var ipClaims []ipamv1.IPAddressClaim
-	var ipAddrs []ipamv1.IPAddress
+	var ipClaims []ipamv2.IPAddressClaim
+	var ipAddrs []ipamv2.IPAddress
 	var err error
 	ic := installConfig.Config
 	for _, pool := range ic.Compute {

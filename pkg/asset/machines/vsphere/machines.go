@@ -12,7 +12,10 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1" //nolint:staticcheck //CORS-3563
+	//nolint:staticcheck //CORS-3563
+	ipamv2 "sigs.k8s.io/cluster-api/api/ipam/v1beta2"
+
+	//nolint:staticcheck //CORS-3563
 
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -26,8 +29,8 @@ import (
 type MachineData struct {
 	Machines               []machineapi.Machine
 	ControlPlaneMachineSet *machinev1.ControlPlaneMachineSet
-	IPClaims               []ipamv1.IPAddressClaim
-	IPAddresses            []ipamv1.IPAddress
+	IPClaims               []ipamv2.IPAddressClaim
+	IPAddresses            []ipamv2.IPAddress
 
 	MachineFailureDomain map[string]string
 }
@@ -230,9 +233,9 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 // applyNetworkConfig this function will apply the static ip configuration to the networkDevice
 // field in the provider spec.  The function will use the desired zone to determine which config
 // to apply and then remove that host config from the hosts array.
-func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineProviderSpec, machine machineapi.Machine) ([]ipamv1.IPAddressClaim, []ipamv1.IPAddress, error) {
-	var ipClaims []ipamv1.IPAddressClaim
-	var ipAddrs []ipamv1.IPAddress
+func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineProviderSpec, machine machineapi.Machine) ([]ipamv2.IPAddressClaim, []ipamv2.IPAddress, error) {
+	var ipClaims []ipamv2.IPAddressClaim
+	var ipAddrs []ipamv2.IPAddress
 	if host != nil {
 		networkDevice := host.NetworkDevice
 		if networkDevice != nil {
@@ -248,11 +251,13 @@ func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineP
 				// Generate the capi networking objects
 				slashIndex := strings.Index(address, "/")
 				ipAddress := address[0:slashIndex]
-				prefix, err := strconv.Atoi(address[slashIndex+1:])
+
+				prefix, err := strconv.ParseInt(address[slashIndex+1:], 10, 32)
 				if err != nil {
 					return nil, nil, errors.Wrap(err, "unable to determine address prefix")
 				}
-				ipClaim, ipAddr := generateCapiNetwork(machine.Name, ipAddress, networkDevice.Gateway, prefix, 0, idx)
+				prefix32 := int32(prefix)
+				ipClaim, ipAddr := generateCapiNetwork(machine.Name, ipAddress, networkDevice.Gateway, &prefix32, 0, idx)
 				ipClaims = append(ipClaims, *ipClaim)
 				ipAddrs = append(ipAddrs, *ipAddr)
 			}
@@ -263,19 +268,18 @@ func applyNetworkConfig(host *vsphere.Host, provider *machineapi.VSphereMachineP
 }
 
 // generateCapiNetwork this function will create IPAddressClaim and IPAddress for the specified information.
-func generateCapiNetwork(machineName, ipAddress, gateway string, prefix, deviceIndex, ipIndex int) (*ipamv1.IPAddressClaim, *ipamv1.IPAddress) {
-	// Generate PoolRef
+func generateCapiNetwork(machineName, ipAddress, gateway string, prefix *int32, deviceIndex, ipIndex int) (*ipamv2.IPAddressClaim, *ipamv2.IPAddress) {
 	apigroup := "installer.openshift.io"
-	poolRef := corev1.TypedLocalObjectReference{
-		APIGroup: &apigroup,
-		Kind:     "IPPool",
+	poolRef := ipamv2.IPPoolReference{
 		Name:     fmt.Sprintf("default-%d", ipIndex),
+		Kind:     "IPPool",
+		APIGroup: apigroup,
 	}
 
 	// Generate IPAddressClaim
-	ipclaim := &ipamv1.IPAddressClaim{
+	ipclaim := &ipamv2.IPAddressClaim{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "ipam.cluster.x-k8s.io/v1beta1",
+			APIVersion: ipamv2.GroupVersion.String(),
 			Kind:       "IPAddressClaim",
 		},
 		ObjectMeta: metav1.ObjectMeta{
@@ -285,24 +289,24 @@ func generateCapiNetwork(machineName, ipAddress, gateway string, prefix, deviceI
 			Name:      fmt.Sprintf("%s-claim-%d-%d", machineName, deviceIndex, ipIndex),
 			Namespace: "openshift-machine-api",
 		},
-		Spec: ipamv1.IPAddressClaimSpec{
+		Spec: ipamv2.IPAddressClaimSpec{
 			PoolRef: poolRef,
 		},
 	}
 
 	// Populate IPAddress info
-	ipaddr := &ipamv1.IPAddress{
+	ipaddr := &ipamv2.IPAddress{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: "ipam.cluster.x-k8s.io/v1beta1",
+			APIVersion: ipamv2.GroupVersion.String(),
 			Kind:       "IPAddress",
 		},
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      fmt.Sprintf("%s-claim-%d-%d", machineName, deviceIndex, ipIndex),
 			Namespace: "openshift-machine-api",
 		},
-		Spec: ipamv1.IPAddressSpec{
+		Spec: ipamv2.IPAddressSpec{
 			Address: ipAddress,
-			ClaimRef: corev1.LocalObjectReference{
+			ClaimRef: ipamv2.IPAddressClaimReference{
 				Name: ipclaim.Name,
 			},
 			Gateway: gateway,
@@ -311,8 +315,8 @@ func generateCapiNetwork(machineName, ipAddress, gateway string, prefix, deviceI
 		},
 	}
 
-	ipclaim.Status = ipamv1.IPAddressClaimStatus{
-		AddressRef: corev1.LocalObjectReference{
+	ipclaim.Status = ipamv2.IPAddressClaimStatus{
+		AddressRef: ipamv2.IPAddressReference{
 			Name: ipaddr.Name,
 		},
 	}

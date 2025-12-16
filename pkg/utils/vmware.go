@@ -9,21 +9,22 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
-	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1" //nolint:staticcheck //CORS-3563
+	//nolint:staticcheck //CORS-3563
+	ipamv2 "sigs.k8s.io/cluster-api/api/ipam/v1beta2"
 
 	machinev1beta1 "github.com/openshift/api/machine/v1beta1"
 	"github.com/openshift/installer/pkg/types"
 )
 
 // ConstructNetworkKargsFromMachine does something.
-func ConstructNetworkKargsFromMachine(claims []ipamv1.IPAddressClaim, addresses []ipamv1.IPAddress, machine *machinev1beta1.Machine, network machinev1beta1.NetworkDeviceSpec) (string, error) {
+func ConstructNetworkKargsFromMachine(claims []ipamv2.IPAddressClaim, addresses []ipamv2.IPAddress, machine *machinev1beta1.Machine, network machinev1beta1.NetworkDeviceSpec) (string, error) {
 	var ipAddresses []string
 	var gateways []string
 	for idx := range network.AddressesFromPools {
 		for _, address := range addresses {
 			logrus.Debugf("Checking IPAdress %v.  Does it match? %v", address.Name, fmt.Sprintf("%s-claim-%d-%d", machine.Name, 0, idx))
 			if address.Name == fmt.Sprintf("%s-claim-%d-%d", machine.Name, 0, idx) {
-				ipAddresses = append(ipAddresses, fmt.Sprintf("%v/%v", address.Spec.Address, address.Spec.Prefix))
+				ipAddresses = append(ipAddresses, fmt.Sprintf("%v/%v", address.Spec.Address, *address.Spec.Prefix))
 				gateways = append(gateways, address.Spec.Gateway)
 				break
 			}
