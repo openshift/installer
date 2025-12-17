@@ -411,6 +411,7 @@ func commonFiles() []string {
 		"/usr/local/bin/add-node.sh",
 		"/usr/local/bin/agent-auth-token-status.sh",
 		"/usr/local/bin/common.sh",
+		"/usr/local/bin/configure-assisted-hw-requirements.sh",
 	}
 }
 
