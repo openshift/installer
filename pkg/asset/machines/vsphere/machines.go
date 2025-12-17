@@ -150,7 +150,7 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 			// To prevent having to touch many function below, adding logic here to ClusterCAPI issue with v1beta1 vs v1beta2.
 			// If cluster capi operator is enabled, we need to support v1beta2 of the IPAM.  If disabled, we can keep v1beta1.
 			if config.EnabledFeatureGates().Enabled(features.FeatureGateClusterAPIMachineManagement) {
-				fmt.Println("Processing api update")
+				logrus.Debug("updating capi ipam apiVersion from v1beta1 to v1beta2 when feature gate ClusterAPIMachineManagement is enabled")
 				for index := range claim {
 					claim[index].APIVersion = "ipam.cluster.x-k8s.io/v1beta2"
 				}
