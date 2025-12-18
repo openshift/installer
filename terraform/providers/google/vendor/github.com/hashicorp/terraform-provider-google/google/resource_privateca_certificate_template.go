@@ -27,7 +27,7 @@ import (
 	privateca "github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/privateca"
 )
 
-func resourcePrivatecaCertificateTemplate() *schema.Resource {
+func ResourcePrivatecaCertificateTemplate() *schema.Resource {
 	return &schema.Resource{
 		Create: resourcePrivatecaCertificateTemplateCreate,
 		Read:   resourcePrivatecaCertificateTemplateRead,
@@ -39,9 +39,9 @@ func resourcePrivatecaCertificateTemplate() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -484,13 +484,13 @@ func resourcePrivatecaCertificateTemplateCreate(d *schema.ResourceData, meta int
 		Project:               dcl.String(project),
 	}
 
-	id, err := replaceVarsForId(d, config, "projects/{{project}}/locations/{{location}}/certificateTemplates/{{name}}")
+	id, err := obj.ID()
 	if err != nil {
 		return fmt.Errorf("error constructing id: %s", err)
 	}
 	d.SetId(id)
-	createDirective := CreateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	directive := CreateDirective
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -506,7 +506,7 @@ func resourcePrivatecaCertificateTemplateCreate(d *schema.ResourceData, meta int
 	} else {
 		client.Config.BasePath = bp
 	}
-	res, err := client.ApplyCertificateTemplate(context.Background(), obj, createDirective...)
+	res, err := client.ApplyCertificateTemplate(context.Background(), obj, directive...)
 
 	if _, ok := err.(dcl.DiffAfterApplyError); ok {
 		log.Printf("[DEBUG] Diff after apply returned from the DCL: %s", err)
@@ -539,7 +539,7 @@ func resourcePrivatecaCertificateTemplateRead(d *schema.ResourceData, meta inter
 		Project:               dcl.String(project),
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -612,7 +612,7 @@ func resourcePrivatecaCertificateTemplateUpdate(d *schema.ResourceData, meta int
 		Project:               dcl.String(project),
 	}
 	directive := UpdateDirective
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -663,7 +663,7 @@ func resourcePrivatecaCertificateTemplateDelete(d *schema.ResourceData, meta int
 	}
 
 	log.Printf("[DEBUG] Deleting CertificateTemplate %q", d.Id())
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -689,6 +689,7 @@ func resourcePrivatecaCertificateTemplateDelete(d *schema.ResourceData, meta int
 
 func resourcePrivatecaCertificateTemplateImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
 	config := meta.(*Config)
+
 	if err := parseImportId([]string{
 		"projects/(?P<project>[^/]+)/locations/(?P<location>[^/]+)/certificateTemplates/(?P<name>[^/]+)",
 		"(?P<project>[^/]+)/(?P<location>[^/]+)/(?P<name>[^/]+)",
@@ -712,7 +713,7 @@ func expandPrivatecaCertificateTemplateIdentityConstraints(o interface{}) *priva
 		return privateca.EmptyCertificateTemplateIdentityConstraints
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplateIdentityConstraints
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -742,7 +743,7 @@ func expandPrivatecaCertificateTemplateIdentityConstraintsCelExpression(o interf
 		return privateca.EmptyCertificateTemplateIdentityConstraintsCelExpression
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplateIdentityConstraintsCelExpression
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -774,7 +775,7 @@ func expandPrivatecaCertificateTemplatePassthroughExtensions(o interface{}) *pri
 		return privateca.EmptyCertificateTemplatePassthroughExtensions
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplatePassthroughExtensions
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -802,7 +803,7 @@ func expandPrivatecaCertificateTemplatePassthroughExtensionsAdditionalExtensions
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]privateca.CertificateTemplatePassthroughExtensionsAdditionalExtensions, 0)
 	}
 
@@ -857,7 +858,7 @@ func expandPrivatecaCertificateTemplatePredefinedValues(o interface{}) *privatec
 		return privateca.EmptyCertificateTemplatePredefinedValues
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplatePredefinedValues
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -891,7 +892,7 @@ func expandPrivatecaCertificateTemplatePredefinedValuesAdditionalExtensionsArray
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]privateca.CertificateTemplatePredefinedValuesAdditionalExtensions, 0)
 	}
 
@@ -950,7 +951,7 @@ func expandPrivatecaCertificateTemplatePredefinedValuesAdditionalExtensionsObjec
 		return privateca.EmptyCertificateTemplatePredefinedValuesAdditionalExtensionsObjectId
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplatePredefinedValuesAdditionalExtensionsObjectId
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -976,7 +977,7 @@ func expandPrivatecaCertificateTemplatePredefinedValuesCaOptions(o interface{}) 
 		return privateca.EmptyCertificateTemplatePredefinedValuesCaOptions
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplatePredefinedValuesCaOptions
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1004,7 +1005,7 @@ func expandPrivatecaCertificateTemplatePredefinedValuesKeyUsage(o interface{}) *
 		return privateca.EmptyCertificateTemplatePredefinedValuesKeyUsage
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplatePredefinedValuesKeyUsage
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1034,7 +1035,7 @@ func expandPrivatecaCertificateTemplatePredefinedValuesKeyUsageBaseKeyUsage(o in
 		return privateca.EmptyCertificateTemplatePredefinedValuesKeyUsageBaseKeyUsage
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplatePredefinedValuesKeyUsageBaseKeyUsage
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1076,7 +1077,7 @@ func expandPrivatecaCertificateTemplatePredefinedValuesKeyUsageExtendedKeyUsage(
 		return privateca.EmptyCertificateTemplatePredefinedValuesKeyUsageExtendedKeyUsage
 	}
 	objArr := o.([]interface{})
-	if len(objArr) == 0 {
+	if len(objArr) == 0 || objArr[0] == nil {
 		return privateca.EmptyCertificateTemplatePredefinedValuesKeyUsageExtendedKeyUsage
 	}
 	obj := objArr[0].(map[string]interface{})
@@ -1112,7 +1113,7 @@ func expandPrivatecaCertificateTemplatePredefinedValuesKeyUsageUnknownExtendedKe
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]privateca.CertificateTemplatePredefinedValuesKeyUsageUnknownExtendedKeyUsages, 0)
 	}
 
@@ -1167,7 +1168,7 @@ func expandPrivatecaCertificateTemplatePredefinedValuesPolicyIdsArray(o interfac
 	}
 
 	objs := o.([]interface{})
-	if len(objs) == 0 {
+	if len(objs) == 0 || objs[0] == nil {
 		return make([]privateca.CertificateTemplatePredefinedValuesPolicyIds, 0)
 	}
 
@@ -1226,7 +1227,6 @@ func flattenPrivatecaCertificateTemplatePassthroughExtensionsKnownExtensionsArra
 	}
 	return items
 }
-
 func expandPrivatecaCertificateTemplatePassthroughExtensionsKnownExtensionsArray(o interface{}) []privateca.CertificateTemplatePassthroughExtensionsKnownExtensionsEnum {
 	objs := o.([]interface{})
 	items := make([]privateca.CertificateTemplatePassthroughExtensionsKnownExtensionsEnum, 0, len(objs))

@@ -6,9 +6,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleComputeInstance() *schema.Resource {
+func DataSourceGoogleComputeInstance() *schema.Resource {
 	// Generate datasource schema from resource
-	dsSchema := datasourceSchemaFromResourceSchema(resourceComputeInstance().Schema)
+	dsSchema := datasourceSchemaFromResourceSchema(ResourceComputeInstance().Schema)
 
 	// Set 'Optional' schema elements
 	addOptionalFieldsToSchema(dsSchema, "name", "self_link", "project", "zone")
@@ -21,7 +21,7 @@ func dataSourceGoogleComputeInstance() *schema.Resource {
 
 func dataSourceGoogleComputeInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -191,6 +191,6 @@ func dataSourceGoogleComputeInstanceRead(d *schema.ResourceData, meta interface{
 	if err := d.Set("name", instance.Name); err != nil {
 		return fmt.Errorf("Error setting name: %s", err)
 	}
-	d.SetId(fmt.Sprintf("projects/%s/zones/%s/instances/%s", project, instance.Zone, instance.Name))
+	d.SetId(fmt.Sprintf("projects/%s/zones/%s/instances/%s", project, GetResourceNameFromSelfLink(instance.Zone), instance.Name))
 	return nil
 }

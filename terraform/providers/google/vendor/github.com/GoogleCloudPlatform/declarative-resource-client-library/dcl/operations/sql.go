@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,10 +35,12 @@ type SQLOperation struct {
 
 // Wait waits for an Operation to complete by fetching the operation until it completes.
 func (op *SQLOperation) Wait(ctx context.Context, c *dcl.Config, _, _ string) error {
-	glog.Infof("Waiting on: %v", op)
+	glog.Infof("Waiting on operation: %v", op)
 	op.config = c
 
-	return dcl.Do(ctx, op.operate, c.RetryProvider)
+	err := dcl.Do(ctx, op.operate, c.RetryProvider)
+	c.Logger.Infof("Completed operation: %v", op)
+	return err
 }
 
 func (op *SQLOperation) operate(ctx context.Context) (*dcl.RetryDetails, error) {

@@ -19,7 +19,6 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"strings"
 	"time"
 
@@ -27,6 +26,16 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"google.golang.org/api/googleapi"
 )
+
+// diffsupress for beta and to check change in source_disk attribute
+func sourceDiskDiffSupress(_, old, new string, _ *schema.ResourceData) bool {
+	s1 := strings.TrimPrefix(old, "https://www.googleapis.com/compute/beta")
+	s2 := strings.TrimPrefix(new, "https://www.googleapis.com/compute/v1")
+	if strings.HasSuffix(s1, s2) {
+		return true
+	}
+	return false
+}
 
 // Is the new disk size smaller than the old one?
 func isDiskShrinkage(_ context.Context, old, new, _ interface{}) bool {
@@ -141,9 +150,28 @@ func diskImageEquals(oldImageName, newImageName string) bool {
 
 func diskImageFamilyEquals(imageName, familyName string) bool {
 	// Handles the case when the image name includes the family name
-	// e.g. image name: debian-9-drawfork-v20180109, family name: debian-9
-	if strings.Contains(imageName, familyName) {
-		return true
+	// e.g. image name: debian-11-bullseye-v20220719, family name: debian-11
+
+	// First condition is to check if image contains arm64 because of case like:
+	// image name: opensuse-leap-15-4-v20220713-arm64, family name: opensuse-leap (should not be evaluated during handling of amd64 cases)
+	// In second condition, we have to check for amd64 because of cases like:
+	// image name: ubuntu-2210-kinetic-amd64-v20221022, family name: ubuntu-2210 (should not suppress)
+	if !strings.Contains(imageName, "-arm64") && strings.Contains(imageName, strings.TrimSuffix(familyName, "-amd64")) {
+		if strings.Contains(imageName, "-amd64") {
+			return strings.HasSuffix(familyName, "-amd64")
+		} else {
+			return !strings.HasSuffix(familyName, "-amd64")
+		}
+	}
+
+	// We have to check for arm64 because of cases like:
+	// image name: opensuse-leap-15-4-v20220713-arm64, family name: opensuse-leap (should not suppress)
+	if strings.Contains(imageName, strings.TrimSuffix(familyName, "-arm64")) {
+		if strings.Contains(imageName, "-arm64") {
+			return strings.HasSuffix(familyName, "-arm64")
+		} else {
+			return !strings.HasSuffix(familyName, "-arm64")
+		}
 	}
 
 	if suppressCanonicalFamilyDiff(imageName, familyName) {
@@ -168,8 +196,13 @@ func diskImageFamilyEquals(imageName, familyName string) bool {
 // e.g. image: ubuntu-1404-trusty-v20180122, family: ubuntu-1404-lts
 func suppressCanonicalFamilyDiff(imageName, familyName string) bool {
 	parts := canonicalUbuntuLtsImage.FindStringSubmatch(imageName)
-	if len(parts) == 3 {
-		f := fmt.Sprintf("ubuntu-%s%s-lts", parts[1], parts[2])
+	if len(parts) == 4 {
+		var f string
+		if parts[3] == "" {
+			f = fmt.Sprintf("ubuntu-%s%s-lts", parts[1], parts[2])
+		} else {
+			f = fmt.Sprintf("ubuntu-%s%s-lts-%s", parts[1], parts[2], parts[3])
+		}
 		if f == familyName {
 			return true
 		}
@@ -236,7 +269,7 @@ func suppressWindowsFamilyDiff(imageName, familyName string) bool {
 	return strings.Contains(updatedImageName, updatedFamilyString)
 }
 
-func resourceComputeDisk() *schema.Resource {
+func ResourceComputeDisk() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeDiskCreate,
 		Read:   resourceComputeDiskRead,
@@ -248,9 +281,9 @@ func resourceComputeDisk() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(5 * time.Minute),
-			Update: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		CustomizeDiff: customdiff.All(
@@ -321,6 +354,15 @@ If absent, the Compute Engine Service Agent service account is used.`,
 RFC 4648 base64 to either encrypt or decrypt this resource.`,
 							Sensitive: true,
 						},
+						"rsa_encrypted_key": {
+							Type:     schema.TypeString,
+							Optional: true,
+							ForceNew: true,
+							Description: `Specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit 
+customer-supplied encryption key to either encrypt or decrypt 
+this resource. You can provide either the rawKey or the rsaEncryptedKey.`,
+							Sensitive: true,
+						},
 						"sha256": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -364,6 +406,7 @@ the supported values for the caller's project.`,
 			},
 			"provisioned_iops": {
 				Type:        schema.TypeInt,
+				Computed:    true,
 				Optional:    true,
 				ForceNew:    true,
 				Description: `Indicates how many IOPS must be provisioned for the disk.`,
@@ -400,6 +443,21 @@ following are valid values:
 * 'projects/project/global/snapshots/snapshot'
 * 'global/snapshots/snapshot'
 * 'snapshot'`,
+			},
+			"source_disk": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: sourceDiskDiffSupress,
+				Description: `The source disk used to create this disk. You can provide this as a partial or full URL to the resource.
+For example, the following are valid values:
+
+* https://www.googleapis.com/compute/v1/projects/{project}/zones/{zone}/disks/{disk}
+* https://www.googleapis.com/compute/v1/projects/{project}/regions/{region}/disks/{disk}
+* projects/{project}/zones/{zone}/disks/{disk}
+* projects/{project}/regions/{region}/disks/{disk}
+* zones/{zone}/disks/{disk}
+* regions/{region}/disks/{disk}`,
 			},
 			"source_image_encryption_key": {
 				Type:     schema.TypeList,
@@ -526,6 +584,13 @@ internally during updates.`,
 				Computed:    true,
 				Description: `Last detach timestamp in RFC3339 text format.`,
 			},
+			"source_disk_id": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `The ID value of the disk used to create this image. This value may
+be used to determine whether the image was taken from the current
+or a previous instance of a given disk name.`,
+			},
 			"source_image_id": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -572,7 +637,7 @@ project/zones/zone/instances/instance`,
 
 func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -613,6 +678,12 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 		return err
 	} else if v, ok := d.GetOkExists("physical_block_size_bytes"); !isEmptyValue(reflect.ValueOf(physicalBlockSizeBytesProp)) && (ok || !reflect.DeepEqual(v, physicalBlockSizeBytesProp)) {
 		obj["physicalBlockSizeBytes"] = physicalBlockSizeBytesProp
+	}
+	sourceDiskProp, err := expandComputeDiskSourceDisk(d.Get("source_disk"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("source_disk"); !isEmptyValue(reflect.ValueOf(sourceDiskProp)) && (ok || !reflect.DeepEqual(v, sourceDiskProp)) {
+		obj["sourceDisk"] = sourceDiskProp
 	}
 	typeProp, err := expandComputeDiskType(d.Get("type"), d, config)
 	if err != nil {
@@ -687,7 +758,7 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating Disk: %s", err)
 	}
@@ -699,7 +770,7 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating Disk", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -716,7 +787,7 @@ func resourceComputeDiskCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceComputeDiskRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -739,7 +810,7 @@ func resourceComputeDiskRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeDisk %q", d.Id()))
 	}
@@ -790,6 +861,12 @@ func resourceComputeDiskRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("physical_block_size_bytes", flattenComputeDiskPhysicalBlockSizeBytes(res["physicalBlockSizeBytes"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Disk: %s", err)
 	}
+	if err := d.Set("source_disk", flattenComputeDiskSourceDisk(res["sourceDisk"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Disk: %s", err)
+	}
+	if err := d.Set("source_disk_id", flattenComputeDiskSourceDiskId(res["sourceDiskId"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Disk: %s", err)
+	}
 	if err := d.Set("type", flattenComputeDiskType(res["type"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Disk: %s", err)
 	}
@@ -829,7 +906,7 @@ func resourceComputeDiskRead(d *schema.ResourceData, meta interface{}) error {
 
 func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -870,14 +947,14 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			billingProject = bp
 		}
 
-		res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error updating Disk %q: %s", d.Id(), err)
 		} else {
 			log.Printf("[DEBUG] Finished updating Disk %q: %#v", d.Id(), res)
 		}
 
-		err = computeOperationWaitTime(
+		err = ComputeOperationWaitTime(
 			config, res, project, "Updating Disk", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
@@ -904,14 +981,14 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 			billingProject = bp
 		}
 
-		res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+		res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
 			return fmt.Errorf("Error updating Disk %q: %s", d.Id(), err)
 		} else {
 			log.Printf("[DEBUG] Finished updating Disk %q: %#v", d.Id(), res)
 		}
 
-		err = computeOperationWaitTime(
+		err = ComputeOperationWaitTime(
 			config, res, project, "Updating Disk", userAgent,
 			d.Timeout(schema.TimeoutUpdate))
 		if err != nil {
@@ -926,7 +1003,7 @@ func resourceComputeDiskUpdate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -945,7 +1022,7 @@ func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	var obj map[string]interface{}
-	readRes, err := sendRequest(config, "GET", project, url, userAgent, nil)
+	readRes, err := SendRequest(config, "GET", project, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeDisk %q", d.Id()))
 	}
@@ -988,7 +1065,7 @@ func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 				return fmt.Errorf("Error detaching disk %s from instance %s/%s/%s: %s", call.deviceName, call.project,
 					call.zone, call.instance, err.Error())
 			}
-			err = computeOperationWaitTime(config, op, call.project,
+			err = ComputeOperationWaitTime(config, op, call.project,
 				fmt.Sprintf("Detaching disk from %s/%s/%s", call.project, call.zone, call.instance), userAgent, d.Timeout(schema.TimeoutDelete))
 			if err != nil {
 				if opErr, ok := err.(ComputeOperationError); ok && len(opErr.Errors) == 1 && opErr.Errors[0].Code == "RESOURCE_NOT_FOUND" {
@@ -1006,12 +1083,12 @@ func resourceComputeDiskDelete(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "Disk")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting Disk", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -1075,7 +1152,7 @@ func flattenComputeDiskName(v interface{}, d *schema.ResourceData, config *Confi
 func flattenComputeDiskSize(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1099,7 +1176,7 @@ func flattenComputeDiskUsers(v interface{}, d *schema.ResourceData, config *Conf
 func flattenComputeDiskPhysicalBlockSizeBytes(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1111,6 +1188,14 @@ func flattenComputeDiskPhysicalBlockSizeBytes(v interface{}, d *schema.ResourceD
 	}
 
 	return v // let terraform core handle it otherwise
+}
+
+func flattenComputeDiskSourceDisk(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeDiskSourceDiskId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
 }
 
 func flattenComputeDiskType(v interface{}, d *schema.ResourceData, config *Config) interface{} {
@@ -1127,7 +1212,7 @@ func flattenComputeDiskImage(v interface{}, d *schema.ResourceData, config *Conf
 func flattenComputeDiskProvisionedIops(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -1198,6 +1283,8 @@ func flattenComputeDiskDiskEncryptionKey(v interface{}, d *schema.ResourceData, 
 	transformed := make(map[string]interface{})
 	transformed["raw_key"] =
 		flattenComputeDiskDiskEncryptionKeyRawKey(original["rawKey"], d, config)
+	transformed["rsa_encrypted_key"] =
+		flattenComputeDiskDiskEncryptionKeyRsaEncryptedKey(original["rsaEncryptedKey"], d, config)
 	transformed["sha256"] =
 		flattenComputeDiskDiskEncryptionKeySha256(original["sha256"], d, config)
 	transformed["kms_key_self_link"] =
@@ -1207,6 +1294,10 @@ func flattenComputeDiskDiskEncryptionKey(v interface{}, d *schema.ResourceData, 
 	return []interface{}{transformed}
 }
 func flattenComputeDiskDiskEncryptionKeyRawKey(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenComputeDiskDiskEncryptionKeyRsaEncryptedKey(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	return v
 }
 
@@ -1296,6 +1387,10 @@ func expandComputeDiskSize(v interface{}, d TerraformResourceData, config *Confi
 }
 
 func expandComputeDiskPhysicalBlockSizeBytes(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeDiskSourceDisk(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1395,6 +1490,13 @@ func expandComputeDiskDiskEncryptionKey(v interface{}, d TerraformResourceData, 
 		transformed["rawKey"] = transformedRawKey
 	}
 
+	transformedRsaEncryptedKey, err := expandComputeDiskDiskEncryptionKeyRsaEncryptedKey(original["rsa_encrypted_key"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedRsaEncryptedKey); val.IsValid() && !isEmptyValue(val) {
+		transformed["rsaEncryptedKey"] = transformedRsaEncryptedKey
+	}
+
 	transformedSha256, err := expandComputeDiskDiskEncryptionKeySha256(original["sha256"], d, config)
 	if err != nil {
 		return nil, err
@@ -1420,6 +1522,10 @@ func expandComputeDiskDiskEncryptionKey(v interface{}, d TerraformResourceData, 
 }
 
 func expandComputeDiskDiskEncryptionKeyRawKey(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeDiskDiskEncryptionKeyRsaEncryptedKey(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1507,7 +1613,7 @@ func resourceComputeDiskEncoder(d *schema.ResourceData, meta interface{}, obj ma
 		return nil, err
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
@@ -1546,6 +1652,7 @@ func resourceComputeDiskDecoder(d *schema.ResourceData, meta interface{}, res ma
 		transformed := make(map[string]interface{})
 		// The raw key won't be returned, so we need to use the original.
 		transformed["rawKey"] = d.Get("disk_encryption_key.0.raw_key")
+		transformed["rsaEncryptedKey"] = d.Get("disk_encryption_key.0.rsa_encrypted_key")
 		transformed["sha256"] = original["sha256"]
 
 		if kmsKeyName, ok := original["kmsKeyName"]; ok {

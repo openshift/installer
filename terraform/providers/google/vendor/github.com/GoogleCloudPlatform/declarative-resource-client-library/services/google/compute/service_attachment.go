@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -134,8 +134,8 @@ func (r *ServiceAttachmentConnectedEndpoints) UnmarshalJSON(data []byte) error {
 }
 
 // This object is used to assert a desired state where this ServiceAttachmentConnectedEndpoints is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyServiceAttachmentConnectedEndpoints *ServiceAttachmentConnectedEndpoints = &ServiceAttachmentConnectedEndpoints{empty: true}
 
 func (r *ServiceAttachmentConnectedEndpoints) Empty() bool {
@@ -183,8 +183,8 @@ func (r *ServiceAttachmentConsumerAcceptLists) UnmarshalJSON(data []byte) error 
 }
 
 // This object is used to assert a desired state where this ServiceAttachmentConsumerAcceptLists is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyServiceAttachmentConsumerAcceptLists *ServiceAttachmentConsumerAcceptLists = &ServiceAttachmentConsumerAcceptLists{empty: true}
 
 func (r *ServiceAttachmentConsumerAcceptLists) Empty() bool {
@@ -232,8 +232,8 @@ func (r *ServiceAttachmentPscServiceAttachmentId) UnmarshalJSON(data []byte) err
 }
 
 // This object is used to assert a desired state where this ServiceAttachmentPscServiceAttachmentId is
-// empty.  Go lacks global const objects, but this object should be treated
-// as one.  Modifying this object will have undesirable results.
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
 var EmptyServiceAttachmentPscServiceAttachmentId *ServiceAttachmentPscServiceAttachmentId = &ServiceAttachmentPscServiceAttachmentId{empty: true}
 
 func (r *ServiceAttachmentPscServiceAttachmentId) Empty() bool {
@@ -267,22 +267,22 @@ func (r *ServiceAttachment) ID() (string, error) {
 	}
 	nr := r.urlNormalized()
 	params := map[string]interface{}{
-		"id":                     dcl.ValueOrEmptyString(nr.Id),
-		"name":                   dcl.ValueOrEmptyString(nr.Name),
-		"description":            dcl.ValueOrEmptyString(nr.Description),
-		"selfLink":               dcl.ValueOrEmptyString(nr.SelfLink),
-		"region":                 dcl.ValueOrEmptyString(nr.Region),
-		"targetService":          dcl.ValueOrEmptyString(nr.TargetService),
-		"connectionPreference":   dcl.ValueOrEmptyString(nr.ConnectionPreference),
-		"connectedEndpoints":     dcl.ValueOrEmptyString(nr.ConnectedEndpoints),
-		"natSubnets":             dcl.ValueOrEmptyString(nr.NatSubnets),
-		"enableProxyProtocol":    dcl.ValueOrEmptyString(nr.EnableProxyProtocol),
-		"consumerRejectLists":    dcl.ValueOrEmptyString(nr.ConsumerRejectLists),
-		"consumerAcceptLists":    dcl.ValueOrEmptyString(nr.ConsumerAcceptLists),
-		"pscServiceAttachmentId": dcl.ValueOrEmptyString(nr.PscServiceAttachmentId),
-		"fingerprint":            dcl.ValueOrEmptyString(nr.Fingerprint),
-		"project":                dcl.ValueOrEmptyString(nr.Project),
-		"location":               dcl.ValueOrEmptyString(nr.Location),
+		"id":                        dcl.ValueOrEmptyString(nr.Id),
+		"name":                      dcl.ValueOrEmptyString(nr.Name),
+		"description":               dcl.ValueOrEmptyString(nr.Description),
+		"self_link":                 dcl.ValueOrEmptyString(nr.SelfLink),
+		"region":                    dcl.ValueOrEmptyString(nr.Region),
+		"target_service":            dcl.ValueOrEmptyString(nr.TargetService),
+		"connection_preference":     dcl.ValueOrEmptyString(nr.ConnectionPreference),
+		"connected_endpoints":       dcl.ValueOrEmptyString(nr.ConnectedEndpoints),
+		"nat_subnets":               dcl.ValueOrEmptyString(nr.NatSubnets),
+		"enable_proxy_protocol":     dcl.ValueOrEmptyString(nr.EnableProxyProtocol),
+		"consumer_reject_lists":     dcl.ValueOrEmptyString(nr.ConsumerRejectLists),
+		"consumer_accept_lists":     dcl.ValueOrEmptyString(nr.ConsumerAcceptLists),
+		"psc_service_attachment_id": dcl.ValueOrEmptyString(nr.PscServiceAttachmentId),
+		"fingerprint":               dcl.ValueOrEmptyString(nr.Fingerprint),
+		"project":                   dcl.ValueOrEmptyString(nr.Project),
+		"location":                  dcl.ValueOrEmptyString(nr.Location),
 	}
 	return dcl.Nprintf("projects/{{project}}/regions/{{location}}/serviceAttachments/{{name}}", params), nil
 }
@@ -369,7 +369,7 @@ func (c *Client) GetServiceAttachment(ctx context.Context, r *ServiceAttachment)
 		}
 		return nil, err
 	}
-	result, err := unmarshalServiceAttachment(b, c)
+	result, err := unmarshalServiceAttachment(b, c, r)
 	if err != nil {
 		return nil, err
 	}
@@ -526,7 +526,7 @@ func applyServiceAttachmentHelper(c *Client, ctx context.Context, rawDesired *Se
 func applyServiceAttachmentDiff(c *Client, ctx context.Context, desired *ServiceAttachment, rawDesired *ServiceAttachment, ops []serviceAttachmentApiOperation, opts ...dcl.ApplyOption) (*ServiceAttachment, error) {
 	// 3.1, 3.2a Retrieval of raw new state & canonicalization with desired state
 	c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state...")
-	rawNew, err := c.GetServiceAttachment(ctx, desired.urlNormalized())
+	rawNew, err := c.GetServiceAttachment(ctx, desired)
 	if err != nil {
 		return nil, err
 	}
@@ -539,7 +539,7 @@ func applyServiceAttachmentDiff(c *Client, ctx context.Context, desired *Service
 
 				c.Config.Logger.InfoWithContext(ctx, "Retrieving raw new state from operation...")
 
-				fullResp, err := unmarshalMapServiceAttachment(r, c)
+				fullResp, err := unmarshalMapServiceAttachment(r, c, rawDesired)
 				if err != nil {
 					return nil, err
 				}

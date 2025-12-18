@@ -10,7 +10,7 @@ import (
 	"google.golang.org/api/iam/v1"
 )
 
-func resourceGoogleServiceAccount() *schema.Resource {
+func ResourceGoogleServiceAccount() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceGoogleServiceAccountCreate,
 		Read:   resourceGoogleServiceAccountRead,
@@ -69,6 +69,11 @@ func resourceGoogleServiceAccount() *schema.Resource {
 				ForceNew:    true,
 				Description: `The ID of the project that the service account will be created in. Defaults to the provider project configuration.`,
 			},
+			"member": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `The Identity of the service account in the form 'serviceAccount:{email}'. This value is often used to refer to the service account in order to grant IAM permissions.`,
+			},
 		},
 		UseJSONNumber: true,
 	}
@@ -76,7 +81,7 @@ func resourceGoogleServiceAccount() *schema.Resource {
 
 func resourceGoogleServiceAccountCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -106,7 +111,7 @@ func resourceGoogleServiceAccountCreate(d *schema.ResourceData, meta interface{}
 
 	d.SetId(sa.Name)
 
-	err = retryTimeDuration(func() (operr error) {
+	err = RetryTimeDuration(func() (operr error) {
 		_, saerr := config.NewIamClient(userAgent).Projects.ServiceAccounts.Get(d.Id()).Do()
 		return saerr
 	}, d.Timeout(schema.TimeoutCreate), isNotFoundRetryableError("service account creation"))
@@ -115,12 +120,38 @@ func resourceGoogleServiceAccountCreate(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error reading service account after creation: %s", err)
 	}
 
+	// We poll until the resource is found due to eventual consistency issue
+	// on part of the api https://cloud.google.com/iam/docs/overview#consistency
+	err = PollingWaitTime(resourceServiceAccountPollRead(d, meta), PollCheckForExistence, "Creating Service Account", d.Timeout(schema.TimeoutCreate), 1)
+
+	if err != nil {
+		return err
+	}
+
 	return resourceGoogleServiceAccountRead(d, meta)
+}
+
+func resourceServiceAccountPollRead(d *schema.ResourceData, meta interface{}) PollReadFunc {
+	return func() (map[string]interface{}, error) {
+		config := meta.(*Config)
+		userAgent, err := generateUserAgentString(d, config.UserAgent)
+		if err != nil {
+			return nil, err
+		}
+
+		// Confirm the service account exists
+		_, err = config.NewIamClient(userAgent).Projects.ServiceAccounts.Get(d.Id()).Do()
+
+		if err != nil {
+			return nil, err
+		}
+		return nil, nil
+	}
 }
 
 func resourceGoogleServiceAccountRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -155,12 +186,15 @@ func resourceGoogleServiceAccountRead(d *schema.ResourceData, meta interface{}) 
 	if err := d.Set("disabled", sa.Disabled); err != nil {
 		return fmt.Errorf("Error setting disabled: %s", err)
 	}
+	if err := d.Set("member", "serviceAccount:"+sa.Email); err != nil {
+		return fmt.Errorf("Error setting member: %s", err)
+	}
 	return nil
 }
 
 func resourceGoogleServiceAccountDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -175,7 +209,7 @@ func resourceGoogleServiceAccountDelete(d *schema.ResourceData, meta interface{}
 
 func resourceGoogleServiceAccountUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

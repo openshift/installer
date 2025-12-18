@@ -24,7 +24,32 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceApigeeInstance() *schema.Resource {
+// Supress diffs when the lists of project have the same number of entries to handle the case that
+// API does not return what the user originally provided. Instead, API does some transformation.
+// For example, user provides a list of project number, but API returns a list of project Id.
+func projectListDiffSuppress(_, _, _ string, d *schema.ResourceData) bool {
+	return projectListDiffSuppressFunc(d)
+}
+
+func projectListDiffSuppressFunc(d TerraformResourceDataChange) bool {
+	kLength := "consumer_accept_list.#"
+	oldLength, newLength := d.GetChange(kLength)
+
+	oldInt, ok := oldLength.(int)
+	if !ok {
+		return false
+	}
+
+	newInt, ok := newLength.(int)
+	if !ok {
+		return false
+	}
+	log.Printf("[DEBUG] - suppressing diff with oldInt %d, newInt %d", oldInt, newInt)
+
+	return oldInt == newInt
+}
+
+func ResourceApigeeInstance() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceApigeeInstanceCreate,
 		Read:   resourceApigeeInstanceRead,
@@ -41,12 +66,10 @@ func resourceApigeeInstance() *schema.Resource {
 
 		Schema: map[string]*schema.Schema{
 			"location": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				Description: `Compute Engine location where the instance resides. For trial organization
-subscriptions, the location must be a Compute Engine zone. For paid organization
-subscriptions, it should correspond to a Compute Engine region.`,
+				Type:        schema.TypeString,
+				Required:    true,
+				ForceNew:    true,
+				Description: `Required. Compute Engine location where the instance resides.`,
 			},
 			"name": {
 				Type:        schema.TypeString,
@@ -60,6 +83,20 @@ subscriptions, it should correspond to a Compute Engine region.`,
 				ForceNew: true,
 				Description: `The Apigee Organization associated with the Apigee instance,
 in the format 'organizations/{{org_name}}'.`,
+			},
+			"consumer_accept_list": {
+				Type:             schema.TypeList,
+				Computed:         true,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: projectListDiffSuppress,
+				Description: `Optional. Customer accept list represents the list of projects (id/number) on customer
+side that can privately connect to the service attachment. It is an optional field
+which the customers can provide during the instance creation. By default, the customer
+project associated with the Apigee organization will be included to the list.`,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -80,11 +117,24 @@ Use the following format: 'projects/([^/]+)/locations/([^/]+)/keyRings/([^/]+)/c
 				ForceNew:    true,
 				Description: `Display name of the instance.`,
 			},
-			"peering_cidr_range": {
+			"ip_range": {
 				Type:     schema.TypeString,
 				Optional: true,
 				ForceNew: true,
-				Description: `The size of the CIDR block range that will be reserved by the instance. For valid values, 
+				Description: `IP range represents the customer-provided CIDR block of length 22 that will be used for
+the Apigee instance creation. This optional range, if provided, should be freely
+available as part of larger named range the customer has allocated to the Service
+Networking peering. If this is not provided, Apigee will automatically request for any
+available /22 CIDR block from Service Networking. The customer should use this CIDR block
+for configuring their firewall needs to allow traffic from Apigee.
+Input format: "a.b.c.d/22"`,
+			},
+			"peering_cidr_range": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Optional: true,
+				ForceNew: true,
+				Description: `The size of the CIDR block range that will be reserved by the instance. For valid values,
 see [CidrRange](https://cloud.google.com/apigee/docs/reference/apis/apigee/rest/v1/organizations.instances#CidrRange) on the documentation.`,
 			},
 			"host": {
@@ -97,6 +147,13 @@ see [CidrRange](https://cloud.google.com/apigee/docs/reference/apis/apigee/rest/
 				Computed:    true,
 				Description: `Output only. Port number of the exposed Apigee endpoint.`,
 			},
+			"service_attachment": {
+				Type:     schema.TypeString,
+				Computed: true,
+				Description: `Output only. Resource name of the service attachment created for the instance in
+the format: projects/*/regions/*/serviceAttachments/* Apigee customers can privately
+forward traffic to this service attachment using the PSC endpoints.`,
+			},
 		},
 		UseJSONNumber: true,
 	}
@@ -104,7 +161,7 @@ see [CidrRange](https://cloud.google.com/apigee/docs/reference/apis/apigee/rest/
 
 func resourceApigeeInstanceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -128,6 +185,12 @@ func resourceApigeeInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("peering_cidr_range"); !isEmptyValue(reflect.ValueOf(peeringCidrRangeProp)) && (ok || !reflect.DeepEqual(v, peeringCidrRangeProp)) {
 		obj["peeringCidrRange"] = peeringCidrRangeProp
 	}
+	ipRangeProp, err := expandApigeeInstanceIpRange(d.Get("ip_range"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("ip_range"); !isEmptyValue(reflect.ValueOf(ipRangeProp)) && (ok || !reflect.DeepEqual(v, ipRangeProp)) {
+		obj["ipRange"] = ipRangeProp
+	}
 	descriptionProp, err := expandApigeeInstanceDescription(d.Get("description"), d, config)
 	if err != nil {
 		return err
@@ -146,6 +209,19 @@ func resourceApigeeInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("disk_encryption_key_name"); !isEmptyValue(reflect.ValueOf(diskEncryptionKeyNameProp)) && (ok || !reflect.DeepEqual(v, diskEncryptionKeyNameProp)) {
 		obj["diskEncryptionKeyName"] = diskEncryptionKeyNameProp
 	}
+	consumerAcceptListProp, err := expandApigeeInstanceConsumerAcceptList(d.Get("consumer_accept_list"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("consumer_accept_list"); !isEmptyValue(reflect.ValueOf(consumerAcceptListProp)) && (ok || !reflect.DeepEqual(v, consumerAcceptListProp)) {
+		obj["consumerAcceptList"] = consumerAcceptListProp
+	}
+
+	lockName, err := replaceVars(d, config, "{{org_id}}/apigeeInstances")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
 
 	url, err := replaceVars(d, config, "{{ApigeeBasePath}}{{org_id}}/instances")
 	if err != nil {
@@ -160,7 +236,7 @@ func resourceApigeeInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate), isApigeeRetryableError)
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
 	}
@@ -175,12 +251,13 @@ func resourceApigeeInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = apigeeOperationWaitTimeWithResponse(
+	err = ApigeeOperationWaitTimeWithResponse(
 		config, res, &opRes, "Creating Instance", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Instance: %s", err)
 	}
 
@@ -202,7 +279,7 @@ func resourceApigeeInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceApigeeInstanceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -219,7 +296,7 @@ func resourceApigeeInstanceRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil, isApigeeRetryableError)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ApigeeInstance %q", d.Id()))
 	}
@@ -248,18 +325,31 @@ func resourceApigeeInstanceRead(d *schema.ResourceData, meta interface{}) error 
 	if err := d.Set("port", flattenApigeeInstancePort(res["port"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("consumer_accept_list", flattenApigeeInstanceConsumerAcceptList(res["consumerAcceptList"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("service_attachment", flattenApigeeInstanceServiceAttachment(res["serviceAttachment"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 
 	return nil
 }
 
 func resourceApigeeInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
 	billingProject := ""
+
+	lockName, err := replaceVars(d, config, "{{org_id}}/apigeeInstances")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
 
 	url, err := replaceVars(d, config, "{{ApigeeBasePath}}{{org_id}}/instances/{{name}}")
 	if err != nil {
@@ -274,12 +364,12 @@ func resourceApigeeInstanceDelete(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete), isApigeeRetryableError)
 	if err != nil {
 		return handleNotFoundError(err, d, "Instance")
 	}
 
-	err = apigeeOperationWaitTime(
+	err = ApigeeOperationWaitTime(
 		config, res, "Deleting Instance", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -368,6 +458,14 @@ func flattenApigeeInstancePort(v interface{}, d *schema.ResourceData, config *Co
 	return v
 }
 
+func flattenApigeeInstanceConsumerAcceptList(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
+func flattenApigeeInstanceServiceAttachment(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	return v
+}
+
 func expandApigeeInstanceName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
@@ -380,6 +478,10 @@ func expandApigeeInstancePeeringCidrRange(v interface{}, d TerraformResourceData
 	return v, nil
 }
 
+func expandApigeeInstanceIpRange(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandApigeeInstanceDescription(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }
@@ -389,5 +491,9 @@ func expandApigeeInstanceDisplayName(v interface{}, d TerraformResourceData, con
 }
 
 func expandApigeeInstanceDiskEncryptionKeyName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandApigeeInstanceConsumerAcceptList(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
 	return v, nil
 }

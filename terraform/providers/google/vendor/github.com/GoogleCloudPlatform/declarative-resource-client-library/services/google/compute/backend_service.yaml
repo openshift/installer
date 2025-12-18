@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a BackendService
     parameters:
-    - name: BackendService
+    - name: backendService
       required: true
       description: A full instance of a BackendService
   apply:
     description: The function used to apply information about a BackendService
     parameters:
-    - name: BackendService
+    - name: backendService
       required: true
       description: A full instance of a BackendService
   delete:
     description: The function used to delete a BackendService
     parameters:
-    - name: BackendService
+    - name: backendService
       required: true
       description: A full instance of a BackendService
   deleteAll:
@@ -67,7 +67,11 @@ components:
       - region
       x-dcl-uses-state-hint: true
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -717,6 +721,7 @@ components:
             HTTP(S), SSL Proxy, TCP Proxy and Network Load Balancing. Choose ` INTERNAL`
             for Internal TCP/UDP Load Balancing. Choose ` INTERNAL_MANAGED` for Internal
             HTTP(S) Load Balancing. ` INTERNAL_SELF_MANAGED` for Traffic Director.
+            Choose `EXTERNAL_MANAGED` for Global external HTTP(S) load balancers.
             A backend service created for one type of load balancer cannot be used
             with another. For more information, refer to (/load-balancing/docs/choosing-load-balancer/).
             Possible values: INVALID_LOAD_BALANCING_SCHEME, INTERNAL, INTERNAL_MANAGED,
@@ -1079,12 +1084,6 @@ components:
           x-dcl-go-name: SelfLink
           readOnly: true
           description: Server-defined URL for the resource.
-          x-kubernetes-immutable: true
-        selfLinkWithId:
-          type: string
-          x-dcl-go-name: SelfLinkWithId
-          readOnly: true
-          description: Server-defined URL for this resource with the resource id.
           x-kubernetes-immutable: true
         sessionAffinity:
           type: string

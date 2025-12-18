@@ -23,11 +23,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"google.golang.org/api/googleapi"
 )
 
-func resourceComputeRouterBgpPeer() *schema.Resource {
+func ResourceComputeRouterBgpPeer() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeRouterBgpPeerCreate,
 		Read:   resourceComputeRouterBgpPeerRead,
@@ -39,9 +37,9 @@ func resourceComputeRouterBgpPeer() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
-			Update: schema.DefaultTimeout(10 * time.Minute),
-			Delete: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Update: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -85,7 +83,7 @@ Only IPv4 is supported.`,
 			"advertise_mode": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"DEFAULT", "CUSTOM", ""}, false),
+				ValidateFunc: validateEnum([]string{"DEFAULT", "CUSTOM", ""}),
 				Description: `User-specified flag to indicate which mode to use for advertisement.
 Valid values of this enum field are: 'DEFAULT', 'CUSTOM' Default value: "DEFAULT" Possible values: ["DEFAULT", "CUSTOM"]`,
 				Default: "DEFAULT",
@@ -151,7 +149,7 @@ length, the routes with the lowest priority value win.`,
 						"session_initialization_mode": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"ACTIVE", "DISABLED", "PASSIVE"}, false),
+							ValidateFunc: validateEnum([]string{"ACTIVE", "DISABLED", "PASSIVE"}),
 							Description: `The BFD session initialization mode for this BGP peer.
 If set to 'ACTIVE', the Cloud Router will initiate the BFD session
 for this BGP peer. If set to 'PASSIVE', the Cloud Router will wait
@@ -214,6 +212,15 @@ Only IPv4 is supported.`,
 				Description: `Region where the router and BgpPeer reside.
 If it is not provided, the provider region is used.`,
 			},
+			"router_appliance_instance": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				DiffSuppressFunc: compareSelfLinkOrResourceName,
+				Description: `The URI of the VM instance that is used as third-party router appliances
+such as Next Gen Firewalls, Virtual Routers, or Router Appliances.
+The VM instance must be located in zones contained in the same region as
+this Cloud Router. The VM instance is the peer side of the BGP session.`,
+			},
 			"management_type": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -241,7 +248,7 @@ or deleted.`,
 
 func resourceComputeRouterBgpPeerCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -313,6 +320,12 @@ func resourceComputeRouterBgpPeerCreate(d *schema.ResourceData, meta interface{}
 	} else if v, ok := d.GetOkExists("enable"); ok || !reflect.DeepEqual(v, enableProp) {
 		obj["enable"] = enableProp
 	}
+	routerApplianceInstanceProp, err := expandNestedComputeRouterBgpPeerRouterApplianceInstance(d.Get("router_appliance_instance"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("router_appliance_instance"); !isEmptyValue(reflect.ValueOf(routerApplianceInstanceProp)) && (ok || !reflect.DeepEqual(v, routerApplianceInstanceProp)) {
+		obj["routerApplianceInstance"] = routerApplianceInstanceProp
+	}
 
 	lockName, err := replaceVars(d, config, "router/{{region}}/{{router}}")
 	if err != nil {
@@ -345,7 +358,7 @@ func resourceComputeRouterBgpPeerCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating RouterBgpPeer: %s", err)
 	}
@@ -357,7 +370,7 @@ func resourceComputeRouterBgpPeerCreate(d *schema.ResourceData, meta interface{}
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating RouterBgpPeer", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -374,7 +387,7 @@ func resourceComputeRouterBgpPeerCreate(d *schema.ResourceData, meta interface{}
 
 func resourceComputeRouterBgpPeerRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -397,7 +410,7 @@ func resourceComputeRouterBgpPeerRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeRouterBgpPeer %q", d.Id()))
 	}
@@ -454,13 +467,16 @@ func resourceComputeRouterBgpPeerRead(d *schema.ResourceData, meta interface{}) 
 	if err := d.Set("enable", flattenNestedComputeRouterBgpPeerEnable(res["enable"], d, config)); err != nil {
 		return fmt.Errorf("Error reading RouterBgpPeer: %s", err)
 	}
+	if err := d.Set("router_appliance_instance", flattenNestedComputeRouterBgpPeerRouterApplianceInstance(res["routerApplianceInstance"], d, config)); err != nil {
+		return fmt.Errorf("Error reading RouterBgpPeer: %s", err)
+	}
 
 	return nil
 }
 
 func resourceComputeRouterBgpPeerUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -528,6 +544,12 @@ func resourceComputeRouterBgpPeerUpdate(d *schema.ResourceData, meta interface{}
 	} else if v, ok := d.GetOkExists("enable"); ok || !reflect.DeepEqual(v, enableProp) {
 		obj["enable"] = enableProp
 	}
+	routerApplianceInstanceProp, err := expandNestedComputeRouterBgpPeerRouterApplianceInstance(d.Get("router_appliance_instance"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("router_appliance_instance"); !isEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, routerApplianceInstanceProp)) {
+		obj["routerApplianceInstance"] = routerApplianceInstanceProp
+	}
 
 	lockName, err := replaceVars(d, config, "router/{{region}}/{{router}}")
 	if err != nil {
@@ -553,7 +575,7 @@ func resourceComputeRouterBgpPeerUpdate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutUpdate))
 
 	if err != nil {
 		return fmt.Errorf("Error updating RouterBgpPeer %q: %s", d.Id(), err)
@@ -561,7 +583,7 @@ func resourceComputeRouterBgpPeerUpdate(d *schema.ResourceData, meta interface{}
 		log.Printf("[DEBUG] Finished updating RouterBgpPeer %q: %#v", d.Id(), res)
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Updating RouterBgpPeer", userAgent,
 		d.Timeout(schema.TimeoutUpdate))
 
@@ -574,7 +596,7 @@ func resourceComputeRouterBgpPeerUpdate(d *schema.ResourceData, meta interface{}
 
 func resourceComputeRouterBgpPeerDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -612,12 +634,12 @@ func resourceComputeRouterBgpPeerDelete(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "RouterBgpPeer")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting RouterBgpPeer", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -669,7 +691,7 @@ func flattenNestedComputeRouterBgpPeerPeerIpAddress(v interface{}, d *schema.Res
 func flattenNestedComputeRouterBgpPeerPeerAsn(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -686,7 +708,7 @@ func flattenNestedComputeRouterBgpPeerPeerAsn(v interface{}, d *schema.ResourceD
 func flattenNestedComputeRouterBgpPeerAdvertisedRoutePriority(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -769,7 +791,7 @@ func flattenNestedComputeRouterBgpPeerBfdSessionInitializationMode(v interface{}
 func flattenNestedComputeRouterBgpPeerBfdMinTransmitInterval(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -786,7 +808,7 @@ func flattenNestedComputeRouterBgpPeerBfdMinTransmitInterval(v interface{}, d *s
 func flattenNestedComputeRouterBgpPeerBfdMinReceiveInterval(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -803,7 +825,7 @@ func flattenNestedComputeRouterBgpPeerBfdMinReceiveInterval(v interface{}, d *sc
 func flattenNestedComputeRouterBgpPeerBfdMultiplier(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
@@ -827,6 +849,13 @@ func flattenNestedComputeRouterBgpPeerEnable(v interface{}, d *schema.ResourceDa
 		return v
 	}
 	return b
+}
+
+func flattenNestedComputeRouterBgpPeerRouterApplianceInstance(v interface{}, d *schema.ResourceData, config *Config) interface{} {
+	if v == nil {
+		return v
+	}
+	return ConvertSelfLinkToV1(v.(string))
 }
 
 func expandNestedComputeRouterBgpPeerName(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
@@ -962,6 +991,14 @@ func expandNestedComputeRouterBgpPeerEnable(v interface{}, d TerraformResourceDa
 	return strings.ToUpper(strconv.FormatBool(v.(bool))), nil
 }
 
+func expandNestedComputeRouterBgpPeerRouterApplianceInstance(v interface{}, d TerraformResourceData, config *Config) (interface{}, error) {
+	f, err := parseZonalFieldValue("instances", v.(string), "project", "zone", d, config, true)
+	if err != nil {
+		return nil, fmt.Errorf("Invalid value for router_appliance_instance: %s", err)
+	}
+	return f.RelativeLink(), nil
+}
+
 func flattenNestedComputeRouterBgpPeer(d *schema.ResourceData, meta interface{}, res map[string]interface{}) (map[string]interface{}, error) {
 	var v interface{}
 	var ok bool
@@ -1086,10 +1123,7 @@ func resourceComputeRouterBgpPeerPatchDeleteEncoder(d *schema.ResourceData, meta
 	}
 	if item == nil {
 		// Spoof 404 error for proper handling by Delete (i.e. no-op)
-		return nil, &googleapi.Error{
-			Code:    404,
-			Message: "RouterBgpPeer not found in list",
-		}
+		return nil, fake404("nested", "ComputeRouterBgpPeer")
 	}
 
 	updatedItems := append(currItems[:idx], currItems[idx+1:]...)
@@ -1113,12 +1147,12 @@ func resourceComputeRouterBgpPeerListForPatch(d *schema.ResourceData, meta inter
 		return nil, err
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := sendRequest(config, "GET", project, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", project, url, userAgent, nil)
 	if err != nil {
 		return nil, err
 	}

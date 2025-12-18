@@ -21,10 +21,9 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"google.golang.org/api/googleapi"
 )
 
-func resourceAccessContextManagerServicePerimeterResource() *schema.Resource {
+func ResourceAccessContextManagerServicePerimeterResource() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAccessContextManagerServicePerimeterResourceCreate,
 		Read:   resourceAccessContextManagerServicePerimeterResourceRead,
@@ -35,8 +34,8 @@ func resourceAccessContextManagerServicePerimeterResource() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -62,7 +61,7 @@ Format: projects/{project_number}`,
 
 func resourceAccessContextManagerServicePerimeterResourceCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -104,7 +103,7 @@ func resourceAccessContextManagerServicePerimeterResourceCreate(d *schema.Resour
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating ServicePerimeterResource: %s", err)
 	}
@@ -119,12 +118,13 @@ func resourceAccessContextManagerServicePerimeterResourceCreate(d *schema.Resour
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = accessContextManagerOperationWaitTimeWithResponse(
+	err = AccessContextManagerOperationWaitTimeWithResponse(
 		config, res, &opRes, "Creating ServicePerimeterResource", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create ServicePerimeterResource: %s", err)
 	}
 
@@ -156,7 +156,7 @@ func resourceAccessContextManagerServicePerimeterResourceCreate(d *schema.Resour
 
 func resourceAccessContextManagerServicePerimeterResourceRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -173,7 +173,7 @@ func resourceAccessContextManagerServicePerimeterResourceRead(d *schema.Resource
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerServicePerimeterResource %q", d.Id()))
 	}
@@ -199,7 +199,7 @@ func resourceAccessContextManagerServicePerimeterResourceRead(d *schema.Resource
 
 func resourceAccessContextManagerServicePerimeterResourceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -235,12 +235,12 @@ func resourceAccessContextManagerServicePerimeterResourceDelete(d *schema.Resour
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "PATCH", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "ServicePerimeterResource")
 	}
 
-	err = accessContextManagerOperationWaitTime(
+	err = AccessContextManagerOperationWaitTime(
 		config, res, "Deleting ServicePerimeterResource", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -383,10 +383,7 @@ func resourceAccessContextManagerServicePerimeterResourcePatchDeleteEncoder(d *s
 	}
 	if item == nil {
 		// Spoof 404 error for proper handling by Delete (i.e. no-op)
-		return nil, &googleapi.Error{
-			Code:    404,
-			Message: "ServicePerimeterResource not found in list",
-		}
+		return nil, fake404("nested", "AccessContextManagerServicePerimeterResource")
 	}
 
 	updatedItems := append(currItems[:idx], currItems[idx+1:]...)
@@ -410,12 +407,12 @@ func resourceAccessContextManagerServicePerimeterResourceListForPatch(d *schema.
 		return nil, err
 	}
 
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := sendRequest(config, "GET", "", url, userAgent, nil)
+	res, err := SendRequest(config, "GET", "", url, userAgent, nil)
 	if err != nil {
 		return nil, err
 	}

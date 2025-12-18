@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a VpnGateway
     parameters:
-    - name: VpnGateway
+    - name: vpnGateway
       required: true
       description: A full instance of a VpnGateway
   apply:
     description: The function used to apply information about a VpnGateway
     parameters:
-    - name: VpnGateway
+    - name: vpnGateway
       required: true
       description: A full instance of a VpnGateway
   delete:
     description: The function used to delete a VpnGateway
     parameters:
-    - name: VpnGateway
+    - name: vpnGateway
       required: true
       description: A full instance of a VpnGateway
   deleteAll:
@@ -42,7 +42,7 @@ paths:
       required: true
       schema:
         type: string
-    - name: region
+    - name: location
       required: true
       schema:
         type: string
@@ -53,7 +53,7 @@ paths:
       required: true
       schema:
         type: string
-    - name: region
+    - name: location
       required: true
       schema:
         type: string
@@ -61,12 +61,14 @@ components:
   schemas:
     VpnGateway:
       title: VpnGateway
-      x-dcl-id: projects/{{project}}/regions/{{region}}/vpnGateways/{{name}}
-      x-dcl-locations:
-      - region
+      x-dcl-id: projects/{{project}}/regions/{{location}}/vpnGateways/{{name}}
       x-dcl-parent-container: project
       x-dcl-labels: labels
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -89,6 +91,12 @@ components:
             [Output Only] The unique identifier for the resource. This identifier is
             defined by the server.
           x-kubernetes-immutable: true
+        labelFingerprint:
+          type: string
+          x-dcl-go-name: LabelFingerprint
+          readOnly: true
+          description: The fingerprint used for optimistic locking of this resource.  Used
+            internally during updates.
         labels:
           type: object
           additionalProperties:
@@ -97,6 +105,13 @@ components:
           description: Labels for this resource. These can only be added or modified
             by the `setLabels` method. Each label key/value pair must comply with
             [RFC1035](https://www.ietf.org/rfc/rfc1035.txt). Label values may be empty.
+        location:
+          type: string
+          x-dcl-go-name: Location
+          description: |-
+            URL of the region where the target VPN gateway resides.
+            You must specify this field as part of the HTTP request URL. It is
+            not settable as a field in the request body.
           x-kubernetes-immutable: true
         name:
           type: string
@@ -130,14 +145,6 @@ components:
           - resource: Cloudresourcemanager/Project
             field: name
             parent: true
-        region:
-          type: string
-          x-dcl-go-name: Region
-          description: |-
-            URL of the region where the target VPN gateway resides.
-            You must specify this field as part of the HTTP request URL. It is
-            not settable as a field in the request body.
-          x-kubernetes-immutable: true
         selfLink:
           type: string
           x-dcl-go-name: SelfLink

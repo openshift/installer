@@ -6,7 +6,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func dataSourceGoogleMonitoringUptimeCheckIps() *schema.Resource {
+func DataSourceGoogleMonitoringUptimeCheckIps() *schema.Resource {
 	return &schema.Resource{
 		Read: dataSourceGoogleMonitoringUptimeCheckIpsRead,
 
@@ -37,7 +37,7 @@ func dataSourceGoogleMonitoringUptimeCheckIps() *schema.Resource {
 
 func dataSourceGoogleMonitoringUptimeCheckIpsRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

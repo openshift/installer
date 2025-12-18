@@ -1,4 +1,4 @@
-# Copyright 2021 Google LLC. All Rights Reserved.
+# Copyright 2023 Google LLC. All Rights Reserved.
 # 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,19 +20,19 @@ paths:
   get:
     description: The function used to get information about a AutoscalingPolicy
     parameters:
-    - name: AutoscalingPolicy
+    - name: autoscalingPolicy
       required: true
       description: A full instance of a AutoscalingPolicy
   apply:
     description: The function used to apply information about a AutoscalingPolicy
     parameters:
-    - name: AutoscalingPolicy
+    - name: autoscalingPolicy
       required: true
       description: A full instance of a AutoscalingPolicy
   delete:
     description: The function used to delete a AutoscalingPolicy
     parameters:
-    - name: AutoscalingPolicy
+    - name: autoscalingPolicy
       required: true
       description: A full instance of a AutoscalingPolicy
   deleteAll:
@@ -63,7 +63,11 @@ components:
       title: AutoscalingPolicy
       x-dcl-id: projects/{{project}}/locations/{{location}}/autoscalingPolicies/{{name}}
       x-dcl-parent-container: project
+      x-dcl-has-create: true
       x-dcl-has-iam: false
+      x-dcl-read-timeout: 0
+      x-dcl-apply-timeout: 0
+      x-dcl-delete-timeout: 0
       type: object
       required:
       - name
@@ -85,6 +89,7 @@ components:
               description: 'Optional. Duration between scaling events. A scaling period
                 starts after the update operation from the previous event has completed.
                 Bounds: . Default: 2m.'
+              x-dcl-server-default: true
             yarnConfig:
               type: object
               x-dcl-go-name: YarnConfig
@@ -206,6 +211,7 @@ components:
                 is set for one group only, the cluster will default to zero weight
                 on the unset group. For example if weight is set only on primary workers,
                 the cluster will use primary workers only and no secondary workers.'
+              x-dcl-server-default: true
         workerConfig:
           type: object
           x-dcl-go-name: WorkerConfig
@@ -230,6 +236,7 @@ components:
               x-dcl-go-name: MinInstances
               description: 'Optional. Minimum number of instances for this group.
                 Primary workers - Bounds: . Default: 0.'
+              x-dcl-server-default: true
             weight:
               type: integer
               format: int64
@@ -249,3 +256,4 @@ components:
                 is set for one group only, the cluster will default to zero weight
                 on the unset group. For example if weight is set only on primary workers,
                 the cluster will use primary workers only and no secondary workers.'
+              x-dcl-server-default: true

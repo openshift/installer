@@ -24,7 +24,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
 
-func resourceTagsTagBinding() *schema.Resource {
+func ResourceTagsTagBinding() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceTagsTagBindingCreate,
 		Read:   resourceTagsTagBindingRead,
@@ -35,8 +35,8 @@ func resourceTagsTagBinding() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(4 * time.Minute),
-			Delete: schema.DefaultTimeout(4 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
+			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -64,7 +64,7 @@ func resourceTagsTagBinding() *schema.Resource {
 
 func resourceTagsTagBindingCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -83,6 +83,13 @@ func resourceTagsTagBindingCreate(d *schema.ResourceData, meta interface{}) erro
 		obj["tagValue"] = tagValueProp
 	}
 
+	lockName, err := replaceVars(d, config, "tagBindings/{{parent}}")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
+
 	url, err := replaceVars(d, config, "{{TagsBasePath}}tagBindings")
 	if err != nil {
 		return err
@@ -96,7 +103,7 @@ func resourceTagsTagBindingCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating TagBinding: %s", err)
 	}
@@ -111,12 +118,13 @@ func resourceTagsTagBindingCreate(d *schema.ResourceData, meta interface{}) erro
 	// Use the resource in the operation response to populate
 	// identity fields and d.Id() before read
 	var opRes map[string]interface{}
-	err = tagsOperationWaitTimeWithResponse(
+	err = TagsOperationWaitTimeWithResponse(
 		config, res, &opRes, "Creating TagBinding", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		// The resource didn't actually create
 		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create TagBinding: %s", err)
 	}
 
@@ -148,7 +156,7 @@ func resourceTagsTagBindingCreate(d *schema.ResourceData, meta interface{}) erro
 
 func resourceTagsTagBindingRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -165,7 +173,7 @@ func resourceTagsTagBindingRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("TagsTagBinding %q", d.Id()))
 	}
@@ -197,12 +205,19 @@ func resourceTagsTagBindingRead(d *schema.ResourceData, meta interface{}) error 
 
 func resourceTagsTagBindingDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
 
 	billingProject := ""
+
+	lockName, err := replaceVars(d, config, "tagBindings/{{parent}}")
+	if err != nil {
+		return err
+	}
+	mutexKV.Lock(lockName)
+	defer mutexKV.Unlock(lockName)
 
 	url, err := replaceVars(d, config, "{{TagsBasePath}}tagBindings/{{name}}")
 	if err != nil {
@@ -217,12 +232,12 @@ func resourceTagsTagBindingDelete(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "TagBinding")
 	}
 
-	err = tagsOperationWaitTime(
+	err = TagsOperationWaitTime(
 		config, res, "Deleting TagBinding", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 

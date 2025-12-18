@@ -18,6 +18,34 @@ import (
 var (
 	resolveDataprocImageVersion = regexp.MustCompile(`(?P<Major>[^\s.-]+)\.(?P<Minor>[^\s.-]+)(?:\.(?P<Subminor>[^\s.-]+))?(?:\-(?P<Distr>[^\s.-]+))?`)
 
+	virtualClusterConfigKeys = []string{
+		"virtual_cluster_config.0.staging_bucket",
+		"virtual_cluster_config.0.auxiliary_services_config",
+		"virtual_cluster_config.0.kubernetes_cluster_config",
+	}
+
+	auxiliaryServicesConfigKeys = []string{
+		"virtual_cluster_config.0.auxiliary_services_config.0.metastore_config",
+		"virtual_cluster_config.0.auxiliary_services_config.0.spark_history_server_config",
+	}
+
+	auxiliaryServicesMetastoreConfigKeys = []string{
+		"virtual_cluster_config.0.auxiliary_services_config.0.metastore_config.0.dataproc_metastore_service",
+	}
+
+	auxiliaryServicesSparkHistoryServerConfigKeys = []string{
+		"virtual_cluster_config.0.auxiliary_services_config.0.spark_history_server_config.0.dataproc_cluster",
+	}
+
+	kubernetesClusterConfigKeys = []string{
+		"virtual_cluster_config.0.kubernetes_cluster_config.0.kubernetes_namespace",
+	}
+
+	gkeClusterConfigKeys = []string{
+		"virtual_cluster_config.0.kubernetes_cluster_config.0.gke_cluster_config.0.gke_cluster_target",
+		"virtual_cluster_config.0.kubernetes_cluster_config.0.gke_cluster_config.0.node_pool_target",
+	}
+
 	gceClusterConfigKeys = []string{
 		"cluster_config.0.gce_cluster_config.0.zone",
 		"cluster_config.0.gce_cluster_config.0.network",
@@ -28,12 +56,20 @@ var (
 		"cluster_config.0.gce_cluster_config.0.internal_ip_only",
 		"cluster_config.0.gce_cluster_config.0.shielded_instance_config",
 		"cluster_config.0.gce_cluster_config.0.metadata",
+		"cluster_config.0.gce_cluster_config.0.reservation_affinity",
+		"cluster_config.0.gce_cluster_config.0.node_group_affinity",
 	}
 
 	schieldedInstanceConfigKeys = []string{
 		"cluster_config.0.gce_cluster_config.0.shielded_instance_config.0.enable_secure_boot",
 		"cluster_config.0.gce_cluster_config.0.shielded_instance_config.0.enable_vtpm",
 		"cluster_config.0.gce_cluster_config.0.shielded_instance_config.0.enable_integrity_monitoring",
+	}
+
+	reservationAffinityKeys = []string{
+		"cluster_config.0.gce_cluster_config.0.reservation_affinity.0.consume_reservation_type",
+		"cluster_config.0.gce_cluster_config.0.reservation_affinity.0.key",
+		"cluster_config.0.gce_cluster_config.0.reservation_affinity.0.values",
 	}
 
 	preemptibleWorkerDiskConfigKeys = []string{
@@ -48,6 +84,15 @@ var (
 		"cluster_config.0.software_config.0.optional_components",
 	}
 
+	dataprocMetricConfigKeys = []string{
+		"cluster_config.0.dataproc_metric_config.0.metrics",
+	}
+
+	metricKeys = []string{
+		"cluster_config.0.dataproc_metric_config.0.metrics.0.metric_source",
+		"cluster_config.0.dataproc_metric_config.0.metrics.0.metric_overrides",
+	}
+
 	clusterConfigKeys = []string{
 		"cluster_config.0.staging_bucket",
 		"cluster_config.0.temp_bucket",
@@ -60,10 +105,47 @@ var (
 		"cluster_config.0.initialization_action",
 		"cluster_config.0.encryption_config",
 		"cluster_config.0.autoscaling_config",
+		"cluster_config.0.metastore_config",
+		"cluster_config.0.lifecycle_config",
+		"cluster_config.0.endpoint_config",
+		"cluster_config.0.dataproc_metric_config",
 	}
 )
 
-func resourceDataprocCluster() *schema.Resource {
+const resourceDataprocGoogleProvidedLabelPrefix = "labels.goog-dataproc"
+
+func resourceDataprocLabelDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
+	if strings.HasPrefix(k, resourceDataprocGoogleProvidedLabelPrefix) && new == "" {
+		return true
+	}
+
+	// Let diff be determined by labels (above)
+	if strings.HasPrefix(k, "labels.%") {
+		return true
+	}
+
+	// For other keys, don't suppress diff.
+	return false
+}
+
+const resourceDataprocGoogleProvidedDPGKEPrefix = "virtual_cluster_config.0.kubernetes_cluster_config.0.kubernetes_software_config.0.properties.dpgke"
+const resourceDataprocGoogleProvidedSparkPrefix = "virtual_cluster_config.0.kubernetes_cluster_config.0.kubernetes_software_config.0.properties.spark"
+
+func resourceDataprocPropertyDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
+	// Suppress diffs for the properties provided by API
+	if strings.HasPrefix(k, resourceDataprocGoogleProvidedDPGKEPrefix) && new == "" {
+		return true
+	}
+
+	if strings.HasPrefix(k, resourceDataprocGoogleProvidedSparkPrefix) && new == "" {
+		return true
+	}
+
+	// For other keys, don't suppress diff.
+	return false
+}
+
+func ResourceDataprocCluster() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceDataprocClusterCreate,
 		Read:   resourceDataprocClusterRead,
@@ -71,9 +153,9 @@ func resourceDataprocCluster() *schema.Resource {
 		Delete: resourceDataprocClusterDelete,
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(20 * time.Minute),
-			Update: schema.DefaultTimeout(20 * time.Minute),
-			Delete: schema.DefaultTimeout(20 * time.Minute),
+			Create: schema.DefaultTimeout(45 * time.Minute),
+			Update: schema.DefaultTimeout(45 * time.Minute),
+			Delete: schema.DefaultTimeout(45 * time.Minute),
 		},
 
 		Schema: map[string]*schema.Schema{
@@ -132,11 +214,272 @@ func resourceDataprocCluster() *schema.Resource {
 				Type:     schema.TypeMap,
 				Optional: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
-				// GCP automatically adds two labels
-				//    'goog-dataproc-cluster-uuid'
-				//    'goog-dataproc-cluster-name'
+				// GCP automatically adds labels
+				DiffSuppressFunc: resourceDataprocLabelDiffSuppress,
+				Computed:         true,
+				Description:      `The list of labels (key/value pairs) to be applied to instances in the cluster. GCP generates some itself including goog-dataproc-cluster-name which is the name of the cluster.`,
+			},
+
+			"virtual_cluster_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
 				Computed:    true,
-				Description: `The list of labels (key/value pairs) to be applied to instances in the cluster. GCP generates some itself including goog-dataproc-cluster-name which is the name of the cluster.`,
+				MaxItems:    1,
+				Description: `The virtual cluster config is used when creating a Dataproc cluster that does not directly control the underlying compute resources, for example, when creating a Dataproc-on-GKE cluster. Dataproc may set default values, and values may change when clusters are updated. Exactly one of config or virtualClusterConfig must be specified.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+
+						"staging_bucket": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							AtLeastOneOf: virtualClusterConfigKeys,
+							ForceNew:     true,
+							Description:  `A Cloud Storage bucket used to stage job dependencies, config files, and job driver console output. If you do not specify a staging bucket, Cloud Dataproc will determine a Cloud Storage location (US, ASIA, or EU) for your cluster's staging bucket according to the Compute Engine zone where your cluster is deployed, and then create and manage this project-level, per-location bucket.`,
+						},
+
+						"auxiliary_services_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							MaxItems:     1,
+							AtLeastOneOf: virtualClusterConfigKeys,
+							Description:  `Auxiliary services configuration for a Cluster.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+
+									"metastore_config": {
+										Type:         schema.TypeList,
+										Optional:     true,
+										MaxItems:     1,
+										AtLeastOneOf: auxiliaryServicesConfigKeys,
+										Description:  `The Hive Metastore configuration for this workload.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+
+												"dataproc_metastore_service": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													ForceNew:     true,
+													AtLeastOneOf: auxiliaryServicesMetastoreConfigKeys,
+													Description:  `The Hive Metastore configuration for this workload.`,
+												},
+											},
+										},
+									},
+
+									"spark_history_server_config": {
+										Type:         schema.TypeList,
+										Optional:     true,
+										MaxItems:     1,
+										AtLeastOneOf: auxiliaryServicesConfigKeys,
+										Description:  `The Spark History Server configuration for the workload.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+
+												"dataproc_cluster": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													ForceNew:     true,
+													AtLeastOneOf: auxiliaryServicesSparkHistoryServerConfigKeys,
+													Description:  `Resource name of an existing Dataproc Cluster to act as a Spark History Server for the workload.`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+
+						"kubernetes_cluster_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							MaxItems:     1,
+							AtLeastOneOf: virtualClusterConfigKeys,
+							Description:  `The configuration for running the Dataproc cluster on Kubernetes.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+
+									"kubernetes_namespace": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										ForceNew:     true,
+										AtLeastOneOf: kubernetesClusterConfigKeys,
+										Description:  `A namespace within the Kubernetes cluster to deploy into. If this namespace does not exist, it is created. If it exists, Dataproc verifies that another Dataproc VirtualCluster is not installed into it. If not specified, the name of the Dataproc Cluster is used.`,
+									},
+
+									"kubernetes_software_config": {
+										Type:        schema.TypeList,
+										MaxItems:    1,
+										Required:    true,
+										Description: `The software configuration for this Dataproc cluster running on Kubernetes.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+
+												"component_version": {
+													Type:        schema.TypeMap,
+													Required:    true,
+													ForceNew:    true,
+													Elem:        &schema.Schema{Type: schema.TypeString},
+													Description: `The components that should be installed in this Dataproc cluster. The key must be a string from the KubernetesComponent enumeration. The value is the version of the software to be installed.`,
+												},
+
+												"properties": {
+													Type:             schema.TypeMap,
+													Optional:         true,
+													ForceNew:         true,
+													DiffSuppressFunc: resourceDataprocPropertyDiffSuppress,
+													Elem:             &schema.Schema{Type: schema.TypeString},
+													Computed:         true,
+													Description:      `The properties to set on daemon config files. Property keys are specified in prefix:property format, for example spark:spark.kubernetes.container.image.`,
+												},
+											},
+										},
+									},
+
+									"gke_cluster_config": {
+										Type:        schema.TypeList,
+										Required:    true,
+										MaxItems:    1,
+										Description: `The configuration for running the Dataproc cluster on GKE.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+
+												"gke_cluster_target": {
+													Type:         schema.TypeString,
+													ForceNew:     true,
+													Optional:     true,
+													AtLeastOneOf: gkeClusterConfigKeys,
+													Description:  `A target GKE cluster to deploy to. It must be in the same project and region as the Dataproc cluster (the GKE cluster can be zonal or regional). Format: 'projects/{project}/locations/{location}/clusters/{cluster_id}'`,
+												},
+
+												"node_pool_target": {
+													Type:         schema.TypeList,
+													Optional:     true,
+													AtLeastOneOf: gkeClusterConfigKeys,
+													MinItems:     1,
+													Description:  `GKE node pools where workloads will be scheduled. At least one node pool must be assigned the DEFAULT GkeNodePoolTarget.Role. If a GkeNodePoolTarget is not specified, Dataproc constructs a DEFAULT GkeNodePoolTarget.`,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+
+															"node_pool": {
+																Type:        schema.TypeString,
+																ForceNew:    true,
+																Required:    true,
+																Description: `The target GKE node pool. Format: 'projects/{project}/locations/{location}/clusters/{cluster}/nodePools/{nodePool}'`,
+															},
+
+															"roles": {
+																Type:        schema.TypeSet,
+																Elem:        &schema.Schema{Type: schema.TypeString},
+																ForceNew:    true,
+																Required:    true,
+																Description: `The roles associated with the GKE node pool.`,
+															},
+
+															"node_pool_config": {
+																Type:        schema.TypeList,
+																Optional:    true,
+																Computed:    true,
+																MaxItems:    1,
+																Description: `Input only. The configuration for the GKE node pool.`,
+																Elem: &schema.Resource{
+																	Schema: map[string]*schema.Schema{
+
+																		"config": {
+																			Type:        schema.TypeList,
+																			Optional:    true,
+																			Computed:    true,
+																			MaxItems:    1,
+																			Description: `The node pool configuration.`,
+																			Elem: &schema.Resource{
+																				Schema: map[string]*schema.Schema{
+
+																					"machine_type": {
+																						Type:        schema.TypeString,
+																						ForceNew:    true,
+																						Optional:    true,
+																						Description: `The name of a Compute Engine machine type.`,
+																					},
+
+																					"local_ssd_count": {
+																						Type:        schema.TypeInt,
+																						ForceNew:    true,
+																						Optional:    true,
+																						Description: `The minimum number of nodes in the node pool. Must be >= 0 and <= maxNodeCount.`,
+																					},
+
+																					"preemptible": {
+																						Type:        schema.TypeBool,
+																						ForceNew:    true,
+																						Optional:    true,
+																						Description: `Whether the nodes are created as preemptible VM instances. Preemptible nodes cannot be used in a node pool with the CONTROLLER role or in the DEFAULT node pool if the CONTROLLER role is not assigned (the DEFAULT node pool will assume the CONTROLLER role).`,
+																					},
+
+																					"min_cpu_platform": {
+																						Type:        schema.TypeString,
+																						ForceNew:    true,
+																						Optional:    true,
+																						Description: `Minimum CPU platform to be used by this instance. The instance may be scheduled on the specified or a newer CPU platform. Specify the friendly names of CPU platforms, such as "Intel Haswell" or "Intel Sandy Bridge".`,
+																					},
+
+																					"spot": {
+																						Type:        schema.TypeBool,
+																						ForceNew:    true,
+																						Optional:    true,
+																						Description: `Spot flag for enabling Spot VM, which is a rebrand of the existing preemptible flag.`,
+																					},
+																				},
+																			},
+																		},
+
+																		"locations": {
+																			Type:        schema.TypeSet,
+																			Elem:        &schema.Schema{Type: schema.TypeString},
+																			ForceNew:    true,
+																			Required:    true,
+																			Description: `The list of Compute Engine zones where node pool nodes associated with a Dataproc on GKE virtual cluster will be located.`,
+																		},
+
+																		"autoscaling": {
+																			Type:        schema.TypeList,
+																			Optional:    true,
+																			Computed:    true,
+																			MaxItems:    1,
+																			Description: `The autoscaler configuration for this node pool. The autoscaler is enabled only when a valid configuration is present.`,
+																			Elem: &schema.Resource{
+																				Schema: map[string]*schema.Schema{
+
+																					"min_node_count": {
+																						Type:        schema.TypeInt,
+																						ForceNew:    true,
+																						Optional:    true,
+																						Description: `The minimum number of nodes in the node pool. Must be >= 0 and <= maxNodeCount.`,
+																					},
+
+																					"max_node_count": {
+																						Type:        schema.TypeInt,
+																						ForceNew:    true,
+																						Optional:    true,
+																						Description: `The maximum number of nodes in the node pool. Must be >= minNodeCount, and must be > 0.`,
+																					},
+																				},
+																			},
+																		},
+																	},
+																},
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
 			},
 
 			"cluster_config": {
@@ -302,6 +645,62 @@ func resourceDataprocCluster() *schema.Resource {
 											},
 										},
 									},
+
+									"reservation_affinity": {
+										Type:         schema.TypeList,
+										Optional:     true,
+										AtLeastOneOf: gceClusterConfigKeys,
+										Computed:     true,
+										MaxItems:     1,
+										Description:  `Reservation Affinity for consuming Zonal reservation.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"consume_reservation_type": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													AtLeastOneOf: reservationAffinityKeys,
+													ForceNew:     true,
+													ValidateFunc: validation.StringInSlice([]string{"NO_RESERVATION", "ANY_RESERVATION", "SPECIFIC_RESERVATION"}, false),
+													Description:  `Type of reservation to consume.`,
+												},
+												"key": {
+													Type:         schema.TypeString,
+													Optional:     true,
+													AtLeastOneOf: reservationAffinityKeys,
+													ForceNew:     true,
+													Description:  `Corresponds to the label key of reservation resource.`,
+												},
+												"values": {
+													Type:         schema.TypeSet,
+													Elem:         &schema.Schema{Type: schema.TypeString},
+													Optional:     true,
+													AtLeastOneOf: reservationAffinityKeys,
+													ForceNew:     true,
+													Description:  `Corresponds to the label values of reservation resource.`,
+												},
+											},
+										},
+									},
+
+									"node_group_affinity": {
+										Type:         schema.TypeList,
+										Optional:     true,
+										AtLeastOneOf: gceClusterConfigKeys,
+										Computed:     true,
+										MaxItems:     1,
+										Description:  `Node Group Affinity for sole-tenant clusters.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"node_group_uri": {
+													Type:             schema.TypeString,
+													ForceNew:         true,
+													Required:         true,
+													Description:      `The URI of a sole-tenant that the cluster will be created on.`,
+													DiffSuppressFunc: compareSelfLinkOrResourceName,
+												},
+											},
+										},
+									},
 								},
 							},
 						},
@@ -325,6 +724,7 @@ func resourceDataprocCluster() *schema.Resource {
 										Description: `Specifies the number of preemptible nodes to create. Defaults to 0.`,
 										AtLeastOneOf: []string{
 											"cluster_config.0.preemptible_worker_config.0.num_instances",
+											"cluster_config.0.preemptible_worker_config.0.preemptibility",
 											"cluster_config.0.preemptible_worker_config.0.disk_config",
 										},
 									},
@@ -333,6 +733,20 @@ func resourceDataprocCluster() *schema.Resource {
 									// It always uses whatever is specified for the worker_config
 									// "machine_type": { ... }
 									// "min_cpu_platform": { ... }
+									"preemptibility": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `Specifies the preemptibility of the secondary nodes. Defaults to PREEMPTIBLE.`,
+										AtLeastOneOf: []string{
+											"cluster_config.0.preemptible_worker_config.0.num_instances",
+											"cluster_config.0.preemptible_worker_config.0.preemptibility",
+											"cluster_config.0.preemptible_worker_config.0.disk_config",
+										},
+										ForceNew:     true,
+										ValidateFunc: validation.StringInSlice([]string{"PREEMPTIBILITY_UNSPECIFIED", "NON_PREEMPTIBLE", "PREEMPTIBLE", "SPOT"}, false),
+										Default:      "PREEMPTIBLE",
+									},
+
 									"disk_config": {
 										Type:        schema.TypeList,
 										Optional:    true,
@@ -340,6 +754,7 @@ func resourceDataprocCluster() *schema.Resource {
 										Description: `Disk Config`,
 										AtLeastOneOf: []string{
 											"cluster_config.0.preemptible_worker_config.0.num_instances",
+											"cluster_config.0.preemptible_worker_config.0.preemptibility",
 											"cluster_config.0.preemptible_worker_config.0.disk_config",
 										},
 										MaxItems: 1,
@@ -370,9 +785,8 @@ func resourceDataprocCluster() *schema.Resource {
 													Optional:     true,
 													AtLeastOneOf: preemptibleWorkerDiskConfigKeys,
 													ForceNew:     true,
-													ValidateFunc: validation.StringInSlice([]string{"pd-standard", "pd-ssd", ""}, false),
 													Default:      "pd-standard",
-													Description:  `The disk type of the primary disk attached to each preemptible worker node. One of "pd-ssd" or "pd-standard". Defaults to "pd-standard".`,
+													Description:  `The disk type of the primary disk attached to each preemptible worker node. Such as "pd-ssd" or "pd-standard". Defaults to "pd-standard".`,
 												},
 											},
 										},
@@ -536,8 +950,6 @@ by Dataproc`,
 										Description:  `The set of optional components to activate on the cluster.`,
 										Elem: &schema.Schema{
 											Type: schema.TypeString,
-											ValidateFunc: validation.StringInSlice([]string{"COMPONENT_UNSPECIFIED", "ANACONDA", "DOCKER", "DRUID", "HBASE", "FLINK",
-												"HIVE_WEBHCAT", "JUPYTER", "KERBEROS", "PRESTO", "RANGER", "SOLR", "ZEPPELIN", "ZOOKEEPER"}, false),
 										},
 									},
 								},
@@ -603,11 +1015,130 @@ by Dataproc`,
 								},
 							},
 						},
+						"metastore_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							AtLeastOneOf: clusterConfigKeys,
+							MaxItems:     1,
+							Description:  `Specifies a Metastore configuration.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"dataproc_metastore_service": {
+										Type:        schema.TypeString,
+										Required:    true,
+										ForceNew:    true,
+										Description: `Resource name of an existing Dataproc Metastore service.`,
+									},
+								},
+							},
+						},
+						"lifecycle_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							MaxItems:     1,
+							AtLeastOneOf: clusterConfigKeys,
+							Description:  `The settings for auto deletion cluster schedule.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"idle_delete_ttl": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `The duration to keep the cluster alive while idling (no jobs running). After this TTL, the cluster will be deleted. Valid range: [10m, 14d].`,
+										AtLeastOneOf: []string{
+											"cluster_config.0.lifecycle_config.0.idle_delete_ttl",
+											"cluster_config.0.lifecycle_config.0.auto_delete_time",
+										},
+									},
+									"idle_start_time": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `Time when the cluster became idle (most recent job finished) and became eligible for deletion due to idleness.`,
+									},
+									// the API also has the auto_delete_ttl option in its request, however,
+									// the value is not returned in the response, rather the auto_delete_time
+									// after calculating ttl with the update time is returned, thus, for now
+									// we will only allow auto_delete_time to updated.
+									"auto_delete_time": {
+										Type:             schema.TypeString,
+										Optional:         true,
+										Description:      `The time when cluster will be auto-deleted. A timestamp in RFC3339 UTC "Zulu" format, accurate to nanoseconds. Example: "2014-10-02T15:01:23.045123456Z".`,
+										DiffSuppressFunc: timestampDiffSuppress(time.RFC3339Nano),
+										AtLeastOneOf: []string{
+											"cluster_config.0.lifecycle_config.0.idle_delete_ttl",
+											"cluster_config.0.lifecycle_config.0.auto_delete_time",
+										},
+									},
+								},
+							},
+						},
+						"endpoint_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							MaxItems:     1,
+							Description:  `The config settings for port access on the cluster. Structure defined below.`,
+							AtLeastOneOf: clusterConfigKeys,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"enable_http_port_access": {
+										Type:        schema.TypeBool,
+										Required:    true,
+										ForceNew:    true,
+										Description: `The flag to enable http access to specific ports on the cluster from external sources (aka Component Gateway). Defaults to false.`,
+									},
+									"http_ports": {
+										Type:        schema.TypeMap,
+										Computed:    true,
+										Description: `The map of port descriptions to URLs. Will only be populated if enable_http_port_access is true.`,
+									},
+								},
+							},
+						},
+
+						"dataproc_metric_config": {
+							Type:         schema.TypeList,
+							Optional:     true,
+							MaxItems:     1,
+							Description:  `The config for Dataproc metrics.`,
+							AtLeastOneOf: clusterConfigKeys,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"metrics": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: `Metrics sources to enable.`,
+										Elem:        metricsSchema(),
+									},
+								},
+							},
+						},
 					},
 				},
 			},
 		},
 		UseJSONNumber: true,
+	}
+}
+
+// We need to pull metrics' schema out so we can use it to make a set hash func
+func metricsSchema() *schema.Resource {
+	return &schema.Resource{
+		Schema: map[string]*schema.Schema{
+			"metric_source": {
+				Type:         schema.TypeString,
+				ForceNew:     true,
+				Required:     true,
+				ValidateFunc: validation.StringInSlice([]string{"MONITORING_AGENT_DEFAULTS", "HDFS", "SPARK", "YARN", "SPARK_HISTORY_SERVER", "HIVESERVER2"}, false),
+				Description:  `A source for the collection of Dataproc OSS metrics (see [available OSS metrics] (https://cloud.google.com//dataproc/docs/guides/monitoring#available_oss_metrics)).`,
+			},
+			"metric_overrides": {
+				Type:        schema.TypeSet,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Optional:    true,
+				ForceNew:    true,
+				Description: `Specify one or more [available OSS metrics] (https://cloud.google.com/dataproc/docs/guides/monitoring#available_oss_metrics) to collect.`,
+			},
+		},
 	}
 }
 
@@ -621,6 +1152,8 @@ func instanceConfigSchema(parent string) *schema.Schema {
 		"cluster_config.0." + parent + ".0.accelerators",
 	}
 
+	masterConfig := strings.Contains(parent, "master")
+
 	return &schema.Schema{
 		Type:         schema.TypeList,
 		Optional:     true,
@@ -633,6 +1166,7 @@ func instanceConfigSchema(parent string) *schema.Schema {
 				"num_instances": {
 					Type:         schema.TypeInt,
 					Optional:     true,
+					ForceNew:     masterConfig,
 					Computed:     true,
 					Description:  `Specifies the number of master/worker nodes to create. If not specified, GCP will default to a predetermined computed value.`,
 					AtLeastOneOf: instanceConfigKeys,
@@ -703,15 +1237,14 @@ func instanceConfigSchema(parent string) *schema.Schema {
 							"boot_disk_type": {
 								Type:        schema.TypeString,
 								Optional:    true,
-								Description: `The disk type of the primary disk attached to each node. One of "pd-ssd" or "pd-standard". Defaults to "pd-standard".`,
+								Description: `The disk type of the primary disk attached to each node. Such as "pd-ssd" or "pd-standard". Defaults to "pd-standard".`,
 								AtLeastOneOf: []string{
 									"cluster_config.0." + parent + ".0.disk_config.0.num_local_ssds",
 									"cluster_config.0." + parent + ".0.disk_config.0.boot_disk_size_gb",
 									"cluster_config.0." + parent + ".0.disk_config.0.boot_disk_type",
 								},
-								ForceNew:     true,
-								ValidateFunc: validation.StringInSlice([]string{"pd-standard", "pd-ssd", ""}, false),
-								Default:      "pd-standard",
+								ForceNew: true,
+								Default:  "pd-standard",
 							},
 						},
 					},
@@ -761,7 +1294,7 @@ func acceleratorsSchema() *schema.Resource {
 
 func resourceDataprocClusterCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -777,7 +1310,12 @@ func resourceDataprocClusterCreate(d *schema.ResourceData, meta interface{}) err
 		ProjectId:   project,
 	}
 
-	cluster.Config, err = expandClusterConfig(d, config)
+	if _, ok := d.GetOk("virtual_cluster_config"); ok {
+		cluster.VirtualClusterConfig, err = expandVirtualClusterConfig(d, config)
+	} else {
+		cluster.Config, err = expandClusterConfig(d, config)
+	}
+
 	if err != nil {
 		return err
 	}
@@ -813,6 +1351,188 @@ func resourceDataprocClusterCreate(d *schema.ResourceData, meta interface{}) err
 
 	log.Printf("[INFO] Dataproc cluster %s has been created", cluster.ClusterName)
 	return resourceDataprocClusterRead(d, meta)
+}
+
+func expandVirtualClusterConfig(d *schema.ResourceData, config *Config) (*dataproc.VirtualClusterConfig, error) {
+	conf := &dataproc.VirtualClusterConfig{}
+
+	if v, ok := d.GetOk("virtual_cluster_config"); ok {
+		confs := v.([]interface{})
+		if (len(confs)) == 0 {
+			return conf, nil
+		}
+	}
+
+	if v, ok := d.GetOk("virtual_cluster_config.0.staging_bucket"); ok {
+		conf.StagingBucket = v.(string)
+	}
+
+	if cfg, ok := configOptions(d, "virtual_cluster_config.0.auxiliary_services_config"); ok {
+		conf.AuxiliaryServicesConfig = expandAuxiliaryServicesConfig(d, cfg)
+	}
+
+	if cfg, ok := configOptions(d, "virtual_cluster_config.0.kubernetes_cluster_config"); ok {
+		conf.KubernetesClusterConfig = expandKubernetesClusterConfig(d, cfg)
+	}
+	return conf, nil
+}
+
+func expandAuxiliaryServicesConfig(d *schema.ResourceData, cfg map[string]interface{}) *dataproc.AuxiliaryServicesConfig {
+	conf := &dataproc.AuxiliaryServicesConfig{}
+	if mcfg, ok := configOptions(d, "virtual_cluster_config.0.auxiliary_services_config.0.metastore_config"); ok {
+		conf.MetastoreConfig = expandVCMetastoreConfig(mcfg)
+	}
+
+	if shscfg, ok := configOptions(d, "virtual_cluster_config.0.auxiliary_services_config.0.spark_history_server_config"); ok {
+		conf.SparkHistoryServerConfig = expandSparkHistoryServerConfig(shscfg)
+	}
+	return conf
+}
+
+func expandVCMetastoreConfig(cfg map[string]interface{}) *dataproc.MetastoreConfig {
+	conf := &dataproc.MetastoreConfig{}
+	if v, ok := cfg["dataproc_metastore_service"]; ok {
+		conf.DataprocMetastoreService = v.(string)
+	}
+	return conf
+}
+
+func expandSparkHistoryServerConfig(cfg map[string]interface{}) *dataproc.SparkHistoryServerConfig {
+	conf := &dataproc.SparkHistoryServerConfig{}
+	if v, ok := cfg["dataproc_cluster"]; ok {
+		conf.DataprocCluster = v.(string)
+	}
+	return conf
+}
+
+func expandKubernetesClusterConfig(d *schema.ResourceData, cfg map[string]interface{}) *dataproc.KubernetesClusterConfig {
+	conf := &dataproc.KubernetesClusterConfig{}
+
+	if v, ok := cfg["kubernetes_namespace"]; ok {
+		conf.KubernetesNamespace = v.(string)
+	}
+
+	if kscfg, ok := d.GetOk("virtual_cluster_config.0.kubernetes_cluster_config.0.kubernetes_software_config"); ok {
+		conf.KubernetesSoftwareConfig = expandKubernetesSoftwareConfig(kscfg.([]interface{})[0].(map[string]interface{}))
+	}
+
+	if gkeccfg, ok := d.GetOk("virtual_cluster_config.0.kubernetes_cluster_config.0.gke_cluster_config"); ok {
+		conf.GkeClusterConfig = expandGkeClusterConfig(d, gkeccfg.([]interface{})[0].(map[string]interface{}))
+	}
+	return conf
+}
+
+func expandKubernetesSoftwareConfig(cfg map[string]interface{}) *dataproc.KubernetesSoftwareConfig {
+	conf := &dataproc.KubernetesSoftwareConfig{}
+	if compSet, ok := cfg["component_version"]; ok {
+		components := map[string]string{}
+
+		for k, val := range compSet.(map[string]interface{}) {
+			components[k] = val.(string)
+		}
+
+		conf.ComponentVersion = components
+	}
+
+	if propSet, ok := cfg["properties"]; ok {
+		properties := map[string]string{}
+
+		for k, val := range propSet.(map[string]interface{}) {
+			properties[k] = val.(string)
+		}
+
+		conf.Properties = properties
+	}
+	return conf
+}
+
+func expandGkeClusterConfig(d *schema.ResourceData, cfg map[string]interface{}) *dataproc.GkeClusterConfig {
+	conf := &dataproc.GkeClusterConfig{}
+
+	if clusterAddress, ok := cfg["gke_cluster_target"]; ok {
+		conf.GkeClusterTarget = clusterAddress.(string)
+
+		if v, ok := d.GetOk("virtual_cluster_config.0.kubernetes_cluster_config.0.gke_cluster_config.0.node_pool_target"); ok {
+			conf.NodePoolTarget = expandGkeNodePoolTarget(d, v, clusterAddress.(string))
+		}
+	}
+	return conf
+}
+
+func expandGkeNodePoolTarget(d *schema.ResourceData, v interface{}, clusterAddress string) []*dataproc.GkeNodePoolTarget {
+	nodePools := v.([]interface{})
+
+	nodePoolList := []*dataproc.GkeNodePoolTarget{}
+	for i, v1 := range nodePools {
+		data := v1.(map[string]interface{})
+		nodePool := dataproc.GkeNodePoolTarget{
+			NodePool: clusterAddress + "/nodePools/" + data["node_pool"].(string),
+			Roles:    convertStringSet(data["roles"].(*schema.Set)),
+		}
+
+		if v, ok := d.GetOk(fmt.Sprintf("virtual_cluster_config.0.kubernetes_cluster_config.0.gke_cluster_config.0.node_pool_target.%d.node_pool_config", i)); ok {
+			nodePool.NodePoolConfig = expandGkeNodePoolConfig(v.([]interface{})[0].(map[string]interface{}))
+		}
+
+		nodePoolList = append(nodePoolList, &nodePool)
+	}
+
+	return nodePoolList
+}
+
+func expandGkeNodePoolConfig(cfg map[string]interface{}) *dataproc.GkeNodePoolConfig {
+	conf := &dataproc.GkeNodePoolConfig{}
+
+	if nodecfg, ok := cfg["config"]; ok {
+		conf.Config = expandGkeNodeConfig(nodecfg.([]interface{})[0].(map[string]interface{}))
+	}
+
+	if v, ok := cfg["locations"]; ok {
+		conf.Locations = convertStringSet(v.(*schema.Set))
+	}
+
+	if autoscalingcfg, ok := cfg["autoscaling"]; ok {
+		conf.Autoscaling = expandGkeNodePoolAutoscalingConfig(autoscalingcfg.([]interface{})[0].(map[string]interface{}))
+	}
+	return conf
+}
+
+func expandGkeNodeConfig(cfg map[string]interface{}) *dataproc.GkeNodeConfig {
+	conf := &dataproc.GkeNodeConfig{}
+
+	if v, ok := cfg["local_ssd_count"]; ok {
+		conf.LocalSsdCount = int64(v.(int))
+	}
+
+	if v, ok := cfg["machine_type"]; ok {
+		conf.MachineType = v.(string)
+	}
+
+	if v, ok := cfg["preemptible"]; ok {
+		conf.Preemptible = v.(bool)
+	}
+
+	if v, ok := cfg["min_cpu_platform"]; ok {
+		conf.MinCpuPlatform = v.(string)
+	}
+
+	if v, ok := cfg["spot"]; ok {
+		conf.Spot = v.(bool)
+	}
+	return conf
+}
+
+func expandGkeNodePoolAutoscalingConfig(cfg map[string]interface{}) *dataproc.GkeNodePoolAutoscalingConfig {
+	conf := &dataproc.GkeNodePoolAutoscalingConfig{}
+
+	if v, ok := cfg["min_node_count"]; ok {
+		conf.MinNodeCount = int64(v.(int))
+	}
+
+	if v, ok := cfg["max_node_count"]; ok {
+		conf.MaxNodeCount = int64(v.(int))
+	}
+	return conf
 }
 
 func expandClusterConfig(d *schema.ResourceData, config *Config) (*dataproc.ClusterConfig, error) {
@@ -863,6 +1583,22 @@ func expandClusterConfig(d *schema.ResourceData, config *Config) (*dataproc.Clus
 		conf.AutoscalingConfig = expandAutoscalingConfig(cfg)
 	}
 
+	if cfg, ok := configOptions(d, "cluster_config.0.metastore_config"); ok {
+		conf.MetastoreConfig = expandMetastoreConfig(cfg)
+	}
+
+	if cfg, ok := configOptions(d, "cluster_config.0.lifecycle_config"); ok {
+		conf.LifecycleConfig = expandLifecycleConfig(cfg)
+	}
+
+	if cfg, ok := configOptions(d, "cluster_config.0.endpoint_config"); ok {
+		conf.EndpointConfig = expandEndpointConfig(cfg)
+	}
+
+	if cfg, ok := configOptions(d, "cluster_config.0.dataproc_metric_config"); ok {
+		conf.DataprocMetricConfig = expandDataprocMetricConfig(cfg)
+	}
+
 	if cfg, ok := configOptions(d, "cluster_config.0.master_config"); ok {
 		log.Println("[INFO] got master_config")
 		conf.MasterConfig = expandInstanceGroupConfig(cfg)
@@ -876,9 +1612,6 @@ func expandClusterConfig(d *schema.ResourceData, config *Config) (*dataproc.Clus
 	if cfg, ok := configOptions(d, "cluster_config.0.preemptible_worker_config"); ok {
 		log.Println("[INFO] got preemptible worker config")
 		conf.SecondaryWorkerConfig = expandPreemptibleInstanceGroupConfig(cfg)
-		if conf.SecondaryWorkerConfig.NumInstances > 0 {
-			conf.SecondaryWorkerConfig.IsPreemptible = true
-		}
 	}
 	return conf, nil
 }
@@ -942,6 +1675,26 @@ func expandGceClusterConfig(d *schema.ResourceData, config *Config) (*dataproc.G
 		}
 		if v, ok := cfgSic["enable_vtpm"]; ok {
 			conf.ShieldedInstanceConfig.EnableVtpm = v.(bool)
+		}
+	}
+	if v, ok := d.GetOk("cluster_config.0.gce_cluster_config.0.reservation_affinity"); ok {
+		cfgRa := v.([]interface{})[0].(map[string]interface{})
+		conf.ReservationAffinity = &dataproc.ReservationAffinity{}
+		if v, ok := cfgRa["consume_reservation_type"]; ok {
+			conf.ReservationAffinity.ConsumeReservationType = v.(string)
+		}
+		if v, ok := cfgRa["key"]; ok {
+			conf.ReservationAffinity.Key = v.(string)
+		}
+		if v, ok := cfgRa["values"]; ok {
+			conf.ReservationAffinity.Values = convertStringSet(v.(*schema.Set))
+		}
+	}
+	if v, ok := d.GetOk("cluster_config.0.gce_cluster_config.0.node_group_affinity"); ok {
+		cfgNga := v.([]interface{})[0].(map[string]interface{})
+		conf.NodeGroupAffinity = &dataproc.NodeGroupAffinity{}
+		if v, ok := cfgNga["node_group_uri"]; ok {
+			conf.NodeGroupAffinity.NodeGroupUri = v.(string)
 		}
 	}
 	return conf, nil
@@ -1045,6 +1798,50 @@ func expandAutoscalingConfig(cfg map[string]interface{}) *dataproc.AutoscalingCo
 	return conf
 }
 
+func expandLifecycleConfig(cfg map[string]interface{}) *dataproc.LifecycleConfig {
+	conf := &dataproc.LifecycleConfig{}
+	if v, ok := cfg["idle_delete_ttl"]; ok {
+		conf.IdleDeleteTtl = v.(string)
+	}
+	if v, ok := cfg["auto_delete_time"]; ok {
+		conf.AutoDeleteTime = v.(string)
+	}
+	return conf
+}
+
+func expandEndpointConfig(cfg map[string]interface{}) *dataproc.EndpointConfig {
+	conf := &dataproc.EndpointConfig{}
+	if v, ok := cfg["enable_http_port_access"]; ok {
+		conf.EnableHttpPortAccess = v.(bool)
+	}
+	return conf
+}
+
+func expandDataprocMetricConfig(cfg map[string]interface{}) *dataproc.DataprocMetricConfig {
+	conf := &dataproc.DataprocMetricConfig{}
+	metricsConfigs := cfg["metrics"].([]interface{})
+	metricsSet := make([]*dataproc.Metric, 0, len(metricsConfigs))
+
+	for _, raw := range metricsConfigs {
+		data := raw.(map[string]interface{})
+		metric := dataproc.Metric{
+			MetricSource:    data["metric_source"].(string),
+			MetricOverrides: convertStringSet(data["metric_overrides"].(*schema.Set)),
+		}
+		metricsSet = append(metricsSet, &metric)
+	}
+	conf.Metrics = metricsSet
+	return conf
+}
+
+func expandMetastoreConfig(cfg map[string]interface{}) *dataproc.MetastoreConfig {
+	conf := &dataproc.MetastoreConfig{}
+	if v, ok := cfg["dataproc_metastore_service"]; ok {
+		conf.DataprocMetastoreService = v.(string)
+	}
+	return conf
+}
+
 func expandInitializationActions(v interface{}) []*dataproc.NodeInitializationAction {
 	actionList := v.([]interface{})
 
@@ -1085,6 +1882,9 @@ func expandPreemptibleInstanceGroupConfig(cfg map[string]interface{}) *dataproc.
 				icg.DiskConfig.BootDiskType = v.(string)
 			}
 		}
+	}
+	if p, ok := cfg["preemptibility"]; ok {
+		icg.Preemptibility = p.(string)
 	}
 	return icg
 }
@@ -1144,7 +1944,7 @@ func expandAccelerators(configured []interface{}) []*dataproc.AcceleratorConfig 
 
 func resourceDataprocClusterUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1203,6 +2003,28 @@ func resourceDataprocClusterUpdate(d *schema.ResourceData, meta interface{}) err
 		updMask = append(updMask, "config.autoscaling_config.policy_uri")
 	}
 
+	if d.HasChange("cluster_config.0.lifecycle_config.0.idle_delete_ttl") {
+		idleDeleteTtl := d.Get("cluster_config.0.lifecycle_config.0.idle_delete_ttl").(string)
+		cluster.Config.LifecycleConfig = &dataproc.LifecycleConfig{
+			IdleDeleteTtl: idleDeleteTtl,
+		}
+
+		updMask = append(updMask, "config.lifecycle_config.idle_delete_ttl")
+	}
+
+	if d.HasChange("cluster_config.0.lifecycle_config.0.auto_delete_time") {
+		desiredDeleteTime := d.Get("cluster_config.0.lifecycle_config.0.auto_delete_time").(string)
+		if cluster.Config.LifecycleConfig != nil {
+			cluster.Config.LifecycleConfig.AutoDeleteTime = desiredDeleteTime
+		} else {
+			cluster.Config.LifecycleConfig = &dataproc.LifecycleConfig{
+				AutoDeleteTime: desiredDeleteTime,
+			}
+		}
+
+		updMask = append(updMask, "config.lifecycle_config.auto_delete_time")
+	}
+
 	if len(updMask) > 0 {
 		gracefulDecommissionTimeout := d.Get("graceful_decommission_timeout").(string)
 
@@ -1229,7 +2051,7 @@ func resourceDataprocClusterUpdate(d *schema.ResourceData, meta interface{}) err
 
 func resourceDataprocClusterRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -1261,16 +2083,146 @@ func resourceDataprocClusterRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("Error setting labels: %s", err)
 	}
 
-	cfg, err := flattenClusterConfig(d, cluster.Config)
-	if err != nil {
-		return err
+	var cfg []map[string]interface{}
+
+	if cluster.Config != nil {
+		cfg, err = flattenClusterConfig(d, cluster.Config)
+
+		if err != nil {
+			return err
+		}
+
+		err = d.Set("cluster_config", cfg)
+	} else {
+		cfg, err = flattenVirtualClusterConfig(d, cluster.VirtualClusterConfig)
+
+		if err != nil {
+			return err
+		}
+
+		err = d.Set("virtual_cluster_config", cfg)
 	}
 
-	err = d.Set("cluster_config", cfg)
 	if err != nil {
 		return err
 	}
 	return nil
+}
+
+func flattenVirtualClusterConfig(d *schema.ResourceData, cfg *dataproc.VirtualClusterConfig) ([]map[string]interface{}, error) {
+	data := map[string]interface{}{
+		"staging_bucket":            d.Get("virtual_cluster_config.0.staging_bucket"),
+		"auxiliary_services_config": flattenAuxiliaryServicesConfig(d, cfg.AuxiliaryServicesConfig),
+		"kubernetes_cluster_config": flattenKubernetesClusterConfig(d, cfg.KubernetesClusterConfig),
+	}
+
+	return []map[string]interface{}{data}, nil
+}
+
+func flattenAuxiliaryServicesConfig(d *schema.ResourceData, cfg *dataproc.AuxiliaryServicesConfig) []map[string]interface{} {
+	if cfg == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"metastore_config":            flattenVCMetastoreConfig(d, cfg.MetastoreConfig),
+		"spark_history_server_config": flattenSparkHistoryServerConfig(d, cfg.SparkHistoryServerConfig),
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenVCMetastoreConfig(d *schema.ResourceData, cfg *dataproc.MetastoreConfig) []map[string]interface{} {
+	if cfg == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"dataproc_metastore_service": cfg.DataprocMetastoreService,
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenSparkHistoryServerConfig(d *schema.ResourceData, cfg *dataproc.SparkHistoryServerConfig) []map[string]interface{} {
+	if cfg == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"dataproc_cluster": cfg.DataprocCluster,
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenKubernetesClusterConfig(d *schema.ResourceData, cfg *dataproc.KubernetesClusterConfig) []map[string]interface{} {
+	if cfg == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"gke_cluster_config":         flattenGkeClusterConfig(d, cfg.GkeClusterConfig),
+		"kubernetes_namespace":       cfg.KubernetesNamespace,
+		"kubernetes_software_config": flattenKubernetesSoftwareConfig(d, cfg.KubernetesSoftwareConfig),
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenGkeClusterConfig(d *schema.ResourceData, cfg *dataproc.GkeClusterConfig) []map[string]interface{} {
+	if cfg == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"gke_cluster_target": cfg.GkeClusterTarget,
+	}
+
+	if len(cfg.NodePoolTarget) > 0 {
+		val, err := flattenNodePoolTargetConfig(d, cfg.NodePoolTarget, cfg.GkeClusterTarget)
+		if err != nil {
+			return nil
+		}
+
+		data["node_pool_target"] = val
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenNodePoolTargetConfig(d *schema.ResourceData, nia []*dataproc.GkeNodePoolTarget, clusterAddress string) ([]map[string]interface{}, error) {
+	nodePools := []map[string]interface{}{}
+	for i, v := range nia {
+		nodePoolAddress := strings.Split(v.NodePool, "/")
+		nodePool := map[string]interface{}{
+			"node_pool": nodePoolAddress[len(nodePoolAddress)-1],
+			"roles":     v.Roles,
+		}
+
+		if npc, ok := d.GetOk(fmt.Sprintf("virtual_cluster_config.0.kubernetes_cluster_config.0.gke_cluster_config.0.node_pool_target.%d.node_pool_config", i)); ok {
+			// We can't read the node pool config details due to `Input only`-field,
+			// copy the initialize_params from what the user originally specified to avoid diffs.
+			nodePool["node_pool_config"] = npc
+		}
+
+		nodePools = append(nodePools, nodePool)
+	}
+
+	return nodePools, nil
+}
+
+func flattenKubernetesSoftwareConfig(d *schema.ResourceData, cfg *dataproc.KubernetesSoftwareConfig) []map[string]interface{} {
+	if cfg == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"component_version": cfg.ComponentVersion,
+		"properties":        cfg.Properties,
+	}
+
+	return []map[string]interface{}{data}
 }
 
 func flattenClusterConfig(d *schema.ResourceData, cfg *dataproc.ClusterConfig) ([]map[string]interface{}, error) {
@@ -1288,6 +2240,10 @@ func flattenClusterConfig(d *schema.ResourceData, cfg *dataproc.ClusterConfig) (
 		"autoscaling_config":        flattenAutoscalingConfig(d, cfg.AutoscalingConfig),
 		"security_config":           flattenSecurityConfig(d, cfg.SecurityConfig),
 		"preemptible_worker_config": flattenPreemptibleInstanceGroupConfig(d, cfg.SecondaryWorkerConfig),
+		"metastore_config":          flattenMetastoreConfig(d, cfg.MetastoreConfig),
+		"lifecycle_config":          flattenLifecycleConfig(d, cfg.LifecycleConfig),
+		"endpoint_config":           flattenEndpointConfig(d, cfg.EndpointConfig),
+		"dataproc_metric_config":    flattenDataprocMetricConfig(d, cfg.DataprocMetricConfig),
 	}
 
 	if len(cfg.InitializationActions) > 0 {
@@ -1368,6 +2324,64 @@ func flattenAutoscalingConfig(d *schema.ResourceData, ec *dataproc.AutoscalingCo
 	return []map[string]interface{}{data}
 }
 
+func flattenLifecycleConfig(d *schema.ResourceData, lc *dataproc.LifecycleConfig) []map[string]interface{} {
+	if lc == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"idle_delete_ttl":  lc.IdleDeleteTtl,
+		"auto_delete_time": lc.AutoDeleteTime,
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenEndpointConfig(d *schema.ResourceData, ec *dataproc.EndpointConfig) []map[string]interface{} {
+	if ec == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"enable_http_port_access": ec.EnableHttpPortAccess,
+		"http_ports":              ec.HttpPorts,
+	}
+
+	return []map[string]interface{}{data}
+}
+
+func flattenDataprocMetricConfig(d *schema.ResourceData, dmc *dataproc.DataprocMetricConfig) []map[string]interface{} {
+	if dmc == nil {
+		return nil
+	}
+
+	metrics := map[string]interface{}{}
+	metricsTypeList := schema.NewSet(schema.HashResource(metricsSchema()), []interface{}{}).List()
+	for _, metric := range dmc.Metrics {
+		data := map[string]interface{}{
+			"metric_source":    metric.MetricSource,
+			"metric_overrides": metric.MetricOverrides,
+		}
+
+		metricsTypeList = append(metricsTypeList, &data)
+	}
+	metrics["metrics"] = metricsTypeList
+
+	return []map[string]interface{}{metrics}
+}
+
+func flattenMetastoreConfig(d *schema.ResourceData, ec *dataproc.MetastoreConfig) []map[string]interface{} {
+	if ec == nil {
+		return nil
+	}
+
+	data := map[string]interface{}{
+		"dataproc_metastore_service": ec.DataprocMetastoreService,
+	}
+
+	return []map[string]interface{}{data}
+}
+
 func flattenAccelerators(accelerators []*dataproc.AcceleratorConfig) interface{} {
 	acceleratorsTypeSet := schema.NewSet(schema.HashResource(acceleratorsSchema()), []interface{}{})
 	for _, accelerator := range accelerators {
@@ -1431,6 +2445,22 @@ func flattenGceClusterConfig(d *schema.ResourceData, gcc *dataproc.GceClusterCon
 			},
 		}
 	}
+	if gcc.ReservationAffinity != nil {
+		gceConfig["reservation_affinity"] = []map[string]interface{}{
+			{
+				"consume_reservation_type": gcc.ReservationAffinity.ConsumeReservationType,
+				"key":                      gcc.ReservationAffinity.Key,
+				"values":                   gcc.ReservationAffinity.Values,
+			},
+		}
+	}
+	if gcc.NodeGroupAffinity != nil {
+		gceConfig["node_group_affinity"] = []map[string]interface{}{
+			{
+				"node_group_uri": gcc.NodeGroupAffinity.NodeGroupUri,
+			},
+		}
+	}
 
 	return []map[string]interface{}{gceConfig}
 }
@@ -1458,6 +2488,7 @@ func flattenPreemptibleInstanceGroupConfig(d *schema.ResourceData, icg *dataproc
 	if icg != nil {
 		data["num_instances"] = icg.NumInstances
 		data["instance_names"] = icg.InstanceNames
+		data["preemptibility"] = icg.Preemptibility
 		if icg.DiskConfig != nil {
 			disk["boot_disk_size_gb"] = icg.DiskConfig.BootDiskSizeGb
 			disk["num_local_ssds"] = icg.DiskConfig.NumLocalSsds
@@ -1502,7 +2533,7 @@ func extractInitTimeout(t string) (int, error) {
 
 func resourceDataprocClusterDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}

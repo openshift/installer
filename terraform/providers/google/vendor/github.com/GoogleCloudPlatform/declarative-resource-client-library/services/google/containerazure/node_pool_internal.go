@@ -1,4 +1,4 @@
-// Copyright 2021 Google LLC. All Rights Reserved.
+// Copyright 2023 Google LLC. All Rights Reserved.
 // 
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"strings"
-	"time"
 
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl"
 	"github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations"
@@ -86,6 +85,11 @@ func (r *NodePoolConfig) validate() error {
 			return err
 		}
 	}
+	if !dcl.IsEmptyValueIndirect(r.ProxyConfig) {
+		if err := r.ProxyConfig.validate(); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 func (r *NodePoolConfigRootVolume) validate() error {
@@ -93,6 +97,15 @@ func (r *NodePoolConfigRootVolume) validate() error {
 }
 func (r *NodePoolConfigSshConfig) validate() error {
 	if err := dcl.Required(r, "authorizedKey"); err != nil {
+		return err
+	}
+	return nil
+}
+func (r *NodePoolConfigProxyConfig) validate() error {
+	if err := dcl.Required(r, "resourceGroupId"); err != nil {
+		return err
+	}
+	if err := dcl.Required(r, "secretId"); err != nil {
 		return err
 	}
 	return nil
@@ -175,9 +188,21 @@ type nodePoolApiOperation interface {
 // fields based on the intended state of the resource.
 func newUpdateNodePoolUpdateAzureNodePoolRequest(ctx context.Context, f *NodePool, c *Client) (map[string]interface{}, error) {
 	req := map[string]interface{}{}
+	res := f
+	_ = res
 
 	if v := f.Version; !dcl.IsEmptyValueIndirect(v) {
 		req["version"] = v
+	}
+	if v, err := expandNodePoolConfig(c, f.Config, res); err != nil {
+		return nil, fmt.Errorf("error expanding Config into config: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		req["config"] = v
+	}
+	if v, err := expandNodePoolAutoscaling(c, f.Autoscaling, res); err != nil {
+		return nil, fmt.Errorf("error expanding Autoscaling into autoscaling: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		req["autoscaling"] = v
 	}
 	if v := f.Annotations; !dcl.IsEmptyValueIndirect(v) {
 		req["annotations"] = v
@@ -310,7 +335,7 @@ func (c *Client) listNodePool(ctx context.Context, r *NodePool, pageToken string
 
 	var l []*NodePool
 	for _, v := range m.AzureNodePools {
-		res, err := unmarshalMapNodePool(v, c)
+		res, err := unmarshalMapNodePool(v, c, r)
 		if err != nil {
 			return nil, m.Token, err
 		}
@@ -375,20 +400,20 @@ func (op *deleteNodePoolOperation) do(ctx context.Context, r *NodePool, c *Clien
 		return err
 	}
 
-	// we saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
-	// this is the reason we are adding retry to handle that case.
-	maxRetry := 10
-	for i := 1; i <= maxRetry; i++ {
-		_, err = c.GetNodePool(ctx, r)
-		if !dcl.IsNotFound(err) {
-			if i == maxRetry {
-				return dcl.NotDeletedError{ExistingResource: r}
-			}
-			time.Sleep(1000 * time.Millisecond)
-		} else {
-			break
+	// We saw a race condition where for some successful delete operation, the Get calls returned resources for a short duration.
+	// This is the reason we are adding retry to handle that case.
+	retriesRemaining := 10
+	dcl.Do(ctx, func(ctx context.Context) (*dcl.RetryDetails, error) {
+		_, err := c.GetNodePool(ctx, r)
+		if dcl.IsNotFound(err) {
+			return nil, nil
 		}
-	}
+		if retriesRemaining > 0 {
+			retriesRemaining--
+			return &dcl.RetryDetails{}, dcl.OperationNotDone{}
+		}
+		return nil, dcl.NotDeletedError{ExistingResource: r}
+	}, c.Config.RetryProvider)
 	return nil
 }
 
@@ -487,6 +512,11 @@ func (c *Client) nodePoolDiffsForRawDesired(ctx context.Context, rawDesired *Nod
 	c.Config.Logger.InfoWithContextf(ctx, "Found initial state for NodePool: %v", rawInitial)
 	c.Config.Logger.InfoWithContextf(ctx, "Initial desired state for NodePool: %v", rawDesired)
 
+	// The Get call applies postReadExtract and so the result may contain fields that are not part of API version.
+	if err := extractNodePoolFields(rawInitial); err != nil {
+		return nil, nil, nil, err
+	}
+
 	// 1.3: Canonicalize raw initial state into initial state.
 	initial, err = canonicalizeNodePoolInitialState(rawInitial, rawDesired)
 	if err != nil {
@@ -547,7 +577,8 @@ func canonicalizeNodePoolDesiredState(rawDesired, rawInitial *NodePool, opts ...
 		canonicalDesired.SubnetId = rawDesired.SubnetId
 	}
 	canonicalDesired.Autoscaling = canonicalizeNodePoolAutoscaling(rawDesired.Autoscaling, rawInitial.Autoscaling, opts...)
-	if dcl.IsZeroValue(rawDesired.Annotations) {
+	if dcl.IsZeroValue(rawDesired.Annotations) || (dcl.IsEmptyValueIndirect(rawDesired.Annotations) && dcl.IsEmptyValueIndirect(rawInitial.Annotations)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Annotations = rawInitial.Annotations
 	} else {
 		canonicalDesired.Annotations = rawDesired.Annotations
@@ -573,13 +604,12 @@ func canonicalizeNodePoolDesiredState(rawDesired, rawInitial *NodePool, opts ...
 	} else {
 		canonicalDesired.Cluster = rawDesired.Cluster
 	}
-
 	return canonicalDesired, nil
 }
 
 func canonicalizeNodePoolNewState(c *Client, rawNew, rawDesired *NodePool) (*NodePool, error) {
 
-	if dcl.IsNotReturnedByServer(rawNew.Name) && dcl.IsNotReturnedByServer(rawDesired.Name) {
+	if dcl.IsEmptyValueIndirect(rawNew.Name) && dcl.IsEmptyValueIndirect(rawDesired.Name) {
 		rawNew.Name = rawDesired.Name
 	} else {
 		if dcl.PartialSelfLinkToSelfLink(rawDesired.Name, rawNew.Name) {
@@ -587,7 +617,7 @@ func canonicalizeNodePoolNewState(c *Client, rawNew, rawDesired *NodePool) (*Nod
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Version) && dcl.IsNotReturnedByServer(rawDesired.Version) {
+	if dcl.IsEmptyValueIndirect(rawNew.Version) && dcl.IsEmptyValueIndirect(rawDesired.Version) {
 		rawNew.Version = rawDesired.Version
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Version, rawNew.Version) {
@@ -595,13 +625,13 @@ func canonicalizeNodePoolNewState(c *Client, rawNew, rawDesired *NodePool) (*Nod
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Config) && dcl.IsNotReturnedByServer(rawDesired.Config) {
+	if dcl.IsEmptyValueIndirect(rawNew.Config) && dcl.IsEmptyValueIndirect(rawDesired.Config) {
 		rawNew.Config = rawDesired.Config
 	} else {
 		rawNew.Config = canonicalizeNewNodePoolConfig(c, rawDesired.Config, rawNew.Config)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.SubnetId) && dcl.IsNotReturnedByServer(rawDesired.SubnetId) {
+	if dcl.IsEmptyValueIndirect(rawNew.SubnetId) && dcl.IsEmptyValueIndirect(rawDesired.SubnetId) {
 		rawNew.SubnetId = rawDesired.SubnetId
 	} else {
 		if dcl.StringCanonicalize(rawDesired.SubnetId, rawNew.SubnetId) {
@@ -609,18 +639,18 @@ func canonicalizeNodePoolNewState(c *Client, rawNew, rawDesired *NodePool) (*Nod
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Autoscaling) && dcl.IsNotReturnedByServer(rawDesired.Autoscaling) {
+	if dcl.IsEmptyValueIndirect(rawNew.Autoscaling) && dcl.IsEmptyValueIndirect(rawDesired.Autoscaling) {
 		rawNew.Autoscaling = rawDesired.Autoscaling
 	} else {
 		rawNew.Autoscaling = canonicalizeNewNodePoolAutoscaling(c, rawDesired.Autoscaling, rawNew.Autoscaling)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.State) && dcl.IsNotReturnedByServer(rawDesired.State) {
+	if dcl.IsEmptyValueIndirect(rawNew.State) && dcl.IsEmptyValueIndirect(rawDesired.State) {
 		rawNew.State = rawDesired.State
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Uid) && dcl.IsNotReturnedByServer(rawDesired.Uid) {
+	if dcl.IsEmptyValueIndirect(rawNew.Uid) && dcl.IsEmptyValueIndirect(rawDesired.Uid) {
 		rawNew.Uid = rawDesired.Uid
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Uid, rawNew.Uid) {
@@ -628,7 +658,7 @@ func canonicalizeNodePoolNewState(c *Client, rawNew, rawDesired *NodePool) (*Nod
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Reconciling) && dcl.IsNotReturnedByServer(rawDesired.Reconciling) {
+	if dcl.IsEmptyValueIndirect(rawNew.Reconciling) && dcl.IsEmptyValueIndirect(rawDesired.Reconciling) {
 		rawNew.Reconciling = rawDesired.Reconciling
 	} else {
 		if dcl.BoolCanonicalize(rawDesired.Reconciling, rawNew.Reconciling) {
@@ -636,17 +666,17 @@ func canonicalizeNodePoolNewState(c *Client, rawNew, rawDesired *NodePool) (*Nod
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.CreateTime) && dcl.IsNotReturnedByServer(rawDesired.CreateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.CreateTime) && dcl.IsEmptyValueIndirect(rawDesired.CreateTime) {
 		rawNew.CreateTime = rawDesired.CreateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.UpdateTime) && dcl.IsNotReturnedByServer(rawDesired.UpdateTime) {
+	if dcl.IsEmptyValueIndirect(rawNew.UpdateTime) && dcl.IsEmptyValueIndirect(rawDesired.UpdateTime) {
 		rawNew.UpdateTime = rawDesired.UpdateTime
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Etag) && dcl.IsNotReturnedByServer(rawDesired.Etag) {
+	if dcl.IsEmptyValueIndirect(rawNew.Etag) && dcl.IsEmptyValueIndirect(rawDesired.Etag) {
 		rawNew.Etag = rawDesired.Etag
 	} else {
 		if dcl.StringCanonicalize(rawDesired.Etag, rawNew.Etag) {
@@ -654,18 +684,18 @@ func canonicalizeNodePoolNewState(c *Client, rawNew, rawDesired *NodePool) (*Nod
 		}
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.Annotations) && dcl.IsNotReturnedByServer(rawDesired.Annotations) {
+	if dcl.IsEmptyValueIndirect(rawNew.Annotations) && dcl.IsEmptyValueIndirect(rawDesired.Annotations) {
 		rawNew.Annotations = rawDesired.Annotations
 	} else {
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.MaxPodsConstraint) && dcl.IsNotReturnedByServer(rawDesired.MaxPodsConstraint) {
+	if dcl.IsEmptyValueIndirect(rawNew.MaxPodsConstraint) && dcl.IsEmptyValueIndirect(rawDesired.MaxPodsConstraint) {
 		rawNew.MaxPodsConstraint = rawDesired.MaxPodsConstraint
 	} else {
 		rawNew.MaxPodsConstraint = canonicalizeNewNodePoolMaxPodsConstraint(c, rawDesired.MaxPodsConstraint, rawNew.MaxPodsConstraint)
 	}
 
-	if dcl.IsNotReturnedByServer(rawNew.AzureAvailabilityZone) && dcl.IsNotReturnedByServer(rawDesired.AzureAvailabilityZone) {
+	if dcl.IsEmptyValueIndirect(rawNew.AzureAvailabilityZone) && dcl.IsEmptyValueIndirect(rawDesired.AzureAvailabilityZone) {
 		rawNew.AzureAvailabilityZone = rawDesired.AzureAvailabilityZone
 	} else {
 		if dcl.StringCanonicalize(rawDesired.AzureAvailabilityZone, rawNew.AzureAvailabilityZone) {
@@ -702,18 +732,20 @@ func canonicalizeNodePoolConfig(des, initial *NodePoolConfig, opts ...dcl.ApplyO
 		cDes.VmSize = des.VmSize
 	}
 	cDes.RootVolume = canonicalizeNodePoolConfigRootVolume(des.RootVolume, initial.RootVolume, opts...)
-	if dcl.IsZeroValue(des.Tags) {
+	if dcl.IsZeroValue(des.Tags) || (dcl.IsEmptyValueIndirect(des.Tags) && dcl.IsEmptyValueIndirect(initial.Tags)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.Tags = initial.Tags
 	} else {
 		cDes.Tags = des.Tags
 	}
 	cDes.SshConfig = canonicalizeNodePoolConfigSshConfig(des.SshConfig, initial.SshConfig, opts...)
+	cDes.ProxyConfig = canonicalizeNodePoolConfigProxyConfig(des.ProxyConfig, initial.ProxyConfig, opts...)
 
 	return cDes
 }
 
 func canonicalizeNodePoolConfigSlice(des, initial []NodePoolConfig, opts ...dcl.ApplyOption) []NodePoolConfig {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -747,7 +779,7 @@ func canonicalizeNewNodePoolConfig(c *Client, des, nw *NodePoolConfig) *NodePool
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for NodePoolConfig while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -759,6 +791,7 @@ func canonicalizeNewNodePoolConfig(c *Client, des, nw *NodePoolConfig) *NodePool
 	}
 	nw.RootVolume = canonicalizeNewNodePoolConfigRootVolume(c, des.RootVolume, nw.RootVolume)
 	nw.SshConfig = canonicalizeNewNodePoolConfigSshConfig(c, des.SshConfig, nw.SshConfig)
+	nw.ProxyConfig = canonicalizeNewNodePoolConfigProxyConfig(c, des.ProxyConfig, nw.ProxyConfig)
 
 	return nw
 }
@@ -767,23 +800,26 @@ func canonicalizeNewNodePoolConfigSet(c *Client, des, nw []NodePoolConfig) []Nod
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []NodePoolConfig
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []NodePoolConfig
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareNodePoolConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewNodePoolConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewNodePoolConfigSlice(c *Client, des, nw []NodePoolConfig) []NodePoolConfig {
@@ -820,7 +856,8 @@ func canonicalizeNodePoolConfigRootVolume(des, initial *NodePoolConfigRootVolume
 
 	cDes := &NodePoolConfigRootVolume{}
 
-	if dcl.IsZeroValue(des.SizeGib) {
+	if dcl.IsZeroValue(des.SizeGib) || (dcl.IsEmptyValueIndirect(des.SizeGib) && dcl.IsEmptyValueIndirect(initial.SizeGib)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.SizeGib = initial.SizeGib
 	} else {
 		cDes.SizeGib = des.SizeGib
@@ -830,7 +867,7 @@ func canonicalizeNodePoolConfigRootVolume(des, initial *NodePoolConfigRootVolume
 }
 
 func canonicalizeNodePoolConfigRootVolumeSlice(des, initial []NodePoolConfigRootVolume, opts ...dcl.ApplyOption) []NodePoolConfigRootVolume {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -864,7 +901,7 @@ func canonicalizeNewNodePoolConfigRootVolume(c *Client, des, nw *NodePoolConfigR
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for NodePoolConfigRootVolume while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -878,23 +915,26 @@ func canonicalizeNewNodePoolConfigRootVolumeSet(c *Client, des, nw []NodePoolCon
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []NodePoolConfigRootVolume
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []NodePoolConfigRootVolume
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareNodePoolConfigRootVolumeNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewNodePoolConfigRootVolume(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewNodePoolConfigRootVolumeSlice(c *Client, des, nw []NodePoolConfigRootVolume) []NodePoolConfigRootVolume {
@@ -941,7 +981,7 @@ func canonicalizeNodePoolConfigSshConfig(des, initial *NodePoolConfigSshConfig, 
 }
 
 func canonicalizeNodePoolConfigSshConfigSlice(des, initial []NodePoolConfigSshConfig, opts ...dcl.ApplyOption) []NodePoolConfigSshConfig {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -975,7 +1015,7 @@ func canonicalizeNewNodePoolConfigSshConfig(c *Client, des, nw *NodePoolConfigSs
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for NodePoolConfigSshConfig while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -993,23 +1033,26 @@ func canonicalizeNewNodePoolConfigSshConfigSet(c *Client, des, nw []NodePoolConf
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []NodePoolConfigSshConfig
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []NodePoolConfigSshConfig
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareNodePoolConfigSshConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewNodePoolConfigSshConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewNodePoolConfigSshConfigSlice(c *Client, des, nw []NodePoolConfigSshConfig) []NodePoolConfigSshConfig {
@@ -1032,6 +1075,132 @@ func canonicalizeNewNodePoolConfigSshConfigSlice(c *Client, des, nw []NodePoolCo
 	return items
 }
 
+func canonicalizeNodePoolConfigProxyConfig(des, initial *NodePoolConfigProxyConfig, opts ...dcl.ApplyOption) *NodePoolConfigProxyConfig {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &NodePoolConfigProxyConfig{}
+
+	if dcl.StringCanonicalize(des.ResourceGroupId, initial.ResourceGroupId) || dcl.IsZeroValue(des.ResourceGroupId) {
+		cDes.ResourceGroupId = initial.ResourceGroupId
+	} else {
+		cDes.ResourceGroupId = des.ResourceGroupId
+	}
+	if dcl.StringCanonicalize(des.SecretId, initial.SecretId) || dcl.IsZeroValue(des.SecretId) {
+		cDes.SecretId = initial.SecretId
+	} else {
+		cDes.SecretId = des.SecretId
+	}
+
+	return cDes
+}
+
+func canonicalizeNodePoolConfigProxyConfigSlice(des, initial []NodePoolConfigProxyConfig, opts ...dcl.ApplyOption) []NodePoolConfigProxyConfig {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]NodePoolConfigProxyConfig, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeNodePoolConfigProxyConfig(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]NodePoolConfigProxyConfig, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeNodePoolConfigProxyConfig(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewNodePoolConfigProxyConfig(c *Client, des, nw *NodePoolConfigProxyConfig) *NodePoolConfigProxyConfig {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for NodePoolConfigProxyConfig while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.StringCanonicalize(des.ResourceGroupId, nw.ResourceGroupId) {
+		nw.ResourceGroupId = des.ResourceGroupId
+	}
+	if dcl.StringCanonicalize(des.SecretId, nw.SecretId) {
+		nw.SecretId = des.SecretId
+	}
+
+	return nw
+}
+
+func canonicalizeNewNodePoolConfigProxyConfigSet(c *Client, des, nw []NodePoolConfigProxyConfig) []NodePoolConfigProxyConfig {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []NodePoolConfigProxyConfig
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareNodePoolConfigProxyConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewNodePoolConfigProxyConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewNodePoolConfigProxyConfigSlice(c *Client, des, nw []NodePoolConfigProxyConfig) []NodePoolConfigProxyConfig {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []NodePoolConfigProxyConfig
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewNodePoolConfigProxyConfig(c, &d, &n))
+	}
+
+	return items
+}
+
 func canonicalizeNodePoolAutoscaling(des, initial *NodePoolAutoscaling, opts ...dcl.ApplyOption) *NodePoolAutoscaling {
 	if des == nil {
 		return initial
@@ -1046,12 +1215,14 @@ func canonicalizeNodePoolAutoscaling(des, initial *NodePoolAutoscaling, opts ...
 
 	cDes := &NodePoolAutoscaling{}
 
-	if dcl.IsZeroValue(des.MinNodeCount) {
+	if dcl.IsZeroValue(des.MinNodeCount) || (dcl.IsEmptyValueIndirect(des.MinNodeCount) && dcl.IsEmptyValueIndirect(initial.MinNodeCount)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.MinNodeCount = initial.MinNodeCount
 	} else {
 		cDes.MinNodeCount = des.MinNodeCount
 	}
-	if dcl.IsZeroValue(des.MaxNodeCount) {
+	if dcl.IsZeroValue(des.MaxNodeCount) || (dcl.IsEmptyValueIndirect(des.MaxNodeCount) && dcl.IsEmptyValueIndirect(initial.MaxNodeCount)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.MaxNodeCount = initial.MaxNodeCount
 	} else {
 		cDes.MaxNodeCount = des.MaxNodeCount
@@ -1061,7 +1232,7 @@ func canonicalizeNodePoolAutoscaling(des, initial *NodePoolAutoscaling, opts ...
 }
 
 func canonicalizeNodePoolAutoscalingSlice(des, initial []NodePoolAutoscaling, opts ...dcl.ApplyOption) []NodePoolAutoscaling {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1095,7 +1266,7 @@ func canonicalizeNewNodePoolAutoscaling(c *Client, des, nw *NodePoolAutoscaling)
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for NodePoolAutoscaling while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1109,23 +1280,26 @@ func canonicalizeNewNodePoolAutoscalingSet(c *Client, des, nw []NodePoolAutoscal
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []NodePoolAutoscaling
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []NodePoolAutoscaling
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareNodePoolAutoscalingNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewNodePoolAutoscaling(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewNodePoolAutoscalingSlice(c *Client, des, nw []NodePoolAutoscaling) []NodePoolAutoscaling {
@@ -1162,7 +1336,8 @@ func canonicalizeNodePoolMaxPodsConstraint(des, initial *NodePoolMaxPodsConstrai
 
 	cDes := &NodePoolMaxPodsConstraint{}
 
-	if dcl.IsZeroValue(des.MaxPodsPerNode) {
+	if dcl.IsZeroValue(des.MaxPodsPerNode) || (dcl.IsEmptyValueIndirect(des.MaxPodsPerNode) && dcl.IsEmptyValueIndirect(initial.MaxPodsPerNode)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		cDes.MaxPodsPerNode = initial.MaxPodsPerNode
 	} else {
 		cDes.MaxPodsPerNode = des.MaxPodsPerNode
@@ -1172,7 +1347,7 @@ func canonicalizeNodePoolMaxPodsConstraint(des, initial *NodePoolMaxPodsConstrai
 }
 
 func canonicalizeNodePoolMaxPodsConstraintSlice(des, initial []NodePoolMaxPodsConstraint, opts ...dcl.ApplyOption) []NodePoolMaxPodsConstraint {
-	if des == nil {
+	if dcl.IsEmptyValueIndirect(des) {
 		return initial
 	}
 
@@ -1206,7 +1381,7 @@ func canonicalizeNewNodePoolMaxPodsConstraint(c *Client, des, nw *NodePoolMaxPod
 	}
 
 	if nw == nil {
-		if dcl.IsNotReturnedByServer(des) {
+		if dcl.IsEmptyValueIndirect(des) {
 			c.Config.Logger.Info("Found explicitly empty value for NodePoolMaxPodsConstraint while comparing non-nil desired to nil actual.  Returning desired object.")
 			return des
 		}
@@ -1220,23 +1395,26 @@ func canonicalizeNewNodePoolMaxPodsConstraintSet(c *Client, des, nw []NodePoolMa
 	if des == nil {
 		return nw
 	}
-	var reorderedNew []NodePoolMaxPodsConstraint
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []NodePoolMaxPodsConstraint
 	for _, d := range des {
-		matchedNew := -1
-		for idx, n := range nw {
+		matchedIndex := -1
+		for i, n := range nw {
 			if diffs, _ := compareNodePoolMaxPodsConstraintNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
-				matchedNew = idx
+				matchedIndex = i
 				break
 			}
 		}
-		if matchedNew != -1 {
-			reorderedNew = append(reorderedNew, nw[matchedNew])
-			nw = append(nw[:matchedNew], nw[matchedNew+1:]...)
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewNodePoolMaxPodsConstraint(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
 		}
 	}
-	reorderedNew = append(reorderedNew, nw...)
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
 
-	return reorderedNew
+	return items
 }
 
 func canonicalizeNewNodePoolMaxPodsConstraintSlice(c *Client, des, nw []NodePoolMaxPodsConstraint) []NodePoolMaxPodsConstraint {
@@ -1277,125 +1455,128 @@ func diffNodePool(c *Client, desired, actual *NodePool, opts ...dcl.ApplyOption)
 	var fn dcl.FieldName
 	var newDiffs []*dcl.FieldDiff
 	// New style diffs.
-	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Name, actual.Name, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Name")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Version, actual.Version, dcl.Info{OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAzureNodePoolOperation")}, fn.AddNest("Version")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Version, actual.Version, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAzureNodePoolOperation")}, fn.AddNest("Version")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Config, actual.Config, dcl.Info{ObjectFunction: compareNodePoolConfigNewStyle, EmptyObject: EmptyNodePoolConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Config")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Config, actual.Config, dcl.DiffInfo{ObjectFunction: compareNodePoolConfigNewStyle, EmptyObject: EmptyNodePoolConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Config")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SubnetId, actual.SubnetId, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubnetId")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SubnetId, actual.SubnetId, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SubnetId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Autoscaling, actual.Autoscaling, dcl.Info{ObjectFunction: compareNodePoolAutoscalingNewStyle, EmptyObject: EmptyNodePoolAutoscaling, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Autoscaling")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Autoscaling, actual.Autoscaling, dcl.DiffInfo{ObjectFunction: compareNodePoolAutoscalingNewStyle, EmptyObject: EmptyNodePoolAutoscaling, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Autoscaling")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.State, actual.State, dcl.Info{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("State")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.State, actual.State, dcl.DiffInfo{OutputOnly: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("State")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Uid, actual.Uid, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uid")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Uid, actual.Uid, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Uid")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Reconciling, actual.Reconciling, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Reconciling")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Reconciling, actual.Reconciling, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Reconciling")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.CreateTime, actual.CreateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CreateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.UpdateTime, actual.UpdateTime, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UpdateTime")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.UpdateTime, actual.UpdateTime, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("UpdateTime")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Etag, actual.Etag, dcl.Info{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Etag")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Etag, actual.Etag, dcl.DiffInfo{OutputOnly: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Etag")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Annotations, actual.Annotations, dcl.Info{OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAzureNodePoolOperation")}, fn.AddNest("Annotations")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Annotations, actual.Annotations, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAzureNodePoolOperation")}, fn.AddNest("Annotations")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MaxPodsConstraint, actual.MaxPodsConstraint, dcl.Info{ObjectFunction: compareNodePoolMaxPodsConstraintNewStyle, EmptyObject: EmptyNodePoolMaxPodsConstraint, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxPodsConstraint")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MaxPodsConstraint, actual.MaxPodsConstraint, dcl.DiffInfo{ObjectFunction: compareNodePoolMaxPodsConstraintNewStyle, EmptyObject: EmptyNodePoolMaxPodsConstraint, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxPodsConstraint")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.AzureAvailabilityZone, actual.AzureAvailabilityZone, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AzureAvailabilityZone")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AzureAvailabilityZone, actual.AzureAvailabilityZone, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AzureAvailabilityZone")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Project, actual.Project, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Project")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Location, actual.Location, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Location")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Cluster, actual.Cluster, dcl.Info{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Cluster")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Cluster, actual.Cluster, dcl.DiffInfo{Type: "ReferenceType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Cluster")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if len(newDiffs) > 0 {
+		c.Config.Logger.Infof("Diff function found diffs: %v", newDiffs)
+	}
 	return newDiffs, nil
 }
 func compareNodePoolConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
@@ -1418,28 +1599,35 @@ func compareNodePoolConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.F
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.VmSize, actual.VmSize, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("VmSize")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.VmSize, actual.VmSize, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("VmSize")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.RootVolume, actual.RootVolume, dcl.Info{ObjectFunction: compareNodePoolConfigRootVolumeNewStyle, EmptyObject: EmptyNodePoolConfigRootVolume, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RootVolume")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.RootVolume, actual.RootVolume, dcl.DiffInfo{ServerDefault: true, ObjectFunction: compareNodePoolConfigRootVolumeNewStyle, EmptyObject: EmptyNodePoolConfigRootVolume, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("RootVolume")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.Tags, actual.Tags, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tags")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.Tags, actual.Tags, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Tags")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.SshConfig, actual.SshConfig, dcl.Info{ObjectFunction: compareNodePoolConfigSshConfigNewStyle, EmptyObject: EmptyNodePoolConfigSshConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SshConfig")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SshConfig, actual.SshConfig, dcl.DiffInfo{ObjectFunction: compareNodePoolConfigSshConfigNewStyle, EmptyObject: EmptyNodePoolConfigSshConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SshConfig")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.ProxyConfig, actual.ProxyConfig, dcl.DiffInfo{ObjectFunction: compareNodePoolConfigProxyConfigNewStyle, EmptyObject: EmptyNodePoolConfigProxyConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ProxyConfig")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1468,7 +1656,7 @@ func compareNodePoolConfigRootVolumeNewStyle(d, a interface{}, fn dcl.FieldName)
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.SizeGib, actual.SizeGib, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SizeGib")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.SizeGib, actual.SizeGib, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SizeGib")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1497,7 +1685,43 @@ func compareNodePoolConfigSshConfigNewStyle(d, a interface{}, fn dcl.FieldName) 
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.AuthorizedKey, actual.AuthorizedKey, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("AuthorizedKey")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.AuthorizedKey, actual.AuthorizedKey, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAzureNodePoolOperation")}, fn.AddNest("AuthorizedKey")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
+func compareNodePoolConfigProxyConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*NodePoolConfigProxyConfig)
+	if !ok {
+		desiredNotPointer, ok := d.(NodePoolConfigProxyConfig)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a NodePoolConfigProxyConfig or *NodePoolConfigProxyConfig", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*NodePoolConfigProxyConfig)
+	if !ok {
+		actualNotPointer, ok := a.(NodePoolConfigProxyConfig)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a NodePoolConfigProxyConfig", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.ResourceGroupId, actual.ResourceGroupId, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("ResourceGroupId")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.SecretId, actual.SecretId, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SecretId")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1526,14 +1750,14 @@ func compareNodePoolAutoscalingNewStyle(d, a interface{}, fn dcl.FieldName) ([]*
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.MinNodeCount, actual.MinNodeCount, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MinNodeCount")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MinNodeCount, actual.MinNodeCount, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAzureNodePoolOperation")}, fn.AddNest("MinNodeCount")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
 		diffs = append(diffs, ds...)
 	}
 
-	if ds, err := dcl.Diff(desired.MaxNodeCount, actual.MaxNodeCount, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxNodeCount")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MaxNodeCount, actual.MaxNodeCount, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateNodePoolUpdateAzureNodePoolOperation")}, fn.AddNest("MaxNodeCount")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1562,7 +1786,7 @@ func compareNodePoolMaxPodsConstraintNewStyle(d, a interface{}, fn dcl.FieldName
 		actual = &actualNotPointer
 	}
 
-	if ds, err := dcl.Diff(desired.MaxPodsPerNode, actual.MaxPodsPerNode, dcl.Info{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxPodsPerNode")); len(ds) != 0 || err != nil {
+	if ds, err := dcl.Diff(desired.MaxPodsPerNode, actual.MaxPodsPerNode, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("MaxPodsPerNode")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1617,17 +1841,17 @@ func (r *NodePool) marshal(c *Client) ([]byte, error) {
 }
 
 // unmarshalNodePool decodes JSON responses into the NodePool resource schema.
-func unmarshalNodePool(b []byte, c *Client) (*NodePool, error) {
+func unmarshalNodePool(b []byte, c *Client, res *NodePool) (*NodePool, error) {
 	var m map[string]interface{}
 	if err := json.Unmarshal(b, &m); err != nil {
 		return nil, err
 	}
-	return unmarshalMapNodePool(m, c)
+	return unmarshalMapNodePool(m, c, res)
 }
 
-func unmarshalMapNodePool(m map[string]interface{}, c *Client) (*NodePool, error) {
+func unmarshalMapNodePool(m map[string]interface{}, c *Client, res *NodePool) (*NodePool, error) {
 
-	flattened := flattenNodePool(c, m)
+	flattened := flattenNodePool(c, m, res)
 	if flattened == nil {
 		return nil, fmt.Errorf("attempted to flatten empty json object")
 	}
@@ -1637,33 +1861,35 @@ func unmarshalMapNodePool(m map[string]interface{}, c *Client) (*NodePool, error
 // expandNodePool expands NodePool into a JSON request object.
 func expandNodePool(c *Client, f *NodePool) (map[string]interface{}, error) {
 	m := make(map[string]interface{})
+	res := f
+	_ = res
 	if v, err := dcl.DeriveField("projects/%s/locations/%s/azureClusters/%s/azureNodePools/%s", f.Name, dcl.SelfLinkToName(f.Project), dcl.SelfLinkToName(f.Location), dcl.SelfLinkToName(f.Cluster), dcl.SelfLinkToName(f.Name)); err != nil {
 		return nil, fmt.Errorf("error expanding Name into name: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["name"] = v
 	}
 	if v := f.Version; dcl.ValueShouldBeSent(v) {
 		m["version"] = v
 	}
-	if v, err := expandNodePoolConfig(c, f.Config); err != nil {
+	if v, err := expandNodePoolConfig(c, f.Config, res); err != nil {
 		return nil, fmt.Errorf("error expanding Config into config: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["config"] = v
 	}
 	if v := f.SubnetId; dcl.ValueShouldBeSent(v) {
 		m["subnetId"] = v
 	}
-	if v, err := expandNodePoolAutoscaling(c, f.Autoscaling); err != nil {
+	if v, err := expandNodePoolAutoscaling(c, f.Autoscaling, res); err != nil {
 		return nil, fmt.Errorf("error expanding Autoscaling into autoscaling: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["autoscaling"] = v
 	}
 	if v := f.Annotations; dcl.ValueShouldBeSent(v) {
 		m["annotations"] = v
 	}
-	if v, err := expandNodePoolMaxPodsConstraint(c, f.MaxPodsConstraint); err != nil {
+	if v, err := expandNodePoolMaxPodsConstraint(c, f.MaxPodsConstraint, res); err != nil {
 		return nil, fmt.Errorf("error expanding MaxPodsConstraint into maxPodsConstraint: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["maxPodsConstraint"] = v
 	}
 	if v := f.AzureAvailabilityZone; dcl.ValueShouldBeSent(v) {
@@ -1671,17 +1897,17 @@ func expandNodePool(c *Client, f *NodePool) (map[string]interface{}, error) {
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Project into project: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["project"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Location into location: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["location"] = v
 	}
 	if v, err := dcl.EmptyValue(); err != nil {
 		return nil, fmt.Errorf("error expanding Cluster into cluster: %w", err)
-	} else if v != nil {
+	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["cluster"] = v
 	}
 
@@ -1690,7 +1916,7 @@ func expandNodePool(c *Client, f *NodePool) (map[string]interface{}, error) {
 
 // flattenNodePool flattens NodePool from a JSON request object into the
 // NodePool type.
-func flattenNodePool(c *Client, i interface{}) *NodePool {
+func flattenNodePool(c *Client, i interface{}, res *NodePool) *NodePool {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1699,38 +1925,38 @@ func flattenNodePool(c *Client, i interface{}) *NodePool {
 		return nil
 	}
 
-	res := &NodePool{}
-	res.Name = dcl.FlattenString(m["name"])
-	res.Version = dcl.FlattenString(m["version"])
-	res.Config = flattenNodePoolConfig(c, m["config"])
-	res.SubnetId = dcl.FlattenString(m["subnetId"])
-	res.Autoscaling = flattenNodePoolAutoscaling(c, m["autoscaling"])
-	res.State = flattenNodePoolStateEnum(m["state"])
-	res.Uid = dcl.FlattenString(m["uid"])
-	res.Reconciling = dcl.FlattenBool(m["reconciling"])
-	res.CreateTime = dcl.FlattenString(m["createTime"])
-	res.UpdateTime = dcl.FlattenString(m["updateTime"])
-	res.Etag = dcl.FlattenString(m["etag"])
-	res.Annotations = dcl.FlattenKeyValuePairs(m["annotations"])
-	res.MaxPodsConstraint = flattenNodePoolMaxPodsConstraint(c, m["maxPodsConstraint"])
-	res.AzureAvailabilityZone = dcl.FlattenString(m["azureAvailabilityZone"])
-	res.Project = dcl.FlattenString(m["project"])
-	res.Location = dcl.FlattenString(m["location"])
-	res.Cluster = dcl.FlattenString(m["cluster"])
+	resultRes := &NodePool{}
+	resultRes.Name = dcl.FlattenString(m["name"])
+	resultRes.Version = dcl.FlattenString(m["version"])
+	resultRes.Config = flattenNodePoolConfig(c, m["config"], res)
+	resultRes.SubnetId = dcl.FlattenString(m["subnetId"])
+	resultRes.Autoscaling = flattenNodePoolAutoscaling(c, m["autoscaling"], res)
+	resultRes.State = flattenNodePoolStateEnum(m["state"])
+	resultRes.Uid = dcl.FlattenString(m["uid"])
+	resultRes.Reconciling = dcl.FlattenBool(m["reconciling"])
+	resultRes.CreateTime = dcl.FlattenString(m["createTime"])
+	resultRes.UpdateTime = dcl.FlattenString(m["updateTime"])
+	resultRes.Etag = dcl.FlattenString(m["etag"])
+	resultRes.Annotations = dcl.FlattenKeyValuePairs(m["annotations"])
+	resultRes.MaxPodsConstraint = flattenNodePoolMaxPodsConstraint(c, m["maxPodsConstraint"], res)
+	resultRes.AzureAvailabilityZone = dcl.FlattenString(m["azureAvailabilityZone"])
+	resultRes.Project = dcl.FlattenString(m["project"])
+	resultRes.Location = dcl.FlattenString(m["location"])
+	resultRes.Cluster = dcl.FlattenString(m["cluster"])
 
-	return res
+	return resultRes
 }
 
 // expandNodePoolConfigMap expands the contents of NodePoolConfig into a JSON
 // request object.
-func expandNodePoolConfigMap(c *Client, f map[string]NodePoolConfig) (map[string]interface{}, error) {
+func expandNodePoolConfigMap(c *Client, f map[string]NodePoolConfig, res *NodePool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandNodePoolConfig(c, &item)
+		i, err := expandNodePoolConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1744,14 +1970,14 @@ func expandNodePoolConfigMap(c *Client, f map[string]NodePoolConfig) (map[string
 
 // expandNodePoolConfigSlice expands the contents of NodePoolConfig into a JSON
 // request object.
-func expandNodePoolConfigSlice(c *Client, f []NodePoolConfig) ([]map[string]interface{}, error) {
+func expandNodePoolConfigSlice(c *Client, f []NodePoolConfig, res *NodePool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandNodePoolConfig(c, &item)
+		i, err := expandNodePoolConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1764,7 +1990,7 @@ func expandNodePoolConfigSlice(c *Client, f []NodePoolConfig) ([]map[string]inte
 
 // flattenNodePoolConfigMap flattens the contents of NodePoolConfig from a JSON
 // response object.
-func flattenNodePoolConfigMap(c *Client, i interface{}) map[string]NodePoolConfig {
+func flattenNodePoolConfigMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolConfig {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]NodePoolConfig{}
@@ -1776,7 +2002,7 @@ func flattenNodePoolConfigMap(c *Client, i interface{}) map[string]NodePoolConfi
 
 	items := make(map[string]NodePoolConfig)
 	for k, item := range a {
-		items[k] = *flattenNodePoolConfig(c, item.(map[string]interface{}))
+		items[k] = *flattenNodePoolConfig(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1784,7 +2010,7 @@ func flattenNodePoolConfigMap(c *Client, i interface{}) map[string]NodePoolConfi
 
 // flattenNodePoolConfigSlice flattens the contents of NodePoolConfig from a JSON
 // response object.
-func flattenNodePoolConfigSlice(c *Client, i interface{}) []NodePoolConfig {
+func flattenNodePoolConfigSlice(c *Client, i interface{}, res *NodePool) []NodePoolConfig {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []NodePoolConfig{}
@@ -1796,7 +2022,7 @@ func flattenNodePoolConfigSlice(c *Client, i interface{}) []NodePoolConfig {
 
 	items := make([]NodePoolConfig, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenNodePoolConfig(c, item.(map[string]interface{})))
+		items = append(items, *flattenNodePoolConfig(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1804,7 +2030,7 @@ func flattenNodePoolConfigSlice(c *Client, i interface{}) []NodePoolConfig {
 
 // expandNodePoolConfig expands an instance of NodePoolConfig into a JSON
 // request object.
-func expandNodePoolConfig(c *Client, f *NodePoolConfig) (map[string]interface{}, error) {
+func expandNodePoolConfig(c *Client, f *NodePoolConfig, res *NodePool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1813,7 +2039,7 @@ func expandNodePoolConfig(c *Client, f *NodePoolConfig) (map[string]interface{},
 	if v := f.VmSize; !dcl.IsEmptyValueIndirect(v) {
 		m["vmSize"] = v
 	}
-	if v, err := expandNodePoolConfigRootVolume(c, f.RootVolume); err != nil {
+	if v, err := expandNodePoolConfigRootVolume(c, f.RootVolume, res); err != nil {
 		return nil, fmt.Errorf("error expanding RootVolume into rootVolume: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["rootVolume"] = v
@@ -1821,10 +2047,15 @@ func expandNodePoolConfig(c *Client, f *NodePoolConfig) (map[string]interface{},
 	if v := f.Tags; !dcl.IsEmptyValueIndirect(v) {
 		m["tags"] = v
 	}
-	if v, err := expandNodePoolConfigSshConfig(c, f.SshConfig); err != nil {
+	if v, err := expandNodePoolConfigSshConfig(c, f.SshConfig, res); err != nil {
 		return nil, fmt.Errorf("error expanding SshConfig into sshConfig: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["sshConfig"] = v
+	}
+	if v, err := expandNodePoolConfigProxyConfig(c, f.ProxyConfig, res); err != nil {
+		return nil, fmt.Errorf("error expanding ProxyConfig into proxyConfig: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["proxyConfig"] = v
 	}
 
 	return m, nil
@@ -1832,7 +2063,7 @@ func expandNodePoolConfig(c *Client, f *NodePoolConfig) (map[string]interface{},
 
 // flattenNodePoolConfig flattens an instance of NodePoolConfig from a JSON
 // response object.
-func flattenNodePoolConfig(c *Client, i interface{}) *NodePoolConfig {
+func flattenNodePoolConfig(c *Client, i interface{}, res *NodePool) *NodePoolConfig {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1844,23 +2075,24 @@ func flattenNodePoolConfig(c *Client, i interface{}) *NodePoolConfig {
 		return EmptyNodePoolConfig
 	}
 	r.VmSize = dcl.FlattenString(m["vmSize"])
-	r.RootVolume = flattenNodePoolConfigRootVolume(c, m["rootVolume"])
+	r.RootVolume = flattenNodePoolConfigRootVolume(c, m["rootVolume"], res)
 	r.Tags = dcl.FlattenKeyValuePairs(m["tags"])
-	r.SshConfig = flattenNodePoolConfigSshConfig(c, m["sshConfig"])
+	r.SshConfig = flattenNodePoolConfigSshConfig(c, m["sshConfig"], res)
+	r.ProxyConfig = flattenNodePoolConfigProxyConfig(c, m["proxyConfig"], res)
 
 	return r
 }
 
 // expandNodePoolConfigRootVolumeMap expands the contents of NodePoolConfigRootVolume into a JSON
 // request object.
-func expandNodePoolConfigRootVolumeMap(c *Client, f map[string]NodePoolConfigRootVolume) (map[string]interface{}, error) {
+func expandNodePoolConfigRootVolumeMap(c *Client, f map[string]NodePoolConfigRootVolume, res *NodePool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandNodePoolConfigRootVolume(c, &item)
+		i, err := expandNodePoolConfigRootVolume(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1874,14 +2106,14 @@ func expandNodePoolConfigRootVolumeMap(c *Client, f map[string]NodePoolConfigRoo
 
 // expandNodePoolConfigRootVolumeSlice expands the contents of NodePoolConfigRootVolume into a JSON
 // request object.
-func expandNodePoolConfigRootVolumeSlice(c *Client, f []NodePoolConfigRootVolume) ([]map[string]interface{}, error) {
+func expandNodePoolConfigRootVolumeSlice(c *Client, f []NodePoolConfigRootVolume, res *NodePool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandNodePoolConfigRootVolume(c, &item)
+		i, err := expandNodePoolConfigRootVolume(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1894,7 +2126,7 @@ func expandNodePoolConfigRootVolumeSlice(c *Client, f []NodePoolConfigRootVolume
 
 // flattenNodePoolConfigRootVolumeMap flattens the contents of NodePoolConfigRootVolume from a JSON
 // response object.
-func flattenNodePoolConfigRootVolumeMap(c *Client, i interface{}) map[string]NodePoolConfigRootVolume {
+func flattenNodePoolConfigRootVolumeMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolConfigRootVolume {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]NodePoolConfigRootVolume{}
@@ -1906,7 +2138,7 @@ func flattenNodePoolConfigRootVolumeMap(c *Client, i interface{}) map[string]Nod
 
 	items := make(map[string]NodePoolConfigRootVolume)
 	for k, item := range a {
-		items[k] = *flattenNodePoolConfigRootVolume(c, item.(map[string]interface{}))
+		items[k] = *flattenNodePoolConfigRootVolume(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -1914,7 +2146,7 @@ func flattenNodePoolConfigRootVolumeMap(c *Client, i interface{}) map[string]Nod
 
 // flattenNodePoolConfigRootVolumeSlice flattens the contents of NodePoolConfigRootVolume from a JSON
 // response object.
-func flattenNodePoolConfigRootVolumeSlice(c *Client, i interface{}) []NodePoolConfigRootVolume {
+func flattenNodePoolConfigRootVolumeSlice(c *Client, i interface{}, res *NodePool) []NodePoolConfigRootVolume {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []NodePoolConfigRootVolume{}
@@ -1926,7 +2158,7 @@ func flattenNodePoolConfigRootVolumeSlice(c *Client, i interface{}) []NodePoolCo
 
 	items := make([]NodePoolConfigRootVolume, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenNodePoolConfigRootVolume(c, item.(map[string]interface{})))
+		items = append(items, *flattenNodePoolConfigRootVolume(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -1934,7 +2166,7 @@ func flattenNodePoolConfigRootVolumeSlice(c *Client, i interface{}) []NodePoolCo
 
 // expandNodePoolConfigRootVolume expands an instance of NodePoolConfigRootVolume into a JSON
 // request object.
-func expandNodePoolConfigRootVolume(c *Client, f *NodePoolConfigRootVolume) (map[string]interface{}, error) {
+func expandNodePoolConfigRootVolume(c *Client, f *NodePoolConfigRootVolume, res *NodePool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -1949,7 +2181,7 @@ func expandNodePoolConfigRootVolume(c *Client, f *NodePoolConfigRootVolume) (map
 
 // flattenNodePoolConfigRootVolume flattens an instance of NodePoolConfigRootVolume from a JSON
 // response object.
-func flattenNodePoolConfigRootVolume(c *Client, i interface{}) *NodePoolConfigRootVolume {
+func flattenNodePoolConfigRootVolume(c *Client, i interface{}, res *NodePool) *NodePoolConfigRootVolume {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -1967,14 +2199,14 @@ func flattenNodePoolConfigRootVolume(c *Client, i interface{}) *NodePoolConfigRo
 
 // expandNodePoolConfigSshConfigMap expands the contents of NodePoolConfigSshConfig into a JSON
 // request object.
-func expandNodePoolConfigSshConfigMap(c *Client, f map[string]NodePoolConfigSshConfig) (map[string]interface{}, error) {
+func expandNodePoolConfigSshConfigMap(c *Client, f map[string]NodePoolConfigSshConfig, res *NodePool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandNodePoolConfigSshConfig(c, &item)
+		i, err := expandNodePoolConfigSshConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -1988,14 +2220,14 @@ func expandNodePoolConfigSshConfigMap(c *Client, f map[string]NodePoolConfigSshC
 
 // expandNodePoolConfigSshConfigSlice expands the contents of NodePoolConfigSshConfig into a JSON
 // request object.
-func expandNodePoolConfigSshConfigSlice(c *Client, f []NodePoolConfigSshConfig) ([]map[string]interface{}, error) {
+func expandNodePoolConfigSshConfigSlice(c *Client, f []NodePoolConfigSshConfig, res *NodePool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandNodePoolConfigSshConfig(c, &item)
+		i, err := expandNodePoolConfigSshConfig(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -2008,7 +2240,7 @@ func expandNodePoolConfigSshConfigSlice(c *Client, f []NodePoolConfigSshConfig) 
 
 // flattenNodePoolConfigSshConfigMap flattens the contents of NodePoolConfigSshConfig from a JSON
 // response object.
-func flattenNodePoolConfigSshConfigMap(c *Client, i interface{}) map[string]NodePoolConfigSshConfig {
+func flattenNodePoolConfigSshConfigMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolConfigSshConfig {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]NodePoolConfigSshConfig{}
@@ -2020,7 +2252,7 @@ func flattenNodePoolConfigSshConfigMap(c *Client, i interface{}) map[string]Node
 
 	items := make(map[string]NodePoolConfigSshConfig)
 	for k, item := range a {
-		items[k] = *flattenNodePoolConfigSshConfig(c, item.(map[string]interface{}))
+		items[k] = *flattenNodePoolConfigSshConfig(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -2028,7 +2260,7 @@ func flattenNodePoolConfigSshConfigMap(c *Client, i interface{}) map[string]Node
 
 // flattenNodePoolConfigSshConfigSlice flattens the contents of NodePoolConfigSshConfig from a JSON
 // response object.
-func flattenNodePoolConfigSshConfigSlice(c *Client, i interface{}) []NodePoolConfigSshConfig {
+func flattenNodePoolConfigSshConfigSlice(c *Client, i interface{}, res *NodePool) []NodePoolConfigSshConfig {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []NodePoolConfigSshConfig{}
@@ -2040,7 +2272,7 @@ func flattenNodePoolConfigSshConfigSlice(c *Client, i interface{}) []NodePoolCon
 
 	items := make([]NodePoolConfigSshConfig, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenNodePoolConfigSshConfig(c, item.(map[string]interface{})))
+		items = append(items, *flattenNodePoolConfigSshConfig(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -2048,7 +2280,7 @@ func flattenNodePoolConfigSshConfigSlice(c *Client, i interface{}) []NodePoolCon
 
 // expandNodePoolConfigSshConfig expands an instance of NodePoolConfigSshConfig into a JSON
 // request object.
-func expandNodePoolConfigSshConfig(c *Client, f *NodePoolConfigSshConfig) (map[string]interface{}, error) {
+func expandNodePoolConfigSshConfig(c *Client, f *NodePoolConfigSshConfig, res *NodePool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -2063,7 +2295,7 @@ func expandNodePoolConfigSshConfig(c *Client, f *NodePoolConfigSshConfig) (map[s
 
 // flattenNodePoolConfigSshConfig flattens an instance of NodePoolConfigSshConfig from a JSON
 // response object.
-func flattenNodePoolConfigSshConfig(c *Client, i interface{}) *NodePoolConfigSshConfig {
+func flattenNodePoolConfigSshConfig(c *Client, i interface{}, res *NodePool) *NodePoolConfigSshConfig {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -2079,16 +2311,134 @@ func flattenNodePoolConfigSshConfig(c *Client, i interface{}) *NodePoolConfigSsh
 	return r
 }
 
-// expandNodePoolAutoscalingMap expands the contents of NodePoolAutoscaling into a JSON
+// expandNodePoolConfigProxyConfigMap expands the contents of NodePoolConfigProxyConfig into a JSON
 // request object.
-func expandNodePoolAutoscalingMap(c *Client, f map[string]NodePoolAutoscaling) (map[string]interface{}, error) {
+func expandNodePoolConfigProxyConfigMap(c *Client, f map[string]NodePoolConfigProxyConfig, res *NodePool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandNodePoolAutoscaling(c, &item)
+		i, err := expandNodePoolConfigProxyConfig(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandNodePoolConfigProxyConfigSlice expands the contents of NodePoolConfigProxyConfig into a JSON
+// request object.
+func expandNodePoolConfigProxyConfigSlice(c *Client, f []NodePoolConfigProxyConfig, res *NodePool) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandNodePoolConfigProxyConfig(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenNodePoolConfigProxyConfigMap flattens the contents of NodePoolConfigProxyConfig from a JSON
+// response object.
+func flattenNodePoolConfigProxyConfigMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolConfigProxyConfig {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]NodePoolConfigProxyConfig{}
+	}
+
+	if len(a) == 0 {
+		return map[string]NodePoolConfigProxyConfig{}
+	}
+
+	items := make(map[string]NodePoolConfigProxyConfig)
+	for k, item := range a {
+		items[k] = *flattenNodePoolConfigProxyConfig(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenNodePoolConfigProxyConfigSlice flattens the contents of NodePoolConfigProxyConfig from a JSON
+// response object.
+func flattenNodePoolConfigProxyConfigSlice(c *Client, i interface{}, res *NodePool) []NodePoolConfigProxyConfig {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []NodePoolConfigProxyConfig{}
+	}
+
+	if len(a) == 0 {
+		return []NodePoolConfigProxyConfig{}
+	}
+
+	items := make([]NodePoolConfigProxyConfig, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenNodePoolConfigProxyConfig(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandNodePoolConfigProxyConfig expands an instance of NodePoolConfigProxyConfig into a JSON
+// request object.
+func expandNodePoolConfigProxyConfig(c *Client, f *NodePoolConfigProxyConfig, res *NodePool) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.ResourceGroupId; !dcl.IsEmptyValueIndirect(v) {
+		m["resourceGroupId"] = v
+	}
+	if v := f.SecretId; !dcl.IsEmptyValueIndirect(v) {
+		m["secretId"] = v
+	}
+
+	return m, nil
+}
+
+// flattenNodePoolConfigProxyConfig flattens an instance of NodePoolConfigProxyConfig from a JSON
+// response object.
+func flattenNodePoolConfigProxyConfig(c *Client, i interface{}, res *NodePool) *NodePoolConfigProxyConfig {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &NodePoolConfigProxyConfig{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyNodePoolConfigProxyConfig
+	}
+	r.ResourceGroupId = dcl.FlattenString(m["resourceGroupId"])
+	r.SecretId = dcl.FlattenString(m["secretId"])
+
+	return r
+}
+
+// expandNodePoolAutoscalingMap expands the contents of NodePoolAutoscaling into a JSON
+// request object.
+func expandNodePoolAutoscalingMap(c *Client, f map[string]NodePoolAutoscaling, res *NodePool) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandNodePoolAutoscaling(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -2102,14 +2452,14 @@ func expandNodePoolAutoscalingMap(c *Client, f map[string]NodePoolAutoscaling) (
 
 // expandNodePoolAutoscalingSlice expands the contents of NodePoolAutoscaling into a JSON
 // request object.
-func expandNodePoolAutoscalingSlice(c *Client, f []NodePoolAutoscaling) ([]map[string]interface{}, error) {
+func expandNodePoolAutoscalingSlice(c *Client, f []NodePoolAutoscaling, res *NodePool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandNodePoolAutoscaling(c, &item)
+		i, err := expandNodePoolAutoscaling(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -2122,7 +2472,7 @@ func expandNodePoolAutoscalingSlice(c *Client, f []NodePoolAutoscaling) ([]map[s
 
 // flattenNodePoolAutoscalingMap flattens the contents of NodePoolAutoscaling from a JSON
 // response object.
-func flattenNodePoolAutoscalingMap(c *Client, i interface{}) map[string]NodePoolAutoscaling {
+func flattenNodePoolAutoscalingMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolAutoscaling {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]NodePoolAutoscaling{}
@@ -2134,7 +2484,7 @@ func flattenNodePoolAutoscalingMap(c *Client, i interface{}) map[string]NodePool
 
 	items := make(map[string]NodePoolAutoscaling)
 	for k, item := range a {
-		items[k] = *flattenNodePoolAutoscaling(c, item.(map[string]interface{}))
+		items[k] = *flattenNodePoolAutoscaling(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -2142,7 +2492,7 @@ func flattenNodePoolAutoscalingMap(c *Client, i interface{}) map[string]NodePool
 
 // flattenNodePoolAutoscalingSlice flattens the contents of NodePoolAutoscaling from a JSON
 // response object.
-func flattenNodePoolAutoscalingSlice(c *Client, i interface{}) []NodePoolAutoscaling {
+func flattenNodePoolAutoscalingSlice(c *Client, i interface{}, res *NodePool) []NodePoolAutoscaling {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []NodePoolAutoscaling{}
@@ -2154,7 +2504,7 @@ func flattenNodePoolAutoscalingSlice(c *Client, i interface{}) []NodePoolAutosca
 
 	items := make([]NodePoolAutoscaling, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenNodePoolAutoscaling(c, item.(map[string]interface{})))
+		items = append(items, *flattenNodePoolAutoscaling(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -2162,7 +2512,7 @@ func flattenNodePoolAutoscalingSlice(c *Client, i interface{}) []NodePoolAutosca
 
 // expandNodePoolAutoscaling expands an instance of NodePoolAutoscaling into a JSON
 // request object.
-func expandNodePoolAutoscaling(c *Client, f *NodePoolAutoscaling) (map[string]interface{}, error) {
+func expandNodePoolAutoscaling(c *Client, f *NodePoolAutoscaling, res *NodePool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -2180,7 +2530,7 @@ func expandNodePoolAutoscaling(c *Client, f *NodePoolAutoscaling) (map[string]in
 
 // flattenNodePoolAutoscaling flattens an instance of NodePoolAutoscaling from a JSON
 // response object.
-func flattenNodePoolAutoscaling(c *Client, i interface{}) *NodePoolAutoscaling {
+func flattenNodePoolAutoscaling(c *Client, i interface{}, res *NodePool) *NodePoolAutoscaling {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -2199,14 +2549,14 @@ func flattenNodePoolAutoscaling(c *Client, i interface{}) *NodePoolAutoscaling {
 
 // expandNodePoolMaxPodsConstraintMap expands the contents of NodePoolMaxPodsConstraint into a JSON
 // request object.
-func expandNodePoolMaxPodsConstraintMap(c *Client, f map[string]NodePoolMaxPodsConstraint) (map[string]interface{}, error) {
+func expandNodePoolMaxPodsConstraintMap(c *Client, f map[string]NodePoolMaxPodsConstraint, res *NodePool) (map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := make(map[string]interface{})
 	for k, item := range f {
-		i, err := expandNodePoolMaxPodsConstraint(c, &item)
+		i, err := expandNodePoolMaxPodsConstraint(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -2220,14 +2570,14 @@ func expandNodePoolMaxPodsConstraintMap(c *Client, f map[string]NodePoolMaxPodsC
 
 // expandNodePoolMaxPodsConstraintSlice expands the contents of NodePoolMaxPodsConstraint into a JSON
 // request object.
-func expandNodePoolMaxPodsConstraintSlice(c *Client, f []NodePoolMaxPodsConstraint) ([]map[string]interface{}, error) {
+func expandNodePoolMaxPodsConstraintSlice(c *Client, f []NodePoolMaxPodsConstraint, res *NodePool) ([]map[string]interface{}, error) {
 	if f == nil {
 		return nil, nil
 	}
 
 	items := []map[string]interface{}{}
 	for _, item := range f {
-		i, err := expandNodePoolMaxPodsConstraint(c, &item)
+		i, err := expandNodePoolMaxPodsConstraint(c, &item, res)
 		if err != nil {
 			return nil, err
 		}
@@ -2240,7 +2590,7 @@ func expandNodePoolMaxPodsConstraintSlice(c *Client, f []NodePoolMaxPodsConstrai
 
 // flattenNodePoolMaxPodsConstraintMap flattens the contents of NodePoolMaxPodsConstraint from a JSON
 // response object.
-func flattenNodePoolMaxPodsConstraintMap(c *Client, i interface{}) map[string]NodePoolMaxPodsConstraint {
+func flattenNodePoolMaxPodsConstraintMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolMaxPodsConstraint {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]NodePoolMaxPodsConstraint{}
@@ -2252,7 +2602,7 @@ func flattenNodePoolMaxPodsConstraintMap(c *Client, i interface{}) map[string]No
 
 	items := make(map[string]NodePoolMaxPodsConstraint)
 	for k, item := range a {
-		items[k] = *flattenNodePoolMaxPodsConstraint(c, item.(map[string]interface{}))
+		items[k] = *flattenNodePoolMaxPodsConstraint(c, item.(map[string]interface{}), res)
 	}
 
 	return items
@@ -2260,7 +2610,7 @@ func flattenNodePoolMaxPodsConstraintMap(c *Client, i interface{}) map[string]No
 
 // flattenNodePoolMaxPodsConstraintSlice flattens the contents of NodePoolMaxPodsConstraint from a JSON
 // response object.
-func flattenNodePoolMaxPodsConstraintSlice(c *Client, i interface{}) []NodePoolMaxPodsConstraint {
+func flattenNodePoolMaxPodsConstraintSlice(c *Client, i interface{}, res *NodePool) []NodePoolMaxPodsConstraint {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []NodePoolMaxPodsConstraint{}
@@ -2272,7 +2622,7 @@ func flattenNodePoolMaxPodsConstraintSlice(c *Client, i interface{}) []NodePoolM
 
 	items := make([]NodePoolMaxPodsConstraint, 0, len(a))
 	for _, item := range a {
-		items = append(items, *flattenNodePoolMaxPodsConstraint(c, item.(map[string]interface{})))
+		items = append(items, *flattenNodePoolMaxPodsConstraint(c, item.(map[string]interface{}), res))
 	}
 
 	return items
@@ -2280,7 +2630,7 @@ func flattenNodePoolMaxPodsConstraintSlice(c *Client, i interface{}) []NodePoolM
 
 // expandNodePoolMaxPodsConstraint expands an instance of NodePoolMaxPodsConstraint into a JSON
 // request object.
-func expandNodePoolMaxPodsConstraint(c *Client, f *NodePoolMaxPodsConstraint) (map[string]interface{}, error) {
+func expandNodePoolMaxPodsConstraint(c *Client, f *NodePoolMaxPodsConstraint, res *NodePool) (map[string]interface{}, error) {
 	if dcl.IsEmptyValueIndirect(f) {
 		return nil, nil
 	}
@@ -2295,7 +2645,7 @@ func expandNodePoolMaxPodsConstraint(c *Client, f *NodePoolMaxPodsConstraint) (m
 
 // flattenNodePoolMaxPodsConstraint flattens an instance of NodePoolMaxPodsConstraint from a JSON
 // response object.
-func flattenNodePoolMaxPodsConstraint(c *Client, i interface{}) *NodePoolMaxPodsConstraint {
+func flattenNodePoolMaxPodsConstraint(c *Client, i interface{}, res *NodePool) *NodePoolMaxPodsConstraint {
 	m, ok := i.(map[string]interface{})
 	if !ok {
 		return nil
@@ -2313,7 +2663,7 @@ func flattenNodePoolMaxPodsConstraint(c *Client, i interface{}) *NodePoolMaxPods
 
 // flattenNodePoolStateEnumMap flattens the contents of NodePoolStateEnum from a JSON
 // response object.
-func flattenNodePoolStateEnumMap(c *Client, i interface{}) map[string]NodePoolStateEnum {
+func flattenNodePoolStateEnumMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolStateEnum {
 	a, ok := i.(map[string]interface{})
 	if !ok {
 		return map[string]NodePoolStateEnum{}
@@ -2333,7 +2683,7 @@ func flattenNodePoolStateEnumMap(c *Client, i interface{}) map[string]NodePoolSt
 
 // flattenNodePoolStateEnumSlice flattens the contents of NodePoolStateEnum from a JSON
 // response object.
-func flattenNodePoolStateEnumSlice(c *Client, i interface{}) []NodePoolStateEnum {
+func flattenNodePoolStateEnumSlice(c *Client, i interface{}, res *NodePool) []NodePoolStateEnum {
 	a, ok := i.([]interface{})
 	if !ok {
 		return []NodePoolStateEnum{}
@@ -2356,7 +2706,7 @@ func flattenNodePoolStateEnumSlice(c *Client, i interface{}) []NodePoolStateEnum
 func flattenNodePoolStateEnum(i interface{}) *NodePoolStateEnum {
 	s, ok := i.(string)
 	if !ok {
-		return NodePoolStateEnumRef("")
+		return nil
 	}
 
 	return NodePoolStateEnumRef(s)
@@ -2367,7 +2717,7 @@ func flattenNodePoolStateEnum(i interface{}) *NodePoolStateEnum {
 // identity).  This is useful in extracting the element from a List call.
 func (r *NodePool) matcher(c *Client) func([]byte) bool {
 	return func(b []byte) bool {
-		cr, err := unmarshalNodePool(b, c)
+		cr, err := unmarshalNodePool(b, c, r)
 		if err != nil {
 			c.Config.Logger.Warning("failed to unmarshal provided resource in matcher.")
 			return false
@@ -2416,6 +2766,7 @@ type nodePoolDiff struct {
 	// The diff should include one or the other of RequiresRecreate or UpdateOp.
 	RequiresRecreate bool
 	UpdateOp         nodePoolApiOperation
+	FieldName        string // used for error logging
 }
 
 func convertFieldDiffsToNodePoolDiffs(config *dcl.Config, fds []*dcl.FieldDiff, opts []dcl.ApplyOption) ([]nodePoolDiff, error) {
@@ -2435,7 +2786,8 @@ func convertFieldDiffsToNodePoolDiffs(config *dcl.Config, fds []*dcl.FieldDiff, 
 	var diffs []nodePoolDiff
 	// For each operation name, create a nodePoolDiff which contains the operation.
 	for opName, fieldDiffs := range opNamesToFieldDiffs {
-		diff := nodePoolDiff{}
+		// Use the first field diff's field name for logging required recreate error.
+		diff := nodePoolDiff{FieldName: fieldDiffs[0].FieldName}
 		if opName == "Recreate" {
 			diff.RequiresRecreate = true
 		} else {
@@ -2470,7 +2822,7 @@ func extractNodePoolFields(r *NodePool) error {
 	if err := extractNodePoolConfigFields(r, vConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vConfig) {
+	if !dcl.IsEmptyValueIndirect(vConfig) {
 		r.Config = vConfig
 	}
 	vAutoscaling := r.Autoscaling
@@ -2481,7 +2833,7 @@ func extractNodePoolFields(r *NodePool) error {
 	if err := extractNodePoolAutoscalingFields(r, vAutoscaling); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAutoscaling) {
+	if !dcl.IsEmptyValueIndirect(vAutoscaling) {
 		r.Autoscaling = vAutoscaling
 	}
 	vMaxPodsConstraint := r.MaxPodsConstraint
@@ -2492,7 +2844,7 @@ func extractNodePoolFields(r *NodePool) error {
 	if err := extractNodePoolMaxPodsConstraintFields(r, vMaxPodsConstraint); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vMaxPodsConstraint) {
+	if !dcl.IsEmptyValueIndirect(vMaxPodsConstraint) {
 		r.MaxPodsConstraint = vMaxPodsConstraint
 	}
 	return nil
@@ -2506,7 +2858,7 @@ func extractNodePoolConfigFields(r *NodePool, o *NodePoolConfig) error {
 	if err := extractNodePoolConfigRootVolumeFields(r, vRootVolume); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRootVolume) {
+	if !dcl.IsEmptyValueIndirect(vRootVolume) {
 		o.RootVolume = vRootVolume
 	}
 	vSshConfig := o.SshConfig
@@ -2517,8 +2869,19 @@ func extractNodePoolConfigFields(r *NodePool, o *NodePoolConfig) error {
 	if err := extractNodePoolConfigSshConfigFields(r, vSshConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSshConfig) {
+	if !dcl.IsEmptyValueIndirect(vSshConfig) {
 		o.SshConfig = vSshConfig
+	}
+	vProxyConfig := o.ProxyConfig
+	if vProxyConfig == nil {
+		// note: explicitly not the empty object.
+		vProxyConfig = &NodePoolConfigProxyConfig{}
+	}
+	if err := extractNodePoolConfigProxyConfigFields(r, vProxyConfig); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vProxyConfig) {
+		o.ProxyConfig = vProxyConfig
 	}
 	return nil
 }
@@ -2526,6 +2889,9 @@ func extractNodePoolConfigRootVolumeFields(r *NodePool, o *NodePoolConfigRootVol
 	return nil
 }
 func extractNodePoolConfigSshConfigFields(r *NodePool, o *NodePoolConfigSshConfig) error {
+	return nil
+}
+func extractNodePoolConfigProxyConfigFields(r *NodePool, o *NodePoolConfigProxyConfig) error {
 	return nil
 }
 func extractNodePoolAutoscalingFields(r *NodePool, o *NodePoolAutoscaling) error {
@@ -2544,7 +2910,7 @@ func postReadExtractNodePoolFields(r *NodePool) error {
 	if err := postReadExtractNodePoolConfigFields(r, vConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vConfig) {
+	if !dcl.IsEmptyValueIndirect(vConfig) {
 		r.Config = vConfig
 	}
 	vAutoscaling := r.Autoscaling
@@ -2555,7 +2921,7 @@ func postReadExtractNodePoolFields(r *NodePool) error {
 	if err := postReadExtractNodePoolAutoscalingFields(r, vAutoscaling); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vAutoscaling) {
+	if !dcl.IsEmptyValueIndirect(vAutoscaling) {
 		r.Autoscaling = vAutoscaling
 	}
 	vMaxPodsConstraint := r.MaxPodsConstraint
@@ -2566,7 +2932,7 @@ func postReadExtractNodePoolFields(r *NodePool) error {
 	if err := postReadExtractNodePoolMaxPodsConstraintFields(r, vMaxPodsConstraint); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vMaxPodsConstraint) {
+	if !dcl.IsEmptyValueIndirect(vMaxPodsConstraint) {
 		r.MaxPodsConstraint = vMaxPodsConstraint
 	}
 	return nil
@@ -2580,7 +2946,7 @@ func postReadExtractNodePoolConfigFields(r *NodePool, o *NodePoolConfig) error {
 	if err := extractNodePoolConfigRootVolumeFields(r, vRootVolume); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vRootVolume) {
+	if !dcl.IsEmptyValueIndirect(vRootVolume) {
 		o.RootVolume = vRootVolume
 	}
 	vSshConfig := o.SshConfig
@@ -2591,8 +2957,19 @@ func postReadExtractNodePoolConfigFields(r *NodePool, o *NodePoolConfig) error {
 	if err := extractNodePoolConfigSshConfigFields(r, vSshConfig); err != nil {
 		return err
 	}
-	if !dcl.IsNotReturnedByServer(vSshConfig) {
+	if !dcl.IsEmptyValueIndirect(vSshConfig) {
 		o.SshConfig = vSshConfig
+	}
+	vProxyConfig := o.ProxyConfig
+	if vProxyConfig == nil {
+		// note: explicitly not the empty object.
+		vProxyConfig = &NodePoolConfigProxyConfig{}
+	}
+	if err := extractNodePoolConfigProxyConfigFields(r, vProxyConfig); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vProxyConfig) {
+		o.ProxyConfig = vProxyConfig
 	}
 	return nil
 }
@@ -2600,6 +2977,9 @@ func postReadExtractNodePoolConfigRootVolumeFields(r *NodePool, o *NodePoolConfi
 	return nil
 }
 func postReadExtractNodePoolConfigSshConfigFields(r *NodePool, o *NodePoolConfigSshConfig) error {
+	return nil
+}
+func postReadExtractNodePoolConfigProxyConfigFields(r *NodePool, o *NodePoolConfigProxyConfig) error {
 	return nil
 }
 func postReadExtractNodePoolAutoscalingFields(r *NodePool, o *NodePoolAutoscaling) error {

@@ -18,14 +18,12 @@ import (
 	"fmt"
 	"log"
 	"reflect"
-	"strconv"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 )
 
-func resourceComputeManagedSslCertificate() *schema.Resource {
+func ResourceComputeManagedSslCertificate() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeManagedSslCertificateCreate,
 		Read:   resourceComputeManagedSslCertificateRead,
@@ -36,7 +34,7 @@ func resourceComputeManagedSslCertificate() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(6 * time.Minute),
+			Create: schema.DefaultTimeout(30 * time.Minute),
 			Delete: schema.DefaultTimeout(30 * time.Minute),
 		},
 
@@ -90,7 +88,7 @@ These are in the same namespace as the managed SSL certificates.`,
 				Type:         schema.TypeString,
 				Optional:     true,
 				ForceNew:     true,
-				ValidateFunc: validation.StringInSlice([]string{"MANAGED", ""}, false),
+				ValidateFunc: validateEnum([]string{"MANAGED", ""}),
 				Description: `Enum field whose value is always 'MANAGED' - used to signal to the API
 which type this is. Default value: "MANAGED" Possible values: ["MANAGED"]`,
 				Default: "MANAGED",
@@ -109,7 +107,7 @@ which type this is. Default value: "MANAGED" Possible values: ["MANAGED"]`,
 			"expire_time": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: `Expire time of the certificate.`,
+				Description: `Expire time of the certificate in RFC3339 text format.`,
 			},
 			"subject_alternative_names": {
 				Type:        schema.TypeList,
@@ -136,7 +134,7 @@ which type this is. Default value: "MANAGED" Possible values: ["MANAGED"]`,
 
 func resourceComputeManagedSslCertificateCreate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -186,7 +184,7 @@ func resourceComputeManagedSslCertificateCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
+	res, err := SendRequestWithTimeout(config, "POST", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutCreate))
 	if err != nil {
 		return fmt.Errorf("Error creating ManagedSslCertificate: %s", err)
 	}
@@ -198,7 +196,7 @@ func resourceComputeManagedSslCertificateCreate(d *schema.ResourceData, meta int
 	}
 	d.SetId(id)
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Creating ManagedSslCertificate", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 
@@ -215,7 +213,7 @@ func resourceComputeManagedSslCertificateCreate(d *schema.ResourceData, meta int
 
 func resourceComputeManagedSslCertificateRead(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -238,7 +236,7 @@ func resourceComputeManagedSslCertificateRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	res, err := sendRequest(config, "GET", billingProject, url, userAgent, nil)
+	res, err := SendRequest(config, "GET", billingProject, url, userAgent, nil)
 	if err != nil {
 		return handleNotFoundError(err, d, fmt.Sprintf("ComputeManagedSslCertificate %q", d.Id()))
 	}
@@ -280,7 +278,7 @@ func resourceComputeManagedSslCertificateRead(d *schema.ResourceData, meta inter
 
 func resourceComputeManagedSslCertificateDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*Config)
-	userAgent, err := generateUserAgentString(d, config.userAgent)
+	userAgent, err := generateUserAgentString(d, config.UserAgent)
 	if err != nil {
 		return err
 	}
@@ -306,12 +304,12 @@ func resourceComputeManagedSslCertificateDelete(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	res, err := sendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
+	res, err := SendRequestWithTimeout(config, "DELETE", billingProject, url, userAgent, obj, d.Timeout(schema.TimeoutDelete))
 	if err != nil {
 		return handleNotFoundError(err, d, "ManagedSslCertificate")
 	}
 
-	err = computeOperationWaitTime(
+	err = ComputeOperationWaitTime(
 		config, res, project, "Deleting ManagedSslCertificate", userAgent,
 		d.Timeout(schema.TimeoutDelete))
 
@@ -354,7 +352,7 @@ func flattenComputeManagedSslCertificateDescription(v interface{}, d *schema.Res
 func flattenComputeManagedSslCertificateCertificateId(v interface{}, d *schema.ResourceData, config *Config) interface{} {
 	// Handles the string fixed64 format
 	if strVal, ok := v.(string); ok {
-		if intVal, err := strconv.ParseInt(strVal, 10, 64); err == nil {
+		if intVal, err := StringToFixed64(strVal); err == nil {
 			return intVal
 		}
 	}
