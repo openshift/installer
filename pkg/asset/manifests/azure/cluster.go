@@ -93,6 +93,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Destination:      ptr.To("*"),
 					Action:           capz.SecurityRuleActionAllow,
 				},
+				{
+					Name:             fmt.Sprintf("%s_ssh_in", clusterID.InfraID),
+					Protocol:         capz.SecurityGroupProtocolTCP,
+					Direction:        capz.SecurityRuleDirectionInbound,
+					Priority:         220,
+					SourcePorts:      ptr.To("*"),
+					DestinationPorts: ptr.To("22"),
+					Source:           ptr.To(source),
+					Destination:      ptr.To("*"),
+					Action:           capz.SecurityRuleActionAllow,
+				},
 			},
 		},
 	}
