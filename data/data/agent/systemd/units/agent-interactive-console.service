@@ -1,7 +1,7 @@
 [Unit]
 Description=Get interactive user configuration at boot
-After=dev-fb0.device network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service agent-extract-tui.service
-Before=getty@tty1.service network.target network.service agent.service node-zero.service NetworkManager-wait-online.service
+After=dev-fb0.device network-pre.target NetworkManager.service pre-network-manager-config.service selinux.service agent-extract-tui.service set-hostname.service
+Before=getty@tty1.service network.target network.service agent.service node-zero.service NetworkManager-wait-online.service agent-auth-token-status.service
 Wants=agent-extract-tui.service
 ConditionPathExists=/usr/local/bin/agent-tui
 ConditionPathExists=/dev/fb0

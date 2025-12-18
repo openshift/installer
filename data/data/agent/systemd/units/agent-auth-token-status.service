@@ -1,7 +1,7 @@
 [Unit]
 Description=service that displays a message if auth tokens are expired.
 Wants=network-online.target
-After=network-online.target agent-interactive-console.service
+After=network-online.target
 ConditionPathExists=/etc/assisted/add-nodes.env
 
 [Service]
