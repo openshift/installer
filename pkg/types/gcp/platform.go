@@ -121,10 +121,14 @@ type Platform struct {
 	// +optional
 	DNS *DNS `json:"dns,omitempty"`
 
-	// FirewallRulesManagement specifies the management policy for the cluster. Managed indicates that
-	// the firewall rules will be created and destroyed by the cluster. Unmanaged indicates that the
-	// user should create and destroy the firewall rules.
-	// +default="Managed"
+	// FirewallRulesManagement specifies the management policy for the cluster. "Managed" indicates that
+	// the firewall rules will be created and destroyed by the cluster. "Unmanaged" indicates that the
+	// user should create and destroy the firewall rules. For Shared VPC installation, if the installer
+	// credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+	// can be absent or set to "Unmanaged" explicitly. For non-Shared VPC installation, if the installer
+	// credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+	// must be set to "Unmanaged" explicitly. And in this case, the user needs to pre-configure the VPC network
+	// and the firewall rules before the installation.
 	// +optional
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
 }
