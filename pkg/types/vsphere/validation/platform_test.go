@@ -461,6 +461,19 @@ func TestValidatePlatform(t *testing.T) {
 			expectedError: `^test-path\.failureDomains\.server: Invalid value: "bad-vcenter": server does not exist in vcenters`,
 		},
 		{
+			name: "Multi-zone platform datacenter not in vCenter datacenters list",
+			platform: func() *vsphere.Platform {
+				p := validPlatform()
+				p.FailureDomains[0].Topology.Datacenter = "non-existent-datacenter"
+				p.FailureDomains[0].Topology.Datastore = "/non-existent-datacenter/datastore/test-datastore"
+				p.FailureDomains[0].Topology.ComputeCluster = "/non-existent-datacenter/host/test-cluster"
+				p.FailureDomains[0].Topology.ResourcePool = "/non-existent-datacenter/host/test-cluster/Resources/test-resourcepool"
+				p.FailureDomains[0].Topology.Folder = "/non-existent-datacenter/vm/test-folder"
+				return p
+			}(),
+			expectedError: `^test-path\.failureDomains\.topology\.datacenter: Invalid value: "non-existent-datacenter": datacenter must be defined in vCenter test-vcenter datacenters list$`,
+		},
+		{
 			name: "Multi-zone platform failure domain topology cluster relative path",
 			platform: func() *vsphere.Platform {
 				p := validPlatform()
