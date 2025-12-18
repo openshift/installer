@@ -198,6 +198,16 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		return err
 	}
 	for _, image := range response.Images {
+		// Early detection: Check if the AMI is managed by AWS Backup service.
+		// AWS Backup-managed AMIs cannot be deleted via EC2 APIs and will fail with
+		// AuthFailure. Detecting this early via tags avoids unnecessary API calls.
+		for _, tag := range image.Tags {
+			if aws.StringValue(tag.Key) == "aws:backup:source-resource" {
+				logger.Warnf("Skipping AMI image %s deletion since it is managed by the AWS Backup service. To delete this image, please use the AWS Backup APIs, CLI, or console", id)
+				return nil
+			}
+		}
+
 		var snapshots []string
 		for _, bdm := range image.BlockDeviceMappings {
 			if bdm.Ebs != nil && bdm.Ebs.SnapshotId != nil {
@@ -219,7 +229,18 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		ImageId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidAMI.NotFound" {
+		errCode := HandleErrorCode(err)
+		switch errCode {
+		case "InvalidAMI.NotFound":
+			return nil
+		case "AuthFailure":
+			// AMIs, managed by AWS Backup service, cannot be deleted via EC2 APIs. When attempting to delete, the following error is returned
+			//
+			// AuthFailure: This image is managed by AWS Backup and cannot be deleted via EC2 APIs. To delete this image, please use the AWS Backup APIs, CLI, or console.
+			//
+			// The installer cannot handle this case automatically. Users must manually delete the AMI, following AWS instructions.
+			// This is a fallback in case the tag check above didn't catch it (e.g., if AWS Backup tags were removed or not present).
+			logger.WithError(err).Warnf("Skipping AMI image %s deletion", id)
 			return nil
 		}
 		return err
@@ -650,7 +671,19 @@ func deleteEC2Snapshot(ctx context.Context, client *ec2v2.Client, id string, log
 		SnapshotId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidSnapshot.NotFound" {
+		errCode := HandleErrorCode(err)
+		switch errCode {
+		case "InvalidSnapshot.NotFound":
+			return nil
+		case "InvalidParameterValue":
+			// An InvalidParameterValue indicates the AWS request parameter is not valid, is unsupported, or cannot be used.
+			// For example, snapshots, managed by the AWS Backup service, cannot be deleted via EC2 APIs. When attempting to delete, the following error is returned:
+			//
+			// InvalidParameterValue: This snapshot is managed by the AWS Backup service and cannot be deleted via EC2 APIs.
+			// If you wish to delete this snapshot, please do so via the Backup console.
+			//
+			// The installer should not try to delete these backup snapshots, but leave it to the users to clean them up.
+			logger.WithError(err).Warnf("Skipping snapshot %s deletion", id)
 			return nil
 		}
 		return err
