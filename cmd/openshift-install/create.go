@@ -51,6 +51,14 @@ type target struct {
 	assets  []asset.WritableAsset
 }
 
+type customDNSInfo struct {
+	platform       string
+	privateInstall bool
+	lbIPAddr       string
+}
+
+var savedConfig *rest.Config
+
 // each target is a variable to preserve the order when creating subcommands and still
 // allow other functions to directly access each target individually.
 var (
@@ -152,8 +160,15 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 		return 0, errors.Wrap(err, "loading kubeconfig")
 	}
 
+	// Kubeconfig could get modified with the Dialer context. Save a copy of the original config
+	// in case we need to revert back to it (e.g., when a proxy is configured for private installs).
+	savedConfig = rest.CopyConfig(config)
+	customDNSData := customDNSInfo{}
+	if err := getCustomDNSInfo(ctx, &customDNSData); err != nil {
+		logrus.Fatal(fmt.Errorf("unable to retrieve configuration for UserProvisionedDNS: %w", err))
+	}
 	// Handle the case when the API server is not reachable.
-	if err := handleUnreachableAPIServer(ctx, config); err != nil {
+	if err := handleUnreachableAPIServer(config, &customDNSData); err != nil {
 		logrus.Fatal(fmt.Errorf("unable to handle api server override: %w", err))
 	}
 
@@ -222,6 +237,8 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 	}
 	timer.StopTimer(timer.TotalTimeElapsed)
 	timer.LogSummary()
+
+	postInstallSteps(&customDNSData)
 	return 0, nil
 }
 
@@ -336,13 +353,11 @@ func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd 
 }
 
 func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *clusterCreateError {
-	client, err := kubernetes.NewForConfig(config)
+	customDNSData := customDNSInfo{}
+	err := getCustomDNSInfo(ctx, &customDNSData)
 	if err != nil {
-		return newClientError(errors.Wrap(err, "creating a Kubernetes client"))
+		return newClientError(errors.Wrap(err, "unable to retrieve configuration for UserProvisionedDNS"))
 	}
-
-	discovery := client.Discovery()
-
 	apiTimeout := 20 * time.Minute
 
 	untilTime := time.Now().Add(apiTimeout)
@@ -366,6 +381,15 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 
 	var lastErr error
 	err = wait.PollUntilContextCancel(apiContext, 2*time.Second, true, func(_ context.Context) (done bool, err error) {
+		// Determine which config to use: the modified one (with custom dialer) or the original.
+		// When UserProvisionedDNS is enabled and this is a private install, a proxy server
+		// could be configured. In that case, kubeconfig does not need the custom dialer.
+		activeConfig := getKubeconfig(&customDNSData, config)
+		client, err := kubernetes.NewForConfig(activeConfig)
+		if err != nil {
+			return false, err
+		}
+		discovery := client.Discovery()
 		version, err := discovery.ServerVersion()
 		if err == nil {
 			logrus.Infof("API %s up", version)
@@ -425,11 +449,16 @@ func waitForBootstrapComplete(ctx context.Context, config *rest.Config) *cluster
 		logrus.Infof("  Baremetal control plane finished provisioning.")
 	}
 
+	activeConfig := getKubeconfig(&customDNSData, config)
+	client, err := kubernetes.NewForConfig(activeConfig)
+	if err != nil {
+		return newClientError(errors.Wrap(err, "creating a Kubernetes client"))
+	}
 	if err := waitForBootstrapConfigMap(waitCtx, client); err != nil {
 		return err
 	}
 
-	if err := waitForEtcdBootstrapMemberRemoval(ctx, config); err != nil {
+	if err := waitForEtcdBootstrapMemberRemoval(ctx, activeConfig); err != nil {
 		return newBootstrapError(err)
 	}
 
@@ -501,12 +530,15 @@ func waitForEtcdBootstrapMemberRemoval(ctx context.Context, config *rest.Config)
 	return nil
 }
 
-func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error {
+// getCustomDNSInfo gets LB IP address and other values needed specifically when UserProvisionedDNS
+// is configured from various assets in the asset store and populates customDNSInfo. That information
+// is useful to make updates to kubeconfig before and after install.
+func getCustomDNSInfo(ctx context.Context, customDNSData *customDNSInfo) error {
 	assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
 	if err != nil {
 		return fmt.Errorf("failed to create asset store: %w", err)
 	}
-
+	customDNSData.platform = ""
 	// Ensure that the install is expecting the user to provision their own DNS solution.
 	installConfig := &installconfig.InstallConfig{}
 	if err := assetStore.Fetch(ctx, installConfig); err != nil {
@@ -528,6 +560,7 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	default:
 		return nil
 	}
+	customDNSData.platform = installConfig.Config.Platform.Name()
 
 	lbConfig := &lbconfig.Config{}
 	if err := assetStore.Fetch(ctx, lbConfig); err != nil {
@@ -535,16 +568,17 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	}
 
 	lbType := lbconfig.PublicLoadBalancer
+	customDNSData.privateInstall = false
 	if !installConfig.Config.PublicAPI() {
 		lbType = lbconfig.PrivateLoadBalancer
+		customDNSData.privateInstall = true
 	}
 
 	_, ipAddrs, err := lbConfig.ParseDNSDataFromConfig(lbType)
 	if err != nil {
 		return fmt.Errorf("failed to parse lbconfig: %w", err)
 	}
-
-	// The kubeconfig handles one ip address
+	// Grabbing just the 1st load balancer IP address
 	ipAddr := ""
 	if len(ipAddrs) > 0 {
 		ipAddr = ipAddrs[0].String()
@@ -552,12 +586,7 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	if ipAddr == "" {
 		return fmt.Errorf("no ip address found in lbconfig")
 	}
-
-	dialer := &net.Dialer{
-		Timeout:   1 * time.Minute,
-		KeepAlive: 1 * time.Minute,
-	}
-	config.Dial = kubeconfig.CreateDialContext(dialer, ipAddr)
+	customDNSData.lbIPAddr = ipAddr
 
 	// The asset is currently saved in <install-dir>/openshift. This directory
 	// was consumed during install but this file is generated after that action. This
@@ -565,6 +594,72 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	if err := asset.DeleteAssetFromDisk(lbConfig, command.RootOpts.Dir); err != nil {
 		return fmt.Errorf("failed to delete %s from disk", lbConfig.Name())
 	}
-
 	return nil
+}
+
+// handleUnreachableAPIServer updates kubeconfig with Dial context if needed.
+func handleUnreachableAPIServer(config *rest.Config, customDNSData *customDNSInfo) error {
+	if customDNSData.platform == "" {
+		// Platform doesn't support custom-dns or UserProvisioedDNS was not enabled in a
+		// supported platform. Nothing to do.
+		return nil
+	}
+	if customDNSData.lbIPAddr == "" {
+		return fmt.Errorf("no load balancer ip address found to update kubeconfig")
+	}
+
+	dialer := &net.Dialer{
+		Timeout:   1 * time.Minute,
+		KeepAlive: 1 * time.Minute,
+	}
+	config.Dial = kubeconfig.CreateDialContext(dialer, customDNSData.lbIPAddr)
+	return nil
+}
+
+// checkPrivateInstallReachability checks if install host is within the same network
+// as the private cluster.
+func checkPrivateInstallReachability(customDNSData *customDNSInfo) (bool, error) {
+	reachableAPIServer := true
+	if customDNSData.platform == "" {
+		// Platform doesn't support custom-dns or UserProvisionedDNS was not enabled in a
+		// supported platform. Nothing to do.
+		return true, nil
+	}
+	if customDNSData.privateInstall {
+		if customDNSData.lbIPAddr == "" {
+			return true, fmt.Errorf("no load balancer ip address found to check connectivity")
+		}
+		logrus.Debugf("checking if API server reachable with updated kubeconfig.")
+		// Check if private LB IP and port are reachable from the Install host.
+		address := net.JoinHostPort(customDNSData.lbIPAddr, "6443")
+		conn, err := net.DialTimeout("tcp", address, time.Second*10)
+		if err != nil {
+			// Not reachable. So, the install host is not in the same network.
+			// Use kubeconfig without dialer context because some reachability
+			// mechanism should be put in place at this time.
+			logrus.Debugf("unable to reach API server with kubeconfig. Reverting to using original kubeconfig.")
+			reachableAPIServer = false
+		} else {
+			conn.Close()
+		}
+	}
+	return reachableAPIServer, nil
+}
+
+func postInstallSteps(customDNSData *customDNSInfo) {
+	if customDNSData.platform != "" {
+		// Platform with ProvisionedDNS enabled. Display post-install message.
+		logrus.Infof("This cluster is configured with UserProvisionedDNS. To access the cluster, please configure your External DNS solution with entries for the cluster's API and *.apps service endpoints. Please refer to documentation for further details")
+	}
+}
+
+func getKubeconfig(customDNSData *customDNSInfo, config *rest.Config) *rest.Config {
+	activeConfig := config
+	reachable, reachErr := checkPrivateInstallReachability(customDNSData)
+	if reachErr == nil && !reachable && savedConfig != nil {
+		// Revert to saved kubeconfig without Dialer context.
+		logrus.Debug("Private install not directly reachable, using original kubeconfig configuration")
+		activeConfig = savedConfig
+	}
+	return activeConfig
 }
