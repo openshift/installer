@@ -1,8 +1,8 @@
 [Unit]
 Description=Node Image Pull
-Wants=var-ostree\x2dcontainer.mount
+Wants=var-ostreecontainer.mount
 Requires=network.target NetworkManager.service
-After=network.target var-ostree\x2dcontainer.mount
+After=network.target var-ostreecontainer.mount
 
 [Service]
 Type=oneshot

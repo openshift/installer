@@ -29,8 +29,8 @@ ostree_checkout="${ostree_repo}/tmp/node-image"
 hardlink='-H'
 # this is the CoreOS API for "are we in a live environment", i.e. PXE or ISO
 if test -f /run/ostree-live; then
-    ostree_repo=/var/ostree-container/repo
-    ostree_checkout=/var/ostree-container/checkout
+    ostree_repo=/var/ostreecontainer/repo
+    ostree_checkout=/var/ostreecontainer/checkout
     mkdir -p "${ostree_repo}"
     echo "In live environment; creating temporary repo to pull node image"
     ostree init --mode=bare --repo="${ostree_repo}"
