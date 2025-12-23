@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
@@ -21,6 +22,7 @@ import (
 	icvsphere "github.com/openshift/installer/pkg/asset/installconfig/vsphere"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/defaults"
+	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/validation"
 )
 
@@ -133,6 +135,33 @@ func (a *InstallConfig) finishGCP() error {
 		}
 		a.Config.Platform.GCP.Endpoint.ClusterUseOnly = &defaultClusterUseOnly
 	}
+
+	project := a.Config.GCP.ProjectID
+	if a.Config.Platform.GCP.NetworkProjectID != "" {
+		project = a.Config.GCP.NetworkProjectID
+	}
+
+	if a.Config.GCP.FirewallRulesManagement == "" {
+		firewallPermissions, err := icgcp.HasPermission(context.TODO(), project, []string{
+			icgcp.CreateFirewallPermission,
+			icgcp.DeleteFirewallPermission,
+			icgcp.UpdateNetworksPermission,
+		}, a.Config.GCP.Endpoint)
+		if err != nil {
+			return err
+		}
+
+		a.Config.GCP.FirewallRulesManagement = gcp.ManagedFirewallRules
+		if !firewallPermissions {
+			if a.Config.GCP.NetworkProjectID != "" {
+				logrus.Debugf("missing firewall permissions, setting rule management to Unmanaged")
+				a.Config.GCP.FirewallRulesManagement = gcp.UnmanagedFirewallRules
+			} else {
+				logrus.Warnf("missing firewall permissions, add the permissions or set firewall rules management to Unmanaged and create firewall rules")
+			}
+		}
+	}
+
 	return nil
 }
 
