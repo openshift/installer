@@ -81,8 +81,10 @@ aliases:
     - tthvo
   gcp-approvers:
     - patrickdillon
+    - barbacbd
   gcp-reviewers:
     - patrickdillon
+    - barbacbd
   azure-approvers:
     - jhixson74
     - rna-afk
