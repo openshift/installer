@@ -253,6 +253,9 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			if err != nil {
 				logrus.Warn(errors.Wrap(err, "failed to filter zone list"))
 			}
+			// Sort the zones by lexical order to ensure CAPI and MAPI machines
+			// are distributed to zones in the same order.
+			slices.Sort(mpool.Zones)
 		}
 
 		pool.Platform.AWS = &mpool
