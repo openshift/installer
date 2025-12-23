@@ -202,9 +202,12 @@ func (p Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerIn
 		errs = append(errs, err)
 	}
 
-	// Delete security groups tagged with the cluster ID and bootstrap role
-	if err := postdestroy.SecurityGroups(ctx, cloud, infraID); err != nil {
-		errs = append(errs, err)
+	// If we are not a PowerVC driver, then deal with security groups
+	if in.Metadata.PowerVC == nil {
+		// Delete security groups tagged with the cluster ID and bootstrap role
+		if err := postdestroy.SecurityGroups(ctx, cloud, infraID); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	return errors.Join(errs...)
