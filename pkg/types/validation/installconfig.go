@@ -267,6 +267,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 
 	allErrs = append(allErrs, ValidateFeatureSet(c)...)
+	allErrs = append(allErrs, validateOSImageStream(c)...)
 
 	return allErrs
 }
@@ -1683,6 +1684,14 @@ func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path
 		// Allowed platforms
 	default:
 		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("fencing is only supported on baremetal, external or none platforms, instead %s platform was found", config.Platform.Name())))
+	}
+	return errs
+}
+
+func validateOSImageStream(config *types.InstallConfig) field.ErrorList {
+	errs := field.ErrorList{}
+	if len(config.OSImageStream) != 0 && config.IsSCOS() {
+		errs = append(errs, field.Forbidden(field.NewPath("osImageStream"), "OS Image Streams are only supported on OCP clusters using RHCOS"))
 	}
 	return errs
 }
