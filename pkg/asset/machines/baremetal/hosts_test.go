@@ -766,6 +766,15 @@ routes:
 						architecture("ppc64le"),
 				).build(),
 		},
+		{
+			Scenario: "host-with-custom-metadata",
+			Machines: machines(machine("machine-0")),
+			Config:   configHosts(hostType("master-0").bmc("usr0", "pwd0").annotation("custom.openshift.io/example", "test-value")),
+
+			ExpectedSetting: settings().
+				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
+				hosts(host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").annotation("custom.openshift.io/example", "test-value").customDeploy()).build(),
+		},
 	}
 
 	for _, tc := range testCases {
@@ -922,6 +931,15 @@ func (htb *hostTypeBuilder) bmc(user, password string) *hostTypeBuilder {
 
 func (htb *hostTypeBuilder) networkConfig(config string) *hostTypeBuilder {
 	yaml.Unmarshal([]byte(config), &htb.NetworkConfig)
+	return htb
+}
+
+func (htb *hostTypeBuilder) annotation(key, value string) *hostTypeBuilder {
+	if htb.ObjectMeta.Annotations == nil {
+		htb.ObjectMeta.Annotations = map[string]string{}
+	}
+
+	htb.ObjectMeta.Annotations[key] = value
 	return htb
 }
 
