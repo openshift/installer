@@ -150,6 +150,15 @@ spec:
                   For the compute machine pools, the only valid name is "worker".
                   For the arbiter machine pools, the only valid name is "arbiter".
                 type: string
+              osImageStream:
+                description: |-
+                  OSImageStream specifies the OS Image Stream to use for machines in this pool.
+                  When set, this value overrides the global osImageStream defined in the InstallConfig.
+                  When unset, machines in this pool will inherit the global osImageStream value if configured,
+                  or fall back to the cluster's default OS image stream if neither value is set.
+                  This allows different machine pools to use different OS image streams while maintaining
+                  a common default for the cluster.
+                type: string
               platform:
                 description: Platform is configuration for machine pool specific to
                   the platform.
@@ -1710,6 +1719,15 @@ spec:
                     For the compute machine pools, the only valid name is "worker".
                     For the arbiter machine pools, the only valid name is "arbiter".
                   type: string
+                osImageStream:
+                  description: |-
+                    OSImageStream specifies the OS Image Stream to use for machines in this pool.
+                    When set, this value overrides the global osImageStream defined in the InstallConfig.
+                    When unset, machines in this pool will inherit the global osImageStream value if configured,
+                    or fall back to the cluster's default OS image stream if neither value is set.
+                    This allows different machine pools to use different OS image streams while maintaining
+                    a common default for the cluster.
+                  type: string
                 platform:
                   description: Platform is configuration for machine pool specific
                     to the platform.
@@ -3209,6 +3227,15 @@ spec:
                   For the control plane machine pool, the name will always be "master".
                   For the compute machine pools, the only valid name is "worker".
                   For the arbiter machine pools, the only valid name is "arbiter".
+                type: string
+              osImageStream:
+                description: |-
+                  OSImageStream specifies the OS Image Stream to use for machines in this pool.
+                  When set, this value overrides the global osImageStream defined in the InstallConfig.
+                  When unset, machines in this pool will inherit the global osImageStream value if configured,
+                  or fall back to the cluster's default OS image stream if neither value is set.
+                  This allows different machine pools to use different OS image streams while maintaining
+                  a common default for the cluster.
                 type: string
               platform:
                 description: Platform is configuration for machine pool specific to
@@ -4885,6 +4912,14 @@ spec:
                 - Internal
                 type: string
             type: object
+          osImageStream:
+            description: |-
+              OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
+              This value serves as the default for all machine pools (control plane, compute, arbiter).
+              Individual machine pools can override this value by specifying their own osImageStream.
+              When both this field and the machine pool's osImageStream are unset, the cluster will
+              use its own default OS image stream.
+            type: string
           platform:
             description: |-
               Platform is the configuration for the specific platform upon which to
