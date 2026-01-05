@@ -37,6 +37,9 @@ var Regions = map[string]Region{
 			"dal12": {
 				SysTypes: []string{"s922", "e980"},
 			},
+			"dal14": {
+				SysTypes: []string{"s922", "s1022", "s1122", "e980", "e1080"},
+			},
 		},
 		VPCZones: []string{"us-south-1", "us-south-2", "us-south-3"},
 	},
