@@ -15,6 +15,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/smithy-go/middleware"
+	smithyhttp "github.com/aws/smithy-go/transport/http"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -454,6 +456,23 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 	return nil
 }
 
+// withContentMD5 removes all flexible checksum procecdures from an operation,
+// instead computing an MD5 checksum for the request payload.
+// Since AWS SDK v2, the SDK will compute and send a CRC32 checksum by default, which is a
+// breaking change in behaviour. This we need this setup to restore backwards compact.
+// Reference: https://github.com/aws/aws-sdk-go-v2/discussions/2960#discussion-7829557
+//
+//nolint:errcheck
+func withContentMD5(o *s3.Options) {
+	o.APIOptions = append(o.APIOptions, func(stack *middleware.Stack) error {
+		stack.Initialize.Remove("AWSChecksum:SetupInputContext")
+		stack.Build.Remove("AWSChecksum:RequestMetricsTracking")
+		stack.Finalize.Remove("AWSChecksum:ComputeInputPayloadChecksum")
+		stack.Finalize.Remove("addInputChecksumTrailer")
+		return smithyhttp.AddContentChecksumMiddleware(stack)
+	})
+}
+
 // removeS3Bucket deletes an s3 bucket given its name.
 func removeS3Bucket(ctx context.Context, region string, bucketName string, endpoints []awstypes.ServiceEndpoint) error {
 	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(region))
@@ -468,6 +487,9 @@ func removeS3Bucket(ctx context.Context, region string, bucketName string, endpo
 				options.BaseEndpoint = aws.String(endpoint.URL)
 			}
 		}
+		// We disable checksum for PUT and GET calls (i.e. checksum is optional).
+		options.RequestChecksumCalculation = aws.RequestChecksumCalculationWhenRequired
+		options.ResponseChecksumValidation = aws.ResponseChecksumValidationWhenRequired
 	})
 
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{Bucket: aws.String(bucketName)})
@@ -490,7 +512,7 @@ func removeS3Bucket(ctx context.Context, region string, bucketName string, endpo
 				Delete: &s3types.Delete{
 					Objects: objects,
 				},
-			}); err != nil {
+			}, withContentMD5); err != nil {
 				return fmt.Errorf("failed to delete objects in bucket %s: %w", bucketName, err)
 			}
 		}

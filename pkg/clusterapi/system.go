@@ -197,7 +197,11 @@ func (c *system) Run(ctx context.Context) error { //nolint:gocyclo
 				"--webhook-cert-dir={{.WebhookCertDir}}",
 				"--feature-gates=BootstrapFormatIgnition=true,ExternalResourceGC=true,TagUnmanagedNetworkResources=false,EKS=false,MachinePool=false",
 			},
-			map[string]string{},
+			map[string]string{
+				// We disable checksum for PUT and GET calls (i.e. checksum is optional).
+				"AWS_REQUEST_CHECKSUM_CALCULATION": "WHEN_REQUIRED",
+				"AWS_RESPONSE_CHECKSUM_VALIDATION": "WHEN_REQUIRED",
+			},
 		)
 		if cfg := metadata.AWS; cfg != nil && len(cfg.ServiceEndpoints) > 0 {
 			endpoints := make([]string, 0, len(cfg.ServiceEndpoints))
