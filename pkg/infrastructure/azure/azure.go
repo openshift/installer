@@ -106,8 +106,8 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	installConfig := in.InstallConfig.Config
 	platform := installConfig.Platform.Azure
 	subscriptionID := session.Credentials.SubscriptionID
-	cloudConfiguration := session.CloudConfig
-	tokenCredential := session.TokenCreds
+	p.CloudConfiguration = session.CloudConfig
+	p.TokenCredential = session.TokenCreds
 	p.ResourceGroupName = platform.ClusterResourceGroupName(in.InfraID)
 
 	userTags := platform.UserTags
@@ -120,7 +120,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	opts := &arm.ClientOptions{
 		ClientOptions: policy.ClientOptions{
-			Cloud: cloudConfiguration,
+			Cloud: p.CloudConfiguration,
 		},
 	}
 	computeClientOpts := opts
@@ -128,7 +128,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		opts.APIVersion = stackAPIVersion
 		computeClientOpts = &arm.ClientOptions{
 			ClientOptions: policy.ClientOptions{
-				Cloud:      cloudConfiguration,
+				Cloud:      p.CloudConfiguration,
 				APIVersion: stackComputeAPIVersion,
 			},
 		}
@@ -141,7 +141,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		region:            platform.Region,
 		resourceGroupName: p.ResourceGroupName,
 		subscriptionID:    subscriptionID,
-		tokenCredential:   tokenCredential,
+		tokenCredential:   p.TokenCredential,
 		infraID:           in.InfraID,
 		clientOpts:        p.clientOptions,
 		tags:              p.Tags,
@@ -155,7 +155,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 
 	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
-		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, p.clientOptions)
+		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, p.TokenCredential, p.clientOptions)
 		if err != nil {
 			return fmt.Errorf("failed to create azure network factory: %w", err)
 		}
@@ -235,16 +235,17 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	if platform.CloudName != aztypes.StackCloud {
 		// Create storage account
 		createStorageAccountOutput, err = CreateStorageAccount(ctx, &CreateStorageAccountInput{
-			SubscriptionID:     subscriptionID,
-			ResourceGroupName:  resourceGroupName,
-			StorageAccountName: storageAccountName,
-			CloudName:          platform.CloudName,
-			Region:             platform.Region,
-			AuthType:           session.AuthType,
-			Tags:               tags,
-			CustomerManagedKey: platform.CustomerManagedKey,
-			TokenCredential:    tokenCredential,
-			ClientOpts:         p.clientOptions,
+			SubscriptionID:       subscriptionID,
+			ResourceGroupName:    resourceGroupName,
+			StorageAccountName:   storageAccountName,
+			CloudName:            platform.CloudName,
+			Region:               platform.Region,
+			AuthType:             session.AuthType,
+			AllowSharedKeyAccess: !in.InstallConfig.Config.Azure.DisallowSharedKeyAccess,
+			Tags:                 tags,
+			CustomerManagedKey:   platform.CustomerManagedKey,
+			TokenCredential:      p.TokenCredential,
+			ClientOpts:           p.clientOptions,
 		})
 		if err != nil {
 			return err
@@ -277,15 +278,16 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		logrus.Debugf("BlobContainer.ID=%s", *blobContainer.ID)
 
 		_, err = CreatePageBlob(ctx, &CreatePageBlobInput{
-			StorageURL:         storageURL,
-			BlobURL:            blobURL,
-			ImageURL:           imageURL,
-			ImageLength:        imageLength,
-			CloudEnvironment:   in.InstallConfig.Azure.CloudName,
-			TokenCredential:    session.TokenCreds,
-			StorageAccountName: storageAccountName,
-			StorageAccountKeys: storageAccountKeys,
-			ClientOpts:         p.clientOptions,
+			StorageURL:           storageURL,
+			BlobURL:              blobURL,
+			ImageURL:             imageURL,
+			ImageLength:          imageLength,
+			CloudEnvironment:     in.InstallConfig.Azure.CloudName,
+			AllowSharedKeyAccess: !in.InstallConfig.Config.Azure.DisallowSharedKeyAccess,
+			TokenCredential:      session.TokenCreds,
+			StorageAccountName:   storageAccountName,
+			StorageAccountKeys:   storageAccountKeys,
+			ClientOpts:           p.clientOptions,
 		})
 		if err != nil {
 			return err
@@ -298,7 +300,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			GalleryName:       galleryName,
 			Region:            platform.Region,
 			Tags:              tags,
-			TokenCredential:   tokenCredential,
+			TokenCredential:   p.TokenCredential,
 			ClientOpts:        p.clientOptions,
 		})
 		if err != nil {
@@ -317,7 +319,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			Offer:                "rhcos",
 			SKU:                  "basic",
 			Tags:                 tags,
-			TokenCredential:      tokenCredential,
+			TokenCredential:      p.TokenCredential,
 			ClientOpts:           p.clientOptions,
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
@@ -343,7 +345,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			Offer:                "rhcos-gen2",
 			SKU:                  "gen2",
 			Tags:                 tags,
-			TokenCredential:      tokenCredential,
+			TokenCredential:      p.TokenCredential,
 			ClientOpts:           p.clientOptions,
 			Architecture:         architecture,
 			OSType:               armcompute.OperatingSystemTypesLinux,
@@ -389,7 +391,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	if installConfig.Azure.CloudName == aztypes.StackCloud {
-		client, err := armcompute.NewImagesClient(subscriptionID, tokenCredential, p.computeClientOptions)
+		client, err := armcompute.NewImagesClient(subscriptionID, p.TokenCredential, p.computeClientOptions)
 		if err != nil {
 			return fmt.Errorf("error creating stack managed images client: %w", err)
 		}
@@ -777,31 +779,28 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 	if err != nil {
 		return nil, fmt.Errorf("failed to create service client: %w", err)
 	}
-	udc, err := serviceClient.GetUserDelegationCredential(context.Background(), info, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create user delegation credentials: %w", err)
-	}
 
 	if in.InstallConfig.Config.Azure.CustomerManagedKey == nil {
 		logrus.Debugf("Creating a Block Blob for ignition shim")
 		sasURL, err = CreateBlockBlob(ctx, &CreateBlockBlobInput{
-			StorageURL:         p.StorageURL,
-			BlobURL:            blobURL,
-			AuthType:           session.AuthType,
-			TokenCredential:    session.TokenCreds,
-			StorageAccountName: p.StorageAccountName,
-			StorageAccountKeys: p.StorageAccountKeys,
-			ClientOpts:         p.clientOptions,
-			BootstrapIgnData:   ignOutput.UpdatedBootstrapIgn,
-			CloudEnvironment:   in.InstallConfig.Azure.CloudName,
-			ContainerName:      ignitionContainerName,
-			BlobName:           blobName,
-			StorageSuffix:      session.Environment.StorageEndpointSuffix,
-			ARMEndpoint:        in.InstallConfig.Azure.ARMEndpoint,
-			Session:            session,
-			Region:             in.InstallConfig.Config.Azure.Region,
-			Tags:               p.Tags,
-			ResourceGroupName:  p.ResourceGroupName,
+			StorageURL:           p.StorageURL,
+			BlobURL:              blobURL,
+			AuthType:             session.AuthType,
+			TokenCredential:      session.TokenCreds,
+			StorageAccountName:   p.StorageAccountName,
+			StorageAccountKeys:   p.StorageAccountKeys,
+			AllowSharedKeyAccess: !in.InstallConfig.Config.Azure.DisallowSharedKeyAccess,
+			ClientOpts:           p.clientOptions,
+			BootstrapIgnData:     ignOutput.UpdatedBootstrapIgn,
+			CloudEnvironment:     in.InstallConfig.Azure.CloudName,
+			ContainerName:        ignitionContainerName,
+			BlobName:             blobName,
+			StorageSuffix:        session.Environment.StorageEndpointSuffix,
+			ARMEndpoint:          in.InstallConfig.Azure.ARMEndpoint,
+			Session:              session,
+			Region:               in.InstallConfig.Config.Azure.Region,
+			Tags:                 p.Tags,
+			ResourceGroupName:    p.ResourceGroupName,
 		})
 		if err != nil {
 			return nil, fmt.Errorf("failed to create BlockBlob for ignition shim: %w", err)
@@ -829,7 +828,11 @@ func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]
 			return nil, fmt.Errorf("failed to create PageBlob for ignition shim: %w", err)
 		}
 	}
-	if sasURL == "" {
+	if sasURL == "" && in.InstallConfig.Config.Azure.DisallowSharedKeyAccess {
+		udc, err := serviceClient.GetUserDelegationCredential(context.Background(), info, nil)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create user delegation credentials: %w", err)
+		}
 		sasQueryParams, err := sas.BlobSignatureValues{
 			Protocol:      sas.ProtocolHTTPS,
 			StartTime:     time.Now().UTC().Add(time.Second * -10),
