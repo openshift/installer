@@ -43,7 +43,7 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 			}
 
 			// Unfortunately role.Tags is empty from ListRoles, so we need to query each one
-			response, err := search.Client.ListRoleTags(ctx, &iamv2.ListRoleTagsInput{RoleName: role.RoleName})
+			response, err := search.Client.GetRole(ctx, &iamv2.GetRoleInput{RoleName: role.RoleName})
 			if err != nil {
 				switch {
 				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
@@ -63,8 +63,8 @@ func (search *IamRoleSearch) find(ctx context.Context) (arns []string, names []s
 					lastError = fmt.Errorf("get tags for %s: %w", *role.Arn, err)
 				}
 			} else {
-				tags := make(map[string]string, len(response.Tags))
-				for _, tag := range response.Tags {
+				tags := make(map[string]string, len(response.Role.Tags))
+				for _, tag := range response.Role.Tags {
 					tags[*tag.Key] = *tag.Value
 				}
 				if tagMatch(search.Filters, tags) {
@@ -111,7 +111,7 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 			}
 
 			// Unfortunately user.Tags is empty from ListUsers, so we need to query each one
-			response, err := search.client.ListUserTags(ctx, &iamv2.ListUserTagsInput{UserName: user.UserName})
+			response, err := search.client.GetUser(ctx, &iamv2.GetUserInput{UserName: user.UserName})
 			if err != nil {
 				switch {
 				case strings.Contains(HandleErrorCode(err), "NoSuchEntity"):
@@ -129,8 +129,8 @@ func (search *IamUserSearch) arns(ctx context.Context) ([]string, error) {
 					lastError = fmt.Errorf("get tags for %s: %w", *user.Arn, err)
 				}
 			} else {
-				tags := make(map[string]string, len(response.Tags))
-				for _, tag := range response.Tags {
+				tags := make(map[string]string, len(response.User.Tags))
+				for _, tag := range response.User.Tags {
 					tags[*tag.Key] = *tag.Value
 				}
 				if tagMatch(search.filters, tags) {
