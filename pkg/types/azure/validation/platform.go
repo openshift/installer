@@ -154,6 +154,9 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		}
 	}
 
+	if p.CloudName == azure.StackCloud && p.AllowSharedKeyAccess != nil && !*p.AllowSharedKeyAccess {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("allowSharedAccessKey"), p.AllowSharedKeyAccess, "disabling shared access key creation is unsupported in Azure stack hub"))
+	}
 	return allErrs
 }
 
