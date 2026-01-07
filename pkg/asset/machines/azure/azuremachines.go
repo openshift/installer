@@ -390,7 +390,7 @@ func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confiden
 	case rhcosImg == "" && !confidentialVM:
 		// hive calls the machines function, but may pass an empty
 		// string for rhcos. In which case, allow MAO to choose default.
-		return nil
+		return &capz.Image{} // can't be nil or mapiImage will panic
 	default: // Installer-created image gallery, for OKD && confidential VMs.
 		// image gallery names cannot have dashes
 		galleryName := strings.ReplaceAll(infraID, "-", "_")
