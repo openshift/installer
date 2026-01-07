@@ -5706,6 +5706,12 @@ spec:
                           type: string
                         type: array
                     type: object
+                  disallowSharedKeyAccess:
+                    description: |-
+                      DisallowSharedKeyAccess specifies if shared access key should be disabled for the storage account.
+                      Default value is false (allows shared access key creation).
+                      Disabling this will require a new permission "Storage Blob Data Contributor" in azure.
+                    type: boolean
                   ipFamily:
                     default: IPv4
                     description: |-
