@@ -35,7 +35,6 @@ controllerconfigs.machineconfiguration.openshift.io:
   - DualReplica
   - DyanmicServiceEndpointIBMCloud
   - GCPClusterHostedDNSInstall
-  - GCPCustomAPIEndpointsInstall
   - HighlyAvailableArbiter
   - HighlyAvailableArbiter+DualReplica
   - NutanixMultiSubnets
@@ -124,6 +123,7 @@ machineconfignodes.machineconfiguration.openshift.io:
   - ImageModeStatusReporting
   - IrreconcilableMachineConfig
   - MachineConfigNodes
+  - NoRegistryClusterInstall
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_80"
@@ -202,6 +202,7 @@ machineconfigpools.machineconfiguration.openshift.io:
   Capability: ""
   Category: ""
   FeatureGates:
+  - OSStreams
   - PinnedImages
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
