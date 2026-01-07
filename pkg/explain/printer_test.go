@@ -332,6 +332,9 @@ Deprecated: use platform.Azure.Subnets section
 installing on Azure for machine pools which do not define their own
 platform configuration.
 
+    disallowSharedKeyAccess <boolean>
+      DisallowSharedKeyAccess specifies if shared access key should be disabled for the storage account.
+
     networkResourceGroupName <string>
       NetworkResourceGroupName specifies the network resource group that contains an existing VNet
 
