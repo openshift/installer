@@ -236,7 +236,7 @@ func (o *ClusterUninstaller) ValidateOwnedSubnets(ctx context.Context) error {
 		subnetFilters := make([]ec2v2types.Filter, 0, len(tags))
 		for tagKey, tagValue := range tags {
 			subnetFilters = append(subnetFilters, ec2v2types.Filter{
-				Name:   aws.String(fmt.Sprintf("tag:%s", tagKey)),
+				Name:   awsv2.String(fmt.Sprintf("tag:%s", tagKey)),
 				Values: []string{tagValue},
 			})
 		}
@@ -250,7 +250,7 @@ func (o *ClusterUninstaller) ValidateOwnedSubnets(ctx context.Context) error {
 			}
 
 			for _, subnet := range page.Subnets {
-				id := aws.StringValue(subnet.SubnetId)
+				id := awsv2.ToString(subnet.SubnetId)
 				if id == "" {
 					continue
 				}

@@ -199,7 +199,7 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		// AWS Backup-managed AMIs cannot be deleted via EC2 APIs and will fail with
 		// AuthFailure. Detecting this early via tags avoids unnecessary API calls.
 		for _, tag := range image.Tags {
-			if aws.StringValue(tag.Key) == "aws:backup:source-resource" {
+			if aws.ToString(tag.Key) == "aws:backup:source-resource" {
 				logger.Warnf("Skipping AMI image %s deletion since it is managed by the AWS Backup service. To delete this image, please use the AWS Backup APIs, CLI, or console", id)
 				return nil
 			}
