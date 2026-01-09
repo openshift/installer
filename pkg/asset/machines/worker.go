@@ -216,16 +216,38 @@ func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.Mac
 			fallback = true
 			logrus.Warnf("For given zone %v, GetDatacenterSupportedSystems returns %v", ic.PowerVS.Zone, err)
 		} else {
-			// Is the hardcoded default of s922 in the list?
-			found := false
-			for _, st := range sysTypes {
-				if st == sysType {
-					found = true
-					break
+			if ic.PowerVS.Zone == "dal14" {
+				for _, st := range sysTypes {
+					if st == "s1022" {
+						sysType = "s1022"
+						break
+					}
 				}
-			}
-			if !found {
-				sysType = sysTypes[0]
+				// If s1022 not found, fall back to checking for s922
+				if sysType != "s1022" {
+					for _, st := range sysTypes {
+						if st == "s922" {
+							sysType = "s922"
+							break
+						}
+					}
+					// If neither s1022 nor s922 found, use first in list
+					if sysType == "s922" {
+						sysType = sysTypes[0]
+					}
+				}
+			} else {
+				// For other zones, check if the hardcoded default of s922 is in the list, this is the prior case code
+				found := false
+				for _, st := range sysTypes {
+					if st == sysType {
+						found = true
+						break
+					}
+				}
+				if !found {
+					sysType = sysTypes[0]
+				}
 			}
 		}
 	}
@@ -234,7 +256,22 @@ func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.Mac
 		// Fallback to hardcoded list
 		sysTypes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region, ic.PowerVS.Zone)
 		if err == nil {
-			sysType = sysTypes[0]
+			// For dal14, prefer s1022 if available (Power9 is no longer supported in us-south)
+			if ic.PowerVS.Zone == "dal14" {
+				for _, st := range sysTypes {
+					if st == "s1022" {
+						sysType = "s1022"
+						break
+					}
+				}
+				// If s1022 not found, use first in list
+				if sysType != "s1022" {
+					sysType = sysTypes[0]
+				}
+			} else {
+				// this is prior case behavior
+				sysType = sysTypes[0]
+			}
 		} else {
 			logrus.Warnf("For given zone %v, AvailableSysTypes returns %v", ic.PowerVS.Zone, err)
 		}
