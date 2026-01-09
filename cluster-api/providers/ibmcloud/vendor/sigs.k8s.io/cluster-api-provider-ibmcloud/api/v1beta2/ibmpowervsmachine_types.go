@@ -83,7 +83,7 @@ type IBMPowerVSMachineSpec struct {
 	// When omitted, this means that the user has no opinion and the platform is left to choose a
 	// reasonable default, which is subject to change over time. The current default is s922 which is generally available.
 	// + This is not an enum because we expect other values to be added later which should be supported implicitly.
-	// +kubebuilder:validation:Enum:="s922";"e880";"e980";"s1022";""
+	// +kubebuilder:validation:Enum:="s922";"e880";"e980";"s1022";"s1122";""
 	// +optional
 	SystemType string `json:"systemType,omitempty"`
 
