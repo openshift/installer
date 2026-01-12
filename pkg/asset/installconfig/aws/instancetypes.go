@@ -14,6 +14,7 @@ type InstanceType struct {
 	DefaultVCpus int64
 	MemInMiB     int64
 	Arches       []string
+	Features     []string
 }
 
 // instanceTypes retrieves a list of instance types for the given region.
@@ -29,6 +30,7 @@ func instanceTypes(ctx context.Context, session *session.Session, region string)
 					DefaultVCpus: aws.Int64Value(info.VCpuInfo.DefaultVCpus),
 					MemInMiB:     aws.Int64Value(info.MemoryInfo.SizeInMiB),
 					Arches:       aws.StringValueSlice(info.ProcessorInfo.SupportedArchitectures),
+					Features:     aws.StringValueSlice(info.ProcessorInfo.SupportedFeatures),
 				}
 			}
 			return !lastPage
