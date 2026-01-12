@@ -8,8 +8,8 @@ generate_capi_manifest() {
 	echo "Generating ${provider} manifest"
 	pushd "$1"
 	# Parse provider module URL and revision
-	# Workaround the import path for azure-service-operator being different from the module path
-	provider_go_module="$(grep _ tools.go | awk '{ print $2 }' | sed 's|"||g' | sed 's|/cmd/controller$||g')"
+	# Workaround the import path for azure-service-operator & openstackorc being different from the module path
+	provider_go_module="$(grep _ tools.go | awk '{ print $2 }' | sed -En 's/"//g;s#/cmd/(controller|manager)$##; p')"
 	mod_info="$(go mod download -json "${provider_go_module}")"
 	popd
 	version="$(echo "${mod_info}" | jq '.Version' | sed 's|"||g')"
@@ -25,12 +25,16 @@ generate_capi_manifest() {
 	elif [ "${provider}" = "openstackorc" ]; then
 		# Just copy the CRD from upstream
 		curl -fSsL "https://github.com/k-orc/openstack-resource-controller/releases/download/${version}/install.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+	elif [ "${provider}" = "nutanix" ]; then
+		# Download pre-built infrastructure components from GitHub releases
+		curl -fSsL "https://github.com/nutanix-cloud-native/cluster-api-provider-nutanix/releases/download/${version}/infrastructure-components.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 	else
 		# Generate provider manifest from specified revision
 		clone_path="$(mktemp -d)"
 		git clone "${repo_origin}" "${clone_path}"
 		pushd "${clone_path}"
 		git checkout "${revision}"
+
 		case "${provider}" in
 		vsphere)
 			make release-manifests-all
