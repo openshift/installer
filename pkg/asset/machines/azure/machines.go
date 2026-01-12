@@ -433,11 +433,6 @@ func generateSecurityProfile(mpool *azure.MachinePool) *machineapi.SecurityProfi
 
 func mapiImage(osImage azure.OSImage, azEnv azure.CloudEnvironment, confidentialVM bool, gen, rg, sub, infraID, rhcosImg string) machineapi.Image {
 	mImg := machineapi.Image{}
-	// hive uses this package, but may pass an empty string for rhcosImg,
-	// in which case we want to depend on MAO default, so return empty.
-	if rhcosImg == "" {
-		return mImg
-	}
 	cImg := capzImage(osImage, azEnv, confidentialVM, gen, rg, sub, infraID, rhcosImg)
 
 	if cImg.ID != nil {
