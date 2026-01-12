@@ -213,6 +213,7 @@ IotHub_STATUS: Object (10 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 IotHub_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -391,3 +392,4 @@ IotHub_Spec: Object (6 properties)
 │       ├── "S2"
 │       └── "S3"
 └── Tags: map[string]string
+

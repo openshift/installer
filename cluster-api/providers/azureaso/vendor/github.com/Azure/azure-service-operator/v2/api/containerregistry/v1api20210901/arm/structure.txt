@@ -111,6 +111,7 @@ Registry_STATUS: Object (9 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Registry_Spec: Object (6 properties)
 ├── Identity: *Object (4 properties)
 │   ├── PrincipalId: *string
@@ -177,3 +178,4 @@ Registry_Spec: Object (6 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Tags: map[string]string
+

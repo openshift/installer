@@ -48,6 +48,7 @@ Component_STATUS: Object (8 properties)
 │   └── WorkspaceResourceId: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 Component_Spec: Object (6 properties)
 ├── Etag: *string
 ├── Kind: *string
@@ -80,3 +81,4 @@ Component_Spec: Object (6 properties)
 │   ├── SamplingPercentage: *float64
 │   └── WorkspaceResourceId: *string
 └── Tags: map[string]string
+

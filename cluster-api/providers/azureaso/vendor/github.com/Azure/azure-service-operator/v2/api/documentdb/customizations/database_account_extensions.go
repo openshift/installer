@@ -9,15 +9,16 @@ import (
 	"context"
 	"strings"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/cosmos/armcosmos"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	documentdb "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage"
+	documentdb "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
@@ -47,7 +48,7 @@ func (ext *DatabaseAccountExtension) ExportKubernetesSecrets(
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*documentdb.DatabaseAccount)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *documentdb.DatabaseAccount", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *documentdb.DatabaseAccount", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -75,7 +76,7 @@ func (ext *DatabaseAccountExtension) ExportKubernetesSecrets(
 		var acctClient *armcosmos.DatabaseAccountsClient
 		acctClient, err = armcosmos.NewDatabaseAccountsClient(subscription, armClient.Creds(), armClient.ClientOptions())
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create new DatabaseAccountClient")
+			return nil, eris.Wrapf(err, "failed to create new DatabaseAccountClient")
 		}
 
 		// TODO: There is a ListReadOnlyKeys API that requires less permissions. We should consider determining
@@ -83,7 +84,7 @@ func (ext *DatabaseAccountExtension) ExportKubernetesSecrets(
 		var resp armcosmos.DatabaseAccountsClientListKeysResponse
 		resp, err = acctClient.ListKeys(ctx, id.ResourceGroupName, typedObj.AzureName(), nil)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed listing keys")
+			return nil, eris.Wrapf(err, "failed listing keys")
 		}
 
 		keys = resp.DatabaseAccountListKeysResult
@@ -222,7 +223,7 @@ func (ext *DatabaseAccountExtension) PreReconcileCheck(
 	// It will need to be updated if the hub storage version changes.
 	account, ok := obj.(*documentdb.DatabaseAccount)
 	if !ok {
-		return extensions.PreReconcileCheckResult{}, errors.Errorf("cannot run on unknown resource type %T, expected *documentdb.DatabaseAccount", obj)
+		return extensions.PreReconcileCheckResult{}, eris.Errorf("cannot run on unknown resource type %T, expected *documentdb.DatabaseAccount", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if

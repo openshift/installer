@@ -65,6 +65,7 @@ Domain_STATUS: Object (7 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Domain_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -101,6 +102,7 @@ Domain_Spec: Object (4 properties)
 │       ├── "Disabled"
 │       └── "Enabled"
 └── Tags: map[string]string
+
 DomainsTopic_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -128,8 +130,10 @@ DomainsTopic_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 DomainsTopic_Spec: Object (1 property)
 └── Name: string
+
 EventSubscription_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -284,6 +288,7 @@ EventSubscription_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 EventSubscription_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -412,6 +417,7 @@ EventSubscription_Spec: Object (2 properties)
     └── RetryPolicy: *Object (2 properties)
         ├── EventTimeToLiveInMinutes: *int
         └── MaxDeliveryAttempts: *int
+
 Topic_STATUS: Object (7 properties)
 ├── Id: *string
 ├── Location: *string
@@ -476,6 +482,7 @@ Topic_STATUS: Object (7 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Topic_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -512,3 +519,4 @@ Topic_Spec: Object (4 properties)
 │       ├── "Disabled"
 │       └── "Enabled"
 └── Tags: map[string]string
+

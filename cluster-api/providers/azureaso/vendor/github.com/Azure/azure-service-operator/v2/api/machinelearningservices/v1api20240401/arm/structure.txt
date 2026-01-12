@@ -25,27 +25,21 @@ RegistryTrackedResource_STATUS: Object (10 properties)
 │   ├── MlFlowRegistryUri: *string
 │   ├── PublicNetworkAccess: *string
 │   ├── RegionDetails: Object (3 properties)[]
-│   │   ├── AcrDetails: Object (2 properties)[]
-│   │   │   ├── SystemCreatedAcrAccount: *Object (3 properties)
-│   │   │   │   ├── AcrAccountName: *string
-│   │   │   │   ├── AcrAccountSku: *string
-│   │   │   │   └── ArmResourceId: *Object (1 property)
-│   │   │   │       └── ResourceId: *string
-│   │   │   └── UserCreatedAcrAccount: *Object (1 property)
+│   │   ├── AcrDetails: Object (1 property)[]
+│   │   │   └── SystemCreatedAcrAccount: *Object (3 properties)
+│   │   │       ├── AcrAccountName: *string
+│   │   │       ├── AcrAccountSku: *string
 │   │   │       └── ArmResourceId: *Object (1 property)
 │   │   │           └── ResourceId: *string
 │   │   ├── Location: *string
-│   │   └── StorageAccountDetails: Object (2 properties)[]
-│   │       ├── SystemCreatedStorageAccount: *Object (5 properties)
-│   │       │   ├── AllowBlobPublicAccess: *bool
-│   │       │   ├── ArmResourceId: *Object (1 property)
-│   │       │   │   └── ResourceId: *string
-│   │       │   ├── StorageAccountHnsEnabled: *bool
-│   │       │   ├── StorageAccountName: *string
-│   │       │   └── StorageAccountType: *string
-│   │       └── UserCreatedStorageAccount: *Object (1 property)
-│   │           └── ArmResourceId: *Object (1 property)
-│   │               └── ResourceId: *string
+│   │   └── StorageAccountDetails: Object (1 property)[]
+│   │       └── SystemCreatedStorageAccount: *Object (5 properties)
+│   │           ├── AllowBlobPublicAccess: *bool
+│   │           ├── ArmResourceId: *Object (1 property)
+│   │           │   └── ResourceId: *string
+│   │           ├── StorageAccountHnsEnabled: *bool
+│   │           ├── StorageAccountName: *string
+│   │           └── StorageAccountType: *string
 │   └── RegistryPrivateEndpointConnections: Object (3 properties)[]
 │       ├── Id: *string
 │       ├── Location: *string
@@ -90,6 +84,7 @@ RegistryTrackedResource_STATUS: Object (10 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Registry_Spec: Object (7 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -109,23 +104,17 @@ Registry_Spec: Object (7 properties)
 │   ├── MlFlowRegistryUri: *string
 │   ├── PublicNetworkAccess: *string
 │   ├── RegionDetails: Object (3 properties)[]
-│   │   ├── AcrDetails: Object (2 properties)[]
-│   │   │   ├── SystemCreatedAcrAccount: *Object (2 properties)
-│   │   │   │   ├── AcrAccountName: *string
-│   │   │   │   └── AcrAccountSku: *string
-│   │   │   └── UserCreatedAcrAccount: *Object (1 property)
-│   │   │       └── ArmResourceId: *Object (1 property)
-│   │   │           └── ResourceId: *string
+│   │   ├── AcrDetails: Object (1 property)[]
+│   │   │   └── SystemCreatedAcrAccount: *Object (2 properties)
+│   │   │       ├── AcrAccountName: *string
+│   │   │       └── AcrAccountSku: *string
 │   │   ├── Location: *string
-│   │   └── StorageAccountDetails: Object (2 properties)[]
-│   │       ├── SystemCreatedStorageAccount: *Object (4 properties)
-│   │       │   ├── AllowBlobPublicAccess: *bool
-│   │       │   ├── StorageAccountHnsEnabled: *bool
-│   │       │   ├── StorageAccountName: *string
-│   │       │   └── StorageAccountType: *string
-│   │       └── UserCreatedStorageAccount: *Object (1 property)
-│   │           └── ArmResourceId: *Object (1 property)
-│   │               └── ResourceId: *string
+│   │   └── StorageAccountDetails: Object (1 property)[]
+│   │       └── SystemCreatedStorageAccount: *Object (4 properties)
+│   │           ├── AllowBlobPublicAccess: *bool
+│   │           ├── StorageAccountHnsEnabled: *bool
+│   │           ├── StorageAccountName: *string
+│   │           └── StorageAccountType: *string
 │   └── RegistryPrivateEndpointConnections: Object (3 properties)[]
 │       ├── Id: *string
 │       ├── Location: *string
@@ -153,6 +142,7 @@ Registry_Spec: Object (7 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Tags: map[string]string
+
 Workspace_STATUS: Object (10 properties)
 ├── Id: *string
 ├── Identity: *Object (4 properties)
@@ -334,6 +324,7 @@ Workspace_STATUS: Object (10 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Workspace_Spec: Object (7 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -467,6 +458,7 @@ Workspace_Spec: Object (7 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Tags: map[string]string
+
 WorkspacesCompute_STATUS: Object (9 properties)
 ├── Id: *string
 ├── Identity: *Object (4 properties)
@@ -1204,6 +1196,7 @@ WorkspacesCompute_STATUS: Object (9 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 WorkspacesCompute_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -1520,6 +1513,7 @@ WorkspacesCompute_Spec: Object (6 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Tags: map[string]string
+
 WorkspacesConnection_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -3037,6 +3031,7 @@ WorkspacesConnection_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 WorkspacesConnection_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (12 properties)
@@ -4441,3 +4436,4 @@ WorkspacesConnection_Spec: Object (2 properties)
         ├── Value: *string
         └── ValueFormat: *Enum (1 value)
             └── "JSON"
+

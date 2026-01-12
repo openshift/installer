@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (ruleSet *RuleSet) ConvertTo(hub conversion.Hub) error {
 
 	return ruleSet.AssignProperties_To_RuleSet(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-cdn-azure-com-v1api20230501-ruleset,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=rulesets,verbs=create;update,versions=v1api20230501,name=default.v1api20230501.rulesets.cdn.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &RuleSet{}
-
-// Default applies defaults to the RuleSet resource
-func (ruleSet *RuleSet) Default() {
-	ruleSet.defaultImpl()
-	var temp any = ruleSet
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (ruleSet *RuleSet) defaultAzureName() {
-	if ruleSet.Spec.AzureName == "" {
-		ruleSet.Spec.AzureName = ruleSet.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the RuleSet resource
-func (ruleSet *RuleSet) defaultImpl() { ruleSet.defaultAzureName() }
 
 var _ configmaps.Exporter = &RuleSet{}
 
@@ -173,6 +147,10 @@ func (ruleSet *RuleSet) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (ruleSet *RuleSet) Owner() *genruntime.ResourceReference {
+	if ruleSet.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(ruleSet.Spec)
 	return ruleSet.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (ruleSet *RuleSet) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st RuleSet_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	ruleSet.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-cdn-azure-com-v1api20230501-ruleset,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=rulesets,verbs=create;update,versions=v1api20230501,name=validate.v1api20230501.rulesets.cdn.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &RuleSet{}
-
-// ValidateCreate validates the creation of the resource
-func (ruleSet *RuleSet) ValidateCreate() (admission.Warnings, error) {
-	validations := ruleSet.createValidations()
-	var temp any = ruleSet
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (ruleSet *RuleSet) ValidateDelete() (admission.Warnings, error) {
-	validations := ruleSet.deleteValidations()
-	var temp any = ruleSet
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (ruleSet *RuleSet) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := ruleSet.updateValidations()
-	var temp any = ruleSet
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (ruleSet *RuleSet) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){ruleSet.validateResourceReferences, ruleSet.validateOwnerReference, ruleSet.validateSecretDestinations, ruleSet.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (ruleSet *RuleSet) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (ruleSet *RuleSet) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return ruleSet.validateResourceReferences()
-		},
-		ruleSet.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return ruleSet.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return ruleSet.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return ruleSet.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (ruleSet *RuleSet) validateConfigMapDestinations() (admission.Warnings, error) {
-	if ruleSet.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(ruleSet, nil, ruleSet.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (ruleSet *RuleSet) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(ruleSet)
-}
-
-// validateResourceReferences validates all resource references
-func (ruleSet *RuleSet) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&ruleSet.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (ruleSet *RuleSet) validateSecretDestinations() (admission.Warnings, error) {
-	if ruleSet.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(ruleSet, nil, ruleSet.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (ruleSet *RuleSet) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*RuleSet)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, ruleSet)
 }
 
 // AssignProperties_From_RuleSet populates our RuleSet from the provided source RuleSet
@@ -309,7 +184,7 @@ func (ruleSet *RuleSet) AssignProperties_From_RuleSet(source *storage.RuleSet) e
 	var spec RuleSet_Spec
 	err := spec.AssignProperties_From_RuleSet_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RuleSet_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_RuleSet_Spec() to populate field Spec")
 	}
 	ruleSet.Spec = spec
 
@@ -317,7 +192,7 @@ func (ruleSet *RuleSet) AssignProperties_From_RuleSet(source *storage.RuleSet) e
 	var status RuleSet_STATUS
 	err = status.AssignProperties_From_RuleSet_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RuleSet_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_RuleSet_STATUS() to populate field Status")
 	}
 	ruleSet.Status = status
 
@@ -335,7 +210,7 @@ func (ruleSet *RuleSet) AssignProperties_To_RuleSet(destination *storage.RuleSet
 	var spec storage.RuleSet_Spec
 	err := ruleSet.Spec.AssignProperties_To_RuleSet_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RuleSet_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_RuleSet_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (ruleSet *RuleSet) AssignProperties_To_RuleSet(destination *storage.RuleSet
 	var status storage.RuleSet_STATUS
 	err = ruleSet.Status.AssignProperties_To_RuleSet_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RuleSet_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_RuleSet_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -441,13 +316,13 @@ func (ruleSet *RuleSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.RuleSet_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = ruleSet.AssignProperties_From_RuleSet_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -465,13 +340,13 @@ func (ruleSet *RuleSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.RuleSet_Spec{}
 	err := ruleSet.AssignProperties_To_RuleSet_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -488,7 +363,7 @@ func (ruleSet *RuleSet_Spec) AssignProperties_From_RuleSet_Spec(source *storage.
 		var operatorSpec RuleSetOperatorSpec
 		err := operatorSpec.AssignProperties_From_RuleSetOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RuleSetOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_RuleSetOperatorSpec() to populate field OperatorSpec")
 		}
 		ruleSet.OperatorSpec = &operatorSpec
 	} else {
@@ -520,7 +395,7 @@ func (ruleSet *RuleSet_Spec) AssignProperties_To_RuleSet_Spec(destination *stora
 		var operatorSpec storage.RuleSetOperatorSpec
 		err := ruleSet.OperatorSpec.AssignProperties_To_RuleSetOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RuleSetOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_RuleSetOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -602,13 +477,13 @@ func (ruleSet *RuleSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.RuleSet_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = ruleSet.AssignProperties_From_RuleSet_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -626,13 +501,13 @@ func (ruleSet *RuleSet_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.RuleSet_STATUS{}
 	err := ruleSet.AssignProperties_To_RuleSet_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -756,7 +631,7 @@ func (ruleSet *RuleSet_STATUS) AssignProperties_From_RuleSet_STATUS(source *stor
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		ruleSet.SystemData = &systemDatum
 	} else {
@@ -808,7 +683,7 @@ func (ruleSet *RuleSet_STATUS) AssignProperties_To_RuleSet_STATUS(destination *s
 		var systemDatum storage.SystemData_STATUS
 		err := ruleSet.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

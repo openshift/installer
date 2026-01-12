@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/compute/v1api20210701
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-07-01"
+
 Image: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (9 properties)
@@ -137,3 +138,4 @@ Image: Resource
     │   └── ZoneResilient: *bool
     ├── Tags: map[string]string
     └── Type: *string
+

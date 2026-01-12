@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,22 +67,6 @@ func (service *StorageAccountsTableService) ConvertTo(hub conversion.Hub) error 
 
 	return service.AssignProperties_To_StorageAccountsTableService(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-storage-azure-com-v1api20230101-storageaccountstableservice,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=storage.azure.com,resources=storageaccountstableservices,verbs=create;update,versions=v1api20230101,name=default.v1api20230101.storageaccountstableservices.storage.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &StorageAccountsTableService{}
-
-// Default applies defaults to the StorageAccountsTableService resource
-func (service *StorageAccountsTableService) Default() {
-	service.defaultImpl()
-	var temp any = service
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultImpl applies the code generated defaults to the StorageAccountsTableService resource
-func (service *StorageAccountsTableService) defaultImpl() {}
 
 var _ configmaps.Exporter = &StorageAccountsTableService{}
 
@@ -165,6 +146,10 @@ func (service *StorageAccountsTableService) NewEmptyStatus() genruntime.Converti
 
 // Owner returns the ResourceReference of the owner
 func (service *StorageAccountsTableService) Owner() *genruntime.ResourceReference {
+	if service.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(service.Spec)
 	return service.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -181,114 +166,11 @@ func (service *StorageAccountsTableService) SetStatus(status genruntime.Converti
 	var st StorageAccountsTableService_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	service.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-storage-azure-com-v1api20230101-storageaccountstableservice,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=storage.azure.com,resources=storageaccountstableservices,verbs=create;update,versions=v1api20230101,name=validate.v1api20230101.storageaccountstableservices.storage.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &StorageAccountsTableService{}
-
-// ValidateCreate validates the creation of the resource
-func (service *StorageAccountsTableService) ValidateCreate() (admission.Warnings, error) {
-	validations := service.createValidations()
-	var temp any = service
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (service *StorageAccountsTableService) ValidateDelete() (admission.Warnings, error) {
-	validations := service.deleteValidations()
-	var temp any = service
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (service *StorageAccountsTableService) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := service.updateValidations()
-	var temp any = service
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (service *StorageAccountsTableService) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){service.validateResourceReferences, service.validateOwnerReference, service.validateSecretDestinations, service.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (service *StorageAccountsTableService) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (service *StorageAccountsTableService) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return service.validateResourceReferences()
-		},
-		service.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return service.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return service.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return service.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (service *StorageAccountsTableService) validateConfigMapDestinations() (admission.Warnings, error) {
-	if service.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(service, nil, service.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (service *StorageAccountsTableService) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(service)
-}
-
-// validateResourceReferences validates all resource references
-func (service *StorageAccountsTableService) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&service.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (service *StorageAccountsTableService) validateSecretDestinations() (admission.Warnings, error) {
-	if service.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(service, nil, service.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (service *StorageAccountsTableService) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*StorageAccountsTableService)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, service)
 }
 
 // AssignProperties_From_StorageAccountsTableService populates our StorageAccountsTableService from the provided source StorageAccountsTableService
@@ -301,7 +183,7 @@ func (service *StorageAccountsTableService) AssignProperties_From_StorageAccount
 	var spec StorageAccountsTableService_Spec
 	err := spec.AssignProperties_From_StorageAccountsTableService_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsTableService_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsTableService_Spec() to populate field Spec")
 	}
 	service.Spec = spec
 
@@ -309,7 +191,7 @@ func (service *StorageAccountsTableService) AssignProperties_From_StorageAccount
 	var status StorageAccountsTableService_STATUS
 	err = status.AssignProperties_From_StorageAccountsTableService_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsTableService_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsTableService_STATUS() to populate field Status")
 	}
 	service.Status = status
 
@@ -327,7 +209,7 @@ func (service *StorageAccountsTableService) AssignProperties_To_StorageAccountsT
 	var spec storage.StorageAccountsTableService_Spec
 	err := service.Spec.AssignProperties_To_StorageAccountsTableService_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsTableService_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsTableService_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -335,7 +217,7 @@ func (service *StorageAccountsTableService) AssignProperties_To_StorageAccountsT
 	var status storage.StorageAccountsTableService_STATUS
 	err = service.Status.AssignProperties_To_StorageAccountsTableService_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsTableService_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsTableService_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -458,13 +340,13 @@ func (service *StorageAccountsTableService_Spec) ConvertSpecFrom(source genrunti
 	src = &storage.StorageAccountsTableService_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = service.AssignProperties_From_StorageAccountsTableService_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -482,13 +364,13 @@ func (service *StorageAccountsTableService_Spec) ConvertSpecTo(destination genru
 	dst = &storage.StorageAccountsTableService_Spec{}
 	err := service.AssignProperties_To_StorageAccountsTableService_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -502,7 +384,7 @@ func (service *StorageAccountsTableService_Spec) AssignProperties_From_StorageAc
 		var cor CorsRules
 		err := cor.AssignProperties_From_CorsRules(source.Cors)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CorsRules() to populate field Cors")
+			return eris.Wrap(err, "calling AssignProperties_From_CorsRules() to populate field Cors")
 		}
 		service.Cors = &cor
 	} else {
@@ -514,7 +396,7 @@ func (service *StorageAccountsTableService_Spec) AssignProperties_From_StorageAc
 		var operatorSpec StorageAccountsTableServiceOperatorSpec
 		err := operatorSpec.AssignProperties_From_StorageAccountsTableServiceOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsTableServiceOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsTableServiceOperatorSpec() to populate field OperatorSpec")
 		}
 		service.OperatorSpec = &operatorSpec
 	} else {
@@ -543,7 +425,7 @@ func (service *StorageAccountsTableService_Spec) AssignProperties_To_StorageAcco
 		var cor storage.CorsRules
 		err := service.Cors.AssignProperties_To_CorsRules(&cor)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CorsRules() to populate field Cors")
+			return eris.Wrap(err, "calling AssignProperties_To_CorsRules() to populate field Cors")
 		}
 		destination.Cors = &cor
 	} else {
@@ -555,7 +437,7 @@ func (service *StorageAccountsTableService_Spec) AssignProperties_To_StorageAcco
 		var operatorSpec storage.StorageAccountsTableServiceOperatorSpec
 		err := service.OperatorSpec.AssignProperties_To_StorageAccountsTableServiceOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsTableServiceOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsTableServiceOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -592,7 +474,7 @@ func (service *StorageAccountsTableService_Spec) Initialize_From_StorageAccounts
 		var cor CorsRules
 		err := cor.Initialize_From_CorsRules_STATUS(source.Cors)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CorsRules_STATUS() to populate field Cors")
+			return eris.Wrap(err, "calling Initialize_From_CorsRules_STATUS() to populate field Cors")
 		}
 		service.Cors = &cor
 	} else {
@@ -642,13 +524,13 @@ func (service *StorageAccountsTableService_STATUS) ConvertStatusFrom(source genr
 	src = &storage.StorageAccountsTableService_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = service.AssignProperties_From_StorageAccountsTableService_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -666,13 +548,13 @@ func (service *StorageAccountsTableService_STATUS) ConvertStatusTo(destination g
 	dst = &storage.StorageAccountsTableService_STATUS{}
 	err := service.AssignProperties_To_StorageAccountsTableService_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -741,7 +623,7 @@ func (service *StorageAccountsTableService_STATUS) AssignProperties_From_Storage
 		var cor CorsRules_STATUS
 		err := cor.AssignProperties_From_CorsRules_STATUS(source.Cors)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CorsRules_STATUS() to populate field Cors")
+			return eris.Wrap(err, "calling AssignProperties_From_CorsRules_STATUS() to populate field Cors")
 		}
 		service.Cors = &cor
 	} else {
@@ -774,7 +656,7 @@ func (service *StorageAccountsTableService_STATUS) AssignProperties_To_StorageAc
 		var cor storage.CorsRules_STATUS
 		err := service.Cors.AssignProperties_To_CorsRules_STATUS(&cor)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CorsRules_STATUS() to populate field Cors")
+			return eris.Wrap(err, "calling AssignProperties_To_CorsRules_STATUS() to populate field Cors")
 		}
 		destination.Cors = &cor
 	} else {

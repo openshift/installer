@@ -7,14 +7,15 @@ import (
 	"context"
 	"net/http"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	network "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -37,7 +38,7 @@ func (extension *RouteTableExtension) ModifyARMResource(
 ) (genruntime.ARMResource, error) {
 	typedObj, ok := obj.(*network.RouteTable)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -52,7 +53,7 @@ func (extension *RouteTableExtension) ModifyARMResource(
 
 	apiVersion, err := genruntime.GetAPIVersion(typedObj, kubeClient.Scheme())
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
+		return nil, eris.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
 	}
 
 	// Get the raw resource
@@ -61,22 +62,22 @@ func (extension *RouteTableExtension) ModifyARMResource(
 	if err != nil {
 		// If the error is NotFound, the resource we're trying to Create doesn't exist and so no modification is needed
 		var responseError *azcore.ResponseError
-		if errors.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
+		if eris.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
 			return armObj, nil
 		}
-		return nil, errors.Wrapf(err, "getting resource with ID: %q", resourceID)
+		return nil, eris.Wrapf(err, "getting resource with ID: %q", resourceID)
 	}
 
 	azureRoutes, err := getRawChildCollection(raw, "routes")
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get routes")
+		return nil, eris.Wrap(err, "failed to get routes")
 	}
 
 	log.V(Info).Info("Found routes to include on RouteTable", "count", len(azureRoutes), "names", genruntime.RawNames(azureRoutes))
 
 	err = setChildCollection(armObj.Spec(), azureRoutes, "Routes")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to set routes")
+		return nil, eris.Wrapf(err, "failed to set routes")
 	}
 
 	return armObj, nil

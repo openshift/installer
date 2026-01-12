@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (share *StorageAccountsFileServicesShare) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (share *StorageAccountsFileServicesShare) Owner() *genruntime.ResourceReference {
+	if share.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(share.Spec)
 	return share.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (share *StorageAccountsFileServicesShare) SetStatus(status genruntime.Conve
 	var st StorageAccountsFileServicesShare_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	share.Status = st
@@ -189,7 +193,7 @@ var _ genruntime.ConvertibleSpec = &StorageAccountsFileServicesShare_Spec{}
 // ConvertSpecFrom populates our StorageAccountsFileServicesShare_Spec from the provided source
 func (share *StorageAccountsFileServicesShare_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == share {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(share)
@@ -198,7 +202,7 @@ func (share *StorageAccountsFileServicesShare_Spec) ConvertSpecFrom(source genru
 // ConvertSpecTo populates the provided destination from our StorageAccountsFileServicesShare_Spec
 func (share *StorageAccountsFileServicesShare_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == share {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(share)
@@ -237,7 +241,7 @@ var _ genruntime.ConvertibleStatus = &StorageAccountsFileServicesShare_STATUS{}
 // ConvertStatusFrom populates our StorageAccountsFileServicesShare_STATUS from the provided source
 func (share *StorageAccountsFileServicesShare_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == share {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(share)
@@ -246,7 +250,7 @@ func (share *StorageAccountsFileServicesShare_STATUS) ConvertStatusFrom(source g
 // ConvertStatusTo populates the provided destination from our StorageAccountsFileServicesShare_STATUS
 func (share *StorageAccountsFileServicesShare_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == share {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(share)

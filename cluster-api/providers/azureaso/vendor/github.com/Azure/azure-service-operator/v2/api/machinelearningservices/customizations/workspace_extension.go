@@ -9,15 +9,16 @@ import (
 	"context"
 	"strings"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/machinelearning/armmachinelearning"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	"github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20240401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -49,7 +50,7 @@ func (ext *WorkspaceExtension) ExportKubernetesSecrets(
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*storage.Workspace)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *storage.Workspace", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *storage.Workspace", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -77,13 +78,13 @@ func (ext *WorkspaceExtension) ExportKubernetesSecrets(
 		var workspacesClient *armmachinelearning.WorkspacesClient
 		workspacesClient, err = armmachinelearning.NewWorkspacesClient(subscription, armClient.Creds(), armClient.ClientOptions())
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create new workspaceClient")
+			return nil, eris.Wrapf(err, "failed to create new workspaceClient")
 		}
 
 		var resp armmachinelearning.WorkspacesClientListKeysResponse
 		resp, err = workspacesClient.ListKeys(ctx, id.ResourceGroupName, typedObj.AzureName(), nil)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed listing keys")
+			return nil, eris.Wrapf(err, "failed listing keys")
 		}
 		keys = resp.ListWorkspaceKeysResult
 	}

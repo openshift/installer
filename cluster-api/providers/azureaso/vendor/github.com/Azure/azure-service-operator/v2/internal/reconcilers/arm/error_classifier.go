@@ -7,10 +7,11 @@ package arm
 
 import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/retry"
 )
 
 func ClassifyCloudError(err *genericarmclient.CloudError) (core.CloudErrorDetails, error) {
@@ -24,17 +25,10 @@ func ClassifyCloudError(err *genericarmclient.CloudError) (core.CloudErrorDetail
 		return result, nil
 	}
 
-	classification := classifyCloudError(err)
-
-	result := core.CloudErrorDetails{
-		Classification: classification,
-		Code:           err.Code(),
-		Message:        err.Message(),
-	}
-	return result, nil
+	return classifyCloudError(err), nil
 }
 
-func classifyCloudError(err *genericarmclient.CloudError) core.ErrorClassification {
+func classifyCloudError(err *genericarmclient.CloudError) core.CloudErrorDetails {
 	// See https://docs.microsoft.com/en-us/azure/azure-resource-manager/templates/common-deployment-errors
 	// for a breakdown of common deployment error codes. Note that the error codes documented there are
 	// the inner error codes we're parsing here.
@@ -42,13 +36,23 @@ func classifyCloudError(err *genericarmclient.CloudError) core.ErrorClassificati
 	code := err.Code()
 	if code == "" {
 		// If there's no code, assume we can retry on it
-		return core.ErrorRetryable
+		return core.CloudErrorDetails{
+			Classification: core.ErrorRetryable,
+			Code:           err.Code(),
+			Message:        err.Message(),
+		}
+	}
+
+	result := core.CloudErrorDetails{
+		Code:    err.Code(),
+		Message: err.Message(),
 	}
 
 	switch code {
 	case "AnotherOperationInProgress",
 		"AuthorizationFailed",
 		"AllocationFailed",
+		"Conflict",
 		"FailedIdentityOperation",
 		"InvalidResourceReference",
 		"InvalidSubscriptionRegistrationState",
@@ -63,9 +67,12 @@ func classifyCloudError(err *genericarmclient.CloudError) core.ErrorClassificati
 		"ResourceNotFound",
 		"ResourceQuotaExceeded",
 		"SubscriptionNotRegistered":
-		return core.ErrorRetryable
+		result.Classification = core.ErrorRetryable
+	case "ScopeLocked": // This error is raised when a resource or resource(s) are locked by a lock
+		// Retry, but at a very slow rate to avoid spamming the Azure API with a request that is unlikely to succeed.
+		result.Classification = core.ErrorRetryable
+		result.Retry = retry.VerySlow
 	case "BadRequestFormat",
-		"Conflict",
 		"BadRequest",
 		"PublicIpForGatewayIsRequired", // TODO: There's not a great way to look at an arbitrary error returned by this API and determine if it's a 4xx or 5xx level... ugh
 		"InvalidParameter",
@@ -89,20 +96,24 @@ func classifyCloudError(err *genericarmclient.CloudError) core.ErrorClassificati
 		"ReservedResourceName",
 		"SkuNotAvailable",
 		"SubscriptionNotFound":
-		return core.ErrorFatal
+		result.Classification = core.ErrorFatal
 	default:
 		// If we don't know what the error is use the HTTP status code to determine if we can retry
-		return classifyHTTPError(err)
+		result.Classification = classifyHTTPError(err)
 	}
+
+	return result
 }
 
 func classifyHTTPError(err *genericarmclient.CloudError) core.ErrorClassification {
 	var httpError *azcore.ResponseError
-	if !errors.As(err.Unwrap(), &httpError) {
+	if !eris.As(err.Unwrap(), &httpError) {
 		return core.ErrorRetryable
 	}
+
 	if httpError.StatusCode == 400 {
 		return core.ErrorFatal
 	}
+
 	return core.ErrorRetryable
 }

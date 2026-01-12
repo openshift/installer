@@ -22,6 +22,7 @@ RoleAssignment_STATUS: Object (4 properties)
 │   ├── UpdatedBy: *string
 │   └── UpdatedOn: *string
 └── Type: *string
+
 RoleAssignment_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -36,3 +37,4 @@ RoleAssignment_Spec: Object (2 properties)
     │   ├── "ServicePrincipal"
     │   └── "User"
     └── RoleDefinitionId: *string
+

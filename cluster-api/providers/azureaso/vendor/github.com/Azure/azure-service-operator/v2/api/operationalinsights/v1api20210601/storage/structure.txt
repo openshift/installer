@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/operationalinsights/v1api20210601
 ----------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-06-01"
+
 Workspace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (16 properties)
@@ -74,3 +75,4 @@ Workspace: Resource
         ├── DataIngestionStatus: *string
         ├── PropertyBag: genruntime.PropertyBag
         └── QuotaNextResetTime: *string
+

@@ -156,6 +156,7 @@ WebApplicationFirewallPolicy_STATUS: Object (8 properties)
 │       └── "Standard_AzureFrontDoor"
 ├── Tags: map[string]string
 └── Type: *string
+
 WebApplicationFirewallPolicy_Spec: Object (6 properties)
 ├── Etag: *string
 ├── Location: *string
@@ -295,3 +296,4 @@ WebApplicationFirewallPolicy_Spec: Object (6 properties)
 │       ├── "Premium_AzureFrontDoor"
 │       └── "Standard_AzureFrontDoor"
 └── Tags: map[string]string
+

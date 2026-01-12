@@ -11,7 +11,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -136,6 +136,10 @@ func (authorization *AuthorizationProvidersAuthorization) NewEmptyStatus() genru
 
 // Owner returns the ResourceReference of the owner
 func (authorization *AuthorizationProvidersAuthorization) Owner() *genruntime.ResourceReference {
+	if authorization.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(authorization.Spec)
 	return authorization.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -152,7 +156,7 @@ func (authorization *AuthorizationProvidersAuthorization) SetStatus(status genru
 	var st AuthorizationProvidersAuthorization_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	authorization.Status = st
@@ -169,7 +173,7 @@ func (authorization *AuthorizationProvidersAuthorization) AssignProperties_From_
 	var spec AuthorizationProvidersAuthorization_Spec
 	err := spec.AssignProperties_From_AuthorizationProvidersAuthorization_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorization_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorization_Spec() to populate field Spec")
 	}
 	authorization.Spec = spec
 
@@ -177,7 +181,7 @@ func (authorization *AuthorizationProvidersAuthorization) AssignProperties_From_
 	var status AuthorizationProvidersAuthorization_STATUS
 	err = status.AssignProperties_From_AuthorizationProvidersAuthorization_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorization_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorization_STATUS() to populate field Status")
 	}
 	authorization.Status = status
 
@@ -186,7 +190,7 @@ func (authorization *AuthorizationProvidersAuthorization) AssignProperties_From_
 	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization); ok {
 		err := augmentedAuthorization.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -204,7 +208,7 @@ func (authorization *AuthorizationProvidersAuthorization) AssignProperties_To_Au
 	var spec storage.AuthorizationProvidersAuthorization_Spec
 	err := authorization.Spec.AssignProperties_To_AuthorizationProvidersAuthorization_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorization_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorization_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -212,7 +216,7 @@ func (authorization *AuthorizationProvidersAuthorization) AssignProperties_To_Au
 	var status storage.AuthorizationProvidersAuthorization_STATUS
 	err = authorization.Status.AssignProperties_To_AuthorizationProvidersAuthorization_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorization_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorization_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -221,7 +225,7 @@ func (authorization *AuthorizationProvidersAuthorization) AssignProperties_To_Au
 	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization); ok {
 		err := augmentedAuthorization.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -288,13 +292,13 @@ func (authorization *AuthorizationProvidersAuthorization_Spec) ConvertSpecFrom(s
 	src = &storage.AuthorizationProvidersAuthorization_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = authorization.AssignProperties_From_AuthorizationProvidersAuthorization_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -312,13 +316,13 @@ func (authorization *AuthorizationProvidersAuthorization_Spec) ConvertSpecTo(des
 	dst = &storage.AuthorizationProvidersAuthorization_Spec{}
 	err := authorization.AssignProperties_To_AuthorizationProvidersAuthorization_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -343,7 +347,7 @@ func (authorization *AuthorizationProvidersAuthorization_Spec) AssignProperties_
 		var operatorSpec AuthorizationProvidersAuthorizationOperatorSpec
 		err := operatorSpec.AssignProperties_From_AuthorizationProvidersAuthorizationOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorizationOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationProvidersAuthorizationOperatorSpec() to populate field OperatorSpec")
 		}
 		authorization.OperatorSpec = &operatorSpec
 	} else {
@@ -381,7 +385,7 @@ func (authorization *AuthorizationProvidersAuthorization_Spec) AssignProperties_
 	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization_Spec); ok {
 		err := augmentedAuthorization.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -408,7 +412,7 @@ func (authorization *AuthorizationProvidersAuthorization_Spec) AssignProperties_
 		var operatorSpec storage.AuthorizationProvidersAuthorizationOperatorSpec
 		err := authorization.OperatorSpec.AssignProperties_To_AuthorizationProvidersAuthorizationOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorizationOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationProvidersAuthorizationOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -446,7 +450,7 @@ func (authorization *AuthorizationProvidersAuthorization_Spec) AssignProperties_
 	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization_Spec); ok {
 		err := augmentedAuthorization.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -482,13 +486,13 @@ func (authorization *AuthorizationProvidersAuthorization_STATUS) ConvertStatusFr
 	src = &storage.AuthorizationProvidersAuthorization_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = authorization.AssignProperties_From_AuthorizationProvidersAuthorization_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -506,13 +510,13 @@ func (authorization *AuthorizationProvidersAuthorization_STATUS) ConvertStatusTo
 	dst = &storage.AuthorizationProvidersAuthorization_STATUS{}
 	err := authorization.AssignProperties_To_AuthorizationProvidersAuthorization_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -534,7 +538,7 @@ func (authorization *AuthorizationProvidersAuthorization_STATUS) AssignPropertie
 		var error AuthorizationError_STATUS
 		err := error.AssignProperties_From_AuthorizationError_STATUS(source.Error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AuthorizationError_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_From_AuthorizationError_STATUS() to populate field Error")
 		}
 		authorization.Error = &error
 	} else {
@@ -571,7 +575,7 @@ func (authorization *AuthorizationProvidersAuthorization_STATUS) AssignPropertie
 	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization_STATUS); ok {
 		err := augmentedAuthorization.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -595,7 +599,7 @@ func (authorization *AuthorizationProvidersAuthorization_STATUS) AssignPropertie
 		var error storage.AuthorizationError_STATUS
 		err := authorization.Error.AssignProperties_To_AuthorizationError_STATUS(&error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AuthorizationError_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_To_AuthorizationError_STATUS() to populate field Error")
 		}
 		destination.Error = &error
 	} else {
@@ -632,7 +636,7 @@ func (authorization *AuthorizationProvidersAuthorization_STATUS) AssignPropertie
 	if augmentedAuthorization, ok := authorizationAsAny.(augmentConversionForAuthorizationProvidersAuthorization_STATUS); ok {
 		err := augmentedAuthorization.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -681,7 +685,7 @@ func (error *AuthorizationError_STATUS) AssignProperties_From_AuthorizationError
 	if augmentedError, ok := errorAsAny.(augmentConversionForAuthorizationError_STATUS); ok {
 		err := augmentedError.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -712,7 +716,7 @@ func (error *AuthorizationError_STATUS) AssignProperties_To_AuthorizationError_S
 	if augmentedError, ok := errorAsAny.(augmentConversionForAuthorizationError_STATUS); ok {
 		err := augmentedError.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -781,7 +785,7 @@ func (operator *AuthorizationProvidersAuthorizationOperatorSpec) AssignPropertie
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForAuthorizationProvidersAuthorizationOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -842,7 +846,7 @@ func (operator *AuthorizationProvidersAuthorizationOperatorSpec) AssignPropertie
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForAuthorizationProvidersAuthorizationOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

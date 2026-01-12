@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -116,6 +116,10 @@ func (factory *Factory) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (factory *Factory) Owner() *genruntime.ResourceReference {
+	if factory.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(factory.Spec)
 	return factory.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -132,7 +136,7 @@ func (factory *Factory) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Factory_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	factory.Status = st
@@ -199,7 +203,7 @@ var _ genruntime.ConvertibleSpec = &Factory_Spec{}
 // ConvertSpecFrom populates our Factory_Spec from the provided source
 func (factory *Factory_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == factory {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(factory)
@@ -208,7 +212,7 @@ func (factory *Factory_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 // ConvertSpecTo populates the provided destination from our Factory_Spec
 func (factory *Factory_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == factory {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(factory)
@@ -242,7 +246,7 @@ var _ genruntime.ConvertibleStatus = &Factory_STATUS{}
 // ConvertStatusFrom populates our Factory_STATUS from the provided source
 func (factory *Factory_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == factory {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(factory)
@@ -251,7 +255,7 @@ func (factory *Factory_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 // ConvertStatusTo populates the provided destination from our Factory_STATUS
 func (factory *Factory_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == factory {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(factory)

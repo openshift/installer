@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api2021
 --------------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-07-01"
+
 Workspace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (25 properties)
@@ -160,6 +161,7 @@ Workspace: Resource
     ├── TenantId: *string
     ├── Type: *string
     └── WorkspaceId: *string
+
 WorkspacesCompute: Resource
 ├── Owner: machinelearningservices/v1api20210701.Workspace
 ├── Spec: Object (11 properties)
@@ -958,6 +960,7 @@ WorkspacesCompute: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 WorkspacesConnection: Resource
 ├── Owner: machinelearningservices/v1api20210701.Workspace
 ├── Spec: Object (10 properties)
@@ -985,122 +988,242 @@ WorkspacesConnection: Resource
     ├── Type: *string
     ├── Value: *string
     └── ValueFormat: *string
+
 augmentConversionForAKS: Interface
+
 augmentConversionForAKS_Properties: Interface
+
 augmentConversionForAKS_Properties_STATUS: Interface
+
 augmentConversionForAKS_STATUS: Interface
+
 augmentConversionForAksNetworkingConfiguration: Interface
+
 augmentConversionForAksNetworkingConfiguration_STATUS: Interface
+
 augmentConversionForAmlCompute: Interface
+
 augmentConversionForAmlComputeProperties: Interface
+
 augmentConversionForAmlComputeProperties_STATUS: Interface
+
 augmentConversionForAmlCompute_STATUS: Interface
+
 augmentConversionForAssignedUser: Interface
+
 augmentConversionForAssignedUser_STATUS: Interface
+
 augmentConversionForAutoPauseProperties: Interface
+
 augmentConversionForAutoPauseProperties_STATUS: Interface
+
 augmentConversionForAutoScaleProperties: Interface
+
 augmentConversionForAutoScaleProperties_STATUS: Interface
+
 augmentConversionForCompute: Interface
+
 augmentConversionForComputeInstance: Interface
+
 augmentConversionForComputeInstanceApplication_STATUS: Interface
+
 augmentConversionForComputeInstanceConnectivityEndpoints_STATUS: Interface
+
 augmentConversionForComputeInstanceCreatedBy_STATUS: Interface
+
 augmentConversionForComputeInstanceLastOperation_STATUS: Interface
+
 augmentConversionForComputeInstanceProperties: Interface
+
 augmentConversionForComputeInstanceProperties_STATUS: Interface
+
 augmentConversionForComputeInstanceSshSettings: Interface
+
 augmentConversionForComputeInstanceSshSettings_STATUS: Interface
+
 augmentConversionForComputeInstance_STATUS: Interface
+
 augmentConversionForCompute_STATUS: Interface
+
 augmentConversionForCosmosDbSettings: Interface
+
 augmentConversionForCosmosDbSettings_STATUS: Interface
+
 augmentConversionForDataFactory: Interface
+
 augmentConversionForDataFactory_STATUS: Interface
+
 augmentConversionForDataLakeAnalytics: Interface
+
 augmentConversionForDataLakeAnalytics_Properties: Interface
+
 augmentConversionForDataLakeAnalytics_Properties_STATUS: Interface
+
 augmentConversionForDataLakeAnalytics_STATUS: Interface
+
 augmentConversionForDatabricks: Interface
+
 augmentConversionForDatabricksProperties: Interface
+
 augmentConversionForDatabricksProperties_STATUS: Interface
+
 augmentConversionForDatabricks_STATUS: Interface
+
 augmentConversionForEncryptionProperty: Interface
+
 augmentConversionForEncryptionProperty_STATUS: Interface
+
 augmentConversionForErrorAdditionalInfo_STATUS: Interface
+
 augmentConversionForErrorDetail_STATUS: Interface
+
 augmentConversionForErrorDetail_STATUS_Unrolled: Interface
+
 augmentConversionForErrorResponse_STATUS: Interface
+
 augmentConversionForHDInsight: Interface
+
 augmentConversionForHDInsightProperties: Interface
+
 augmentConversionForHDInsightProperties_STATUS: Interface
+
 augmentConversionForHDInsight_STATUS: Interface
+
 augmentConversionForIdentity: Interface
+
 augmentConversionForIdentityForCmk: Interface
+
 augmentConversionForIdentityForCmk_STATUS: Interface
+
 augmentConversionForIdentity_STATUS: Interface
+
 augmentConversionForInstanceTypeSchema: Interface
+
 augmentConversionForInstanceTypeSchema_Resources: Interface
+
 augmentConversionForInstanceTypeSchema_Resources_STATUS: Interface
+
 augmentConversionForInstanceTypeSchema_STATUS: Interface
+
 augmentConversionForKeyVaultProperties: Interface
+
 augmentConversionForKeyVaultProperties_STATUS: Interface
+
 augmentConversionForKubernetes: Interface
+
 augmentConversionForKubernetesProperties: Interface
+
 augmentConversionForKubernetesProperties_STATUS: Interface
+
 augmentConversionForKubernetes_STATUS: Interface
+
 augmentConversionForNodeStateCounts_STATUS: Interface
+
 augmentConversionForNotebookPreparationError_STATUS: Interface
+
 augmentConversionForNotebookResourceInfo_STATUS: Interface
+
 augmentConversionForPersonalComputeInstanceSettings: Interface
+
 augmentConversionForPersonalComputeInstanceSettings_STATUS: Interface
+
 augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
 augmentConversionForResourceId: Interface
+
 augmentConversionForResourceId_STATUS: Interface
+
 augmentConversionForScaleSettings: Interface
+
 augmentConversionForScaleSettings_STATUS: Interface
+
 augmentConversionForScriptReference: Interface
+
 augmentConversionForScriptReference_STATUS: Interface
+
 augmentConversionForScriptsToExecute: Interface
+
 augmentConversionForScriptsToExecute_STATUS: Interface
+
 augmentConversionForServiceManagedResourcesSettings: Interface
+
 augmentConversionForServiceManagedResourcesSettings_STATUS: Interface
+
 augmentConversionForSetupScripts: Interface
+
 augmentConversionForSetupScripts_STATUS: Interface
+
 augmentConversionForSharedPrivateLinkResource: Interface
+
 augmentConversionForSharedPrivateLinkResource_STATUS: Interface
+
 augmentConversionForSku: Interface
+
 augmentConversionForSku_STATUS: Interface
+
 augmentConversionForSslConfiguration: Interface
+
 augmentConversionForSslConfiguration_STATUS: Interface
+
 augmentConversionForSynapseSpark: Interface
+
 augmentConversionForSynapseSpark_Properties: Interface
+
 augmentConversionForSynapseSpark_Properties_STATUS: Interface
+
 augmentConversionForSynapseSpark_STATUS: Interface
+
 augmentConversionForSystemData_STATUS: Interface
+
 augmentConversionForSystemService_STATUS: Interface
+
 augmentConversionForUserAccountCredentials: Interface
+
 augmentConversionForUserAccountCredentials_STATUS: Interface
+
 augmentConversionForUserAssignedIdentityDetails: Interface
+
 augmentConversionForUserAssignedIdentity_STATUS: Interface
+
 augmentConversionForVirtualMachine: Interface
+
 augmentConversionForVirtualMachineImage: Interface
+
 augmentConversionForVirtualMachineImage_STATUS: Interface
+
 augmentConversionForVirtualMachineSshCredentials: Interface
+
 augmentConversionForVirtualMachineSshCredentials_STATUS: Interface
+
 augmentConversionForVirtualMachine_Properties: Interface
+
 augmentConversionForVirtualMachine_Properties_STATUS: Interface
+
 augmentConversionForVirtualMachine_STATUS: Interface
+
 augmentConversionForWorkspace: Interface
+
 augmentConversionForWorkspaceOperatorSecrets: Interface
+
 augmentConversionForWorkspaceOperatorSpec: Interface
+
 augmentConversionForWorkspace_STATUS: Interface
+
 augmentConversionForWorkspace_Spec: Interface
+
 augmentConversionForWorkspacesCompute: Interface
+
 augmentConversionForWorkspacesComputeOperatorSpec: Interface
+
 augmentConversionForWorkspacesCompute_STATUS: Interface
+
 augmentConversionForWorkspacesCompute_Spec: Interface
+
 augmentConversionForWorkspacesConnection: Interface
+
 augmentConversionForWorkspacesConnectionOperatorSpec: Interface
+
 augmentConversionForWorkspacesConnection_STATUS: Interface
+
 augmentConversionForWorkspacesConnection_Spec: Interface
+

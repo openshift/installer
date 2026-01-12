@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -116,6 +116,10 @@ func (fragment *PolicyFragment) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (fragment *PolicyFragment) Owner() *genruntime.ResourceReference {
+	if fragment.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(fragment.Spec)
 	return fragment.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -132,7 +136,7 @@ func (fragment *PolicyFragment) SetStatus(status genruntime.ConvertibleStatus) e
 	var st PolicyFragment_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	fragment.Status = st
@@ -186,7 +190,7 @@ var _ genruntime.ConvertibleSpec = &PolicyFragment_Spec{}
 // ConvertSpecFrom populates our PolicyFragment_Spec from the provided source
 func (fragment *PolicyFragment_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == fragment {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(fragment)
@@ -195,7 +199,7 @@ func (fragment *PolicyFragment_Spec) ConvertSpecFrom(source genruntime.Convertib
 // ConvertSpecTo populates the provided destination from our PolicyFragment_Spec
 func (fragment *PolicyFragment_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == fragment {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(fragment)
@@ -218,7 +222,7 @@ var _ genruntime.ConvertibleStatus = &PolicyFragment_STATUS{}
 // ConvertStatusFrom populates our PolicyFragment_STATUS from the provided source
 func (fragment *PolicyFragment_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == fragment {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(fragment)
@@ -227,7 +231,7 @@ func (fragment *PolicyFragment_STATUS) ConvertStatusFrom(source genruntime.Conve
 // ConvertStatusTo populates the provided destination from our PolicyFragment_STATUS
 func (fragment *PolicyFragment_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == fragment {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(fragment)

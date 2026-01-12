@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2024-03-02"
+
 Disk: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (33 properties)
@@ -213,6 +214,7 @@ Disk: Resource
     ├── Type: *string
     ├── UniqueId: *string
     └── Zones: string[]
+
 DiskAccess: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -247,6 +249,7 @@ DiskAccess: Resource
     ├── Tags: map[string]string
     ├── TimeCreated: *string
     └── Type: *string
+
 DiskEncryptionSet: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (13 properties)
@@ -325,6 +328,7 @@ DiskEncryptionSet: Resource
     ├── RotationToLatestKeyVersionEnabled: *bool
     ├── Tags: map[string]string
     └── Type: *string
+
 Snapshot: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (27 properties)
@@ -520,3 +524,4 @@ Snapshot: Resource
     ├── TimeCreated: *string
     ├── Type: *string
     └── UniqueId: *string
+

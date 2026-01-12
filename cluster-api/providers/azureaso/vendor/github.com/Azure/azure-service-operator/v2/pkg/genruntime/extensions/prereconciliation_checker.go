@@ -8,13 +8,15 @@ package extensions
 import (
 	"context"
 
-	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
+	"github.com/go-logr/logr"
+	"github.com/rotisserie/eris"
+
+	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
 )
 
 // PreReconciliationChecker is implemented by resources that want to do extra checks before proceeding with
@@ -102,7 +104,7 @@ func (r PreReconcileCheckResult) Message() string {
 // CreateConditionError returns an error that can be used to set a condition on the resource.
 func (r PreReconcileCheckResult) CreateConditionError() error {
 	return conditions.NewReadyConditionImpactingError(
-		errors.New(r.message),
+		eris.New(r.message),
 		r.severity,
 		r.reason)
 }

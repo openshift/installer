@@ -9,9 +9,11 @@ FederatedIdentityCredential_STATUS: Object (4 properties)
 │   ├── Issuer: *string
 │   └── Subject: *string
 └── Type: *string
+
 FederatedIdentityCredential_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
     ├── Audiences: string[]
     ├── Issuer: *string
     └── Subject: *string
+

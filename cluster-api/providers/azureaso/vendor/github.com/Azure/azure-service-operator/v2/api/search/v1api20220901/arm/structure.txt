@@ -65,6 +65,7 @@ SearchService_STATUS: Object (8 properties)
 │       └── "storage_optimized_l2"
 ├── Tags: map[string]string
 └── Type: *string
+
 SearchService_Spec: Object (6 properties)
 ├── Identity: *Object (1 property)
 │   └── Type: *Enum (2 values)
@@ -105,3 +106,4 @@ SearchService_Spec: Object (6 properties)
 │       ├── "storage_optimized_l1"
 │       └── "storage_optimized_l2"
 └── Tags: map[string]string
+

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-04-01-preview"
+
 Vault: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (6 properties)
@@ -265,3 +266,4 @@ Vault: Resource
     │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
+

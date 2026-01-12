@@ -9,21 +9,18 @@ import (
 	arm "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,46 +55,37 @@ var _ conversion.Convertible = &Extension{}
 
 // ConvertFrom populates our Extension from the provided hub Extension
 func (extension *Extension) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.Extension)
-	if !ok {
-		return fmt.Errorf("expected kubernetesconfiguration/v1api20230501/storage/Extension but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.Extension
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return extension.AssignProperties_From_Extension(source)
+	err = extension.AssignProperties_From_Extension(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to extension")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub Extension from our Extension
 func (extension *Extension) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.Extension)
-	if !ok {
-		return fmt.Errorf("expected kubernetesconfiguration/v1api20230501/storage/Extension but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.Extension
+	err := extension.AssignProperties_To_Extension(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from extension")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return extension.AssignProperties_To_Extension(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-kubernetesconfiguration-azure-com-v1api20230501-extension,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=kubernetesconfiguration.azure.com,resources=extensions,verbs=create;update,versions=v1api20230501,name=default.v1api20230501.extensions.kubernetesconfiguration.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Extension{}
-
-// Default applies defaults to the Extension resource
-func (extension *Extension) Default() {
-	extension.defaultImpl()
-	var temp any = extension
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (extension *Extension) defaultAzureName() {
-	if extension.Spec.AzureName == "" {
-		extension.Spec.AzureName = extension.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Extension resource
-func (extension *Extension) defaultImpl() { extension.defaultAzureName() }
 
 var _ configmaps.Exporter = &Extension{}
 
@@ -117,17 +105,6 @@ func (extension *Extension) SecretDestinationExpressions() []*core.DestinationEx
 		return nil
 	}
 	return extension.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &Extension{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (extension *Extension) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*Extension_STATUS); ok {
-		return extension.Spec.Initialize_From_Extension_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type Extension_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesConfigExporter = &Extension{}
@@ -197,6 +174,10 @@ func (extension *Extension) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (extension *Extension) Owner() *genruntime.ResourceReference {
+	if extension.Spec.Owner == nil {
+		return nil
+	}
+
 	return extension.Spec.Owner.AsResourceReference()
 }
 
@@ -212,112 +193,11 @@ func (extension *Extension) SetStatus(status genruntime.ConvertibleStatus) error
 	var st Extension_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	extension.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-kubernetesconfiguration-azure-com-v1api20230501-extension,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=kubernetesconfiguration.azure.com,resources=extensions,verbs=create;update,versions=v1api20230501,name=validate.v1api20230501.extensions.kubernetesconfiguration.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Extension{}
-
-// ValidateCreate validates the creation of the resource
-func (extension *Extension) ValidateCreate() (admission.Warnings, error) {
-	validations := extension.createValidations()
-	var temp any = extension
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (extension *Extension) ValidateDelete() (admission.Warnings, error) {
-	validations := extension.deleteValidations()
-	var temp any = extension
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (extension *Extension) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := extension.updateValidations()
-	var temp any = extension
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (extension *Extension) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){extension.validateResourceReferences, extension.validateSecretDestinations, extension.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (extension *Extension) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (extension *Extension) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return extension.validateResourceReferences()
-		},
-		extension.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return extension.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return extension.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (extension *Extension) validateConfigMapDestinations() (admission.Warnings, error) {
-	if extension.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	var toValidate []*genruntime.ConfigMapDestination
-	if extension.Spec.OperatorSpec.ConfigMaps != nil {
-		toValidate = []*genruntime.ConfigMapDestination{
-			extension.Spec.OperatorSpec.ConfigMaps.PrincipalId,
-		}
-	}
-	return configmaps.ValidateDestinations(extension, toValidate, extension.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateResourceReferences validates all resource references
-func (extension *Extension) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&extension.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (extension *Extension) validateSecretDestinations() (admission.Warnings, error) {
-	if extension.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(extension, nil, extension.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (extension *Extension) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Extension)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, extension)
 }
 
 // AssignProperties_From_Extension populates our Extension from the provided source Extension
@@ -330,7 +210,7 @@ func (extension *Extension) AssignProperties_From_Extension(source *storage.Exte
 	var spec Extension_Spec
 	err := spec.AssignProperties_From_Extension_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Extension_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Extension_Spec() to populate field Spec")
 	}
 	extension.Spec = spec
 
@@ -338,7 +218,7 @@ func (extension *Extension) AssignProperties_From_Extension(source *storage.Exte
 	var status Extension_STATUS
 	err = status.AssignProperties_From_Extension_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Extension_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Extension_STATUS() to populate field Status")
 	}
 	extension.Status = status
 
@@ -356,7 +236,7 @@ func (extension *Extension) AssignProperties_To_Extension(destination *storage.E
 	var spec storage.Extension_Spec
 	err := extension.Spec.AssignProperties_To_Extension_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Extension_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Extension_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -364,7 +244,7 @@ func (extension *Extension) AssignProperties_To_Extension(destination *storage.E
 	var status storage.Extension_STATUS
 	err = extension.Status.AssignProperties_To_Extension_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Extension_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Extension_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -509,7 +389,7 @@ func (extension *Extension_Spec) ConvertToARM(resolved genruntime.ConvertToARMRe
 		var temp map[string]string
 		tempSecret, err := resolved.ResolvedSecretMaps.Lookup(*extension.ConfigurationProtectedSettings)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property temp")
+			return nil, eris.Wrap(err, "looking up secret for property temp")
 		}
 		temp = tempSecret
 		result.Properties.ConfigurationProtectedSettings = temp
@@ -701,13 +581,13 @@ func (extension *Extension_Spec) ConvertSpecFrom(source genruntime.ConvertibleSp
 	src = &storage.Extension_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = extension.AssignProperties_From_Extension_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -725,13 +605,13 @@ func (extension *Extension_Spec) ConvertSpecTo(destination genruntime.Convertibl
 	dst = &storage.Extension_Spec{}
 	err := extension.AssignProperties_To_Extension_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -745,7 +625,7 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *st
 		var aksAssignedIdentity Extension_Properties_AksAssignedIdentity_Spec
 		err := aksAssignedIdentity.AssignProperties_From_Extension_Properties_AksAssignedIdentity_Spec(source.AksAssignedIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Extension_Properties_AksAssignedIdentity_Spec() to populate field AksAssignedIdentity")
+			return eris.Wrap(err, "calling AssignProperties_From_Extension_Properties_AksAssignedIdentity_Spec() to populate field AksAssignedIdentity")
 		}
 		extension.AksAssignedIdentity = &aksAssignedIdentity
 	} else {
@@ -782,7 +662,7 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *st
 		var identity Identity
 		err := identity.AssignProperties_From_Identity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Identity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_Identity() to populate field Identity")
 		}
 		extension.Identity = &identity
 	} else {
@@ -794,7 +674,7 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *st
 		var operatorSpec ExtensionOperatorSpec
 		err := operatorSpec.AssignProperties_From_ExtensionOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtensionOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtensionOperatorSpec() to populate field OperatorSpec")
 		}
 		extension.OperatorSpec = &operatorSpec
 	} else {
@@ -814,7 +694,7 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *st
 		var plan Plan
 		err := plan.AssignProperties_From_Plan(source.Plan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Plan() to populate field Plan")
+			return eris.Wrap(err, "calling AssignProperties_From_Plan() to populate field Plan")
 		}
 		extension.Plan = &plan
 	} else {
@@ -829,7 +709,7 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *st
 		var scope Scope
 		err := scope.AssignProperties_From_Scope(source.Scope)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Scope() to populate field Scope")
+			return eris.Wrap(err, "calling AssignProperties_From_Scope() to populate field Scope")
 		}
 		extension.Scope = &scope
 	} else {
@@ -841,7 +721,7 @@ func (extension *Extension_Spec) AssignProperties_From_Extension_Spec(source *st
 		var systemDatum SystemData
 		err := systemDatum.AssignProperties_From_SystemData(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData() to populate field SystemData")
 		}
 		extension.SystemData = &systemDatum
 	} else {
@@ -865,7 +745,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 		var aksAssignedIdentity storage.Extension_Properties_AksAssignedIdentity_Spec
 		err := extension.AksAssignedIdentity.AssignProperties_To_Extension_Properties_AksAssignedIdentity_Spec(&aksAssignedIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Extension_Properties_AksAssignedIdentity_Spec() to populate field AksAssignedIdentity")
+			return eris.Wrap(err, "calling AssignProperties_To_Extension_Properties_AksAssignedIdentity_Spec() to populate field AksAssignedIdentity")
 		}
 		destination.AksAssignedIdentity = &aksAssignedIdentity
 	} else {
@@ -902,7 +782,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 		var identity storage.Identity
 		err := extension.Identity.AssignProperties_To_Identity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Identity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_Identity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -914,7 +794,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 		var operatorSpec storage.ExtensionOperatorSpec
 		err := extension.OperatorSpec.AssignProperties_To_ExtensionOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtensionOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtensionOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -937,7 +817,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 		var plan storage.Plan
 		err := extension.Plan.AssignProperties_To_Plan(&plan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Plan() to populate field Plan")
+			return eris.Wrap(err, "calling AssignProperties_To_Plan() to populate field Plan")
 		}
 		destination.Plan = &plan
 	} else {
@@ -952,7 +832,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 		var scope storage.Scope
 		err := extension.Scope.AssignProperties_To_Scope(&scope)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Scope() to populate field Scope")
+			return eris.Wrap(err, "calling AssignProperties_To_Scope() to populate field Scope")
 		}
 		destination.Scope = &scope
 	} else {
@@ -964,7 +844,7 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 		var systemDatum storage.SystemData
 		err := extension.SystemData.AssignProperties_To_SystemData(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -980,93 +860,6 @@ func (extension *Extension_Spec) AssignProperties_To_Extension_Spec(destination 
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Extension_STATUS populates our Extension_Spec from the provided source Extension_STATUS
-func (extension *Extension_Spec) Initialize_From_Extension_STATUS(source *Extension_STATUS) error {
-
-	// AksAssignedIdentity
-	if source.AksAssignedIdentity != nil {
-		var aksAssignedIdentity Extension_Properties_AksAssignedIdentity_Spec
-		err := aksAssignedIdentity.Initialize_From_Extension_Properties_AksAssignedIdentity_STATUS(source.AksAssignedIdentity)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Extension_Properties_AksAssignedIdentity_STATUS() to populate field AksAssignedIdentity")
-		}
-		extension.AksAssignedIdentity = &aksAssignedIdentity
-	} else {
-		extension.AksAssignedIdentity = nil
-	}
-
-	// AutoUpgradeMinorVersion
-	if source.AutoUpgradeMinorVersion != nil {
-		autoUpgradeMinorVersion := *source.AutoUpgradeMinorVersion
-		extension.AutoUpgradeMinorVersion = &autoUpgradeMinorVersion
-	} else {
-		extension.AutoUpgradeMinorVersion = nil
-	}
-
-	// ConfigurationSettings
-	extension.ConfigurationSettings = genruntime.CloneMapOfStringToString(source.ConfigurationSettings)
-
-	// ExtensionType
-	extension.ExtensionType = genruntime.ClonePointerToString(source.ExtensionType)
-
-	// Identity
-	if source.Identity != nil {
-		var identity Identity
-		err := identity.Initialize_From_Identity_STATUS(source.Identity)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Identity_STATUS() to populate field Identity")
-		}
-		extension.Identity = &identity
-	} else {
-		extension.Identity = nil
-	}
-
-	// Plan
-	if source.Plan != nil {
-		var plan Plan
-		err := plan.Initialize_From_Plan_STATUS(source.Plan)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Plan_STATUS() to populate field Plan")
-		}
-		extension.Plan = &plan
-	} else {
-		extension.Plan = nil
-	}
-
-	// ReleaseTrain
-	extension.ReleaseTrain = genruntime.ClonePointerToString(source.ReleaseTrain)
-
-	// Scope
-	if source.Scope != nil {
-		var scope Scope
-		err := scope.Initialize_From_Scope_STATUS(source.Scope)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Scope_STATUS() to populate field Scope")
-		}
-		extension.Scope = &scope
-	} else {
-		extension.Scope = nil
-	}
-
-	// SystemData
-	if source.SystemData != nil {
-		var systemDatum SystemData
-		err := systemDatum.Initialize_From_SystemData_STATUS(source.SystemData)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SystemData_STATUS() to populate field SystemData")
-		}
-		extension.SystemData = &systemDatum
-	} else {
-		extension.SystemData = nil
-	}
-
-	// Version
-	extension.Version = genruntime.ClonePointerToString(source.Version)
 
 	// No error
 	return nil
@@ -1169,13 +962,13 @@ func (extension *Extension_STATUS) ConvertStatusFrom(source genruntime.Convertib
 	src = &storage.Extension_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = extension.AssignProperties_From_Extension_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1193,13 +986,13 @@ func (extension *Extension_STATUS) ConvertStatusTo(destination genruntime.Conver
 	dst = &storage.Extension_STATUS{}
 	err := extension.AssignProperties_To_Extension_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1446,7 +1239,7 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 		var aksAssignedIdentity Extension_Properties_AksAssignedIdentity_STATUS
 		err := aksAssignedIdentity.AssignProperties_From_Extension_Properties_AksAssignedIdentity_STATUS(source.AksAssignedIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Extension_Properties_AksAssignedIdentity_STATUS() to populate field AksAssignedIdentity")
+			return eris.Wrap(err, "calling AssignProperties_From_Extension_Properties_AksAssignedIdentity_STATUS() to populate field AksAssignedIdentity")
 		}
 		extension.AksAssignedIdentity = &aksAssignedIdentity
 	} else {
@@ -1481,7 +1274,7 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 		var errorInfo ErrorDetail_STATUS
 		err := errorInfo.AssignProperties_From_ErrorDetail_STATUS(source.ErrorInfo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS() to populate field ErrorInfo")
+			return eris.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS() to populate field ErrorInfo")
 		}
 		extension.ErrorInfo = &errorInfo
 	} else {
@@ -1499,7 +1292,7 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 		var identity Identity_STATUS
 		err := identity.AssignProperties_From_Identity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Identity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_Identity_STATUS() to populate field Identity")
 		}
 		extension.Identity = &identity
 	} else {
@@ -1525,7 +1318,7 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 		var plan Plan_STATUS
 		err := plan.AssignProperties_From_Plan_STATUS(source.Plan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Plan_STATUS() to populate field Plan")
+			return eris.Wrap(err, "calling AssignProperties_From_Plan_STATUS() to populate field Plan")
 		}
 		extension.Plan = &plan
 	} else {
@@ -1549,7 +1342,7 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 		var scope Scope_STATUS
 		err := scope.AssignProperties_From_Scope_STATUS(source.Scope)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Scope_STATUS() to populate field Scope")
+			return eris.Wrap(err, "calling AssignProperties_From_Scope_STATUS() to populate field Scope")
 		}
 		extension.Scope = &scope
 	} else {
@@ -1565,7 +1358,7 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 			var status ExtensionStatus_STATUS
 			err := status.AssignProperties_From_ExtensionStatus_STATUS(&statusItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ExtensionStatus_STATUS() to populate field Statuses")
+				return eris.Wrap(err, "calling AssignProperties_From_ExtensionStatus_STATUS() to populate field Statuses")
 			}
 			statusList[statusIndex] = status
 		}
@@ -1579,7 +1372,7 @@ func (extension *Extension_STATUS) AssignProperties_From_Extension_STATUS(source
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		extension.SystemData = &systemDatum
 	} else {
@@ -1606,7 +1399,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 		var aksAssignedIdentity storage.Extension_Properties_AksAssignedIdentity_STATUS
 		err := extension.AksAssignedIdentity.AssignProperties_To_Extension_Properties_AksAssignedIdentity_STATUS(&aksAssignedIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Extension_Properties_AksAssignedIdentity_STATUS() to populate field AksAssignedIdentity")
+			return eris.Wrap(err, "calling AssignProperties_To_Extension_Properties_AksAssignedIdentity_STATUS() to populate field AksAssignedIdentity")
 		}
 		destination.AksAssignedIdentity = &aksAssignedIdentity
 	} else {
@@ -1641,7 +1434,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 		var errorInfo storage.ErrorDetail_STATUS
 		err := extension.ErrorInfo.AssignProperties_To_ErrorDetail_STATUS(&errorInfo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS() to populate field ErrorInfo")
+			return eris.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS() to populate field ErrorInfo")
 		}
 		destination.ErrorInfo = &errorInfo
 	} else {
@@ -1659,7 +1452,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 		var identity storage.Identity_STATUS
 		err := extension.Identity.AssignProperties_To_Identity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Identity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_Identity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1685,7 +1478,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 		var plan storage.Plan_STATUS
 		err := extension.Plan.AssignProperties_To_Plan_STATUS(&plan)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Plan_STATUS() to populate field Plan")
+			return eris.Wrap(err, "calling AssignProperties_To_Plan_STATUS() to populate field Plan")
 		}
 		destination.Plan = &plan
 	} else {
@@ -1708,7 +1501,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 		var scope storage.Scope_STATUS
 		err := extension.Scope.AssignProperties_To_Scope_STATUS(&scope)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Scope_STATUS() to populate field Scope")
+			return eris.Wrap(err, "calling AssignProperties_To_Scope_STATUS() to populate field Scope")
 		}
 		destination.Scope = &scope
 	} else {
@@ -1724,7 +1517,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 			var status storage.ExtensionStatus_STATUS
 			err := statusItem.AssignProperties_To_ExtensionStatus_STATUS(&status)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ExtensionStatus_STATUS() to populate field Statuses")
+				return eris.Wrap(err, "calling AssignProperties_To_ExtensionStatus_STATUS() to populate field Statuses")
 			}
 			statusList[statusIndex] = status
 		}
@@ -1738,7 +1531,7 @@ func (extension *Extension_STATUS) AssignProperties_To_Extension_STATUS(destinat
 		var systemDatum storage.SystemData_STATUS
 		err := extension.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1848,7 +1641,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -1869,7 +1662,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 			var detailLocal ErrorDetail_STATUS_Unrolled
 			err := detailLocal.AssignProperties_From_ErrorDetail_STATUS_Unrolled(&detailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS_Unrolled() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS_Unrolled() to populate field Details")
 			}
 			detailList[detailIndex] = detailLocal
 		}
@@ -1902,7 +1695,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -1923,7 +1716,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 			var detailLocal storage.ErrorDetail_STATUS_Unrolled
 			err := detailItem.AssignProperties_To_ErrorDetail_STATUS_Unrolled(&detailLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS_Unrolled() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS_Unrolled() to populate field Details")
 			}
 			detailList[detailIndex] = detailLocal
 		}
@@ -2031,21 +1824,6 @@ func (identity *Extension_Properties_AksAssignedIdentity_Spec) AssignProperties_
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Extension_Properties_AksAssignedIdentity_STATUS populates our Extension_Properties_AksAssignedIdentity_Spec from the provided source Extension_Properties_AksAssignedIdentity_STATUS
-func (identity *Extension_Properties_AksAssignedIdentity_Spec) Initialize_From_Extension_Properties_AksAssignedIdentity_STATUS(source *Extension_Properties_AksAssignedIdentity_STATUS) error {
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), extension_Properties_AksAssignedIdentity_Type_Spec_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
 	}
 
 	// No error
@@ -2191,7 +1969,7 @@ func (operator *ExtensionOperatorSpec) AssignProperties_From_ExtensionOperatorSp
 		var configMap ExtensionOperatorConfigMaps
 		err := configMap.AssignProperties_From_ExtensionOperatorConfigMaps(source.ConfigMaps)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtensionOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtensionOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		operator.ConfigMaps = &configMap
 	} else {
@@ -2248,7 +2026,7 @@ func (operator *ExtensionOperatorSpec) AssignProperties_To_ExtensionOperatorSpec
 		var configMap storage.ExtensionOperatorConfigMaps
 		err := operator.ConfigMaps.AssignProperties_To_ExtensionOperatorConfigMaps(&configMap)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtensionOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtensionOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		destination.ConfigMaps = &configMap
 	} else {
@@ -2499,21 +2277,6 @@ func (identity *Identity) AssignProperties_To_Identity(destination *storage.Iden
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Identity_STATUS populates our Identity from the provided source Identity_STATUS
-func (identity *Identity) Initialize_From_Identity_STATUS(source *Identity_STATUS) error {
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), identity_Type_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
 	}
 
 	// No error
@@ -2784,28 +2547,6 @@ func (plan *Plan) AssignProperties_To_Plan(destination *storage.Plan) error {
 	return nil
 }
 
-// Initialize_From_Plan_STATUS populates our Plan from the provided source Plan_STATUS
-func (plan *Plan) Initialize_From_Plan_STATUS(source *Plan_STATUS) error {
-
-	// Name
-	plan.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Product
-	plan.Product = genruntime.ClonePointerToString(source.Product)
-
-	// PromotionCode
-	plan.PromotionCode = genruntime.ClonePointerToString(source.PromotionCode)
-
-	// Publisher
-	plan.Publisher = genruntime.ClonePointerToString(source.Publisher)
-
-	// Version
-	plan.Version = genruntime.ClonePointerToString(source.Version)
-
-	// No error
-	return nil
-}
-
 // Plan for the resource.
 type Plan_STATUS struct {
 	// Name: A user defined name of the 3rd Party Artifact that is being procured.
@@ -3034,7 +2775,7 @@ func (scope *Scope) AssignProperties_From_Scope(source *storage.Scope) error {
 		var cluster ScopeCluster
 		err := cluster.AssignProperties_From_ScopeCluster(source.Cluster)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScopeCluster() to populate field Cluster")
+			return eris.Wrap(err, "calling AssignProperties_From_ScopeCluster() to populate field Cluster")
 		}
 		scope.Cluster = &cluster
 	} else {
@@ -3046,7 +2787,7 @@ func (scope *Scope) AssignProperties_From_Scope(source *storage.Scope) error {
 		var namespace ScopeNamespace
 		err := namespace.AssignProperties_From_ScopeNamespace(source.Namespace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScopeNamespace() to populate field Namespace")
+			return eris.Wrap(err, "calling AssignProperties_From_ScopeNamespace() to populate field Namespace")
 		}
 		scope.Namespace = &namespace
 	} else {
@@ -3067,7 +2808,7 @@ func (scope *Scope) AssignProperties_To_Scope(destination *storage.Scope) error 
 		var cluster storage.ScopeCluster
 		err := scope.Cluster.AssignProperties_To_ScopeCluster(&cluster)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScopeCluster() to populate field Cluster")
+			return eris.Wrap(err, "calling AssignProperties_To_ScopeCluster() to populate field Cluster")
 		}
 		destination.Cluster = &cluster
 	} else {
@@ -3079,7 +2820,7 @@ func (scope *Scope) AssignProperties_To_Scope(destination *storage.Scope) error 
 		var namespace storage.ScopeNamespace
 		err := scope.Namespace.AssignProperties_To_ScopeNamespace(&namespace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScopeNamespace() to populate field Namespace")
+			return eris.Wrap(err, "calling AssignProperties_To_ScopeNamespace() to populate field Namespace")
 		}
 		destination.Namespace = &namespace
 	} else {
@@ -3091,37 +2832,6 @@ func (scope *Scope) AssignProperties_To_Scope(destination *storage.Scope) error 
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Scope_STATUS populates our Scope from the provided source Scope_STATUS
-func (scope *Scope) Initialize_From_Scope_STATUS(source *Scope_STATUS) error {
-
-	// Cluster
-	if source.Cluster != nil {
-		var cluster ScopeCluster
-		err := cluster.Initialize_From_ScopeCluster_STATUS(source.Cluster)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ScopeCluster_STATUS() to populate field Cluster")
-		}
-		scope.Cluster = &cluster
-	} else {
-		scope.Cluster = nil
-	}
-
-	// Namespace
-	if source.Namespace != nil {
-		var namespace ScopeNamespace
-		err := namespace.Initialize_From_ScopeNamespace_STATUS(source.Namespace)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ScopeNamespace_STATUS() to populate field Namespace")
-		}
-		scope.Namespace = &namespace
-	} else {
-		scope.Namespace = nil
 	}
 
 	// No error
@@ -3185,7 +2895,7 @@ func (scope *Scope_STATUS) AssignProperties_From_Scope_STATUS(source *storage.Sc
 		var cluster ScopeCluster_STATUS
 		err := cluster.AssignProperties_From_ScopeCluster_STATUS(source.Cluster)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScopeCluster_STATUS() to populate field Cluster")
+			return eris.Wrap(err, "calling AssignProperties_From_ScopeCluster_STATUS() to populate field Cluster")
 		}
 		scope.Cluster = &cluster
 	} else {
@@ -3197,7 +2907,7 @@ func (scope *Scope_STATUS) AssignProperties_From_Scope_STATUS(source *storage.Sc
 		var namespace ScopeNamespace_STATUS
 		err := namespace.AssignProperties_From_ScopeNamespace_STATUS(source.Namespace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScopeNamespace_STATUS() to populate field Namespace")
+			return eris.Wrap(err, "calling AssignProperties_From_ScopeNamespace_STATUS() to populate field Namespace")
 		}
 		scope.Namespace = &namespace
 	} else {
@@ -3218,7 +2928,7 @@ func (scope *Scope_STATUS) AssignProperties_To_Scope_STATUS(destination *storage
 		var cluster storage.ScopeCluster_STATUS
 		err := scope.Cluster.AssignProperties_To_ScopeCluster_STATUS(&cluster)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScopeCluster_STATUS() to populate field Cluster")
+			return eris.Wrap(err, "calling AssignProperties_To_ScopeCluster_STATUS() to populate field Cluster")
 		}
 		destination.Cluster = &cluster
 	} else {
@@ -3230,7 +2940,7 @@ func (scope *Scope_STATUS) AssignProperties_To_Scope_STATUS(destination *storage
 		var namespace storage.ScopeNamespace_STATUS
 		err := scope.Namespace.AssignProperties_To_ScopeNamespace_STATUS(&namespace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScopeNamespace_STATUS() to populate field Namespace")
+			return eris.Wrap(err, "calling AssignProperties_To_ScopeNamespace_STATUS() to populate field Namespace")
 		}
 		destination.Namespace = &namespace
 	} else {
@@ -3451,41 +3161,6 @@ func (data *SystemData) AssignProperties_To_SystemData(destination *storage.Syst
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SystemData_STATUS populates our SystemData from the provided source SystemData_STATUS
-func (data *SystemData) Initialize_From_SystemData_STATUS(source *SystemData_STATUS) error {
-
-	// CreatedAt
-	data.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
-
-	// CreatedBy
-	data.CreatedBy = genruntime.ClonePointerToString(source.CreatedBy)
-
-	// CreatedByType
-	if source.CreatedByType != nil {
-		createdByType := genruntime.ToEnum(string(*source.CreatedByType), systemData_CreatedByType_Values)
-		data.CreatedByType = &createdByType
-	} else {
-		data.CreatedByType = nil
-	}
-
-	// LastModifiedAt
-	data.LastModifiedAt = genruntime.ClonePointerToString(source.LastModifiedAt)
-
-	// LastModifiedBy
-	data.LastModifiedBy = genruntime.ClonePointerToString(source.LastModifiedBy)
-
-	// LastModifiedByType
-	if source.LastModifiedByType != nil {
-		lastModifiedByType := genruntime.ToEnum(string(*source.LastModifiedByType), systemData_LastModifiedByType_Values)
-		data.LastModifiedByType = &lastModifiedByType
-	} else {
-		data.LastModifiedByType = nil
 	}
 
 	// No error
@@ -3820,7 +3495,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_S
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -3856,7 +3531,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STA
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -4065,16 +3740,6 @@ func (cluster *ScopeCluster) AssignProperties_To_ScopeCluster(destination *stora
 	return nil
 }
 
-// Initialize_From_ScopeCluster_STATUS populates our ScopeCluster from the provided source ScopeCluster_STATUS
-func (cluster *ScopeCluster) Initialize_From_ScopeCluster_STATUS(source *ScopeCluster_STATUS) error {
-
-	// ReleaseNamespace
-	cluster.ReleaseNamespace = genruntime.ClonePointerToString(source.ReleaseNamespace)
-
-	// No error
-	return nil
-}
-
 // Specifies that the scope of the extension is Cluster
 type ScopeCluster_STATUS struct {
 	// ReleaseNamespace: Namespace where the extension Release must be placed, for a Cluster scoped extension.  If this
@@ -4205,16 +3870,6 @@ func (namespace *ScopeNamespace) AssignProperties_To_ScopeNamespace(destination 
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ScopeNamespace_STATUS populates our ScopeNamespace from the provided source ScopeNamespace_STATUS
-func (namespace *ScopeNamespace) Initialize_From_ScopeNamespace_STATUS(source *ScopeNamespace_STATUS) error {
-
-	// TargetNamespace
-	namespace.TargetNamespace = genruntime.ClonePointerToString(source.TargetNamespace)
 
 	// No error
 	return nil

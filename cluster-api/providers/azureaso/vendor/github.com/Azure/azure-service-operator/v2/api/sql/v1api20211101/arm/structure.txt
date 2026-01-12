@@ -69,6 +69,7 @@ Server_STATUS: Object (8 properties)
 │       └── "Disconnected"
 ├── Tags: map[string]string
 └── Type: *string
+
 Server_Spec: Object (5 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -105,6 +106,7 @@ Server_Spec: Object (5 properties)
 │   │   └── "Enabled"
 │   └── Version: *string
 └── Tags: map[string]string
+
 ServersAdministrator_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -116,6 +118,7 @@ ServersAdministrator_STATUS: Object (4 properties)
 │   ├── Sid: *string
 │   └── TenantId: *string
 └── Type: *string
+
 ServersAdministrator_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (4 properties)
@@ -124,6 +127,7 @@ ServersAdministrator_Spec: Object (2 properties)
     ├── Login: *string
     ├── Sid: *string
     └── TenantId: *string
+
 ServersAdvancedThreatProtectionSetting_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -149,6 +153,7 @@ ServersAdvancedThreatProtectionSetting_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 ServersAdvancedThreatProtectionSetting_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -156,6 +161,7 @@ ServersAdvancedThreatProtectionSetting_Spec: Object (2 properties)
         ├── "Disabled"
         ├── "Enabled"
         └── "New"
+
 ServersAuditingSetting_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -173,6 +179,7 @@ ServersAuditingSetting_STATUS: Object (4 properties)
 │   ├── StorageAccountSubscriptionId: *string
 │   └── StorageEndpoint: *string
 └── Type: *string
+
 ServersAuditingSetting_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (11 properties)
@@ -189,16 +196,19 @@ ServersAuditingSetting_Spec: Object (2 properties)
     ├── StorageAccountAccessKey: *string
     ├── StorageAccountSubscriptionId: *string
     └── StorageEndpoint: *string
+
 ServersAzureADOnlyAuthentication_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
 ├── Properties: *Object (1 property)
 │   └── AzureADOnlyAuthentication: *bool
 └── Type: *string
+
 ServersAzureADOnlyAuthentication_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
     └── AzureADOnlyAuthentication: *bool
+
 ServersConnectionPolicy_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Kind: *string
@@ -210,6 +220,7 @@ ServersConnectionPolicy_STATUS: Object (6 properties)
 │       ├── "Proxy"
 │       └── "Redirect"
 └── Type: *string
+
 ServersConnectionPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -217,6 +228,7 @@ ServersConnectionPolicy_Spec: Object (2 properties)
         ├── "Default"
         ├── "Proxy"
         └── "Redirect"
+
 ServersDatabase_STATUS: Object (10 properties)
 ├── Id: *string
 ├── Identity: *Object (3 properties)
@@ -337,6 +349,7 @@ ServersDatabase_STATUS: Object (10 properties)
 │   └── Tier: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 ServersDatabase_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (2 values)
@@ -403,6 +416,7 @@ ServersDatabase_Spec: Object (6 properties)
 │   ├── Size: *string
 │   └── Tier: *string
 └── Tags: map[string]string
+
 ServersDatabasesAdvancedThreatProtectionSetting_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -428,6 +442,7 @@ ServersDatabasesAdvancedThreatProtectionSetting_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 ServersDatabasesAdvancedThreatProtectionSetting_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -435,6 +450,7 @@ ServersDatabasesAdvancedThreatProtectionSetting_Spec: Object (2 properties)
         ├── "Disabled"
         ├── "Enabled"
         └── "New"
+
 ServersDatabasesAuditingSetting_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Kind: *string
@@ -452,6 +468,7 @@ ServersDatabasesAuditingSetting_STATUS: Object (5 properties)
 │   ├── StorageAccountSubscriptionId: *string
 │   └── StorageEndpoint: *string
 └── Type: *string
+
 ServersDatabasesAuditingSetting_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (10 properties)
@@ -467,6 +484,7 @@ ServersDatabasesAuditingSetting_Spec: Object (2 properties)
     ├── StorageAccountAccessKey: *string
     ├── StorageAccountSubscriptionId: *string
     └── StorageEndpoint: *string
+
 ServersDatabasesBackupLongTermRetentionPolicy_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -476,6 +494,7 @@ ServersDatabasesBackupLongTermRetentionPolicy_STATUS: Object (4 properties)
 │   ├── WeeklyRetention: *string
 │   └── YearlyRetention: *string
 └── Type: *string
+
 ServersDatabasesBackupLongTermRetentionPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (4 properties)
@@ -483,6 +502,7 @@ ServersDatabasesBackupLongTermRetentionPolicy_Spec: Object (2 properties)
     ├── WeekOfYear: *int
     ├── WeeklyRetention: *string
     └── YearlyRetention: *string
+
 ServersDatabasesBackupShortTermRetentionPolicy_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -492,6 +512,7 @@ ServersDatabasesBackupShortTermRetentionPolicy_STATUS: Object (4 properties)
 │   │   └── 24
 │   └── RetentionDays: *int
 └── Type: *string
+
 ServersDatabasesBackupShortTermRetentionPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
@@ -499,6 +520,7 @@ ServersDatabasesBackupShortTermRetentionPolicy_Spec: Object (2 properties)
     │   ├── 12
     │   └── 24
     └── RetentionDays: *int
+
 ServersDatabasesSecurityAlertPolicy_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -528,6 +550,7 @@ ServersDatabasesSecurityAlertPolicy_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 ServersDatabasesSecurityAlertPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -540,6 +563,7 @@ ServersDatabasesSecurityAlertPolicy_Spec: Object (2 properties)
     │   └── "Enabled"
     ├── StorageAccountAccessKey: *string
     └── StorageEndpoint: *string
+
 ServersDatabasesTransparentDataEncryption_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -548,12 +572,14 @@ ServersDatabasesTransparentDataEncryption_STATUS: Object (4 properties)
 │       ├── "Disabled"
 │       └── "Enabled"
 └── Type: *string
+
 ServersDatabasesTransparentDataEncryption_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
     └── State: *Enum (2 values)
         ├── "Disabled"
         └── "Enabled"
+
 ServersDatabasesVulnerabilityAssessment_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -564,6 +590,7 @@ ServersDatabasesVulnerabilityAssessment_STATUS: Object (4 properties)
 │   │   └── IsEnabled: *bool
 │   └── StorageContainerPath: *string
 └── Type: *string
+
 ServersDatabasesVulnerabilityAssessment_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (4 properties)
@@ -574,6 +601,7 @@ ServersDatabasesVulnerabilityAssessment_Spec: Object (2 properties)
     ├── StorageAccountAccessKey: *string
     ├── StorageContainerPath: *string
     └── StorageContainerSasKey: *string
+
 ServersElasticPool_STATUS: Object (8 properties)
 ├── Id: *string
 ├── Kind: *string
@@ -604,6 +632,7 @@ ServersElasticPool_STATUS: Object (8 properties)
 │   └── Tier: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 ServersElasticPool_Spec: Object (5 properties)
 ├── Location: *string
 ├── Name: string
@@ -626,6 +655,7 @@ ServersElasticPool_Spec: Object (5 properties)
 │   ├── Size: *string
 │   └── Tier: *string
 └── Tags: map[string]string
+
 ServersFailoverGroup_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -653,6 +683,7 @@ ServersFailoverGroup_STATUS: Object (6 properties)
 │   └── ReplicationState: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 ServersFailoverGroup_Spec: Object (3 properties)
 ├── Name: string
 ├── Properties: *Object (4 properties)
@@ -669,6 +700,7 @@ ServersFailoverGroup_Spec: Object (3 properties)
 │       │   └── "Manual"
 │       └── FailoverWithDataLossGracePeriodMinutes: *int
 └── Tags: map[string]string
+
 ServersFirewallRule_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -676,11 +708,13 @@ ServersFirewallRule_STATUS: Object (4 properties)
 │   ├── EndIpAddress: *string
 │   └── StartIpAddress: *string
 └── Type: *string
+
 ServersFirewallRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── EndIpAddress: *string
     └── StartIpAddress: *string
+
 ServersIPV6FirewallRule_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -688,19 +722,23 @@ ServersIPV6FirewallRule_STATUS: Object (4 properties)
 │   ├── EndIPv6Address: *string
 │   └── StartIPv6Address: *string
 └── Type: *string
+
 ServersIPV6FirewallRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── EndIPv6Address: *string
     └── StartIPv6Address: *string
+
 ServersOutboundFirewallRule_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
 ├── Properties: *Object (1 property)
 │   └── ProvisioningState: *string
 └── Type: *string
+
 ServersOutboundFirewallRule_Spec: Object (1 property)
 └── Name: string
+
 ServersSecurityAlertPolicy_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -730,6 +768,7 @@ ServersSecurityAlertPolicy_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 ServersSecurityAlertPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -742,6 +781,7 @@ ServersSecurityAlertPolicy_Spec: Object (2 properties)
     │   └── "Enabled"
     ├── StorageAccountAccessKey: *string
     └── StorageEndpoint: *string
+
 ServersVirtualNetworkRule_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -756,11 +796,13 @@ ServersVirtualNetworkRule_STATUS: Object (4 properties)
 │   │   └── "Unknown"
 │   └── VirtualNetworkSubnetId: *string
 └── Type: *string
+
 ServersVirtualNetworkRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── IgnoreMissingVnetServiceEndpoint: *bool
     └── VirtualNetworkSubnetId: *string
+
 ServersVulnerabilityAssessment_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -771,6 +813,7 @@ ServersVulnerabilityAssessment_STATUS: Object (4 properties)
 │   │   └── IsEnabled: *bool
 │   └── StorageContainerPath: *string
 └── Type: *string
+
 ServersVulnerabilityAssessment_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (4 properties)
@@ -781,3 +824,4 @@ ServersVulnerabilityAssessment_Spec: Object (2 properties)
     ├── StorageAccountAccessKey: *string
     ├── StorageContainerPath: *string
     └── StorageContainerSasKey: *string
+

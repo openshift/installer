@@ -10,6 +10,8 @@ import (
 	v20211101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	v20221001p "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20221001preview"
 	v20221001ps "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20221001preview/storage"
+	v20240101 "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20240101"
+	v20240101s "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20240101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -24,5 +26,7 @@ func (extension *NamespacesTopicExtension) GetExtendedResources() []genruntime.K
 		&v20211101.NamespacesTopic{},
 		&v20211101s.NamespacesTopic{},
 		&v20221001p.NamespacesTopic{},
-		&v20221001ps.NamespacesTopic{}}
+		&v20221001ps.NamespacesTopic{},
+		&v20240101.NamespacesTopic{},
+		&v20240101s.NamespacesTopic{}}
 }
