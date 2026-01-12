@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/alertsmanagement/v1api20230301
 -----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-03-01"
+
 PrometheusRuleGroup: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (11 properties)
@@ -76,3 +77,4 @@ PrometheusRuleGroup: Resource
     │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
+

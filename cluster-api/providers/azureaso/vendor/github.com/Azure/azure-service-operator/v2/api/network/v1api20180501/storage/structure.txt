@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20180501/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-05-01"
+
 DnsZone: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (10 properties)
@@ -43,6 +44,7 @@ DnsZone: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── ZoneType: *string
+
 DnsZonesAAAARecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (18 properties)
@@ -157,6 +159,7 @@ DnsZonesAAAARecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsZonesARecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (19 properties)
@@ -272,6 +275,7 @@ DnsZonesARecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsZonesCAARecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (18 properties)
@@ -386,6 +390,7 @@ DnsZonesCAARecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsZonesCNAMERecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (18 properties)
@@ -500,6 +505,7 @@ DnsZonesCNAMERecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsZonesMXRecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (18 properties)
@@ -614,6 +620,7 @@ DnsZonesMXRecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsZonesNSRecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (18 properties)
@@ -728,6 +735,7 @@ DnsZonesNSRecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsZonesPTRRecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (18 properties)
@@ -842,6 +850,7 @@ DnsZonesPTRRecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsZonesSRVRecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (18 properties)
@@ -956,6 +965,7 @@ DnsZonesSRVRecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsZonesTXTRecord: Resource
 ├── Owner: network/v1api20180501.DnsZone
 ├── Spec: Object (18 properties)
@@ -1070,21 +1080,40 @@ DnsZonesTXTRecord: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 augmentConversionForARecord: Interface
+
 augmentConversionForARecord_STATUS: Interface
+
 augmentConversionForAaaaRecord: Interface
+
 augmentConversionForAaaaRecord_STATUS: Interface
+
 augmentConversionForCnameRecord: Interface
+
 augmentConversionForCnameRecord_STATUS: Interface
+
 augmentConversionForMxRecord: Interface
+
 augmentConversionForMxRecord_STATUS: Interface
+
 augmentConversionForPtrRecord: Interface
+
 augmentConversionForPtrRecord_STATUS: Interface
+
 augmentConversionForSoaRecord: Interface
+
 augmentConversionForSoaRecord_STATUS: Interface
+
 augmentConversionForSrvRecord: Interface
+
 augmentConversionForSrvRecord_STATUS: Interface
+
 augmentConversionForSubResource: Interface
+
 augmentConversionForSubResource_STATUS: Interface
+
 augmentConversionForTxtRecord: Interface
+
 augmentConversionForTxtRecord_STATUS: Interface
+

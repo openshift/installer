@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/web/v1api20220301/storage
 ------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-03-01"
+
 ServerFarm: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (25 properties)
@@ -123,6 +124,7 @@ ServerFarm: Resource
     ├── Type: *string
     ├── WorkerTierName: *string
     └── ZoneRedundant: *bool
+
 Site: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (37 properties)
@@ -669,3 +671,62 @@ Site: Resource
     ├── VnetContentShareEnabled: *bool
     ├── VnetImagePullEnabled: *bool
     └── VnetRouteAllEnabled: *bool
+
+SitesSourcecontrol: Resource
+├── Owner: web/v1api20220301.Site
+├── Spec: Object (12 properties)
+│   ├── Branch: *string
+│   ├── DeploymentRollbackEnabled: *bool
+│   ├── GitHubActionConfiguration: *Object (5 properties)
+│   │   ├── CodeConfiguration: *Object (3 properties)
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   ├── RuntimeStack: *string
+│   │   │   └── RuntimeVersion: *string
+│   │   ├── ContainerConfiguration: *Object (5 properties)
+│   │   │   ├── ImageName: *string
+│   │   │   ├── Password: *genruntime.SecretReference
+│   │   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   │   ├── ServerUrl: *string
+│   │   │   └── Username: *string
+│   │   ├── GenerateWorkflowFile: *bool
+│   │   ├── IsLinux: *bool
+│   │   └── PropertyBag: genruntime.PropertyBag
+│   ├── IsGitHubAction: *bool
+│   ├── IsManualIntegration: *bool
+│   ├── IsMercurial: *bool
+│   ├── Kind: *string
+│   ├── OperatorSpec: *Object (3 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   ├── PropertyBag: genruntime.PropertyBag
+│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   ├── OriginalVersion: string
+│   ├── Owner: *genruntime.KnownResourceReference
+│   ├── PropertyBag: genruntime.PropertyBag
+│   └── RepoUrl: *string
+└── Status: Object (13 properties)
+    ├── Branch: *string
+    ├── Conditions: conditions.Condition[]
+    ├── DeploymentRollbackEnabled: *bool
+    ├── GitHubActionConfiguration: *Object (5 properties)
+    │   ├── CodeConfiguration: *Object (3 properties)
+    │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   ├── RuntimeStack: *string
+    │   │   └── RuntimeVersion: *string
+    │   ├── ContainerConfiguration: *Object (4 properties)
+    │   │   ├── ImageName: *string
+    │   │   ├── PropertyBag: genruntime.PropertyBag
+    │   │   ├── ServerUrl: *string
+    │   │   └── Username: *string
+    │   ├── GenerateWorkflowFile: *bool
+    │   ├── IsLinux: *bool
+    │   └── PropertyBag: genruntime.PropertyBag
+    ├── Id: *string
+    ├── IsGitHubAction: *bool
+    ├── IsManualIntegration: *bool
+    ├── IsMercurial: *bool
+    ├── Kind: *string
+    ├── Name: *string
+    ├── PropertyBag: genruntime.PropertyBag
+    ├── RepoUrl: *string
+    └── Type: *string
+

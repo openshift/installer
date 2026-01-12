@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20200601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20200601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (record *PrivateDnsZonesAAAARecord) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = record.AssignProperties_From_PrivateDnsZonesAAAARecord(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to record")
+		return eris.Wrap(err, "converting from source to record")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (record *PrivateDnsZonesAAAARecord) ConvertTo(hub conversion.Hub) error {
 	var destination storage.PrivateDnsZonesAAAARecord
 	err := record.AssignProperties_To_PrivateDnsZonesAAAARecord(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from record")
+		return eris.Wrap(err, "converting to destination from record")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20200601-privatednszonesaaaarecord,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=privatednszonesaaaarecords,verbs=create;update,versions=v1api20200601,name=default.v1api20200601.privatednszonesaaaarecords.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &PrivateDnsZonesAAAARecord{}
-
-// Default applies defaults to the PrivateDnsZonesAAAARecord resource
-func (record *PrivateDnsZonesAAAARecord) Default() {
-	record.defaultImpl()
-	var temp any = record
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (record *PrivateDnsZonesAAAARecord) defaultAzureName() {
-	if record.Spec.AzureName == "" {
-		record.Spec.AzureName = record.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the PrivateDnsZonesAAAARecord resource
-func (record *PrivateDnsZonesAAAARecord) defaultImpl() { record.defaultAzureName() }
 
 var _ configmaps.Exporter = &PrivateDnsZonesAAAARecord{}
 
@@ -176,6 +150,10 @@ func (record *PrivateDnsZonesAAAARecord) NewEmptyStatus() genruntime.Convertible
 
 // Owner returns the ResourceReference of the owner
 func (record *PrivateDnsZonesAAAARecord) Owner() *genruntime.ResourceReference {
+	if record.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(record.Spec)
 	return record.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,114 +170,11 @@ func (record *PrivateDnsZonesAAAARecord) SetStatus(status genruntime.Convertible
 	var st PrivateDnsZonesAAAARecord_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	record.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20200601-privatednszonesaaaarecord,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=privatednszonesaaaarecords,verbs=create;update,versions=v1api20200601,name=validate.v1api20200601.privatednszonesaaaarecords.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &PrivateDnsZonesAAAARecord{}
-
-// ValidateCreate validates the creation of the resource
-func (record *PrivateDnsZonesAAAARecord) ValidateCreate() (admission.Warnings, error) {
-	validations := record.createValidations()
-	var temp any = record
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (record *PrivateDnsZonesAAAARecord) ValidateDelete() (admission.Warnings, error) {
-	validations := record.deleteValidations()
-	var temp any = record
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (record *PrivateDnsZonesAAAARecord) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := record.updateValidations()
-	var temp any = record
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (record *PrivateDnsZonesAAAARecord) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){record.validateResourceReferences, record.validateOwnerReference, record.validateSecretDestinations, record.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (record *PrivateDnsZonesAAAARecord) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (record *PrivateDnsZonesAAAARecord) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return record.validateResourceReferences()
-		},
-		record.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return record.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return record.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return record.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (record *PrivateDnsZonesAAAARecord) validateConfigMapDestinations() (admission.Warnings, error) {
-	if record.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(record, nil, record.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (record *PrivateDnsZonesAAAARecord) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(record)
-}
-
-// validateResourceReferences validates all resource references
-func (record *PrivateDnsZonesAAAARecord) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&record.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (record *PrivateDnsZonesAAAARecord) validateSecretDestinations() (admission.Warnings, error) {
-	if record.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(record, nil, record.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (record *PrivateDnsZonesAAAARecord) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*PrivateDnsZonesAAAARecord)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, record)
 }
 
 // AssignProperties_From_PrivateDnsZonesAAAARecord populates our PrivateDnsZonesAAAARecord from the provided source PrivateDnsZonesAAAARecord
@@ -312,7 +187,7 @@ func (record *PrivateDnsZonesAAAARecord) AssignProperties_From_PrivateDnsZonesAA
 	var spec PrivateDnsZonesAAAARecord_Spec
 	err := spec.AssignProperties_From_PrivateDnsZonesAAAARecord_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecord_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecord_Spec() to populate field Spec")
 	}
 	record.Spec = spec
 
@@ -320,7 +195,7 @@ func (record *PrivateDnsZonesAAAARecord) AssignProperties_From_PrivateDnsZonesAA
 	var status PrivateDnsZonesAAAARecord_STATUS
 	err = status.AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS() to populate field Status")
 	}
 	record.Status = status
 
@@ -338,7 +213,7 @@ func (record *PrivateDnsZonesAAAARecord) AssignProperties_To_PrivateDnsZonesAAAA
 	var spec storage.PrivateDnsZonesAAAARecord_Spec
 	err := record.Spec.AssignProperties_To_PrivateDnsZonesAAAARecord_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecord_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecord_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -346,7 +221,7 @@ func (record *PrivateDnsZonesAAAARecord) AssignProperties_To_PrivateDnsZonesAAAA
 	var status storage.PrivateDnsZonesAAAARecord_STATUS
 	err = record.Status.AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -702,13 +577,13 @@ func (record *PrivateDnsZonesAAAARecord_Spec) ConvertSpecFrom(source genruntime.
 	src = &storage.PrivateDnsZonesAAAARecord_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = record.AssignProperties_From_PrivateDnsZonesAAAARecord_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -726,13 +601,13 @@ func (record *PrivateDnsZonesAAAARecord_Spec) ConvertSpecTo(destination genrunti
 	dst = &storage.PrivateDnsZonesAAAARecord_Spec{}
 	err := record.AssignProperties_To_PrivateDnsZonesAAAARecord_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -750,7 +625,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 			var aRecord ARecord
 			err := aRecord.AssignProperties_From_ARecord(&aRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ARecord() to populate field ARecords")
+				return eris.Wrap(err, "calling AssignProperties_From_ARecord() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -768,7 +643,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 			var aaaaRecord AaaaRecord
 			err := aaaaRecord.AssignProperties_From_AaaaRecord(&aaaaRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AaaaRecord() to populate field AaaaRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_AaaaRecord() to populate field AaaaRecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -785,7 +660,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 		var cnameRecord CnameRecord
 		err := cnameRecord.AssignProperties_From_CnameRecord(source.CnameRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CnameRecord() to populate field CnameRecord")
+			return eris.Wrap(err, "calling AssignProperties_From_CnameRecord() to populate field CnameRecord")
 		}
 		record.CnameRecord = &cnameRecord
 	} else {
@@ -807,7 +682,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 			var mxRecord MxRecord
 			err := mxRecord.AssignProperties_From_MxRecord(&mxRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MxRecord() to populate field MxRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_MxRecord() to populate field MxRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -821,7 +696,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 		var operatorSpec PrivateDnsZonesAAAARecordOperatorSpec
 		err := operatorSpec.AssignProperties_From_PrivateDnsZonesAAAARecordOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecordOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateDnsZonesAAAARecordOperatorSpec() to populate field OperatorSpec")
 		}
 		record.OperatorSpec = &operatorSpec
 	} else {
@@ -845,7 +720,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 			var ptrRecord PtrRecord
 			err := ptrRecord.AssignProperties_From_PtrRecord(&ptrRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PtrRecord() to populate field PtrRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_PtrRecord() to populate field PtrRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -859,7 +734,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 		var soaRecord SoaRecord
 		err := soaRecord.AssignProperties_From_SoaRecord(source.SoaRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SoaRecord() to populate field SoaRecord")
+			return eris.Wrap(err, "calling AssignProperties_From_SoaRecord() to populate field SoaRecord")
 		}
 		record.SoaRecord = &soaRecord
 	} else {
@@ -875,7 +750,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 			var srvRecord SrvRecord
 			err := srvRecord.AssignProperties_From_SrvRecord(&srvRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SrvRecord() to populate field SrvRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_SrvRecord() to populate field SrvRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -896,7 +771,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_From_PrivateDnsZo
 			var txtRecord TxtRecord
 			err := txtRecord.AssignProperties_From_TxtRecord(&txtRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TxtRecord() to populate field TxtRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_TxtRecord() to populate field TxtRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}
@@ -923,7 +798,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 			var aRecord storage.ARecord
 			err := aRecordItem.AssignProperties_To_ARecord(&aRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ARecord() to populate field ARecords")
+				return eris.Wrap(err, "calling AssignProperties_To_ARecord() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -941,7 +816,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 			var aaaaRecord storage.AaaaRecord
 			err := aaaaRecordItem.AssignProperties_To_AaaaRecord(&aaaaRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AaaaRecord() to populate field AaaaRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_AaaaRecord() to populate field AaaaRecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -958,7 +833,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 		var cnameRecord storage.CnameRecord
 		err := record.CnameRecord.AssignProperties_To_CnameRecord(&cnameRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CnameRecord() to populate field CnameRecord")
+			return eris.Wrap(err, "calling AssignProperties_To_CnameRecord() to populate field CnameRecord")
 		}
 		destination.CnameRecord = &cnameRecord
 	} else {
@@ -980,7 +855,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 			var mxRecord storage.MxRecord
 			err := mxRecordItem.AssignProperties_To_MxRecord(&mxRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MxRecord() to populate field MxRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_MxRecord() to populate field MxRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -994,7 +869,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 		var operatorSpec storage.PrivateDnsZonesAAAARecordOperatorSpec
 		err := record.OperatorSpec.AssignProperties_To_PrivateDnsZonesAAAARecordOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecordOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateDnsZonesAAAARecordOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1021,7 +896,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 			var ptrRecord storage.PtrRecord
 			err := ptrRecordItem.AssignProperties_To_PtrRecord(&ptrRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PtrRecord() to populate field PtrRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_PtrRecord() to populate field PtrRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -1035,7 +910,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 		var soaRecord storage.SoaRecord
 		err := record.SoaRecord.AssignProperties_To_SoaRecord(&soaRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SoaRecord() to populate field SoaRecord")
+			return eris.Wrap(err, "calling AssignProperties_To_SoaRecord() to populate field SoaRecord")
 		}
 		destination.SoaRecord = &soaRecord
 	} else {
@@ -1051,7 +926,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 			var srvRecord storage.SrvRecord
 			err := srvRecordItem.AssignProperties_To_SrvRecord(&srvRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SrvRecord() to populate field SrvRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_SrvRecord() to populate field SrvRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -1072,7 +947,7 @@ func (record *PrivateDnsZonesAAAARecord_Spec) AssignProperties_To_PrivateDnsZone
 			var txtRecord storage.TxtRecord
 			err := txtRecordItem.AssignProperties_To_TxtRecord(&txtRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TxtRecord() to populate field TxtRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_TxtRecord() to populate field TxtRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}
@@ -1170,13 +1045,13 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) ConvertStatusFrom(source genrunt
 	src = &storage.PrivateDnsZonesAAAARecord_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = record.AssignProperties_From_PrivateDnsZonesAAAARecord_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1194,13 +1069,13 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) ConvertStatusTo(destination genr
 	dst = &storage.PrivateDnsZonesAAAARecord_STATUS{}
 	err := record.AssignProperties_To_PrivateDnsZonesAAAARecord_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1406,7 +1281,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDns
 			var aRecord ARecord_STATUS
 			err := aRecord.AssignProperties_From_ARecord_STATUS(&aRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ARecord_STATUS() to populate field ARecords")
+				return eris.Wrap(err, "calling AssignProperties_From_ARecord_STATUS() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -1424,7 +1299,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDns
 			var aaaaRecord AaaaRecord_STATUS
 			err := aaaaRecord.AssignProperties_From_AaaaRecord_STATUS(&aaaaRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AaaaRecord_STATUS() to populate field AaaaRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_AaaaRecord_STATUS() to populate field AaaaRecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -1438,7 +1313,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDns
 		var cnameRecord CnameRecord_STATUS
 		err := cnameRecord.AssignProperties_From_CnameRecord_STATUS(source.CnameRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CnameRecord_STATUS() to populate field CnameRecord")
+			return eris.Wrap(err, "calling AssignProperties_From_CnameRecord_STATUS() to populate field CnameRecord")
 		}
 		record.CnameRecord = &cnameRecord
 	} else {
@@ -1477,7 +1352,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDns
 			var mxRecord MxRecord_STATUS
 			err := mxRecord.AssignProperties_From_MxRecord_STATUS(&mxRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MxRecord_STATUS() to populate field MxRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_MxRecord_STATUS() to populate field MxRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -1498,7 +1373,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDns
 			var ptrRecord PtrRecord_STATUS
 			err := ptrRecord.AssignProperties_From_PtrRecord_STATUS(&ptrRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PtrRecord_STATUS() to populate field PtrRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_PtrRecord_STATUS() to populate field PtrRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -1512,7 +1387,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDns
 		var soaRecord SoaRecord_STATUS
 		err := soaRecord.AssignProperties_From_SoaRecord_STATUS(source.SoaRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SoaRecord_STATUS() to populate field SoaRecord")
+			return eris.Wrap(err, "calling AssignProperties_From_SoaRecord_STATUS() to populate field SoaRecord")
 		}
 		record.SoaRecord = &soaRecord
 	} else {
@@ -1528,7 +1403,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDns
 			var srvRecord SrvRecord_STATUS
 			err := srvRecord.AssignProperties_From_SrvRecord_STATUS(&srvRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SrvRecord_STATUS() to populate field SrvRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_SrvRecord_STATUS() to populate field SrvRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -1549,7 +1424,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_From_PrivateDns
 			var txtRecord TxtRecord_STATUS
 			err := txtRecord.AssignProperties_From_TxtRecord_STATUS(&txtRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TxtRecord_STATUS() to populate field TxtRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_TxtRecord_STATUS() to populate field TxtRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}
@@ -1579,7 +1454,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZo
 			var aRecord storage.ARecord_STATUS
 			err := aRecordItem.AssignProperties_To_ARecord_STATUS(&aRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ARecord_STATUS() to populate field ARecords")
+				return eris.Wrap(err, "calling AssignProperties_To_ARecord_STATUS() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -1597,7 +1472,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZo
 			var aaaaRecord storage.AaaaRecord_STATUS
 			err := aaaaRecordItem.AssignProperties_To_AaaaRecord_STATUS(&aaaaRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AaaaRecord_STATUS() to populate field AaaaRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_AaaaRecord_STATUS() to populate field AaaaRecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -1611,7 +1486,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZo
 		var cnameRecord storage.CnameRecord_STATUS
 		err := record.CnameRecord.AssignProperties_To_CnameRecord_STATUS(&cnameRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CnameRecord_STATUS() to populate field CnameRecord")
+			return eris.Wrap(err, "calling AssignProperties_To_CnameRecord_STATUS() to populate field CnameRecord")
 		}
 		destination.CnameRecord = &cnameRecord
 	} else {
@@ -1650,7 +1525,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZo
 			var mxRecord storage.MxRecord_STATUS
 			err := mxRecordItem.AssignProperties_To_MxRecord_STATUS(&mxRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MxRecord_STATUS() to populate field MxRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_MxRecord_STATUS() to populate field MxRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -1671,7 +1546,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZo
 			var ptrRecord storage.PtrRecord_STATUS
 			err := ptrRecordItem.AssignProperties_To_PtrRecord_STATUS(&ptrRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PtrRecord_STATUS() to populate field PtrRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_PtrRecord_STATUS() to populate field PtrRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -1685,7 +1560,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZo
 		var soaRecord storage.SoaRecord_STATUS
 		err := record.SoaRecord.AssignProperties_To_SoaRecord_STATUS(&soaRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SoaRecord_STATUS() to populate field SoaRecord")
+			return eris.Wrap(err, "calling AssignProperties_To_SoaRecord_STATUS() to populate field SoaRecord")
 		}
 		destination.SoaRecord = &soaRecord
 	} else {
@@ -1701,7 +1576,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZo
 			var srvRecord storage.SrvRecord_STATUS
 			err := srvRecordItem.AssignProperties_To_SrvRecord_STATUS(&srvRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SrvRecord_STATUS() to populate field SrvRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_SrvRecord_STATUS() to populate field SrvRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -1722,7 +1597,7 @@ func (record *PrivateDnsZonesAAAARecord_STATUS) AssignProperties_To_PrivateDnsZo
 			var txtRecord storage.TxtRecord_STATUS
 			err := txtRecordItem.AssignProperties_To_TxtRecord_STATUS(&txtRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TxtRecord_STATUS() to populate field TxtRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_TxtRecord_STATUS() to populate field TxtRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}

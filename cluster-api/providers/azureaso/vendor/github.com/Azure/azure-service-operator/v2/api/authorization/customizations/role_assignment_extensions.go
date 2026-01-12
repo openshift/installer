@@ -10,7 +10,6 @@ import (
 	"strings"
 
 	api "github.com/Azure/azure-service-operator/v2/api/authorization/v1api20220401"
-
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 )
@@ -34,7 +33,7 @@ func (extension *RoleAssignmentExtension) Import(
 	if assignment, ok := rsrc.(*api.RoleAssignment); ok {
 		// Check to see whether this role assignment is inherited or not
 		// (we can tell by looking at the scope of the assignment)
-		if assignment.Status.Scope != nil {
+		if assignment.Status.Scope != nil && owner != nil {
 			if !strings.EqualFold(owner.ARMID, *assignment.Status.Scope) {
 				// Scope isn't our owner, so it's inherited from further up and should not be imported
 				return extensions.ImportSkipped("role assignment is inherited"), nil

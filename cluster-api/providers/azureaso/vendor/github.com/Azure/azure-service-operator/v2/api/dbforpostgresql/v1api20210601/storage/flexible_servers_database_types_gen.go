@@ -4,14 +4,13 @@
 package storage
 
 import (
-	"fmt"
 	storage "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20221201/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -50,22 +49,36 @@ var _ conversion.Convertible = &FlexibleServersDatabase{}
 
 // ConvertFrom populates our FlexibleServersDatabase from the provided hub FlexibleServersDatabase
 func (database *FlexibleServersDatabase) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.FlexibleServersDatabase)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20221201/storage/FlexibleServersDatabase but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.FlexibleServersDatabase
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return database.AssignProperties_From_FlexibleServersDatabase(source)
+	err = database.AssignProperties_From_FlexibleServersDatabase(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to database")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub FlexibleServersDatabase from our FlexibleServersDatabase
 func (database *FlexibleServersDatabase) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.FlexibleServersDatabase)
-	if !ok {
-		return fmt.Errorf("expected dbforpostgresql/v1api20221201/storage/FlexibleServersDatabase but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.FlexibleServersDatabase
+	err := database.AssignProperties_To_FlexibleServersDatabase(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from database")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return database.AssignProperties_To_FlexibleServersDatabase(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &FlexibleServersDatabase{}
@@ -136,6 +149,10 @@ func (database *FlexibleServersDatabase) NewEmptyStatus() genruntime.Convertible
 
 // Owner returns the ResourceReference of the owner
 func (database *FlexibleServersDatabase) Owner() *genruntime.ResourceReference {
+	if database.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(database.Spec)
 	return database.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -152,7 +169,7 @@ func (database *FlexibleServersDatabase) SetStatus(status genruntime.Convertible
 	var st FlexibleServersDatabase_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	database.Status = st
@@ -169,7 +186,7 @@ func (database *FlexibleServersDatabase) AssignProperties_From_FlexibleServersDa
 	var spec FlexibleServersDatabase_Spec
 	err := spec.AssignProperties_From_FlexibleServersDatabase_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabase_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabase_Spec() to populate field Spec")
 	}
 	database.Spec = spec
 
@@ -177,7 +194,7 @@ func (database *FlexibleServersDatabase) AssignProperties_From_FlexibleServersDa
 	var status FlexibleServersDatabase_STATUS
 	err = status.AssignProperties_From_FlexibleServersDatabase_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabase_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabase_STATUS() to populate field Status")
 	}
 	database.Status = status
 
@@ -186,7 +203,7 @@ func (database *FlexibleServersDatabase) AssignProperties_From_FlexibleServersDa
 	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForFlexibleServersDatabase); ok {
 		err := augmentedDatabase.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -204,7 +221,7 @@ func (database *FlexibleServersDatabase) AssignProperties_To_FlexibleServersData
 	var spec storage.FlexibleServersDatabase_Spec
 	err := database.Spec.AssignProperties_To_FlexibleServersDatabase_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabase_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabase_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -212,7 +229,7 @@ func (database *FlexibleServersDatabase) AssignProperties_To_FlexibleServersData
 	var status storage.FlexibleServersDatabase_STATUS
 	err = database.Status.AssignProperties_To_FlexibleServersDatabase_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabase_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabase_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -221,7 +238,7 @@ func (database *FlexibleServersDatabase) AssignProperties_To_FlexibleServersData
 	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForFlexibleServersDatabase); ok {
 		err := augmentedDatabase.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -286,13 +303,13 @@ func (database *FlexibleServersDatabase_Spec) ConvertSpecFrom(source genruntime.
 	src = &storage.FlexibleServersDatabase_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_FlexibleServersDatabase_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -310,13 +327,13 @@ func (database *FlexibleServersDatabase_Spec) ConvertSpecTo(destination genrunti
 	dst = &storage.FlexibleServersDatabase_Spec{}
 	err := database.AssignProperties_To_FlexibleServersDatabase_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -341,7 +358,7 @@ func (database *FlexibleServersDatabase_Spec) AssignProperties_From_FlexibleServ
 		var operatorSpec FlexibleServersDatabaseOperatorSpec
 		err := operatorSpec.AssignProperties_From_FlexibleServersDatabaseOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_FlexibleServersDatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		database.OperatorSpec = &operatorSpec
 	} else {
@@ -371,7 +388,7 @@ func (database *FlexibleServersDatabase_Spec) AssignProperties_From_FlexibleServ
 	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForFlexibleServersDatabase_Spec); ok {
 		err := augmentedDatabase.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -398,7 +415,7 @@ func (database *FlexibleServersDatabase_Spec) AssignProperties_To_FlexibleServer
 		var operatorSpec storage.FlexibleServersDatabaseOperatorSpec
 		err := database.OperatorSpec.AssignProperties_To_FlexibleServersDatabaseOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_FlexibleServersDatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -428,7 +445,7 @@ func (database *FlexibleServersDatabase_Spec) AssignProperties_To_FlexibleServer
 	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForFlexibleServersDatabase_Spec); ok {
 		err := augmentedDatabase.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -462,13 +479,13 @@ func (database *FlexibleServersDatabase_STATUS) ConvertStatusFrom(source genrunt
 	src = &storage.FlexibleServersDatabase_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_FlexibleServersDatabase_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -486,13 +503,13 @@ func (database *FlexibleServersDatabase_STATUS) ConvertStatusTo(destination genr
 	dst = &storage.FlexibleServersDatabase_STATUS{}
 	err := database.AssignProperties_To_FlexibleServersDatabase_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -523,7 +540,7 @@ func (database *FlexibleServersDatabase_STATUS) AssignProperties_From_FlexibleSe
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		database.SystemData = &systemDatum
 	} else {
@@ -545,7 +562,7 @@ func (database *FlexibleServersDatabase_STATUS) AssignProperties_From_FlexibleSe
 	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForFlexibleServersDatabase_STATUS); ok {
 		err := augmentedDatabase.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -578,7 +595,7 @@ func (database *FlexibleServersDatabase_STATUS) AssignProperties_To_FlexibleServ
 		var systemDatum storage.SystemData_STATUS
 		err := database.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -600,7 +617,7 @@ func (database *FlexibleServersDatabase_STATUS) AssignProperties_To_FlexibleServ
 	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForFlexibleServersDatabase_STATUS); ok {
 		err := augmentedDatabase.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -679,7 +696,7 @@ func (operator *FlexibleServersDatabaseOperatorSpec) AssignProperties_From_Flexi
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFlexibleServersDatabaseOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -740,7 +757,7 @@ func (operator *FlexibleServersDatabaseOperatorSpec) AssignProperties_To_Flexibl
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForFlexibleServersDatabaseOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

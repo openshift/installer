@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (address *PublicIPAddress) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (address *PublicIPAddress) Owner() *genruntime.ResourceReference {
+	if address.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(address.Spec)
 	return address.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (address *PublicIPAddress) SetStatus(status genruntime.ConvertibleStatus) e
 	var st PublicIPAddress_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	address.Status = st
@@ -199,7 +203,7 @@ var _ genruntime.ConvertibleSpec = &PublicIPAddress_Spec{}
 // ConvertSpecFrom populates our PublicIPAddress_Spec from the provided source
 func (address *PublicIPAddress_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == address {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(address)
@@ -208,7 +212,7 @@ func (address *PublicIPAddress_Spec) ConvertSpecFrom(source genruntime.Convertib
 // ConvertSpecTo populates the provided destination from our PublicIPAddress_Spec
 func (address *PublicIPAddress_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == address {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(address)
@@ -249,7 +253,7 @@ var _ genruntime.ConvertibleStatus = &PublicIPAddress_STATUS{}
 // ConvertStatusFrom populates our PublicIPAddress_STATUS from the provided source
 func (address *PublicIPAddress_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == address {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(address)
@@ -258,7 +262,7 @@ func (address *PublicIPAddress_STATUS) ConvertStatusFrom(source genruntime.Conve
 // ConvertStatusTo populates the provided destination from our PublicIPAddress_STATUS
 func (address *PublicIPAddress_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == address {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(address)

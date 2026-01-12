@@ -147,6 +147,7 @@ func (mapping InputSchemaMapping_STATUS) MarshalJSON() ([]byte, error) {
 	if mapping.Json != nil {
 		return json.Marshal(mapping.Json)
 	}
+
 	return nil, nil
 }
 

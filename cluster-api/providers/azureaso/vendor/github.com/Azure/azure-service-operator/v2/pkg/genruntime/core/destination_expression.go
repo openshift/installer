@@ -31,6 +31,6 @@ type DestinationExpression struct {
 	Value string `json:"value,omitempty"`
 }
 
-func (s DestinationExpression) String() string {
+func (s *DestinationExpression) String() string {
 	return fmt.Sprintf("Name: %q, Key: %q, Value: %q", s.Name, s.Key, s.Value)
 }

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network.frontdoor/v1api20220501
 ------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-05-01"
+
 WebApplicationFirewallPolicy: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (10 properties)
@@ -308,3 +309,4 @@ WebApplicationFirewallPolicy: Resource
     │       └── "Standard_AzureFrontDoor"
     ├── Tags: map[string]string
     └── Type: *string
+

@@ -6,7 +6,7 @@
 package genruntime
 
 import (
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -56,7 +56,7 @@ func GetVersionedSpec(metaObject ARMMetaObject, scheme *runtime.Scheme) (Convert
 func GetVersionedSpecFromGVK(metaObject ARMMetaObject, scheme *runtime.Scheme, gvk schema.GroupVersionKind) (ConvertibleSpec, error) {
 	rsrc, err := NewEmptyVersionedResourceFromGVK(scheme, gvk)
 	if err != nil {
-		return nil, errors.Wrap(err, "getting versioned spec")
+		return nil, eris.Wrap(err, "getting versioned spec")
 	}
 
 	if rsrc.GetObjectKind().GroupVersionKind() == metaObject.GetObjectKind().GroupVersionKind() {
@@ -68,7 +68,7 @@ func GetVersionedSpecFromGVK(metaObject ARMMetaObject, scheme *runtime.Scheme, g
 	spec := rsrc.GetSpec()
 	err = spec.ConvertSpecFrom(metaObject.GetSpec())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed conversion of spec")
+		return nil, eris.Wrap(err, "failed conversion of spec")
 	}
 
 	return spec, nil

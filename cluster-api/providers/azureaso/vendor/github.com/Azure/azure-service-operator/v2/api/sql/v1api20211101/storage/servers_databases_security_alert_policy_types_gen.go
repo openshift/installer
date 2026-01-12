@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -114,6 +114,10 @@ func (policy *ServersDatabasesSecurityAlertPolicy) NewEmptyStatus() genruntime.C
 
 // Owner returns the ResourceReference of the owner
 func (policy *ServersDatabasesSecurityAlertPolicy) Owner() *genruntime.ResourceReference {
+	if policy.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(policy.Spec)
 	return policy.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -130,7 +134,7 @@ func (policy *ServersDatabasesSecurityAlertPolicy) SetStatus(status genruntime.C
 	var st ServersDatabasesSecurityAlertPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	policy.Status = st
@@ -185,7 +189,7 @@ var _ genruntime.ConvertibleSpec = &ServersDatabasesSecurityAlertPolicy_Spec{}
 // ConvertSpecFrom populates our ServersDatabasesSecurityAlertPolicy_Spec from the provided source
 func (policy *ServersDatabasesSecurityAlertPolicy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(policy)
@@ -194,7 +198,7 @@ func (policy *ServersDatabasesSecurityAlertPolicy_Spec) ConvertSpecFrom(source g
 // ConvertSpecTo populates the provided destination from our ServersDatabasesSecurityAlertPolicy_Spec
 func (policy *ServersDatabasesSecurityAlertPolicy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(policy)
@@ -222,7 +226,7 @@ var _ genruntime.ConvertibleStatus = &ServersDatabasesSecurityAlertPolicy_STATUS
 // ConvertStatusFrom populates our ServersDatabasesSecurityAlertPolicy_STATUS from the provided source
 func (policy *ServersDatabasesSecurityAlertPolicy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(policy)
@@ -231,7 +235,7 @@ func (policy *ServersDatabasesSecurityAlertPolicy_STATUS) ConvertStatusFrom(sour
 // ConvertStatusTo populates the provided destination from our ServersDatabasesSecurityAlertPolicy_STATUS
 func (policy *ServersDatabasesSecurityAlertPolicy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == policy {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(policy)

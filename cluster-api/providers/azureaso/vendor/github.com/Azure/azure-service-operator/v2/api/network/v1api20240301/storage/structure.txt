@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2024-03-01"
+
 BastionHost: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (21 properties)
@@ -81,6 +82,7 @@ BastionHost: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Zones: string[]
+
 LoadBalancer: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (16 properties)
@@ -438,6 +440,7 @@ LoadBalancer: Resource
     │   └── Tier: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 LoadBalancersInboundNatRule: Resource
 ├── Owner: network/v1api20240301.LoadBalancer
 ├── Spec: Object (15 properties)
@@ -488,6 +491,7 @@ LoadBalancersInboundNatRule: Resource
     ├── Protocol: *string
     ├── ProvisioningState: *string
     └── Type: *string
+
 NatGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (12 properties)
@@ -537,6 +541,7 @@ NatGateway: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 NetworkInterface: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (19 properties)
@@ -696,6 +701,7 @@ NetworkInterface: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── VnetEncryptionSupported: *bool
     └── WorkloadType: *string
+
 NetworkSecurityGroup: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -731,6 +737,7 @@ NetworkSecurityGroup: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 NetworkSecurityGroupsSecurityRule: Resource
 ├── Owner: network/v1api20240301.NetworkSecurityGroup
 ├── Spec: Object (20 properties)
@@ -788,6 +795,7 @@ NetworkSecurityGroupsSecurityRule: Resource
     ├── SourcePortRange: *string
     ├── SourcePortRanges: string[]
     └── Type: *string
+
 PrivateEndpoint: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -909,6 +917,7 @@ PrivateEndpoint: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 PrivateEndpointsPrivateDnsZoneGroup: Resource
 ├── Owner: network/v1api20240301.PrivateEndpoint
 ├── Spec: Object (6 properties)
@@ -943,6 +952,7 @@ PrivateEndpointsPrivateDnsZoneGroup: Resource
     │       └── Ttl: *int
     ├── PropertyBag: genruntime.PropertyBag
     └── ProvisioningState: *string
+
 PrivateLinkService: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -1032,6 +1042,7 @@ PrivateLinkService: Resource
     └── Visibility: *Object (2 properties)
         ├── PropertyBag: genruntime.PropertyBag
         └── Subscriptions: string[]
+
 PublicIPAddress: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (22 properties)
@@ -1138,6 +1149,7 @@ PublicIPAddress: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 PublicIPPrefix: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -1211,6 +1223,7 @@ PublicIPPrefix: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 RouteTable: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -1237,6 +1250,7 @@ RouteTable: Resource
     ├── ResourceGuid: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 RouteTablesRoute: Resource
 ├── Owner: network/v1api20240301.RouteTable
 ├── Spec: Object (8 properties)
@@ -1263,6 +1277,7 @@ RouteTablesRoute: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── ProvisioningState: *string
     └── Type: *string
+
 VirtualNetwork: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (18 properties)
@@ -1345,6 +1360,7 @@ VirtualNetwork: Resource
     ├── ResourceGuid: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 VirtualNetworkGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (32 properties)
@@ -1638,6 +1654,7 @@ VirtualNetworkGateway: Resource
     │       └── PublicCertData: *string
     ├── VpnGatewayGeneration: *string
     └── VpnType: *string
+
 VirtualNetworksSubnet: Resource
 ├── Owner: network/v1api20240301.VirtualNetwork
 ├── Spec: Object (19 properties)
@@ -1749,6 +1766,7 @@ VirtualNetworksSubnet: Resource
     │   └── Service: *string
     ├── SharingScope: *string
     └── Type: *string
+
 VirtualNetworksVirtualNetworkPeering: Resource
 ├── Owner: network/v1api20240301.VirtualNetwork
 ├── Spec: Object (22 properties)
@@ -1832,5 +1850,8 @@ VirtualNetworksVirtualNetworkPeering: Resource
     ├── ResourceGuid: *string
     ├── Type: *string
     └── UseRemoteGateways: *bool
+
 augmentConversionForSubResource: Interface
+
 augmentConversionForSubResource_STATUS: Interface
+

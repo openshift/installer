@@ -11,7 +11,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 )
 
@@ -141,7 +141,7 @@ func (j *jsonProvider) FindStructFieldType(structType, fieldName string) (*types
 
 				typed, ok := inner.(map[string]v1.JSON)
 				if !ok {
-					return nil, errors.Errorf("unexpected actual type for map[string]v1.JSON")
+					return nil, eris.Errorf("unexpected actual type for map[string]v1.JSON")
 				}
 
 				var raw []byte

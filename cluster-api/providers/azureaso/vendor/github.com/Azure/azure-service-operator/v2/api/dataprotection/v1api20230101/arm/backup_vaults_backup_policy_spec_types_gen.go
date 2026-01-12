@@ -42,6 +42,7 @@ func (policy BaseBackupPolicy) MarshalJSON() ([]byte, error) {
 	if policy.BackupPolicy != nil {
 		return json.Marshal(policy.BackupPolicy)
 	}
+
 	return nil, nil
 }
 
@@ -94,9 +95,11 @@ func (rule BasePolicyRule) MarshalJSON() ([]byte, error) {
 	if rule.AzureBackup != nil {
 		return json.Marshal(rule.AzureBackup)
 	}
+
 	if rule.AzureRetention != nil {
 		return json.Marshal(rule.AzureRetention)
 	}
+
 	return nil, nil
 }
 
@@ -168,6 +171,7 @@ func (parameters BackupParameters) MarshalJSON() ([]byte, error) {
 	if parameters.AzureBackupParams != nil {
 		return json.Marshal(parameters.AzureBackupParams)
 	}
+
 	return nil, nil
 }
 
@@ -219,9 +223,11 @@ func (context TriggerContext) MarshalJSON() ([]byte, error) {
 	if context.Adhoc != nil {
 		return json.Marshal(context.Adhoc)
 	}
+
 	if context.Schedule != nil {
 		return json.Marshal(context.Schedule)
 	}
+
 	return nil, nil
 }
 
@@ -288,6 +294,7 @@ func (option DeleteOption) MarshalJSON() ([]byte, error) {
 	if option.AbsoluteDeleteOption != nil {
 		return json.Marshal(option.AbsoluteDeleteOption)
 	}
+
 	return nil, nil
 }
 
@@ -387,12 +394,15 @@ func (option CopyOption) MarshalJSON() ([]byte, error) {
 	if option.CopyOnExpiry != nil {
 		return json.Marshal(option.CopyOnExpiry)
 	}
+
 	if option.CustomCopy != nil {
 		return json.Marshal(option.CustomCopy)
 	}
+
 	if option.ImmediateCopy != nil {
 		return json.Marshal(option.ImmediateCopy)
 	}
+
 	return nil, nil
 }
 
@@ -466,6 +476,7 @@ func (criteria BackupCriteria) MarshalJSON() ([]byte, error) {
 	if criteria.ScheduleBasedBackupCriteria != nil {
 		return json.Marshal(criteria.ScheduleBasedBackupCriteria)
 	}
+
 	return nil, nil
 }
 

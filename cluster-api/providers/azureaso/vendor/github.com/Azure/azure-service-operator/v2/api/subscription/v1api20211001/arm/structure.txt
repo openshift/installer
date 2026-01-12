@@ -41,6 +41,7 @@ Alias_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 Alias_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (6 properties)
@@ -56,3 +57,4 @@ Alias_Spec: Object (2 properties)
     └── Workload: *Enum (2 values)
         ├── "DevTest"
         └── "Production"
+

@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	containerservice "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
@@ -48,7 +48,7 @@ func (ext *ManagedClustersAgentPoolExtension) PreReconcileCheck(
 	agentPool, ok := obj.(*containerservice.ManagedClustersAgentPool)
 	if !ok {
 		return extensions.PreReconcileCheckResult{},
-			errors.Errorf("cannot run on unknown resource type %T, expected *containerservice.ManagedCluster", obj)
+			eris.Errorf("cannot run on unknown resource type %T, expected *containerservice.ManagedCluster", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if

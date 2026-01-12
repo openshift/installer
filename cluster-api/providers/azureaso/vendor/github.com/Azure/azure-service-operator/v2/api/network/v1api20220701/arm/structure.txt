@@ -175,6 +175,7 @@ ApplicationGateway_STATUS_ApplicationGateway_SubResourceEmbedded: Object (9 prop
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 ApplicationGateway_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -603,6 +604,7 @@ ApplicationGateway_Spec: Object (6 properties)
 │       └── RuleSetVersion: *string
 ├── Tags: map[string]string
 └── Zones: string[]
+
 BastionHost_STATUS: Object (8 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -629,6 +631,7 @@ BastionHost_STATUS: Object (8 properties)
 │       └── "Standard"
 ├── Tags: map[string]string
 └── Type: *string
+
 BastionHost_Spec: Object (5 properties)
 ├── Location: *string
 ├── Name: string
@@ -655,6 +658,7 @@ BastionHost_Spec: Object (5 properties)
 │       ├── "Basic"
 │       └── "Standard"
 └── Tags: map[string]string
+
 DnsForwardingRuleSetsForwardingRule_STATUS: Object (6 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -691,6 +695,7 @@ DnsForwardingRuleSetsForwardingRule_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 DnsForwardingRuleSetsForwardingRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (4 properties)
@@ -702,6 +707,7 @@ DnsForwardingRuleSetsForwardingRule_Spec: Object (2 properties)
     └── TargetDnsServers: Object (2 properties)[]
         ├── IpAddress: *string
         └── Port: *int
+
 DnsForwardingRuleSetsVirtualNetworkLink_STATUS: Object (6 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -733,12 +739,14 @@ DnsForwardingRuleSetsVirtualNetworkLink_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 DnsForwardingRuleSetsVirtualNetworkLink_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── Metadata: map[string]string
     └── VirtualNetwork: *Object (1 property)
         └── Id: *string
+
 DnsForwardingRuleset_STATUS: Object (8 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -772,6 +780,7 @@ DnsForwardingRuleset_STATUS: Object (8 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 DnsForwardingRuleset_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -779,6 +788,7 @@ DnsForwardingRuleset_Spec: Object (4 properties)
 │   └── DnsResolverOutboundEndpoints: Object (1 property)[]
 │       └── Id: *string
 └── Tags: map[string]string
+
 DnsResolver_STATUS: Object (8 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -815,6 +825,7 @@ DnsResolver_STATUS: Object (8 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 DnsResolver_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -822,6 +833,7 @@ DnsResolver_Spec: Object (4 properties)
 │   └── VirtualNetwork: *Object (1 property)
 │       └── Id: *string
 └── Tags: map[string]string
+
 DnsResolversInboundEndpoint_STATUS: Object (8 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -860,6 +872,7 @@ DnsResolversInboundEndpoint_STATUS: Object (8 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 DnsResolversInboundEndpoint_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -872,6 +885,7 @@ DnsResolversInboundEndpoint_Spec: Object (4 properties)
 │       └── Subnet: *Object (1 property)
 │           └── Id: *string
 └── Tags: map[string]string
+
 DnsResolversOutboundEndpoint_STATUS: Object (8 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -905,6 +919,7 @@ DnsResolversOutboundEndpoint_STATUS: Object (8 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 DnsResolversOutboundEndpoint_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -912,6 +927,7 @@ DnsResolversOutboundEndpoint_Spec: Object (4 properties)
 │   └── Subnet: *Object (1 property)
 │       └── Id: *string
 └── Tags: map[string]string
+
 NatGateway_STATUS: Object (9 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -937,6 +953,7 @@ NatGateway_STATUS: Object (9 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 NatGateway_Spec: Object (6 properties)
 ├── Location: *string
 ├── Name: string
@@ -951,6 +968,7 @@ NatGateway_Spec: Object (6 properties)
 │       └── "Standard"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1022,6 +1040,7 @@ PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded: Object (8 properties
 │       └── Id: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 PrivateEndpoint_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1062,6 +1081,7 @@ PrivateEndpoint_Spec: Object (5 properties)
 │   └── Subnet: *Object (1 property)
 │       └── Id: *string
 └── Tags: map[string]string
+
 PrivateEndpointsPrivateDnsZoneGroup_STATUS: Object (4 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -1087,6 +1107,7 @@ PrivateEndpointsPrivateDnsZoneGroup_STATUS: Object (4 properties)
         ├── "Failed"
         ├── "Succeeded"
         └── "Updating"
+
 PrivateEndpointsPrivateDnsZoneGroup_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -1094,6 +1115,7 @@ PrivateEndpointsPrivateDnsZoneGroup_Spec: Object (2 properties)
         ├── Name: *string
         └── Properties: *Object (1 property)
             └── PrivateDnsZoneId: *string
+
 PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1145,6 +1167,7 @@ PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded: Object (8 prop
 │       └── Subscriptions: string[]
 ├── Tags: map[string]string
 └── Type: *string
+
 PrivateLinkService_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1175,6 +1198,7 @@ PrivateLinkService_Spec: Object (5 properties)
 │   └── Visibility: *Object (1 property)
 │       └── Subscriptions: string[]
 └── Tags: map[string]string
+
 PublicIPPrefix_STATUS: Object (10 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1216,6 +1240,7 @@ PublicIPPrefix_STATUS: Object (10 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 PublicIPPrefix_Spec: Object (7 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1243,3 +1268,4 @@ PublicIPPrefix_Spec: Object (7 properties)
 │       └── "Regional"
 ├── Tags: map[string]string
 └── Zones: string[]
+

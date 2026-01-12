@@ -11,7 +11,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -137,6 +137,10 @@ func (policy *Policy) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (policy *Policy) Owner() *genruntime.ResourceReference {
+	if policy.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(policy.Spec)
 	return policy.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -153,7 +157,7 @@ func (policy *Policy) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Policy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	policy.Status = st
@@ -170,7 +174,7 @@ func (policy *Policy) AssignProperties_From_Policy(source *storage.Policy) error
 	var spec Policy_Spec
 	err := spec.AssignProperties_From_Policy_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Policy_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Policy_Spec() to populate field Spec")
 	}
 	policy.Spec = spec
 
@@ -178,7 +182,7 @@ func (policy *Policy) AssignProperties_From_Policy(source *storage.Policy) error
 	var status Policy_STATUS
 	err = status.AssignProperties_From_Policy_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Policy_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Policy_STATUS() to populate field Status")
 	}
 	policy.Status = status
 
@@ -187,7 +191,7 @@ func (policy *Policy) AssignProperties_From_Policy(source *storage.Policy) error
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -205,7 +209,7 @@ func (policy *Policy) AssignProperties_To_Policy(destination *storage.Policy) er
 	var spec storage.Policy_Spec
 	err := policy.Spec.AssignProperties_To_Policy_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Policy_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Policy_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -213,7 +217,7 @@ func (policy *Policy) AssignProperties_To_Policy(destination *storage.Policy) er
 	var status storage.Policy_STATUS
 	err = policy.Status.AssignProperties_To_Policy_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Policy_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Policy_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -222,7 +226,7 @@ func (policy *Policy) AssignProperties_To_Policy(destination *storage.Policy) er
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -284,13 +288,13 @@ func (policy *Policy_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) er
 	src = &storage.Policy_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = policy.AssignProperties_From_Policy_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -308,13 +312,13 @@ func (policy *Policy_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec)
 	dst = &storage.Policy_Spec{}
 	err := policy.AssignProperties_To_Policy_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -333,7 +337,7 @@ func (policy *Policy_Spec) AssignProperties_From_Policy_Spec(source *storage.Pol
 		var operatorSpec PolicyOperatorSpec
 		err := operatorSpec.AssignProperties_From_PolicyOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PolicyOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_PolicyOperatorSpec() to populate field OperatorSpec")
 		}
 		policy.OperatorSpec = &operatorSpec
 	} else {
@@ -366,7 +370,7 @@ func (policy *Policy_Spec) AssignProperties_From_Policy_Spec(source *storage.Pol
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForPolicy_Spec); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -387,7 +391,7 @@ func (policy *Policy_Spec) AssignProperties_To_Policy_Spec(destination *storage.
 		var operatorSpec storage.PolicyOperatorSpec
 		err := policy.OperatorSpec.AssignProperties_To_PolicyOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PolicyOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_PolicyOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -420,7 +424,7 @@ func (policy *Policy_Spec) AssignProperties_To_Policy_Spec(destination *storage.
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForPolicy_Spec); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -453,13 +457,13 @@ func (policy *Policy_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStat
 	src = &storage.Policy_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = policy.AssignProperties_From_Policy_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -477,13 +481,13 @@ func (policy *Policy_STATUS) ConvertStatusTo(destination genruntime.ConvertibleS
 	dst = &storage.Policy_STATUS{}
 	err := policy.AssignProperties_To_Policy_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -524,7 +528,7 @@ func (policy *Policy_STATUS) AssignProperties_From_Policy_STATUS(source *storage
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -567,7 +571,7 @@ func (policy *Policy_STATUS) AssignProperties_To_Policy_STATUS(destination *stor
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -646,7 +650,7 @@ func (operator *PolicyOperatorSpec) AssignProperties_From_PolicyOperatorSpec(sou
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPolicyOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -707,7 +711,7 @@ func (operator *PolicyOperatorSpec) AssignProperties_To_PolicyOperatorSpec(desti
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForPolicyOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

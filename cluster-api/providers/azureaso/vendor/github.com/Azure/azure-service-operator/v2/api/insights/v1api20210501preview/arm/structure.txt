@@ -42,6 +42,7 @@ DiagnosticSetting_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 DiagnosticSetting_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (9 properties)
@@ -66,3 +67,4 @@ DiagnosticSetting_Spec: Object (2 properties)
     ├── ServiceBusRuleId: *string
     ├── StorageAccountId: *string
     └── WorkspaceId: *string
+

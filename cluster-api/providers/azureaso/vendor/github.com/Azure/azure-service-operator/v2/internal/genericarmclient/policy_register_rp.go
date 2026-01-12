@@ -64,11 +64,16 @@ func (r *rpRegistrationPolicy) Do(req *azpolicy.Request) (*http.Response, error)
 		return resp, err
 	}
 	var reqErr requestError
-	if err = runtime.UnmarshalAsJSON(resp, &reqErr); err != nil {
-		return resp, err
+	if unmarshalErr := runtime.UnmarshalAsJSON(resp, &reqErr); unmarshalErr != nil {
+		return resp, unmarshalErr
 	}
 	if reqErr.ServiceError == nil {
-		return resp, errors.New("missing error information")
+		// This is unexpected and likely due to Azure RPs failing to adhere to the expected
+		// error shape contract. The good news is that if this happens we know this isn't
+		// an unregistered RP because that API will have the right shape. We just return
+		// the resp/err directly in this case to let the caller deal with whatever the problem
+		// was as we know it wasn't unregistered RP.
+		return resp, err
 	}
 	if !strings.EqualFold(reqErr.ServiceError.Code, unregisteredRPCode) {
 		// not a 409 due to unregistered RP
@@ -138,7 +143,7 @@ func (client *providersOperations) Register(ctx context.Context, resourceProvide
 	}
 	// The linter doesn't realize that the response is closed in the course of
 	// the registerHandleResponse call below. Suppressing it as it is a false positive.
-	// nolint:bodyclose
+	//nolint:bodyclose
 	resp, err := client.p.Do(req)
 	if err != nil {
 		return providerResponse{}, err

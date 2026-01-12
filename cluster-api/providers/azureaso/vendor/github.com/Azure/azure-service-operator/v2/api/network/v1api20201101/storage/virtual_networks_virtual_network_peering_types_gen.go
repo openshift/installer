@@ -13,7 +13,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -138,6 +138,10 @@ func (peering *VirtualNetworksVirtualNetworkPeering) NewEmptyStatus() genruntime
 
 // Owner returns the ResourceReference of the owner
 func (peering *VirtualNetworksVirtualNetworkPeering) Owner() *genruntime.ResourceReference {
+	if peering.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(peering.Spec)
 	return peering.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -154,7 +158,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) SetStatus(status genruntime
 	var st VirtualNetworksVirtualNetworkPeering_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	peering.Status = st
@@ -171,7 +175,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) AssignProperties_From_Virtu
 	var spec VirtualNetworksVirtualNetworkPeering_Spec
 	err := spec.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec() to populate field Spec")
 	}
 	peering.Spec = spec
 
@@ -179,7 +183,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) AssignProperties_From_Virtu
 	var status VirtualNetworksVirtualNetworkPeering_STATUS
 	err = status.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS() to populate field Status")
 	}
 	peering.Status = status
 
@@ -188,7 +192,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) AssignProperties_From_Virtu
 	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering); ok {
 		err := augmentedPeering.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -206,7 +210,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) AssignProperties_To_Virtual
 	var spec v20240301s.VirtualNetworksVirtualNetworkPeering_Spec
 	err := peering.Spec.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -214,7 +218,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) AssignProperties_To_Virtual
 	var status v20240301s.VirtualNetworksVirtualNetworkPeering_STATUS
 	err = peering.Status.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -223,7 +227,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering) AssignProperties_To_Virtual
 	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering); ok {
 		err := augmentedPeering.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -296,13 +300,13 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertSpecFrom(source
 	src = &v20240301s.VirtualNetworksVirtualNetworkPeering_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -320,13 +324,13 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) ConvertSpecTo(destinat
 	dst = &v20240301s.VirtualNetworksVirtualNetworkPeering_Spec{}
 	err := peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -405,7 +409,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_From_
 		var operatorSpec VirtualNetworksVirtualNetworkPeeringOperatorSpec
 		err := operatorSpec.AssignProperties_From_VirtualNetworksVirtualNetworkPeeringOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeeringOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworksVirtualNetworkPeeringOperatorSpec() to populate field OperatorSpec")
 		}
 		peering.OperatorSpec = &operatorSpec
 	} else {
@@ -445,7 +449,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_From_
 		var remoteAddressSpace AddressSpace
 		err := remoteAddressSpace.AssignProperties_From_AddressSpace(source.RemoteAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AddressSpace() to populate field RemoteAddressSpace")
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace() to populate field RemoteAddressSpace")
 		}
 		peering.RemoteAddressSpace = &remoteAddressSpace
 	} else {
@@ -457,7 +461,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_From_
 		var remoteBgpCommunity VirtualNetworkBgpCommunities
 		err := remoteBgpCommunity.AssignProperties_From_VirtualNetworkBgpCommunities(source.RemoteBgpCommunities)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities() to populate field RemoteBgpCommunities")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities() to populate field RemoteBgpCommunities")
 		}
 		peering.RemoteBgpCommunities = &remoteBgpCommunity
 	} else {
@@ -476,12 +480,12 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_From_
 		var subResourceStash v20220701s.SubResource
 		err := subResourceStash.AssignProperties_From_SubResource(source.RemoteVirtualNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from RemoteVirtualNetwork")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field SubResourceStash from RemoteVirtualNetwork")
 		}
 		var remoteVirtualNetwork SubResource
 		err = remoteVirtualNetwork.AssignProperties_From_SubResource(&subResourceStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RemoteVirtualNetwork from SubResourceStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field RemoteVirtualNetwork from SubResourceStash")
 		}
 		peering.RemoteVirtualNetwork = &remoteVirtualNetwork
 	} else {
@@ -515,7 +519,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_From_
 	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering_Spec); ok {
 		err := augmentedPeering.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -568,7 +572,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var enableOnlyIPv6Peering bool
 		err := propertyBag.Pull("EnableOnlyIPv6Peering", &enableOnlyIPv6Peering)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'EnableOnlyIPv6Peering' from propertyBag")
+			return eris.Wrap(err, "pulling 'EnableOnlyIPv6Peering' from propertyBag")
 		}
 
 		destination.EnableOnlyIPv6Peering = &enableOnlyIPv6Peering
@@ -581,7 +585,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var localAddressSpace v20240301s.AddressSpace
 		err := propertyBag.Pull("LocalAddressSpace", &localAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'LocalAddressSpace' from propertyBag")
+			return eris.Wrap(err, "pulling 'LocalAddressSpace' from propertyBag")
 		}
 
 		destination.LocalAddressSpace = &localAddressSpace
@@ -594,7 +598,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var localSubnetName []string
 		err := propertyBag.Pull("LocalSubnetNames", &localSubnetName)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'LocalSubnetNames' from propertyBag")
+			return eris.Wrap(err, "pulling 'LocalSubnetNames' from propertyBag")
 		}
 
 		destination.LocalSubnetNames = localSubnetName
@@ -607,7 +611,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var localVirtualNetworkAddressSpace v20240301s.AddressSpace
 		err := propertyBag.Pull("LocalVirtualNetworkAddressSpace", &localVirtualNetworkAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'LocalVirtualNetworkAddressSpace' from propertyBag")
+			return eris.Wrap(err, "pulling 'LocalVirtualNetworkAddressSpace' from propertyBag")
 		}
 
 		destination.LocalVirtualNetworkAddressSpace = &localVirtualNetworkAddressSpace
@@ -620,7 +624,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var operatorSpec v20240301s.VirtualNetworksVirtualNetworkPeeringOperatorSpec
 		err := peering.OperatorSpec.AssignProperties_To_VirtualNetworksVirtualNetworkPeeringOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeeringOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworksVirtualNetworkPeeringOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -643,7 +647,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var peerCompleteVnet bool
 		err := propertyBag.Pull("PeerCompleteVnets", &peerCompleteVnet)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PeerCompleteVnets' from propertyBag")
+			return eris.Wrap(err, "pulling 'PeerCompleteVnets' from propertyBag")
 		}
 
 		destination.PeerCompleteVnets = &peerCompleteVnet
@@ -659,7 +663,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var peeringSyncLevel string
 		err := propertyBag.Pull("PeeringSyncLevel", &peeringSyncLevel)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PeeringSyncLevel' from propertyBag")
+			return eris.Wrap(err, "pulling 'PeeringSyncLevel' from propertyBag")
 		}
 
 		destination.PeeringSyncLevel = &peeringSyncLevel
@@ -672,7 +676,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var remoteAddressSpace v20240301s.AddressSpace
 		err := peering.RemoteAddressSpace.AssignProperties_To_AddressSpace(&remoteAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AddressSpace() to populate field RemoteAddressSpace")
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace() to populate field RemoteAddressSpace")
 		}
 		destination.RemoteAddressSpace = &remoteAddressSpace
 	} else {
@@ -684,7 +688,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var remoteBgpCommunity v20240301s.VirtualNetworkBgpCommunities
 		err := peering.RemoteBgpCommunities.AssignProperties_To_VirtualNetworkBgpCommunities(&remoteBgpCommunity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities() to populate field RemoteBgpCommunities")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities() to populate field RemoteBgpCommunities")
 		}
 		destination.RemoteBgpCommunities = &remoteBgpCommunity
 	} else {
@@ -696,7 +700,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var remoteSubnetName []string
 		err := propertyBag.Pull("RemoteSubnetNames", &remoteSubnetName)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'RemoteSubnetNames' from propertyBag")
+			return eris.Wrap(err, "pulling 'RemoteSubnetNames' from propertyBag")
 		}
 
 		destination.RemoteSubnetNames = remoteSubnetName
@@ -709,12 +713,12 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var subResourceStash v20220701s.SubResource
 		err := peering.RemoteVirtualNetwork.AssignProperties_To_SubResource(&subResourceStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from RemoteVirtualNetwork")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field SubResourceStash from RemoteVirtualNetwork")
 		}
 		var remoteVirtualNetwork v20240301s.SubResource
 		err = subResourceStash.AssignProperties_To_SubResource(&remoteVirtualNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RemoteVirtualNetwork from SubResourceStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field RemoteVirtualNetwork from SubResourceStash")
 		}
 		destination.RemoteVirtualNetwork = &remoteVirtualNetwork
 	} else {
@@ -726,7 +730,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 		var remoteVirtualNetworkAddressSpace v20240301s.AddressSpace
 		err := propertyBag.Pull("RemoteVirtualNetworkAddressSpace", &remoteVirtualNetworkAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'RemoteVirtualNetworkAddressSpace' from propertyBag")
+			return eris.Wrap(err, "pulling 'RemoteVirtualNetworkAddressSpace' from propertyBag")
 		}
 
 		destination.RemoteVirtualNetworkAddressSpace = &remoteVirtualNetworkAddressSpace
@@ -754,7 +758,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_Spec) AssignProperties_To_Vi
 	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering_Spec); ok {
 		err := augmentedPeering.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -797,13 +801,13 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) ConvertStatusFrom(so
 	src = &v20240301s.VirtualNetworksVirtualNetworkPeering_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = peering.AssignProperties_From_VirtualNetworksVirtualNetworkPeering_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -821,13 +825,13 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) ConvertStatusTo(dest
 	dst = &v20240301s.VirtualNetworksVirtualNetworkPeering_STATUS{}
 	err := peering.AssignProperties_To_VirtualNetworksVirtualNetworkPeering_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -935,7 +939,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_Fro
 		var remoteAddressSpace AddressSpace_STATUS
 		err := remoteAddressSpace.AssignProperties_From_AddressSpace_STATUS(source.RemoteAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AddressSpace_STATUS() to populate field RemoteAddressSpace")
+			return eris.Wrap(err, "calling AssignProperties_From_AddressSpace_STATUS() to populate field RemoteAddressSpace")
 		}
 		peering.RemoteAddressSpace = &remoteAddressSpace
 	} else {
@@ -947,7 +951,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_Fro
 		var remoteBgpCommunity VirtualNetworkBgpCommunities_STATUS
 		err := remoteBgpCommunity.AssignProperties_From_VirtualNetworkBgpCommunities_STATUS(source.RemoteBgpCommunities)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities_STATUS() to populate field RemoteBgpCommunities")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualNetworkBgpCommunities_STATUS() to populate field RemoteBgpCommunities")
 		}
 		peering.RemoteBgpCommunities = &remoteBgpCommunity
 	} else {
@@ -966,17 +970,17 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_Fro
 		var subResourceSTATUSStash v20240101s.SubResource_STATUS
 		err := subResourceSTATUSStash.AssignProperties_From_SubResource_STATUS(source.RemoteVirtualNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from RemoteVirtualNetwork")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash from RemoteVirtualNetwork")
 		}
 		var subResourceSTATUSStashLocal v20220701s.SubResource_STATUS
 		err = subResourceSTATUSStashLocal.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field SubResource_STATUSStash")
 		}
 		var remoteVirtualNetwork SubResource_STATUS
 		err = remoteVirtualNetwork.AssignProperties_From_SubResource_STATUS(&subResourceSTATUSStashLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field RemoteVirtualNetwork from SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field RemoteVirtualNetwork from SubResource_STATUSStash")
 		}
 		peering.RemoteVirtualNetwork = &remoteVirtualNetwork
 	} else {
@@ -1023,7 +1027,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_Fro
 	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering_STATUS); ok {
 		err := augmentedPeering.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1076,7 +1080,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var enableOnlyIPv6Peering bool
 		err := propertyBag.Pull("EnableOnlyIPv6Peering", &enableOnlyIPv6Peering)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'EnableOnlyIPv6Peering' from propertyBag")
+			return eris.Wrap(err, "pulling 'EnableOnlyIPv6Peering' from propertyBag")
 		}
 
 		destination.EnableOnlyIPv6Peering = &enableOnlyIPv6Peering
@@ -1095,7 +1099,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var localAddressSpace v20240301s.AddressSpace_STATUS
 		err := propertyBag.Pull("LocalAddressSpace", &localAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'LocalAddressSpace' from propertyBag")
+			return eris.Wrap(err, "pulling 'LocalAddressSpace' from propertyBag")
 		}
 
 		destination.LocalAddressSpace = &localAddressSpace
@@ -1108,7 +1112,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var localSubnetName []string
 		err := propertyBag.Pull("LocalSubnetNames", &localSubnetName)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'LocalSubnetNames' from propertyBag")
+			return eris.Wrap(err, "pulling 'LocalSubnetNames' from propertyBag")
 		}
 
 		destination.LocalSubnetNames = localSubnetName
@@ -1121,7 +1125,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var localVirtualNetworkAddressSpace v20240301s.AddressSpace_STATUS
 		err := propertyBag.Pull("LocalVirtualNetworkAddressSpace", &localVirtualNetworkAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'LocalVirtualNetworkAddressSpace' from propertyBag")
+			return eris.Wrap(err, "pulling 'LocalVirtualNetworkAddressSpace' from propertyBag")
 		}
 
 		destination.LocalVirtualNetworkAddressSpace = &localVirtualNetworkAddressSpace
@@ -1137,7 +1141,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var peerCompleteVnet bool
 		err := propertyBag.Pull("PeerCompleteVnets", &peerCompleteVnet)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PeerCompleteVnets' from propertyBag")
+			return eris.Wrap(err, "pulling 'PeerCompleteVnets' from propertyBag")
 		}
 
 		destination.PeerCompleteVnets = &peerCompleteVnet
@@ -1153,7 +1157,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var peeringSyncLevel string
 		err := propertyBag.Pull("PeeringSyncLevel", &peeringSyncLevel)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PeeringSyncLevel' from propertyBag")
+			return eris.Wrap(err, "pulling 'PeeringSyncLevel' from propertyBag")
 		}
 
 		destination.PeeringSyncLevel = &peeringSyncLevel
@@ -1169,7 +1173,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var remoteAddressSpace v20240301s.AddressSpace_STATUS
 		err := peering.RemoteAddressSpace.AssignProperties_To_AddressSpace_STATUS(&remoteAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AddressSpace_STATUS() to populate field RemoteAddressSpace")
+			return eris.Wrap(err, "calling AssignProperties_To_AddressSpace_STATUS() to populate field RemoteAddressSpace")
 		}
 		destination.RemoteAddressSpace = &remoteAddressSpace
 	} else {
@@ -1181,7 +1185,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var remoteBgpCommunity v20240301s.VirtualNetworkBgpCommunities_STATUS
 		err := peering.RemoteBgpCommunities.AssignProperties_To_VirtualNetworkBgpCommunities_STATUS(&remoteBgpCommunity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities_STATUS() to populate field RemoteBgpCommunities")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualNetworkBgpCommunities_STATUS() to populate field RemoteBgpCommunities")
 		}
 		destination.RemoteBgpCommunities = &remoteBgpCommunity
 	} else {
@@ -1193,7 +1197,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var remoteSubnetName []string
 		err := propertyBag.Pull("RemoteSubnetNames", &remoteSubnetName)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'RemoteSubnetNames' from propertyBag")
+			return eris.Wrap(err, "pulling 'RemoteSubnetNames' from propertyBag")
 		}
 
 		destination.RemoteSubnetNames = remoteSubnetName
@@ -1206,17 +1210,17 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var subResourceSTATUSStash v20220701s.SubResource_STATUS
 		err := peering.RemoteVirtualNetwork.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStash)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from RemoteVirtualNetwork")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash from RemoteVirtualNetwork")
 		}
 		var subResourceSTATUSStashLocal v20240101s.SubResource_STATUS
 		err = subResourceSTATUSStash.AssignProperties_To_SubResource_STATUS(&subResourceSTATUSStashLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field SubResource_STATUSStash")
 		}
 		var remoteVirtualNetwork v20240301s.SubResource_STATUS
 		err = subResourceSTATUSStashLocal.AssignProperties_To_SubResource_STATUS(&remoteVirtualNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field RemoteVirtualNetwork from SubResource_STATUSStash")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field RemoteVirtualNetwork from SubResource_STATUSStash")
 		}
 		destination.RemoteVirtualNetwork = &remoteVirtualNetwork
 	} else {
@@ -1228,7 +1232,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var remoteVirtualNetworkAddressSpace v20240301s.AddressSpace_STATUS
 		err := propertyBag.Pull("RemoteVirtualNetworkAddressSpace", &remoteVirtualNetworkAddressSpace)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'RemoteVirtualNetworkAddressSpace' from propertyBag")
+			return eris.Wrap(err, "pulling 'RemoteVirtualNetworkAddressSpace' from propertyBag")
 		}
 
 		destination.RemoteVirtualNetworkAddressSpace = &remoteVirtualNetworkAddressSpace
@@ -1241,7 +1245,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 		var remoteVirtualNetworkEncryption v20240301s.VirtualNetworkEncryption_STATUS
 		err := propertyBag.Pull("RemoteVirtualNetworkEncryption", &remoteVirtualNetworkEncryption)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'RemoteVirtualNetworkEncryption' from propertyBag")
+			return eris.Wrap(err, "pulling 'RemoteVirtualNetworkEncryption' from propertyBag")
 		}
 
 		destination.RemoteVirtualNetworkEncryption = &remoteVirtualNetworkEncryption
@@ -1275,7 +1279,7 @@ func (peering *VirtualNetworksVirtualNetworkPeering_STATUS) AssignProperties_To_
 	if augmentedPeering, ok := peeringAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeering_STATUS); ok {
 		err := augmentedPeering.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1354,7 +1358,7 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeeringOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1415,7 +1419,7 @@ func (operator *VirtualNetworksVirtualNetworkPeeringOperatorSpec) AssignProperti
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForVirtualNetworksVirtualNetworkPeeringOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

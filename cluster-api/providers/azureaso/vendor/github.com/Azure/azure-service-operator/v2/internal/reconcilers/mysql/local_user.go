@@ -9,12 +9,13 @@ import (
 	"context"
 	"database/sql"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 
 	asomysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1"
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	mysqlutil "github.com/Azure/azure-service-operator/v2/internal/util/mysql"
@@ -47,25 +48,25 @@ func (u *localUser) CreateOrUpdate(ctx context.Context) error {
 
 	password, err := secrets.LookupFromPtr(u.user.Spec.LocalUser.Password)
 	if err != nil {
-		return errors.Wrap(err, "failed to look up .spec.localUser.Password")
+		return eris.Wrap(err, "failed to look up .spec.localUser.Password")
 	}
 
 	// Create or update the user. Note that this updates password if it has changed
 	username := u.user.Spec.AzureName
 	err = mysqlutil.CreateOrUpdateUser(ctx, db, username, u.user.Spec.Hostname, password)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user")
+		return eris.Wrap(err, "failed to create user")
 	}
 
 	// Ensure that the privileges are set
 	err = mysqlutil.ReconcileUserServerPrivileges(ctx, db, username, u.user.Spec.Hostname, u.user.Spec.Privileges)
 	if err != nil {
-		return errors.Wrap(err, "ensuring server roles")
+		return eris.Wrap(err, "ensuring server roles")
 	}
 
 	err = mysqlutil.ReconcileUserDatabasePrivileges(ctx, db, username, u.user.Spec.Hostname, u.user.Spec.DatabasePrivileges)
 	if err != nil {
-		return errors.Wrap(err, "ensuring database roles")
+		return eris.Wrap(err, "ensuring database roles")
 	}
 
 	u.log.V(Status).Info("Successfully reconciled MySQLUser")
@@ -131,7 +132,7 @@ func (u *localUser) connectToDB(ctx context.Context, secrets genruntime.Resolved
 		var adminPassword string
 		adminPassword, err = secrets.LookupFromPtr(u.user.Spec.LocalUser.ServerAdminPassword)
 		if err != nil {
-			err = errors.Wrap(err, "failed to look up .spec.localUser.ServerAdminPassword")
+			err = eris.Wrap(err, "failed to look up .spec.localUser.ServerAdminPassword")
 			err = conditions.NewReadyConditionImpactingError(err, conditions.ConditionSeverityWarning, conditions.ReasonSecretNotFound)
 			return nil, err
 		}
@@ -140,7 +141,7 @@ func (u *localUser) connectToDB(ctx context.Context, secrets genruntime.Resolved
 
 		db, err = mysqlutil.ConnectToDB(ctx, serverFQDN, mysqlutil.SystemDatabase, mysqlutil.ServerPort, adminUser, adminPassword)
 		if err != nil {
-			return nil, errors.Wrapf(
+			return nil, eris.Wrapf(
 				err,
 				"failed to connect database. Server: %s, Database: %s, Port: %d, AdminUser: %s",
 				serverFQDN,

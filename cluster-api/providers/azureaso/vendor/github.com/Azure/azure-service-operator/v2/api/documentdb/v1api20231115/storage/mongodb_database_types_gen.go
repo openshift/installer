@@ -4,22 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources=mongodbdatabases,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources={mongodbdatabases/status,mongodbdatabases/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,28 @@ func (database *MongodbDatabase) GetConditions() conditions.Conditions {
 // SetConditions sets the conditions on the resource status
 func (database *MongodbDatabase) SetConditions(conditions conditions.Conditions) {
 	database.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &MongodbDatabase{}
+
+// ConvertFrom populates our MongodbDatabase from the provided hub MongodbDatabase
+func (database *MongodbDatabase) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.MongodbDatabase)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/MongodbDatabase but received %T instead", hub)
+	}
+
+	return database.AssignProperties_From_MongodbDatabase(source)
+}
+
+// ConvertTo populates the provided hub MongodbDatabase from our MongodbDatabase
+func (database *MongodbDatabase) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.MongodbDatabase)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/MongodbDatabase but received %T instead", hub)
+	}
+
+	return database.AssignProperties_To_MongodbDatabase(destination)
 }
 
 var _ configmaps.Exporter = &MongodbDatabase{}
@@ -115,6 +136,10 @@ func (database *MongodbDatabase) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (database *MongodbDatabase) Owner() *genruntime.ResourceReference {
+	if database.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(database.Spec)
 	return database.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,15 +156,82 @@ func (database *MongodbDatabase) SetStatus(status genruntime.ConvertibleStatus) 
 	var st MongodbDatabase_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	database.Status = st
 	return nil
 }
 
-// Hub marks that this MongodbDatabase is the hub type for conversion
-func (database *MongodbDatabase) Hub() {}
+// AssignProperties_From_MongodbDatabase populates our MongodbDatabase from the provided source MongodbDatabase
+func (database *MongodbDatabase) AssignProperties_From_MongodbDatabase(source *storage.MongodbDatabase) error {
+
+	// ObjectMeta
+	database.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec MongodbDatabase_Spec
+	err := spec.AssignProperties_From_MongodbDatabase_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_MongodbDatabase_Spec() to populate field Spec")
+	}
+	database.Spec = spec
+
+	// Status
+	var status MongodbDatabase_STATUS
+	err = status.AssignProperties_From_MongodbDatabase_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_MongodbDatabase_STATUS() to populate field Status")
+	}
+	database.Status = status
+
+	// Invoke the augmentConversionForMongodbDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForMongodbDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongodbDatabase populates the provided destination MongodbDatabase from our MongodbDatabase
+func (database *MongodbDatabase) AssignProperties_To_MongodbDatabase(destination *storage.MongodbDatabase) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *database.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.MongodbDatabase_Spec
+	err := database.Spec.AssignProperties_To_MongodbDatabase_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_MongodbDatabase_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.MongodbDatabase_STATUS
+	err = database.Status.AssignProperties_To_MongodbDatabase_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_MongodbDatabase_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForMongodbDatabase interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForMongodbDatabase); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (database *MongodbDatabase) OriginalGVK() *schema.GroupVersionKind {
@@ -159,6 +251,11 @@ type MongodbDatabaseList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []MongodbDatabase `json:"items"`
+}
+
+type augmentConversionForMongodbDatabase interface {
+	AssignPropertiesFrom(src *storage.MongodbDatabase) error
+	AssignPropertiesTo(dst *storage.MongodbDatabase) error
 }
 
 // Storage version of v1api20231115.MongodbDatabase_Spec
@@ -185,20 +282,212 @@ var _ genruntime.ConvertibleSpec = &MongodbDatabase_Spec{}
 
 // ConvertSpecFrom populates our MongodbDatabase_Spec from the provided source
 func (database *MongodbDatabase_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == database {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.MongodbDatabase_Spec)
+	if ok {
+		// Populate our instance from source
+		return database.AssignProperties_From_MongodbDatabase_Spec(src)
 	}
 
-	return source.ConvertSpecTo(database)
+	// Convert to an intermediate form
+	src = &storage.MongodbDatabase_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = database.AssignProperties_From_MongodbDatabase_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our MongodbDatabase_Spec
 func (database *MongodbDatabase_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == database {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.MongodbDatabase_Spec)
+	if ok {
+		// Populate destination from our instance
+		return database.AssignProperties_To_MongodbDatabase_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(database)
+	// Convert to an intermediate form
+	dst = &storage.MongodbDatabase_Spec{}
+	err := database.AssignProperties_To_MongodbDatabase_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_MongodbDatabase_Spec populates our MongodbDatabase_Spec from the provided source MongodbDatabase_Spec
+func (database *MongodbDatabase_Spec) AssignProperties_From_MongodbDatabase_Spec(source *storage.MongodbDatabase_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	database.AzureName = source.AzureName
+
+	// Location
+	database.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec MongodbDatabaseOperatorSpec
+		err := operatorSpec.AssignProperties_From_MongodbDatabaseOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongodbDatabaseOperatorSpec() to populate field OperatorSpec")
+		}
+		database.OperatorSpec = &operatorSpec
+	} else {
+		database.OperatorSpec = nil
+	}
+
+	// Options
+	if source.Options != nil {
+		var option CreateUpdateOptions
+		err := option.AssignProperties_From_CreateUpdateOptions(source.Options)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
+		}
+		database.Options = &option
+	} else {
+		database.Options = nil
+	}
+
+	// OriginalVersion
+	database.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		database.Owner = &owner
+	} else {
+		database.Owner = nil
+	}
+
+	// Resource
+	if source.Resource != nil {
+		var resource MongoDBDatabaseResource
+		err := resource.AssignProperties_From_MongoDBDatabaseResource(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongoDBDatabaseResource() to populate field Resource")
+		}
+		database.Resource = &resource
+	} else {
+		database.Resource = nil
+	}
+
+	// Tags
+	database.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabase_Spec interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForMongodbDatabase_Spec); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongodbDatabase_Spec populates the provided destination MongodbDatabase_Spec from our MongodbDatabase_Spec
+func (database *MongodbDatabase_Spec) AssignProperties_To_MongodbDatabase_Spec(destination *storage.MongodbDatabase_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// AzureName
+	destination.AzureName = database.AzureName
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(database.Location)
+
+	// OperatorSpec
+	if database.OperatorSpec != nil {
+		var operatorSpec storage.MongodbDatabaseOperatorSpec
+		err := database.OperatorSpec.AssignProperties_To_MongodbDatabaseOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongodbDatabaseOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// Options
+	if database.Options != nil {
+		var option storage.CreateUpdateOptions
+		err := database.Options.AssignProperties_To_CreateUpdateOptions(&option)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
+		}
+		destination.Options = &option
+	} else {
+		destination.Options = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = database.OriginalVersion
+
+	// Owner
+	if database.Owner != nil {
+		owner := database.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Resource
+	if database.Resource != nil {
+		var resource storage.MongoDBDatabaseResource
+		err := database.Resource.AssignProperties_To_MongoDBDatabaseResource(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongoDBDatabaseResource() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(database.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabase_Spec interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForMongodbDatabase_Spec); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.MongodbDatabase_STATUS
@@ -218,20 +507,194 @@ var _ genruntime.ConvertibleStatus = &MongodbDatabase_STATUS{}
 
 // ConvertStatusFrom populates our MongodbDatabase_STATUS from the provided source
 func (database *MongodbDatabase_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == database {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.MongodbDatabase_STATUS)
+	if ok {
+		// Populate our instance from source
+		return database.AssignProperties_From_MongodbDatabase_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(database)
+	// Convert to an intermediate form
+	src = &storage.MongodbDatabase_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = database.AssignProperties_From_MongodbDatabase_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our MongodbDatabase_STATUS
 func (database *MongodbDatabase_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == database {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.MongodbDatabase_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return database.AssignProperties_To_MongodbDatabase_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(database)
+	// Convert to an intermediate form
+	dst = &storage.MongodbDatabase_STATUS{}
+	err := database.AssignProperties_To_MongodbDatabase_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_MongodbDatabase_STATUS populates our MongodbDatabase_STATUS from the provided source MongodbDatabase_STATUS
+func (database *MongodbDatabase_STATUS) AssignProperties_From_MongodbDatabase_STATUS(source *storage.MongodbDatabase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	database.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	database.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	database.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	database.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Options
+	if source.Options != nil {
+		var option OptionsResource_STATUS
+		err := option.AssignProperties_From_OptionsResource_STATUS(source.Options)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_OptionsResource_STATUS() to populate field Options")
+		}
+		database.Options = &option
+	} else {
+		database.Options = nil
+	}
+
+	// Resource
+	if source.Resource != nil {
+		var resource MongoDBDatabaseGetProperties_Resource_STATUS
+		err := resource.AssignProperties_From_MongoDBDatabaseGetProperties_Resource_STATUS(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_MongoDBDatabaseGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		database.Resource = &resource
+	} else {
+		database.Resource = nil
+	}
+
+	// Tags
+	database.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	database.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		database.PropertyBag = propertyBag
+	} else {
+		database.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForMongodbDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongodbDatabase_STATUS populates the provided destination MongodbDatabase_STATUS from our MongodbDatabase_STATUS
+func (database *MongodbDatabase_STATUS) AssignProperties_To_MongodbDatabase_STATUS(destination *storage.MongodbDatabase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(database.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(database.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(database.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(database.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(database.Name)
+
+	// Options
+	if database.Options != nil {
+		var option storage.OptionsResource_STATUS
+		err := database.Options.AssignProperties_To_OptionsResource_STATUS(&option)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_OptionsResource_STATUS() to populate field Options")
+		}
+		destination.Options = &option
+	} else {
+		destination.Options = nil
+	}
+
+	// Resource
+	if database.Resource != nil {
+		var resource storage.MongoDBDatabaseGetProperties_Resource_STATUS
+		err := database.Resource.AssignProperties_To_MongoDBDatabaseGetProperties_Resource_STATUS(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_MongoDBDatabaseGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(database.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(database.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabase_STATUS interface (if implemented) to customize the conversion
+	var databaseAsAny any = database
+	if augmentedDatabase, ok := databaseAsAny.(augmentConversionForMongodbDatabase_STATUS); ok {
+		err := augmentedDatabase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForMongodbDatabase_Spec interface {
+	AssignPropertiesFrom(src *storage.MongodbDatabase_Spec) error
+	AssignPropertiesTo(dst *storage.MongodbDatabase_Spec) error
+}
+
+type augmentConversionForMongodbDatabase_STATUS interface {
+	AssignPropertiesFrom(src *storage.MongodbDatabase_STATUS) error
+	AssignPropertiesTo(dst *storage.MongodbDatabase_STATUS) error
 }
 
 // Storage version of v1api20231115.CreateUpdateOptions
@@ -241,6 +704,86 @@ type CreateUpdateOptions struct {
 	AutoscaleSettings *AutoscaleSettings     `json:"autoscaleSettings,omitempty"`
 	PropertyBag       genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	Throughput        *int                   `json:"throughput,omitempty"`
+}
+
+// AssignProperties_From_CreateUpdateOptions populates our CreateUpdateOptions from the provided source CreateUpdateOptions
+func (options *CreateUpdateOptions) AssignProperties_From_CreateUpdateOptions(source *storage.CreateUpdateOptions) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoscaleSettings
+	if source.AutoscaleSettings != nil {
+		var autoscaleSetting AutoscaleSettings
+		err := autoscaleSetting.AssignProperties_From_AutoscaleSettings(source.AutoscaleSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AutoscaleSettings() to populate field AutoscaleSettings")
+		}
+		options.AutoscaleSettings = &autoscaleSetting
+	} else {
+		options.AutoscaleSettings = nil
+	}
+
+	// Throughput
+	options.Throughput = genruntime.ClonePointerToInt(source.Throughput)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		options.PropertyBag = propertyBag
+	} else {
+		options.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCreateUpdateOptions interface (if implemented) to customize the conversion
+	var optionsAsAny any = options
+	if augmentedOptions, ok := optionsAsAny.(augmentConversionForCreateUpdateOptions); ok {
+		err := augmentedOptions.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CreateUpdateOptions populates the provided destination CreateUpdateOptions from our CreateUpdateOptions
+func (options *CreateUpdateOptions) AssignProperties_To_CreateUpdateOptions(destination *storage.CreateUpdateOptions) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(options.PropertyBag)
+
+	// AutoscaleSettings
+	if options.AutoscaleSettings != nil {
+		var autoscaleSetting storage.AutoscaleSettings
+		err := options.AutoscaleSettings.AssignProperties_To_AutoscaleSettings(&autoscaleSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AutoscaleSettings() to populate field AutoscaleSettings")
+		}
+		destination.AutoscaleSettings = &autoscaleSetting
+	} else {
+		destination.AutoscaleSettings = nil
+	}
+
+	// Throughput
+	destination.Throughput = genruntime.ClonePointerToInt(options.Throughput)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCreateUpdateOptions interface (if implemented) to customize the conversion
+	var optionsAsAny any = options
+	if augmentedOptions, ok := optionsAsAny.(augmentConversionForCreateUpdateOptions); ok {
+		err := augmentedOptions.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.MongoDBDatabaseGetProperties_Resource_STATUS
@@ -254,12 +797,248 @@ type MongoDBDatabaseGetProperties_Resource_STATUS struct {
 	Ts                *float64                      `json:"_ts,omitempty"`
 }
 
+// AssignProperties_From_MongoDBDatabaseGetProperties_Resource_STATUS populates our MongoDBDatabaseGetProperties_Resource_STATUS from the provided source MongoDBDatabaseGetProperties_Resource_STATUS
+func (resource *MongoDBDatabaseGetProperties_Resource_STATUS) AssignProperties_From_MongoDBDatabaseGetProperties_Resource_STATUS(source *storage.MongoDBDatabaseGetProperties_Resource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreateMode
+	resource.CreateMode = genruntime.ClonePointerToString(source.CreateMode)
+
+	// Etag
+	resource.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// RestoreParameters
+	if source.RestoreParameters != nil {
+		var restoreParameter RestoreParametersBase_STATUS
+		err := restoreParameter.AssignProperties_From_RestoreParametersBase_STATUS(source.RestoreParameters)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RestoreParametersBase_STATUS() to populate field RestoreParameters")
+		}
+		resource.RestoreParameters = &restoreParameter
+	} else {
+		resource.RestoreParameters = nil
+	}
+
+	// Rid
+	resource.Rid = genruntime.ClonePointerToString(source.Rid)
+
+	// Ts
+	if source.Ts != nil {
+		t := *source.Ts
+		resource.Ts = &t
+	} else {
+		resource.Ts = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoDBDatabaseGetProperties_Resource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForMongoDBDatabaseGetProperties_Resource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoDBDatabaseGetProperties_Resource_STATUS populates the provided destination MongoDBDatabaseGetProperties_Resource_STATUS from our MongoDBDatabaseGetProperties_Resource_STATUS
+func (resource *MongoDBDatabaseGetProperties_Resource_STATUS) AssignProperties_To_MongoDBDatabaseGetProperties_Resource_STATUS(destination *storage.MongoDBDatabaseGetProperties_Resource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// CreateMode
+	destination.CreateMode = genruntime.ClonePointerToString(resource.CreateMode)
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(resource.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// RestoreParameters
+	if resource.RestoreParameters != nil {
+		var restoreParameter storage.RestoreParametersBase_STATUS
+		err := resource.RestoreParameters.AssignProperties_To_RestoreParametersBase_STATUS(&restoreParameter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RestoreParametersBase_STATUS() to populate field RestoreParameters")
+		}
+		destination.RestoreParameters = &restoreParameter
+	} else {
+		destination.RestoreParameters = nil
+	}
+
+	// Rid
+	destination.Rid = genruntime.ClonePointerToString(resource.Rid)
+
+	// Ts
+	if resource.Ts != nil {
+		t := *resource.Ts
+		destination.Ts = &t
+	} else {
+		destination.Ts = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoDBDatabaseGetProperties_Resource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForMongoDBDatabaseGetProperties_Resource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.MongodbDatabaseOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type MongodbDatabaseOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_MongodbDatabaseOperatorSpec populates our MongodbDatabaseOperatorSpec from the provided source MongodbDatabaseOperatorSpec
+func (operator *MongodbDatabaseOperatorSpec) AssignProperties_From_MongodbDatabaseOperatorSpec(source *storage.MongodbDatabaseOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabaseOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForMongodbDatabaseOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongodbDatabaseOperatorSpec populates the provided destination MongodbDatabaseOperatorSpec from our MongodbDatabaseOperatorSpec
+func (operator *MongodbDatabaseOperatorSpec) AssignProperties_To_MongodbDatabaseOperatorSpec(destination *storage.MongodbDatabaseOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongodbDatabaseOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForMongodbDatabaseOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.MongoDBDatabaseResource
@@ -271,6 +1050,92 @@ type MongoDBDatabaseResource struct {
 	RestoreParameters *RestoreParametersBase `json:"restoreParameters,omitempty"`
 }
 
+// AssignProperties_From_MongoDBDatabaseResource populates our MongoDBDatabaseResource from the provided source MongoDBDatabaseResource
+func (resource *MongoDBDatabaseResource) AssignProperties_From_MongoDBDatabaseResource(source *storage.MongoDBDatabaseResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CreateMode
+	resource.CreateMode = genruntime.ClonePointerToString(source.CreateMode)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// RestoreParameters
+	if source.RestoreParameters != nil {
+		var restoreParameter RestoreParametersBase
+		err := restoreParameter.AssignProperties_From_RestoreParametersBase(source.RestoreParameters)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_RestoreParametersBase() to populate field RestoreParameters")
+		}
+		resource.RestoreParameters = &restoreParameter
+	} else {
+		resource.RestoreParameters = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoDBDatabaseResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForMongoDBDatabaseResource); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_MongoDBDatabaseResource populates the provided destination MongoDBDatabaseResource from our MongoDBDatabaseResource
+func (resource *MongoDBDatabaseResource) AssignProperties_To_MongoDBDatabaseResource(destination *storage.MongoDBDatabaseResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// CreateMode
+	destination.CreateMode = genruntime.ClonePointerToString(resource.CreateMode)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// RestoreParameters
+	if resource.RestoreParameters != nil {
+		var restoreParameter storage.RestoreParametersBase
+		err := resource.RestoreParameters.AssignProperties_To_RestoreParametersBase(&restoreParameter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_RestoreParametersBase() to populate field RestoreParameters")
+		}
+		destination.RestoreParameters = &restoreParameter
+	} else {
+		destination.RestoreParameters = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForMongoDBDatabaseResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForMongoDBDatabaseResource); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.OptionsResource_STATUS
 // Cosmos DB options resource object
 type OptionsResource_STATUS struct {
@@ -279,16 +1144,233 @@ type OptionsResource_STATUS struct {
 	Throughput        *int                      `json:"throughput,omitempty"`
 }
 
+// AssignProperties_From_OptionsResource_STATUS populates our OptionsResource_STATUS from the provided source OptionsResource_STATUS
+func (resource *OptionsResource_STATUS) AssignProperties_From_OptionsResource_STATUS(source *storage.OptionsResource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AutoscaleSettings
+	if source.AutoscaleSettings != nil {
+		var autoscaleSetting AutoscaleSettings_STATUS
+		err := autoscaleSetting.AssignProperties_From_AutoscaleSettings_STATUS(source.AutoscaleSettings)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_AutoscaleSettings_STATUS() to populate field AutoscaleSettings")
+		}
+		resource.AutoscaleSettings = &autoscaleSetting
+	} else {
+		resource.AutoscaleSettings = nil
+	}
+
+	// Throughput
+	resource.Throughput = genruntime.ClonePointerToInt(source.Throughput)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOptionsResource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForOptionsResource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_OptionsResource_STATUS populates the provided destination OptionsResource_STATUS from our OptionsResource_STATUS
+func (resource *OptionsResource_STATUS) AssignProperties_To_OptionsResource_STATUS(destination *storage.OptionsResource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// AutoscaleSettings
+	if resource.AutoscaleSettings != nil {
+		var autoscaleSetting storage.AutoscaleSettings_STATUS
+		err := resource.AutoscaleSettings.AssignProperties_To_AutoscaleSettings_STATUS(&autoscaleSetting)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_AutoscaleSettings_STATUS() to populate field AutoscaleSettings")
+		}
+		destination.AutoscaleSettings = &autoscaleSetting
+	} else {
+		destination.AutoscaleSettings = nil
+	}
+
+	// Throughput
+	destination.Throughput = genruntime.ClonePointerToInt(resource.Throughput)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForOptionsResource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForOptionsResource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForCreateUpdateOptions interface {
+	AssignPropertiesFrom(src *storage.CreateUpdateOptions) error
+	AssignPropertiesTo(dst *storage.CreateUpdateOptions) error
+}
+
+type augmentConversionForMongoDBDatabaseGetProperties_Resource_STATUS interface {
+	AssignPropertiesFrom(src *storage.MongoDBDatabaseGetProperties_Resource_STATUS) error
+	AssignPropertiesTo(dst *storage.MongoDBDatabaseGetProperties_Resource_STATUS) error
+}
+
+type augmentConversionForMongodbDatabaseOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.MongodbDatabaseOperatorSpec) error
+	AssignPropertiesTo(dst *storage.MongodbDatabaseOperatorSpec) error
+}
+
+type augmentConversionForMongoDBDatabaseResource interface {
+	AssignPropertiesFrom(src *storage.MongoDBDatabaseResource) error
+	AssignPropertiesTo(dst *storage.MongoDBDatabaseResource) error
+}
+
+type augmentConversionForOptionsResource_STATUS interface {
+	AssignPropertiesFrom(src *storage.OptionsResource_STATUS) error
+	AssignPropertiesTo(dst *storage.OptionsResource_STATUS) error
+}
+
 // Storage version of v1api20231115.AutoscaleSettings
 type AutoscaleSettings struct {
 	MaxThroughput *int                   `json:"maxThroughput,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
+// AssignProperties_From_AutoscaleSettings populates our AutoscaleSettings from the provided source AutoscaleSettings
+func (settings *AutoscaleSettings) AssignProperties_From_AutoscaleSettings(source *storage.AutoscaleSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// MaxThroughput
+	settings.MaxThroughput = genruntime.ClonePointerToInt(source.MaxThroughput)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoscaleSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAutoscaleSettings); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AutoscaleSettings populates the provided destination AutoscaleSettings from our AutoscaleSettings
+func (settings *AutoscaleSettings) AssignProperties_To_AutoscaleSettings(destination *storage.AutoscaleSettings) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// MaxThroughput
+	destination.MaxThroughput = genruntime.ClonePointerToInt(settings.MaxThroughput)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoscaleSettings interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAutoscaleSettings); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.AutoscaleSettings_STATUS
 type AutoscaleSettings_STATUS struct {
 	MaxThroughput *int                   `json:"maxThroughput,omitempty"`
 	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_AutoscaleSettings_STATUS populates our AutoscaleSettings_STATUS from the provided source AutoscaleSettings_STATUS
+func (settings *AutoscaleSettings_STATUS) AssignProperties_From_AutoscaleSettings_STATUS(source *storage.AutoscaleSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// MaxThroughput
+	settings.MaxThroughput = genruntime.ClonePointerToInt(source.MaxThroughput)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		settings.PropertyBag = propertyBag
+	} else {
+		settings.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoscaleSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAutoscaleSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_AutoscaleSettings_STATUS populates the provided destination AutoscaleSettings_STATUS from our AutoscaleSettings_STATUS
+func (settings *AutoscaleSettings_STATUS) AssignProperties_To_AutoscaleSettings_STATUS(destination *storage.AutoscaleSettings_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(settings.PropertyBag)
+
+	// MaxThroughput
+	destination.MaxThroughput = genruntime.ClonePointerToInt(settings.MaxThroughput)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAutoscaleSettings_STATUS interface (if implemented) to customize the conversion
+	var settingsAsAny any = settings
+	if augmentedSettings, ok := settingsAsAny.(augmentConversionForAutoscaleSettings_STATUS); ok {
+		err := augmentedSettings.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.RestoreParametersBase
@@ -299,12 +1381,196 @@ type RestoreParametersBase struct {
 	RestoreTimestampInUtc *string                `json:"restoreTimestampInUtc,omitempty"`
 }
 
+// AssignProperties_From_RestoreParametersBase populates our RestoreParametersBase from the provided source RestoreParametersBase
+func (base *RestoreParametersBase) AssignProperties_From_RestoreParametersBase(source *storage.RestoreParametersBase) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// RestoreSource
+	base.RestoreSource = genruntime.ClonePointerToString(source.RestoreSource)
+
+	// RestoreTimestampInUtc
+	base.RestoreTimestampInUtc = genruntime.ClonePointerToString(source.RestoreTimestampInUtc)
+
+	// RestoreWithTtlDisabled
+	if source.RestoreWithTtlDisabled != nil {
+		propertyBag.Add("RestoreWithTtlDisabled", *source.RestoreWithTtlDisabled)
+	} else {
+		propertyBag.Remove("RestoreWithTtlDisabled")
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		base.PropertyBag = propertyBag
+	} else {
+		base.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRestoreParametersBase interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForRestoreParametersBase); ok {
+		err := augmentedBase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RestoreParametersBase populates the provided destination RestoreParametersBase from our RestoreParametersBase
+func (base *RestoreParametersBase) AssignProperties_To_RestoreParametersBase(destination *storage.RestoreParametersBase) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(base.PropertyBag)
+
+	// RestoreSource
+	destination.RestoreSource = genruntime.ClonePointerToString(base.RestoreSource)
+
+	// RestoreTimestampInUtc
+	destination.RestoreTimestampInUtc = genruntime.ClonePointerToString(base.RestoreTimestampInUtc)
+
+	// RestoreWithTtlDisabled
+	if propertyBag.Contains("RestoreWithTtlDisabled") {
+		var restoreWithTtlDisabled bool
+		err := propertyBag.Pull("RestoreWithTtlDisabled", &restoreWithTtlDisabled)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'RestoreWithTtlDisabled' from propertyBag")
+		}
+
+		destination.RestoreWithTtlDisabled = &restoreWithTtlDisabled
+	} else {
+		destination.RestoreWithTtlDisabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRestoreParametersBase interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForRestoreParametersBase); ok {
+		err := augmentedBase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.RestoreParametersBase_STATUS
 // Parameters to indicate the information about the restore.
 type RestoreParametersBase_STATUS struct {
 	PropertyBag           genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	RestoreSource         *string                `json:"restoreSource,omitempty"`
 	RestoreTimestampInUtc *string                `json:"restoreTimestampInUtc,omitempty"`
+}
+
+// AssignProperties_From_RestoreParametersBase_STATUS populates our RestoreParametersBase_STATUS from the provided source RestoreParametersBase_STATUS
+func (base *RestoreParametersBase_STATUS) AssignProperties_From_RestoreParametersBase_STATUS(source *storage.RestoreParametersBase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// RestoreSource
+	base.RestoreSource = genruntime.ClonePointerToString(source.RestoreSource)
+
+	// RestoreTimestampInUtc
+	base.RestoreTimestampInUtc = genruntime.ClonePointerToString(source.RestoreTimestampInUtc)
+
+	// RestoreWithTtlDisabled
+	if source.RestoreWithTtlDisabled != nil {
+		propertyBag.Add("RestoreWithTtlDisabled", *source.RestoreWithTtlDisabled)
+	} else {
+		propertyBag.Remove("RestoreWithTtlDisabled")
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		base.PropertyBag = propertyBag
+	} else {
+		base.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRestoreParametersBase_STATUS interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForRestoreParametersBase_STATUS); ok {
+		err := augmentedBase.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_RestoreParametersBase_STATUS populates the provided destination RestoreParametersBase_STATUS from our RestoreParametersBase_STATUS
+func (base *RestoreParametersBase_STATUS) AssignProperties_To_RestoreParametersBase_STATUS(destination *storage.RestoreParametersBase_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(base.PropertyBag)
+
+	// RestoreSource
+	destination.RestoreSource = genruntime.ClonePointerToString(base.RestoreSource)
+
+	// RestoreTimestampInUtc
+	destination.RestoreTimestampInUtc = genruntime.ClonePointerToString(base.RestoreTimestampInUtc)
+
+	// RestoreWithTtlDisabled
+	if propertyBag.Contains("RestoreWithTtlDisabled") {
+		var restoreWithTtlDisabled bool
+		err := propertyBag.Pull("RestoreWithTtlDisabled", &restoreWithTtlDisabled)
+		if err != nil {
+			return eris.Wrap(err, "pulling 'RestoreWithTtlDisabled' from propertyBag")
+		}
+
+		destination.RestoreWithTtlDisabled = &restoreWithTtlDisabled
+	} else {
+		destination.RestoreWithTtlDisabled = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForRestoreParametersBase_STATUS interface (if implemented) to customize the conversion
+	var baseAsAny any = base
+	if augmentedBase, ok := baseAsAny.(augmentConversionForRestoreParametersBase_STATUS); ok {
+		err := augmentedBase.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAutoscaleSettings interface {
+	AssignPropertiesFrom(src *storage.AutoscaleSettings) error
+	AssignPropertiesTo(dst *storage.AutoscaleSettings) error
+}
+
+type augmentConversionForAutoscaleSettings_STATUS interface {
+	AssignPropertiesFrom(src *storage.AutoscaleSettings_STATUS) error
+	AssignPropertiesTo(dst *storage.AutoscaleSettings_STATUS) error
+}
+
+type augmentConversionForRestoreParametersBase interface {
+	AssignPropertiesFrom(src *storage.RestoreParametersBase) error
+	AssignPropertiesTo(dst *storage.RestoreParametersBase) error
+}
+
+type augmentConversionForRestoreParametersBase_STATUS interface {
+	AssignPropertiesFrom(src *storage.RestoreParametersBase_STATUS) error
+	AssignPropertiesTo(dst *storage.RestoreParametersBase_STATUS) error
 }
 
 func init() {
