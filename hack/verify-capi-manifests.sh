@@ -18,10 +18,35 @@ generate_capi_manifest() {
 	revision="$(jq '.Origin.Hash' "${info_path}" | sed 's|"||g')"
 
 	if [ "${provider}" = "azureaso" ]; then
-		# Just copy the CRD from upstream
-		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_${version}.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
-		echo "---" >>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
-		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_customresourcedefinitions_${version}.yaml" >>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
+		# Copy the operator YAML and filtered CRDs from upstream
+		# List of allowed ASO CRDs (matching cluster-api-provider-azure)
+		aso_crds=(
+			"resourcegroups.resources.azure.com"
+			"natgateways.network.azure.com"
+			"managedclusters.containerservice.azure.com"
+			"managedclustersagentpools.containerservice.azure.com"
+			"bastionhosts.network.azure.com"
+			"virtualnetworks.network.azure.com"
+			"virtualnetworkssubnets.network.azure.com"
+			"privateendpoints.network.azure.com"
+			"fleetsmembers.containerservice.azure.com"
+			"extensions.kubernetesconfiguration.azure.com"
+		)
+
+		# Build the yq filter for allowed CRD names
+		set +x
+		crd_filter=""
+		for crd_name in "${aso_crds[@]}"; do
+			crd_filter="${crd_filter}.metadata.name == \"${crd_name}\" or "
+		done
+		crd_filter="${crd_filter}false"  # Add false at the end to close the OR chain
+		set -x
+
+		# Download and filter CRDs (keeping webhooks and other non-CRD resources)
+		# We filter by selecting: (not a CRD) OR (CRD with allowed name)
+		curl -fSsL "https://github.com/Azure/azure-service-operator/releases/download/${version}/azureserviceoperator_customresourcedefinitions_${version}.yaml" | \
+		    yq e ". | select(.kind != \"CustomResourceDefinition\" or (.kind == \"CustomResourceDefinition\" and (${crd_filter})))" - \
+			>>"${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
 	elif [ "${provider}" = "openstackorc" ]; then
 		# Just copy the CRD from upstream
 		curl -fSsL "https://github.com/k-orc/openstack-resource-controller/releases/download/${version}/install.yaml" -o "${MANIFESTS_DIR}/${provider}-infrastructure-components.yaml"
@@ -64,6 +89,12 @@ if [ "$IS_CONTAINER" != "" ]; then
 	if ! command -v jq; then
 		curl -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 -o /usr/bin/jq
 		chmod u+x /usr/bin/jq
+	fi
+
+	# Install `yq` if not present
+	if ! command -v yq; then
+		curl -L https://github.com/mikefarah/yq/releases/download/v4.44.6/yq_linux_amd64 -o /usr/bin/yq
+		chmod u+x /usr/bin/yq
 	fi
 
 	# Silence git hints and advices
