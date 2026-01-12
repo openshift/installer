@@ -3,6 +3,7 @@ package gcp
 
 import (
 	"fmt"
+	"github.com/sirupsen/logrus"
 
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -130,8 +131,11 @@ func Machines(clusterID string, config *types.InstallConfig, pool *types.Machine
 func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, osImage string, azIdx int, role, userDataSecret string, credentialsMode types.CredentialsMode) (*machineapi.GCPMachineProviderSpec, error) {
 	az := mpool.Zones[azIdx]
 	if mpool.OSImage != nil {
+		logrus.Warnf("setting the osImage here")
 		osImage = fmt.Sprintf("projects/%s/global/images/%s", mpool.OSImage.Project, mpool.OSImage.Name)
 	}
+
+	logrus.Warnf("osImage is: %s", osImage)
 	network, subnetwork, err := getNetworks(platform, clusterID, role)
 	if err != nil {
 		return nil, err
@@ -172,7 +176,8 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 			Value:    tag.Value,
 		}
 	}
-	return &machineapi.GCPMachineProviderSpec{
+
+	m := &machineapi.GCPMachineProviderSpec{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "machine.openshift.io/v1beta1",
 			Kind:       "GCPMachineProviderSpec",
@@ -207,7 +212,11 @@ func provider(clusterID string, platform *gcp.Platform, mpool *gcp.MachinePool, 
 		OnHostMaintenance:      machineapi.GCPHostMaintenanceType(mpool.OnHostMaintenance),
 		Labels:                 labels,
 		ResourceManagerTags:    tags,
-	}, nil
+	}
+
+	logrus.Warnf("Machine provider spec: %+v", m)
+
+	return m, nil
 }
 
 // ConfigMasters assigns a set of load balancers to the given machines

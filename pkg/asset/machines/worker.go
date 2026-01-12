@@ -652,11 +652,13 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				}
 				mpool.Zones = azs
 			}
+			logrus.Warnf("GCP Machine Pool %+v", mpool)
 			pool.Platform.GCP = &mpool
 			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName)
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
+			logrus.Warnf("GCP Machine Sets %+v", sets)
 			for _, set := range sets {
 				machineSets = append(machineSets, set)
 			}

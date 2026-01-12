@@ -94,7 +94,7 @@ func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, ar
 		return field.NotFound(fldPath.Child("type"), family)
 	}
 
-	acceptedArmFamilies := sets.New("c4a", "t2a")
+	acceptedArmFamilies := sets.New("c4a", "n4a", "t2a")
 	if arch == types.ArchitectureARM64 && !acceptedArmFamilies.Has(family) {
 		return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedArmFamilies))
 	}
@@ -180,7 +180,12 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 	}
 
 	if arch != unknownArchitecture {
-		if typeArch := mapiutil.CPUArchitecture(instanceType); string(typeArch) != arch {
+		// FIXME: Don't commit this. It is a work around during a SPIKE
+		typeArch := mapiutil.CPUArchitecture(instanceType)
+		if strings.HasPrefix(instanceType, "n4a") {
+			typeArch = "arm64"
+		}
+		if string(typeArch) != arch {
 			errMsg := fmt.Sprintf("instance type architecture %s does not match specified architecture %s", typeArch, arch)
 			allErrs = append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, errMsg))
 		}
