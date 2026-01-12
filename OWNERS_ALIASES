@@ -150,6 +150,7 @@ aliases:
     - Roshan-R
     - PeaceRebel
     - angelcerveraroldan
+    - Rolv-Apneseth
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -176,6 +177,7 @@ aliases:
     - Roshan-R
     - PeaceRebel
     - angelcerveraroldan
+    - Rolv-Apneseth
   agent-reviewers:
     - andfasano
     - bfournie
