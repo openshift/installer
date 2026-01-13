@@ -37,7 +37,6 @@ import (
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
-	powervctypes "github.com/openshift/installer/pkg/types/powervc"
 	powervstypes "github.com/openshift/installer/pkg/types/powervs"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -119,7 +118,20 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 		// Note that the newline is required in order to be valid yaml.
 		cm.Data[cloudProviderConfigDataKey] = `[Global]
 `
-	case openstacktypes.Name, powervctypes.Name:
+		netStack := installConfig.Config.AWS.IPFamily
+		if netStack == awstypes.DualStackIPv6Primary {
+			cm.Data[cloudProviderConfigDataKey] = `[Global]
+NodeIPFamilies=ipv6
+NodeIPFamilies=ipv4
+`
+		}
+		if netStack == awstypes.DualStackIPv4Primary {
+			cm.Data[cloudProviderConfigDataKey] = `[Global]
+NodeIPFamilies=ipv4
+NodeIPFamilies=ipv6
+`
+		}
+	case openstacktypes.Name:
 		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(ctx, *installConfig.Config)
 		if err != nil {
 			return errors.Wrap(err, "failed to generate OpenStack provider config")

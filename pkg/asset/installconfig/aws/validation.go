@@ -10,6 +10,7 @@ import (
 	"sort"
 
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/ec2"
@@ -298,7 +299,6 @@ func (sdg *subnetDataGroups) From(ctx context.Context, meta *Metadata, providedS
 // validateSubnets ensures BYO subnets are valid.
 func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, config *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
-	networking := config.Networking
 	providedSubnets := config.AWS.VPC.Subnets
 	publish := config.Publish
 
@@ -329,8 +329,8 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, c
 	}
 
 	allErrs = append(allErrs, validateSharedSubnets(ctx, meta, fldPath)...)
-	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Private, networking.MachineNetwork)...)
-	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Public, networking.MachineNetwork)...)
+	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Private, config)...)
+	allErrs = append(allErrs, validateSubnetCIDR(fldPath, subnetDataGroups.Public, config)...)
 
 	if len(subnetsWithRole) > 0 {
 		allErrs = append(allErrs, validateSubnetRoles(fldPath, subnetsWithRole, subnetDataGroups, config)...)
@@ -514,16 +514,37 @@ func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *fiel
 	return allErrs
 }
 
-func validateSubnetCIDR(fldPath *field.Path, subnetDataGroup map[string]subnetData, networks []types.MachineNetworkEntry) field.ErrorList {
+func validateSubnetCIDR(fldPath *field.Path, subnetDataGroup map[string]subnetData, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 	for id, subnetData := range subnetDataGroup {
 		fp := fldPath.Index(subnetData.Idx)
+
+		// Validate IPv6 machine CIDR
+		for _, ipv6Association := range subnetData.IPv6CIDRAssociation {
+			ipv6CidrBlock := aws.StringValue(ipv6Association.Ipv6CidrBlock)
+
+			ipv6CidrState := ipv6Association.Ipv6CidrBlockState
+			if ipv6CidrState != nil && ipv6CidrState.State != ec2types.SubnetCidrBlockStateCodeAssociated {
+				allErrs = append(allErrs, field.Invalid(fp, id,
+					fmt.Sprintf("expect subnet IPv6 CIDR %s to be associated but found in state %s", ipv6CidrBlock, ipv6CidrState.State)))
+				continue
+			}
+
+			cidripv6, _, err := net.ParseCIDR(ipv6CidrBlock)
+			if err != nil {
+				allErrs = append(allErrs, field.Invalid(fp, id, err.Error()))
+				continue
+			}
+			allErrs = append(allErrs, validateMachineNetworksContainIP(fp, ic.IPv6MachineNetworks(), id, cidripv6)...)
+		}
+
+		// Validate IPv4 machine CIDR
 		cidr, _, err := net.ParseCIDR(subnetData.CIDR)
 		if err != nil {
 			allErrs = append(allErrs, field.Invalid(fp, id, err.Error()))
 			continue
 		}
-		allErrs = append(allErrs, validateMachineNetworksContainIP(fp, networks, id, cidr)...)
+		allErrs = append(allErrs, validateMachineNetworksContainIP(fp, ic.IPv4MachineNetworks(), id, cidr)...)
 	}
 	return allErrs
 }

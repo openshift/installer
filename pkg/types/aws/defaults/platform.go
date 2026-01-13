@@ -34,6 +34,16 @@ var (
 
 // SetPlatformDefaults sets the defaults for the platform.
 func SetPlatformDefaults(p *aws.Platform) {
+	if p.IPFamily == "" {
+		p.IPFamily = aws.IPv4
+	}
+
+	// Classic LBs do not support dual-stack so we set the default to NLB if unset.
+	if p.LBType == "" {
+		if p.IPFamily == aws.DualStackIPv4Primary || p.IPFamily == aws.DualStackIPv6Primary {
+			p.LBType = configv1.NLB
+		}
+	}
 }
 
 // InstanceTypes returns a list of instance types, in decreasing priority order, which we should use for a given

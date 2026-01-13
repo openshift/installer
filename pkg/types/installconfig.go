@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
+	utilnet "k8s.io/utils/net"
 
 	configv1 "github.com/openshift/api/config/v1"
 	features "github.com/openshift/api/features"
@@ -656,4 +657,26 @@ func (c *InstallConfig) PublicIngress() bool {
 		return true
 	}
 	return false
+}
+
+// IPv4MachineNetworks returns machine network entries of IPv4 family.
+func (c *InstallConfig) IPv4MachineNetworks() []MachineNetworkEntry {
+	var machineNetworks []MachineNetworkEntry
+	for _, network := range c.MachineNetwork {
+		if utilnet.IsIPv4CIDR(&network.CIDR.IPNet) {
+			machineNetworks = append(machineNetworks, network)
+		}
+	}
+	return machineNetworks
+}
+
+// IPv6MachineNetworks returns machine network entries of IPv6 family.
+func (c *InstallConfig) IPv6MachineNetworks() []MachineNetworkEntry {
+	var machineNetworks []MachineNetworkEntry
+	for _, network := range c.MachineNetwork {
+		if utilnet.IsIPv6CIDR(&network.CIDR.IPNet) {
+			machineNetworks = append(machineNetworks, network)
+		}
+	}
+	return machineNetworks
 }
