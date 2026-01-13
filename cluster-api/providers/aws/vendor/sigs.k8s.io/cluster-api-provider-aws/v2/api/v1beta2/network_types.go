@@ -23,6 +23,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
+	"k8s.io/utils/net"
 	"k8s.io/utils/ptr"
 )
 
@@ -217,6 +218,53 @@ var (
 	TargetGroupAttributeUnhealthyDrainingIntervalSeconds = "target_health_state.unhealthy.draining_interval_seconds"
 )
 
+// TargetGroupIPType defines the IP address type for target groups.
+type TargetGroupIPType string
+
+var (
+	// TargetGroupIPTypeIPv4 defines the IPv4 address type for target groups.
+	TargetGroupIPTypeIPv4 = TargetGroupIPType("ipv4")
+
+	// TargetGroupIPTypeIPv6 defines the IPv6 address type for target groups.
+	TargetGroupIPTypeIPv6 = TargetGroupIPType("ipv6")
+)
+
+func (t TargetGroupIPType) String() string {
+	return string(t)
+}
+
+// Equals returns true if two TargetGroupIPType are equal.
+func (t TargetGroupIPType) Equals(other *TargetGroupIPType) bool {
+	if other == nil {
+		return false
+	}
+
+	return t == *other
+}
+
+// LoadBalancerIPAddressType defines the IP address type for load balancers.
+type LoadBalancerIPAddressType string
+
+// Enum values for LoadBalancerIPAddressType
+const (
+	LoadBalancerIPAddressTypeIPv4                       = LoadBalancerIPAddressType("ipv4")
+	LoadBalancerIPAddressTypeDualstack                  = LoadBalancerIPAddressType("dualstack")
+	LoadBalancerIPAddressTypeDualstackWithoutPublicIPv4 = LoadBalancerIPAddressType("dualstack-without-public-ipv4")
+)
+
+func (t LoadBalancerIPAddressType) String() string {
+	return string(t)
+}
+
+// Equals returns true if two LoadBalancerIPAddressType are equal.
+func (t LoadBalancerIPAddressType) Equals(other *LoadBalancerIPAddressType) bool {
+	if other == nil {
+		return false
+	}
+
+	return t == *other
+}
+
 // LoadBalancerAttribute defines a set of attributes for a V2 load balancer.
 type LoadBalancerAttribute string
 
@@ -242,6 +290,8 @@ type TargetGroupSpec struct {
 	VpcID    string      `json:"vpcId"`
 	// HealthCheck is the elb health check associated with the load balancer.
 	HealthCheck *TargetGroupHealthCheck `json:"targetGroupHealthCheck,omitempty"`
+	// IPType is the IP address type for the target group.
+	IPType TargetGroupIPType `json:"ipType,omitempty"`
 }
 
 // Listener defines an AWS network load balancer listener.
@@ -297,6 +347,10 @@ type LoadBalancer struct {
 	// LoadBalancerType sets the type for a load balancer. The default type is classic.
 	// +kubebuilder:validation:Enum:=classic;elb;alb;nlb
 	LoadBalancerType LoadBalancerType `json:"loadBalancerType,omitempty"`
+
+	// LoadBalancerIPAddressType specifies the IP address type for the load balancer.
+	// +kubebuilder:validation:Enum:=ipv4;dualstack;dualstack-without-public-ipv4
+	LoadBalancerIPAddressType LoadBalancerIPAddressType `json:"loadBalancerIPAddressType,omitempty"`
 }
 
 // IsUnmanaged returns true if the Classic ELB is unmanaged.
@@ -367,7 +421,32 @@ type NetworkSpec struct {
 	// NodePortIngressRuleCidrBlocks is an optional set of CIDR blocks to allow traffic to nodes' NodePort services.
 	// If none are specified here, all IPs are allowed to connect.
 	// +optional
-	NodePortIngressRuleCidrBlocks []string `json:"nodePortIngressRuleCidrBlocks,omitempty"`
+	NodePortIngressRuleCidrBlocks CidrBlocks `json:"nodePortIngressRuleCidrBlocks,omitempty"`
+}
+
+// CidrBlocks defines a set of CIDR blocks.
+type CidrBlocks []string
+
+// IPv4CidrBlocks returns only IPv4 CIDR blocks.
+func (c CidrBlocks) IPv4CidrBlocks() CidrBlocks {
+	var cidrs CidrBlocks
+	for _, cidr := range c {
+		if net.IsIPv4CIDRString(cidr) {
+			cidrs = append(cidrs, cidr)
+		}
+	}
+	return cidrs
+}
+
+// IPv6CidrBlocks returns only IPv6 CIDR blocks.
+func (c CidrBlocks) IPv6CidrBlocks() CidrBlocks {
+	var cidrs CidrBlocks
+	for _, cidr := range c {
+		if net.IsIPv6CIDRString(cidr) {
+			cidrs = append(cidrs, cidr)
+		}
+	}
+	return cidrs
 }
 
 // IPv6 contains ipv6 specific settings for the network.
@@ -402,6 +481,7 @@ type IPAMPool struct {
 	// The netmask length of the IPv4 CIDR you want to allocate to VPC from
 	// an Amazon VPC IP Address Manager (IPAM) pool.
 	// Defaults to /16 for IPv4 if not specified.
+	// Defaults to /56 for IPv6 if not specified.
 	NetmaskLength int64 `json:"netmaskLength,omitempty"`
 }
 
@@ -432,8 +512,7 @@ type VPCSpec struct {
 	// Mutually exclusive with CidrBlock.
 	IPAMPool *IPAMPool `json:"ipamPool,omitempty"`
 
-	// IPv6 contains ipv6 specific settings for the network. Supported only in managed clusters.
-	// This field cannot be set on AWSCluster object.
+	// IPv6 contains ipv6 specific settings for the network.
 	// +optional
 	IPv6 *IPv6 `json:"ipv6,omitempty"`
 
@@ -561,7 +640,6 @@ type SubnetSpec struct {
 
 	// IPv6CidrBlock is the IPv6 CIDR block to be used when the provider creates a managed VPC.
 	// A subnet can have an IPv4 and an IPv6 address.
-	// IPv6 is only supported in managed clusters, this field cannot be set on AWSCluster object.
 	// +optional
 	IPv6CidrBlock string `json:"ipv6CidrBlock,omitempty"`
 
@@ -572,8 +650,7 @@ type SubnetSpec struct {
 	// +optional
 	IsPublic bool `json:"isPublic"`
 
-	// IsIPv6 defines the subnet as an IPv6 subnet. A subnet is IPv6 when it is associated with a VPC that has IPv6 enabled.
-	// IPv6 is only supported in managed clusters, this field cannot be set on AWSCluster object.
+	// IsIPv6 defines the subnet as an IPv6 subnet. A subnet is IPv6 when it is associated with an IPv6 CIDR.
 	// +optional
 	IsIPv6 bool `json:"isIpv6,omitempty"`
 

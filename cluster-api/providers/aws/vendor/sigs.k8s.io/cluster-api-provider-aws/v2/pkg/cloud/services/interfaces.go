@@ -37,6 +37,8 @@ const (
 	AnyIPv4CidrBlock = "0.0.0.0/0"
 	// AnyIPv6CidrBlock is the CIDR block to match all IPv6 addresses.
 	AnyIPv6CidrBlock = "::/0"
+	// NAT64CidrBlock is the well-known CIDR block defined in RFC6052 for NAT64.
+	NAT64CidrBlock = "64:ff9b::/96"
 )
 
 // ASGInterface encapsulates the methods exposed to the machinepool

@@ -48,6 +48,7 @@ func (src *AWSMachine) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.HostAffinity = restored.Spec.HostAffinity
 	dst.Spec.CapacityReservationPreference = restored.Spec.CapacityReservationPreference
 	dst.Spec.NetworkInterfaceType = restored.Spec.NetworkInterfaceType
+	dst.Spec.AssignPrimaryIPv6 = restored.Spec.AssignPrimaryIPv6
 	dst.Spec.CPUOptions = restored.Spec.CPUOptions
 	if restored.Spec.DynamicHostAllocation != nil {
 		dst.Spec.DynamicHostAllocation = restored.Spec.DynamicHostAllocation
@@ -120,6 +121,7 @@ func (r *AWSMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 	dst.Spec.Template.Spec.HostAffinity = restored.Spec.Template.Spec.HostAffinity
 	dst.Spec.Template.Spec.CapacityReservationPreference = restored.Spec.Template.Spec.CapacityReservationPreference
 	dst.Spec.Template.Spec.NetworkInterfaceType = restored.Spec.Template.Spec.NetworkInterfaceType
+	dst.Spec.Template.Spec.AssignPrimaryIPv6 = restored.Spec.Template.Spec.AssignPrimaryIPv6
 	dst.Spec.Template.Spec.CPUOptions = restored.Spec.Template.Spec.CPUOptions
 	if restored.Spec.Template.Spec.DynamicHostAllocation != nil {
 		dst.Spec.Template.Spec.DynamicHostAllocation = restored.Spec.Template.Spec.DynamicHostAllocation

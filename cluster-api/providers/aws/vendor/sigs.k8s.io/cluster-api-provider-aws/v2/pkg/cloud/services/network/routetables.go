@@ -145,7 +145,8 @@ func (s *Service) fixMismatchedRouting(specRoute *ec2.CreateRouteInput, currentR
 		if (currentRoute.DestinationIpv6CidrBlock != nil &&
 			aws.ToString(currentRoute.DestinationIpv6CidrBlock) == aws.ToString(specRoute.DestinationIpv6CidrBlock)) &&
 			((currentRoute.GatewayId != nil && aws.ToString(currentRoute.GatewayId) != aws.ToString(specRoute.GatewayId)) ||
-				(currentRoute.NatGatewayId != nil && aws.ToString(currentRoute.NatGatewayId) != aws.ToString(specRoute.NatGatewayId))) {
+				(currentRoute.NatGatewayId != nil && aws.ToString(currentRoute.NatGatewayId) != aws.ToString(specRoute.NatGatewayId)) ||
+				(currentRoute.EgressOnlyInternetGatewayId != nil && aws.ToString(currentRoute.EgressOnlyInternetGatewayId) != aws.ToString(specRoute.EgressOnlyInternetGatewayId))) {
 			input = &ec2.ReplaceRouteInput{
 				RouteTableId:                rt.RouteTableId,
 				DestinationIpv6CidrBlock:    specRoute.DestinationIpv6CidrBlock,
@@ -321,6 +322,13 @@ func (s *Service) getNatGatewayPrivateRoute(natGatewayID string) *ec2.CreateRout
 	}
 }
 
+func (s *Service) getNat64PrivateRoute(natGatewayID string) *ec2.CreateRouteInput {
+	return &ec2.CreateRouteInput{
+		NatGatewayId:             aws.String(natGatewayID),
+		DestinationIpv6CidrBlock: aws.String(services.NAT64CidrBlock),
+	}
+}
+
 func (s *Service) getEgressOnlyInternetGateway() *ec2.CreateRouteInput {
 	return &ec2.CreateRouteInput{
 		DestinationIpv6CidrBlock:    aws.String(services.AnyIPv6CidrBlock),
@@ -415,6 +423,11 @@ func (s *Service) getRoutesToPrivateSubnet(sn *infrav1.SubnetSpec) (routes []*ec
 
 	routes = append(routes, s.getNatGatewayPrivateRoute(natGatewayID))
 	if sn.IsIPv6 {
+		// We add the NAT64 route only if DNS64 is enabled for the subnet
+		// That is when the subnet is private and IPv6-only.
+		if sn.CidrBlock == "" {
+			routes = append(routes, s.getNat64PrivateRoute(natGatewayID))
+		}
 		if !s.scope.VPC().IsIPv6Enabled() {
 			// Safety net because EgressOnlyInternetGateway needs the ID from the ipv6 block.
 			// if, for whatever reason by this point that is not available, we don't want to

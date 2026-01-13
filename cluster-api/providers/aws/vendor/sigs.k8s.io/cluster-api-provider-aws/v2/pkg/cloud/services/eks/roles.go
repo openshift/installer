@@ -17,13 +17,13 @@ limitations under the License.
 package eks
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/smithy-go"
 	"github.com/pkg/errors"
-	"golang.org/x/net/context"
 
 	"sigs.k8s.io/cluster-api-provider-aws/v2/cmd/clusterawsadm/api/bootstrap/v1beta1"
 	ekscontrolplanev1 "sigs.k8s.io/cluster-api-provider-aws/v2/controlplane/eks/api/v1beta2"

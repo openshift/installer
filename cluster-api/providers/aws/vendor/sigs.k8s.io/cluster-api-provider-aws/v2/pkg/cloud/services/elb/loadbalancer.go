@@ -306,6 +306,67 @@ func (s *Service) getAdditionalTargetGroupHealthCheck(ln infrav1.AdditionalListe
 	return healthCheck
 }
 
+// getAPITargetGroupIPType determines the IP address type for the API server target group.
+// It examines the control plane subnets to determine if they have IPv4 and/or IPv6 addresses,
+// and can be overridden by the load balancer spec.
+func (s *Service) getAPITargetGroupIPType(lbSpec *infrav1.AWSLoadBalancerSpec) infrav1.TargetGroupIPType {
+	// If explicitly set in spec, use that value
+	if lbSpec != nil && lbSpec.TargetGroupIPType != nil {
+		return *lbSpec.TargetGroupIPType
+	}
+	// Otherwise, determine based on control plane subnet addresses
+	return s.getTargetGroupIPAddressType()
+}
+
+// getAdditionalTargetGroupIPType determines the IP address type for an additional listener's target group.
+// It examines the control plane subnets to determine if they have IPv4 and/or IPv6 addresses,
+// and can be overridden by the listener spec.
+func (s *Service) getAdditionalTargetGroupIPType(ln infrav1.AdditionalListenerSpec) infrav1.TargetGroupIPType {
+	// If explicitly set in spec, use that value
+	if ln.TargetGroupIPType != nil {
+		return *ln.TargetGroupIPType
+	}
+	// Otherwise, determine based on control plane subnet addresses
+	return s.getTargetGroupIPAddressType()
+}
+
+// getTargetGroupIPAddressType determines the target group IP address type based on
+// control plane subnet configurations. It examines whether subnets have IPv4 and/or
+// IPv6 CIDR blocks and returns the appropriate IP type.
+func (s *Service) getTargetGroupIPAddressType() infrav1.TargetGroupIPType {
+	// We should only consider IPv6 features if the user explicitly enables IPv6 capabilities
+	// Thus, return IPv4 as IPv4 is the only IP family in use.
+	if !s.scope.VPC().IsIPv6Enabled() {
+		return infrav1.TargetGroupIPTypeIPv4
+	}
+
+	var hasIPv4OnlySn, hasIPv6OnlySn bool
+
+	cpSubnets := s.scope.Subnets().FilterPrivate().FilterNonCni()
+	for _, subnet := range cpSubnets {
+		if subnet.CidrBlock != "" && !subnet.IsIPv6 {
+			hasIPv4OnlySn = true
+		}
+		if subnet.CidrBlock == "" && subnet.IsIPv6 {
+			hasIPv6OnlySn = true
+		}
+	}
+
+	// CP nodes may only have IPv4 addresses
+	if hasIPv4OnlySn {
+		return infrav1.TargetGroupIPTypeIPv4
+	}
+
+	// CP nodes may only have IPv6 addresses
+	if hasIPv6OnlySn {
+		return infrav1.TargetGroupIPTypeIPv6
+	}
+
+	// Cluster subnets include only dual-stack subnets
+	// CP nodes may have both address types. Prefer IPv6.
+	return infrav1.TargetGroupIPTypeIPv6
+}
+
 func (s *Service) getAPIServerLBSpec(ctx context.Context, elbName string, lbSpec *infrav1.AWSLoadBalancerSpec) (*infrav1.LoadBalancer, error) {
 	var securityGroupIDs []string
 	if lbSpec != nil {
@@ -335,6 +396,7 @@ func (s *Service) getAPIServerLBSpec(ctx context.Context, elbName string, lbSpec
 					Protocol:    infrav1.ELBProtocolTCP,
 					VpcID:       s.scope.VPC().ID,
 					HealthCheck: apiHealthCheck,
+					IPType:      s.getAPITargetGroupIPType(lbSpec),
 				},
 			},
 		},
@@ -360,6 +422,7 @@ func (s *Service) getAPIServerLBSpec(ctx context.Context, elbName string, lbSpec
 					Protocol:    listener.Protocol,
 					VpcID:       s.scope.VPC().ID,
 					HealthCheck: lnHealthCheck,
+					IPType:      s.getAdditionalTargetGroupIPType(listener),
 				},
 			})
 		}
@@ -1779,9 +1842,11 @@ func (s *Service) createTargetGroup(ctx context.Context, ln infrav1.Listener, ta
 		HealthyThresholdCount:      aws.Int32(infrav1.DefaultAPIServerHealthThresholdCount),
 		UnhealthyThresholdCount:    aws.Int32(infrav1.DefaultAPIServerUnhealthThresholdCount),
 	}
-	if s.scope.VPC().IsIPv6Enabled() {
-		targetGroupInput.IpAddressType = elbv2types.TargetGroupIpAddressTypeEnumIpv6
+
+	if ln.TargetGroup.IPType != "" {
+		targetGroupInput.IpAddressType = elbv2types.TargetGroupIpAddressTypeEnum(ln.TargetGroup.IPType)
 	}
+
 	if ln.TargetGroup.HealthCheck != nil {
 		targetGroupInput.HealthCheckEnabled = aws.Bool(true)
 
@@ -1840,6 +1905,8 @@ func fromSDKTypeToClassicELB(v *elbtypes.LoadBalancerDescription, attrs *elbtype
 		DNSName:          aws.ToString(v.DNSName),
 		Tags:             converters.ELBTagsToMap(tags),
 		LoadBalancerType: infrav1.LoadBalancerTypeClassic,
+		// Classic Load Balancers only support IPv4.
+		LoadBalancerIPAddressType: infrav1.LoadBalancerIPAddressTypeIPv4,
 	}
 
 	if attrs.ConnectionSettings != nil && attrs.ConnectionSettings.IdleTimeout != nil {
@@ -1859,14 +1926,24 @@ func fromSDKTypeToLB(v elbv2types.LoadBalancer, attrs []elbv2types.LoadBalancerA
 		availabilityZones[i] = aws.ToString(az.ZoneName)
 	}
 	res := &infrav1.LoadBalancer{
-		ARN:               aws.ToString(v.LoadBalancerArn),
-		Name:              aws.ToString(v.LoadBalancerName),
-		Scheme:            infrav1.ELBScheme(v.Scheme),
-		SubnetIDs:         subnetIDs,
-		SecurityGroupIDs:  v.SecurityGroups,
-		AvailabilityZones: availabilityZones,
-		DNSName:           aws.ToString(v.DNSName),
-		Tags:              converters.V2TagsToMap(tags),
+		ARN:                       aws.ToString(v.LoadBalancerArn),
+		Name:                      aws.ToString(v.LoadBalancerName),
+		Scheme:                    infrav1.ELBScheme(v.Scheme),
+		SubnetIDs:                 subnetIDs,
+		SecurityGroupIDs:          v.SecurityGroups,
+		AvailabilityZones:         availabilityZones,
+		DNSName:                   aws.ToString(v.DNSName),
+		Tags:                      converters.V2TagsToMap(tags),
+		LoadBalancerIPAddressType: infrav1.LoadBalancerIPAddressType(v.IpAddressType),
+	}
+
+	switch v.Type {
+	case elbv2types.LoadBalancerTypeEnumApplication:
+		res.LoadBalancerType = infrav1.LoadBalancerTypeALB
+	case elbv2types.LoadBalancerTypeEnumNetwork:
+		res.LoadBalancerType = infrav1.LoadBalancerTypeNLB
+	case elbv2types.LoadBalancerTypeEnumGateway:
+		res.LoadBalancerType = infrav1.LoadBalancerTypeELB
 	}
 
 	infraAttrs := make(map[string]*string, len(attrs))
@@ -1926,7 +2003,9 @@ func isSDKTargetGroupEqualToTargetGroup(elbTG *elbv2types.TargetGroup, spec *inf
 		// Not created by CAPA
 		return false
 	}
-	return int64(ptr.Deref(elbTG.Port, 0)) == spec.Port && strings.EqualFold(string(elbTG.Protocol), spec.Protocol.String())
+	return int64(ptr.Deref(elbTG.Port, 0)) == spec.Port &&
+		strings.EqualFold(string(elbTG.Protocol), spec.Protocol.String()) &&
+		strings.EqualFold(string(elbTG.IpAddressType), string(spec.IPType))
 }
 
 // SchemeToSDKScheme converts infrav1.ELBScheme to elbv2types.LoadBalancerSchemeEnum.

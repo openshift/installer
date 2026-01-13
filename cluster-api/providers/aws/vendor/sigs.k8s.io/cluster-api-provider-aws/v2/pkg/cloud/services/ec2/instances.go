@@ -120,6 +120,7 @@ func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope,
 		RootVolume:           scope.AWSMachine.Spec.RootVolume.DeepCopy(),
 		NonRootVolumes:       scope.AWSMachine.Spec.NonRootVolumes,
 		NetworkInterfaces:    scope.AWSMachine.Spec.NetworkInterfaces,
+		AssignPrimaryIPv6:    scope.AWSMachine.Spec.AssignPrimaryIPv6,
 		NetworkInterfaceType: scope.AWSMachine.Spec.NetworkInterfaceType,
 	}
 
@@ -594,21 +595,32 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 		for index, id := range i.NetworkInterfaces {
 			netInterfaces = append(netInterfaces, types.InstanceNetworkInterfaceSpecification{
 				NetworkInterfaceId: aws.String(id),
-				DeviceIndex:        aws.Int32(int32(index)), //nolint:gosec // disable G115
+				DeviceIndex:        aws.Int32(int32(index)),
 			})
 		}
 		netInterfaces[0].AssociatePublicIpAddress = i.PublicIPOnLaunch
 
 		input.NetworkInterfaces = netInterfaces
 	} else {
-		input.NetworkInterfaces = []types.InstanceNetworkInterfaceSpecification{
-			{
-				DeviceIndex:              aws.Int32(0),
-				SubnetId:                 aws.String(i.SubnetID),
-				Groups:                   i.SecurityGroupIDs,
-				AssociatePublicIpAddress: i.PublicIPOnLaunch,
-			},
+		netInterface := types.InstanceNetworkInterfaceSpecification{
+			DeviceIndex:              aws.Int32(0),
+			SubnetId:                 aws.String(i.SubnetID),
+			Groups:                   i.SecurityGroupIDs,
+			AssociatePublicIpAddress: i.PublicIPOnLaunch,
 		}
+
+		// When registering targets by instance ID for an IPv6 target group, the targets must have an assigned primary IPv6 address.
+		// Use case: registering controlplane nodes to the API LBs.
+		enablePrimaryIpv6, err := s.shouldEnablePrimaryIpv6(i)
+		if err != nil {
+			return nil, fmt.Errorf("failed to determine whether to enable PrimaryIpv6 for instance: %w", err)
+		}
+		if enablePrimaryIpv6 {
+			netInterface.PrimaryIpv6 = aws.Bool(true)
+			netInterface.Ipv6AddressCount = aws.Int32(1)
+		}
+
+		input.NetworkInterfaces = []types.InstanceNetworkInterfaceSpecification{netInterface}
 	}
 
 	if i.NetworkInterfaceType != "" {
@@ -709,11 +721,14 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 	if i.HostID != nil {
 		if i.HostAffinity == nil {
+			// If HostAffinity is not specified, default to "default" Affinity (flexible affinity).
 			i.HostAffinity = aws.String("default")
 		}
 		if len(i.Tenancy) == 0 {
+			// If Tenancy is not specified with HostID set, default to "host" Tenancy.
 			i.Tenancy = "host"
 		}
+
 		s.scope.Debug("Running instance with dedicated host placement",
 			"hostId", i.HostID,
 			"affinity", i.HostAffinity)
@@ -938,6 +953,7 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 		ImageID:      aws.ToString(v.ImageId),
 		SSHKeyName:   v.KeyName,
 		PrivateIP:    v.PrivateIpAddress,
+		IPv6Address:  v.Ipv6Address,
 		PublicIP:     v.PublicIpAddress,
 		ENASupport:   v.EnaSupport,
 		EBSOptimized: v.EbsOptimized,
@@ -963,6 +979,17 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 
 	i.Addresses = s.getInstanceAddresses(v)
 
+	// Extract whether the instance has a primary IPv6 assigned
+	for _, eni := range v.NetworkInterfaces {
+		for _, addr := range eni.Ipv6Addresses {
+			if aws.ToBool(addr.IsPrimaryIpv6) {
+				enabled := infrav1.PrimaryIPv6AssignmentStateEnabled
+				i.AssignPrimaryIPv6 = &enabled
+				break
+			}
+		}
+	}
+
 	i.AvailabilityZone = aws.ToString(v.Placement.AvailabilityZone)
 
 	for _, volume := range v.BlockDeviceMappings {
@@ -974,6 +1001,7 @@ func (s *Service) SDKToInstance(v types.Instance) (*infrav1.Instance, error) {
 		metadataOptions.HTTPEndpoint = infrav1.InstanceMetadataState(string(v.MetadataOptions.HttpEndpoint))
 		metadataOptions.HTTPTokens = infrav1.HTTPTokensState(string(v.MetadataOptions.HttpTokens))
 		metadataOptions.InstanceMetadataTags = infrav1.InstanceMetadataState(string(v.MetadataOptions.InstanceMetadataTags))
+		metadataOptions.HTTPProtocolIPv6 = infrav1.InstanceMetadataState(v.MetadataOptions.HttpProtocolIpv6)
 		if v.MetadataOptions.HttpPutResponseHopLimit != nil {
 			metadataOptions.HTTPPutResponseHopLimit = int64(*v.MetadataOptions.HttpPutResponseHopLimit)
 		}
@@ -1129,6 +1157,7 @@ func (s *Service) ModifyInstanceMetadataOptions(instanceID string, options *infr
 		HttpPutResponseHopLimit: utils.ToInt32Pointer(&options.HTTPPutResponseHopLimit),
 		HttpTokens:              types.HttpTokensState(string(options.HTTPTokens)),
 		InstanceMetadataTags:    types.InstanceMetadataTagsState(string(options.InstanceMetadataTags)),
+		HttpProtocolIpv6:        types.InstanceMetadataProtocolState(string(options.HTTPProtocolIPv6)),
 		InstanceId:              aws.String(instanceID),
 	}
 
@@ -1165,7 +1194,7 @@ func (s *Service) GetDHCPOptionSetDomainName(ec2client common.EC2API, vpcID *str
 
 	dhcpResult, err := ec2client.DescribeDhcpOptions(context.TODO(), dhcpInput)
 	if err != nil {
-		log.Error(err, "failed to describe DHCP Options Set", "DhcpOptionsSet", *dhcpResult)
+		log.Error(err, "failed to describe DHCP Options Set", "input", *dhcpInput)
 		return nil
 	}
 
@@ -1282,6 +1311,9 @@ func getInstanceMetadataOptionsRequest(metadataOptions *infrav1.InstanceMetadata
 	if metadataOptions.HTTPEndpoint != "" {
 		request.HttpEndpoint = types.InstanceMetadataEndpointState(string(metadataOptions.HTTPEndpoint))
 	}
+	if metadataOptions.HTTPProtocolIPv6 != "" {
+		request.HttpProtocolIpv6 = types.InstanceMetadataProtocolState(string(metadataOptions.HTTPProtocolIPv6))
+	}
 	if metadataOptions.HTTPPutResponseHopLimit != 0 {
 		request.HttpPutResponseHopLimit = utils.ToInt32Pointer(&metadataOptions.HTTPPutResponseHopLimit)
 	}
@@ -1377,4 +1409,66 @@ func getInstanceCPUOptionsRequest(cpuOptions infrav1.CPUOptions) *types.CpuOptio
 	}
 
 	return request
+}
+
+// shouldEnablePrimaryIpv6 determines whether to enable a primary IPv6 address for an instance.
+// This is required when registering instances by ID to IPv6 target groups.
+func (s *Service) shouldEnablePrimaryIpv6(i *infrav1.Instance) (bool, error) {
+	// We ignore IPv6-related fields when the users do not explicitly enable IPv6 capabilities.
+	if !s.scope.VPC().IsIPv6Enabled() {
+		// If explicitly set to enabled but VPC doesn't have IPv6 enabled, return error.
+		if i.AssignPrimaryIPv6 != nil && *i.AssignPrimaryIPv6 == infrav1.PrimaryIPv6AssignmentStateEnabled {
+			return false, fmt.Errorf("cannot enable PrimaryIPv6: VPC does not have IPv6 enabled")
+		}
+		return false, nil
+	}
+
+	// If explicitly set to disabled, return early without checking subnet capabilities.
+	if i.AssignPrimaryIPv6 != nil && *i.AssignPrimaryIPv6 == infrav1.PrimaryIPv6AssignmentStateDisabled {
+		return false, nil
+	}
+
+	// We need to know whether the subnet has IPv6 enabled (i.e. IPv6 only or dual-stack subnet)
+	var hasIPv6CIDR bool
+	if sn := s.scope.Subnets().FindByID(i.SubnetID); sn != nil {
+		hasIPv6CIDR = sn.IsIPv6
+	} else {
+		// Subnet not in cluster VPC, query AWS API
+		sns, err := s.getFilteredSubnets(types.Filter{Name: aws.String("subnet-id"), Values: []string{i.SubnetID}})
+		if err != nil {
+			return false, fmt.Errorf("failed to find subnet info with id %q for instance: %w", i.SubnetID, err)
+		}
+		if len(sns) == 0 {
+			return false, fmt.Errorf("expected subnet %q for instance to exist, but found none", i.SubnetID)
+		}
+		if len(sns) > 1 {
+			subnetIDs := make([]string, len(sns))
+			for i, sn := range sns {
+				subnetIDs[i] = aws.ToString(sn.SubnetId)
+			}
+			return false, fmt.Errorf("expected 1 subnet with id %q, but found %v: %v", i.SubnetID, len(sns), subnetIDs)
+		}
+
+		for _, set := range sns[0].Ipv6CidrBlockAssociationSet {
+			if set.Ipv6CidrBlockState.State == types.SubnetCidrBlockStateCodeAssociated {
+				hasIPv6CIDR = true
+				break
+			}
+		}
+	}
+
+	// We should use the value provided by the users if any.
+	if i.AssignPrimaryIPv6 != nil {
+		// If explicitly set to enabled, validate subnet has IPv6.
+		enablePrimaryIPv6 := *i.AssignPrimaryIPv6 == infrav1.PrimaryIPv6AssignmentStateEnabled
+		if enablePrimaryIPv6 && !hasIPv6CIDR {
+			return false, fmt.Errorf("cannot enable PrimaryIPv6: subnet %s does not have IPv6 CIDR block", i.SubnetID)
+		}
+		return enablePrimaryIPv6, nil
+	}
+
+	// Otherwise, we define the default behavior as follows:
+	// - disabled if subnet is ipv4 only
+	// - enabled if subnet is ipv6 only or dual-stack
+	return hasIPv6CIDR, nil
 }
