@@ -35,7 +35,7 @@ var (
 	}
 
 	// awsDedicatedHostNamePattern is a regex expression that defines the dedicated host id format.
-	awsDedicatedHostNamePattern = regexp.MustCompile(`^h-[0-9a-f]{17}$`)
+	awsDedicatedHostNamePattern = regexp.MustCompile(`^h-([0-9a-f]{8}|[0-9a-f]{17})$`)
 )
 
 // AWS has a limit of 16 security groups. See:
@@ -94,7 +94,7 @@ func validateHostPlacement(p *aws.MachinePool, fldPath *field.Path) field.ErrorL
 				if len(host.ID) == 0 {
 					allErrs = append(allErrs, field.Required(hostPath.Child("id"), "a hostID must be specified when configuring 'dedicatedHost'"))
 				} else if !awsDedicatedHostNamePattern.MatchString(host.ID) {
-					allErrs = append(allErrs, field.Invalid(hostPath.Child("id"), host.ID, "id must start with 'h-' followed by 17 lowercase hexadecimal characters (0-9 and a-f)"))
+					allErrs = append(allErrs, field.Invalid(hostPath.Child("id"), host.ID, "id must start with 'h-' followed by 8 or 17 lowercase hexadecimal characters (0-9 and a-f)"))
 				}
 			}
 		}

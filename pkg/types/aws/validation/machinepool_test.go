@@ -270,7 +270,44 @@ func TestValidateMachinePool(t *testing.T) {
 					},
 				},
 			},
-			expected: `^test-path.hostPlacement.dedicatedHost\[0\].id: Invalid value: "h-09DCFABC": id must start with 'h-' followed by 17 lowercase hexadecimal characters \(0-9 and a-f\)$`,
+			expected: `^test-path.hostPlacement.dedicatedHost\[0\].id: Invalid value: "h-09DCFABC": id must start with 'h-' followed by 8 or 17 lowercase hexadecimal characters \(0-9 and a-f\)$`,
+		},
+		{
+			name: "valid dedicated host - 8 character format",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-1a2b3c4d"},
+					},
+				},
+			},
+		},
+		{
+			name: "valid dedicated host - 8 character format with zone",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID:   "h-9876abcd",
+							Zone: "us-east-1a",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid dedicated host - wrong length (not 8 or 17)",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-12345"},
+					},
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost\[0\].id: Invalid value: "h-12345": id must start with 'h-' followed by 8 or 17 lowercase hexadecimal characters \(0-9 and a-f\)$`,
 		},
 		{
 			name: "valid dedicated host with zone specified",
