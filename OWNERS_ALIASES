@@ -149,6 +149,7 @@ aliases:
     - joelcapitao
     - Roshan-R
     - PeaceRebel
+    - angelcerveraroldan
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -174,6 +175,7 @@ aliases:
     - joelcapitao
     - Roshan-R
     - PeaceRebel
+    - angelcerveraroldan
   agent-reviewers:
     - andfasano
     - bfournie
