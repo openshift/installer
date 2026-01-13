@@ -94,7 +94,7 @@ func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, ar
 		return field.NotFound(fldPath.Child("type"), family)
 	}
 
-	acceptedArmFamilies := sets.New("c4a", "t2a")
+	acceptedArmFamilies := sets.New("c4a", "n4a", "t2a")
 	if arch == types.ArchitectureARM64 && !acceptedArmFamilies.Has(family) {
 		return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedArmFamilies))
 	}
