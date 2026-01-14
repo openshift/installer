@@ -11,3 +11,4 @@ Type=oneshot
 # and now, back to our regularly scheduled programming...
 ExecStart=/usr/bin/echo "Node image overlay complete; switching back to multi-user.target"
 ExecStart=/usr/bin/systemctl --no-block isolate multi-user.target
+KillMode=none
