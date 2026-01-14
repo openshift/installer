@@ -762,76 +762,59 @@ func TestAzureClusterName(t *testing.T) {
 			valid:       true,
 		},
 		{
-			name:        "cluster name containing azure",
+			name:        "cluster name is exactly azure",
+			clusterName: "azure",
+			valid:       false,
+			expected:    `cluster name must not be the reserved word "azure"`,
+		},
+		{
+			name:        "cluster name containing azure as substring",
 			clusterName: "myazure-cluster",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "azure"`,
+			valid:       true,
 		},
 		{
-			name:        "cluster name containing office",
+			name:        "cluster name is exactly office",
+			clusterName: "office",
+			valid:       false,
+			expected:    `cluster name must not be the reserved word "office"`,
+		},
+		{
+			name:        "cluster name containing office as substring",
 			clusterName: "office-test",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "office"`,
+			valid:       true,
 		},
 		{
-			name:        "cluster name containing office365",
+			name:        "cluster name is exactly office365",
+			clusterName: "office365",
+			valid:       false,
+			expected:    `cluster name must not be the reserved word "office365"`,
+		},
+		{
+			name:        "cluster name containing office365 as substring",
 			clusterName: "office365-app",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "office365"`,
+			valid:       true,
 		},
 		{
-			name:        "cluster name containing exchange",
-			clusterName: "exchange-mail",
+			name:        "cluster name is exactly access",
+			clusterName: "access",
 			valid:       false,
-			expected:    `cluster name must not contain the reserved word "exchange"`,
+			expected:    `cluster name must not be the reserved word "access"`,
 		},
 		{
-			name:        "cluster name containing outlook",
-			clusterName: "test-outlook",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "outlook"`,
-		},
-		{
-			name:        "cluster name containing sharepoint",
-			clusterName: "sharepoint-app",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "sharepoint"`,
-		},
-		{
-			name:        "cluster name containing xbox",
-			clusterName: "xbox-gaming",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "xbox"`,
-		},
-		{
-			name:        "cluster name containing o365 uppercase",
-			clusterName: "my-O365-cluster",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "o365"`,
-		},
-		{
-			name:        "cluster name containing dotnet",
-			clusterName: "dotnet-app",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "dotnet"`,
-		},
-		{
-			name:        "cluster name containing visualstudio",
-			clusterName: "visualstudio-env",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "visualstudio"`,
-		},
-		{
-			name:        "cluster name containing access",
+			name:        "cluster name containing access as substring",
 			clusterName: "myaccess-portal",
-			valid:       false,
-			expected:    `cluster name must not contain the reserved word "access"`,
+			valid:       true,
 		},
 		{
-			name:        "cluster name containing bing",
-			clusterName: "bing-search",
+			name:        "cluster name is exactly xbox",
+			clusterName: "xbox",
 			valid:       false,
-			expected:    `cluster name must not contain the reserved word "bing"`,
+			expected:    `cluster name must not be the reserved word "xbox"`,
+		},
+		{
+			name:        "cluster name containing xbox as substring",
+			clusterName: "xbox-gaming",
+			valid:       true,
 		},
 	}
 	for _, tc := range cases {
@@ -848,3 +831,4 @@ func TestAzureClusterName(t *testing.T) {
 		})
 	}
 }
+

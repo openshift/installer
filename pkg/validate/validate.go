@@ -154,33 +154,33 @@ func GCPClusterName(v string) error {
 // with ReservedResourceName or DomainNameLabelReserved errors.
 // See: https://learn.microsoft.com/en-us/azure/azure-resource-manager/troubleshooting/error-reserved-resource-name
 func AzureClusterName(v string) error {
-	upperName := strings.ToUpper(v)
+        upperName := strings.ToUpper(v)
 
-	// Words that are completely reserved (cannot be used as whole word or substring)
-	// Ordered by length (longest first) to match more specific words before generic ones
-	completelyReservedWords := []string{
-		"APP_GLOBALRESOURCES", "APP_LOCALRESOURCES", "APP_WEBREFERENCES", "VISUALSTUDIO",
-		"APP_BROWSERS", "APP_THEMES", "WEB.CONFIG", "SHAREPOINT", "POWERPOINT",
-		"APP_CODE", "APP_DATA", "OFFICE365", "BIZSPARK", "EXCHANGE", "FOREFRONT",
-		"HOLOLENS", "ONEDRIVE", "ONENOTE", "BIZTALK", "CORTANA", "DIRECTX",
-		"DYNAMICS", "OUTLOOK", "DOTNET", "ACCESS", "GROOVE", "HYPERV", "KINECT",
-		"OFFICE", "AZURE", "EXCEL", "SKYPE", "VISIO", "BING", "LYNC",
-		"MSDN", "O365", "XBOX",
-	}
+        // Words that are completely reserved (cannot be used as whole word)
+        // These words are forbidden only when used as the complete cluster name
+        completelyReservedWords := []string{
+                "ACCESS", "APP_CODE", "APP_THEMES", "APP_DATA", "APP_GLOBALRESOURCES",
+                "APP_LOCALRESOURCES", "APP_WEBREFERENCES", "APP_BROWSERS", "AZURE", "BING",
+                "BIZSPARK", "BIZTALK", "CORTANA", "DIRECTX", "DOTNET", "DYNAMICS",
+                "EXCEL", "EXCHANGE", "FOREFRONT", "GROOVE", "HOLOLENS", "HYPERV",
+                "KINECT", "LYNC", "MSDN", "O365", "OFFICE", "OFFICE365",
+                "ONEDRIVE", "ONENOTE", "OUTLOOK", "POWERPOINT", "SHAREPOINT", "SKYPE",
+                "VISIO", "VISUALSTUDIO", "WEB.CONFIG", "XBOX",
+        }
 
-	for _, reserved := range completelyReservedWords {
-		if strings.Contains(upperName, reserved) {
-			return fmt.Errorf("cluster name must not contain the reserved word %q", strings.ToLower(reserved))
-		}
-	}
+        for _, reserved := range completelyReservedWords {
+                if upperName == reserved {
+                        return fmt.Errorf("cluster name must not be the reserved word %q", strings.ToLower(reserved))
+                }
+        }
 
-	// Words that cannot be used as whole word or substring
-	forbiddenSubstrings := []string{"MICROSOFT", "WINDOWS"}
-	for _, forbidden := range forbiddenSubstrings {
-		if strings.Contains(upperName, forbidden) {
-			return fmt.Errorf("cluster name must not contain the reserved word %q", strings.ToLower(forbidden))
-		}
-	}
+        // Words that cannot be used as whole word or substring
+        forbiddenSubstrings := []string{"MICROSOFT", "WINDOWS"}
+        for _, forbidden := range forbiddenSubstrings {
+                if strings.Contains(upperName, forbidden) {
+                        return fmt.Errorf("cluster name must not contain the reserved word %q", strings.ToLower(forbidden))
+                }
+        }
 
 	// Words that cannot be used at the start
 	if strings.HasPrefix(upperName, "LOGIN") {
