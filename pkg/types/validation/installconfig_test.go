@@ -62,6 +62,15 @@ func validAWSPlatform() *aws.Platform {
 	}
 }
 
+func validAzurePlatform() *azure.Platform {
+	return &azure.Platform{
+		Region:                      "centralus",
+		BaseDomainResourceGroupName: "test-basedomain-rg",
+		CloudName:                   azure.PublicCloud,
+		OutboundType:                "Loadbalancer",
+	}
+}
+
 func validAzureStackPlatform() *azure.Platform {
 	return &azure.Platform{
 		Region:                      "test-region",
@@ -1354,6 +1363,100 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: `^credentialsMode: Unsupported value: "Mint": supported values: "Manual"$`,
+		},
+		{
+			name: "valid azure cluster name",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ObjectMeta.Name = "test-cluster"
+				return c
+			}(),
+		},
+		{
+			name: "azure cluster name containing microsoft",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ObjectMeta.Name = "amicrosoft-test"
+				return c
+			}(),
+			expectedError: `^metadata\.name: Invalid value: "amicrosoft-test": cluster name must not contain the reserved word "microsoft"$`,
+		},
+		{
+			name: "azure cluster name containing windows",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ObjectMeta.Name = "windows-cluster"
+				return c
+			}(),
+			expectedError: `^metadata\.name: Invalid value: "windows-cluster": cluster name must not contain the reserved word "windows"$`,
+		},
+		{
+			name: "azure cluster name starting with login",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ObjectMeta.Name = "login-test"
+				return c
+			}(),
+			expectedError: `^metadata\.name: Invalid value: "login-test": cluster name must not start with the reserved word "login"$`,
+		},
+		{
+			name: "azure cluster name containing azure",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ObjectMeta.Name = "myazure-env"
+				return c
+			}(),
+			expectedError: `^metadata\.name: Invalid value: "myazure-env": cluster name must not contain the reserved word "azure"$`,
+		},
+		{
+			name: "azure cluster name containing office",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ObjectMeta.Name = "office365-app"
+				return c
+			}(),
+			expectedError: `^metadata\.name: Invalid value: "office365-app": cluster name must not contain the reserved word "office365"$`,
+		},
+		{
+			name: "azure cluster name containing exchange",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ObjectMeta.Name = "exchange-mail"
+				return c
+			}(),
+			expectedError: `^metadata\.name: Invalid value: "exchange-mail": cluster name must not contain the reserved word "exchange"$`,
+		},
+		{
+			name: "azure cluster name with login not at start",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ObjectMeta.Name = "bloginsystem"
+				return c
+			}(),
 		},
 		{
 			name: "release image source is not valid",

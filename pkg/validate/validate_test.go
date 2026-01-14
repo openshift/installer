@@ -702,3 +702,149 @@ func TestMAC(t *testing.T) {
 		})
 	}
 }
+
+func TestAzureClusterName(t *testing.T) {
+	cases := []struct {
+		name        string
+		clusterName string
+		valid       bool
+		expected    string
+	}{
+		{
+			name:        "valid cluster name",
+			clusterName: "test-cluster",
+			valid:       true,
+		},
+		{
+			name:        "valid cluster name with numbers",
+			clusterName: "test-cluster-123",
+			valid:       true,
+		},
+		{
+			name:        "cluster name containing microsoft",
+			clusterName: "amicrosoft-test",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "microsoft"`,
+		},
+		{
+			name:        "cluster name containing MICROSOFT uppercase",
+			clusterName: "aMICROSOFT-test",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "microsoft"`,
+		},
+		{
+			name:        "cluster name containing windows",
+			clusterName: "windows-cluster",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "windows"`,
+		},
+		{
+			name:        "cluster name containing WINDOWS uppercase",
+			clusterName: "myWINDOWS",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "windows"`,
+		},
+		{
+			name:        "cluster name starting with login",
+			clusterName: "login-cluster",
+			valid:       false,
+			expected:    `cluster name must not start with the reserved word "login"`,
+		},
+		{
+			name:        "cluster name starting with LOGIN uppercase",
+			clusterName: "LOGIN",
+			valid:       false,
+			expected:    `cluster name must not start with the reserved word "login"`,
+		},
+		{
+			name:        "cluster name with login not at start",
+			clusterName: "bloginsystem",
+			valid:       true,
+		},
+		{
+			name:        "cluster name containing azure",
+			clusterName: "myazure-cluster",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "azure"`,
+		},
+		{
+			name:        "cluster name containing office",
+			clusterName: "office-test",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "office"`,
+		},
+		{
+			name:        "cluster name containing office365",
+			clusterName: "office365-app",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "office365"`,
+		},
+		{
+			name:        "cluster name containing exchange",
+			clusterName: "exchange-mail",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "exchange"`,
+		},
+		{
+			name:        "cluster name containing outlook",
+			clusterName: "test-outlook",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "outlook"`,
+		},
+		{
+			name:        "cluster name containing sharepoint",
+			clusterName: "sharepoint-app",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "sharepoint"`,
+		},
+		{
+			name:        "cluster name containing xbox",
+			clusterName: "xbox-gaming",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "xbox"`,
+		},
+		{
+			name:        "cluster name containing o365 uppercase",
+			clusterName: "my-O365-cluster",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "o365"`,
+		},
+		{
+			name:        "cluster name containing dotnet",
+			clusterName: "dotnet-app",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "dotnet"`,
+		},
+		{
+			name:        "cluster name containing visualstudio",
+			clusterName: "visualstudio-env",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "visualstudio"`,
+		},
+		{
+			name:        "cluster name containing access",
+			clusterName: "myaccess-portal",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "access"`,
+		},
+		{
+			name:        "cluster name containing bing",
+			clusterName: "bing-search",
+			valid:       false,
+			expected:    `cluster name must not contain the reserved word "bing"`,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			err := AzureClusterName(tc.clusterName)
+			if tc.valid {
+				assert.NoError(t, err)
+			} else {
+				assert.Error(t, err)
+				if tc.expected != "" {
+					assert.Regexp(t, tc.expected, err.Error())
+				}
+			}
+		})
+	}
+}

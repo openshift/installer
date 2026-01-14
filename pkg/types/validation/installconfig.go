@@ -109,6 +109,12 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	if nameErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, nameErr.Error()))
 	}
+	// Azure-specific validation for reserved words
+	if c.Platform.Azure != nil {
+		if err := validate.AzureClusterName(c.ObjectMeta.Name); err != nil {
+			allErrs = append(allErrs, field.Invalid(field.NewPath("metadata", "name"), c.ObjectMeta.Name, err.Error()))
+		}
+	}
 	baseDomainErr := validate.DomainName(c.BaseDomain, true)
 	if baseDomainErr != nil {
 		allErrs = append(allErrs, field.Invalid(field.NewPath("baseDomain"), c.BaseDomain, baseDomainErr.Error()))
