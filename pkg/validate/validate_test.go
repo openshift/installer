@@ -831,4 +831,3 @@ func TestAzureClusterName(t *testing.T) {
 		})
 	}
 }
-
