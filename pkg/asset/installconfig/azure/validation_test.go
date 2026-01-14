@@ -367,6 +367,67 @@ var (
 		ic.Compute[0].Platform.Azure.OSDisk.SecurityProfile = &azure.VMDiskSecurityProfile{DiskEncryptionSet: validDiskEncryptionSetConfig()}
 	}
 
+	validUserAssignedIdentityName          = "valid-identity"
+	validUserAssignedIdentityResourceGroup = "valid-identity-rg"
+	validUserAssignedIdentitySubscription  = "valid-sub-id"
+	invalidUserAssignedIdentityName        = "invalid-identity"
+
+	validUserAssignedIdentityConfig = func() *azure.VMIdentity {
+		return &azure.VMIdentity{
+			Type: "UserAssigned",
+			UserAssignedIdentities: []azure.UserAssignedIdentity{
+				{
+					Name:          validUserAssignedIdentityName,
+					ResourceGroup: validUserAssignedIdentityResourceGroup,
+					Subscription:  validUserAssignedIdentitySubscription,
+				},
+			},
+		}
+	}
+
+	invalidUserAssignedIdentityConfig = func() *azure.VMIdentity {
+		return &azure.VMIdentity{
+			Type: "UserAssigned",
+			UserAssignedIdentities: []azure.UserAssignedIdentity{
+				{
+					Name:          invalidUserAssignedIdentityName,
+					ResourceGroup: validUserAssignedIdentityResourceGroup,
+					Subscription:  validUserAssignedIdentitySubscription,
+				},
+			},
+		}
+	}
+
+	validUserAssignedIdentityDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.Identity = validUserAssignedIdentityConfig()
+	}
+	validUserAssignedIdentityControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.Identity = validUserAssignedIdentityConfig()
+	}
+	validUserAssignedIdentityCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.Identity = validUserAssignedIdentityConfig()
+	}
+
+	invalidUserAssignedIdentityDefaultMachinePlatform = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.Identity = invalidUserAssignedIdentityConfig()
+	}
+	invalidUserAssignedIdentityControlPlane = func(ic *types.InstallConfig) {
+		ic.ControlPlane.Platform.Azure.Identity = invalidUserAssignedIdentityConfig()
+	}
+	invalidUserAssignedIdentityCompute = func(ic *types.InstallConfig) {
+		ic.Compute[0].Platform.Azure.Identity = invalidUserAssignedIdentityConfig()
+	}
+
+	noUserAssignedIdentity = func(ic *types.InstallConfig) {
+		ic.Azure.DefaultMachinePlatform.Identity = &azure.VMIdentity{
+			Type: "None",
+		}
+		ic.ControlPlane.Platform.Azure.Identity = nil
+		if len(ic.Compute) > 0 {
+			ic.Compute[0].Platform.Azure.Identity = nil
+		}
+	}
+
 	validOSImageCompute = func(ic *types.InstallConfig) {
 		ic.Compute[0].Platform.Azure.OSImage = validOSImage
 	}
@@ -1632,6 +1693,93 @@ func TestAzureStackDiskType(t *testing.T) {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
 				assert.NoError(t, aggregatedErrors.ToAggregate())
+			}
+		})
+	}
+}
+
+func TestValidateUserAssignedIdentities(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name:     "Valid user-assigned identity for default machine platform",
+			edits:    editFunctions{validUserAssignedIdentityDefaultMachinePlatform},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid user-assigned identity not found for default machine platform",
+			edits:    editFunctions{invalidUserAssignedIdentityDefaultMachinePlatform},
+			errorMsg: fmt.Sprintf(`platform.azure.defaultMachinePlatform.identity.userAssignedIdentities\[0\]: Invalid value: "%s": failed to validate user-assigned identity '%s' in resource group '%s'`, invalidUserAssignedIdentityName, invalidUserAssignedIdentityName, validUserAssignedIdentityResourceGroup),
+		},
+		{
+			name:     "Valid user-assigned identity for control plane",
+			edits:    editFunctions{validUserAssignedIdentityControlPlane},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid user-assigned identity not found for control plane",
+			edits:    editFunctions{invalidUserAssignedIdentityControlPlane},
+			errorMsg: fmt.Sprintf(`controlPlane.platform.azure.identity.userAssignedIdentities\[0\]: Invalid value: "%s": failed to validate user-assigned identity '%s' in resource group '%s'`, invalidUserAssignedIdentityName, invalidUserAssignedIdentityName, validUserAssignedIdentityResourceGroup),
+		},
+		{
+			name:     "Valid user-assigned identity for compute",
+			edits:    editFunctions{validUserAssignedIdentityCompute},
+			errorMsg: "",
+		},
+		{
+			name:     "Invalid user-assigned identity not found for compute",
+			edits:    editFunctions{invalidUserAssignedIdentityCompute},
+			errorMsg: fmt.Sprintf(`compute\[0\].platform.azure.identity.userAssignedIdentities\[0\]: Invalid value: "%s": failed to validate user-assigned identity '%s' in resource group '%s'`, invalidUserAssignedIdentityName, invalidUserAssignedIdentityName, validUserAssignedIdentityResourceGroup),
+		},
+		{
+			name:     "No user-assigned identities specified",
+			edits:    editFunctions{noUserAssignedIdentity},
+			errorMsg: "",
+		},
+		{
+			name: "Multiple valid identities in different pools",
+			edits: editFunctions{
+				validUserAssignedIdentityDefaultMachinePlatform,
+				validUserAssignedIdentityControlPlane,
+				validUserAssignedIdentityCompute,
+			},
+			errorMsg: "",
+		},
+		{
+			name: "Mix of valid and invalid identities",
+			edits: editFunctions{
+				validUserAssignedIdentityDefaultMachinePlatform,
+				invalidUserAssignedIdentityControlPlane,
+			},
+			errorMsg: fmt.Sprintf(`failed to validate user-assigned identity '%s' in resource group '%s'`, invalidUserAssignedIdentityName, validUserAssignedIdentityResourceGroup),
+		},
+	}
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	azureClient := mock.NewMockAPI(mockCtrl)
+
+	// Setup mock expectations for valid and invalid identities
+	azureClient.EXPECT().GetUserAssignedIdentity(gomock.Any(), validUserAssignedIdentitySubscription, validUserAssignedIdentityResourceGroup, validUserAssignedIdentityName).Return(nil).AnyTimes()
+	azureClient.EXPECT().GetUserAssignedIdentity(gomock.Any(), validUserAssignedIdentitySubscription, validUserAssignedIdentityResourceGroup, invalidUserAssignedIdentityName).Return(fmt.Errorf("resource not found")).AnyTimes()
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			errors := ValidateUserAssignedIdentities(azureClient, editedInstallConfig)
+			aggregatedErrors := errors.ToAggregate()
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
 			}
 		})
 	}
