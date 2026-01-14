@@ -268,6 +268,20 @@ func (mr *MockAPIMockRecorder) GetStorageEndpointSuffix(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStorageEndpointSuffix", reflect.TypeOf((*MockAPI)(nil).GetStorageEndpointSuffix), ctx)
 }
 
+// GetUserAssignedIdentity mocks base method.
+func (m *MockAPI) GetUserAssignedIdentity(ctx context.Context, subscriptionID, resourceGroup, name string) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetUserAssignedIdentity", ctx, subscriptionID, resourceGroup, name)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetUserAssignedIdentity indicates an expected call of GetUserAssignedIdentity.
+func (mr *MockAPIMockRecorder) GetUserAssignedIdentity(ctx, subscriptionID, resourceGroup, name any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetUserAssignedIdentity", reflect.TypeOf((*MockAPI)(nil).GetUserAssignedIdentity), ctx, subscriptionID, resourceGroup, name)
+}
+
 // GetVMCapabilities mocks base method.
 func (m *MockAPI) GetVMCapabilities(ctx context.Context, instanceType, region string) (map[string]string, error) {
 	m.ctrl.T.Helper()
