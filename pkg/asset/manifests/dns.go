@@ -138,7 +138,15 @@ func (d *DNS) Generate(ctx context.Context, dependencies asset.Parents) error { 
 				ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
 			}
 		}
-		if installConfig.Azure.CloudName != azuretypes.StackCloud {
+
+		// Azure Stack Hub only supports "DNS zones"--there is not a private/public zone distinction.
+		// Set PrivateZone to the base domain zone for ASH, or cluster private zone for regular Azure.
+		if installConfig.Azure.CloudName == azuretypes.StackCloud {
+			// Azure Stack Hub uses the base domain zone for all DNS records (api, api-int, *.apps)
+			config.Spec.PrivateZone = &configv1.DNSZone{
+				ID: dnsConfig.GetDNSZoneID(installConfig.Config.Azure.BaseDomainResourceGroupName, installConfig.Config.BaseDomain),
+			}
+		} else {
 			config.Spec.PrivateZone = &configv1.DNSZone{
 				ID: dnsConfig.GetPrivateDNSZoneID(installConfig.Config.Azure.ClusterResourceGroupName(clusterID.InfraID), installConfig.Config.ClusterDomain()),
 			}
