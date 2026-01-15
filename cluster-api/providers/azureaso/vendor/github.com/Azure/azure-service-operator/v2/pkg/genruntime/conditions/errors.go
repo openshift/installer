@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
+
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/retry"
 )
 
 // ReadyConditionImpactingError is an error that requires notification in the Ready condition
@@ -17,7 +19,7 @@ type ReadyConditionImpactingError struct {
 	Severity            ConditionSeverity
 	Reason              string
 	cause               error
-	RetryClassification RetryClassification
+	RetryClassification retry.Classification
 }
 
 // NewReadyConditionImpactingError creates a new ReadyConditionImpactingError
@@ -34,14 +36,14 @@ var _ error = &ReadyConditionImpactingError{}
 
 func AsReadyConditionImpactingError(err error) (*ReadyConditionImpactingError, bool) {
 	var typedErr *ReadyConditionImpactingError
-	if errors.As(err, &typedErr) {
+	if eris.As(err, &typedErr) {
 		return typedErr, true
 	}
 
 	return nil, false
 }
 
-func (e *ReadyConditionImpactingError) WithRetryClassification(classification RetryClassification) *ReadyConditionImpactingError {
+func (e *ReadyConditionImpactingError) WithRetryClassification(classification retry.Classification) *ReadyConditionImpactingError {
 	e.RetryClassification = classification
 	return e
 }
@@ -56,7 +58,7 @@ func (e *ReadyConditionImpactingError) Error() string {
 
 func (e *ReadyConditionImpactingError) Is(err error) bool {
 	var typedErr *ReadyConditionImpactingError
-	if errors.As(err, &typedErr) {
+	if eris.As(err, &typedErr) {
 		return e.Severity == typedErr.Severity && e.Reason == typedErr.Reason
 	}
 	return false

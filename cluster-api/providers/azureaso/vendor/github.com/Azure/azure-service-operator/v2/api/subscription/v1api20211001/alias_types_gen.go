@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/subscription/v1api20211001/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/subscription/v1api20211001/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (alias *Alias) ConvertTo(hub conversion.Hub) error {
 
 	return alias.AssignProperties_To_Alias(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-subscription-azure-com-v1api20211001-alias,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=subscription.azure.com,resources=aliases,verbs=create;update,versions=v1api20211001,name=default.v1api20211001.aliases.subscription.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Alias{}
-
-// Default applies defaults to the Alias resource
-func (alias *Alias) Default() {
-	alias.defaultImpl()
-	var temp any = alias
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (alias *Alias) defaultAzureName() {
-	if alias.Spec.AzureName == "" {
-		alias.Spec.AzureName = alias.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Alias resource
-func (alias *Alias) defaultImpl() { alias.defaultAzureName() }
 
 var _ configmaps.Exporter = &Alias{}
 
@@ -188,106 +162,11 @@ func (alias *Alias) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Alias_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	alias.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-subscription-azure-com-v1api20211001-alias,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=subscription.azure.com,resources=aliases,verbs=create;update,versions=v1api20211001,name=validate.v1api20211001.aliases.subscription.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Alias{}
-
-// ValidateCreate validates the creation of the resource
-func (alias *Alias) ValidateCreate() (admission.Warnings, error) {
-	validations := alias.createValidations()
-	var temp any = alias
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (alias *Alias) ValidateDelete() (admission.Warnings, error) {
-	validations := alias.deleteValidations()
-	var temp any = alias
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (alias *Alias) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := alias.updateValidations()
-	var temp any = alias
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (alias *Alias) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){alias.validateResourceReferences, alias.validateSecretDestinations, alias.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (alias *Alias) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (alias *Alias) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return alias.validateResourceReferences()
-		},
-		alias.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return alias.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return alias.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (alias *Alias) validateConfigMapDestinations() (admission.Warnings, error) {
-	if alias.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(alias, nil, alias.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateResourceReferences validates all resource references
-func (alias *Alias) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&alias.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (alias *Alias) validateSecretDestinations() (admission.Warnings, error) {
-	if alias.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(alias, nil, alias.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (alias *Alias) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Alias)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, alias)
 }
 
 // AssignProperties_From_Alias populates our Alias from the provided source Alias
@@ -300,7 +179,7 @@ func (alias *Alias) AssignProperties_From_Alias(source *storage.Alias) error {
 	var spec Alias_Spec
 	err := spec.AssignProperties_From_Alias_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Alias_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Alias_Spec() to populate field Spec")
 	}
 	alias.Spec = spec
 
@@ -308,7 +187,7 @@ func (alias *Alias) AssignProperties_From_Alias(source *storage.Alias) error {
 	var status Alias_STATUS
 	err = status.AssignProperties_From_Alias_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Alias_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Alias_STATUS() to populate field Status")
 	}
 	alias.Status = status
 
@@ -326,7 +205,7 @@ func (alias *Alias) AssignProperties_To_Alias(destination *storage.Alias) error 
 	var spec storage.Alias_Spec
 	err := alias.Spec.AssignProperties_To_Alias_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Alias_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Alias_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -334,7 +213,7 @@ func (alias *Alias) AssignProperties_To_Alias(destination *storage.Alias) error 
 	var status storage.Alias_STATUS
 	err = alias.Status.AssignProperties_To_Alias_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Alias_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Alias_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -444,13 +323,13 @@ func (alias *Alias_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) erro
 	src = &storage.Alias_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = alias.AssignProperties_From_Alias_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -468,13 +347,13 @@ func (alias *Alias_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) e
 	dst = &storage.Alias_Spec{}
 	err := alias.AssignProperties_To_Alias_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -491,7 +370,7 @@ func (alias *Alias_Spec) AssignProperties_From_Alias_Spec(source *storage.Alias_
 		var operatorSpec AliasOperatorSpec
 		err := operatorSpec.AssignProperties_From_AliasOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AliasOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_AliasOperatorSpec() to populate field OperatorSpec")
 		}
 		alias.OperatorSpec = &operatorSpec
 	} else {
@@ -503,7 +382,7 @@ func (alias *Alias_Spec) AssignProperties_From_Alias_Spec(source *storage.Alias_
 		var property PutAliasRequestProperties
 		err := property.AssignProperties_From_PutAliasRequestProperties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PutAliasRequestProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_PutAliasRequestProperties() to populate field Properties")
 		}
 		alias.Properties = &property
 	} else {
@@ -527,7 +406,7 @@ func (alias *Alias_Spec) AssignProperties_To_Alias_Spec(destination *storage.Ali
 		var operatorSpec storage.AliasOperatorSpec
 		err := alias.OperatorSpec.AssignProperties_To_AliasOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AliasOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_AliasOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -542,7 +421,7 @@ func (alias *Alias_Spec) AssignProperties_To_Alias_Spec(destination *storage.Ali
 		var property storage.PutAliasRequestProperties
 		err := alias.Properties.AssignProperties_To_PutAliasRequestProperties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PutAliasRequestProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_PutAliasRequestProperties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -568,7 +447,7 @@ func (alias *Alias_Spec) Initialize_From_Alias_STATUS(source *Alias_STATUS) erro
 		var property PutAliasRequestProperties
 		err := property.Initialize_From_SubscriptionAliasResponseProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubscriptionAliasResponseProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling Initialize_From_SubscriptionAliasResponseProperties_STATUS() to populate field Properties")
 		}
 		alias.Properties = &property
 	} else {
@@ -621,13 +500,13 @@ func (alias *Alias_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus
 	src = &storage.Alias_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = alias.AssignProperties_From_Alias_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -645,13 +524,13 @@ func (alias *Alias_STATUS) ConvertStatusTo(destination genruntime.ConvertibleSta
 	dst = &storage.Alias_STATUS{}
 	err := alias.AssignProperties_To_Alias_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -734,7 +613,7 @@ func (alias *Alias_STATUS) AssignProperties_From_Alias_STATUS(source *storage.Al
 		var property SubscriptionAliasResponseProperties_STATUS
 		err := property.AssignProperties_From_SubscriptionAliasResponseProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubscriptionAliasResponseProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_SubscriptionAliasResponseProperties_STATUS() to populate field Properties")
 		}
 		alias.Properties = &property
 	} else {
@@ -746,7 +625,7 @@ func (alias *Alias_STATUS) AssignProperties_From_Alias_STATUS(source *storage.Al
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		alias.SystemData = &systemDatum
 	} else {
@@ -779,7 +658,7 @@ func (alias *Alias_STATUS) AssignProperties_To_Alias_STATUS(destination *storage
 		var property storage.SubscriptionAliasResponseProperties_STATUS
 		err := alias.Properties.AssignProperties_To_SubscriptionAliasResponseProperties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubscriptionAliasResponseProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_SubscriptionAliasResponseProperties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -791,7 +670,7 @@ func (alias *Alias_STATUS) AssignProperties_To_Alias_STATUS(destination *storage
 		var systemDatum storage.SystemData_STATUS
 		err := alias.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1060,7 +939,7 @@ func (properties *PutAliasRequestProperties) AssignProperties_From_PutAliasReque
 		var additionalProperty PutAliasRequestAdditionalProperties
 		err := additionalProperty.AssignProperties_From_PutAliasRequestAdditionalProperties(source.AdditionalProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PutAliasRequestAdditionalProperties() to populate field AdditionalProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_PutAliasRequestAdditionalProperties() to populate field AdditionalProperties")
 		}
 		properties.AdditionalProperties = &additionalProperty
 	} else {
@@ -1102,7 +981,7 @@ func (properties *PutAliasRequestProperties) AssignProperties_To_PutAliasRequest
 		var additionalProperty storage.PutAliasRequestAdditionalProperties
 		err := properties.AdditionalProperties.AssignProperties_To_PutAliasRequestAdditionalProperties(&additionalProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PutAliasRequestAdditionalProperties() to populate field AdditionalProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_PutAliasRequestAdditionalProperties() to populate field AdditionalProperties")
 		}
 		destination.AdditionalProperties = &additionalProperty
 	} else {

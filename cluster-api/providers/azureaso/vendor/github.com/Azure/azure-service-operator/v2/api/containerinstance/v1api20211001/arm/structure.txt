@@ -218,6 +218,7 @@ ContainerGroup_STATUS: Object (8 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 ContainerGroup_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -381,3 +382,4 @@ ContainerGroup_Spec: Object (6 properties)
 │       └── Secret: map[string]string
 ├── Tags: map[string]string
 └── Zones: string[]
+

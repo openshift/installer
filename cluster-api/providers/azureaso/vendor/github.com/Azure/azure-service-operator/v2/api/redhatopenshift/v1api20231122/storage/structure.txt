@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/redhatopenshift/v1api20231122/sto
 ------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-11-22"
+
 OpenShiftCluster: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -39,10 +40,15 @@ OpenShiftCluster: Resource
 │   │   ├── PreconfiguredNSG: *string
 │   │   ├── PropertyBag: genruntime.PropertyBag
 │   │   └── ServiceCidr: *string
-│   ├── OperatorSpec: *Object (3 properties)
+│   ├── OperatorSpec: *Object (4 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
 │   │   ├── PropertyBag: genruntime.PropertyBag
-│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   │   ├── SecretExpressions: *core.DestinationExpression[]
+│   │   └── Secrets: *Object (4 properties)
+│   │       ├── AdminCredentials: *genruntime.SecretDestination
+│   │       ├── Password: *genruntime.SecretDestination
+│   │       ├── PropertyBag: genruntime.PropertyBag
+│   │       └── Username: *genruntime.SecretDestination
 │   ├── OriginalVersion: string
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── PropertyBag: genruntime.PropertyBag
@@ -138,3 +144,4 @@ OpenShiftCluster: Resource
         ├── PropertyBag: genruntime.PropertyBag
         ├── SubnetId: *string
         └── VmSize: *string
+

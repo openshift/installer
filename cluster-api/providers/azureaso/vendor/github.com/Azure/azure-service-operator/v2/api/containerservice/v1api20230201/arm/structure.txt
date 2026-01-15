@@ -390,6 +390,7 @@ ManagedCluster_STATUS: Object (10 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 ManagedCluster_Spec: Object (7 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -724,6 +725,7 @@ ManagedCluster_Spec: Object (7 properties)
 │       ├── "Free"
 │       └── "Standard"
 └── Tags: map[string]string
+
 ManagedClustersAgentPool_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -845,6 +847,7 @@ ManagedClustersAgentPool_STATUS: Object (4 properties)
 │       ├── "OCIContainer"
 │       └── "WasmWasi"
 └── Type: *string
+
 ManagedClustersAgentPool_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (38 properties)
@@ -961,3 +964,4 @@ ManagedClustersAgentPool_Spec: Object (2 properties)
     └── WorkloadRuntime: *Enum (2 values)
         ├── "OCIContainer"
         └── "WasmWasi"
+

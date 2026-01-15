@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (database *ServersDatabase) ConvertTo(hub conversion.Hub) error {
 
 	return database.AssignProperties_To_ServersDatabase(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-sql-azure-com-v1api20211101-serversdatabase,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serversdatabases,verbs=create;update,versions=v1api20211101,name=default.v1api20211101.serversdatabases.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ServersDatabase{}
-
-// Default applies defaults to the ServersDatabase resource
-func (database *ServersDatabase) Default() {
-	database.defaultImpl()
-	var temp any = database
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (database *ServersDatabase) defaultAzureName() {
-	if database.Spec.AzureName == "" {
-		database.Spec.AzureName = database.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ServersDatabase resource
-func (database *ServersDatabase) defaultImpl() { database.defaultAzureName() }
 
 var _ configmaps.Exporter = &ServersDatabase{}
 
@@ -173,6 +147,10 @@ func (database *ServersDatabase) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (database *ServersDatabase) Owner() *genruntime.ResourceReference {
+	if database.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(database.Spec)
 	return database.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (database *ServersDatabase) SetStatus(status genruntime.ConvertibleStatus) 
 	var st ServersDatabase_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	database.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-sql-azure-com-v1api20211101-serversdatabase,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serversdatabases,verbs=create;update,versions=v1api20211101,name=validate.v1api20211101.serversdatabases.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ServersDatabase{}
-
-// ValidateCreate validates the creation of the resource
-func (database *ServersDatabase) ValidateCreate() (admission.Warnings, error) {
-	validations := database.createValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (database *ServersDatabase) ValidateDelete() (admission.Warnings, error) {
-	validations := database.deleteValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (database *ServersDatabase) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := database.updateValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (database *ServersDatabase) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (database *ServersDatabase) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (database *ServersDatabase) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateResourceReferences()
-		},
-		database.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (database *ServersDatabase) validateConfigMapDestinations() (admission.Warnings, error) {
-	if database.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(database, nil, database.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (database *ServersDatabase) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(database)
-}
-
-// validateResourceReferences validates all resource references
-func (database *ServersDatabase) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&database.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (database *ServersDatabase) validateSecretDestinations() (admission.Warnings, error) {
-	if database.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(database, nil, database.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (database *ServersDatabase) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ServersDatabase)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, database)
 }
 
 // AssignProperties_From_ServersDatabase populates our ServersDatabase from the provided source ServersDatabase
@@ -309,7 +184,7 @@ func (database *ServersDatabase) AssignProperties_From_ServersDatabase(source *s
 	var spec ServersDatabase_Spec
 	err := spec.AssignProperties_From_ServersDatabase_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersDatabase_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersDatabase_Spec() to populate field Spec")
 	}
 	database.Spec = spec
 
@@ -317,7 +192,7 @@ func (database *ServersDatabase) AssignProperties_From_ServersDatabase(source *s
 	var status ServersDatabase_STATUS
 	err = status.AssignProperties_From_ServersDatabase_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersDatabase_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersDatabase_STATUS() to populate field Status")
 	}
 	database.Status = status
 
@@ -335,7 +210,7 @@ func (database *ServersDatabase) AssignProperties_To_ServersDatabase(destination
 	var spec storage.ServersDatabase_Spec
 	err := database.Spec.AssignProperties_To_ServersDatabase_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersDatabase_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersDatabase_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (database *ServersDatabase) AssignProperties_To_ServersDatabase(destination
 	var status storage.ServersDatabase_STATUS
 	err = database.Status.AssignProperties_To_ServersDatabase_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersDatabase_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersDatabase_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -1012,13 +887,13 @@ func (database *ServersDatabase_Spec) ConvertSpecFrom(source genruntime.Converti
 	src = &storage.ServersDatabase_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_ServersDatabase_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -1036,13 +911,13 @@ func (database *ServersDatabase_Spec) ConvertSpecTo(destination genruntime.Conve
 	dst = &storage.ServersDatabase_Spec{}
 	err := database.AssignProperties_To_ServersDatabase_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -1087,12 +962,7 @@ func (database *ServersDatabase_Spec) AssignProperties_From_ServersDatabase_Spec
 	}
 
 	// FederatedClientId
-	if source.FederatedClientId != nil {
-		federatedClientId := *source.FederatedClientId
-		database.FederatedClientId = &federatedClientId
-	} else {
-		database.FederatedClientId = nil
-	}
+	database.FederatedClientId = genruntime.ClonePointerToString(source.FederatedClientId)
 
 	// HighAvailabilityReplicaCount
 	database.HighAvailabilityReplicaCount = genruntime.ClonePointerToInt(source.HighAvailabilityReplicaCount)
@@ -1102,7 +972,7 @@ func (database *ServersDatabase_Spec) AssignProperties_From_ServersDatabase_Spec
 		var identity DatabaseIdentity
 		err := identity.AssignProperties_From_DatabaseIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DatabaseIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_DatabaseIdentity() to populate field Identity")
 		}
 		database.Identity = &identity
 	} else {
@@ -1156,7 +1026,7 @@ func (database *ServersDatabase_Spec) AssignProperties_From_ServersDatabase_Spec
 		var operatorSpec ServersDatabaseOperatorSpec
 		err := operatorSpec.AssignProperties_From_ServersDatabaseOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServersDatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ServersDatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		database.OperatorSpec = &operatorSpec
 	} else {
@@ -1239,7 +1109,7 @@ func (database *ServersDatabase_Spec) AssignProperties_From_ServersDatabase_Spec
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		database.Sku = &sku
 	} else {
@@ -1319,12 +1189,7 @@ func (database *ServersDatabase_Spec) AssignProperties_To_ServersDatabase_Spec(d
 	}
 
 	// FederatedClientId
-	if database.FederatedClientId != nil {
-		federatedClientId := *database.FederatedClientId
-		destination.FederatedClientId = &federatedClientId
-	} else {
-		destination.FederatedClientId = nil
-	}
+	destination.FederatedClientId = genruntime.ClonePointerToString(database.FederatedClientId)
 
 	// HighAvailabilityReplicaCount
 	destination.HighAvailabilityReplicaCount = genruntime.ClonePointerToInt(database.HighAvailabilityReplicaCount)
@@ -1334,7 +1199,7 @@ func (database *ServersDatabase_Spec) AssignProperties_To_ServersDatabase_Spec(d
 		var identity storage.DatabaseIdentity
 		err := database.Identity.AssignProperties_To_DatabaseIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DatabaseIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_DatabaseIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1387,7 +1252,7 @@ func (database *ServersDatabase_Spec) AssignProperties_To_ServersDatabase_Spec(d
 		var operatorSpec storage.ServersDatabaseOperatorSpec
 		err := database.OperatorSpec.AssignProperties_To_ServersDatabaseOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServersDatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ServersDatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1469,7 +1334,7 @@ func (database *ServersDatabase_Spec) AssignProperties_To_ServersDatabase_Spec(d
 		var sku storage.Sku
 		err := database.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1551,12 +1416,7 @@ func (database *ServersDatabase_Spec) Initialize_From_ServersDatabase_STATUS(sou
 	}
 
 	// FederatedClientId
-	if source.FederatedClientId != nil {
-		federatedClientId := *source.FederatedClientId
-		database.FederatedClientId = &federatedClientId
-	} else {
-		database.FederatedClientId = nil
-	}
+	database.FederatedClientId = genruntime.ClonePointerToString(source.FederatedClientId)
 
 	// HighAvailabilityReplicaCount
 	database.HighAvailabilityReplicaCount = genruntime.ClonePointerToInt(source.HighAvailabilityReplicaCount)
@@ -1566,7 +1426,7 @@ func (database *ServersDatabase_Spec) Initialize_From_ServersDatabase_STATUS(sou
 		var identity DatabaseIdentity
 		err := identity.Initialize_From_DatabaseIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DatabaseIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_DatabaseIdentity_STATUS() to populate field Identity")
 		}
 		database.Identity = &identity
 	} else {
@@ -1678,7 +1538,7 @@ func (database *ServersDatabase_Spec) Initialize_From_ServersDatabase_STATUS(sou
 		var sku Sku
 		err := sku.Initialize_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
 		}
 		database.Sku = &sku
 	} else {
@@ -1943,13 +1803,13 @@ func (database *ServersDatabase_STATUS) ConvertStatusFrom(source genruntime.Conv
 	src = &storage.ServersDatabase_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_ServersDatabase_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1967,13 +1827,13 @@ func (database *ServersDatabase_STATUS) ConvertStatusTo(destination genruntime.C
 	dst = &storage.ServersDatabase_STATUS{}
 	err := database.AssignProperties_To_ServersDatabase_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -2489,7 +2349,7 @@ func (database *ServersDatabase_STATUS) AssignProperties_From_ServersDatabase_ST
 		var currentSku Sku_STATUS
 		err := currentSku.AssignProperties_From_Sku_STATUS(source.CurrentSku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field CurrentSku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field CurrentSku")
 		}
 		database.CurrentSku = &currentSku
 	} else {
@@ -2525,7 +2385,7 @@ func (database *ServersDatabase_STATUS) AssignProperties_From_ServersDatabase_ST
 		var identity DatabaseIdentity_STATUS
 		err := identity.AssignProperties_From_DatabaseIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DatabaseIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_DatabaseIdentity_STATUS() to populate field Identity")
 		}
 		database.Identity = &identity
 	} else {
@@ -2651,7 +2511,7 @@ func (database *ServersDatabase_STATUS) AssignProperties_From_ServersDatabase_ST
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		database.Sku = &sku
 	} else {
@@ -2743,7 +2603,7 @@ func (database *ServersDatabase_STATUS) AssignProperties_To_ServersDatabase_STAT
 		var currentSku storage.Sku_STATUS
 		err := database.CurrentSku.AssignProperties_To_Sku_STATUS(&currentSku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field CurrentSku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field CurrentSku")
 		}
 		destination.CurrentSku = &currentSku
 	} else {
@@ -2779,7 +2639,7 @@ func (database *ServersDatabase_STATUS) AssignProperties_To_ServersDatabase_STAT
 		var identity storage.DatabaseIdentity_STATUS
 		err := database.Identity.AssignProperties_To_DatabaseIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DatabaseIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_DatabaseIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -2900,7 +2760,7 @@ func (database *ServersDatabase_STATUS) AssignProperties_To_ServersDatabase_STAT
 		var sku storage.Sku_STATUS
 		err := database.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -3035,7 +2895,7 @@ func (identity *DatabaseIdentity) AssignProperties_From_DatabaseIdentity(source 
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -3070,7 +2930,7 @@ func (identity *DatabaseIdentity) AssignProperties_To_DatabaseIdentity(destinati
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -3198,7 +3058,7 @@ func (identity *DatabaseIdentity_STATUS) AssignProperties_From_DatabaseIdentity_
 			var userAssignedIdentity DatabaseUserIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_DatabaseUserIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_DatabaseUserIdentity_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_DatabaseUserIdentity_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -3236,7 +3096,7 @@ func (identity *DatabaseIdentity_STATUS) AssignProperties_To_DatabaseIdentity_ST
 			var userAssignedIdentity storage.DatabaseUserIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_DatabaseUserIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_DatabaseUserIdentity_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_DatabaseUserIdentity_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}

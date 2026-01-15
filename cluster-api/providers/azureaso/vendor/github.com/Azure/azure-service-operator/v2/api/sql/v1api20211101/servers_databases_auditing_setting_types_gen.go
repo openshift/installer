@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,22 +67,6 @@ func (setting *ServersDatabasesAuditingSetting) ConvertTo(hub conversion.Hub) er
 
 	return setting.AssignProperties_To_ServersDatabasesAuditingSetting(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-sql-azure-com-v1api20211101-serversdatabasesauditingsetting,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serversdatabasesauditingsettings,verbs=create;update,versions=v1api20211101,name=default.v1api20211101.serversdatabasesauditingsettings.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ServersDatabasesAuditingSetting{}
-
-// Default applies defaults to the ServersDatabasesAuditingSetting resource
-func (setting *ServersDatabasesAuditingSetting) Default() {
-	setting.defaultImpl()
-	var temp any = setting
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ServersDatabasesAuditingSetting resource
-func (setting *ServersDatabasesAuditingSetting) defaultImpl() {}
 
 var _ configmaps.Exporter = &ServersDatabasesAuditingSetting{}
 
@@ -165,6 +146,10 @@ func (setting *ServersDatabasesAuditingSetting) NewEmptyStatus() genruntime.Conv
 
 // Owner returns the ResourceReference of the owner
 func (setting *ServersDatabasesAuditingSetting) Owner() *genruntime.ResourceReference {
+	if setting.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(setting.Spec)
 	return setting.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -181,114 +166,11 @@ func (setting *ServersDatabasesAuditingSetting) SetStatus(status genruntime.Conv
 	var st ServersDatabasesAuditingSetting_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	setting.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-sql-azure-com-v1api20211101-serversdatabasesauditingsetting,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serversdatabasesauditingsettings,verbs=create;update,versions=v1api20211101,name=validate.v1api20211101.serversdatabasesauditingsettings.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ServersDatabasesAuditingSetting{}
-
-// ValidateCreate validates the creation of the resource
-func (setting *ServersDatabasesAuditingSetting) ValidateCreate() (admission.Warnings, error) {
-	validations := setting.createValidations()
-	var temp any = setting
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (setting *ServersDatabasesAuditingSetting) ValidateDelete() (admission.Warnings, error) {
-	validations := setting.deleteValidations()
-	var temp any = setting
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (setting *ServersDatabasesAuditingSetting) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := setting.updateValidations()
-	var temp any = setting
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (setting *ServersDatabasesAuditingSetting) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){setting.validateResourceReferences, setting.validateOwnerReference, setting.validateSecretDestinations, setting.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (setting *ServersDatabasesAuditingSetting) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (setting *ServersDatabasesAuditingSetting) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return setting.validateResourceReferences()
-		},
-		setting.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return setting.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return setting.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return setting.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (setting *ServersDatabasesAuditingSetting) validateConfigMapDestinations() (admission.Warnings, error) {
-	if setting.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(setting, nil, setting.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (setting *ServersDatabasesAuditingSetting) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(setting)
-}
-
-// validateResourceReferences validates all resource references
-func (setting *ServersDatabasesAuditingSetting) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&setting.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (setting *ServersDatabasesAuditingSetting) validateSecretDestinations() (admission.Warnings, error) {
-	if setting.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(setting, nil, setting.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (setting *ServersDatabasesAuditingSetting) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ServersDatabasesAuditingSetting)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, setting)
 }
 
 // AssignProperties_From_ServersDatabasesAuditingSetting populates our ServersDatabasesAuditingSetting from the provided source ServersDatabasesAuditingSetting
@@ -301,7 +183,7 @@ func (setting *ServersDatabasesAuditingSetting) AssignProperties_From_ServersDat
 	var spec ServersDatabasesAuditingSetting_Spec
 	err := spec.AssignProperties_From_ServersDatabasesAuditingSetting_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersDatabasesAuditingSetting_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersDatabasesAuditingSetting_Spec() to populate field Spec")
 	}
 	setting.Spec = spec
 
@@ -309,7 +191,7 @@ func (setting *ServersDatabasesAuditingSetting) AssignProperties_From_ServersDat
 	var status ServersDatabasesAuditingSetting_STATUS
 	err = status.AssignProperties_From_ServersDatabasesAuditingSetting_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersDatabasesAuditingSetting_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersDatabasesAuditingSetting_STATUS() to populate field Status")
 	}
 	setting.Status = status
 
@@ -327,7 +209,7 @@ func (setting *ServersDatabasesAuditingSetting) AssignProperties_To_ServersDatab
 	var spec storage.ServersDatabasesAuditingSetting_Spec
 	err := setting.Spec.AssignProperties_To_ServersDatabasesAuditingSetting_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersDatabasesAuditingSetting_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersDatabasesAuditingSetting_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -335,7 +217,7 @@ func (setting *ServersDatabasesAuditingSetting) AssignProperties_To_ServersDatab
 	var status storage.ServersDatabasesAuditingSetting_STATUS
 	err = setting.Status.AssignProperties_To_ServersDatabasesAuditingSetting_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersDatabasesAuditingSetting_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersDatabasesAuditingSetting_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -539,7 +421,7 @@ func (setting *ServersDatabasesAuditingSetting_Spec) ConvertToARM(resolved genru
 	if setting.StorageAccountAccessKey != nil {
 		storageAccountAccessKeySecret, err := resolved.ResolvedSecrets.Lookup(*setting.StorageAccountAccessKey)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property StorageAccountAccessKey")
+			return nil, eris.Wrap(err, "looking up secret for property StorageAccountAccessKey")
 		}
 		storageAccountAccessKey := storageAccountAccessKeySecret
 		result.Properties.StorageAccountAccessKey = &storageAccountAccessKey
@@ -677,13 +559,13 @@ func (setting *ServersDatabasesAuditingSetting_Spec) ConvertSpecFrom(source genr
 	src = &storage.ServersDatabasesAuditingSetting_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = setting.AssignProperties_From_ServersDatabasesAuditingSetting_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -701,13 +583,13 @@ func (setting *ServersDatabasesAuditingSetting_Spec) ConvertSpecTo(destination g
 	dst = &storage.ServersDatabasesAuditingSetting_Spec{}
 	err := setting.AssignProperties_To_ServersDatabasesAuditingSetting_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -748,7 +630,7 @@ func (setting *ServersDatabasesAuditingSetting_Spec) AssignProperties_From_Serve
 		var operatorSpec ServersDatabasesAuditingSettingOperatorSpec
 		err := operatorSpec.AssignProperties_From_ServersDatabasesAuditingSettingOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServersDatabasesAuditingSettingOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ServersDatabasesAuditingSettingOperatorSpec() to populate field OperatorSpec")
 		}
 		setting.OperatorSpec = &operatorSpec
 	} else {
@@ -787,12 +669,7 @@ func (setting *ServersDatabasesAuditingSetting_Spec) AssignProperties_From_Serve
 	}
 
 	// StorageAccountSubscriptionId
-	if source.StorageAccountSubscriptionId != nil {
-		storageAccountSubscriptionId := *source.StorageAccountSubscriptionId
-		setting.StorageAccountSubscriptionId = &storageAccountSubscriptionId
-	} else {
-		setting.StorageAccountSubscriptionId = nil
-	}
+	setting.StorageAccountSubscriptionId = genruntime.ClonePointerToString(source.StorageAccountSubscriptionId)
 
 	// StorageEndpoint
 	setting.StorageEndpoint = genruntime.ClonePointerToString(source.StorageEndpoint)
@@ -838,7 +715,7 @@ func (setting *ServersDatabasesAuditingSetting_Spec) AssignProperties_To_Servers
 		var operatorSpec storage.ServersDatabasesAuditingSettingOperatorSpec
 		err := setting.OperatorSpec.AssignProperties_To_ServersDatabasesAuditingSettingOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServersDatabasesAuditingSettingOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ServersDatabasesAuditingSettingOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -879,12 +756,7 @@ func (setting *ServersDatabasesAuditingSetting_Spec) AssignProperties_To_Servers
 	}
 
 	// StorageAccountSubscriptionId
-	if setting.StorageAccountSubscriptionId != nil {
-		storageAccountSubscriptionId := *setting.StorageAccountSubscriptionId
-		destination.StorageAccountSubscriptionId = &storageAccountSubscriptionId
-	} else {
-		destination.StorageAccountSubscriptionId = nil
-	}
+	destination.StorageAccountSubscriptionId = genruntime.ClonePointerToString(setting.StorageAccountSubscriptionId)
 
 	// StorageEndpoint
 	destination.StorageEndpoint = genruntime.ClonePointerToString(setting.StorageEndpoint)
@@ -945,12 +817,7 @@ func (setting *ServersDatabasesAuditingSetting_Spec) Initialize_From_ServersData
 	}
 
 	// StorageAccountSubscriptionId
-	if source.StorageAccountSubscriptionId != nil {
-		storageAccountSubscriptionId := *source.StorageAccountSubscriptionId
-		setting.StorageAccountSubscriptionId = &storageAccountSubscriptionId
-	} else {
-		setting.StorageAccountSubscriptionId = nil
-	}
+	setting.StorageAccountSubscriptionId = genruntime.ClonePointerToString(source.StorageAccountSubscriptionId)
 
 	// StorageEndpoint
 	setting.StorageEndpoint = genruntime.ClonePointerToString(source.StorageEndpoint)
@@ -1090,13 +957,13 @@ func (setting *ServersDatabasesAuditingSetting_STATUS) ConvertStatusFrom(source 
 	src = &storage.ServersDatabasesAuditingSetting_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = setting.AssignProperties_From_ServersDatabasesAuditingSetting_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1114,13 +981,13 @@ func (setting *ServersDatabasesAuditingSetting_STATUS) ConvertStatusTo(destinati
 	dst = &storage.ServersDatabasesAuditingSetting_STATUS{}
 	err := setting.AssignProperties_To_ServersDatabasesAuditingSetting_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

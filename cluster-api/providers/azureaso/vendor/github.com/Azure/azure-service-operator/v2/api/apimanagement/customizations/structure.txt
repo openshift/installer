@@ -2,16 +2,30 @@
 github.com/Azure/azure-service-operator/v2/api/apimanagement/customizations
 ---------------------------------------------------------------------------
 ApiExtension: Object (0 properties)
+
 ApiVersionSetExtension: Object (0 properties)
+
 AuthorizationProviderExtension: Object (0 properties)
+
 AuthorizationProvidersAuthorizationExtension: Object (0 properties)
+
 AuthorizationProvidersAuthorizationsAccessPolicyExtension: Object (0 properties)
+
 BackendExtension: Object (0 properties)
+
 NamedValueExtension: Object (0 properties)
+
 PolicyExtension: Object (0 properties)
+
 PolicyFragmentExtension: Object (0 properties)
+
 ProductApiExtension: Object (0 properties)
+
 ProductExtension: Object (0 properties)
+
 ProductPolicyExtension: Object (0 properties)
+
 ServiceExtension: Object (0 properties)
+
 SubscriptionExtension: Object (0 properties)
+

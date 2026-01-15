@@ -8,7 +8,7 @@ package customizations
 import (
 	"context"
 
-	api "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20221201"
+	api "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1api20240801"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 )

@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (secret *Secret) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (secret *Secret) Owner() *genruntime.ResourceReference {
+	if secret.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(secret.Spec)
 	return secret.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (secret *Secret) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Secret_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	secret.Status = st
@@ -183,7 +187,7 @@ var _ genruntime.ConvertibleSpec = &Secret_Spec{}
 // ConvertSpecFrom populates our Secret_Spec from the provided source
 func (secret *Secret_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == secret {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(secret)
@@ -192,7 +196,7 @@ func (secret *Secret_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) er
 // ConvertSpecTo populates the provided destination from our Secret_Spec
 func (secret *Secret_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == secret {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(secret)
@@ -217,7 +221,7 @@ var _ genruntime.ConvertibleStatus = &Secret_STATUS{}
 // ConvertStatusFrom populates our Secret_STATUS from the provided source
 func (secret *Secret_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == secret {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(secret)
@@ -226,7 +230,7 @@ func (secret *Secret_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStat
 // ConvertStatusTo populates the provided destination from our Secret_STATUS
 func (secret *Secret_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == secret {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(secret)

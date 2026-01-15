@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20240601/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2024-06-01"
+
 PrivateDnsZone: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -34,6 +35,7 @@ PrivateDnsZone: Resource
     ├── ProvisioningState: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 PrivateDnsZonesAAAARecord: Resource
 ├── Owner: network/v1api20240601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -127,6 +129,7 @@ PrivateDnsZonesAAAARecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesARecord: Resource
 ├── Owner: network/v1api20240601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -220,6 +223,7 @@ PrivateDnsZonesARecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesCNAMERecord: Resource
 ├── Owner: network/v1api20240601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -313,6 +317,7 @@ PrivateDnsZonesCNAMERecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesMXRecord: Resource
 ├── Owner: network/v1api20240601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -406,6 +411,7 @@ PrivateDnsZonesMXRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesPTRRecord: Resource
 ├── Owner: network/v1api20240601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -499,6 +505,7 @@ PrivateDnsZonesPTRRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesSRVRecord: Resource
 ├── Owner: network/v1api20240601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -592,6 +599,7 @@ PrivateDnsZonesSRVRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesTXTRecord: Resource
 ├── Owner: network/v1api20240601.PrivateDnsZone
 ├── Spec: Object (16 properties)
@@ -685,6 +693,7 @@ PrivateDnsZonesTXTRecord: Resource
     │   ├── PropertyBag: genruntime.PropertyBag
     │   └── Value: string[]
     └── Type: *string
+
 PrivateDnsZonesVirtualNetworkLink: Resource
 ├── Owner: network/v1api20240601.PrivateDnsZone
 ├── Spec: Object (11 properties)
@@ -720,3 +729,4 @@ PrivateDnsZonesVirtualNetworkLink: Resource
     │   ├── Id: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── VirtualNetworkLinkState: *string
+

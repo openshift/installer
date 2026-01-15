@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-07-01"
+
 ApplicationGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (40 properties)
@@ -495,6 +496,7 @@ ApplicationGateway: Resource
     │   ├── RuleSetType: *string
     │   └── RuleSetVersion: *string
     └── Zones: string[]
+
 BastionHost: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (16 properties)
@@ -551,6 +553,7 @@ BastionHost: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 DnsForwardingRuleSetsForwardingRule: Resource
 ├── Owner: network/v1api20220701.DnsForwardingRuleset
 ├── Spec: Object (9 properties)
@@ -593,6 +596,7 @@ DnsForwardingRuleSetsForwardingRule: Resource
     │   ├── Port: *int
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 DnsForwardingRuleSetsVirtualNetworkLink: Resource
 ├── Owner: network/v1api20220701.DnsForwardingRuleset
 ├── Spec: Object (7 properties)
@@ -628,6 +632,7 @@ DnsForwardingRuleSetsVirtualNetworkLink: Resource
     └── VirtualNetwork: *Object (2 properties)
         ├── Id: *string
         └── PropertyBag: genruntime.PropertyBag
+
 DnsForwardingRuleset: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -666,6 +671,7 @@ DnsForwardingRuleset: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 DnsResolver: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -705,6 +711,7 @@ DnsResolver: Resource
     └── VirtualNetwork: *Object (2 properties)
         ├── Id: *string
         └── PropertyBag: genruntime.PropertyBag
+
 DnsResolversInboundEndpoint: Resource
 ├── Owner: network/v1api20220701.DnsResolver
 ├── Spec: Object (8 properties)
@@ -751,6 +758,7 @@ DnsResolversInboundEndpoint: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 DnsResolversOutboundEndpoint: Resource
 ├── Owner: network/v1api20220701.DnsResolver
 ├── Spec: Object (8 properties)
@@ -789,6 +797,7 @@ DnsResolversOutboundEndpoint: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 NatGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (12 properties)
@@ -838,6 +847,7 @@ NatGateway: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 PrivateEndpoint: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -959,6 +969,7 @@ PrivateEndpoint: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 PrivateEndpointsPrivateDnsZoneGroup: Resource
 ├── Owner: network/v1api20220701.PrivateEndpoint
 ├── Spec: Object (6 properties)
@@ -993,6 +1004,7 @@ PrivateEndpointsPrivateDnsZoneGroup: Resource
     │       └── Ttl: *int
     ├── PropertyBag: genruntime.PropertyBag
     └── ProvisioningState: *string
+
 PrivateLinkService: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -1080,6 +1092,7 @@ PrivateLinkService: Resource
     └── Visibility: *Object (2 properties)
         ├── PropertyBag: genruntime.PropertyBag
         └── Subscriptions: string[]
+
 PublicIPPrefix: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -1153,75 +1166,148 @@ PublicIPPrefix: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 augmentConversionForApplicationSecurityGroupSpec_PrivateEndpoint_SubResourceEmbedded: Interface
+
 augmentConversionForApplicationSecurityGroup_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+
 augmentConversionForBastionHost: Interface
+
 augmentConversionForBastionHostIPConfiguration: Interface
+
 augmentConversionForBastionHostIPConfiguration_STATUS: Interface
+
 augmentConversionForBastionHostOperatorSpec: Interface
+
 augmentConversionForBastionHost_STATUS: Interface
+
 augmentConversionForBastionHost_Spec: Interface
+
 augmentConversionForCustomDnsConfigPropertiesFormat_STATUS: Interface
+
 augmentConversionForExtendedLocation: Interface
+
 augmentConversionForExtendedLocation_STATUS: Interface
+
 augmentConversionForFrontendIPConfiguration_PrivateLinkService_SubResourceEmbedded: Interface
+
 augmentConversionForFrontendIPConfiguration_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+
 augmentConversionForIpTag: Interface
+
 augmentConversionForIpTag_STATUS: Interface
+
 augmentConversionForManagedServiceIdentity: Interface
+
 augmentConversionForManagedServiceIdentity_STATUS: Interface
+
 augmentConversionForManagedServiceIdentity_UserAssignedIdentities_STATUS: Interface
+
 augmentConversionForNatGateway: Interface
+
 augmentConversionForNatGatewayOperatorSpec: Interface
+
 augmentConversionForNatGatewaySku: Interface
+
 augmentConversionForNatGatewaySku_STATUS: Interface
+
 augmentConversionForNatGatewaySpec_PublicIPPrefix_SubResourceEmbedded: Interface
+
 augmentConversionForNatGateway_STATUS: Interface
+
 augmentConversionForNatGateway_STATUS_PublicIPPrefix_SubResourceEmbedded: Interface
+
 augmentConversionForNatGateway_Spec: Interface
+
 augmentConversionForNetworkInterface_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+
 augmentConversionForNetworkInterface_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+
 augmentConversionForPrivateDnsZoneConfig: Interface
+
 augmentConversionForPrivateDnsZoneConfig_STATUS: Interface
+
 augmentConversionForPrivateEndpoint: Interface
+
 augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
 augmentConversionForPrivateEndpointIPConfiguration: Interface
+
 augmentConversionForPrivateEndpointIPConfiguration_STATUS: Interface
+
 augmentConversionForPrivateEndpointOperatorConfigMaps: Interface
+
 augmentConversionForPrivateEndpointOperatorSpec: Interface
+
 augmentConversionForPrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+
 augmentConversionForPrivateEndpoint_Spec: Interface
+
 augmentConversionForPrivateEndpointsPrivateDnsZoneGroup: Interface
+
 augmentConversionForPrivateEndpointsPrivateDnsZoneGroupOperatorSpec: Interface
+
 augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_STATUS: Interface
+
 augmentConversionForPrivateEndpointsPrivateDnsZoneGroup_Spec: Interface
+
 augmentConversionForPrivateLinkService: Interface
+
 augmentConversionForPrivateLinkServiceConnection: Interface
+
 augmentConversionForPrivateLinkServiceConnectionState: Interface
+
 augmentConversionForPrivateLinkServiceConnectionState_STATUS: Interface
+
 augmentConversionForPrivateLinkServiceConnection_STATUS: Interface
+
 augmentConversionForPrivateLinkServiceIpConfiguration: Interface
+
 augmentConversionForPrivateLinkServiceIpConfiguration_STATUS: Interface
+
 augmentConversionForPrivateLinkServiceOperatorConfigMaps: Interface
+
 augmentConversionForPrivateLinkServiceOperatorSpec: Interface
+
 augmentConversionForPrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+
 augmentConversionForPrivateLinkService_Spec: Interface
+
 augmentConversionForPublicIPPrefix: Interface
+
 augmentConversionForPublicIPPrefixOperatorSpec: Interface
+
 augmentConversionForPublicIPPrefixSku: Interface
+
 augmentConversionForPublicIPPrefixSku_STATUS: Interface
+
 augmentConversionForPublicIPPrefix_STATUS: Interface
+
 augmentConversionForPublicIPPrefix_Spec: Interface
+
 augmentConversionForRecordSet_STATUS: Interface
+
 augmentConversionForReferencedPublicIpAddress_STATUS: Interface
+
 augmentConversionForResourceSet: Interface
+
 augmentConversionForResourceSet_STATUS: Interface
+
 augmentConversionForSku: Interface
+
 augmentConversionForSku_STATUS: Interface
+
 augmentConversionForSubResource: Interface
+
 augmentConversionForSubResource_STATUS: Interface
+
 augmentConversionForSubnet_PrivateEndpoint_SubResourceEmbedded: Interface
+
 augmentConversionForSubnet_PrivateLinkService_SubResourceEmbedded: Interface
+
 augmentConversionForSubnet_STATUS_PrivateEndpoint_SubResourceEmbedded: Interface
+
 augmentConversionForSubnet_STATUS_PrivateLinkService_SubResourceEmbedded: Interface
+
 augmentConversionForUserAssignedIdentityDetails: Interface
+

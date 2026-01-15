@@ -127,9 +127,11 @@ func (configuration FactoryRepoConfiguration) MarshalJSON() ([]byte, error) {
 	if configuration.FactoryGitHub != nil {
 		return json.Marshal(configuration.FactoryGitHub)
 	}
+
 	if configuration.FactoryVSTS != nil {
 		return json.Marshal(configuration.FactoryVSTS)
 	}
+
 	return nil, nil
 }
 

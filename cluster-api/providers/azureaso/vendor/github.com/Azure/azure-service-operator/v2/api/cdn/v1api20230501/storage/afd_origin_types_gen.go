@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (origin *AfdOrigin) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (origin *AfdOrigin) Owner() *genruntime.ResourceReference {
+	if origin.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(origin.Spec)
 	return origin.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (origin *AfdOrigin) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st AfdOrigin_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	origin.Status = st
@@ -165,16 +169,17 @@ type AfdOriginList struct {
 type AfdOrigin_Spec struct {
 	// AzureName: The name of the resource in Azure. This is often the same as the name of the resource in Kubernetes but it
 	// doesn't have to be.
-	AzureName                   string                 `json:"azureName,omitempty"`
-	AzureOrigin                 *ResourceReference     `json:"azureOrigin,omitempty"`
-	EnabledState                *string                `json:"enabledState,omitempty"`
-	EnforceCertificateNameCheck *bool                  `json:"enforceCertificateNameCheck,omitempty"`
-	HostName                    *string                `json:"hostName,omitempty"`
-	HttpPort                    *int                   `json:"httpPort,omitempty"`
-	HttpsPort                   *int                   `json:"httpsPort,omitempty"`
-	OperatorSpec                *AfdOriginOperatorSpec `json:"operatorSpec,omitempty"`
-	OriginHostHeader            *string                `json:"originHostHeader,omitempty"`
-	OriginalVersion             string                 `json:"originalVersion,omitempty"`
+	AzureName                   string                         `json:"azureName,omitempty"`
+	AzureOrigin                 *ResourceReference             `json:"azureOrigin,omitempty"`
+	EnabledState                *string                        `json:"enabledState,omitempty"`
+	EnforceCertificateNameCheck *bool                          `json:"enforceCertificateNameCheck,omitempty"`
+	HostName                    *string                        `json:"hostName,omitempty" optionalConfigMapPair:"HostName"`
+	HostNameFromConfig          *genruntime.ConfigMapReference `json:"hostNameFromConfig,omitempty" optionalConfigMapPair:"HostName"`
+	HttpPort                    *int                           `json:"httpPort,omitempty"`
+	HttpsPort                   *int                           `json:"httpsPort,omitempty"`
+	OperatorSpec                *AfdOriginOperatorSpec         `json:"operatorSpec,omitempty"`
+	OriginHostHeader            *string                        `json:"originHostHeader,omitempty"`
+	OriginalVersion             string                         `json:"originalVersion,omitempty"`
 
 	// +kubebuilder:validation:Required
 	// Owner: The owner of the resource. The owner controls where the resource goes when it is deployed. The owner also
@@ -192,7 +197,7 @@ var _ genruntime.ConvertibleSpec = &AfdOrigin_Spec{}
 // ConvertSpecFrom populates our AfdOrigin_Spec from the provided source
 func (origin *AfdOrigin_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == origin {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(origin)
@@ -201,7 +206,7 @@ func (origin *AfdOrigin_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec)
 // ConvertSpecTo populates the provided destination from our AfdOrigin_Spec
 func (origin *AfdOrigin_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == origin {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(origin)
@@ -235,7 +240,7 @@ var _ genruntime.ConvertibleStatus = &AfdOrigin_STATUS{}
 // ConvertStatusFrom populates our AfdOrigin_STATUS from the provided source
 func (origin *AfdOrigin_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == origin {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(origin)
@@ -244,7 +249,7 @@ func (origin *AfdOrigin_STATUS) ConvertStatusFrom(source genruntime.ConvertibleS
 // ConvertStatusTo populates the provided destination from our AfdOrigin_STATUS
 func (origin *AfdOrigin_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == origin {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(origin)

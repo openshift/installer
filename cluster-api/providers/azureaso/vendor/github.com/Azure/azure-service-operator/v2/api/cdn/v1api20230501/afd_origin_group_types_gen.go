@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (group *AfdOriginGroup) ConvertTo(hub conversion.Hub) error {
 
 	return group.AssignProperties_To_AfdOriginGroup(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-cdn-azure-com-v1api20230501-afdorigingroup,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=afdorigingroups,verbs=create;update,versions=v1api20230501,name=default.v1api20230501.afdorigingroups.cdn.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &AfdOriginGroup{}
-
-// Default applies defaults to the AfdOriginGroup resource
-func (group *AfdOriginGroup) Default() {
-	group.defaultImpl()
-	var temp any = group
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (group *AfdOriginGroup) defaultAzureName() {
-	if group.Spec.AzureName == "" {
-		group.Spec.AzureName = group.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the AfdOriginGroup resource
-func (group *AfdOriginGroup) defaultImpl() { group.defaultAzureName() }
 
 var _ configmaps.Exporter = &AfdOriginGroup{}
 
@@ -173,6 +147,10 @@ func (group *AfdOriginGroup) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (group *AfdOriginGroup) Owner() *genruntime.ResourceReference {
+	if group.Spec.Owner == nil {
+		return nil
+	}
+
 	ownerGroup, ownerKind := genruntime.LookupOwnerGroupKind(group.Spec)
 	return group.Spec.Owner.AsResourceReference(ownerGroup, ownerKind)
 }
@@ -189,114 +167,11 @@ func (group *AfdOriginGroup) SetStatus(status genruntime.ConvertibleStatus) erro
 	var st AfdOriginGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	group.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-cdn-azure-com-v1api20230501-afdorigingroup,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=afdorigingroups,verbs=create;update,versions=v1api20230501,name=validate.v1api20230501.afdorigingroups.cdn.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &AfdOriginGroup{}
-
-// ValidateCreate validates the creation of the resource
-func (group *AfdOriginGroup) ValidateCreate() (admission.Warnings, error) {
-	validations := group.createValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (group *AfdOriginGroup) ValidateDelete() (admission.Warnings, error) {
-	validations := group.deleteValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (group *AfdOriginGroup) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := group.updateValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (group *AfdOriginGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (group *AfdOriginGroup) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (group *AfdOriginGroup) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateResourceReferences()
-		},
-		group.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (group *AfdOriginGroup) validateConfigMapDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (group *AfdOriginGroup) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(group)
-}
-
-// validateResourceReferences validates all resource references
-func (group *AfdOriginGroup) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&group.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (group *AfdOriginGroup) validateSecretDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (group *AfdOriginGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*AfdOriginGroup)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, group)
 }
 
 // AssignProperties_From_AfdOriginGroup populates our AfdOriginGroup from the provided source AfdOriginGroup
@@ -309,7 +184,7 @@ func (group *AfdOriginGroup) AssignProperties_From_AfdOriginGroup(source *storag
 	var spec AfdOriginGroup_Spec
 	err := spec.AssignProperties_From_AfdOriginGroup_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_AfdOriginGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_AfdOriginGroup_Spec() to populate field Spec")
 	}
 	group.Spec = spec
 
@@ -317,7 +192,7 @@ func (group *AfdOriginGroup) AssignProperties_From_AfdOriginGroup(source *storag
 	var status AfdOriginGroup_STATUS
 	err = status.AssignProperties_From_AfdOriginGroup_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_AfdOriginGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_AfdOriginGroup_STATUS() to populate field Status")
 	}
 	group.Status = status
 
@@ -335,7 +210,7 @@ func (group *AfdOriginGroup) AssignProperties_To_AfdOriginGroup(destination *sto
 	var spec storage.AfdOriginGroup_Spec
 	err := group.Spec.AssignProperties_To_AfdOriginGroup_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_AfdOriginGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_AfdOriginGroup_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (group *AfdOriginGroup) AssignProperties_To_AfdOriginGroup(destination *sto
 	var status storage.AfdOriginGroup_STATUS
 	err = group.Status.AssignProperties_To_AfdOriginGroup_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_AfdOriginGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_AfdOriginGroup_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -539,13 +414,13 @@ func (group *AfdOriginGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleS
 	src = &storage.AfdOriginGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_AfdOriginGroup_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -563,13 +438,13 @@ func (group *AfdOriginGroup_Spec) ConvertSpecTo(destination genruntime.Convertib
 	dst = &storage.AfdOriginGroup_Spec{}
 	err := group.AssignProperties_To_AfdOriginGroup_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -586,7 +461,7 @@ func (group *AfdOriginGroup_Spec) AssignProperties_From_AfdOriginGroup_Spec(sour
 		var healthProbeSetting HealthProbeParameters
 		err := healthProbeSetting.AssignProperties_From_HealthProbeParameters(source.HealthProbeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HealthProbeParameters() to populate field HealthProbeSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_HealthProbeParameters() to populate field HealthProbeSettings")
 		}
 		group.HealthProbeSettings = &healthProbeSetting
 	} else {
@@ -598,7 +473,7 @@ func (group *AfdOriginGroup_Spec) AssignProperties_From_AfdOriginGroup_Spec(sour
 		var loadBalancingSetting LoadBalancingSettingsParameters
 		err := loadBalancingSetting.AssignProperties_From_LoadBalancingSettingsParameters(source.LoadBalancingSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LoadBalancingSettingsParameters() to populate field LoadBalancingSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_LoadBalancingSettingsParameters() to populate field LoadBalancingSettings")
 		}
 		group.LoadBalancingSettings = &loadBalancingSetting
 	} else {
@@ -610,7 +485,7 @@ func (group *AfdOriginGroup_Spec) AssignProperties_From_AfdOriginGroup_Spec(sour
 		var operatorSpec AfdOriginGroupOperatorSpec
 		err := operatorSpec.AssignProperties_From_AfdOriginGroupOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AfdOriginGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_AfdOriginGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		group.OperatorSpec = &operatorSpec
 	} else {
@@ -635,12 +510,7 @@ func (group *AfdOriginGroup_Spec) AssignProperties_From_AfdOriginGroup_Spec(sour
 	}
 
 	// TrafficRestorationTimeToHealedOrNewEndpointsInMinutes
-	if source.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes != nil {
-		trafficRestorationTimeToHealedOrNewEndpointsInMinute := *source.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes
-		group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = &trafficRestorationTimeToHealedOrNewEndpointsInMinute
-	} else {
-		group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = nil
-	}
+	group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = genruntime.ClonePointerToInt(source.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes)
 
 	// No error
 	return nil
@@ -659,7 +529,7 @@ func (group *AfdOriginGroup_Spec) AssignProperties_To_AfdOriginGroup_Spec(destin
 		var healthProbeSetting storage.HealthProbeParameters
 		err := group.HealthProbeSettings.AssignProperties_To_HealthProbeParameters(&healthProbeSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HealthProbeParameters() to populate field HealthProbeSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_HealthProbeParameters() to populate field HealthProbeSettings")
 		}
 		destination.HealthProbeSettings = &healthProbeSetting
 	} else {
@@ -671,7 +541,7 @@ func (group *AfdOriginGroup_Spec) AssignProperties_To_AfdOriginGroup_Spec(destin
 		var loadBalancingSetting storage.LoadBalancingSettingsParameters
 		err := group.LoadBalancingSettings.AssignProperties_To_LoadBalancingSettingsParameters(&loadBalancingSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LoadBalancingSettingsParameters() to populate field LoadBalancingSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_LoadBalancingSettingsParameters() to populate field LoadBalancingSettings")
 		}
 		destination.LoadBalancingSettings = &loadBalancingSetting
 	} else {
@@ -683,7 +553,7 @@ func (group *AfdOriginGroup_Spec) AssignProperties_To_AfdOriginGroup_Spec(destin
 		var operatorSpec storage.AfdOriginGroupOperatorSpec
 		err := group.OperatorSpec.AssignProperties_To_AfdOriginGroupOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AfdOriginGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_AfdOriginGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -710,12 +580,7 @@ func (group *AfdOriginGroup_Spec) AssignProperties_To_AfdOriginGroup_Spec(destin
 	}
 
 	// TrafficRestorationTimeToHealedOrNewEndpointsInMinutes
-	if group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes != nil {
-		trafficRestorationTimeToHealedOrNewEndpointsInMinute := *group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes
-		destination.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = &trafficRestorationTimeToHealedOrNewEndpointsInMinute
-	} else {
-		destination.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = nil
-	}
+	destination.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = genruntime.ClonePointerToInt(group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -736,7 +601,7 @@ func (group *AfdOriginGroup_Spec) Initialize_From_AfdOriginGroup_STATUS(source *
 		var healthProbeSetting HealthProbeParameters
 		err := healthProbeSetting.Initialize_From_HealthProbeParameters_STATUS(source.HealthProbeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_HealthProbeParameters_STATUS() to populate field HealthProbeSettings")
+			return eris.Wrap(err, "calling Initialize_From_HealthProbeParameters_STATUS() to populate field HealthProbeSettings")
 		}
 		group.HealthProbeSettings = &healthProbeSetting
 	} else {
@@ -748,7 +613,7 @@ func (group *AfdOriginGroup_Spec) Initialize_From_AfdOriginGroup_STATUS(source *
 		var loadBalancingSetting LoadBalancingSettingsParameters
 		err := loadBalancingSetting.Initialize_From_LoadBalancingSettingsParameters_STATUS(source.LoadBalancingSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_LoadBalancingSettingsParameters_STATUS() to populate field LoadBalancingSettings")
+			return eris.Wrap(err, "calling Initialize_From_LoadBalancingSettingsParameters_STATUS() to populate field LoadBalancingSettings")
 		}
 		group.LoadBalancingSettings = &loadBalancingSetting
 	} else {
@@ -764,12 +629,7 @@ func (group *AfdOriginGroup_Spec) Initialize_From_AfdOriginGroup_STATUS(source *
 	}
 
 	// TrafficRestorationTimeToHealedOrNewEndpointsInMinutes
-	if source.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes != nil {
-		trafficRestorationTimeToHealedOrNewEndpointsInMinute := *source.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes
-		group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = &trafficRestorationTimeToHealedOrNewEndpointsInMinute
-	} else {
-		group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = nil
-	}
+	group.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes = genruntime.ClonePointerToInt(source.TrafficRestorationTimeToHealedOrNewEndpointsInMinutes)
 
 	// No error
 	return nil
@@ -835,13 +695,13 @@ func (group *AfdOriginGroup_STATUS) ConvertStatusFrom(source genruntime.Converti
 	src = &storage.AfdOriginGroup_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_AfdOriginGroup_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -859,13 +719,13 @@ func (group *AfdOriginGroup_STATUS) ConvertStatusTo(destination genruntime.Conve
 	dst = &storage.AfdOriginGroup_STATUS{}
 	err := group.AssignProperties_To_AfdOriginGroup_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1019,7 +879,7 @@ func (group *AfdOriginGroup_STATUS) AssignProperties_From_AfdOriginGroup_STATUS(
 		var healthProbeSetting HealthProbeParameters_STATUS
 		err := healthProbeSetting.AssignProperties_From_HealthProbeParameters_STATUS(source.HealthProbeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HealthProbeParameters_STATUS() to populate field HealthProbeSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_HealthProbeParameters_STATUS() to populate field HealthProbeSettings")
 		}
 		group.HealthProbeSettings = &healthProbeSetting
 	} else {
@@ -1034,7 +894,7 @@ func (group *AfdOriginGroup_STATUS) AssignProperties_From_AfdOriginGroup_STATUS(
 		var loadBalancingSetting LoadBalancingSettingsParameters_STATUS
 		err := loadBalancingSetting.AssignProperties_From_LoadBalancingSettingsParameters_STATUS(source.LoadBalancingSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_LoadBalancingSettingsParameters_STATUS() to populate field LoadBalancingSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_LoadBalancingSettingsParameters_STATUS() to populate field LoadBalancingSettings")
 		}
 		group.LoadBalancingSettings = &loadBalancingSetting
 	} else {
@@ -1070,7 +930,7 @@ func (group *AfdOriginGroup_STATUS) AssignProperties_From_AfdOriginGroup_STATUS(
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		group.SystemData = &systemDatum
 	} else {
@@ -1108,7 +968,7 @@ func (group *AfdOriginGroup_STATUS) AssignProperties_To_AfdOriginGroup_STATUS(de
 		var healthProbeSetting storage.HealthProbeParameters_STATUS
 		err := group.HealthProbeSettings.AssignProperties_To_HealthProbeParameters_STATUS(&healthProbeSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HealthProbeParameters_STATUS() to populate field HealthProbeSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_HealthProbeParameters_STATUS() to populate field HealthProbeSettings")
 		}
 		destination.HealthProbeSettings = &healthProbeSetting
 	} else {
@@ -1123,7 +983,7 @@ func (group *AfdOriginGroup_STATUS) AssignProperties_To_AfdOriginGroup_STATUS(de
 		var loadBalancingSetting storage.LoadBalancingSettingsParameters_STATUS
 		err := group.LoadBalancingSettings.AssignProperties_To_LoadBalancingSettingsParameters_STATUS(&loadBalancingSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_LoadBalancingSettingsParameters_STATUS() to populate field LoadBalancingSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_LoadBalancingSettingsParameters_STATUS() to populate field LoadBalancingSettings")
 		}
 		destination.LoadBalancingSettings = &loadBalancingSetting
 	} else {
@@ -1157,7 +1017,7 @@ func (group *AfdOriginGroup_STATUS) AssignProperties_To_AfdOriginGroup_STATUS(de
 		var systemDatum storage.SystemData_STATUS
 		err := group.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1452,12 +1312,7 @@ func (parameters *HealthProbeParameters) PopulateFromARM(owner genruntime.Arbitr
 func (parameters *HealthProbeParameters) AssignProperties_From_HealthProbeParameters(source *storage.HealthProbeParameters) error {
 
 	// ProbeIntervalInSeconds
-	if source.ProbeIntervalInSeconds != nil {
-		probeIntervalInSecond := *source.ProbeIntervalInSeconds
-		parameters.ProbeIntervalInSeconds = &probeIntervalInSecond
-	} else {
-		parameters.ProbeIntervalInSeconds = nil
-	}
+	parameters.ProbeIntervalInSeconds = genruntime.ClonePointerToInt(source.ProbeIntervalInSeconds)
 
 	// ProbePath
 	parameters.ProbePath = genruntime.ClonePointerToString(source.ProbePath)
@@ -1490,12 +1345,7 @@ func (parameters *HealthProbeParameters) AssignProperties_To_HealthProbeParamete
 	propertyBag := genruntime.NewPropertyBag()
 
 	// ProbeIntervalInSeconds
-	if parameters.ProbeIntervalInSeconds != nil {
-		probeIntervalInSecond := *parameters.ProbeIntervalInSeconds
-		destination.ProbeIntervalInSeconds = &probeIntervalInSecond
-	} else {
-		destination.ProbeIntervalInSeconds = nil
-	}
+	destination.ProbeIntervalInSeconds = genruntime.ClonePointerToInt(parameters.ProbeIntervalInSeconds)
 
 	// ProbePath
 	destination.ProbePath = genruntime.ClonePointerToString(parameters.ProbePath)
@@ -1531,12 +1381,7 @@ func (parameters *HealthProbeParameters) AssignProperties_To_HealthProbeParamete
 func (parameters *HealthProbeParameters) Initialize_From_HealthProbeParameters_STATUS(source *HealthProbeParameters_STATUS) error {
 
 	// ProbeIntervalInSeconds
-	if source.ProbeIntervalInSeconds != nil {
-		probeIntervalInSecond := *source.ProbeIntervalInSeconds
-		parameters.ProbeIntervalInSeconds = &probeIntervalInSecond
-	} else {
-		parameters.ProbeIntervalInSeconds = nil
-	}
+	parameters.ProbeIntervalInSeconds = genruntime.ClonePointerToInt(source.ProbeIntervalInSeconds)
 
 	// ProbePath
 	parameters.ProbePath = genruntime.ClonePointerToString(source.ProbePath)

@@ -8,7 +8,7 @@ package customizations
 import (
 	"context"
 
-	api "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630"
+	api "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/extensions"
 )

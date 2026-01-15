@@ -232,12 +232,15 @@ func (rule OutboundRule) MarshalJSON() ([]byte, error) {
 	if rule.FQDN != nil {
 		return json.Marshal(rule.FQDN)
 	}
+
 	if rule.PrivateEndpoint != nil {
 		return json.Marshal(rule.PrivateEndpoint)
 	}
+
 	if rule.ServiceTag != nil {
 		return json.Marshal(rule.ServiceTag)
 	}
+
 	return nil, nil
 }
 

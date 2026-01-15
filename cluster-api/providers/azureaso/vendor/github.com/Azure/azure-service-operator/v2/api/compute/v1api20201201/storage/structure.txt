@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-12-01"
+
 VirtualMachine: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (29 properties)
@@ -612,6 +613,7 @@ VirtualMachine: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── VmId: *string
     └── Zones: string[]
+
 VirtualMachineScaleSet: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (25 properties)
@@ -1146,6 +1148,7 @@ VirtualMachineScaleSet: Resource
     │       └── PropertyBag: genruntime.PropertyBag
     ├── ZoneBalance: *bool
     └── Zones: string[]
+
 VirtualMachineScaleSetsExtension: Resource
 ├── Owner: compute/v1api20201201.VirtualMachineScaleSet
 ├── Spec: Object (14 properties)
@@ -1181,6 +1184,7 @@ VirtualMachineScaleSetsExtension: Resource
     ├── Settings: map[string]v1.JSON
     ├── Type: *string
     └── TypeHandlerVersion: *string
+
 VirtualMachinesExtension: Resource
 ├── Owner: compute/v1api20201201.VirtualMachine
 ├── Spec: Object (16 properties)
@@ -1256,160 +1260,318 @@ VirtualMachinesExtension: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── TypeHandlerVersion: *string
+
 augmentConversionForAdditionalCapabilities: Interface
+
 augmentConversionForAdditionalCapabilities_STATUS: Interface
+
 augmentConversionForAdditionalUnattendContent: Interface
+
 augmentConversionForAdditionalUnattendContent_STATUS: Interface
+
 augmentConversionForApiEntityReference: Interface
+
 augmentConversionForApiEntityReference_STATUS: Interface
+
 augmentConversionForApiErrorBase_STATUS: Interface
+
 augmentConversionForApiError_STATUS: Interface
+
 augmentConversionForAutomaticOSUpgradePolicy: Interface
+
 augmentConversionForAutomaticOSUpgradePolicy_STATUS: Interface
+
 augmentConversionForAutomaticRepairsPolicy: Interface
+
 augmentConversionForAutomaticRepairsPolicy_STATUS: Interface
+
 augmentConversionForAvailablePatchSummary_STATUS: Interface
+
 augmentConversionForBillingProfile: Interface
+
 augmentConversionForBillingProfile_STATUS: Interface
+
 augmentConversionForBootDiagnostics: Interface
+
 augmentConversionForBootDiagnosticsInstanceView_STATUS: Interface
+
 augmentConversionForBootDiagnostics_STATUS: Interface
+
 augmentConversionForDataDisk: Interface
+
 augmentConversionForDataDisk_STATUS: Interface
+
 augmentConversionForDiagnosticsProfile: Interface
+
 augmentConversionForDiagnosticsProfile_STATUS: Interface
+
 augmentConversionForDiffDiskSettings: Interface
+
 augmentConversionForDiffDiskSettings_STATUS: Interface
+
 augmentConversionForDiskEncryptionSettings: Interface
+
 augmentConversionForDiskEncryptionSettings_STATUS: Interface
+
 augmentConversionForDiskInstanceView_STATUS: Interface
+
 augmentConversionForExtendedLocation: Interface
+
 augmentConversionForExtendedLocation_STATUS: Interface
+
 augmentConversionForHardwareProfile: Interface
+
 augmentConversionForHardwareProfile_STATUS: Interface
+
 augmentConversionForImageReference: Interface
+
 augmentConversionForImageReference_STATUS: Interface
+
 augmentConversionForInnerError_STATUS: Interface
+
 augmentConversionForInstanceViewStatus: Interface
+
 augmentConversionForInstanceViewStatus_STATUS: Interface
+
 augmentConversionForKeyVaultKeyReference: Interface
+
 augmentConversionForKeyVaultKeyReference_STATUS: Interface
+
 augmentConversionForKeyVaultSecretReference: Interface
+
 augmentConversionForKeyVaultSecretReference_STATUS: Interface
+
 augmentConversionForLastPatchInstallationSummary_STATUS: Interface
+
 augmentConversionForLinuxConfiguration: Interface
+
 augmentConversionForLinuxConfiguration_STATUS: Interface
+
 augmentConversionForLinuxPatchSettings: Interface
+
 augmentConversionForLinuxPatchSettings_STATUS: Interface
+
 augmentConversionForMaintenanceRedeployStatus_STATUS: Interface
+
 augmentConversionForManagedDiskParameters: Interface
+
 augmentConversionForManagedDiskParameters_STATUS: Interface
+
 augmentConversionForNetworkInterfaceReference: Interface
+
 augmentConversionForNetworkInterfaceReference_STATUS: Interface
+
 augmentConversionForNetworkProfile: Interface
+
 augmentConversionForNetworkProfile_STATUS: Interface
+
 augmentConversionForOSDisk: Interface
+
 augmentConversionForOSDisk_STATUS: Interface
+
 augmentConversionForOSProfile: Interface
+
 augmentConversionForOSProfile_STATUS: Interface
+
 augmentConversionForPatchSettings: Interface
+
 augmentConversionForPatchSettings_STATUS: Interface
+
 augmentConversionForPlan: Interface
+
 augmentConversionForPlan_STATUS: Interface
+
 augmentConversionForRollingUpgradePolicy: Interface
+
 augmentConversionForRollingUpgradePolicy_STATUS: Interface
+
 augmentConversionForScaleInPolicy: Interface
+
 augmentConversionForScaleInPolicy_STATUS: Interface
+
 augmentConversionForScheduledEventsProfile: Interface
+
 augmentConversionForScheduledEventsProfile_STATUS: Interface
+
 augmentConversionForSecurityProfile: Interface
+
 augmentConversionForSecurityProfile_STATUS: Interface
+
 augmentConversionForSku: Interface
+
 augmentConversionForSku_STATUS: Interface
+
 augmentConversionForSshConfiguration: Interface
+
 augmentConversionForSshConfiguration_STATUS: Interface
+
 augmentConversionForSshPublicKeySpec: Interface
+
 augmentConversionForSshPublicKey_STATUS: Interface
+
 augmentConversionForStorageProfile: Interface
+
 augmentConversionForStorageProfile_STATUS: Interface
+
 augmentConversionForSubResource: Interface
+
 augmentConversionForSubResource_STATUS: Interface
+
 augmentConversionForTerminateNotificationProfile: Interface
+
 augmentConversionForTerminateNotificationProfile_STATUS: Interface
+
 augmentConversionForUefiSettings: Interface
+
 augmentConversionForUefiSettings_STATUS: Interface
+
 augmentConversionForUpgradePolicy: Interface
+
 augmentConversionForUpgradePolicy_STATUS: Interface
+
 augmentConversionForUserAssignedIdentityDetails: Interface
+
 augmentConversionForVaultCertificate: Interface
+
 augmentConversionForVaultCertificate_STATUS: Interface
+
 augmentConversionForVaultSecretGroup: Interface
+
 augmentConversionForVaultSecretGroup_STATUS: Interface
+
 augmentConversionForVirtualHardDisk: Interface
+
 augmentConversionForVirtualHardDisk_STATUS: Interface
+
 augmentConversionForVirtualMachine: Interface
+
 augmentConversionForVirtualMachineAgentInstanceView_STATUS: Interface
+
 augmentConversionForVirtualMachineExtensionHandlerInstanceView_STATUS: Interface
+
 augmentConversionForVirtualMachineExtensionInstanceView: Interface
+
 augmentConversionForVirtualMachineExtensionInstanceView_STATUS: Interface
+
 augmentConversionForVirtualMachineExtension_STATUS: Interface
+
 augmentConversionForVirtualMachineHealthStatus_STATUS: Interface
+
 augmentConversionForVirtualMachineIdentity: Interface
+
 augmentConversionForVirtualMachineIdentity_STATUS: Interface
+
 augmentConversionForVirtualMachineIdentity_UserAssignedIdentities_STATUS: Interface
+
 augmentConversionForVirtualMachineInstanceView_STATUS: Interface
+
 augmentConversionForVirtualMachineOperatorSpec: Interface
+
 augmentConversionForVirtualMachinePatchStatus_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSet: Interface
+
 augmentConversionForVirtualMachineScaleSetDataDisk: Interface
+
 augmentConversionForVirtualMachineScaleSetDataDisk_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetExtension: Interface
+
 augmentConversionForVirtualMachineScaleSetExtensionProfile: Interface
+
 augmentConversionForVirtualMachineScaleSetExtensionProfile_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetExtension_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetIPConfiguration: Interface
+
 augmentConversionForVirtualMachineScaleSetIPConfiguration_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetIdentity: Interface
+
 augmentConversionForVirtualMachineScaleSetIdentity_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetIdentity_UserAssignedIdentities_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetIpTag: Interface
+
 augmentConversionForVirtualMachineScaleSetIpTag_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetManagedDiskParameters: Interface
+
 augmentConversionForVirtualMachineScaleSetManagedDiskParameters_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetNetworkConfiguration: Interface
+
 augmentConversionForVirtualMachineScaleSetNetworkConfigurationDnsSettings: Interface
+
 augmentConversionForVirtualMachineScaleSetNetworkConfigurationDnsSettings_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetNetworkConfiguration_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetNetworkProfile: Interface
+
 augmentConversionForVirtualMachineScaleSetNetworkProfile_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetOSDisk: Interface
+
 augmentConversionForVirtualMachineScaleSetOSDisk_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetOSProfile: Interface
+
 augmentConversionForVirtualMachineScaleSetOSProfile_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetOperatorSpec: Interface
+
 augmentConversionForVirtualMachineScaleSetPublicIPAddressConfiguration: Interface
+
 augmentConversionForVirtualMachineScaleSetPublicIPAddressConfigurationDnsSettings: Interface
+
 augmentConversionForVirtualMachineScaleSetPublicIPAddressConfigurationDnsSettings_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetPublicIPAddressConfiguration_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetStorageProfile: Interface
+
 augmentConversionForVirtualMachineScaleSetStorageProfile_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetVMProfile: Interface
+
 augmentConversionForVirtualMachineScaleSetVMProfile_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSet_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSet_Spec: Interface
+
 augmentConversionForVirtualMachineScaleSetsExtension: Interface
+
 augmentConversionForVirtualMachineScaleSetsExtensionOperatorSpec: Interface
+
 augmentConversionForVirtualMachineScaleSetsExtension_STATUS: Interface
+
 augmentConversionForVirtualMachineScaleSetsExtension_Spec: Interface
+
 augmentConversionForVirtualMachine_STATUS: Interface
+
 augmentConversionForVirtualMachine_Spec: Interface
+
 augmentConversionForVirtualMachinesExtension: Interface
+
 augmentConversionForVirtualMachinesExtensionOperatorSpec: Interface
+
 augmentConversionForVirtualMachinesExtension_STATUS: Interface
+
 augmentConversionForVirtualMachinesExtension_Spec: Interface
+
 augmentConversionForWinRMConfiguration: Interface
+
 augmentConversionForWinRMConfiguration_STATUS: Interface
+
 augmentConversionForWinRMListener: Interface
+
 augmentConversionForWinRMListener_STATUS: Interface
+
 augmentConversionForWindowsConfiguration: Interface
+
 augmentConversionForWindowsConfiguration_STATUS: Interface
+

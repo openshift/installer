@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-03-01"
+
 Image: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (11 properties)
@@ -113,6 +114,7 @@ Image: Resource
     │   └── ZoneResilient: *bool
     ├── Tags: map[string]string
     └── Type: *string
+
 VirtualMachine: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (33 properties)
@@ -946,6 +948,7 @@ VirtualMachine: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── VmId: *string
     └── Zones: string[]
+
 VirtualMachineScaleSet: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (26 properties)
@@ -1619,6 +1622,7 @@ VirtualMachineScaleSet: Resource
     │   └── UserData: *string
     ├── ZoneBalance: *bool
     └── Zones: string[]
+
 VirtualMachineScaleSetsExtension: Resource
 ├── Owner: compute/v1api20220301.VirtualMachineScaleSet
 ├── Spec: Object (16 properties)
@@ -1668,6 +1672,7 @@ VirtualMachineScaleSetsExtension: Resource
     ├── SuppressFailures: *bool
     ├── Type: *string
     └── TypeHandlerVersion: *string
+
 VirtualMachinesExtension: Resource
 ├── Owner: compute/v1api20220301.VirtualMachine
 ├── Spec: Object (18 properties)
@@ -1757,9 +1762,16 @@ VirtualMachinesExtension: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── TypeHandlerVersion: *string
+
 augmentConversionForApiErrorBase_STATUS: Interface
+
 augmentConversionForApiError_STATUS: Interface
+
 augmentConversionForExtendedLocation: Interface
+
 augmentConversionForExtendedLocation_STATUS: Interface
+
 augmentConversionForInnerError_STATUS: Interface
+
 augmentConversionForUserAssignedIdentityDetails: Interface
+

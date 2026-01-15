@@ -6,24 +6,34 @@ AdvancedNetworking: Object (2 properties)
 │   ├── Enabled: *bool
 │   └── PropertyBag: genruntime.PropertyBag
 └── PropertyBag: genruntime.PropertyBag
+
 AdvancedNetworking_STATUS: Object (2 properties)
 ├── Observability: *Object (2 properties)
 │   ├── Enabled: *bool
 │   └── PropertyBag: genruntime.PropertyBag
 └── PropertyBag: genruntime.PropertyBag
+
 AgentPoolSecurityProfile: Object (4 properties)
 ├── EnableSecureBoot: *bool
 ├── EnableVTPM: *bool
 ├── PropertyBag: genruntime.PropertyBag
 └── SshAccess: *string
+
 AgentPoolSecurityProfile_STATUS: Object (4 properties)
 ├── EnableSecureBoot: *bool
 ├── EnableVTPM: *bool
 ├── PropertyBag: genruntime.PropertyBag
 └── SshAccess: *string
+
 augmentConversionForAdvancedNetworking: Interface
+
 augmentConversionForAdvancedNetworkingObservability: Interface
+
 augmentConversionForAdvancedNetworkingObservability_STATUS: Interface
+
 augmentConversionForAdvancedNetworking_STATUS: Interface
+
 augmentConversionForAgentPoolSecurityProfile: Interface
+
 augmentConversionForAgentPoolSecurityProfile_STATUS: Interface
+

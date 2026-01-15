@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net"
+	"os"
 	"sort"
 	"strings"
 	"time"
@@ -172,6 +173,8 @@ type tdsSession struct {
 	routedPort      uint16
 	alwaysEncrypted bool
 	aeSettings      *alwaysEncryptedSettings
+	connid          UniqueIdentifier
+	activityid      UniqueIdentifier
 }
 
 type alwaysEncryptedSettings struct {
@@ -299,13 +302,16 @@ func readPrelogin(r *tdsBuffer) (map[uint8][]byte, error) {
 			break
 		}
 
-		// read prelogin option data
-		value, err := readPreloginOptionData(plOption, struct_buf)
-		if err != nil {
-			return nil, err
-		}
-		results[plOption.token] = value
+		// TRACEID data is not returned from the server
+		if plOption.token != preloginTRACEID {
 
+			// read prelogin option data
+			value, err := readPreloginOptionData(plOption, struct_buf)
+			if err != nil {
+				return nil, err
+			}
+			results[plOption.token] = value
+		}
 		offset += preloginOptionSize
 	}
 	return results, nil
@@ -992,40 +998,6 @@ func dialConnection(ctx context.Context, c *Connector, p *msdsn.Config, logger C
 	return
 }
 
-func preparePreloginFields(p msdsn.Config, fe *featureExtFedAuth) map[uint8][]byte {
-	instance_buf := []byte(p.Instance)
-	instance_buf = append(instance_buf, 0) // zero terminate instance name
-
-	var encrypt byte
-	switch p.Encryption {
-	default:
-		panic(fmt.Errorf("Unsupported Encryption Config %v", p.Encryption))
-	case msdsn.EncryptionDisabled:
-		encrypt = encryptNotSup
-	case msdsn.EncryptionRequired:
-		encrypt = encryptOn
-	case msdsn.EncryptionOff:
-		encrypt = encryptOff
-	case msdsn.EncryptionStrict:
-		encrypt = encryptStrict
-	}
-	v := getDriverVersion(driverVersion)
-	fields := map[uint8][]byte{
-		// 4 bytes for version and 2 bytes for minor version
-		preloginVERSION:    {byte(v), byte(v >> 8), byte(v >> 16), byte(v >> 24), 0, 0},
-		preloginENCRYPTION: {encrypt},
-		preloginINSTOPT:    instance_buf,
-		preloginTHREADID:   {0, 0, 0, 0},
-		preloginMARS:       {0}, // MARS disabled
-	}
-
-	if fe.FedAuthLibrary != FedAuthLibraryReserved {
-		fields[preloginFEDAUTHREQUIRED] = []byte{1}
-	}
-
-	return fields
-}
-
 func interpretPreloginResponse(p msdsn.Config, fe *featureExtFedAuth, fields map[uint8][]byte) (encrypt byte, err error) {
 	// If the server returns the preloginFEDAUTHREQUIRED field, then federated authentication
 	// is supported. The actual value may be 0 or 1, where 0 means either SSPI or federated
@@ -1084,7 +1056,9 @@ func prepareLogin(ctx context.Context, c *Connector, p msdsn.Config, logger Cont
 		CtlIntName:     "go-mssqldb",
 		ClientProgVer:  getDriverVersion(driverVersion),
 		ChangePassword: p.ChangePassword,
+		ClientPID:      uint32(os.Getpid()),
 	}
+	getClientId(&l.ClientID)
 	if p.ColumnEncryption {
 		_ = l.FeatureExt.Add(&featureExtColumnEncryption{})
 	}
@@ -1204,12 +1178,7 @@ initiate_connection:
 		}
 		isTransportEncrypted = true
 	}
-	sess := tdsSession{
-		buf:        outbuf,
-		logger:     logger,
-		logFlags:   uint64(p.LogFlags),
-		aeSettings: &alwaysEncryptedSettings{keyProviders: aecmk.GetGlobalCekProviders()},
-	}
+	sess := newSession(outbuf, logger, p)
 
 	for i, p := range c.keyProviders {
 		sess.aeSettings.keyProviders[i] = p
@@ -1222,7 +1191,7 @@ initiate_connection:
 		fedAuth.ADALWorkflow = c.fedAuthADALWorkflow
 	}
 
-	fields := preparePreloginFields(p, fedAuth)
+	fields := sess.preparePreloginFields(ctx, p, fedAuth)
 
 	err = writePrelogin(packPrelogin, outbuf, fields)
 	if err != nil {
@@ -1309,7 +1278,7 @@ initiate_connection:
 	// SSPI and federated authentication scenarios may require multiple
 	// packet exchanges to complete the login sequence.
 	for loginAck := false; !loginAck; {
-		reader := startReading(&sess, ctx, outputs{})
+		reader := startReading(sess, ctx, outputs{})
 		// don't send attention or wait for cancel confirmation during login
 		reader.noAttn = true
 
@@ -1382,6 +1351,7 @@ initiate_connection:
 				if token.isError() {
 					tokenErr := token.getError()
 					tokenErr.Message = "login error: " + tokenErr.Message
+					conn.Close()
 					return nil, tokenErr
 				}
 			case error:
@@ -1405,7 +1375,7 @@ initiate_connection:
 		}
 		goto initiate_connection
 	}
-	return &sess, nil
+	return sess, nil
 }
 
 type featureExtColumnEncryption struct {
@@ -1424,4 +1394,22 @@ func (f *featureExtColumnEncryption) toBytes() []byte {
 		and the ability to retry queries when the keys sent by the client do not match what is needed for the query to run.
 	*/
 	return []byte{0x01}
+}
+
+// return the 6 byte hardware identifier for the LOGIN7 packet
+func getClientId(mac *[6]byte) {
+	interfaces, err := net.Interfaces()
+	if err == nil {
+		for _, i := range interfaces {
+			if i.Flags&net.FlagUp != 0 && i.HardwareAddr != nil {
+				c := 6
+				if len(i.HardwareAddr) < 6 {
+					c = len(i.HardwareAddr)
+				}
+				copy(mac[:], i.HardwareAddr[:c])
+				return
+			}
+		}
+	}
+	return
 }

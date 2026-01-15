@@ -6,10 +6,11 @@ Licensed under the MIT license.
 package extensions
 
 import (
-	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
-
 	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
+	"github.com/go-logr/logr"
+	"github.com/rotisserie/eris"
+
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -39,7 +40,7 @@ func CreateSuccessfulCreationHandler(
 		log.V(Status).Info("Handling successful resource creation")
 		err := impl.Success(obj)
 		if err != nil {
-			return errors.Wrapf(err, "custom resource success handler failed")
+			return eris.Wrapf(err, "custom resource success handler failed")
 		}
 		return nil
 	}

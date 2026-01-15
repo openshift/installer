@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/compute/v1api20201201
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-12-01"
+
 VirtualMachine: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (27 properties)
@@ -794,6 +795,7 @@ VirtualMachine: Resource
     │   └── Id: *string
     ├── VmId: *string
     └── Zones: string[]
+
 VirtualMachineScaleSet: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (23 properties)
@@ -1334,6 +1336,7 @@ VirtualMachineScaleSet: Resource
     │           └── WriteAcceleratorEnabled: *bool
     ├── ZoneBalance: *bool
     └── Zones: string[]
+
 VirtualMachineScaleSetsExtension: Resource
 ├── Owner: VirtualMachineScaleSet
 ├── Spec: Object (12 properties)
@@ -1365,6 +1368,7 @@ VirtualMachineScaleSetsExtension: Resource
     ├── Settings: map[string]v1.JSON
     ├── Type: *string
     └── TypeHandlerVersion: *string
+
 VirtualMachinesExtension: Resource
 ├── Owner: VirtualMachine
 ├── Spec: Object (14 properties)
@@ -1442,3 +1446,4 @@ VirtualMachinesExtension: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── TypeHandlerVersion: *string
+

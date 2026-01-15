@@ -20,6 +20,7 @@ DnsZone_STATUS: Object (7 properties)
 │       └── "Public"
 ├── Tags: map[string]string
 └── Type: *string
+
 DnsZone_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -32,6 +33,7 @@ DnsZone_Spec: Object (4 properties)
 │       ├── "Private"
 │       └── "Public"
 └── Tags: map[string]string
+
 DnsZonesAAAARecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -76,6 +78,7 @@ DnsZonesAAAARecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesAAAARecord_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -115,6 +118,7 @@ DnsZonesAAAARecord_Spec: Object (2 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
 DnsZonesARecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -159,6 +163,7 @@ DnsZonesARecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesARecord_Spec: Object (3 properties)
 ├── Etag: *string
 ├── Name: string
@@ -199,6 +204,7 @@ DnsZonesARecord_Spec: Object (3 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
 DnsZonesCAARecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -243,6 +249,7 @@ DnsZonesCAARecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesCAARecord_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -282,6 +289,7 @@ DnsZonesCAARecord_Spec: Object (2 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
 DnsZonesCNAMERecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -326,6 +334,7 @@ DnsZonesCNAMERecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesCNAMERecord_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -365,6 +374,7 @@ DnsZonesCNAMERecord_Spec: Object (2 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
 DnsZonesMXRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -409,6 +419,7 @@ DnsZonesMXRecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesMXRecord_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -448,6 +459,7 @@ DnsZonesMXRecord_Spec: Object (2 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
 DnsZonesNSRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -492,6 +504,7 @@ DnsZonesNSRecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesNSRecord_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -531,6 +544,7 @@ DnsZonesNSRecord_Spec: Object (2 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
 DnsZonesPTRRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -575,6 +589,7 @@ DnsZonesPTRRecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesPTRRecord_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -614,6 +629,7 @@ DnsZonesPTRRecord_Spec: Object (2 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
 DnsZonesSRVRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -658,6 +674,7 @@ DnsZonesSRVRecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesSRVRecord_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -697,6 +714,7 @@ DnsZonesSRVRecord_Spec: Object (2 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
 DnsZonesTXTRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -741,6 +759,7 @@ DnsZonesTXTRecord_STATUS: Object (5 properties)
 │   └── TargetResource: *Object (1 property)
 │       └── Id: *string
 └── Type: *string
+
 DnsZonesTXTRecord_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -780,3 +799,4 @@ DnsZonesTXTRecord_Spec: Object (2 properties)
     │   └── Value: string[]
     └── TargetResource: *Object (1 property)
         └── Id: *string
+
