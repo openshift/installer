@@ -57,5 +57,10 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			Condition:       azure.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
 			Field:           field.NewPath("platform", "azure", "userProvisionedDNS"),
 		},
+		{
+			FeatureGateName: features.FeatureGateAzureDualStackInstall,
+			Condition:       azure.IPFamily.DualStackEnabled(),
+			Field:           field.NewPath("platform", "azure", "ipFamily"),
+		},
 	}
 }
