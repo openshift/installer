@@ -1,7 +1,10 @@
 package defaults
 
 import (
+	"github.com/sirupsen/logrus"
+
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 var (
@@ -21,6 +24,10 @@ func SetPlatformDefaults(p *azure.Platform) {
 	}
 	if p.OutboundType == "" {
 		p.OutboundType = azure.LoadbalancerOutboundType
+	}
+	if p.IPFamily == "" {
+		p.IPFamily = network.IPv4
+		logrus.Infof("ipFamily is not specified in install-config; defaulting to %q", network.IPv4)
 	}
 }
 

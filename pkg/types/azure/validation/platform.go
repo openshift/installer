@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 var (
@@ -154,6 +155,28 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		}
 	}
 
+	allErrs = append(allErrs, validateIPFamily(p.IPFamily, fldPath.Child("ipFamily"))...)
+
+	return allErrs
+}
+
+// validateIPFamily checks that the IPFamily field has a valid value.
+func validateIPFamily(ipFamily network.IPFamily, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+	if ipFamily == "" {
+		return allErrs
+	}
+	validValues := []string{
+		string(network.IPv4),
+		string(network.DualStackIPv4Primary),
+		string(network.DualStackIPv6Primary),
+	}
+	switch ipFamily {
+	case network.IPv4, network.DualStackIPv4Primary, network.DualStackIPv6Primary:
+		// valid
+	default:
+		allErrs = append(allErrs, field.NotSupported(fldPath, ipFamily, validValues))
+	}
 	return allErrs
 }
 

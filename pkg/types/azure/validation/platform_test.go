@@ -9,6 +9,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 func validPlatform() *azure.Platform {
@@ -226,6 +227,56 @@ func TestValidatePlatform(t *testing.T) {
 				return p
 			}(),
 			expected: `^test-path\.customerManagedKey: Invalid value: "-": invalid user assigned identity key for encryption$`,
+		},
+		{
+			name: "valid ipFamily IPv4",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = network.IPv4
+				return p
+			}(),
+		},
+		{
+			name: "valid ipFamily DualStackIPv4Primary",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = network.DualStackIPv4Primary
+				return p
+			}(),
+		},
+		{
+			name: "valid ipFamily DualStackIPv6Primary",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = network.DualStackIPv6Primary
+				return p
+			}(),
+		},
+		{
+			name: "valid ipFamily empty",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = ""
+				return p
+			}(),
+		},
+		{
+			name: "invalid ipFamily value",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = "InvalidValue"
+				return p
+			}(),
+			expected: `^test-path\.ipFamily: Unsupported value: "InvalidValue"`,
+		},
+		{
+			name: "invalid ipFamily DualStack",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.IPFamily = "DualStack"
+				return p
+			}(),
+			expected: `^test-path\.ipFamily: Unsupported value: "DualStack"`,
 		},
 	}
 	ic := types.InstallConfig{}

@@ -234,6 +234,15 @@ in a shared VPC scenario when the private hosted zone belongs to a
 different account than the rest of the cluster resources.
 If HostedZoneRole is set, HostedZone must also be set.
 
+    ipFamily <string>
+      Default: "IPv4"
+      Valid Values: "IPv4","DualStackIPv4Primary","DualStackIPv6Primary"
+      IPFamily specifies the IP address family for the cluster network.
+Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+networking with IPv6 as the primary address family. When using dual-stack, the VPC
+and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+
     lbType <string>
       LBType is an optional field to specify a load balancer type.
 When this field is specified, all ingresscontrollers (including the
@@ -331,6 +340,15 @@ Deprecated: use platform.Azure.Subnets section
       DefaultMachinePlatform is the default configuration used when
 installing on Azure for machine pools which do not define their own
 platform configuration.
+
+    ipFamily <string>
+      Default: "IPv4"
+      Valid Values: "IPv4","DualStackIPv4Primary","DualStackIPv6Primary"
+      IPFamily specifies the IP address family for the cluster network.
+Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+networking with IPv6 as the primary address family. When using dual-stack, the VNet
+and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
 
     networkResourceGroupName <string>
       NetworkResourceGroupName specifies the network resource group that contains an existing VNet

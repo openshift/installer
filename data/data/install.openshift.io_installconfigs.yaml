@@ -5052,6 +5052,19 @@ spec:
                       different account than the rest of the cluster resources.
                       If HostedZoneRole is set, HostedZone must also be set.
                     type: string
+                  ipFamily:
+                    default: IPv4
+                    description: |-
+                      IPFamily specifies the IP address family for the cluster network.
+                      Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+                      with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+                      networking with IPv6 as the primary address family. When using dual-stack, the VPC
+                      and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+                    enum:
+                    - IPv4
+                    - DualStackIPv4Primary
+                    - DualStackIPv6Primary
+                    type: string
                   lbType:
                     description: |-
                       LBType is an optional field to specify a load balancer type.
@@ -5693,6 +5706,19 @@ spec:
                           type: string
                         type: array
                     type: object
+                  ipFamily:
+                    default: IPv4
+                    description: |-
+                      IPFamily specifies the IP address family for the cluster network.
+                      Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+                      with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+                      networking with IPv6 as the primary address family. When using dual-stack, the VNet
+                      and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+                    enum:
+                    - IPv4
+                    - DualStackIPv4Primary
+                    - DualStackIPv6Primary
+                    type: string
                   networkResourceGroupName:
                     description: NetworkResourceGroupName specifies the network resource
                       group that contains an existing VNet
