@@ -17,6 +17,7 @@ import (
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/dns"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/network"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
 )
@@ -110,6 +111,39 @@ func TestGenerateInfrastructure(t *testing.T) {
 		),
 		expectedFilesGenerated: 1,
 	}, {
+		name: "AWS IPFamily IPv4",
+		installConfig: icBuild.build(
+			icBuild.forAWS(),
+			icBuild.withAWSIPFamily(network.IPv4),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AWSPlatformType),
+			infraBuild.withAWSIPFamily(configv1.IPv4),
+		),
+		expectedFilesGenerated: 1,
+	}, {
+		name: "AWS IPFamily DualStackIPv4Primary",
+		installConfig: icBuild.build(
+			icBuild.forAWS(),
+			icBuild.withAWSIPFamily(network.DualStackIPv4Primary),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AWSPlatformType),
+			infraBuild.withAWSIPFamily(configv1.DualStackIPv4Primary),
+		),
+		expectedFilesGenerated: 1,
+	}, {
+		name: "AWS IPFamily DualStackIPv6Primary",
+		installConfig: icBuild.build(
+			icBuild.forAWS(),
+			icBuild.withAWSIPFamily(network.DualStackIPv6Primary),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AWSPlatformType),
+			infraBuild.withAWSIPFamily(configv1.DualStackIPv6Primary),
+		),
+		expectedFilesGenerated: 1,
+	}, {
 		name:          "default Azure custom DNS",
 		installConfig: icBuild.build(icBuild.forAzure()),
 		expectedInfrastructure: infraBuild.build(
@@ -126,6 +160,39 @@ func TestGenerateInfrastructure(t *testing.T) {
 		expectedInfrastructure: infraBuild.build(
 			infraBuild.forPlatform(configv1.AzurePlatformType),
 			infraBuild.withAzureClusterHostedDNS("Enabled"),
+		),
+		expectedFilesGenerated: 1,
+	}, {
+		name: "Azure IPFamily IPv4",
+		installConfig: icBuild.build(
+			icBuild.forAzure(),
+			icBuild.withAzureIPFamily(network.IPv4),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AzurePlatformType),
+			infraBuild.withAzureIPFamily(configv1.IPv4),
+		),
+		expectedFilesGenerated: 1,
+	}, {
+		name: "Azure IPFamily DualStackIPv4Primary",
+		installConfig: icBuild.build(
+			icBuild.forAzure(),
+			icBuild.withAzureIPFamily(network.DualStackIPv4Primary),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AzurePlatformType),
+			infraBuild.withAzureIPFamily(configv1.DualStackIPv4Primary),
+		),
+		expectedFilesGenerated: 1,
+	}, {
+		name: "Azure IPFamily DualStackIPv6Primary",
+		installConfig: icBuild.build(
+			icBuild.forAzure(),
+			icBuild.withAzureIPFamily(network.DualStackIPv6Primary),
+		),
+		expectedInfrastructure: infraBuild.build(
+			infraBuild.forPlatform(configv1.AzurePlatformType),
+			infraBuild.withAzureIPFamily(configv1.DualStackIPv6Primary),
 		),
 		expectedFilesGenerated: 1,
 	},
@@ -376,6 +443,13 @@ func (b icBuildNamespace) withAWSBYOSubnets(subnets ...awstypes.Subnet) icOption
 	}
 }
 
+func (b icBuildNamespace) withAWSIPFamily(ipFamily network.IPFamily) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAWS()(ic)
+		ic.Platform.AWS.IPFamily = ipFamily
+	}
+}
+
 func (b icBuildNamespace) withVSphereAPIVIP(vip string) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forVSphere()(ic)
@@ -404,6 +478,13 @@ func (b icBuildNamespace) withAzureUserProvisionedDNS(enabled string) icOption {
 			ic.Platform.Azure.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 			ic.FeatureGates = []string{"AzureClusterHostedDNSInstall=true"}
 		}
+	}
+}
+
+func (b icBuildNamespace) withAzureIPFamily(ipFamily network.IPFamily) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAzure()(ic)
+		ic.Platform.Azure.IPFamily = ipFamily
 	}
 }
 
@@ -467,6 +548,8 @@ func (b infraBuildNamespace) withAWSPlatformStatus() infraOption {
 		infra.Status.PlatformStatus.AWS.CloudLoadBalancerConfig = &configv1.CloudLoadBalancerConfig{
 			DNSType: configv1.PlatformDefaultDNSType,
 		}
+		// Default IPFamily is IPv4
+		infra.Status.PlatformStatus.AWS.IPFamily = configv1.IPv4
 	}
 }
 
@@ -488,6 +571,8 @@ func (b infraBuildNamespace) withAzurePlatformStatus() infraOption {
 		infra.Status.PlatformStatus.Azure = &configv1.AzurePlatformStatus{
 			ResourceGroupName:        infra.Status.InfrastructureName + "-rg",
 			NetworkResourceGroupName: infra.Status.InfrastructureName + "-rg",
+			// Default IPFamily is IPv4
+			IPFamily: configv1.IPv4,
 			CloudLoadBalancerConfig: &configv1.CloudLoadBalancerConfig{
 				DNSType: configv1.PlatformDefaultDNSType,
 			},
@@ -534,6 +619,14 @@ func (b infraBuildNamespace) withAWSClusterHostedDNS(enabled string) infraOption
 	}
 }
 
+func (b infraBuildNamespace) withAWSIPFamily(ipFamily configv1.IPFamilyType) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withAWSPlatformSpec()(infra)
+		b.withAWSPlatformStatus()(infra)
+		infra.Status.PlatformStatus.AWS.IPFamily = ipFamily
+	}
+}
+
 func (b infraBuildNamespace) withAzureClusterHostedDNS(enabled string) infraOption {
 	return func(infra *configv1.Infrastructure) {
 		b.withAzurePlatformStatus()(infra)
@@ -543,6 +636,13 @@ func (b infraBuildNamespace) withAzureClusterHostedDNS(enabled string) infraOpti
 		if enabled == "Enabled" {
 			infra.Status.PlatformStatus.Azure.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
+	}
+}
+
+func (b infraBuildNamespace) withAzureIPFamily(ipFamily configv1.IPFamilyType) infraOption {
+	return func(infra *configv1.Infrastructure) {
+		b.withAzurePlatformStatus()(infra)
+		infra.Status.PlatformStatus.Azure.IPFamily = ipFamily
 	}
 }
 

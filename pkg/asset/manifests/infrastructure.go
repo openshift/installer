@@ -25,6 +25,7 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
+	"github.com/openshift/installer/pkg/types/network"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -139,6 +140,9 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		if installConfig.Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
 			config.Status.PlatformStatus.AWS.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
+
+		// Set IPFamily from install-config to Infrastructure status
+		config.Status.PlatformStatus.AWS.IPFamily = ipFamilyToConfigIPFamily(installConfig.Config.AWS.IPFamily)
 	case azure.Name:
 		config.Spec.PlatformSpec.Type = configv1.AzurePlatformType
 
@@ -170,6 +174,9 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		if installConfig.Config.Azure.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
 			config.Status.PlatformStatus.Azure.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
+
+		// Set IPFamily from install-config to Infrastructure status
+		config.Status.PlatformStatus.Azure.IPFamily = ipFamilyToConfigIPFamily(installConfig.Config.Azure.IPFamily)
 	case baremetal.Name:
 		config.Spec.PlatformSpec.Type = configv1.BareMetalPlatformType
 		config.Spec.PlatformSpec.BareMetal = &configv1.BareMetalPlatformSpec{}
@@ -399,4 +406,20 @@ func (i *Infrastructure) Files() []*asset.File {
 // Load returns false since this asset is not written to disk by the installer.
 func (i *Infrastructure) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+// ipFamilyToConfigIPFamily converts the install-config IPFamily type
+// to the Infrastructure configv1.IPFamilyType.
+func ipFamilyToConfigIPFamily(ipFamily network.IPFamily) configv1.IPFamilyType {
+	switch ipFamily {
+	case network.DualStackIPv4Primary:
+		return configv1.DualStackIPv4Primary
+	case network.DualStackIPv6Primary:
+		return configv1.DualStackIPv6Primary
+	case network.IPv4:
+		return configv1.IPv4
+	default:
+		// Default to IPv4 if not specified or invalid
+		return configv1.IPv4
+	}
 }
