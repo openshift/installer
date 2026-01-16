@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	apiextv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	"github.com/sirupsen/logrus"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -412,6 +413,12 @@ type Networking struct {
 	// pod network when NetworkType is set to OVNKubernetes.
 	OVNKubernetesConfig *OVNKubernetesConfig `json:"ovnKubernetesConfig,omitempty"`
 
+	// HostConfig is a list of NMState configs defining br-ex for the nodes in the cluster.
+	// Each entry is a pair of fields: The short hostname of the node and the contents of
+	// the NMState config to be applied to that node.
+	// +optional
+	HostConfig []HostConfigEntry `json:"hostConfig,omitempty"`
+
 	// Deprecated types, scheduled to be removed
 
 	// Deprecated way to configure an IP address pool for machines.
@@ -480,6 +487,15 @@ type IPv4OVNKubernetesConfig struct {
 	// The value must be in proper IPV4 CIDR format
 	// +optional
 	InternalJoinSubnet *ipnet.IPNet `json:"internalJoinSubnet,omitempty"`
+}
+
+// HostConfigEntry is a pair of fields specifying the NMState config to be applied to a node
+type HostConfigEntry struct {
+	// Hostname is the short hostname of the node
+	Hostname string `json:"hostname"`
+
+	// NetworkConfig is the NMState YAML to be applied to the node specified by the Hostname field
+	NetworkConfig *apiextv1.JSON   `json:"networkConfig"`
 }
 
 // Proxy defines the proxy settings for the cluster.

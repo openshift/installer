@@ -86,6 +86,10 @@ type Master struct {
 	// store the networking configuration per host
 	NetworkConfigSecretFiles []*asset.File
 
+	// NetworkConfigManifests is used to apply NMState configs for
+	// creating br-ex on the host
+	NetworkConfigManifests []*asset.File
+
 	// HostFiles is the list of baremetal hosts provided in the
 	// installer configuration.
 	HostFiles []*asset.File
@@ -107,6 +111,8 @@ const (
 	// the networking configuration Secret filenames for baremetal
 	// clusters.
 	networkConfigSecretFileName = "99_openshift-cluster-api_host-network-config-secrets-%s.yaml"
+
+	masterNetworkConfigManifestFileName = "99_openshift-machine-config-operator_master-host-network-config-manifests-%s.yaml"
 
 	// hostFileName is the format string for constucting the Host
 	// filenames for baremetal clusters.
@@ -135,9 +141,10 @@ const (
 )
 
 var (
-	secretFileNamePattern              = fmt.Sprintf(secretFileName, "*")
-	networkConfigSecretFileNamePattern = fmt.Sprintf(networkConfigSecretFileName, "*")
-	hostFileNamePattern                = fmt.Sprintf(hostFileName, "*")
+	secretFileNamePattern                      = fmt.Sprintf(secretFileName, "*")
+	networkConfigSecretFileNamePattern         = fmt.Sprintf(networkConfigSecretFileName, "*")
+	masterNetworkConfigManifestFileNamePattern = fmt.Sprintf(masterNetworkConfigManifestFileName, "*")
+	hostFileNamePattern                        = fmt.Sprintf(hostFileName, "*")
 	masterMachineFileNamePattern       = fmt.Sprintf(masterMachineFileName, "*")
 	masterIPClaimFileNamePattern       = fmt.Sprintf(ipClaimFileName, "*master*")
 	masterIPAddressFileNamePattern     = fmt.Sprintf(ipAddressFileName, "*master*")
@@ -664,6 +671,15 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		}
 	}
 
+	// Create MachineConfigs from provided NMState configuration
+	if ic.Networking != nil && ic.Networking.HostConfig != nil {
+		hostConfig, err := machineconfig.ForNetworkConfig("master", ic.Networking.HostConfig)
+		if err != nil {
+			return errors.Wrap(err, "failed to create ignition to apply NMState configs for master machines")
+		}
+		machineConfigs = append(machineConfigs, hostConfig)
+	}
+
 	m.MachineConfigFiles, err = machineconfig.Manifests(machineConfigs, "master", directory)
 	if err != nil {
 		return errors.Wrap(err, "failed to create MachineConfig manifests for master machines")
@@ -778,6 +794,7 @@ func (m *Master) Files() []*asset.File {
 	// to avoid unnecessary reconciliation errors.
 	files = append(files, m.SecretFiles...)
 	files = append(files, m.NetworkConfigSecretFiles...)
+	files = append(files, m.NetworkConfigManifests...)
 	// Machines are linked to hosts via the machineRef, so we create
 	// the hosts first to ensure if the operator starts trying to
 	// reconcile a machine it can pick up the related host.
@@ -948,6 +965,7 @@ func IsMachineManifest(file *asset.File) bool {
 	}{
 		{Pattern: secretFileNamePattern, Type: "secret"},
 		{Pattern: networkConfigSecretFileNamePattern, Type: "network config secret"},
+		{Pattern: masterNetworkConfigManifestFileNamePattern, Type: "network config manifest"},
 		{Pattern: hostFileNamePattern, Type: "host"},
 		{Pattern: masterMachineFileNamePattern, Type: "master machine"},
 		{Pattern: workerMachineSetFileNamePattern, Type: "worker machineset"},

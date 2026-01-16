@@ -4430,6 +4430,27 @@ spec:
                   - cidr
                   type: object
                 type: array
+              hostConfig:
+                description: |-
+                  HostConfig is a list of NMState configs defining br-ex for the nodes in the cluster.
+                  Each entry is a pair of fields: The short hostname of the node and the contents of
+                  the NMState config to be applied to that node.
+                items:
+                  description: HostConfigEntry is a pair of fields specifying the
+                    NMState config to be applied to a node
+                  properties:
+                    hostname:
+                      description: Hostname is the short hostname of the node
+                      type: string
+                    networkConfig:
+                      description: NetworkConfig is the NMState YAML to be applied
+                        to the node specified by the Hostname field
+                      x-kubernetes-preserve-unknown-fields: true
+                  required:
+                  - hostname
+                  - networkConfig
+                  type: object
+                type: array
               machineCIDR:
                 description: |-
                   Deprecated way to configure an IP address pool for machines.
