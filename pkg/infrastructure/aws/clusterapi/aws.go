@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	elbv2types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -189,6 +190,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			ZoneID:         *zone.Id,
 			AliasZoneID:    aliasZoneID,
 			HostedZoneRole: "", // we dont want to assume role here
+			EnableAAAA:     in.InstallConfig.Config.AWS.DualStackEnabled(),
 		}); err != nil {
 			return fmt.Errorf("failed to create records for api in public zone: %w", err)
 		}
@@ -208,6 +210,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		ZoneID:         phzID,
 		AliasZoneID:    aliasZoneID,
 		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		EnableAAAA:     in.InstallConfig.Config.AWS.DualStackEnabled(),
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api in private zone: %w", err)
 	}
@@ -221,10 +224,20 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		ZoneID:         phzID,
 		AliasZoneID:    aliasZoneID,
 		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		EnableAAAA:     in.InstallConfig.Config.AWS.DualStackEnabled(),
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
 	logrus.Debugln("Created private API record in private zone")
+
+	// FIXME: Provision the dualstack NLB and DNS record sets for default router.
+	// Remove after CCM support dualstack NLB.
+	if in.InstallConfig.Config.AWS.DualStackEnabled() {
+		if err := provisionDefaultRouterResources(ctx, in, awsCluster, phzID); err != nil {
+			return fmt.Errorf("failed to create resources for default router in dualstack mode: %w", err)
+		}
+		logrus.Debugln("Created resources for default router in dualstack mode")
+	}
 
 	return nil
 }
@@ -506,5 +519,251 @@ func removeS3Bucket(ctx context.Context, region string, bucketName string, endpo
 	}
 
 	logrus.Debugf("bucket %q emptied", bucketName)
+	return nil
+}
+
+// provisionDefaultRouterResources is a HACK around AWS CCM limitation that does not support dual stack NLB.
+// After the infra is ready, we provision the LB and create the necessary record sets for the default router.
+// NOTE: When the cluster operators are progressing, we need to wait till worker nodes are ready to register all nodes
+// to the target group of this ingress NLB.
+func provisionDefaultRouterResources(ctx context.Context, in clusterapi.InfraReadyInput, infraCluster *capa.AWSCluster, privateZoneID string) error {
+	ic := in.InstallConfig.Config
+	region := ic.Platform.AWS.Region
+
+	// Tags specifications
+	clusterTagKey := aws.String(fmt.Sprintf("kubernetes.io/cluster/%s", in.InfraID))
+	clusterTagValue := aws.String("owned")
+
+	// Create clients to call AWS API
+	// FIXME: Let's ignore the custom endpoints for now
+	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(region))
+	if err != nil {
+		return fmt.Errorf("failed to load AWS config: %w", err)
+	}
+	ec2Client := ec2.NewFromConfig(cfg)
+	elbv2Client := elbv2.NewFromConfig(cfg)
+
+	// CCM: Create security groups
+	sgInput := &ec2.CreateSecurityGroupInput{
+		VpcId:       aws.String(infraCluster.Spec.NetworkSpec.VPC.ID),
+		GroupName:   aws.String(fmt.Sprintf("k8s-elb-ingress-%s", in.InfraID)),
+		Description: aws.String("Security group for Kubernetes ELB (openshift-ingress/router-default)"),
+		TagSpecifications: []ec2types.TagSpecification{
+			{
+				ResourceType: ec2types.ResourceTypeSecurityGroup,
+				Tags:         []ec2types.Tag{{Key: clusterTagKey, Value: clusterTagValue}},
+			},
+		},
+	}
+
+	sgOut, err := ec2Client.CreateSecurityGroup(ctx, sgInput)
+	if err != nil {
+		return fmt.Errorf("failed to create security group for ingress elb: %w", err)
+	}
+	securityGroupID := sgOut.GroupId
+	logrus.Infof("CCM: created security group for ingress LB: %s", *securityGroupID)
+
+	// CCM: Authorize access to port 80 and 443 to anywhere IPv4 and IPv6.
+	_, err = ec2Client.AuthorizeSecurityGroupIngress(ctx, &ec2.AuthorizeSecurityGroupIngressInput{
+		GroupId: securityGroupID,
+		IpPermissions: []ec2types.IpPermission{
+			{FromPort: aws.Int32(80), ToPort: aws.Int32(80), IpProtocol: aws.String("tcp"), IpRanges: []ec2types.IpRange{{CidrIp: aws.String(capiutils.AnyIPv4CidrBlock.String())}}},
+			{FromPort: aws.Int32(80), ToPort: aws.Int32(80), IpProtocol: aws.String("tcp"), Ipv6Ranges: []ec2types.Ipv6Range{{CidrIpv6: aws.String(capiutils.AnyIPv6CidrBlock.String())}}},
+			{FromPort: aws.Int32(443), ToPort: aws.Int32(443), IpProtocol: aws.String("tcp"), IpRanges: []ec2types.IpRange{{CidrIp: aws.String(capiutils.AnyIPv4CidrBlock.String())}}},
+			{FromPort: aws.Int32(443), ToPort: aws.Int32(443), IpProtocol: aws.String("tcp"), Ipv6Ranges: []ec2types.Ipv6Range{{CidrIpv6: aws.String(capiutils.AnyIPv6CidrBlock.String())}}},
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to authorize security group ingress rules for ingress elb: %w", err)
+	}
+	logrus.Info("CCM: added ingress rules for 80/443 TCP for ingress LB security group")
+
+	// CCM: Create the dual stack NLB for ingress
+	// FIXME: Let's ignore the IPv4 IP pool.
+	subnetIDs := infraCluster.Spec.NetworkSpec.Subnets.FilterPublic().IDs()
+	scheme := elbv2types.LoadBalancerSchemeEnumInternetFacing
+	if !in.InstallConfig.Config.PublicIngress() {
+		subnetIDs = infraCluster.Spec.NetworkSpec.Subnets.FilterPrivate().IDs()
+		scheme = elbv2types.LoadBalancerSchemeEnumInternal
+	}
+
+	lbInput := &elbv2.CreateLoadBalancerInput{
+		Name:          aws.String(fmt.Sprintf("%.28s-ilb", in.InfraID)),
+		Type:          elbv2types.LoadBalancerTypeEnumNetwork,
+		Subnets:       subnetIDs,
+		Scheme:        scheme,
+		IpAddressType: elbv2types.IpAddressTypeDualstack,
+		Tags: []elbv2types.Tag{
+			{Key: clusterTagKey, Value: clusterTagValue},
+		},
+		SecurityGroups: []string{aws.ToString(securityGroupID)},
+	}
+
+	lbOut, err := elbv2Client.CreateLoadBalancer(ctx, lbInput)
+	if err != nil {
+		return fmt.Errorf("failed to create ingress dualstack nlb: %w", err)
+	}
+	lbSpec := lbOut.LoadBalancers[0]
+	logrus.Infof("CCM: created dualstack ingress LB: %s. Waiting to be ready...", *lbSpec.LoadBalancerArn)
+
+	// Wait till the load balancer becomes ready (5 minutes)
+	waitDuration := 5 * time.Minute
+	lbDescInput := &elbv2.DescribeLoadBalancersInput{
+		LoadBalancerArns: []string{aws.ToString(lbSpec.LoadBalancerArn)},
+	}
+	lbWaiter := elbv2.NewLoadBalancerAvailableWaiter(elbv2Client)
+	if err := lbWaiter.Wait(ctx, lbDescInput, waitDuration); err != nil {
+		return fmt.Errorf("failed to wait for ingress lb to become ready: %w", err)
+	}
+	logrus.Info("CCM: dualstack ingress LB is ready")
+
+	// Track target groups by port to create the corresponding
+	// listeners on the ingress nlb.
+	targetGroupArns := map[int32]string{}
+
+	// CCM: Create target group
+	openPorts := []int32{443, 80}
+	for _, port := range openPorts {
+		name := fmt.Sprintf("%.20s-ingress-%d", in.InstallConfig.Config.GetName(), port)
+
+		ipFamily := elbv2types.TargetGroupIpAddressTypeEnumIpv4
+		if ic.AWS.IPFamily == awstypes.DualStackIPv6Primary {
+			ipFamily = elbv2types.TargetGroupIpAddressTypeEnumIpv6
+		}
+
+		targetGroupInput := &elbv2.CreateTargetGroupInput{
+			Name:          aws.String(name),
+			Port:          aws.Int32(port),
+			Protocol:      elbv2types.ProtocolEnumTcp,
+			VpcId:         aws.String(infraCluster.Spec.NetworkSpec.VPC.ID),
+			IpAddressType: ipFamily,
+			Tags: []elbv2types.Tag{
+				{Key: clusterTagKey, Value: clusterTagValue},
+			},
+		}
+
+		tgOut, err := elbv2Client.CreateTargetGroup(ctx, targetGroupInput)
+		if err != nil {
+			return fmt.Errorf("failed to create target groups for ingress elb: %w", err)
+		}
+		logrus.Infof("CCM: created target group on port %d for ingress LB", port)
+
+		// TODO: This hack requires manual registration of worker nodes
+		// to the below target groups.
+		//
+		// FIXME: What happens to worker node scaling or recreating?
+		// Do new nodes get registered automatically?
+		//
+		// HOWTO:
+		// We need to get the port exposed on nodes for the ingress default controller.
+		//
+		// oc -n openshift-ingress get svc router-nodeport-default -o=wide
+		//
+		//
+		// Note down the ports open on nodes, for example:
+		// 80:30278/TCP
+		// 443:31745/TCP
+		// 1936:31350/TCP (health check)
+		// Then, use these ports to configure the target port and health check port.
+
+		targetGroupARn := tgOut.TargetGroups[0].TargetGroupArn
+		targetGroupArns[port] = aws.ToString(targetGroupARn)
+
+		// Set target group attribute
+		attrModifyInput := &elbv2.ModifyTargetGroupAttributesInput{
+			TargetGroupArn: targetGroupARn,
+			Attributes: []elbv2types.TargetGroupAttribute{
+				{
+					Key:   aws.String("preserve_client_ip.enabled"),
+					Value: aws.String("false"),
+				},
+				{
+					Key:   aws.String("proxy_protocol_v2.enabled"),
+					Value: aws.String("true"),
+				},
+				{
+					Key:   aws.String("target_health_state.unhealthy.connection_termination.enabled"),
+					Value: aws.String("false"),
+				},
+				{
+					Key:   aws.String("target_health_state.unhealthy.draining_interval_seconds"),
+					Value: aws.String("300"),
+				},
+			},
+		}
+		if _, err := elbv2Client.ModifyTargetGroupAttributes(ctx, attrModifyInput); err != nil {
+			return fmt.Errorf("failed to modify target group attributes for ingress elb: %w", err)
+		}
+		logrus.Infof("CCM: modified attributes of target group on port %d for ingress LB", port)
+	}
+
+	// CCM: Create listeners for ingress nlb.
+	for _, port := range openPorts {
+		listenerInput := &elbv2.CreateListenerInput{
+			DefaultActions: []elbv2types.Action{
+				{
+					TargetGroupArn: aws.String(targetGroupArns[port]),
+					Type:           elbv2types.ActionTypeEnumForward,
+				},
+			},
+			LoadBalancerArn: lbSpec.LoadBalancerArn,
+			Port:            aws.Int32(port),
+			Protocol:        elbv2types.ProtocolEnumTcp,
+			Tags: []elbv2types.Tag{
+				{Key: clusterTagKey, Value: clusterTagValue},
+			},
+		}
+
+		if _, err := elbv2Client.CreateListener(ctx, listenerInput); err != nil {
+			return fmt.Errorf("failed to create listeners for ingress elb: %w", err)
+		}
+		logrus.Infof("CCM: created listener on port %d for ingress LB", port)
+	}
+
+	// CIO: Create the wildcards DNS records for the ingress LB
+	// in private zone and public zone (if public ingress)
+	awsSession, err := in.InstallConfig.AWS.Session(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get aws session: %w", err)
+	}
+	client := awsconfig.NewClient(awsSession)
+
+	appsName := fmt.Sprintf("*.apps.%s.", in.InstallConfig.Config.ClusterDomain())
+
+	// Private zone
+	if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
+		Name:           appsName,
+		Region:         infraCluster.Spec.Region,
+		DNSTarget:      aws.ToString(lbSpec.DNSName),
+		ZoneID:         privateZoneID,
+		AliasZoneID:    aws.ToString(lbSpec.CanonicalHostedZoneId),
+		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+		EnableAAAA:     true,
+	}); err != nil {
+		return fmt.Errorf("failed to create records for ingress in private zone: %w", err)
+	}
+	logrus.Info("Created ingress record in private zone")
+
+	// CIO: Public zone if cluster is public
+	if ic.PublicIngress() {
+		zone, err := client.GetBaseDomain(in.InstallConfig.Config.BaseDomain)
+		if err != nil {
+			return err
+		}
+
+		if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
+			Name:           appsName,
+			Region:         infraCluster.Spec.Region,
+			DNSTarget:      aws.ToString(lbSpec.DNSName),
+			ZoneID:         aws.ToString(zone.Id),
+			AliasZoneID:    aws.ToString(lbSpec.CanonicalHostedZoneId),
+			HostedZoneRole: "", // we dont want to assume role here
+			EnableAAAA:     true,
+		}); err != nil {
+			return fmt.Errorf("failed to create records for ingress in public zone: %w", err)
+		}
+		logrus.Info("Created ingress record in public zone")
+	}
+
 	return nil
 }

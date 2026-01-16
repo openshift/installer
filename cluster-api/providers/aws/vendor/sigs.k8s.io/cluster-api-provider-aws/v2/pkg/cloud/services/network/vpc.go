@@ -58,6 +58,10 @@ func (s *Service) reconcileVPC() error {
 
 		s.scope.VPC().CidrBlock = vpc.CidrBlock
 		if s.scope.VPC().IsIPv6Enabled() {
+			if vpc.IPv6 != nil {
+				// Preserve spec fields are not available when describing vpcs
+				vpc.IPv6.IPAMPool = s.scope.VPC().IPv6.IPAMPool
+			}
 			s.scope.VPC().IPv6 = vpc.IPv6
 		}
 		if s.scope.TagUnmanagedNetworkResources() {
@@ -107,7 +111,6 @@ func (s *Service) reconcileVPC() error {
 
 	// .spec.vpc.id is nil. This means no managed VPC exists or we failed to save its ID before. Check if a managed VPC
 	// with the desired name exists, or if not, create a new managed VPC.
-
 	vpc, err := s.describeVPCByName()
 	if err == nil {
 		// An VPC already exists with the desired name
@@ -133,9 +136,16 @@ func (s *Service) reconcileVPC() error {
 	}
 
 	s.scope.VPC().CidrBlock = vpc.CidrBlock
-	s.scope.VPC().IPv6 = vpc.IPv6
 	s.scope.VPC().Tags = vpc.Tags
 	s.scope.VPC().ID = vpc.ID
+
+	if s.scope.VPC().IsIPv6Enabled() {
+		if vpc.IPv6 != nil {
+			// Preserve spec fields are not available when describing vpcs
+			vpc.IPv6.IPAMPool = s.scope.VPC().IPv6.IPAMPool
+		}
+		s.scope.VPC().IPv6 = vpc.IPv6
+	}
 
 	if !v1beta1conditions.Has(s.scope.InfraCluster(), infrav1.VpcReadyCondition) {
 		v1beta1conditions.MarkFalse(s.scope.InfraCluster(), infrav1.VpcReadyCondition, infrav1.VpcCreationStartedReason, clusterv1beta1.ConditionSeverityInfo, "")
@@ -382,15 +392,15 @@ func (s *Service) ensureManagedVPCAttributes(vpc *infrav1.VPCSpec) error {
 	return nil
 }
 
-func (s *Service) getIPAMPoolID() (*string, error) {
+func (s *Service) getIPAMPoolID(ipamPool *infrav1.IPAMPool) (*string, error) {
 	input := &ec2.DescribeIpamPoolsInput{}
 
-	if s.scope.VPC().IPAMPool.ID != "" {
-		input.Filters = append(input.Filters, filter.EC2.IPAM(s.scope.VPC().IPAMPool.ID))
+	if ipamPool.ID != "" {
+		input.Filters = append(input.Filters, filter.EC2.IPAM(ipamPool.ID))
 	}
 
-	if s.scope.VPC().IPAMPool.Name != "" {
-		input.Filters = append(input.Filters, filter.EC2.Name(s.scope.VPC().IPAMPool.Name))
+	if ipamPool.Name != "" {
+		input.Filters = append(input.Filters, filter.EC2.Name(ipamPool.Name))
 	}
 
 	output, err := s.EC2Client.DescribeIpamPools(context.TODO(), input)
@@ -426,7 +436,7 @@ func (s *Service) createVPC() (*infrav1.VPCSpec, error) {
 			input.Ipv6Pool = aws.String(s.scope.VPC().IPv6.PoolID)
 			input.AmazonProvidedIpv6CidrBlock = aws.Bool(false)
 		case s.scope.VPC().IPv6.IPAMPool != nil:
-			ipamPoolID, err := s.getIPAMPoolID()
+			ipamPoolID, err := s.getIPAMPoolID(s.scope.VPC().IPv6.IPAMPool)
 			if err != nil {
 				return nil, errors.Wrap(err, "failed to get IPAM Pool ID")
 			}
@@ -444,7 +454,7 @@ func (s *Service) createVPC() (*infrav1.VPCSpec, error) {
 
 	// IPv4-specific configuration
 	if s.scope.VPC().IPAMPool != nil {
-		ipamPoolID, err := s.getIPAMPoolID()
+		ipamPoolID, err := s.getIPAMPoolID(s.scope.VPC().IPAMPool)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to get IPAM Pool ID")
 		}

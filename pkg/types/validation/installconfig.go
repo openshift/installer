@@ -358,6 +358,9 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		allowV6Primary := false
 		experimentalDualStackEnabled, _ := strconv.ParseBool(os.Getenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DUAL_STACK"))
 		switch {
+		case p.AWS != nil:
+			// We allow ipv6-primary dual stack on AWS
+			allowV6Primary = true
 		case p.Azure != nil && experimentalDualStackEnabled:
 			logrus.Warnf("Using experimental Azure dual-stack support")
 		case p.BareMetal != nil:
@@ -380,6 +383,9 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		}
 		for k, v := range presence {
 			switch {
+			case k == "machineNetwork" && p.AWS != nil:
+				// On AWS, we don't know the IPv6 CIDR at the install time.
+				// It's OK to skip validation.
 			case v.IPv4 && !v.IPv6:
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv6 network in this list"))
 			case !v.IPv4 && v.IPv6:
@@ -403,6 +409,7 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		case p.Nutanix != nil:
 		case p.None != nil:
 		case p.External != nil:
+		case p.AWS != nil:
 		case p.Azure != nil && p.Azure.CloudName == azure.StackCloud:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "Azure Stack does not support IPv6"))
 		default:

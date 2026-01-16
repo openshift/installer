@@ -41,6 +41,10 @@ type Subnet struct {
 	// CIDR is the subnet's CIDR block.
 	CIDR string
 
+	// IPv6CIDRAssociation is the subnet's IPv6 CIDR association.
+	// It contains the allocated IPv6 CIDR and its association state.
+	IPv6CIDRAssociation []ec2types.SubnetIpv6CidrBlockAssociation
+
 	// Public is the flag to define the subnet public.
 	Public bool
 
@@ -102,6 +106,7 @@ func subnets(ctx context.Context, client *ec2.Client, subnetIDs []string, vpcID 
 			if subnet.SubnetId == nil {
 				continue
 			}
+
 			if len(ptr.Deref(subnet.SubnetArn, "")) == 0 {
 				return fmt.Errorf("%s has no ARN", *subnet.SubnetId)
 			}
@@ -120,13 +125,14 @@ func subnets(ctx context.Context, client *ec2.Client, subnetIDs []string, vpcID 
 
 			// At this point, we should be safe to dereference these fields.
 			metas[*subnet.SubnetId] = Subnet{
-				ID:     *subnet.SubnetId,
-				ARN:    *subnet.SubnetArn,
-				Zone:   &Zone{Name: *subnet.AvailabilityZone},
-				CIDR:   ptr.Deref(subnet.CidrBlock, ""),
-				Public: false,
-				Tags:   FromAWSTags(subnet.Tags),
-				VPCID:  *subnet.VpcId,
+				ID:                  *subnet.SubnetId,
+				ARN:                 *subnet.SubnetArn,
+				Zone:                &Zone{Name: *subnet.AvailabilityZone},
+				CIDR:                ptr.Deref(subnet.CidrBlock, ""),
+				Public:              false,
+				Tags:                FromAWSTags(subnet.Tags),
+				VPCID:               *subnet.VpcId,
+				IPv6CIDRAssociation: subnet.Ipv6CidrBlockAssociationSet,
 			}
 			zoneNames = append(zoneNames, *subnet.AvailabilityZone)
 		}

@@ -186,6 +186,11 @@ func (r *AWSMachineTemplate) validateHostAllocation() field.ErrorList {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.template.spec.hostID"), "hostID and dynamicHostAllocation are mutually exclusive"), field.Forbidden(field.NewPath("spec.template.spec.dynamicHostAllocation"), "hostID and dynamicHostAllocation are mutually exclusive"))
 	}
 
+	// When hostAffinity is "host", either hostID or dynamicHostAllocation must be specified
+	if spec.HostAffinity != nil && *spec.HostAffinity == "host" && !hasHostID && !hasDynamicHostAllocation {
+		allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.hostID"), "hostID or dynamicHostAllocation must be set when hostAffinity is 'host'"))
+	}
+
 	return allErrs
 }
 

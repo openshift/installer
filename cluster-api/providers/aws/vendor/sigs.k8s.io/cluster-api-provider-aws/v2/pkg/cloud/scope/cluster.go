@@ -209,6 +209,7 @@ func (s *ClusterScope) ControlPlaneLoadBalancers() []*infrav1.AWSLoadBalancerSpe
 }
 
 // ControlPlaneLoadBalancerScheme returns the Classic ELB scheme (public or internal facing).
+//
 // Deprecated: This method is going to be removed in a future release. Use LoadBalancer.Scheme.
 func (s *ClusterScope) ControlPlaneLoadBalancerScheme() infrav1.ELBScheme {
 	if s.ControlPlaneLoadBalancer() != nil && s.ControlPlaneLoadBalancer().Scheme != nil {
@@ -441,6 +442,6 @@ func (s *ClusterScope) UnstructuredControlPlane() (*unstructured.Unstructured, e
 }
 
 // NodePortIngressRuleCidrBlocks returns the CIDR blocks for the node NodePort ingress rules.
-func (s *ClusterScope) NodePortIngressRuleCidrBlocks() []string {
+func (s *ClusterScope) NodePortIngressRuleCidrBlocks() infrav1.CidrBlocks {
 	return s.AWSCluster.Spec.NetworkSpec.DeepCopy().NodePortIngressRuleCidrBlocks
 }

@@ -152,8 +152,9 @@ type Bastion struct {
 
 	// AllowedCIDRBlocks is a list of CIDR blocks allowed to access the bastion host.
 	// They are set as ingress rules for the Bastion host's Security Group (defaults to 0.0.0.0/0).
+	// If the cluster has IPv6 enabled, defaults to ::/0 and 0.0.0.0/0.
 	// +optional
-	AllowedCIDRBlocks []string `json:"allowedCIDRBlocks,omitempty"`
+	AllowedCIDRBlocks CidrBlocks `json:"allowedCIDRBlocks,omitempty"`
 
 	// InstanceType will use the specified instance type for the bastion. If not specified,
 	// Cluster API Provider AWS will use t3.micro for all regions except us-east-1, where t2.micro
@@ -252,6 +253,15 @@ type AWSLoadBalancerSpec struct {
 	// PreserveClientIP lets the user control if preservation of client ips must be retained or not.
 	// If this is enabled 6443 will be opened to 0.0.0.0/0.
 	PreserveClientIP bool `json:"preserveClientIP,omitempty"`
+
+	// TargetGroupIPType sets the IP address type for the target group.
+	// Valid values are ipv4 and ipv6. If not specified, defaults to ipv4 unless
+	// the VPC has IPv6 enabled, in which case it defaults to ipv6.
+	// This applies to the API server target group.
+	// This field cannot be set if LoadBalancerType is classic or disabled.
+	// +kubebuilder:validation:Enum=ipv4;ipv6
+	// +optional
+	TargetGroupIPType *TargetGroupIPType `json:"targetGroupIPType,omitempty"`
 }
 
 // AdditionalListenerSpec defines the desired state of an
@@ -271,6 +281,14 @@ type AdditionalListenerSpec struct {
 	// HealthCheck sets the optional custom health check configuration to the API target group.
 	// +optional
 	HealthCheck *TargetGroupHealthCheckAdditionalSpec `json:"healthCheck,omitempty"`
+
+	// TargetGroupIPType sets the IP address type for the target group.
+	// Valid values are ipv4 and ipv6. If not specified, defaults to ipv4 unless
+	// the VPC has IPv6 enabled, in which case it defaults to ipv6.
+	// This field cannot be set if LoadBalancerType is classic or disabled.
+	// +kubebuilder:validation:Enum=ipv4;ipv6
+	// +optional
+	TargetGroupIPType *TargetGroupIPType `json:"targetGroupIPType,omitempty"`
 }
 
 // AWSClusterStatus defines the observed state of AWSCluster.
@@ -323,7 +341,8 @@ type S3Bucket struct {
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.ready",description="Cluster infrastructure is ready for EC2 instances"
 // +kubebuilder:printcolumn:name="VPC",type="string",JSONPath=".spec.network.vpc.id",description="AWS VPC the cluster is using"
 // +kubebuilder:printcolumn:name="Endpoint",type="string",JSONPath=".spec.controlPlaneEndpoint",description="API Endpoint",priority=1
-// +kubebuilder:printcolumn:name="Bastion IP",type="string",JSONPath=".status.bastion.publicIp",description="Bastion IP address for breakglass access"
+// +kubebuilder:printcolumn:name="Bastion IP",type="string",JSONPath=".status.bastion.publicIp",description="Bastion IPv4 address for breakglass access"
+// +kubebuilder:printcolumn:name="Bastion IPv6",type="string",JSONPath=".status.bastion.ipv6Address",description="Bastion IPv6 address for breakglass access"
 // +k8s:defaulter-gen=true
 
 // AWSCluster is the schema for Amazon EC2 based Kubernetes Cluster API.

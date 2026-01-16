@@ -173,11 +173,12 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 
 		pool.Platform.AWS = &mpool
 		awsMachines, err := aws.GenerateMachines(clusterID.InfraID, &aws.MachineInput{
-			Role:     "master",
-			Pool:     &pool,
-			Subnets:  subnets,
-			Tags:     tags,
-			PublicIP: publicOnlySubnets,
+			Role:       "master",
+			Pool:       &pool,
+			Subnets:    subnets,
+			Tags:       tags,
+			PublicIP:   publicOnlySubnets,
+			EnableIPv6: ic.AWS.DualStackEnabled(),
 			Ignition: &v1beta2.Ignition{
 				Version: "3.2",
 				// master machines should get ignition from the MCS on the bootstrap node
@@ -214,6 +215,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			Tags:           tags,
 			PublicIP:       publicOnlySubnets || (installConfig.Config.Publish == types.ExternalPublishingStrategy),
 			PublicIpv4Pool: ic.Platform.AWS.PublicIpv4Pool,
+			EnableIPv6:     ic.AWS.DualStackEnabled(),
 			Ignition:       ignition,
 		})
 		if err != nil {

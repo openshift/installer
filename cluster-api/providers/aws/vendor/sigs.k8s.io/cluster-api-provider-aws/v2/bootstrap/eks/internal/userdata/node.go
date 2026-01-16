@@ -30,7 +30,9 @@ const (
 	defaultBootstrapCommand = "/etc/eks/bootstrap.sh"
 
 	nodeUserData = `#cloud-config
+{{- if .Files }}
 {{template "files" .Files}}
+{{- end }}
 runcmd:
 {{- template "commands" .PreBootstrapCommands }}
   - {{ .BootstrapCommand }} {{.ClusterName}} {{- template "args" . }}

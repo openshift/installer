@@ -139,6 +139,9 @@ func (i *Infrastructure) Generate(ctx context.Context, dependencies asset.Parent
 		if installConfig.Config.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled {
 			config.Status.PlatformStatus.AWS.CloudLoadBalancerConfig.DNSType = configv1.ClusterHostedDNSType
 		}
+
+		// Set IPFamily from install-config to Infrastructure status
+		config.Status.PlatformStatus.AWS.IPFamily = awsIPFamilyToConfigIPFamily(installConfig.Config.AWS.IPFamily)
 	case azure.Name:
 		config.Spec.PlatformSpec.Type = configv1.AzurePlatformType
 
@@ -399,4 +402,20 @@ func (i *Infrastructure) Files() []*asset.File {
 // Load returns false since this asset is not written to disk by the installer.
 func (i *Infrastructure) Load(f asset.FileFetcher) (bool, error) {
 	return false, nil
+}
+
+// awsIPFamilyToConfigIPFamily converts the install-config AWS IPFamily type
+// to the Infrastructure configv1.IPFamilyType.
+func awsIPFamilyToConfigIPFamily(ipFamily aws.IPFamily) configv1.IPFamilyType {
+	switch ipFamily {
+	case aws.DualStackIPv4Primary:
+		return configv1.DualStackIPv4Primary
+	case aws.DualStackIPv6Primary:
+		return configv1.DualStackIPv6Primary
+	case aws.IPv4:
+		return configv1.IPv4
+	default:
+		// Default to IPv4 if not specified or invalid
+		return configv1.IPv4
+	}
 }

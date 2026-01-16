@@ -20,6 +20,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/lbconfig"
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
@@ -32,20 +33,24 @@ const (
 	mcsCertFile            = "/opt/openshift/tls/machine-config-server.crt"
 	masterUserDataFile     = "/opt/openshift/openshift/99_openshift-cluster-api_master-user-data-secret.yaml"
 	workerUserDataFile     = "/opt/openshift/openshift/99_openshift-cluster-api_worker-user-data-secret.yaml"
+	clusterConfigDataFile  = "/opt/openshift/manifests/cluster-config.yaml"
 
 	// header is the string that precedes the encoded data in the ignition data.
 	// The data must be replaced before decoding the string, and the string must be
 	// prepended to the encoded data.
 	header = "data:text/plain;charset=utf-8;base64,"
 
+	// The key in the cluster-config-v1 ConfigMap to extract the install-config.
+	clusterConfigCMKey = "install-config"
+
 	masterRole = "master"
 	workerRole = "worker"
 )
 
-// EditIgnition attempts to edit the contents of the bootstrap ignition when the user has selected
+// EditIgnitionForCustomDNS attempts to edit the contents of the bootstrap ignition when the user has selected
 // a custom DNS configuration. Find the public and private load balancer addresses and fill in the
 // infrastructure file within the ignition struct.
-func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateIPAddresses []string) (*IgnitionOutput, error) {
+func EditIgnitionForCustomDNS(in IgnitionInput, platform string, publicIPAddresses, privateIPAddresses []string) (*IgnitionOutput, error) {
 	ignData := &igntypes.Config{}
 	err := json.Unmarshal(in.BootstrapIgnData, ignData)
 	if err != nil {
@@ -288,6 +293,79 @@ func updateUserDataSecret(in IgnitionInput, role string, config *igntypes.Config
 			// replace the contents with the edited information
 			config.Storage.Files[i].Contents.Source = &encoded
 			return nil
+		}
+	}
+	return nil
+}
+
+// EditIgnitionForDualStack attempts to edit the contents of the bootstrap ignition when the cluster is in dualstack.
+// This addes the missing IPv6 manchine network for platform where IPv6 CIDRs are not known at install time, for example, AWS.
+func EditIgnitionForDualStack(in IgnitionInput, platform string, machineNetworks []types.MachineNetworkEntry) (*IgnitionOutput, error) {
+	ignData := &igntypes.Config{}
+	err := json.Unmarshal(in.BootstrapIgnData, ignData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal bootstrap ignition: %w", err)
+	}
+
+	err = updateMachineNetworks(in, ignData, machineNetworks)
+	if err != nil {
+		return nil, fmt.Errorf("failed to add VPC IPv6 CIDR to ignition config: %w", err)
+	}
+	logrus.Debugf("Successfully added VPC IPv6 CIDR to the install-config machine networks")
+
+	editedIgnBytes, err := json.Marshal(ignData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert ignition data to json: %w", err)
+	}
+	logrus.Debugf("Successfully updated bootstrap ignition with updated manifests")
+
+	return &IgnitionOutput{
+		UpdatedBootstrapIgn: editedIgnBytes,
+		UpdatedMasterIgn:    in.MasterIgnData,
+		UpdatedWorkerIgn:    in.WorkerIgnData,
+	}, nil
+}
+
+func updateMachineNetworks(in IgnitionInput, config *igntypes.Config, machineNetworks []types.MachineNetworkEntry) error {
+	for i, fileData := range config.Storage.Files {
+		if fileData.Path == clusterConfigDataFile {
+			contents := strings.Split(*config.Storage.Files[i].Contents.Source, ",")
+			rawDecodedText, err := base64.StdEncoding.DecodeString(contents[1])
+			if err != nil {
+				return fmt.Errorf("failed to decode contents of ignition file: %w", err)
+			}
+
+			configCM := &corev1.ConfigMap{}
+			if err := yaml.Unmarshal(rawDecodedText, configCM); err != nil {
+				return fmt.Errorf("failed to unmarshal cluster-config ConfigMap: %w", err)
+			}
+
+			installConfig := &types.InstallConfig{}
+			if err := yaml.Unmarshal([]byte(configCM.Data[clusterConfigCMKey]), installConfig); err != nil {
+				return fmt.Errorf("failed to unmarshal install-config content: %w", err)
+			}
+
+			// Update the machine network field
+			installConfig.MachineNetwork = machineNetworks
+
+			// Convert the installconfig back to string and save it to the configmap
+			icContents, err := yaml.Marshal(installConfig)
+			if err != nil {
+				return fmt.Errorf("failed to marshal install-config: %w", err)
+			}
+			configCM.Data[clusterConfigCMKey] = string(icContents)
+
+			// convert the infrastructure back to an encoded string
+			configCMContents, err := yaml.Marshal(configCM)
+			if err != nil {
+				return fmt.Errorf("failed to marshal cluster-config ConfigMap: %w", err)
+			}
+
+			encoded := fmt.Sprintf("%s%s", header, base64.StdEncoding.EncodeToString(configCMContents))
+			// replace the contents with the edited information
+			config.Storage.Files[i].Contents.Source = &encoded
+
+			break
 		}
 	}
 	return nil

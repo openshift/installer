@@ -14,6 +14,24 @@ const (
 	VolumeTypeGp3 = "gp3"
 )
 
+// IPFamily specifies the IP address family for the cluster network.
+// +kubebuilder:validation:Enum="IPv4";"DualStackIPv4Primary";"DualStackIPv6Primary"
+type IPFamily string
+
+const (
+	// IPv4 indicates the cluster will use IPv4-only networking.
+	// This is the default mode.
+	IPv4 IPFamily = "IPv4"
+
+	// DualStackIPv4Primary indicates the cluster will use dual-stack
+	// networking with both IPv4 and IPv6 addresses, with IPv4 as the primary address family.
+	DualStackIPv4Primary IPFamily = "DualStackIPv4Primary"
+
+	// DualStackIPv6Primary indicates the cluster will use dual-stack
+	// networking with both IPv4 and IPv6 addresses, with IPv6 as the primary address family.
+	DualStackIPv6Primary IPFamily = "DualStackIPv6Primary"
+)
+
 // Platform stores all the global configuration that all machinesets
 // use.
 type Platform struct {
@@ -126,6 +144,17 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// IPFamily specifies the IP address family for the cluster network.
+	// Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+	// with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+	// networking with IPv6 as the primary address family. When using dual-stack, the VPC
+	// and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+	//
+	// +kubebuilder:default:="IPv4"
+	// +default="IPv4"
+	// +optional
+	IPFamily IPFamily `json:"ipFamily,omitempty"`
 }
 
 // ServiceEndpoint store the configuration for services to
@@ -229,4 +258,9 @@ func IsPublicOnlySubnetsEnabled() bool {
 	// Even though this looks too simple for a function, it's better than having to update the logic everywhere it's
 	// used in case we decide to check for specific values set in the env var.
 	return os.Getenv("OPENSHIFT_INSTALL_AWS_PUBLIC_ONLY") != ""
+}
+
+// DualStackEnabled returns whether dual-stack networking is enabled for the AWS cluster.
+func (p *Platform) DualStackEnabled() bool {
+	return p != nil && (p.IPFamily == DualStackIPv4Primary || p.IPFamily == DualStackIPv6Primary)
 }

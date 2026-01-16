@@ -481,6 +481,7 @@ func (r *AWSMachine) validateHostAllocation() field.ErrorList {
 	hasHostID := r.Spec.HostID != nil && len(*r.Spec.HostID) > 0
 	hasDynamicHostAllocation := r.Spec.DynamicHostAllocation != nil
 
+	// If both hostID and dynamicHostAllocation are specified, return an error
 	if hasHostID && hasDynamicHostAllocation {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.hostID"), "hostID and dynamicHostAllocation are mutually exclusive"), field.Forbidden(field.NewPath("spec.dynamicHostAllocation"), "hostID and dynamicHostAllocation are mutually exclusive"))
 	}

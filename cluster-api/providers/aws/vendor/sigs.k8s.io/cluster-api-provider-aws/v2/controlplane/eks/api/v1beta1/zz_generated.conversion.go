@@ -372,6 +372,7 @@ func autoConvert_v1beta2_AWSManagedControlPlaneSpec_To_v1beta1_AWSManagedControl
 	out.Addons = (*[]Addon)(unsafe.Pointer(in.Addons))
 	out.OIDCIdentityProviderConfig = (*OIDCIdentityProviderConfig)(unsafe.Pointer(in.OIDCIdentityProviderConfig))
 	// WARNING: in.AccessConfig requires manual conversion: does not exist in peer-type
+	// WARNING: in.AccessEntries requires manual conversion: does not exist in peer-type
 	if err := Convert_v1beta2_VpcCni_To_v1beta1_VpcCni(&in.VpcCni, &out.VpcCni, s); err != nil {
 		return err
 	}
