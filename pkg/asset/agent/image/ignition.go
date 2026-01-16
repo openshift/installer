@@ -112,7 +112,6 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&mirror.CaBundle{},
 		&gencrypto.AuthConfig{},
 		&common.InfraEnvID{},
-		&agentcommon.OptionalInstallConfig{},
 	}
 }
 
@@ -361,14 +360,6 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	}
 
 	err = addNTPSources(&config, infraEnv)
-	if err != nil {
-		return err
-	}
-
-	// Generate fencing credentials file for TNF clusters
-	installConfig := &agentcommon.OptionalInstallConfig{}
-	dependencies.Get(installConfig)
-	err = addFencingCredentials(&config, installConfig)
 	if err != nil {
 		return err
 	}
@@ -817,41 +808,5 @@ logdir /var/log/chrony
 	}
 
 	config.Storage.Files = append(config.Storage.Files, ignition.FileFromString(chronyConfPath, "root", 0644, sb.String()))
-	return nil
-}
-
-// addFencingCredentials generates a single fencing-credentials.yaml file for TNF clusters.
-// It creates /etc/assisted/hostconfig/fencing-credentials.yaml containing all credentials
-// from controlPlane.fencing.credentials[]. The hostname matching to actual hosts is
-// performed later by assisted-service.
-func addFencingCredentials(config *igntypes.Config, installConfig *agentcommon.OptionalInstallConfig) error {
-	if installConfig == nil || installConfig.Config == nil {
-		return nil
-	}
-
-	if installConfig.Config.ControlPlane == nil || installConfig.Config.ControlPlane.Fencing == nil {
-		return nil
-	}
-
-	credentials := installConfig.Config.ControlPlane.Fencing.Credentials
-	if len(credentials) == 0 {
-		return nil
-	}
-
-	logrus.Debugf("Generating fencing credentials file with %d credentials", len(credentials))
-
-	// Marshal all credentials to a single YAML file
-	data, err := yaml.Marshal(map[string]interface{}{
-		"credentials": credentials,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to marshal fencing credentials: %w", err)
-	}
-
-	filePath := "/etc/assisted/hostconfig/fencing-credentials.yaml"
-	fencingFile := ignition.FileFromBytes(filePath, "root", 0600, data)
-	config.Storage.Files = append(config.Storage.Files, fencingFile)
-	logrus.Debugf("Generated fencing credentials file at %s", filePath)
-
 	return nil
 }
