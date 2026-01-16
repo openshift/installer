@@ -55,6 +55,7 @@ func (m *AgentManifests) Dependencies() []asset.Asset {
 		&AgentClusterInstall{},
 		&ClusterDeployment{},
 		&ClusterImageSet{},
+		&FencingCredentials{},
 	}
 }
 
@@ -71,6 +72,7 @@ func (m *AgentManifests) Generate(ctx context.Context, dependencies asset.Parent
 		&AgentClusterInstall{},
 		&ClusterDeployment{},
 		&ClusterImageSet{},
+		&FencingCredentials{},
 	} {
 		dependencies.Get(a)
 
@@ -93,6 +95,9 @@ func (m *AgentManifests) Generate(ctx context.Context, dependencies asset.Parent
 			m.ClusterDeployment = v.Config
 		case *ClusterImageSet:
 			m.ClusterImageSet = v.Config
+		case *FencingCredentials:
+			// FencingCredentials files are added directly to FileList below.
+			// No config storage needed - the asset returns empty Files() for non-TNF clusters.
 		}
 
 		m.FileList = append(m.FileList, a.Files()...)
