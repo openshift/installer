@@ -137,7 +137,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	}
 
 	if in.Platform.DefaultMachinePlatform != nil && in.Platform.DefaultMachinePlatform.BootDiagnostics != nil {
-		defaultDiag.Boot.StorageAccountType = ConvertBootDiagnosticsStorageAccountType(in.Platform.DefaultMachinePlatform.BootDiagnostics.Type)
+		defaultDiag.Boot.StorageAccountType = capz.BootDiagnosticsStorageAccountType(in.Platform.DefaultMachinePlatform.BootDiagnostics.Type)
 		if saURI := bootDiagStorageURIBuilder(in.Platform.DefaultMachinePlatform.BootDiagnostics, session.Environment.StorageEndpointSuffix); saURI != "" {
 			defaultDiag.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
 				StorageAccountURI: saURI,
@@ -149,10 +149,10 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	if mpool.BootDiagnostics != nil {
 		controlPlaneDiag = &capz.Diagnostics{
 			Boot: &capz.BootDiagnostics{
-				StorageAccountType: ConvertBootDiagnosticsStorageAccountType(mpool.BootDiagnostics.Type),
+				StorageAccountType: capz.BootDiagnosticsStorageAccountType(mpool.BootDiagnostics.Type),
 			},
 		}
-		controlPlaneDiag.Boot.StorageAccountType = ConvertBootDiagnosticsStorageAccountType(mpool.BootDiagnostics.Type)
+		controlPlaneDiag.Boot.StorageAccountType = capz.BootDiagnosticsStorageAccountType(mpool.BootDiagnostics.Type)
 		if saURI := bootDiagStorageURIBuilder(mpool.BootDiagnostics, session.Environment.StorageEndpointSuffix); saURI != "" {
 			controlPlaneDiag.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
 				StorageAccountURI: saURI,
@@ -191,7 +191,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(aztypes.AcceleratedNetworkingEnabled)),
 					},
 				},
-				Identity:               ConvertVMIdentityType(mpool.Identity.Type),
+				Identity:               capz.VMIdentity(mpool.Identity.Type),
 				UserAssignedIdentities: userAssignedIdentities,
 				Diagnostics:            controlPlaneDiag,
 				DataDisks:              ConvertDataDisks(mpool.DataDisks),
@@ -266,7 +266,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			AllocatePublicIP:           !in.Private,
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
-			Identity:                   ConvertVMIdentityType(mpool.Identity.Type),
+			Identity:                   capz.VMIdentity(mpool.Identity.Type),
 			Diagnostics:                controlPlaneDiag,
 			UserAssignedIdentities:     userAssignedIdentities,
 		},

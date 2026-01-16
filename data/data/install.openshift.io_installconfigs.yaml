@@ -359,39 +359,24 @@ spec:
                                     disk encryption set resource id for the managed
                                     disk.
                                   properties:
-                                    id:
-                                      description: ID defines resourceID for diskEncryptionSet
-                                        resource. It must be in the same subscription
+                                    name:
+                                      description: Name is the name of the disk encryption
+                                        set.
                                       type: string
-                                  type: object
-                                securityProfile:
-                                  description: SecurityProfile specifies the security
-                                    profile for the managed disk.
-                                  properties:
-                                    diskEncryptionSet:
+                                    resourceGroup:
                                       description: |-
-                                        DiskEncryptionSet specifies the customer-managed disk encryption set resource id for the
-                                        managed disk that is used for Customer Managed Key encrypted ConfidentialVM OS Disk and
-                                        VMGuest blob.
-                                      properties:
-                                        id:
-                                          description: ID defines resourceID for diskEncryptionSet
-                                            resource. It must be in the same subscription
-                                          type: string
-                                      type: object
-                                    securityEncryptionType:
-                                      description: |-
-                                        SecurityEncryptionType specifies the encryption type of the managed disk.
-                                        It is set to DiskWithVMGuestState to encrypt the managed disk along with the VMGuestState
-                                        blob, and to VMGuestStateOnly to encrypt the VMGuestState blob only.
-                                        When set to VMGuestStateOnly, VirtualizedTrustedPlatformModule should be set to Enabled.
-                                        When set to DiskWithVMGuestState, EncryptionAtHost should be disabled, SecureBoot and
-                                        VirtualizedTrustedPlatformModule should be set to Enabled.
-                                        It can be set only for Confidential VMs.
-                                      enum:
-                                      - VMGuestStateOnly
-                                      - DiskWithVMGuestState
+                                        ResourceGroup defines the Azure resource group used by the disk
+                                        encryption set.
                                       type: string
+                                    subscriptionId:
+                                      description: |-
+                                        SubscriptionID defines the Azure subscription the disk encryption
+                                        set is in.
+                                      type: string
+                                  required:
+                                  - name
+                                  - resourceGroup
+                                  - subscriptionId
                                   type: object
                                 storageAccountType:
                                   type: string
@@ -1919,40 +1904,24 @@ spec:
                                       disk encryption set resource id for the managed
                                       disk.
                                     properties:
-                                      id:
-                                        description: ID defines resourceID for diskEncryptionSet
-                                          resource. It must be in the same subscription
+                                      name:
+                                        description: Name is the name of the disk
+                                          encryption set.
                                         type: string
-                                    type: object
-                                  securityProfile:
-                                    description: SecurityProfile specifies the security
-                                      profile for the managed disk.
-                                    properties:
-                                      diskEncryptionSet:
+                                      resourceGroup:
                                         description: |-
-                                          DiskEncryptionSet specifies the customer-managed disk encryption set resource id for the
-                                          managed disk that is used for Customer Managed Key encrypted ConfidentialVM OS Disk and
-                                          VMGuest blob.
-                                        properties:
-                                          id:
-                                            description: ID defines resourceID for
-                                              diskEncryptionSet resource. It must
-                                              be in the same subscription
-                                            type: string
-                                        type: object
-                                      securityEncryptionType:
-                                        description: |-
-                                          SecurityEncryptionType specifies the encryption type of the managed disk.
-                                          It is set to DiskWithVMGuestState to encrypt the managed disk along with the VMGuestState
-                                          blob, and to VMGuestStateOnly to encrypt the VMGuestState blob only.
-                                          When set to VMGuestStateOnly, VirtualizedTrustedPlatformModule should be set to Enabled.
-                                          When set to DiskWithVMGuestState, EncryptionAtHost should be disabled, SecureBoot and
-                                          VirtualizedTrustedPlatformModule should be set to Enabled.
-                                          It can be set only for Confidential VMs.
-                                        enum:
-                                        - VMGuestStateOnly
-                                        - DiskWithVMGuestState
+                                          ResourceGroup defines the Azure resource group used by the disk
+                                          encryption set.
                                         type: string
+                                      subscriptionId:
+                                        description: |-
+                                          SubscriptionID defines the Azure subscription the disk encryption
+                                          set is in.
+                                        type: string
+                                    required:
+                                    - name
+                                    - resourceGroup
+                                    - subscriptionId
                                     type: object
                                   storageAccountType:
                                     type: string
@@ -3419,39 +3388,24 @@ spec:
                                     disk encryption set resource id for the managed
                                     disk.
                                   properties:
-                                    id:
-                                      description: ID defines resourceID for diskEncryptionSet
-                                        resource. It must be in the same subscription
+                                    name:
+                                      description: Name is the name of the disk encryption
+                                        set.
                                       type: string
-                                  type: object
-                                securityProfile:
-                                  description: SecurityProfile specifies the security
-                                    profile for the managed disk.
-                                  properties:
-                                    diskEncryptionSet:
+                                    resourceGroup:
                                       description: |-
-                                        DiskEncryptionSet specifies the customer-managed disk encryption set resource id for the
-                                        managed disk that is used for Customer Managed Key encrypted ConfidentialVM OS Disk and
-                                        VMGuest blob.
-                                      properties:
-                                        id:
-                                          description: ID defines resourceID for diskEncryptionSet
-                                            resource. It must be in the same subscription
-                                          type: string
-                                      type: object
-                                    securityEncryptionType:
-                                      description: |-
-                                        SecurityEncryptionType specifies the encryption type of the managed disk.
-                                        It is set to DiskWithVMGuestState to encrypt the managed disk along with the VMGuestState
-                                        blob, and to VMGuestStateOnly to encrypt the VMGuestState blob only.
-                                        When set to VMGuestStateOnly, VirtualizedTrustedPlatformModule should be set to Enabled.
-                                        When set to DiskWithVMGuestState, EncryptionAtHost should be disabled, SecureBoot and
-                                        VirtualizedTrustedPlatformModule should be set to Enabled.
-                                        It can be set only for Confidential VMs.
-                                      enum:
-                                      - VMGuestStateOnly
-                                      - DiskWithVMGuestState
+                                        ResourceGroup defines the Azure resource group used by the disk
+                                        encryption set.
                                       type: string
+                                    subscriptionId:
+                                      description: |-
+                                        SubscriptionID defines the Azure subscription the disk encryption
+                                        set is in.
+                                      type: string
+                                  required:
+                                  - name
+                                  - resourceGroup
+                                  - subscriptionId
                                   type: object
                                 storageAccountType:
                                   type: string
@@ -5361,39 +5315,24 @@ spec:
                                     disk encryption set resource id for the managed
                                     disk.
                                   properties:
-                                    id:
-                                      description: ID defines resourceID for diskEncryptionSet
-                                        resource. It must be in the same subscription
+                                    name:
+                                      description: Name is the name of the disk encryption
+                                        set.
                                       type: string
-                                  type: object
-                                securityProfile:
-                                  description: SecurityProfile specifies the security
-                                    profile for the managed disk.
-                                  properties:
-                                    diskEncryptionSet:
+                                    resourceGroup:
                                       description: |-
-                                        DiskEncryptionSet specifies the customer-managed disk encryption set resource id for the
-                                        managed disk that is used for Customer Managed Key encrypted ConfidentialVM OS Disk and
-                                        VMGuest blob.
-                                      properties:
-                                        id:
-                                          description: ID defines resourceID for diskEncryptionSet
-                                            resource. It must be in the same subscription
-                                          type: string
-                                      type: object
-                                    securityEncryptionType:
-                                      description: |-
-                                        SecurityEncryptionType specifies the encryption type of the managed disk.
-                                        It is set to DiskWithVMGuestState to encrypt the managed disk along with the VMGuestState
-                                        blob, and to VMGuestStateOnly to encrypt the VMGuestState blob only.
-                                        When set to VMGuestStateOnly, VirtualizedTrustedPlatformModule should be set to Enabled.
-                                        When set to DiskWithVMGuestState, EncryptionAtHost should be disabled, SecureBoot and
-                                        VirtualizedTrustedPlatformModule should be set to Enabled.
-                                        It can be set only for Confidential VMs.
-                                      enum:
-                                      - VMGuestStateOnly
-                                      - DiskWithVMGuestState
+                                        ResourceGroup defines the Azure resource group used by the disk
+                                        encryption set.
                                       type: string
+                                    subscriptionId:
+                                      description: |-
+                                        SubscriptionID defines the Azure subscription the disk encryption
+                                        set is in.
+                                      type: string
+                                  required:
+                                  - name
+                                  - resourceGroup
+                                  - subscriptionId
                                   type: object
                                 storageAccountType:
                                   type: string

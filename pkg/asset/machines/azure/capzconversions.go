@@ -8,22 +8,6 @@ import (
 	"github.com/openshift/installer/pkg/types/azure"
 )
 
-// ConvertVMIdentityType converts the local VMIdentityType to the capz VMIdentity type.
-func ConvertVMIdentityType(id azure.VMIdentityType) capz.VMIdentity {
-	return capz.VMIdentity(id)
-}
-
-// ConvertSubnetRole converts the local SubnetRole to the capz SubnetRole type.
-func ConvertSubnetRole(role azure.SubnetRole) capz.SubnetRole {
-	return capz.SubnetRole(role)
-}
-
-// ConvertBootDiagnosticsStorageAccountType converts the local BootDiagnosticsStorageAccountType
-// to the capz BootDiagnosticsStorageAccountType.
-func ConvertBootDiagnosticsStorageAccountType(t azure.BootDiagnosticsStorageAccountType) capz.BootDiagnosticsStorageAccountType {
-	return capz.BootDiagnosticsStorageAccountType(t)
-}
-
 // ConvertDataDisks converts a slice of local DataDisk to capz DataDisk types.
 func ConvertDataDisks(disks []azure.DataDisk) []capz.DataDisk {
 	if disks == nil {
@@ -32,13 +16,13 @@ func ConvertDataDisks(disks []azure.DataDisk) []capz.DataDisk {
 
 	result := make([]capz.DataDisk, len(disks))
 	for i, d := range disks {
-		result[i] = ConvertDataDisk(d)
+		result[i] = convertDataDisk(d)
 	}
 	return result
 }
 
-// ConvertDataDisk converts a local DataDisk to a capz DataDisk.
-func ConvertDataDisk(d azure.DataDisk) capz.DataDisk {
+// convertDataDisk converts a local DataDisk to a capz DataDisk.
+func convertDataDisk(d azure.DataDisk) capz.DataDisk {
 	disk := capz.DataDisk{
 		NameSuffix:  d.NameSuffix,
 		DiskSizeGB:  d.DiskSizeGB,
