@@ -7,7 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	utilsslice "k8s.io/utils/strings/slices"
-	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -342,13 +341,13 @@ func convertAzure(config *types.InstallConfig) error {
 	if config.Azure.DeprecatedControlPlaneSubnet != "" { // nolint: staticcheck
 		subnets = append(subnets, azure.SubnetSpec{
 			Name: config.Azure.DeprecatedControlPlaneSubnet, // nolint: staticcheck
-			Role: v1beta1.SubnetControlPlane,
+			Role: azure.SubnetControlPlane,
 		})
 	}
 	if config.Azure.DeprecatedComputeSubnet != "" { // nolint: staticcheck
 		subnets = append(subnets, azure.SubnetSpec{
 			Name: config.Azure.DeprecatedComputeSubnet, // nolint: staticcheck
-			Role: v1beta1.SubnetNode,
+			Role: azure.SubnetNode,
 		})
 	}
 	config.Azure.Subnets = subnets

@@ -120,7 +120,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 
 	// If identity type is UserAssigned, but no identities are provided, the installer
 	// will create one. Populate the manifest with a reference to that identity.
-	if mpool.Identity.Type == capz.VMIdentityUserAssigned && len(userAssignedIdentities) == 0 {
+	if mpool.Identity.Type == aztypes.VMIdentityUserAssigned && len(userAssignedIdentities) == 0 {
 		userAssignedIdentities = []capz.UserAssignedIdentity{
 			{
 				ProviderID: fmt.Sprintf("/subscriptions/%s/resourcegroups/%s/providers/Microsoft.ManagedIdentity/userAssignedIdentities/%s-identity", subscriptionID, resourceGroup, clusterID),
@@ -137,7 +137,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	}
 
 	if in.Platform.DefaultMachinePlatform != nil && in.Platform.DefaultMachinePlatform.BootDiagnostics != nil {
-		defaultDiag.Boot.StorageAccountType = in.Platform.DefaultMachinePlatform.BootDiagnostics.Type
+		defaultDiag.Boot.StorageAccountType = ConvertBootDiagnosticsStorageAccountType(in.Platform.DefaultMachinePlatform.BootDiagnostics.Type)
 		if saURI := bootDiagStorageURIBuilder(in.Platform.DefaultMachinePlatform.BootDiagnostics, session.Environment.StorageEndpointSuffix); saURI != "" {
 			defaultDiag.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
 				StorageAccountURI: saURI,
@@ -149,10 +149,10 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	if mpool.BootDiagnostics != nil {
 		controlPlaneDiag = &capz.Diagnostics{
 			Boot: &capz.BootDiagnostics{
-				StorageAccountType: mpool.BootDiagnostics.Type,
+				StorageAccountType: ConvertBootDiagnosticsStorageAccountType(mpool.BootDiagnostics.Type),
 			},
 		}
-		controlPlaneDiag.Boot.StorageAccountType = mpool.BootDiagnostics.Type
+		controlPlaneDiag.Boot.StorageAccountType = ConvertBootDiagnosticsStorageAccountType(mpool.BootDiagnostics.Type)
 		if saURI := bootDiagStorageURIBuilder(mpool.BootDiagnostics, session.Environment.StorageEndpointSuffix); saURI != "" {
 			controlPlaneDiag.Boot.UserManaged = &capz.UserManagedBootDiagnostics{
 				StorageAccountURI: saURI,
@@ -191,10 +191,10 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 						AcceleratedNetworking: ptr.To(mpool.VMNetworkingType == string(aztypes.VMnetworkingTypeAccelerated) || mpool.VMNetworkingType == string(aztypes.AcceleratedNetworkingEnabled)),
 					},
 				},
-				Identity:               mpool.Identity.Type,
+				Identity:               ConvertVMIdentityType(mpool.Identity.Type),
 				UserAssignedIdentities: userAssignedIdentities,
 				Diagnostics:            controlPlaneDiag,
-				DataDisks:              mpool.DataDisks,
+				DataDisks:              ConvertDataDisks(mpool.DataDisks),
 			},
 		}
 
@@ -266,7 +266,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 			AllocatePublicIP:           !in.Private,
 			AdditionalCapabilities:     additionalCapabilities,
 			SecurityProfile:            securityProfile,
-			Identity:                   mpool.Identity.Type,
+			Identity:                   ConvertVMIdentityType(mpool.Identity.Type),
 			Diagnostics:                controlPlaneDiag,
 			UserAssignedIdentities:     userAssignedIdentities,
 		},
@@ -349,7 +349,7 @@ func CapzTagsFromUserTags(clusterID string, usertags map[string]string) (capz.Ta
 
 func bootDiagStorageURIBuilder(diag *aztypes.BootDiagnostics, storageEndpointSuffix string) string {
 	storageAccountURI := "https://%s.blob.%s"
-	if diag.Type == capz.UserManagedDiagnosticsStorage && diag.StorageAccountName != "" {
+	if diag.Type == aztypes.UserManagedDiagnosticsStorage && diag.StorageAccountName != "" {
 		return fmt.Sprintf(storageAccountURI, diag.StorageAccountName, storageEndpointSuffix)
 	}
 	return ""

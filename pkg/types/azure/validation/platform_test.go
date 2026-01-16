@@ -5,7 +5,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -27,11 +26,11 @@ func validNetworkPlatform() *azure.Platform {
 	p.Subnets = []azure.SubnetSpec{
 		{
 			Name: "controlplanesubnet",
-			Role: v1beta1.SubnetControlPlane,
+			Role: azure.SubnetControlPlane,
 		},
 		{
 			Name: "computesubnet",
-			Role: v1beta1.SubnetNode,
+			Role: azure.SubnetNode,
 		},
 	}
 

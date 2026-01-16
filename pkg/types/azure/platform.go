@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-
 	"github.com/openshift/installer/pkg/types/dns"
 )
 
@@ -31,6 +29,17 @@ const (
 	// UserDefinedRoutingOutboundType uses user defined routing for egress from the cluster.
 	// see https://docs.microsoft.com/en-us/azure/virtual-network/virtual-networks-udr-overview
 	UserDefinedRoutingOutboundType OutboundType = "UserDefinedRouting"
+)
+
+// SubnetRole defines the unique role of a subnet.
+type SubnetRole string
+
+const (
+	// SubnetNode defines a Kubernetes workload node role.
+	SubnetNode SubnetRole = "node"
+
+	// SubnetControlPlane defines a Kubernetes control plane node role.
+	SubnetControlPlane SubnetRole = "control-plane"
 )
 
 // Platform stores all the global configuration that all machinesets
@@ -128,7 +137,7 @@ type SubnetSpec struct {
 	Name string `json:"name"`
 	// Role specifies the actual role which the subnet should be used in.
 	// +kubebuilder:validation:Enum=node;control-plane
-	Role capz.SubnetRole `json:"role"`
+	Role SubnetRole `json:"role"`
 }
 
 // KeyVault defines an Azure Key Vault.

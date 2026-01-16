@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -116,7 +115,7 @@ func TestCreateAzureIdentity(t *testing.T) {
 				ic := baseInstallConfig()
 				ic.Platform.Azure.DefaultMachinePlatform = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
-						Type: capz.VMIdentityNone,
+						Type: azure.VMIdentityNone,
 					},
 				}
 				return ic
@@ -129,7 +128,7 @@ func TestCreateAzureIdentity(t *testing.T) {
 				ic := baseInstallConfig()
 				ic.Platform.Azure.DefaultMachinePlatform = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
-						Type: capz.VMIdentityUserAssigned,
+						Type: azure.VMIdentityUserAssigned,
 					},
 				}
 				return ic
@@ -142,11 +141,11 @@ func TestCreateAzureIdentity(t *testing.T) {
 				ic := baseInstallConfig()
 				ic.Platform.Azure.DefaultMachinePlatform = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
-						Type: capz.VMIdentityUserAssigned,
+						Type: azure.VMIdentityUserAssigned,
 					},
 				}
 				ic.ControlPlane.Platform.Azure.Identity = &azure.VMIdentity{
-					Type: capz.VMIdentityUserAssigned,
+					Type: azure.VMIdentityUserAssigned,
 					UserAssignedIdentities: []azure.UserAssignedIdentity{
 						{
 							Name:          "test",
@@ -165,7 +164,7 @@ func TestCreateAzureIdentity(t *testing.T) {
 				ic := baseInstallConfig()
 				ic.Platform.Azure.DefaultMachinePlatform = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
-						Type: capz.VMIdentityUserAssigned,
+						Type: azure.VMIdentityUserAssigned,
 						UserAssignedIdentities: []azure.UserAssignedIdentity{
 							{
 								Name:          "test",

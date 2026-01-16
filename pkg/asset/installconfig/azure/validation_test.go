@@ -14,7 +14,6 @@ import (
 	"go.uber.org/mock/gomock"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/asset/installconfig/azure/mock"
 	"github.com/openshift/installer/pkg/ipnet"
@@ -390,7 +389,7 @@ var (
 	validBootDiagnosticsResourceGroup  = "valid-resource-group"
 	validStorageAccountValues          = func(ic *types.InstallConfig) {
 		ic.ControlPlane.Platform.Azure.BootDiagnostics = &azure.BootDiagnostics{
-			Type:               capz.UserManagedDiagnosticsStorage,
+			Type:               azure.UserManagedDiagnosticsStorage,
 			ResourceGroup:      validBootDiagnosticsResourceGroup,
 			StorageAccountName: validBootDiagnosticsStorageAccount,
 		}
@@ -412,10 +411,10 @@ func validInstallConfig() *types.InstallConfig {
 				DefaultMachinePlatform:   &azure.MachinePool{},
 				Subnets: []azure.SubnetSpec{{
 					Name: validControlPlaneSubnet,
-					Role: capz.SubnetControlPlane,
+					Role: azure.SubnetControlPlane,
 				}, {
 					Name: validComputeSubnet,
-					Role: capz.SubnetNode,
+					Role: azure.SubnetNode,
 				}},
 			},
 		},

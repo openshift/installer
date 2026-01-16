@@ -7,7 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/pointer"
 	"k8s.io/utils/ptr"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -101,7 +100,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						DataDisks: []capz.DataDisk{{
+						DataDisks: []azure.DataDisk{{
 							NameSuffix:  "etcd",
 							DiskSizeGB:  1,
 							ManagedDisk: nil,
@@ -127,7 +126,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						DataDisks: []capz.DataDisk{{
+						DataDisks: []azure.DataDisk{{
 							NameSuffix:  "etcd",
 							DiskSizeGB:  1,
 							ManagedDisk: nil,
@@ -152,7 +151,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						DataDisks: []capz.DataDisk{{
+						DataDisks: []azure.DataDisk{{
 							NameSuffix:  "foo",
 							DiskSizeGB:  1,
 							ManagedDisk: nil,
@@ -177,7 +176,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						DataDisks: []capz.DataDisk{{
+						DataDisks: []azure.DataDisk{{
 							NameSuffix:  "etcd",
 							DiskSizeGB:  1,
 							ManagedDisk: nil,
@@ -202,7 +201,7 @@ func TestValidateMachinePool(t *testing.T) {
 				}},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						DataDisks: []capz.DataDisk{{
+						DataDisks: []azure.DataDisk{{
 							NameSuffix:  "etcd",
 							DiskSizeGB:  0,
 							ManagedDisk: nil,
@@ -222,7 +221,7 @@ func TestValidateMachinePool(t *testing.T) {
 				DiskSetup: []types.Disk{},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						DataDisks: []capz.DataDisk{{
+						DataDisks: []azure.DataDisk{{
 							NameSuffix:  "etcd",
 							DiskSizeGB:  0,
 							ManagedDisk: nil,
@@ -256,7 +255,7 @@ func TestValidateMachinePool(t *testing.T) {
 				},
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
-						DataDisks: []capz.DataDisk{
+						DataDisks: []azure.DataDisk{
 							{
 								NameSuffix:  "etcd",
 								DiskSizeGB:  1,
@@ -846,7 +845,7 @@ func TestValidateMachinePool(t *testing.T) {
 				Platform: types.MachinePoolPlatform{
 					Azure: &azure.MachinePool{
 						Identity: &azure.VMIdentity{
-							Type:                   capz.VMIdentityNone,
+							Type:                   azure.VMIdentityNone,
 							UserAssignedIdentities: []azure.UserAssignedIdentity{},
 						},
 					},

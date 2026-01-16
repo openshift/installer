@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	v1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
@@ -109,7 +108,7 @@ func TestFeatureGates(t *testing.T) {
 				c.Azure = &azure.Platform{}
 				c.ControlPlane.Platform.Azure = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
-						Type: capz.VMIdentityUserAssigned,
+						Type: azure.VMIdentityUserAssigned,
 						UserAssignedIdentities: []azure.UserAssignedIdentity{
 							{
 								Name:          "first-identity",
@@ -136,7 +135,7 @@ func TestFeatureGates(t *testing.T) {
 				c.Azure = &azure.Platform{}
 				c.Azure.DefaultMachinePlatform = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
-						Type: capz.VMIdentityUserAssigned,
+						Type: azure.VMIdentityUserAssigned,
 						UserAssignedIdentities: []azure.UserAssignedIdentity{
 							{
 								Name:          "first-identity",
@@ -163,7 +162,7 @@ func TestFeatureGates(t *testing.T) {
 				c.Azure = &azure.Platform{}
 				c.ControlPlane.Platform.Azure = &azure.MachinePool{
 					Identity: &azure.VMIdentity{
-						Type: capz.VMIdentityUserAssigned,
+						Type: azure.VMIdentityUserAssigned,
 						UserAssignedIdentities: []azure.UserAssignedIdentity{
 							{
 								Name:          "solo-bolo!",

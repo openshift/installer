@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -78,12 +77,12 @@ func ValidatePlatform(p *azure.Platform, publish types.PublishingStrategy, fldPa
 		}
 		subnetSpecList[subnets.Name] = true
 		switch subnets.Role {
-		case capz.SubnetControlPlane:
+		case azure.SubnetControlPlane:
 			if hasControlPlane {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("subnets"), subnets.Name, "CAPZ currently does not support multiple control plane subnets"))
 			}
 			hasControlPlane = true
-		case capz.SubnetNode:
+		case azure.SubnetNode:
 			numCompute++
 		default:
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("subnets"), subnets.Name, fmt.Sprintf("role %s not supported", subnets.Role)))
