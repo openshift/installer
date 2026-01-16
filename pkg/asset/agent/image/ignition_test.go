@@ -16,12 +16,12 @@ import (
 	"github.com/vincent-petithory/dataurl"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	aiv1beta1 "github.com/openshift/assisted-service/api/v1beta1"
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	agentcommon "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
@@ -701,6 +701,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&tls.AdminKubeConfigClientCertKey{},
 		&gencrypto.AuthConfig{},
 		&common.InfraEnvID{},
+		&agentcommon.OptionalInstallConfig{},
 	}
 }
 
