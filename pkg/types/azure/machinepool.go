@@ -2,8 +2,6 @@ package azure
 
 import (
 	"fmt"
-
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // SecurityTypes represents the SecurityType of the virtual machine.
@@ -15,6 +13,67 @@ const (
 	// SecurityTypesTrustedLaunch defines the SecurityType of the virtual machine as a Trusted Launch VM.
 	SecurityTypesTrustedLaunch SecurityTypes = "TrustedLaunch"
 )
+
+// VMIdentityType defines the identity of the virtual machine, if configured.
+// +kubebuilder:validation:Enum=None;SystemAssigned;UserAssigned
+type VMIdentityType string
+
+const (
+	// VMIdentityNone ...
+	VMIdentityNone VMIdentityType = "None"
+	// VMIdentitySystemAssigned ...
+	VMIdentitySystemAssigned VMIdentityType = "SystemAssigned"
+	// VMIdentityUserAssigned ...
+	VMIdentityUserAssigned VMIdentityType = "UserAssigned"
+)
+
+// BootDiagnosticsStorageAccountType defines the list of valid storage account types
+// for the boot diagnostics.
+// +kubebuilder:validation:Enum:="Managed";"UserManaged";"Disabled"
+type BootDiagnosticsStorageAccountType string
+
+const (
+	// DisabledDiagnosticsStorage is used to determine that the diagnostics storage account
+	// should be disabled.
+	DisabledDiagnosticsStorage BootDiagnosticsStorageAccountType = "Disabled"
+
+	// ManagedDiagnosticsStorage is used to determine that the diagnostics storage account
+	// should be provisioned by Azure.
+	ManagedDiagnosticsStorage BootDiagnosticsStorageAccountType = "Managed"
+
+	// UserManagedDiagnosticsStorage is used to determine that the diagnostics storage account
+	// should be provisioned by the User.
+	UserManagedDiagnosticsStorage BootDiagnosticsStorageAccountType = "UserManaged"
+)
+
+// DataDisk specifies the parameters that are used to add one or more data disks to the machine.
+type DataDisk struct {
+	// NameSuffix is the suffix to be appended to the machine name to generate the disk name.
+	// Each disk name will be in format <machineName>_<nameSuffix>.
+	NameSuffix string `json:"nameSuffix"`
+	// DiskSizeGB is the size in GB to assign to the data disk.
+	DiskSizeGB int32 `json:"diskSizeGB"`
+	// ManagedDisk specifies the Managed Disk parameters for the data disk.
+	// +optional
+	ManagedDisk *DataDiskManagedDiskParameters `json:"managedDisk,omitempty"`
+	// Lun Specifies the logical unit number of the data disk. This value is used to identify data disks within the VM and therefore must be unique for each data disk attached to a VM.
+	// The value must be between 0 and 63.
+	// +optional
+	Lun *int32 `json:"lun,omitempty"`
+	// CachingType specifies the caching requirements.
+	// +optional
+	// +kubebuilder:validation:Enum=None;ReadOnly;ReadWrite
+	CachingType string `json:"cachingType,omitempty"`
+}
+
+// DataDiskManagedDiskParameters defines the parameters of a managed disk for data disks.
+type DataDiskManagedDiskParameters struct {
+	// +optional
+	StorageAccountType string `json:"storageAccountType,omitempty"`
+	// DiskEncryptionSet specifies the customer-managed disk encryption set resource id for the managed disk.
+	// +optional
+	DiskEncryptionSet *DiskEncryptionSet `json:"diskEncryptionSet,omitempty"`
+}
 
 // MachinePool stores the configuration for a machine pool installed
 // on Azure.
@@ -82,7 +141,7 @@ type MachinePool struct {
 
 	// DataDisk specifies the parameters that are used to add one or more data disks to the machine.
 	// +optional
-	DataDisks []capz.DataDisk `json:"dataDisks,omitempty"`
+	DataDisks []DataDisk `json:"dataDisks,omitempty"`
 }
 
 // SecuritySettings define the security type and the UEFI settings of the virtual machine.
@@ -164,7 +223,7 @@ type BootDiagnostics struct {
 	// nodes.
 	// Values allowed are Disabled, Managed and UserManaged.
 	// +kubebuilder:validation:Enum=Disabled;Managed;UserManaged
-	Type capz.BootDiagnosticsStorageAccountType `json:"type"`
+	Type BootDiagnosticsStorageAccountType `json:"type"`
 
 	// ResourceGroup specifies the name of the resource group where the
 	// storage account to be used for diagnostics storage is present.
@@ -274,7 +333,7 @@ type VMIdentity struct {
 	// +kubebuilder:validation:Schemaless
 	// +kubebuilder:validation:Type=string
 	// +kubebuilder:validation:Enum=None;UserAssigned
-	Type capz.VMIdentity `json:"type"`
+	Type VMIdentityType `json:"type"`
 
 	// UserAssignedIdentities is a list of identities to be attached to a node.
 	// Only one user-assigned identity may be supplied.

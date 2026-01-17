@@ -8,7 +8,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -87,21 +86,21 @@ func ValidateMachinePool(p *azure.MachinePool, poolName string, platform *azure.
 	}
 
 	if p.BootDiagnostics != nil {
-		validValues := sets.NewString(string(capz.DisabledDiagnosticsStorage), string(capz.ManagedDiagnosticsStorage), string(capz.UserManagedDiagnosticsStorage))
+		validValues := sets.NewString(string(azure.DisabledDiagnosticsStorage), string(azure.ManagedDiagnosticsStorage), string(azure.UserManagedDiagnosticsStorage))
 		if !validValues.Has(string(p.BootDiagnostics.Type)) {
 			allErrs = append(allErrs, field.NotSupported(fldPath.Child("bootDiagnostics").Child("type"), p.BootDiagnostics.Type, validValues.List()))
 		}
-		if p.BootDiagnostics.Type == capz.ManagedDiagnosticsStorage && platform.CloudName == azure.StackCloud {
+		if p.BootDiagnostics.Type == azure.ManagedDiagnosticsStorage && platform.CloudName == azure.StackCloud {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountURI"), p.BootDiagnostics.Type, "managed type not supported by azure stack. Use UserManaged instead."))
 		}
-		if p.BootDiagnostics.Type != capz.UserManagedDiagnosticsStorage {
+		if p.BootDiagnostics.Type != azure.UserManagedDiagnosticsStorage {
 			if p.BootDiagnostics.ResourceGroup != "" {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("ResourceGroup"), p.BootDiagnostics.ResourceGroup, "resourceGroup can only be specified if type is set to UserManaged."))
 			}
 			if p.BootDiagnostics.StorageAccountName != "" {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("StorageAccountName"), p.BootDiagnostics.StorageAccountName, "storageAccountName can only be specified if type is set to UserManaged."))
 			}
-		} else if p.BootDiagnostics.Type == capz.UserManagedDiagnosticsStorage {
+		} else if p.BootDiagnostics.Type == azure.UserManagedDiagnosticsStorage {
 			if p.BootDiagnostics.ResourceGroup == "" {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("bootDiagnostics").Child("ResourceGroup"), p.BootDiagnostics.ResourceGroup, "resourceGroup must be specified if type is set to UserManaged."))
 			}
@@ -328,16 +327,16 @@ func validateIdentity(poolName string, p *azure.MachinePool, fldPath *field.Path
 		return append(errs, field.Required(fldPath.Child("type"), "type must be specified if using identity"))
 	}
 
-	if id.Type != capz.VMIdentityNone && id.Type != capz.VMIdentityUserAssigned {
-		supportedValues := []capz.VMIdentity{capz.VMIdentityNone, capz.VMIdentityUserAssigned}
+	if id.Type != azure.VMIdentityNone && id.Type != azure.VMIdentityUserAssigned {
+		supportedValues := []azure.VMIdentityType{azure.VMIdentityNone, azure.VMIdentityUserAssigned}
 		return append(errs, field.NotSupported(fldPath.Child("type"), id.Type, supportedValues))
 	}
 
-	if id.Type == capz.VMIdentityUserAssigned && len(id.UserAssignedIdentities) == 0 {
+	if id.Type == azure.VMIdentityUserAssigned && len(id.UserAssignedIdentities) == 0 {
 		logrus.Warn("Identity type is set to UserAssigned but no user-assigned identities are specified. A user-assigned identity will be created, which requires the User Access Admin role.")
 	}
 
-	if id.UserAssignedIdentities != nil && id.Type != capz.VMIdentityUserAssigned {
+	if id.UserAssignedIdentities != nil && id.Type != azure.VMIdentityUserAssigned {
 		errs = append(errs, field.Invalid(fldPath.Child("type"), id.Type, "userAssignedIdentities may only be used with type: UserAssigned"))
 	}
 

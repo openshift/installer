@@ -370,13 +370,13 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 			ID: *subnet.ID,
 			SubnetClassSpec: capz.SubnetClassSpec{
 				Name:       spec.Name,
-				Role:       spec.Role,
+				Role:       capz.SubnetRole(spec.Role),
 				CIDRBlocks: stringAddress,
 			},
 			SecurityGroup: securityGroup,
 		}
 
-		if installConfig.Config.Azure.OutboundType == azure.NATGatewayMultiZoneOutboundType && spec.Role == capz.SubnetNode {
+		if installConfig.Config.Azure.OutboundType == azure.NATGatewayMultiZoneOutboundType && spec.Role == azure.SubnetNode {
 			specGen.NatGateway = capz.NatGateway{
 				NatGatewayIP: capz.PublicIPSpec{
 					Name: fmt.Sprintf("%s-publicip-%d", infraID, index),
@@ -388,7 +388,7 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 			if zoneIndex == len(zones) {
 				zoneIndex = 0
 			}
-		} else if installConfig.Config.Azure.OutboundType == azure.NATGatewaySingleZoneOutboundType && spec.Role == capz.SubnetNode && !singleZoneNatGateway {
+		} else if installConfig.Config.Azure.OutboundType == azure.NATGatewaySingleZoneOutboundType && spec.Role == azure.SubnetNode && !singleZoneNatGateway {
 			specGen.NatGateway = capz.NatGateway{
 				NatGatewayIP: capz.PublicIPSpec{
 					Name: fmt.Sprintf("%s-publicip-%d", infraID, index),
@@ -397,8 +397,8 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 			}
 			singleZoneNatGateway = true
 		}
-		hasControlPlaneSubnet = hasControlPlaneSubnet || spec.Role == capz.SubnetControlPlane
-		hasComputePlaneSubnet = hasComputePlaneSubnet || spec.Role == capz.SubnetNode
+		hasControlPlaneSubnet = hasControlPlaneSubnet || spec.Role == azure.SubnetControlPlane
+		hasComputePlaneSubnet = hasComputePlaneSubnet || spec.Role == azure.SubnetNode
 		subnetSpec = append(subnetSpec, specGen)
 	}
 	zoneIndex = 0
@@ -457,7 +457,7 @@ func getLBIP(subnets []*net.IPNet, installConfig *installconfig.InstallConfig) (
 
 	var controlPlaneSub string
 	for _, subnet := range installConfig.Config.Azure.Subnets {
-		if subnet.Role == capz.SubnetControlPlane {
+		if subnet.Role == azure.SubnetControlPlane {
 			controlPlaneSub = subnet.Name
 		}
 	}
@@ -497,7 +497,7 @@ func getLBIP(subnets []*net.IPNet, installConfig *installconfig.InstallConfig) (
 	return lbip, nil
 }
 
-func getSubnet(installConfig *installconfig.InstallConfig, subnetType capz.SubnetRole, subnetName string) (*aznetwork.Subnet, error) {
+func getSubnet(installConfig *installconfig.InstallConfig, subnetType azure.SubnetRole, subnetName string) (*aznetwork.Subnet, error) {
 	var subnet *aznetwork.Subnet
 
 	azClient, err := installConfig.Azure.Client()
@@ -507,13 +507,13 @@ func getSubnet(installConfig *installconfig.InstallConfig, subnetType capz.Subne
 	ctx := context.TODO()
 
 	switch subnetType {
-	case capz.SubnetControlPlane:
+	case azure.SubnetControlPlane:
 		subnet, err = azClient.GetControlPlaneSubnet(ctx,
 			installConfig.Config.Azure.NetworkResourceGroupName,
 			installConfig.Config.Azure.VirtualNetwork,
 			subnetName,
 		)
-	case capz.SubnetNode:
+	case azure.SubnetNode:
 		subnet, err = azClient.GetComputeSubnet(ctx,
 			installConfig.Config.Azure.NetworkResourceGroupName,
 			installConfig.Config.Azure.VirtualNetwork,
@@ -595,7 +595,7 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 	machineCidr := installConfig.Config.MachineNetwork
 	var cpSubnet string
 	for _, subnetSpec := range installConfig.Config.Azure.Subnets {
-		if subnetSpec.Role == capz.SubnetControlPlane {
+		if subnetSpec.Role == azure.SubnetControlPlane {
 			cpSubnet = subnetSpec.Name
 		}
 	}
