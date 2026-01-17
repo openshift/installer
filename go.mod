@@ -160,6 +160,8 @@ require (
 	github.com/k-orc/openstack-resource-controller/v2 v2.3.0
 )
 
+require github.com/aws/aws-sdk-go-v2/service/efs v1.40.5
+
 require (
 	cel.dev/expr v0.24.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.29.0 // indirect
