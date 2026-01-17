@@ -3,11 +3,13 @@ package defaults
 import (
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 const (
@@ -34,6 +36,10 @@ var (
 
 // SetPlatformDefaults sets the defaults for the platform.
 func SetPlatformDefaults(p *aws.Platform) {
+	if p.IPFamily == "" {
+		p.IPFamily = network.IPv4
+		logrus.Infof("ipFamily is not specified in install-config; defaulting to %q", network.IPv4)
+	}
 }
 
 // InstanceTypes returns a list of instance types, in decreasing priority order, which we should use for a given

@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/openshift/installer/pkg/types/azure"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 func TestSetPlatformDefaults(t *testing.T) {
@@ -20,6 +21,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			expected: &azure.Platform{
 				CloudName:    azure.PublicCloud,
 				OutboundType: azure.LoadbalancerOutboundType,
+				IPFamily:     network.IPv4,
 			},
 		},
 		{
@@ -30,6 +32,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			expected: &azure.Platform{
 				CloudName:    azure.PublicCloud,
 				OutboundType: azure.LoadbalancerOutboundType,
+				IPFamily:     network.IPv4,
 			},
 		},
 		{
@@ -40,6 +43,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			expected: &azure.Platform{
 				CloudName:    azure.USGovernmentCloud,
 				OutboundType: azure.LoadbalancerOutboundType,
+				IPFamily:     network.IPv4,
 			},
 		},
 		{
@@ -51,6 +55,7 @@ func TestSetPlatformDefaults(t *testing.T) {
 			expected: &azure.Platform{
 				CloudName:    azure.PublicCloud,
 				OutboundType: azure.LoadbalancerOutboundType,
+				IPFamily:     network.IPv4,
 			},
 		},
 		{
@@ -62,6 +67,18 @@ func TestSetPlatformDefaults(t *testing.T) {
 			expected: &azure.Platform{
 				CloudName:    azure.USGovernmentCloud,
 				OutboundType: azure.UserDefinedRoutingOutboundType,
+				IPFamily:     network.IPv4,
+			},
+		},
+		{
+			name: "non-default IPFamily",
+			platform: &azure.Platform{
+				IPFamily: network.DualStackIPv4Primary,
+			},
+			expected: &azure.Platform{
+				CloudName:    azure.PublicCloud,
+				OutboundType: azure.LoadbalancerOutboundType,
+				IPFamily:     network.DualStackIPv4Primary,
 			},
 		},
 	}
