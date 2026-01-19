@@ -135,6 +135,13 @@ the cluster.
     operatorPublishingStrategy <object>
       OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.
 
+    osImageStream <string>
+      OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
+This value serves as the default for all machine pools (control plane, compute, arbiter).
+Individual machine pools can override this value by specifying their own osImageStream.
+When both this field and the machine pool's osImageStream are unset, the cluster will
+use its own default OS image stream.
+
     platform <object> -required-
       Platform is the configuration for the specific platform upon which to
 perform the installation.

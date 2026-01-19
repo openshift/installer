@@ -128,6 +128,16 @@ type MachinePool struct {
 	// The available types are etcd, swap and user-defined.
 	// +optional
 	DiskSetup []Disk `json:"diskSetup,omitempty"`
+
+	// OSImageStream specifies the OS Image Stream to use for machines in this pool.
+	// When set, this value overrides the global osImageStream defined in the InstallConfig.
+	// When unset, machines in this pool will inherit the global osImageStream value if configured,
+	// or fall back to the cluster's default OS image stream if neither value is set.
+	// This allows different machine pools to use different OS image streams while maintaining
+	// a common default for the cluster.
+	//
+	// +optional
+	OSImageStream string `json:"osImageStream,omitempty"`
 }
 
 // MachinePoolPlatform is the platform-specific configuration for a machine

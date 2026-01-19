@@ -35,5 +35,32 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			}(),
 			Field: field.NewPath("compute", "diskSetup"),
 		},
+		{
+			FeatureGateName: features.FeatureGateOSStreams,
+			Condition:       len(c.OSImageStream) != 0,
+			Field:           field.NewPath("osImageStream"),
+		},
+		{
+			FeatureGateName: features.FeatureGateOSStreams,
+			Condition:       c.ControlPlane != nil && len(c.ControlPlane.OSImageStream) != 0,
+			Field:           field.NewPath("controlPlane", "osImageStream"),
+		},
+		{
+			FeatureGateName: features.FeatureGateOSStreams,
+			Condition:       c.Arbiter != nil && len(c.Arbiter.OSImageStream) != 0,
+			Field:           field.NewPath("arbiter", "osImageStream"),
+		},
+		{
+			FeatureGateName: features.FeatureGateOSStreams,
+			Condition: func() bool {
+				for _, compute := range c.Compute {
+					if len(compute.OSImageStream) != 0 {
+						return true
+					}
+				}
+				return false
+			}(),
+			Field: field.NewPath("compute", "osImageStream"),
+		},
 	}
 }
