@@ -172,6 +172,32 @@ func getPrismElement(ctx context.Context, client *nutanixclientv3.Client) (*nuta
 		return nil, errors.New("did not find any prism element clusters")
 	}
 
+	// Filter out Prism Central clusters - we only want Prism Elements
+	filteredPes := make([]*nutanixclientv3.ClusterIntentResponse, 0, len(pes))
+	for _, p := range pes {
+		// Skip Prism Central clusters by checking the service list
+		if p.Status != nil && p.Status.Resources != nil && p.Status.Resources.Config != nil &&
+			p.Status.Resources.Config.ServiceList != nil {
+			isPrismCentral := false
+			for _, service := range p.Status.Resources.Config.ServiceList {
+				if service != nil && *service == "PRISM_CENTRAL" {
+					isPrismCentral = true
+					break
+				}
+			}
+			if isPrismCentral {
+				continue
+			}
+		}
+		filteredPes = append(filteredPes, p)
+	}
+
+	pes = filteredPes
+
+	if len(pes) == 0 {
+		return nil, errors.New("did not find any prism element clusters")
+	}
+
 	if len(pes) == 1 {
 		pe.UUID = *pes[0].Metadata.UUID
 		pe.Endpoint.Address = *pes[0].Spec.Resources.Network.ExternalIP
