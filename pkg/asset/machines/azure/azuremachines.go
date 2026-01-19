@@ -204,13 +204,16 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		}
 
 		if in.Platform.CloudName == aztypes.StackCloud {
-			azureMachine.Spec.Diagnostics = &capz.Diagnostics{
-				Boot: &capz.BootDiagnostics{
-					StorageAccountType: capz.UserManagedDiagnosticsStorage,
-					UserManaged: &capz.UserManagedBootDiagnostics{
-						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+			// For Azure Stack Cloud, apply default diagnostics only if user hasn't specified bootDiagnostics
+			if mpool.BootDiagnostics == nil {
+				azureMachine.Spec.Diagnostics = &capz.Diagnostics{
+					Boot: &capz.BootDiagnostics{
+						StorageAccountType: capz.UserManagedDiagnosticsStorage,
+						UserManaged: &capz.UserManagedBootDiagnostics{
+							StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+						},
 					},
-				},
+				}
 			}
 		}
 
@@ -278,13 +281,16 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	}
 
 	if in.Platform.CloudName == aztypes.StackCloud {
-		bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
-			Boot: &capz.BootDiagnostics{
-				StorageAccountType: capz.UserManagedDiagnosticsStorage,
-				UserManaged: &capz.UserManagedBootDiagnostics{
-					StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+		// For Azure Stack Cloud, apply default diagnostics only if user hasn't specified bootDiagnostics
+		if mpool.BootDiagnostics == nil {
+			bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
+				Boot: &capz.BootDiagnostics{
+					StorageAccountType: capz.UserManagedDiagnosticsStorage,
+					UserManaged: &capz.UserManagedBootDiagnostics{
+						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+					},
 				},
-			},
+			}
 		}
 	}
 
