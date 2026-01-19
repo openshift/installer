@@ -8,7 +8,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	"gopkg.in/yaml.v2"
+	goyaml "gopkg.in/yaml.v2"
 	k8syaml "sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -123,9 +123,11 @@ func (f *FencingCredentials) finish() error {
 		return nil
 	}
 
-	data, err := yaml.Marshal(f.Config)
+	// Use gopkg.in/yaml.v2 for marshaling to respect YAML struct tags (lowercase field names).
+	// This is critical for compatibility with assisted-service, which expects lowercase keys.
+	data, err := goyaml.Marshal(f.Config)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal fencing credentials")
+		return errors.Wrapf(err, "failed to marshal %d fencing credentials", len(f.Config.Credentials))
 	}
 
 	f.File = &asset.File{

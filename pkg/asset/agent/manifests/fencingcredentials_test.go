@@ -64,6 +64,17 @@ func getValidOptionalInstallConfigWithFencingNoCertVerification() *agent.Optiona
 	return installConfig
 }
 
+// getValidOptionalInstallConfigWithEmptyFencingCredentials returns an install config
+// with an empty fencing credentials array.
+func getValidOptionalInstallConfigWithEmptyFencingCredentials() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.ControlPlane.Replicas = ptr.To(int64(2))
+	installConfig.Config.ControlPlane.Fencing = &types.Fencing{
+		Credentials: []*types.Credential{},
+	}
+	return installConfig
+}
+
 func TestFencingCredentials_Generate(t *testing.T) {
 	cases := []struct {
 		name           string
@@ -120,6 +131,15 @@ func TestFencingCredentials_Generate(t *testing.T) {
 			name: "nil install config",
 			dependencies: []asset.Asset{
 				&agent.OptionalInstallConfig{},
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+			},
+			expectedConfig: nil,
+			expectedFiles:  0,
+		},
+		{
+			name: "empty fencing credentials array",
+			dependencies: []asset.Asset{
+				getValidOptionalInstallConfigWithEmptyFencingCredentials(),
 				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
 			},
 			expectedConfig: nil,
