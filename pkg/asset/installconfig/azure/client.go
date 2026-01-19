@@ -14,6 +14,7 @@ import (
 	azmarketplace "github.com/Azure/azure-sdk-for-go/profiles/latest/marketplaceordering/mgmt/marketplaceordering"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/msi/armmsi"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resources/armresources"
 	azstorage "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/storage/armstorage"
@@ -46,6 +47,7 @@ type API interface {
 	CheckIfExistsStorageAccount(ctx context.Context, resourceGroup, storageAccountName, region string) error
 	GetRegionAvailabilityZones(ctx context.Context, region string) ([]string, error)
 	CheckSubnetNatgateway(ctx context.Context, resourceGroup, virtualNetwork, subnet string) (bool, error)
+	GetUserAssignedIdentity(ctx context.Context, subscriptionID, resourceGroup, name string) error
 }
 
 // APIVersion describes to the version to use for Azure API calls that support both azure and azurestack.
@@ -565,4 +567,31 @@ func (c *Client) CheckSubnetNatgateway(ctx context.Context, resourceGroup, virtu
 		return res.Subnet.Properties.NatGateway != nil, nil
 	}
 	return false, fmt.Errorf("unable to get subnet nat gateway")
+}
+
+// GetUserAssignedIdentity checks if a user-assigned identity exists in the specified resource group.
+func (c *Client) GetUserAssignedIdentity(ctx context.Context, subscriptionID, resourceGroup, name string) error {
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
+	// Use the subscription ID from the function parameter if provided, otherwise use session default
+	subID := subscriptionID
+	if subID == "" {
+		subID = c.ssn.Credentials.SubscriptionID
+	}
+
+	clientOptions := arm.ClientOptions{
+		ClientOptions: policy.ClientOptions{
+			// NOTE: the api version must support AzureStack
+			APIVersion: APIVersion,
+			Cloud:      c.ssn.CloudConfig,
+		},
+	}
+	client, err := armmsi.NewUserAssignedIdentitiesClient(subID, c.ssn.TokenCreds, &clientOptions)
+	if err != nil {
+		return fmt.Errorf("failed to create user-assigned identities client: %w", err)
+	}
+
+	_, err = client.Get(ctx, resourceGroup, name, nil)
+	return err
 }
