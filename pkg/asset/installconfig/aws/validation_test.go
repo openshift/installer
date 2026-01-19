@@ -1173,6 +1173,22 @@ func TestValidate(t *testing.T) {
 			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: VPC of subnets is owned by other clusters [another-cluster] and cannot be used for new installations, another VPC must be created separately\E$`,
 		},
 		{
+			name: "invalid byo subnets, vpc has CAPI cluster-owned tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public:  validSubnets("public"),
+				VpcID:   validVPCID,
+			},
+			vpcTags: Tags{
+				"sigs.k8s.io/cluster-api-provider-aws/cluster/another-cluster": "owned",
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: VPC of subnets is owned by other clusters [another-cluster] and cannot be used for new installations, another VPC must be created separately\E$`,
+		},
+		{
 			name: "invalid byo subnets, subnets have cluster-owned tags",
 			installConfig: icBuild.build(
 				icBuild.withBaseBYO(),
@@ -1186,7 +1202,7 @@ func TestValidate(t *testing.T) {
 			subnets: SubnetGroups{
 				Private: validSubnets("private"),
 				Public: mergeSubnets(validSubnets("public"), Subnets{
-					"subnet-valid-public-a1": {
+					"subnet-valid-public-d": {
 						ID:     "subnet-valid-public-d",
 						Zone:   &Zone{Name: "d"},
 						CIDR:   "10.0.6.0/24",
@@ -1198,7 +1214,81 @@ func TestValidate(t *testing.T) {
 				}),
 				VpcID: validVPCID,
 			},
-			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-a1 is owned by other clusters [another-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-d is owned by other clusters [another-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
+		},
+		{
+			name: "invalid byo subnets, subnets have CAPI cluster-owned tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets([]aws.Subnet{
+					{
+						ID: "subnet-valid-public-d",
+					},
+				}, false),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public: mergeSubnets(validSubnets("public"), Subnets{
+					"subnet-valid-public-d": {
+						ID:     "subnet-valid-public-d",
+						Zone:   &Zone{Name: "d"},
+						CIDR:   "10.0.6.0/24",
+						Public: true,
+						Tags: Tags{
+							"sigs.k8s.io/cluster-api-provider-aws/cluster/another-cluster": "owned",
+						},
+					},
+				}),
+				VpcID: validVPCID,
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-d is owned by other clusters [another-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
+		},
+		{
+			name: "invalid byo subnets, vpc has both owned kubernetes and CAPI tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public:  validSubnets("public"),
+				VpcID:   validVPCID,
+			},
+			vpcTags: Tags{
+				"kubernetes.io/cluster/my-cluster":                        "owned",
+				"sigs.k8s.io/cluster-api-provider-aws/cluster/my-cluster": "owned",
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: VPC of subnets is owned by other clusters [my-cluster] and cannot be used for new installations, another VPC must be created separately\E$`,
+		},
+		{
+			name: "invalid byo subnets, subnet has both owned kubernetes and CAPI tags",
+			installConfig: icBuild.build(
+				icBuild.withBaseBYO(),
+				icBuild.withVPCSubnets([]aws.Subnet{
+					{
+						ID: "subnet-valid-public-d",
+					},
+				}, false),
+			),
+			availRegions: validAvailRegions(),
+			subnets: SubnetGroups{
+				Private: validSubnets("private"),
+				Public: mergeSubnets(validSubnets("public"), Subnets{
+					"subnet-valid-public-d": {
+						ID:     "subnet-valid-public-d",
+						Zone:   &Zone{Name: "d"},
+						CIDR:   "10.0.6.0/24",
+						Public: true,
+						Tags: Tags{
+							"kubernetes.io/cluster/my-cluster":                        "owned",
+							"sigs.k8s.io/cluster-api-provider-aws/cluster/my-cluster": "owned",
+						},
+					},
+				}),
+				VpcID: validVPCID,
+			},
+			expectErr: `^\Qplatform.aws.vpc.subnets: Forbidden: subnet subnet-valid-public-d is owned by other clusters [my-cluster] and cannot be used for new installations, another subnet must be created separately\E$`,
 		},
 	}
 
