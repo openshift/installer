@@ -39,6 +39,7 @@ import (
 	gcpvalidation "github.com/openshift/installer/pkg/types/gcp/validation"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
 	ibmcloudvalidation "github.com/openshift/installer/pkg/types/ibmcloud/validation"
+	"github.com/openshift/installer/pkg/types/network"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	nutanixvalidation "github.com/openshift/installer/pkg/types/nutanix/validation"
@@ -278,6 +279,15 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	return allErrs
 }
 
+const (
+	// machine represents the machineNetwork (IP address pools for machines).
+	networkTypeMachine = "machineNetwork"
+	// service represents the serviceNetwork (IP address pools for services).
+	networkTypeService = "serviceNetwork"
+	// cluster represents the clusterNetwork (IP address pools for pods).
+	networkTypeCluster = "clusterNetwork"
+)
+
 // ipAddressType indicates the address types provided for a given field
 type ipAddressType struct {
 	IPv4    bool
@@ -300,13 +310,13 @@ func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool
 	}
 	addresses = make(ipNetByField)
 	for _, network := range n.MachineNetwork {
-		addresses["machineNetwork"] = append(addresses["machineNetwork"], network.CIDR)
+		addresses[networkTypeMachine] = append(addresses[networkTypeMachine], network.CIDR)
 	}
 	for _, network := range n.ServiceNetwork {
-		addresses["serviceNetwork"] = append(addresses["serviceNetwork"], network)
+		addresses[networkTypeService] = append(addresses[networkTypeService], network)
 	}
 	for _, network := range n.ClusterNetwork {
-		addresses["clusterNetwork"] = append(addresses["clusterNetwork"], network.CIDR)
+		addresses[networkTypeCluster] = append(addresses[networkTypeCluster], network.CIDR)
 	}
 	presence = make(ipAddressTypeByField)
 	for k, ipnets := range addresses {
@@ -317,7 +327,7 @@ func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool
 				if i == 0 {
 					has.Primary = corev1.IPv4Protocol
 				}
-				if k == "serviceNetwork" {
+				if k == networkTypeService {
 					hasIPv4 = true
 				}
 			} else {
@@ -325,7 +335,7 @@ func inferIPVersionFromInstallConfig(n *types.Networking) (hasIPv4, hasIPv6 bool
 				if i == 0 {
 					has.Primary = corev1.IPv6Protocol
 				}
-				if k == "serviceNetwork" {
+				if k == networkTypeService {
 					hasIPv6 = true
 				}
 			}
@@ -376,23 +386,35 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 			allowV6Primary = true
 		case p.External != nil:
 			allowV6Primary = true
+		case p.AWS != nil:
+			// Dualstack is only allowed if platform.aws.ipFamily is set to dual-stack variants
+			if ipFamily := p.AWS.IPFamily; ipFamily.DualStackEnabled() {
+				if ipFamily == network.DualStackIPv6Primary {
+					allowV6Primary = true
+				}
+				break
+			}
+			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", fmt.Sprintf("dual-stack IPv4/IPv6 can only be specified when platform.aws.ipFamily is %s or %s", network.DualStackIPv4Primary, network.DualStackIPv6Primary)))
 		default:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "DualStack", "dual-stack IPv4/IPv6 is not supported for this platform, specify only one type of address"))
 		}
-		for k, v := range presence {
+
+		for _, k := range sortedPresenceKeys(presence) {
+			v := presence[k]
+			// Validate that each network type (machineNetwork, serviceNetwork, clusterNetwork) has both IPv4 and IPv6 CIDRs
 			switch {
 			case v.IPv4 && !v.IPv6:
+				// On AWS, users may not be able to specify an IPv6 machineNetwork in advance.
+				// If the installer creates the VPC, IPv6 CIDR by default is automatically assigned by AWS.
+				if k == networkTypeMachine && p.AWS != nil {
+					break
+				}
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv6 network in this list"))
 			case !v.IPv4 && v.IPv6:
 				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "dual-stack IPv4/IPv6 requires an IPv4 network in this list"))
 			}
 
-			// FIXME: we should allow either all-networks-IPv4Primary or
-			// all-networks-IPv6Primary, but the latter currently causes
-			// confusing install failures, so block it.
-			if !allowV6Primary && v.IPv4 && v.IPv6 && v.Primary != corev1.IPv4Protocol {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", k), strings.Join(ipnetworksToStrings(addresses[k]), ", "), "IPv4 addresses must be listed before IPv6 addresses"))
-			}
+			allErrs = append(allErrs, validateNetworkEntryOrder(p, v, addresses[k], allowV6Primary, field.NewPath("networking", k))...)
 		}
 
 	case hasIPv6:
@@ -404,6 +426,13 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		case p.Nutanix != nil:
 		case p.None != nil:
 		case p.External != nil:
+		case p.AWS != nil:
+			// If dual-stack is enabled, there must be both IPv4 and IPv6 service CIDRs
+			if p.AWS.IPFamily.DualStackEnabled() {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
+				break
+			}
+			fallthrough
 		case p.Azure != nil && p.Azure.CloudName == azure.StackCloud:
 			allErrs = append(allErrs, field.Invalid(field.NewPath("networking"), "IPv6", "Azure Stack does not support IPv6"))
 		default:
@@ -411,12 +440,56 @@ func validateNetworkingIPVersion(n *types.Networking, p *types.Platform) field.E
 		}
 
 	case hasIPv4:
-		if len(n.ServiceNetwork) > 1 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "only one service network can be specified"))
+		switch {
+		case p.AWS != nil:
+			// If dual-stack is enabled, there must be both IPv4 and IPv6 service CIDRs
+			if p.AWS.IPFamily.DualStackEnabled() {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type"))
+				break
+			}
+			fallthrough
+		default:
+			if len(n.ServiceNetwork) > 1 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("networking", "serviceNetwork"), strings.Join(ipnetworksToStrings(n.ServiceNetwork), ", "), "only one service network can be specified"))
+			}
 		}
 
 	default:
 		// we should have a validation error for no specified machineNetwork, serviceNetwork, or clusterNetwork
+	}
+
+	return allErrs
+}
+
+// validateNetworkEntryOrder ensures the order of CIDR entries is correct in networking configurations.
+// - IPv4 primary dual-stack: IPv4 CIDR first in list
+// - IPv6 primary dual-stack: IPv6 CIDR first in list
+// Some platforms have an explicit field to define the dual-stack variant, for example, platform.aws.ipFamily on AWS.
+func validateNetworkEntryOrder(p *types.Platform, ipAddressType ipAddressType, networks []ipnet.IPNet, allowV6Primary bool, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// If missing either IPv4 or IPv6 CIDR, order validation is not applicable
+	// There is an existing validation to ensure both IPv4 and IPv6 CIDRs are available in dual-stack
+	if !ipAddressType.IPv4 || !ipAddressType.IPv6 {
+		return allErrs
+	}
+
+	switch {
+	case p.AWS != nil:
+		ipFamily := p.AWS.IPFamily
+
+		if ipFamily == network.DualStackIPv4Primary && ipAddressType.Primary == corev1.IPv6Protocol {
+			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv4Primary requires an IPv4 network first in this list"))
+		}
+
+		if ipFamily == network.DualStackIPv6Primary && ipAddressType.Primary == corev1.IPv4Protocol {
+			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "DualStackIPv6Primary requires an IPv6 network first in this list"))
+		}
+	default:
+		// For platforms that don't support IPv6-primary dual-stack, reject configurations with IPv6 CIDRs listed first.
+		if !allowV6Primary && ipAddressType.Primary != corev1.IPv4Protocol {
+			allErrs = append(allErrs, field.Invalid(fldPath, strings.Join(ipnetworksToStrings(networks), ", "), "IPv4 addresses must be listed before IPv6 addresses"))
+		}
 	}
 
 	return allErrs
