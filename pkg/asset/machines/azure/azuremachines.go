@@ -194,7 +194,7 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 				Identity:               capz.VMIdentity(mpool.Identity.Type),
 				UserAssignedIdentities: userAssignedIdentities,
 				Diagnostics:            controlPlaneDiag,
-				DataDisks:              ConvertDataDisks(mpool.DataDisks),
+				DataDisks:              capzDataDisks(mpool.DataDisks),
 			},
 		}
 
