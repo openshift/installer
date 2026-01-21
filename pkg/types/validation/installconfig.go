@@ -772,7 +772,7 @@ func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Pat
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
 	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
-	allErrs = append(allErrs, validateFencingCredentials(installConfig)...)
+	allErrs = append(allErrs, validateFencingCredentialsAndPlatform(installConfig)...)
 	return allErrs
 }
 
@@ -1663,7 +1663,7 @@ func validateCredentialsNumber(installConfig *types.InstallConfig, fencing *type
 	return errs
 }
 
-func validateFencingCredentials(installConfig *types.InstallConfig) (errors field.ErrorList) {
+func validateFencingCredentialsAndPlatform(installConfig *types.InstallConfig) (errors field.ErrorList) {
 	fldPath := field.NewPath("controlPlane", "fencing")
 	fencingCredentials := installConfig.ControlPlane.Fencing
 	allErrs := field.ErrorList{}
