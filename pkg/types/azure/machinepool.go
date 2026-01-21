@@ -15,14 +15,12 @@ const (
 )
 
 // VMIdentityType defines the identity of the virtual machine, if configured.
-// +kubebuilder:validation:Enum=None;SystemAssigned;UserAssigned
+// +kubebuilder:validation:Enum=None;UserAssigned
 type VMIdentityType string
 
 const (
 	// VMIdentityNone ...
 	VMIdentityNone VMIdentityType = "None"
-	// VMIdentitySystemAssigned ...
-	VMIdentitySystemAssigned VMIdentityType = "SystemAssigned"
 	// VMIdentityUserAssigned ...
 	VMIdentityUserAssigned VMIdentityType = "UserAssigned"
 )
