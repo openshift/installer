@@ -84,6 +84,9 @@ func (a *baseDomain) Generate(_ context.Context, parents asset.Parents) error {
 		}
 		a.BaseDomain = zone.Name
 		a.Publish = zone.Publish
+		if a.Publish == types.InternalPublishingStrategy {
+			powervsconfig.PowerVSInternalPublishingStrategy = true
+		}
 		return nil
 	default:
 		//Do nothing
