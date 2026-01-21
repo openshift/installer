@@ -187,6 +187,27 @@ func (s *ServiceQuotasEndpointResolver) ResolveEndpoint(ctx context.Context, par
 	return servicequotas.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 }
 
+// S3EndpointResolver implements EndpointResolverV2 interface for S3.
+type S3EndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for S3.
+func (s *S3EndpointResolver) ResolveEndpoint(ctx context.Context, params s3.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[s3.ServiceID]
+	if !ok {
+		return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
 // GetDefaultServiceEndpoint will get the default service endpoint for a service and region.
 // Note: This uses the v1 EndpointResolver, which exposes the partition ID.
 func GetDefaultServiceEndpoint(ctx context.Context, service string, opts EndpointOptions) (aws.Endpoint, error) { //nolint: staticcheck
