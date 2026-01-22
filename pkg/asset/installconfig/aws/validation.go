@@ -10,10 +10,10 @@ import (
 	"sort"
 
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -946,19 +946,22 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 }
 
 func validateInstanceProfile(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) *field.Error {
-	session, err := meta.Session(ctx)
+	client, err := NewIAMClient(ctx, EndpointOptions{
+		Region:    meta.Region,
+		Endpoints: meta.Services,
+	})
 	if err != nil {
-		return field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err))
+		return field.InternalError(fldPath, fmt.Errorf("unable to retrieve iam client: %w", err))
 	}
-	client := iam.New(session)
-	res, err := client.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{
+
+	res, err := client.GetInstanceProfile(ctx, &iam.GetInstanceProfileInput{
 		InstanceProfileName: aws.String(pool.IAMProfile),
 	})
 	if err != nil {
 		msg := fmt.Errorf("unable to retrieve instance profile: %w", err).Error()
 		return field.Invalid(fldPath, pool.IAMProfile, msg)
 	}
-	if len(res.InstanceProfile.Roles) == 0 || res.InstanceProfile.Roles[0] == nil {
+	if len(res.InstanceProfile.Roles) == 0 {
 		return field.Invalid(fldPath, pool.IAMProfile, "no role attached to instance profile")
 	}
 
