@@ -14,7 +14,6 @@ import (
 	elbv2types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/sirupsen/logrus"
 	corev1 "k8s.io/api/core/v1"
 	k8serrors "k8s.io/apimachinery/pkg/api/errors"
@@ -337,13 +336,12 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 		return fmt.Errorf("controlplane not found in cluster security groups: %v", keys)
 	}
 
-	region := in.Metadata.ClusterPlatformMetadata.AWS.Region
-	session, err := awsconfig.GetSessionWithOptions(
-		awsconfig.WithRegion(region),
-		awsconfig.WithServiceEndpoints(region, in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints),
-	)
+	ec2Client, err := awsconfig.NewEC2Client(ctx, awsconfig.EndpointOptions{
+		Region:    in.Metadata.ClusterPlatformMetadata.AWS.Region,
+		Endpoints: in.Metadata.ClusterPlatformMetadata.AWS.ServiceEndpoints,
+	})
 	if err != nil {
-		return fmt.Errorf("failed to create aws session: %w", err)
+		return fmt.Errorf("failed to create ec2 client: %w", err)
 	}
 
 	timeout := 15 * time.Minute
@@ -362,7 +360,7 @@ func (p *Provider) DestroyBootstrap(ctx context.Context, in clusterapi.Bootstrap
 				}
 				return true, fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
 			}
-			return isSSHRuleGone(ctx, session, region, sgID)
+			return isSSHRuleGone(ctx, ec2Client, sgID)
 		},
 	); err != nil {
 		if wait.Interrupted(err) {
@@ -409,8 +407,8 @@ func removeSSHRule(ctx context.Context, cl k8sClient.Client, infraID string) err
 }
 
 // isSSHRuleGone checks that the Public SSH rule has been removed from the security group.
-func isSSHRuleGone(ctx context.Context, session *session.Session, region, sgID string) (bool, error) {
-	sgs, err := awsconfig.DescribeSecurityGroups(ctx, session, []string{sgID}, region)
+func isSSHRuleGone(ctx context.Context, client *ec2.Client, sgID string) (bool, error) {
+	sgs, err := awsconfig.DescribeSecurityGroups(ctx, client, []string{sgID})
 	if err != nil {
 		return false, fmt.Errorf("error getting security group: %w", err)
 	}

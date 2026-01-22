@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/aws/aws-sdk-go/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
@@ -1792,7 +1792,7 @@ func validInstanceTypes() map[string]InstanceType {
 		"t2.small": {
 			DefaultVCpus: 1,
 			MemInMiB:     2048,
-			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
 			Networking: Networking{
 				IPv6Supported: true,
 			},
@@ -1800,7 +1800,7 @@ func validInstanceTypes() map[string]InstanceType {
 		"m5.large": {
 			DefaultVCpus: 2,
 			MemInMiB:     8192,
-			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
 			Networking: Networking{
 				IPv6Supported: true,
 			},
@@ -1808,7 +1808,7 @@ func validInstanceTypes() map[string]InstanceType {
 		"m5.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     16384,
-			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
 			Networking: Networking{
 				IPv6Supported: true,
 			},
@@ -1816,7 +1816,7 @@ func validInstanceTypes() map[string]InstanceType {
 		"m6g.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     16384,
-			Arches:       []string{ec2.ArchitectureTypeArm64},
+			Arches:       []string{string(ec2types.ArchitectureTypeArm64)},
 			Networking: Networking{
 				IPv6Supported: true,
 			},
@@ -1824,7 +1824,7 @@ func validInstanceTypes() map[string]InstanceType {
 		"m1.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     15360,
-			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Arches:       []string{string(ec2types.ArchitectureTypeX8664)},
 			Networking: Networking{
 				IPv6Supported: false,
 			},
