@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -30,24 +31,28 @@ const (
 )
 
 var (
-	// v1Tov2ServiceIDMap maps v1 service ID to its v2 equivalent.
-	v1Tov2ServiceIDMap = map[string]string{
-		"ec2":                      ec2.ServiceID,
-		"elasticloadbalancing":     elb.ServiceID,
-		"elasticloadbalancingv2":   elbv2.ServiceID,
-		"iam":                      iam.ServiceID,
-		"route53":                  route53.ServiceID,
-		"s3":                       s3.ServiceID,
-		"sts":                      sts.ServiceID,
-		"resourcegroupstaggingapi": resourcegroupstaggingapi.ServiceID,
-		"servicequotas":            servicequotas.ServiceID,
+	// In v1 sdk, a constant EndpointsID is exported in each service to look up the custom service endpoint.
+	// For example: https://github.com/aws/aws-sdk-go/blob/070853e88d22854d2355c2543d0958a5f76ad407/service/resourcegroupstaggingapi/service.go#L33-L34
+	// In v2 SDK, these constants are no longer available.
+	// For backwards compatibility, we copy those constants from the SDK v1 and map it to ServiceID in SDK v2.
+	compatServiceIDMap = map[string]string{
+		"ec2":                  ec2.ServiceID,
+		"elasticloadbalancing": elb.ServiceID,
+		"iam":                  iam.ServiceID,
+		"route53":              route53.ServiceID,
+		"s3":                   s3.ServiceID,
+		"sts":                  sts.ServiceID,
+		"tagging":              resourcegroupstaggingapi.ServiceID,
+		"servicequotas":        servicequotas.ServiceID,
 	}
+	// logELBv2FallbackOnce logs the ELBv2 fallback once.
+	logELBv2FallbackOnce sync.Once
 )
 
-// resolveServiceID converts a service ID in the SDK from v1 to v2.
-// If the service ID is not recognized, return as-is.
+// resolveServiceID returns the serviceID for service endpoint resolvers to look up the endpoint URL.
+// If the serviceID is an SDKv1 identifier, this converts it SDKv2. Otherwise, return as-is.
 func resolveServiceID(serviceID string) string {
-	if v2serviceID, ok := v1Tov2ServiceIDMap[serviceID]; ok {
+	if v2serviceID, ok := compatServiceIDMap[serviceID]; ok {
 		return v2serviceID
 	}
 	return serviceID
@@ -76,6 +81,23 @@ func NewServiceEndpointResolver(opts EndpointOptions) *ServiceEndpointResolver {
 	for _, endpoint := range opts.Endpoints {
 		endpointMap[resolveServiceID(endpoint.Name)] = endpoint
 	}
+
+	// In v1 SDK, elb and elbv2 uses the same identifier, thus the same endpoint.
+	// elbv2: https://github.com/aws/aws-sdk-go/blob/070853e88d22854d2355c2543d0958a5f76ad407/service/elbv2/service.go#L32-L33
+	// elb: https://github.com/aws/aws-sdk-go/blob/070853e88d22854d2355c2543d0958a5f76ad407/service/elb/service.go#L32-L33
+	// For backwards compatibility, if elbv2 endpoint is undefined, the elbv2 endpoint resolver should fall back to elb endpoint if any.
+	if _, ok := endpointMap[elbv2.ServiceID]; !ok {
+		if elbEp, ok := endpointMap[elb.ServiceID]; ok {
+			logELBv2FallbackOnce.Do(func() {
+				logrus.Infof("elbv2 endpoint is empty, using elb endpoint: %s", elbEp.URL)
+			})
+			endpointMap[elbv2.ServiceID] = typesaws.ServiceEndpoint{
+				Name: elbv2.ServiceID,
+				URL:  elbEp.URL,
+			}
+		}
+	}
+
 	return &ServiceEndpointResolver{
 		endpoints:       endpointMap,
 		endpointOptions: opts,
@@ -101,6 +123,48 @@ func (s *EC2EndpointResolver) ResolveEndpoint(ctx context.Context, params ec2.En
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return ec2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// ELBEndpointResolver implements EndpointResolverV2 interface for ELB (classic).
+type ELBEndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for ELB.
+func (s *ELBEndpointResolver) ResolveEndpoint(ctx context.Context, params elb.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[elb.ServiceID]
+	if !ok {
+		return elb.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return elb.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// ELBV2EndpointResolver implements EndpointResolverV2 interface for ELBV2.
+type ELBV2EndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for ELBV2.
+func (s *ELBV2EndpointResolver) ResolveEndpoint(ctx context.Context, params elbv2.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[elbv2.ServiceID]
+	if !ok {
+		return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return elbv2.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 }
 
 // IAMEndpointResolver implements EndpointResolverV2 interface for IAM.

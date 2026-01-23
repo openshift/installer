@@ -7,6 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -31,6 +33,44 @@ func NewEC2Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...f
 	ec2Opts = append(ec2Opts, optFns...)
 
 	return ec2.NewFromConfig(cfg, ec2Opts...), nil
+}
+
+// NewELBClient creates a new ELB (classic) client.
+func NewELBClient(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*elb.Options)) (*elb.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	elbOpts := []func(*elb.Options){
+		func(o *elb.Options) {
+			o.EndpointResolverV2 = &ELBEndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	elbOpts = append(elbOpts, optFns...)
+
+	return elb.NewFromConfig(cfg, elbOpts...), nil
+}
+
+// NewELBV2Client creates a new ELBV2 client.
+func NewELBV2Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*elbv2.Options)) (*elbv2.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	elbv2Opts := []func(*elbv2.Options){
+		func(o *elbv2.Options) {
+			o.EndpointResolverV2 = &ELBV2EndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	elbv2Opts = append(elbv2Opts, optFns...)
+
+	return elbv2.NewFromConfig(cfg, elbv2Opts...), nil
 }
 
 // NewIAMClient creates a new IAM API client.
