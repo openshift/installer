@@ -45,11 +45,6 @@ type PSCEndpoint struct {
 	// Name contains the name of the private service connect endpoint.
 	Name string `json:"name"`
 
-	// Region is the region where the endpoint resides.
-	// When the region is empty, the location is assumed to be global.
-	// +optional
-	Region string `json:"region,omitempty"`
-
 	// ClusterUseOnly should be set to true when the installer should use
 	// the public api endpoints and all cluster operators should use the
 	// api endpoint overrides. The value should be false when the installer

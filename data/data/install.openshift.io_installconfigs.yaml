@@ -6306,11 +6306,6 @@ spec:
                         description: Name contains the name of the private service
                           connect endpoint.
                         type: string
-                      region:
-                        description: |-
-                          Region is the region where the endpoint resides.
-                          When the region is empty, the location is assumed to be global.
-                        type: string
                     required:
                     - name
                     type: object
