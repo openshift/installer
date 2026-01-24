@@ -641,7 +641,15 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		if err != nil {
 			return fmt.Errorf("failed to delete security rule: %w", err)
 		}
-
+	}
+	_, err = networkClientFactory.NewInboundNatRulesClient().Get(
+		ctx,
+		resourceGroupName,
+		in.Metadata.InfraID,
+		sshRuleName,
+		nil,
+	)
+	if err == nil {
 		err = deleteInboundNatRule(ctx, &inboundNatRuleInput{
 			resourceGroupName:    resourceGroupName,
 			loadBalancerName:     in.Metadata.InfraID,
@@ -652,7 +660,6 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 			return fmt.Errorf("failed to delete inbound nat rule: %w", err)
 		}
 	}
-
 	return nil
 }
 
