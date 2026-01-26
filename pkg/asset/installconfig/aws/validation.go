@@ -447,6 +447,14 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 				errMsg := fmt.Sprintf("instance type supported architectures %s do not match specified architecture %s", sets.List(instanceArches), arch)
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 			}
+
+			// dual-stack: the instance type must support IPv6 networking
+			if platform.IPFamily.DualStackEnabled() {
+				if !typeMeta.Networking.IPv6Supported {
+					errMsg := fmt.Sprintf("instance type %s does not support IPv6 networking", pool.InstanceType)
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+				}
+			}
 		} else {
 			errMsg := fmt.Sprintf("instance type %s not found", pool.InstanceType)
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
