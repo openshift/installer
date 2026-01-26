@@ -101,6 +101,7 @@ func (a *Ignition) Dependencies() []asset.Asset {
 		&joiner.ImportClusterConfig{},
 		&manifests.AgentManifests{},
 		&manifests.ExtraManifests{},
+		&agentconfig.FencingCredentials{},
 		&tls.KubeAPIServerLBSignerCertKey{},
 		&tls.KubeAPIServerLocalhostSignerCertKey{},
 		&tls.KubeAPIServerServiceNetworkSignerCertKey{},
@@ -122,9 +123,10 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
 	extraManifests := &manifests.ExtraManifests{}
+	fencingCredentials := &agentconfig.FencingCredentials{}
 	authConfig := &gencrypto.AuthConfig{}
 	infraEnvAsset := &common.InfraEnvID{}
-	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, authConfig, agentWorkflow, infraEnvAsset)
+	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, fencingCredentials, authConfig, agentWorkflow, infraEnvAsset)
 
 	if err := workflowreport.GetReport(ctx).Stage(workflow.StageIgnition); err != nil {
 		return err
@@ -353,6 +355,8 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	if err != nil {
 		return err
 	}
+
+	addFencingCredentials(&config, fencingCredentials)
 
 	err = addExtraManifests(&config, extraManifests)
 	if err != nil {
@@ -617,6 +621,22 @@ func addHostConfig(config *igntypes.Config, agentHosts *agentconfig.AgentHosts) 
 		config.Storage.Files = append(config.Storage.Files, hostConfigFile)
 	}
 	return nil
+}
+
+// addFencingCredentials adds the fencing credentials file to the ignition config.
+// Fencing credentials are host-scoped (matched by hostname), so they go under /etc/assisted/hostconfig/
+// rather than /etc/assisted/manifests/ which is for cluster-scoped manifests.
+func addFencingCredentials(config *igntypes.Config, fencingCredentials *agentconfig.FencingCredentials) {
+	if fencingCredentials == nil || fencingCredentials.File == nil {
+		return
+	}
+
+	fencingFile := ignition.FileFromBytes(
+		path.Join("/etc/assisted/hostconfig", "fencing-credentials.yaml"),
+		"root", 0644,
+		fencingCredentials.File.Data,
+	)
+	config.Storage.Files = append(config.Storage.Files, fencingFile)
 }
 
 func addDay2ClusterConfigFiles(config *igntypes.Config, clusterInfo joiner.ClusterInfo, importClusterConfig joiner.ImportClusterConfig) error {

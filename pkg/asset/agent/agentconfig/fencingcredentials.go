@@ -1,14 +1,14 @@
-package manifests
+package agentconfig
 
 import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	goyaml "gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/util/validation/field"
 	k8syaml "sigs.k8s.io/yaml"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -17,7 +17,10 @@ import (
 	"github.com/openshift/installer/pkg/types"
 )
 
-var fencingCredentialsFilename = filepath.Join(clusterManifestDir, "fencing-credentials.yaml")
+// fencingCredentialsFilename is the asset output path for fencing credentials.
+// Note: This is the asset's local filename, not the ignition embedding path.
+// The file is embedded at /etc/assisted/hostconfig/fencing-credentials.yaml by ignition.go.
+var fencingCredentialsFilename = "fencing-credentials.yaml"
 
 // FencingCredentialsConfig represents the structure of the fencing-credentials.yaml file.
 type FencingCredentialsConfig struct {
@@ -123,6 +126,11 @@ func (f *FencingCredentials) finish() error {
 		return nil
 	}
 
+	// Validate all fencing credentials
+	if err := f.validateFencingCredentials().ToAggregate(); err != nil {
+		return errors.Wrapf(err, "invalid fencing credentials configuration")
+	}
+
 	// Use gopkg.in/yaml.v2 for marshaling to respect YAML struct tags (lowercase field names).
 	// This is critical for compatibility with assisted-service, which expects lowercase keys.
 	data, err := goyaml.Marshal(f.Config)
@@ -137,4 +145,42 @@ func (f *FencingCredentials) finish() error {
 
 	logrus.Debugf("Generated fencing credentials file at %s", fencingCredentialsFilename)
 	return nil
+}
+
+// validateFencingCredentials validates that all required fields are present
+// and that there are no duplicate hostnames.
+func (f *FencingCredentials) validateFencingCredentials() field.ErrorList {
+	var allErrs field.ErrorList
+	basePath := field.NewPath("controlPlane", "fencing", "credentials")
+
+	seenHostnames := make(map[string]int)
+
+	for i, cred := range f.Config.Credentials {
+		credPath := basePath.Index(i)
+
+		if cred.HostName == "" {
+			allErrs = append(allErrs, field.Required(credPath.Child("hostname"), "hostname is required for fencing credential"))
+		} else {
+			// Check for duplicate hostnames
+			if prevIdx, exists := seenHostnames[cred.HostName]; exists {
+				allErrs = append(allErrs, field.Duplicate(credPath.Child("hostname"),
+					fmt.Sprintf("hostname %q already defined at index %d", cred.HostName, prevIdx)))
+			}
+			seenHostnames[cred.HostName] = i
+		}
+
+		if cred.Address == "" {
+			allErrs = append(allErrs, field.Required(credPath.Child("address"), "BMC address is required for fencing credential"))
+		}
+
+		if cred.Username == "" {
+			allErrs = append(allErrs, field.Required(credPath.Child("username"), "BMC username is required for fencing credential"))
+		}
+
+		if cred.Password == "" {
+			allErrs = append(allErrs, field.Required(credPath.Child("password"), "BMC password is required for fencing credential"))
+		}
+	}
+
+	return allErrs
 }

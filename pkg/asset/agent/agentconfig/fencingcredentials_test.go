@@ -1,4 +1,4 @@
-package manifests
+package agentconfig
 
 import (
 	"context"
@@ -8,14 +8,43 @@ import (
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/mock"
 	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
+
+// getValidOptionalInstallConfig returns a minimal valid install config for testing.
+func getValidOptionalInstallConfig() *agent.OptionalInstallConfig {
+	return &agent.OptionalInstallConfig{
+		AssetBase: installconfig.AssetBase{
+			Config: &types.InstallConfig{
+				ObjectMeta: metav1.ObjectMeta{
+					Name:      "test-cluster",
+					Namespace: "test-namespace",
+				},
+				BaseDomain: "testing.com",
+				ControlPlane: &types.MachinePool{
+					Name:     "master",
+					Replicas: ptr.To(int64(3)),
+				},
+				Platform: types.Platform{
+					BareMetal: &baremetal.Platform{
+						APIVIPs:     []string{"192.168.122.10"},
+						IngressVIPs: []string{"192.168.122.11"},
+					},
+				},
+			},
+		},
+		Supplied: true,
+	}
+}
 
 // getValidOptionalInstallConfigWithFencing returns an install config with fencing credentials
 // for testing TNF (Two-Node Fencing) cluster configurations.
@@ -71,6 +100,66 @@ func getValidOptionalInstallConfigWithEmptyFencingCredentials() *agent.OptionalI
 	installConfig.Config.ControlPlane.Replicas = ptr.To(int64(2))
 	installConfig.Config.ControlPlane.Fencing = &types.Fencing{
 		Credentials: []*types.Credential{},
+	}
+	return installConfig
+}
+
+// getOptionalInstallConfigWithMissingHostname returns an install config
+// with a fencing credential missing the hostname field.
+func getOptionalInstallConfigWithMissingHostname() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.ControlPlane.Replicas = ptr.To(int64(2))
+	installConfig.Config.ControlPlane.Fencing = &types.Fencing{
+		Credentials: []*types.Credential{
+			{
+				HostName: "", // Missing hostname
+				Address:  "redfish+https://192.168.111.1:8000/redfish/v1/Systems/abc",
+				Username: "admin",
+				Password: "password123",
+			},
+		},
+	}
+	return installConfig
+}
+
+// getOptionalInstallConfigWithMissingAddress returns an install config
+// with a fencing credential missing the address field.
+func getOptionalInstallConfigWithMissingAddress() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.ControlPlane.Replicas = ptr.To(int64(2))
+	installConfig.Config.ControlPlane.Fencing = &types.Fencing{
+		Credentials: []*types.Credential{
+			{
+				HostName: "master-0",
+				Address:  "", // Missing address
+				Username: "admin",
+				Password: "password123",
+			},
+		},
+	}
+	return installConfig
+}
+
+// getOptionalInstallConfigWithDuplicateHostnames returns an install config
+// with duplicate hostnames in fencing credentials.
+func getOptionalInstallConfigWithDuplicateHostnames() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.ControlPlane.Replicas = ptr.To(int64(2))
+	installConfig.Config.ControlPlane.Fencing = &types.Fencing{
+		Credentials: []*types.Credential{
+			{
+				HostName: "master-0",
+				Address:  "redfish+https://192.168.111.1:8000/redfish/v1/Systems/abc",
+				Username: "admin",
+				Password: "password123",
+			},
+			{
+				HostName: "master-0", // Duplicate hostname
+				Address:  "redfish+https://192.168.111.1:8000/redfish/v1/Systems/def",
+				Username: "admin",
+				Password: "password456",
+			},
+		},
 	}
 	return installConfig
 }
@@ -163,6 +252,30 @@ func TestFencingCredentials_Generate(t *testing.T) {
 			},
 			expectedFiles: 1,
 		},
+		{
+			name: "validation error - missing hostname",
+			dependencies: []asset.Asset{
+				getOptionalInstallConfigWithMissingHostname(),
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+			},
+			expectedError: "hostname is required",
+		},
+		{
+			name: "validation error - missing address",
+			dependencies: []asset.Asset{
+				getOptionalInstallConfigWithMissingAddress(),
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+			},
+			expectedError: "BMC address is required",
+		},
+		{
+			name: "validation error - duplicate hostnames",
+			dependencies: []asset.Asset{
+				getOptionalInstallConfigWithDuplicateHostnames(),
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+			},
+			expectedError: "already defined at index",
+		},
 	}
 
 	for _, tc := range cases {
@@ -183,7 +296,7 @@ func TestFencingCredentials_Generate(t *testing.T) {
 
 				if tc.expectedFiles > 0 {
 					configFile := fencingAsset.Files()[0]
-					assert.Equal(t, "cluster-manifests/fencing-credentials.yaml", configFile.Filename)
+					assert.Equal(t, "fencing-credentials.yaml", configFile.Filename)
 
 					// Verify YAML contains expected structure
 					assert.Contains(t, string(configFile.Data), "credentials:")
@@ -262,7 +375,7 @@ func TestFencingCredentials_Load(t *testing.T) {
 			name:          "invalid yaml",
 			data:          `this is not valid yaml: [`,
 			expectedFound: false,
-			expectedError: "failed to unmarshal cluster-manifests/fencing-credentials.yaml",
+			expectedError: "failed to unmarshal fencing-credentials.yaml",
 		},
 		{
 			name:          "file not found",
@@ -273,7 +386,7 @@ func TestFencingCredentials_Load(t *testing.T) {
 			name:          "error fetching file",
 			fetchError:    errors.New("fetch failed"),
 			expectedFound: false,
-			expectedError: "failed to load cluster-manifests/fencing-credentials.yaml file: fetch failed",
+			expectedError: "failed to load fencing-credentials.yaml file: fetch failed",
 		},
 	}
 
