@@ -6,8 +6,6 @@ import (
 	"sort"
 	"sync"
 
-	"sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-
 	"github.com/openshift/installer/pkg/types"
 	typesazure "github.com/openshift/installer/pkg/types/azure"
 	azuredefaults "github.com/openshift/installer/pkg/types/azure/defaults"
@@ -179,7 +177,7 @@ func (m *Metadata) GenerateZonesSubnetMap(subnetSpec []typesazure.SubnetSpec, de
 				return subnetSpec[i].Name < subnetSpec[j].Name
 			})
 			for _, subnet := range subnetSpec {
-				if subnet.Role == v1beta1.SubnetNode {
+				if subnet.Role == typesazure.SubnetNode {
 					computeSubnets = append(computeSubnets, subnet.Name)
 				}
 			}

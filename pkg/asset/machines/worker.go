@@ -13,7 +13,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1" //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/yaml"
 
@@ -117,9 +116,9 @@ func defaultAWSMachinePoolPlatform(poolName string) awstypes.MachinePool {
 }
 
 func defaultAzureMachinePoolPlatform(env azuretypes.CloudEnvironment) azuretypes.MachinePool {
-	idType := capz.VMIdentityUserAssigned
+	idType := azuretypes.VMIdentityUserAssigned
 	if env == azuretypes.StackCloud {
-		idType = capz.VMIdentityNone
+		idType = azuretypes.VMIdentityNone
 	}
 
 	return azuretypes.MachinePool{

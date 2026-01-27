@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"github.com/sirupsen/logrus"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	configv1 "github.com/openshift/api/config/v1"
 	features "github.com/openshift/api/features"
@@ -70,19 +69,19 @@ func (c *InstallConfig) CreateAzureIdentity() bool {
 	if dmp := c.Azure.DefaultMachinePlatform; dmp != nil {
 		defaultID = dmp.Identity
 	}
-	defaultNeedsID := defaultID == nil || (defaultID.Type == capz.VMIdentityUserAssigned && len(defaultID.UserAssignedIdentities) == 0)
+	defaultNeedsID := defaultID == nil || (defaultID.Type == azure.VMIdentityUserAssigned && len(defaultID.UserAssignedIdentities) == 0)
 
 	var computeID *azure.VMIdentity
 	if comp := c.Compute; len(comp) > 0 && comp[0].Platform.Azure != nil {
 		computeID = comp[0].Platform.Azure.Identity
 	}
-	computeNeedsID := computeID == nil || (computeID.Type == capz.VMIdentityUserAssigned && len(computeID.UserAssignedIdentities) == 0)
+	computeNeedsID := computeID == nil || (computeID.Type == azure.VMIdentityUserAssigned && len(computeID.UserAssignedIdentities) == 0)
 
 	var cpID *azure.VMIdentity
 	if cp := c.ControlPlane; cp != nil && cp.Platform.Azure != nil {
 		cpID = cp.Platform.Azure.Identity
 	}
-	cpNeedsID := cpID == nil || (cpID.Type == capz.VMIdentityUserAssigned && len(cpID.UserAssignedIdentities) == 0)
+	cpNeedsID := cpID == nil || (cpID.Type == azure.VMIdentityUserAssigned && len(cpID.UserAssignedIdentities) == 0)
 
 	return defaultNeedsID && (computeNeedsID || cpNeedsID)
 }
