@@ -102,6 +102,12 @@ type CredentialsRequestStatus struct {
 	// +optional
 	LastSyncCloudCredsSecretResourceVersion string `json:"lastSyncCloudCredsSecretResourceVersion,omitempty"`
 
+	// LastSyncInfrastructureResourceVersion is the resource version of the
+	// Infrastructure resource. It is used to determine if the user provided tags have
+	// been updated since the last sync.
+	// +optional
+	LastSyncInfrastructureResourceVersion string `json:"lastSyncInfrastructureResourceVersion,omitempty"`
+
 	// ProviderStatus contains cloud provider specific status.
 	// +kubebuilder:pruning:PreserveUnknownFields
 	ProviderStatus *runtime.RawExtension `json:"providerStatus,omitempty"`

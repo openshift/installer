@@ -1,3 +1,7 @@
 package msgraphgocore
 
-var CoreVersion = "0.34.0"
+/** The SDK version */
+// x-release-please-start-version
+var CoreVersion = "1.2.1"
+
+// x-release-please-end

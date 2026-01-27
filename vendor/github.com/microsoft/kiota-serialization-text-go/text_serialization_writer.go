@@ -14,11 +14,13 @@ import (
 
 var NoStructuredDataError = errors.New("text does not support structured data")
 var OnlyOneValue = errors.New("text serialization writer can only write one value")
-var UnsupportedMethodError = errors.New("text does not support current method")
 
 // TextSerializationWriter implements SerializationWriter for JSON.
 type TextSerializationWriter struct {
-	writer []string
+	writer                     []string
+	onBeforeAssignFieldValues  absser.ParsableAction
+	onAfterAssignFieldValues   absser.ParsableAction
+	onStartObjectSerialization absser.ParsableWriter
 }
 
 // NewTextSerializationWriter creates a new instance of the TextSerializationWriter.
@@ -257,25 +259,28 @@ func (w *TextSerializationWriter) WriteNullValue(key string) error {
 }
 
 func (w *TextSerializationWriter) GetOnBeforeSerialization() absser.ParsableAction {
-	return nil
+	return w.onBeforeAssignFieldValues
 }
 
 func (w *TextSerializationWriter) SetOnBeforeSerialization(action absser.ParsableAction) error {
-	return UnsupportedMethodError
+	w.onBeforeAssignFieldValues = action
+	return nil
 }
 
 func (w *TextSerializationWriter) GetOnAfterObjectSerialization() absser.ParsableAction {
-	return nil
+	return w.onAfterAssignFieldValues
 }
 
 func (w *TextSerializationWriter) SetOnAfterObjectSerialization(action absser.ParsableAction) error {
-	return UnsupportedMethodError
-}
-
-func (w *TextSerializationWriter) GetOnStartObjectSerialization() absser.ParsableWriter {
+	w.onAfterAssignFieldValues = action
 	return nil
 }
 
+func (w *TextSerializationWriter) GetOnStartObjectSerialization() absser.ParsableWriter {
+	return w.onStartObjectSerialization
+}
+
 func (w *TextSerializationWriter) SetOnStartObjectSerialization(writer absser.ParsableWriter) error {
-	return UnsupportedMethodError
+	w.onStartObjectSerialization = writer
+	return nil
 }

@@ -37,7 +37,7 @@ func SetObjectValueFromSource[T interface{}](source func(ctor serialization.Pars
 	return nil
 }
 
-// SetCollectionValue is a utility function that receives a collection that can be cast to Parsable and a function that epects the results
+// SetCollectionValue is a utility function that receives a collection that can be cast to Parsable and a function that expects the results
 //
 // source is any function that receives a `ParsableFactory` and returns a slice of Parsable or error
 // ctor is a ParsableFactory
@@ -56,7 +56,8 @@ func SetCollectionValue[T interface{}](source func(ctor serialization.ParsableFa
 
 // CollectionApply applies an operation to every element of the slice and returns a result of the modified collection
 //
-//  is a slice of all the elementents to be mutated
+//	is a slice of all the elementents to be mutated
+//
 // mutator applies an operation to the collection and returns a response of type `R`
 func CollectionApply[T any, R interface{}](collection []T, mutator func(t T) R) []R {
 	cast := make([]R, len(collection))
@@ -138,7 +139,7 @@ func p[T interface{}](t T) *T {
 	return &t
 }
 
-// GetValueOrDefault Converts a Pointer to a value or retuns a default value
+// GetValueOrDefault Converts a Pointer to a value or returns a default value
 func GetValueOrDefault[T interface{}](source func() *T, defaultValue T) T {
 	result := source()
 	if result != nil {

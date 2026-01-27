@@ -31,7 +31,7 @@ func NewAzureIdentityAccessTokenProviderWithScopesAndValidHostsAndObservabilityO
 	if err != nil {
 		return nil, err
 	}
-	if len(scopes) == 0 {
+	if len(validHosts) == 0 {
 		base.GetAllowedHostsValidator().SetAllowedHosts([]string{"graph.microsoft.com", "graph.microsoft.us", "dod-graph.microsoft.us", "graph.microsoft.de", "microsoftgraph.chinacloudapi.cn", "canary.graph.microsoft.com"})
 	}
 	result := &AzureIdentityAccessTokenProvider{

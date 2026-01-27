@@ -6,12 +6,14 @@ import (
 	khttp "github.com/microsoft/kiota-http-go"
 )
 
+var ReplacementPairs = map[string]string{"/users/me-token-to-replace": "/me"}
+
 // GetDefaultMiddlewaresWithOptions creates a default slice of middleware for the Graph Client.
 func GetDefaultMiddlewaresWithOptions(options *GraphClientOptions) []khttp.Middleware {
 	kiotaMiddlewares := khttp.GetDefaultMiddlewares()
 	graphMiddlewares := []khttp.Middleware{
 		NewGraphTelemetryHandler(options),
-		khttp.NewUrlReplaceHandler(),
+		khttp.NewUrlReplaceHandler(true, ReplacementPairs),
 	}
 	graphMiddlewaresLen := len(graphMiddlewares)
 	resultMiddlewares := make([]khttp.Middleware, len(kiotaMiddlewares)+graphMiddlewaresLen)
