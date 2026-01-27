@@ -28,18 +28,24 @@ func (c *Client) AddUserToGroup(ctx context.Context, params *AddUserToGroupInput
 
 type AddUserToGroupInput struct {
 
-	// The name of the group to update. This parameter allows (through its regex
-	// pattern (http://wikipedia.org/wiki/regex) ) a string of characters consisting of
-	// upper and lowercase alphanumeric characters with no spaces. You can also include
-	// any of the following characters: _+=,.@-
+	// The name of the group to update.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	GroupName *string
 
-	// The name of the user to add. This parameter allows (through its regex pattern (http://wikipedia.org/wiki/regex)
-	// ) a string of characters consisting of upper and lowercase alphanumeric
-	// characters with no spaces. You can also include any of the following characters:
-	// _+=,.@-
+	// The name of the user to add.
+	//
+	// This parameter allows (through its [regex pattern]) a string of characters consisting of upper
+	// and lowercase alphanumeric characters with no spaces. You can also include any
+	// of the following characters: _+=,.@-
+	//
+	// [regex pattern]: http://wikipedia.org/wiki/regex
 	//
 	// This member is required.
 	UserName *string
@@ -107,6 +113,12 @@ func (c *Client) addOperationAddUserToGroupMiddlewares(stack *middleware.Stack, 
 		return err
 	}
 	if err = addSetLegacyContextSigningOptionsMiddleware(stack); err != nil {
+		return err
+	}
+	if err = addTimeOffsetBuild(stack, c); err != nil {
+		return err
+	}
+	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
 	if err = addOpAddUserToGroupValidationMiddleware(stack); err != nil {

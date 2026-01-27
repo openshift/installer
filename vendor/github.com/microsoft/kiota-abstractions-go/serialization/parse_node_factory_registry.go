@@ -4,17 +4,28 @@ import (
 	"errors"
 	re "regexp"
 	"strings"
+	"sync"
 )
 
 // ParseNodeFactoryRegistry holds a list of all the registered factories for the various types of nodes.
 type ParseNodeFactoryRegistry struct {
+	lock *sync.Mutex
+
+	// ContentTypeAssociatedFactories maps content types onto the relevant factory.
+	//
+	// When interacting with this field, please make use of Lock and Unlock methods to ensure thread safety.
 	ContentTypeAssociatedFactories map[string]ParseNodeFactory
 }
 
-// DefaultParseNodeFactoryInstance is the default singleton instance of the registry to be used when registering new factories that should be available by default.
-var DefaultParseNodeFactoryInstance = &ParseNodeFactoryRegistry{
-	ContentTypeAssociatedFactories: make(map[string]ParseNodeFactory),
+func NewParseNodeFactoryRegistry() *ParseNodeFactoryRegistry {
+	return &ParseNodeFactoryRegistry{
+		lock:                           &sync.Mutex{},
+		ContentTypeAssociatedFactories: make(map[string]ParseNodeFactory),
+	}
 }
+
+// DefaultParseNodeFactoryInstance is the default singleton instance of the registry to be used when registering new factories that should be available by default.
+var DefaultParseNodeFactoryInstance = NewParseNodeFactoryRegistry()
 
 // GetValidContentType returns the valid content type for the ParseNodeFactoryRegistry
 func (m *ParseNodeFactoryRegistry) GetValidContentType() (string, error) {
@@ -42,4 +53,12 @@ func (m *ParseNodeFactoryRegistry) GetRootParseNode(contentType string, content 
 		return factory.GetRootParseNode(cleanedContentType, content)
 	}
 	return nil, errors.New("content type " + cleanedContentType + " does not have a factory registered to be parsed")
+}
+
+func (m *ParseNodeFactoryRegistry) Lock() {
+	m.lock.Lock()
+}
+
+func (m *ParseNodeFactoryRegistry) Unlock() {
+	m.lock.Unlock()
 }
