@@ -100,9 +100,11 @@ type Platform struct {
 	// transport layer (TCP/SSL). See the following for additional details:
 	// https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
 	//
-	// If this field is not set explicitly, it defaults to "Classic".  This
-	// default is subject to change over time.
+	// If this field is not set explicitly, it defaults to "Classic". This
+	// default is subject to change over time. If ipFamily field is set to
+	// "DualStackIPv4Primary" or "DualStackIPv6Primary", the default is "NLB".
 	//
+	// +kubebuilder:validation:Enum="Classic";"NLB"
 	// +optional
 	LBType configv1.AWSLBType `json:"lbType,omitempty"`
 
