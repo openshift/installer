@@ -7,6 +7,7 @@ import (
 	"net"
 	"strings"
 
+	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
@@ -29,17 +30,21 @@ import (
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
-	mainCIDR := capiutils.CIDRFromInstallConfig(installConfig)
+	mainCIDR := capiutils.CIDRFromInstallConfig(installConfig).String()
 
 	session, err := installConfig.Azure.Session()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create Azure session")
 	}
 
-	subnets, err := cidr.SplitIntoSubnetsIPv4(mainCIDR.String(), 2)
+	subnets, err := cidr.SplitIntoSubnetsIPv4(mainCIDR, 2)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to split CIDR into subnets")
 	}
+
+	virtualNetworkAddressPrefixes := []string{mainCIDR}
+	controlPlaneAddressPrefixes := []string{subnets[0].String()}
+	computeAddressPrefixes := []string{subnets[1].String()}
 
 	// CAPZ expects the capz-system to be created.
 	azureNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "capz-system"}}
@@ -56,7 +61,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 
 	source := "*"
 	if installConfig.Config.Publish == types.InternalPublishingStrategy {
-		source = mainCIDR.String()
+		source = mainCIDR
 	}
 
 	securityGroup := capz.SecurityGroup{
@@ -112,37 +117,29 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	lbip := capz.DefaultInternalLBIPAddress
 	lbip = getIPWithinCIDR(subnets, lbip)
 
-	if controlPlaneSub := installConfig.Config.Azure.ControlPlaneSubnet; controlPlaneSub != "" {
-		client, err := installConfig.Azure.Client()
+	if controlPlaneSubnetName := installConfig.Config.Azure.ControlPlaneSubnet; controlPlaneSubnetName != "" {
+		controlPlaneSubnet, err := getSubnet(installConfig, clusterID, "controlPlane", controlPlaneSubnetName)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get azure client: %w", err)
+			return nil, fmt.Errorf("failed to get control plane subnet: %w", err)
 		}
-		ctx := context.TODO()
-		controlPlaneSubnet, err := client.GetControlPlaneSubnet(ctx, installConfig.Config.Azure.NetworkResourceGroupName, installConfig.Config.Azure.VirtualNetwork, controlPlaneSub)
-		if err != nil || controlPlaneSubnet == nil {
-			return nil, fmt.Errorf("failed to get azure control plane subnet: %w", err)
-		} else if controlPlaneSubnet.AddressPrefixes == nil && controlPlaneSubnet.AddressPrefix == nil {
-			return nil, fmt.Errorf("failed to get azure control plane subnet addresses: %w", err)
+		subnetList, err := getSubnetAddressPrefixes(controlPlaneSubnet)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get control plane subnet address prefixes: %w", err)
 		}
-		subnetList := []*net.IPNet{}
-		if controlPlaneSubnet.AddressPrefixes != nil {
-			for _, sub := range *controlPlaneSubnet.AddressPrefixes {
-				_, ipnet, err := net.ParseCIDR(sub)
-				if err != nil {
-					return nil, fmt.Errorf("failed to get translate azure control plane subnet addresses: %w", err)
-				}
-				subnetList = append(subnetList, ipnet)
-			}
-		}
-
-		if controlPlaneSubnet.AddressPrefix != nil {
-			_, ipnet, err := net.ParseCIDR(*controlPlaneSubnet.AddressPrefix)
-			if err != nil {
-				return nil, fmt.Errorf("failed to get translate azure control plane subnet address prefix: %w", err)
-			}
-			subnetList = append(subnetList, ipnet)
-		}
+		controlPlaneAddressPrefixes = stringifyAddressPrefixes(subnetList)
 		lbip = getIPWithinCIDR(subnetList, lbip)
+	}
+
+	if computeSubnetName := installConfig.Config.Azure.ComputeSubnet; computeSubnetName != "" {
+		computeSubnet, err := getSubnet(installConfig, clusterID, "compute", computeSubnetName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compute subnet: %w", err)
+		}
+		subnetList, err := getSubnetAddressPrefixes(computeSubnet)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get compute subnet address prefixes: %w", err)
+		}
+		computeAddressPrefixes = stringifyAddressPrefixes(subnetList)
 	}
 
 	apiServerLB.FrontendIPs = []capz.FrontendIP{{
@@ -152,6 +149,8 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 	}}
 	if installConfig.Config.Azure.VirtualNetwork != "" {
+		virtualNetworkAddressPrefixes = make([]string, 0)
+
 		client, err := installConfig.Azure.Client()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get azure client: %w", err)
@@ -170,6 +169,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		}
 		apiServerLB.FrontendIPs[0].FrontendIPClass = capz.FrontendIPClass{
 			PrivateIPAddress: lbip,
+		}
+		if virtualNetwork.AddressSpace != nil && virtualNetwork.AddressSpace.AddressPrefixes != nil {
+			virtualNetworkAddressPrefixes = append(virtualNetworkAddressPrefixes, *virtualNetwork.AddressSpace.AddressPrefixes...)
 		}
 	}
 
@@ -207,9 +209,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					// https://github.com/kubernetes-sigs/cluster-api-provider-azure/commit/0f321e4089a3f4dc37f8420bf2ef6762c398c400
 					ID: virtualNetworkID,
 					VnetClassSpec: capz.VnetClassSpec{
-						CIDRBlocks: []string{
-							mainCIDR.String(),
-						},
+						CIDRBlocks: virtualNetworkAddressPrefixes,
 					},
 				},
 				APIServerLB:            apiServerLB,
@@ -217,22 +217,18 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Subnets: capz.Subnets{
 					{
 						SubnetClassSpec: capz.SubnetClassSpec{
-							Name: controlPlaneSubnet,
-							Role: capz.SubnetControlPlane,
-							CIDRBlocks: []string{
-								subnets[0].String(),
-							},
+							Name:       controlPlaneSubnet,
+							Role:       capz.SubnetControlPlane,
+							CIDRBlocks: controlPlaneAddressPrefixes,
 						},
 						SecurityGroup: securityGroup,
 					},
 					{
 						ID: nodeSubnetID,
 						SubnetClassSpec: capz.SubnetClassSpec{
-							Name: computeSubnet,
-							Role: capz.SubnetNode,
-							CIDRBlocks: []string{
-								subnets[1].String(),
-							},
+							Name:       computeSubnet,
+							Role:       capz.SubnetNode,
+							CIDRBlocks: computeAddressPrefixes,
 						},
 						SecurityGroup: securityGroup,
 					},
@@ -315,6 +311,71 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			},
 		},
 	}, nil
+}
+
+func getSubnet(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID, subnetType, subnetName string) (*aznetwork.Subnet, error) {
+	var subnet *aznetwork.Subnet
+
+	azClient, err := installConfig.Azure.Client()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get azure client: %w", err)
+	}
+	ctx := context.TODO()
+
+	if subnetType == "controlPlane" {
+		subnet, err = azClient.GetControlPlaneSubnet(ctx,
+			installConfig.Config.Azure.NetworkResourceGroupName,
+			installConfig.Config.Azure.VirtualNetwork,
+			subnetName,
+		)
+	} else if subnetType == "compute" {
+		subnet, err = azClient.GetComputeSubnet(ctx,
+			installConfig.Config.Azure.NetworkResourceGroupName,
+			installConfig.Config.Azure.VirtualNetwork,
+			subnetName,
+		)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subnet: %w", err)
+	}
+	if subnet == nil {
+		return nil, fmt.Errorf("failed to get subnet")
+	}
+	if subnet.AddressPrefixes == nil && subnet.AddressPrefix == nil {
+		return nil, fmt.Errorf("failed to get subnet addresses: %w", err)
+	}
+	return subnet, nil
+}
+
+func getSubnetAddressPrefixes(subnet *aznetwork.Subnet) ([]*net.IPNet, error) {
+	subnetList := []*net.IPNet{}
+	if subnet.AddressPrefixes != nil {
+		for _, sub := range *subnet.AddressPrefixes {
+			_, ipnet, err := net.ParseCIDR(sub)
+			if err != nil {
+				return subnetList, fmt.Errorf("failed to get translate azure subnet addresses: %w", err)
+			}
+			subnetList = append(subnetList, ipnet)
+		}
+	}
+	if subnet.AddressPrefix != nil {
+		_, ipnet, err := net.ParseCIDR(*subnet.AddressPrefix)
+		if err != nil {
+			return subnetList, fmt.Errorf("failed to get translate azure subnet address prefix: %w", err)
+		}
+		subnetList = append(subnetList, ipnet)
+	}
+
+	return subnetList, nil
+}
+
+func stringifyAddressPrefixes(addressPrefixes []*net.IPNet) []string {
+	strAddressPrefixes := []string{}
+	for _, addressPrefix := range addressPrefixes {
+		strAddressPrefixes = append(strAddressPrefixes, addressPrefix.String())
+	}
+	return strAddressPrefixes
 }
 
 func getIPWithinCIDR(subnets []*net.IPNet, ip string) string {
