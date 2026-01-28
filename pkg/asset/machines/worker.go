@@ -217,6 +217,7 @@ func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.Mac
 			logrus.Warnf("For given zone %v, GetDatacenterSupportedSystems returns %v", ic.PowerVS.Zone, err)
 		} else {
 			if ic.PowerVS.Zone == "dal14" {
+				// prefer s1022 over s1222 for better support
 				for _, st := range sysTypes {
 					if st == "s1022" {
 						sysType = "s1022"
@@ -231,7 +232,7 @@ func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.Mac
 							break
 						}
 					}
-					// If neither s1022 nor s922 found, use first in list
+					// If neither s1022 nor s922 found, use first in list (in case of Dallas this is s1122)
 					if sysType == "s922" {
 						sysType = sysTypes[0]
 					}

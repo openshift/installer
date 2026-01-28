@@ -1122,8 +1122,6 @@ func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region strin
 		}
 	}
 
-	fmt.Printf("DEBUG: Querying region: %s\n", region)
-
 	// Use the global datacenter endpoint for accurate, non-cached data (other code uses a bulk endpoint)
 	datacenterClient := instance.NewIBMPIDatacenterClient(ctx, c.BXCli.PISession, "")
 	datacenter, err := datacenterClient.Get(region)
@@ -1131,34 +1129,8 @@ func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region strin
 		return nil, fmt.Errorf("failed to get datacenter supported systems: %w", err)
 	}
 
-	// Debug: Print the full response
-	fmt.Printf("DEBUG: Full capabilities: %+v\n", datacenter.CapabilitiesDetails)
-	fmt.Printf("DEBUG: Supported systems (general): %v\n", datacenter.CapabilitiesDetails.SupportedSystems.General)
-	fmt.Printf("DEBUG: Supported systems (dedicated): %v\n", datacenter.CapabilitiesDetails.SupportedSystems.Dedicated)
-
 	return datacenter.CapabilitiesDetails.SupportedSystems.General, nil
 }
-
-/*
-ORIGINAL CODE THAT PULLED STALE SYSTEM TYPES, left for comparison
-*/
-
-// // GetDatacenterSupportedSystems retrieves the capabilities of the specified datacenter.
-// func (c *Client) GetDatacenterSupportedSystems(ctx context.Context, region string) ([]string, error) {
-// 	var err error
-// 	if c.BXCli.PISession == nil {
-// 		err = c.BXCli.NewPISession()
-// 		if err != nil {
-// 			return nil, fmt.Errorf("failed to initialize PISession in GetDatacenterSupportedSystems: %w", err)
-// 		}
-// 	}
-// 	params := datacenters.NewV1DatacentersGetParamsWithContext(ctx).WithDatacenterRegion(region)
-// 	getOk, err := c.BXCli.PISession.Power.Datacenters.V1DatacentersGet(params)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to get datacenter supported systems: %w", err)
-// 	}
-// 	return getOk.Payload.CapabilitiesDetails.SupportedSystems.General, nil
-// }
 
 // TransitGatewayNameToID checks to see if the name is an existing transit gateway name.
 func (c *Client) TransitGatewayNameToID(ctx context.Context, name string) (string, error) {
