@@ -95,7 +95,7 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 				}
 			}
 
-			assetStore, err := newStore(tempDir)
+			assetStore, err := newStore(tempDir, true)
 			if err != nil {
 				t.Fatalf("failed to create asset store: %v", err)
 			}
@@ -105,12 +105,12 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 					t.Fatalf("failed to fetch %q: %v", a.Name(), err)
 				}
 
-				if err := asset.PersistToFile(a, tempDir); err != nil {
+				if err := assetStore.PersistToFile(a); err != nil {
 					t.Fatalf("failed to write asset %q to disk: %v", a.Name(), err)
 				}
 			}
 
-			newAssetStore, err := newStore(tempDir)
+			newAssetStore, err := newStore(tempDir, true)
 			if err != nil {
 				t.Fatalf("failed to create new asset store: %v", err)
 			}
