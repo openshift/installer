@@ -20,15 +20,6 @@ import (
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
-// Partition identifiers.
-const (
-	AwsPartitionID      = "aws"        // AWS Standard partition.
-	AwsCnPartitionID    = "aws-cn"     // AWS China partition.
-	AwsUsGovPartitionID = "aws-us-gov" // AWS GovCloud (US) partition.
-	AwsIsoPartitionID   = "aws-iso"    // AWS ISO (US) partition.
-	AwsIsoBPartitionID  = "aws-iso-b"  // AWS ISOB (US) partition.
-)
-
 var (
 	// v1Tov2ServiceIDMap maps v1 service ID to its v2 equivalent.
 	v1Tov2ServiceIDMap = map[string]string{
