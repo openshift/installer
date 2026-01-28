@@ -13,7 +13,7 @@ EnvironmentFile=/etc/assisted/rendezvous-host.env
 Restart=on-failure
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
-ExecStart=/usr/bin/podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --replace -d --name=agent-installer-ui --env AIUI_APP_API_URL $INSTALLER_UI_IMAGE
+ExecStart=/usr/bin/podman run --sdnotify=conmon --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=journald --rm --pod-id-file=%t/assisted-service-pod.pod-id --replace -d --name=agent-installer-ui --env AIUI_APP_API_URL $INSTALLER_UI_IMAGE
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
 

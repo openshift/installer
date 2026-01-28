@@ -67,6 +67,7 @@ Workspace_STATUS: Object (7 properties)
 │       └── QuotaNextResetTime: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 Workspace_Spec: Object (5 properties)
 ├── Etag: *string
 ├── Location: *string
@@ -116,3 +117,4 @@ Workspace_Spec: Object (5 properties)
 │   └── WorkspaceCapping: *Object (1 property)
 │       └── DailyQuotaGb: *float64
 └── Tags: map[string]string
+

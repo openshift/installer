@@ -18,5 +18,10 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			Condition:       c.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
 			Field:           field.NewPath("platform", "aws", "userProvisionedDNS"),
 		},
+		{
+			FeatureGateName: features.FeatureGateAWSDualStackInstall,
+			Condition:       c.AWS.IPFamily.DualStackEnabled(),
+			Field:           field.NewPath("platform", "aws", "ipFamily"),
+		},
 	}
 }

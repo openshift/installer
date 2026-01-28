@@ -12,7 +12,7 @@ import (
 type processingFunc = func(args []string, gciCfg config.Config) error
 
 func (e *Executor) newGciCommand(use, short, long string, aliases []string, stdInSupport bool, processingFunc processingFunc) *cobra.Command {
-	var noInlineComments, noPrefixComments, skipGenerated, skipVendor, customOrder, debug *bool
+	var noInlineComments, noPrefixComments, skipGenerated, skipVendor, customOrder, noLexOrder, debug *bool
 	var sectionStrings, sectionSeparatorStrings *[]string
 	cmd := cobra.Command{
 		Use:               use,
@@ -28,6 +28,7 @@ func (e *Executor) newGciCommand(use, short, long string, aliases []string, stdI
 				SkipGenerated:    *skipGenerated,
 				SkipVendor:       *skipVendor,
 				CustomOrder:      *customOrder,
+				NoLexOrder:       *noLexOrder,
 			}
 			gciCfg, err := config.YamlConfig{Cfg: fmtCfg, SectionStrings: *sectionStrings, SectionSeparatorStrings: *sectionSeparatorStrings}.Parse()
 			if err != nil {
@@ -61,6 +62,7 @@ localmodule: localmodule section, contains all imports from local packages`
 	skipVendor = cmd.Flags().Bool("skip-vendor", false, "Skip files inside vendor directory")
 
 	customOrder = cmd.Flags().Bool("custom-order", false, "Enable custom order of sections")
+	noLexOrder = cmd.Flags().Bool("no-lex-order", false, "Drops lexical ordering for custom sections")
 	sectionStrings = cmd.Flags().StringArrayP("section", "s", section.DefaultSections().String(), sectionHelp)
 
 	// deprecated

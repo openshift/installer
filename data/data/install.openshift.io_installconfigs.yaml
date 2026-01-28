@@ -3,7 +3,7 @@ apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.16.3
+    controller-gen.kubebuilder.io/version: v0.19.0
   name: installconfigs.install.openshift.io
 spec:
   group: install.openshift.io
@@ -5052,6 +5052,19 @@ spec:
                       different account than the rest of the cluster resources.
                       If HostedZoneRole is set, HostedZone must also be set.
                     type: string
+                  ipFamily:
+                    default: IPv4
+                    description: |-
+                      IPFamily specifies the IP address family for the cluster network.
+                      Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+                      with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+                      networking with IPv6 as the primary address family. When using dual-stack, the VPC
+                      and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+                    enum:
+                    - IPv4
+                    - DualStackIPv4Primary
+                    - DualStackIPv6Primary
+                    type: string
                   lbType:
                     description: |-
                       LBType is an optional field to specify a load balancer type.
@@ -5693,6 +5706,19 @@ spec:
                           type: string
                         type: array
                     type: object
+                  ipFamily:
+                    default: IPv4
+                    description: |-
+                      IPFamily specifies the IP address family for the cluster network.
+                      Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+                      with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+                      networking with IPv6 as the primary address family. When using dual-stack, the VNet
+                      and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+                    enum:
+                    - IPv4
+                    - DualStackIPv4Primary
+                    - DualStackIPv6Primary
+                    type: string
                   networkResourceGroupName:
                     description: NetworkResourceGroupName specifies the network resource
                       group that contains an existing VNet
@@ -6306,20 +6332,19 @@ spec:
                         description: Name contains the name of the private service
                           connect endpoint.
                         type: string
-                      region:
-                        description: |-
-                          Region is the region where the endpoint resides.
-                          When the region is empty, the location is assumed to be global.
-                        type: string
                     required:
                     - name
                     type: object
                   firewallRulesManagement:
-                    default: Managed
                     description: |-
-                      FirewallRulesManagement specifies the management policy for the cluster. Managed indicates that
-                      the firewall rules will be created and destroyed by the cluster. Unmanaged indicates that the
-                      user should create and destroy the firewall rules.
+                      FirewallRulesManagement specifies the management policy for the cluster. "Managed" indicates that
+                      the firewall rules will be created and destroyed by the cluster. "Unmanaged" indicates that the
+                      user should create and destroy the firewall rules. For Shared VPC installation, if the installer
+                      credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+                      can be absent or set to "Unmanaged" explicitly. For non-Shared VPC installation, if the installer
+                      credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+                      must be set to "Unmanaged" explicitly. And in this case, the user needs to pre-configure the VPC network
+                      and the firewall rules before the installation.
                     enum:
                     - Managed
                     - Unmanaged

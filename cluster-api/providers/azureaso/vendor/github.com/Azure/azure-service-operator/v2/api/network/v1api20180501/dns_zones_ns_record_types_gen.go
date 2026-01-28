@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20180501/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (record *DnsZonesNSRecord) ConvertTo(hub conversion.Hub) error {
 
 	return record.AssignProperties_To_DnsZonesNSRecord(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20180501-dnszonesnsrecord,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=dnszonesnsrecords,verbs=create;update,versions=v1api20180501,name=default.v1api20180501.dnszonesnsrecords.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &DnsZonesNSRecord{}
-
-// Default applies defaults to the DnsZonesNSRecord resource
-func (record *DnsZonesNSRecord) Default() {
-	record.defaultImpl()
-	var temp any = record
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (record *DnsZonesNSRecord) defaultAzureName() {
-	if record.Spec.AzureName == "" {
-		record.Spec.AzureName = record.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the DnsZonesNSRecord resource
-func (record *DnsZonesNSRecord) defaultImpl() { record.defaultAzureName() }
 
 var _ configmaps.Exporter = &DnsZonesNSRecord{}
 
@@ -173,6 +147,10 @@ func (record *DnsZonesNSRecord) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (record *DnsZonesNSRecord) Owner() *genruntime.ResourceReference {
+	if record.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(record.Spec)
 	return record.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (record *DnsZonesNSRecord) SetStatus(status genruntime.ConvertibleStatus) e
 	var st DnsZonesNSRecord_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	record.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20180501-dnszonesnsrecord,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=dnszonesnsrecords,verbs=create;update,versions=v1api20180501,name=validate.v1api20180501.dnszonesnsrecords.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &DnsZonesNSRecord{}
-
-// ValidateCreate validates the creation of the resource
-func (record *DnsZonesNSRecord) ValidateCreate() (admission.Warnings, error) {
-	validations := record.createValidations()
-	var temp any = record
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (record *DnsZonesNSRecord) ValidateDelete() (admission.Warnings, error) {
-	validations := record.deleteValidations()
-	var temp any = record
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (record *DnsZonesNSRecord) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := record.updateValidations()
-	var temp any = record
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (record *DnsZonesNSRecord) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){record.validateResourceReferences, record.validateOwnerReference, record.validateSecretDestinations, record.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (record *DnsZonesNSRecord) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (record *DnsZonesNSRecord) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return record.validateResourceReferences()
-		},
-		record.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return record.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return record.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return record.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (record *DnsZonesNSRecord) validateConfigMapDestinations() (admission.Warnings, error) {
-	if record.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(record, nil, record.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (record *DnsZonesNSRecord) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(record)
-}
-
-// validateResourceReferences validates all resource references
-func (record *DnsZonesNSRecord) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&record.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (record *DnsZonesNSRecord) validateSecretDestinations() (admission.Warnings, error) {
-	if record.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(record, nil, record.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (record *DnsZonesNSRecord) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*DnsZonesNSRecord)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, record)
 }
 
 // AssignProperties_From_DnsZonesNSRecord populates our DnsZonesNSRecord from the provided source DnsZonesNSRecord
@@ -309,7 +184,7 @@ func (record *DnsZonesNSRecord) AssignProperties_From_DnsZonesNSRecord(source *s
 	var spec DnsZonesNSRecord_Spec
 	err := spec.AssignProperties_From_DnsZonesNSRecord_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DnsZonesNSRecord_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_DnsZonesNSRecord_Spec() to populate field Spec")
 	}
 	record.Spec = spec
 
@@ -317,7 +192,7 @@ func (record *DnsZonesNSRecord) AssignProperties_From_DnsZonesNSRecord(source *s
 	var status DnsZonesNSRecord_STATUS
 	err = status.AssignProperties_From_DnsZonesNSRecord_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DnsZonesNSRecord_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_DnsZonesNSRecord_STATUS() to populate field Status")
 	}
 	record.Status = status
 
@@ -335,7 +210,7 @@ func (record *DnsZonesNSRecord) AssignProperties_To_DnsZonesNSRecord(destination
 	var spec storage.DnsZonesNSRecord_Spec
 	err := record.Spec.AssignProperties_To_DnsZonesNSRecord_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DnsZonesNSRecord_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_DnsZonesNSRecord_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (record *DnsZonesNSRecord) AssignProperties_To_DnsZonesNSRecord(destination
 	var status storage.DnsZonesNSRecord_STATUS
 	err = record.Status.AssignProperties_To_DnsZonesNSRecord_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DnsZonesNSRecord_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_DnsZonesNSRecord_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -753,13 +628,13 @@ func (record *DnsZonesNSRecord_Spec) ConvertSpecFrom(source genruntime.Convertib
 	src = &storage.DnsZonesNSRecord_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = record.AssignProperties_From_DnsZonesNSRecord_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -777,13 +652,13 @@ func (record *DnsZonesNSRecord_Spec) ConvertSpecTo(destination genruntime.Conver
 	dst = &storage.DnsZonesNSRecord_Spec{}
 	err := record.AssignProperties_To_DnsZonesNSRecord_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -801,7 +676,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 			var aaaaRecord AaaaRecord
 			err := aaaaRecord.AssignProperties_From_AaaaRecord(&aaaaRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AaaaRecord() to populate field AAAARecords")
+				return eris.Wrap(err, "calling AssignProperties_From_AaaaRecord() to populate field AAAARecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -819,7 +694,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 			var aRecord ARecord
 			err := aRecord.AssignProperties_From_ARecord(&aRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ARecord() to populate field ARecords")
+				return eris.Wrap(err, "calling AssignProperties_From_ARecord() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -836,7 +711,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 		var cnameRecord CnameRecord
 		err := cnameRecord.AssignProperties_From_CnameRecord(source.CNAMERecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CnameRecord() to populate field CNAMERecord")
+			return eris.Wrap(err, "calling AssignProperties_From_CnameRecord() to populate field CNAMERecord")
 		}
 		record.CNAMERecord = &cnameRecord
 	} else {
@@ -852,7 +727,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 			var caaRecord CaaRecord
 			err := caaRecord.AssignProperties_From_CaaRecord(&caaRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_CaaRecord() to populate field CaaRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_CaaRecord() to populate field CaaRecords")
 			}
 			caaRecordList[caaRecordIndex] = caaRecord
 		}
@@ -870,7 +745,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 			var mxRecord MxRecord
 			err := mxRecord.AssignProperties_From_MxRecord(&mxRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MxRecord() to populate field MXRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_MxRecord() to populate field MXRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -891,7 +766,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 			var nsRecord NsRecord
 			err := nsRecord.AssignProperties_From_NsRecord(&nsRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_NsRecord() to populate field NSRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_NsRecord() to populate field NSRecords")
 			}
 			nsRecordList[nsRecordIndex] = nsRecord
 		}
@@ -905,7 +780,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 		var operatorSpec DnsZonesNSRecordOperatorSpec
 		err := operatorSpec.AssignProperties_From_DnsZonesNSRecordOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DnsZonesNSRecordOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_DnsZonesNSRecordOperatorSpec() to populate field OperatorSpec")
 		}
 		record.OperatorSpec = &operatorSpec
 	} else {
@@ -929,7 +804,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 			var ptrRecord PtrRecord
 			err := ptrRecord.AssignProperties_From_PtrRecord(&ptrRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PtrRecord() to populate field PTRRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_PtrRecord() to populate field PTRRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -943,7 +818,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 		var soaRecord SoaRecord
 		err := soaRecord.AssignProperties_From_SoaRecord(source.SOARecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SoaRecord() to populate field SOARecord")
+			return eris.Wrap(err, "calling AssignProperties_From_SoaRecord() to populate field SOARecord")
 		}
 		record.SOARecord = &soaRecord
 	} else {
@@ -959,7 +834,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 			var srvRecord SrvRecord
 			err := srvRecord.AssignProperties_From_SrvRecord(&srvRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SrvRecord() to populate field SRVRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_SrvRecord() to populate field SRVRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -980,7 +855,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 			var txtRecord TxtRecord
 			err := txtRecord.AssignProperties_From_TxtRecord(&txtRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TxtRecord() to populate field TXTRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_TxtRecord() to populate field TXTRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}
@@ -994,7 +869,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_From_DnsZonesNSRecord_Spec
 		var targetResource SubResource
 		err := targetResource.AssignProperties_From_SubResource(source.TargetResource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TargetResource")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource() to populate field TargetResource")
 		}
 		record.TargetResource = &targetResource
 	} else {
@@ -1019,7 +894,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 			var aaaaRecord storage.AaaaRecord
 			err := aaaaRecordItem.AssignProperties_To_AaaaRecord(&aaaaRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AaaaRecord() to populate field AAAARecords")
+				return eris.Wrap(err, "calling AssignProperties_To_AaaaRecord() to populate field AAAARecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -1037,7 +912,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 			var aRecord storage.ARecord
 			err := aRecordItem.AssignProperties_To_ARecord(&aRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ARecord() to populate field ARecords")
+				return eris.Wrap(err, "calling AssignProperties_To_ARecord() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -1054,7 +929,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 		var cnameRecord storage.CnameRecord
 		err := record.CNAMERecord.AssignProperties_To_CnameRecord(&cnameRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CnameRecord() to populate field CNAMERecord")
+			return eris.Wrap(err, "calling AssignProperties_To_CnameRecord() to populate field CNAMERecord")
 		}
 		destination.CNAMERecord = &cnameRecord
 	} else {
@@ -1070,7 +945,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 			var caaRecord storage.CaaRecord
 			err := caaRecordItem.AssignProperties_To_CaaRecord(&caaRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_CaaRecord() to populate field CaaRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_CaaRecord() to populate field CaaRecords")
 			}
 			caaRecordList[caaRecordIndex] = caaRecord
 		}
@@ -1088,7 +963,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 			var mxRecord storage.MxRecord
 			err := mxRecordItem.AssignProperties_To_MxRecord(&mxRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MxRecord() to populate field MXRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_MxRecord() to populate field MXRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -1109,7 +984,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 			var nsRecord storage.NsRecord
 			err := nsRecordItem.AssignProperties_To_NsRecord(&nsRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_NsRecord() to populate field NSRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_NsRecord() to populate field NSRecords")
 			}
 			nsRecordList[nsRecordIndex] = nsRecord
 		}
@@ -1123,7 +998,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 		var operatorSpec storage.DnsZonesNSRecordOperatorSpec
 		err := record.OperatorSpec.AssignProperties_To_DnsZonesNSRecordOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DnsZonesNSRecordOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_DnsZonesNSRecordOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1150,7 +1025,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 			var ptrRecord storage.PtrRecord
 			err := ptrRecordItem.AssignProperties_To_PtrRecord(&ptrRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PtrRecord() to populate field PTRRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_PtrRecord() to populate field PTRRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -1164,7 +1039,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 		var soaRecord storage.SoaRecord
 		err := record.SOARecord.AssignProperties_To_SoaRecord(&soaRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SoaRecord() to populate field SOARecord")
+			return eris.Wrap(err, "calling AssignProperties_To_SoaRecord() to populate field SOARecord")
 		}
 		destination.SOARecord = &soaRecord
 	} else {
@@ -1180,7 +1055,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 			var srvRecord storage.SrvRecord
 			err := srvRecordItem.AssignProperties_To_SrvRecord(&srvRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SrvRecord() to populate field SRVRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_SrvRecord() to populate field SRVRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -1201,7 +1076,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 			var txtRecord storage.TxtRecord
 			err := txtRecordItem.AssignProperties_To_TxtRecord(&txtRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TxtRecord() to populate field TXTRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_TxtRecord() to populate field TXTRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}
@@ -1215,7 +1090,7 @@ func (record *DnsZonesNSRecord_Spec) AssignProperties_To_DnsZonesNSRecord_Spec(d
 		var targetResource storage.SubResource
 		err := record.TargetResource.AssignProperties_To_SubResource(&targetResource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TargetResource")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource() to populate field TargetResource")
 		}
 		destination.TargetResource = &targetResource
 	} else {
@@ -1245,7 +1120,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 			var aaaaRecord AaaaRecord
 			err := aaaaRecord.Initialize_From_AaaaRecord_STATUS(&aaaaRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_AaaaRecord_STATUS() to populate field AAAARecords")
+				return eris.Wrap(err, "calling Initialize_From_AaaaRecord_STATUS() to populate field AAAARecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -1263,7 +1138,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 			var aRecord ARecord
 			err := aRecord.Initialize_From_ARecord_STATUS(&aRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ARecord_STATUS() to populate field ARecords")
+				return eris.Wrap(err, "calling Initialize_From_ARecord_STATUS() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -1277,7 +1152,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 		var cnameRecord CnameRecord
 		err := cnameRecord.Initialize_From_CnameRecord_STATUS(source.CNAMERecord)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CnameRecord_STATUS() to populate field CNAMERecord")
+			return eris.Wrap(err, "calling Initialize_From_CnameRecord_STATUS() to populate field CNAMERecord")
 		}
 		record.CNAMERecord = &cnameRecord
 	} else {
@@ -1293,7 +1168,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 			var caaRecord CaaRecord
 			err := caaRecord.Initialize_From_CaaRecord_STATUS(&caaRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_CaaRecord_STATUS() to populate field CaaRecords")
+				return eris.Wrap(err, "calling Initialize_From_CaaRecord_STATUS() to populate field CaaRecords")
 			}
 			caaRecordList[caaRecordIndex] = caaRecord
 		}
@@ -1311,7 +1186,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 			var mxRecord MxRecord
 			err := mxRecord.Initialize_From_MxRecord_STATUS(&mxRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MxRecord_STATUS() to populate field MXRecords")
+				return eris.Wrap(err, "calling Initialize_From_MxRecord_STATUS() to populate field MXRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -1332,7 +1207,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 			var nsRecord NsRecord
 			err := nsRecord.Initialize_From_NsRecord_STATUS(&nsRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_NsRecord_STATUS() to populate field NSRecords")
+				return eris.Wrap(err, "calling Initialize_From_NsRecord_STATUS() to populate field NSRecords")
 			}
 			nsRecordList[nsRecordIndex] = nsRecord
 		}
@@ -1350,7 +1225,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 			var ptrRecord PtrRecord
 			err := ptrRecord.Initialize_From_PtrRecord_STATUS(&ptrRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_PtrRecord_STATUS() to populate field PTRRecords")
+				return eris.Wrap(err, "calling Initialize_From_PtrRecord_STATUS() to populate field PTRRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -1364,7 +1239,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 		var soaRecord SoaRecord
 		err := soaRecord.Initialize_From_SoaRecord_STATUS(source.SOARecord)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SoaRecord_STATUS() to populate field SOARecord")
+			return eris.Wrap(err, "calling Initialize_From_SoaRecord_STATUS() to populate field SOARecord")
 		}
 		record.SOARecord = &soaRecord
 	} else {
@@ -1380,7 +1255,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 			var srvRecord SrvRecord
 			err := srvRecord.Initialize_From_SrvRecord_STATUS(&srvRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_SrvRecord_STATUS() to populate field SRVRecords")
+				return eris.Wrap(err, "calling Initialize_From_SrvRecord_STATUS() to populate field SRVRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -1401,7 +1276,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 			var txtRecord TxtRecord
 			err := txtRecord.Initialize_From_TxtRecord_STATUS(&txtRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_TxtRecord_STATUS() to populate field TXTRecords")
+				return eris.Wrap(err, "calling Initialize_From_TxtRecord_STATUS() to populate field TXTRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}
@@ -1415,7 +1290,7 @@ func (record *DnsZonesNSRecord_Spec) Initialize_From_DnsZonesNSRecord_STATUS(sou
 		var targetResource SubResource
 		err := targetResource.Initialize_From_SubResource_STATUS(source.TargetResource)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field TargetResource")
+			return eris.Wrap(err, "calling Initialize_From_SubResource_STATUS() to populate field TargetResource")
 		}
 		record.TargetResource = &targetResource
 	} else {
@@ -1510,13 +1385,13 @@ func (record *DnsZonesNSRecord_STATUS) ConvertStatusFrom(source genruntime.Conve
 	src = &storage.DnsZonesNSRecord_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = record.AssignProperties_From_DnsZonesNSRecord_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1534,13 +1409,13 @@ func (record *DnsZonesNSRecord_STATUS) ConvertStatusTo(destination genruntime.Co
 	dst = &storage.DnsZonesNSRecord_STATUS{}
 	err := record.AssignProperties_To_DnsZonesNSRecord_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1786,7 +1661,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 			var aaaaRecord AaaaRecord_STATUS
 			err := aaaaRecord.AssignProperties_From_AaaaRecord_STATUS(&aaaaRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_AaaaRecord_STATUS() to populate field AAAARecords")
+				return eris.Wrap(err, "calling AssignProperties_From_AaaaRecord_STATUS() to populate field AAAARecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -1804,7 +1679,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 			var aRecord ARecord_STATUS
 			err := aRecord.AssignProperties_From_ARecord_STATUS(&aRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ARecord_STATUS() to populate field ARecords")
+				return eris.Wrap(err, "calling AssignProperties_From_ARecord_STATUS() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -1818,7 +1693,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 		var cnameRecord CnameRecord_STATUS
 		err := cnameRecord.AssignProperties_From_CnameRecord_STATUS(source.CNAMERecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CnameRecord_STATUS() to populate field CNAMERecord")
+			return eris.Wrap(err, "calling AssignProperties_From_CnameRecord_STATUS() to populate field CNAMERecord")
 		}
 		record.CNAMERecord = &cnameRecord
 	} else {
@@ -1834,7 +1709,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 			var caaRecord CaaRecord_STATUS
 			err := caaRecord.AssignProperties_From_CaaRecord_STATUS(&caaRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_CaaRecord_STATUS() to populate field CaaRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_CaaRecord_STATUS() to populate field CaaRecords")
 			}
 			caaRecordList[caaRecordIndex] = caaRecord
 		}
@@ -1864,7 +1739,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 			var mxRecord MxRecord_STATUS
 			err := mxRecord.AssignProperties_From_MxRecord_STATUS(&mxRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MxRecord_STATUS() to populate field MXRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_MxRecord_STATUS() to populate field MXRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -1885,7 +1760,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 			var nsRecord NsRecord_STATUS
 			err := nsRecord.AssignProperties_From_NsRecord_STATUS(&nsRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_NsRecord_STATUS() to populate field NSRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_NsRecord_STATUS() to populate field NSRecords")
 			}
 			nsRecordList[nsRecordIndex] = nsRecord
 		}
@@ -1906,7 +1781,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 			var ptrRecord PtrRecord_STATUS
 			err := ptrRecord.AssignProperties_From_PtrRecord_STATUS(&ptrRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PtrRecord_STATUS() to populate field PTRRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_PtrRecord_STATUS() to populate field PTRRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -1923,7 +1798,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 		var soaRecord SoaRecord_STATUS
 		err := soaRecord.AssignProperties_From_SoaRecord_STATUS(source.SOARecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SoaRecord_STATUS() to populate field SOARecord")
+			return eris.Wrap(err, "calling AssignProperties_From_SoaRecord_STATUS() to populate field SOARecord")
 		}
 		record.SOARecord = &soaRecord
 	} else {
@@ -1939,7 +1814,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 			var srvRecord SrvRecord_STATUS
 			err := srvRecord.AssignProperties_From_SrvRecord_STATUS(&srvRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SrvRecord_STATUS() to populate field SRVRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_SrvRecord_STATUS() to populate field SRVRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -1960,7 +1835,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 			var txtRecord TxtRecord_STATUS
 			err := txtRecord.AssignProperties_From_TxtRecord_STATUS(&txtRecordItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TxtRecord_STATUS() to populate field TXTRecords")
+				return eris.Wrap(err, "calling AssignProperties_From_TxtRecord_STATUS() to populate field TXTRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}
@@ -1974,7 +1849,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_From_DnsZonesNSRecord_ST
 		var targetResource SubResource_STATUS
 		err := targetResource.AssignProperties_From_SubResource_STATUS(source.TargetResource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field TargetResource")
+			return eris.Wrap(err, "calling AssignProperties_From_SubResource_STATUS() to populate field TargetResource")
 		}
 		record.TargetResource = &targetResource
 	} else {
@@ -2002,7 +1877,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 			var aaaaRecord storage.AaaaRecord_STATUS
 			err := aaaaRecordItem.AssignProperties_To_AaaaRecord_STATUS(&aaaaRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_AaaaRecord_STATUS() to populate field AAAARecords")
+				return eris.Wrap(err, "calling AssignProperties_To_AaaaRecord_STATUS() to populate field AAAARecords")
 			}
 			aaaaRecordList[aaaaRecordIndex] = aaaaRecord
 		}
@@ -2020,7 +1895,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 			var aRecord storage.ARecord_STATUS
 			err := aRecordItem.AssignProperties_To_ARecord_STATUS(&aRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ARecord_STATUS() to populate field ARecords")
+				return eris.Wrap(err, "calling AssignProperties_To_ARecord_STATUS() to populate field ARecords")
 			}
 			aRecordList[aRecordIndex] = aRecord
 		}
@@ -2034,7 +1909,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 		var cnameRecord storage.CnameRecord_STATUS
 		err := record.CNAMERecord.AssignProperties_To_CnameRecord_STATUS(&cnameRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CnameRecord_STATUS() to populate field CNAMERecord")
+			return eris.Wrap(err, "calling AssignProperties_To_CnameRecord_STATUS() to populate field CNAMERecord")
 		}
 		destination.CNAMERecord = &cnameRecord
 	} else {
@@ -2050,7 +1925,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 			var caaRecord storage.CaaRecord_STATUS
 			err := caaRecordItem.AssignProperties_To_CaaRecord_STATUS(&caaRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_CaaRecord_STATUS() to populate field CaaRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_CaaRecord_STATUS() to populate field CaaRecords")
 			}
 			caaRecordList[caaRecordIndex] = caaRecord
 		}
@@ -2080,7 +1955,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 			var mxRecord storage.MxRecord_STATUS
 			err := mxRecordItem.AssignProperties_To_MxRecord_STATUS(&mxRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MxRecord_STATUS() to populate field MXRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_MxRecord_STATUS() to populate field MXRecords")
 			}
 			mxRecordList[mxRecordIndex] = mxRecord
 		}
@@ -2101,7 +1976,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 			var nsRecord storage.NsRecord_STATUS
 			err := nsRecordItem.AssignProperties_To_NsRecord_STATUS(&nsRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_NsRecord_STATUS() to populate field NSRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_NsRecord_STATUS() to populate field NSRecords")
 			}
 			nsRecordList[nsRecordIndex] = nsRecord
 		}
@@ -2122,7 +1997,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 			var ptrRecord storage.PtrRecord_STATUS
 			err := ptrRecordItem.AssignProperties_To_PtrRecord_STATUS(&ptrRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PtrRecord_STATUS() to populate field PTRRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_PtrRecord_STATUS() to populate field PTRRecords")
 			}
 			ptrRecordList[ptrRecordIndex] = ptrRecord
 		}
@@ -2139,7 +2014,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 		var soaRecord storage.SoaRecord_STATUS
 		err := record.SOARecord.AssignProperties_To_SoaRecord_STATUS(&soaRecord)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SoaRecord_STATUS() to populate field SOARecord")
+			return eris.Wrap(err, "calling AssignProperties_To_SoaRecord_STATUS() to populate field SOARecord")
 		}
 		destination.SOARecord = &soaRecord
 	} else {
@@ -2155,7 +2030,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 			var srvRecord storage.SrvRecord_STATUS
 			err := srvRecordItem.AssignProperties_To_SrvRecord_STATUS(&srvRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SrvRecord_STATUS() to populate field SRVRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_SrvRecord_STATUS() to populate field SRVRecords")
 			}
 			srvRecordList[srvRecordIndex] = srvRecord
 		}
@@ -2176,7 +2051,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 			var txtRecord storage.TxtRecord_STATUS
 			err := txtRecordItem.AssignProperties_To_TxtRecord_STATUS(&txtRecord)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TxtRecord_STATUS() to populate field TXTRecords")
+				return eris.Wrap(err, "calling AssignProperties_To_TxtRecord_STATUS() to populate field TXTRecords")
 			}
 			txtRecordList[txtRecordIndex] = txtRecord
 		}
@@ -2190,7 +2065,7 @@ func (record *DnsZonesNSRecord_STATUS) AssignProperties_To_DnsZonesNSRecord_STAT
 		var targetResource storage.SubResource_STATUS
 		err := record.TargetResource.AssignProperties_To_SubResource_STATUS(&targetResource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field TargetResource")
+			return eris.Wrap(err, "calling AssignProperties_To_SubResource_STATUS() to populate field TargetResource")
 		}
 		destination.TargetResource = &targetResource
 	} else {

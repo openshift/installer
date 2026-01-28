@@ -8,6 +8,8 @@ import (
 	v20210515s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20210515/storage"
 	v20231115 "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115"
 	v20231115s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage"
+	v20240815 "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815"
+	v20240815s "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -20,5 +22,7 @@ func (extension *SqlDatabaseContainerTriggerExtension) GetExtendedResources() []
 		&v20210515.SqlDatabaseContainerTrigger{},
 		&v20210515s.SqlDatabaseContainerTrigger{},
 		&v20231115.SqlDatabaseContainerTrigger{},
-		&v20231115s.SqlDatabaseContainerTrigger{}}
+		&v20231115s.SqlDatabaseContainerTrigger{},
+		&v20240815.SqlDatabaseContainerTrigger{},
+		&v20240815s.SqlDatabaseContainerTrigger{}}
 }

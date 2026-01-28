@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20180501preview/sto
 ------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-05-01-preview"
+
 Webtest: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (19 properties)
@@ -97,19 +98,36 @@ Webtest: Resource
         ├── PropertyBag: genruntime.PropertyBag
         ├── SSLCertRemainingLifetimeCheck: *int
         └── SSLCheck: *bool
+
 augmentConversionForHeaderField: Interface
+
 augmentConversionForHeaderField_STATUS: Interface
+
 augmentConversionForWebTestGeolocation: Interface
+
 augmentConversionForWebTestGeolocation_STATUS: Interface
+
 augmentConversionForWebTestProperties_Configuration: Interface
+
 augmentConversionForWebTestProperties_Configuration_STATUS: Interface
+
 augmentConversionForWebTestProperties_Request: Interface
+
 augmentConversionForWebTestProperties_Request_STATUS: Interface
+
 augmentConversionForWebTestProperties_ValidationRules: Interface
+
 augmentConversionForWebTestProperties_ValidationRules_ContentValidation: Interface
+
 augmentConversionForWebTestProperties_ValidationRules_ContentValidation_STATUS: Interface
+
 augmentConversionForWebTestProperties_ValidationRules_STATUS: Interface
+
 augmentConversionForWebtest: Interface
+
 augmentConversionForWebtestOperatorSpec: Interface
+
 augmentConversionForWebtest_STATUS: Interface
+
 augmentConversionForWebtest_Spec: Interface
+

@@ -11,6 +11,7 @@ import (
 
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 func TestValidatePlatform(t *testing.T) {
@@ -579,6 +580,50 @@ func TestValidatePlatform(t *testing.T) {
 				},
 			},
 			expected: `^\Qtest-path.vpc.subnets: Invalid value: [{"id":"subnet-1234567890asdfghj","roles":[{"type":"BootstrapNode"},{"type":"ClusterNode"}]},{"id":"subnet-0fcf8e0392f0910d0","roles":[{"type":"IngressControllerLB"}]}]: roles [ControlPlaneExternalLB ControlPlaneInternalLB] must be assigned to at least 1 subnet\E$`,
+		},
+		{
+			name: "valid ipFamily IPv4",
+			platform: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: network.IPv4,
+			},
+		},
+		{
+			name: "valid ipFamily DualStackIPv4Primary",
+			platform: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: network.DualStackIPv4Primary,
+			},
+		},
+		{
+			name: "valid ipFamily DualStackIPv6Primary",
+			platform: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: network.DualStackIPv6Primary,
+			},
+		},
+		{
+			name: "valid ipFamily empty (defaults to IPv4)",
+			platform: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: "",
+			},
+		},
+		{
+			name: "invalid ipFamily",
+			platform: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: "InvalidValue",
+			},
+			expected: `^\Qtest-path.ipFamily: Unsupported value: "InvalidValue": supported values: "IPv4", "DualStackIPv4Primary", "DualStackIPv6Primary"\E$`,
+		},
+		{
+			name: "invalid ipFamily DualStack (old value)",
+			platform: &aws.Platform{
+				Region:   "us-east-1",
+				IPFamily: "DualStack",
+			},
+			expected: `^\Qtest-path.ipFamily: Unsupported value: "DualStack": supported values: "IPv4", "DualStackIPv4Primary", "DualStackIPv6Primary"\E$`,
 		},
 	}
 	for _, tc := range cases {

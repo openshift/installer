@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage
 ------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-05-01"
+
 AfdCustomDomain: Resource
 ├── Owner: cdn/v1api20230501.Profile
 ├── Spec: Object (10 properties)
@@ -66,6 +67,7 @@ AfdCustomDomain: Resource
         ├── ExpirationDate: *string
         ├── PropertyBag: genruntime.PropertyBag
         └── ValidationToken: *string
+
 AfdEndpoint: Resource
 ├── Owner: cdn/v1api20230501.Profile
 ├── Spec: Object (9 properties)
@@ -103,9 +105,10 @@ AfdEndpoint: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 AfdOrigin: Resource
 ├── Owner: cdn/v1api20230501.AfdOriginGroup
-├── Spec: Object (15 properties)
+├── Spec: Object (16 properties)
 │   ├── AzureName: string
 │   ├── AzureOrigin: *Object (2 properties)
 │   │   ├── PropertyBag: genruntime.PropertyBag
@@ -113,6 +116,7 @@ AfdOrigin: Resource
 │   ├── EnabledState: *string
 │   ├── EnforceCertificateNameCheck: *bool
 │   ├── HostName: *string
+│   ├── HostNameFromConfig: *genruntime.ConfigMapReference
 │   ├── HttpPort: *int
 │   ├── HttpsPort: *int
 │   ├── OperatorSpec: *Object (3 properties)
@@ -171,6 +175,7 @@ AfdOrigin: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── Weight: *int
+
 AfdOriginGroup: Resource
 ├── Owner: cdn/v1api20230501.Profile
 ├── Spec: Object (9 properties)
@@ -225,6 +230,7 @@ AfdOriginGroup: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── TrafficRestorationTimeToHealedOrNewEndpointsInMinutes: *int
     └── Type: *string
+
 Profile: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (10 properties)
@@ -282,6 +288,7 @@ Profile: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 Route: Resource
 ├── Owner: cdn/v1api20230501.AfdEndpoint
 ├── Spec: Object (16 properties)
@@ -358,6 +365,7 @@ Route: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 Rule: Resource
 ├── Owner: cdn/v1api20230501.RuleSet
 ├── Spec: Object (9 properties)
@@ -974,6 +982,7 @@ Rule: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 RuleSet: Resource
 ├── Owner: cdn/v1api20230501.Profile
 ├── Spec: Object (5 properties)
@@ -1002,6 +1011,7 @@ RuleSet: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 Secret: Resource
 ├── Owner: cdn/v1api20230501.Profile
 ├── Spec: Object (6 properties)
@@ -1095,6 +1105,7 @@ Secret: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 SecurityPolicy: Resource
 ├── Owner: cdn/v1api20230501.Profile
 ├── Spec: Object (6 properties)
@@ -1151,3 +1162,4 @@ SecurityPolicy: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+

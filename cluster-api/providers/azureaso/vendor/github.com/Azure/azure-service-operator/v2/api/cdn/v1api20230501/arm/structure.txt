@@ -62,6 +62,7 @@ AfdCustomDomain_STATUS: Object (5 properties)
 │       ├── "managedIdentity"
 │       └── "user"
 └── Type: *string
+
 AfdCustomDomain_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (5 properties)
@@ -81,6 +82,7 @@ AfdCustomDomain_Spec: Object (2 properties)
         │   └── "TLS12"
         └── Secret: *Object (1 property)
             └── Id: *string
+
 AfdEndpoint_STATUS: Object (7 properties)
 ├── Id: *string
 ├── Location: *string
@@ -124,6 +126,7 @@ AfdEndpoint_STATUS: Object (7 properties)
 │       └── "user"
 ├── Tags: map[string]string
 └── Type: *string
+
 AfdEndpoint_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -137,6 +140,7 @@ AfdEndpoint_Spec: Object (4 properties)
 │       ├── "Disabled"
 │       └── "Enabled"
 └── Tags: map[string]string
+
 AfdOriginGroup_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -188,6 +192,7 @@ AfdOriginGroup_STATUS: Object (5 properties)
 │       ├── "managedIdentity"
 │       └── "user"
 └── Type: *string
+
 AfdOriginGroup_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (4 properties)
@@ -210,6 +215,7 @@ AfdOriginGroup_Spec: Object (2 properties)
     │   ├── "Disabled"
     │   └── "Enabled"
     └── TrafficRestorationTimeToHealedOrNewEndpointsInMinutes: *int
+
 AfdOrigin_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -266,6 +272,7 @@ AfdOrigin_STATUS: Object (5 properties)
 │       ├── "managedIdentity"
 │       └── "user"
 └── Type: *string
+
 AfdOrigin_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (10 properties)
@@ -293,6 +300,7 @@ AfdOrigin_Spec: Object (2 properties)
     │       ├── "Rejected"
     │       └── "Timeout"
     └── Weight: *int
+
 Profile_STATUS: Object (10 properties)
 ├── Id: *string
 ├── Identity: *Object (4 properties)
@@ -361,6 +369,7 @@ Profile_STATUS: Object (10 properties)
 │       └── "user"
 ├── Tags: map[string]string
 └── Type: *string
+
 Profile_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -389,6 +398,7 @@ Profile_Spec: Object (6 properties)
 │       ├── "Standard_Microsoft"
 │       └── "Standard_Verizon"
 └── Tags: map[string]string
+
 Route_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -455,6 +465,7 @@ Route_STATUS: Object (5 properties)
 │       ├── "managedIdentity"
 │       └── "user"
 └── Type: *string
+
 Route_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (11 properties)
@@ -492,6 +503,7 @@ Route_Spec: Object (2 properties)
     └── SupportedProtocols: Enum (2 values)[]
         ├── "Http"
         └── "Https"
+
 RuleSet_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -524,8 +536,10 @@ RuleSet_STATUS: Object (5 properties)
 │       ├── "managedIdentity"
 │       └── "user"
 └── Type: *string
+
 RuleSet_Spec: Object (1 property)
 └── Name: string
+
 Rule_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -1143,6 +1157,7 @@ Rule_STATUS: Object (5 properties)
 │       ├── "managedIdentity"
 │       └── "user"
 └── Type: *string
+
 Rule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (4 properties)
@@ -1731,6 +1746,7 @@ Rule_Spec: Object (2 properties)
     │   ├── "Continue"
     │   └── "Stop"
     └── Order: *int
+
 Secret_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -1798,6 +1814,7 @@ Secret_STATUS: Object (5 properties)
 │       ├── "managedIdentity"
 │       └── "user"
 └── Type: *string
+
 Secret_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -1824,6 +1841,7 @@ Secret_Spec: Object (2 properties)
             ├── SecretVersion: *string
             └── Type: Enum (1 value)
                 └── "UrlSigningKey"
+
 SecurityPolicy_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -1866,6 +1884,7 @@ SecurityPolicy_STATUS: Object (5 properties)
 │       ├── "managedIdentity"
 │       └── "user"
 └── Type: *string
+
 SecurityPolicy_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -1879,3 +1898,4 @@ SecurityPolicy_Spec: Object (2 properties)
             │   └── "WebApplicationFirewall"
             └── WafPolicy: *Object (1 property)
                 └── Id: *string
+

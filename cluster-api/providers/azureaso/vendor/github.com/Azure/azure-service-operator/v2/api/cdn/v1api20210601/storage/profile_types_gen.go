@@ -11,7 +11,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -136,6 +136,10 @@ func (profile *Profile) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (profile *Profile) Owner() *genruntime.ResourceReference {
+	if profile.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(profile.Spec)
 	return profile.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -152,7 +156,7 @@ func (profile *Profile) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Profile_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	profile.Status = st
@@ -169,7 +173,7 @@ func (profile *Profile) AssignProperties_From_Profile(source *storage.Profile) e
 	var spec Profile_Spec
 	err := spec.AssignProperties_From_Profile_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Profile_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Profile_Spec() to populate field Spec")
 	}
 	profile.Spec = spec
 
@@ -177,7 +181,7 @@ func (profile *Profile) AssignProperties_From_Profile(source *storage.Profile) e
 	var status Profile_STATUS
 	err = status.AssignProperties_From_Profile_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Profile_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Profile_STATUS() to populate field Status")
 	}
 	profile.Status = status
 
@@ -186,7 +190,7 @@ func (profile *Profile) AssignProperties_From_Profile(source *storage.Profile) e
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -204,7 +208,7 @@ func (profile *Profile) AssignProperties_To_Profile(destination *storage.Profile
 	var spec storage.Profile_Spec
 	err := profile.Spec.AssignProperties_To_Profile_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Profile_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Profile_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -212,7 +216,7 @@ func (profile *Profile) AssignProperties_To_Profile(destination *storage.Profile
 	var status storage.Profile_STATUS
 	err = profile.Status.AssignProperties_To_Profile_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Profile_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Profile_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -221,7 +225,7 @@ func (profile *Profile) AssignProperties_To_Profile(destination *storage.Profile
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -294,13 +298,13 @@ func (profile *Profile_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.Profile_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = profile.AssignProperties_From_Profile_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -318,13 +322,13 @@ func (profile *Profile_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.Profile_Spec{}
 	err := profile.AssignProperties_To_Profile_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -353,7 +357,7 @@ func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *storage.
 		var operatorSpec ProfileOperatorSpec
 		err := operatorSpec.AssignProperties_From_ProfileOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ProfileOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ProfileOperatorSpec() to populate field OperatorSpec")
 		}
 		profile.OperatorSpec = &operatorSpec
 	} else {
@@ -379,7 +383,7 @@ func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *storage.
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		profile.Sku = &sku
 	} else {
@@ -401,7 +405,7 @@ func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *storage.
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForProfile_Spec); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -422,7 +426,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *stora
 		var identity storage.ManagedServiceIdentity
 		err := propertyBag.Pull("Identity", &identity)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Identity' from propertyBag")
+			return eris.Wrap(err, "pulling 'Identity' from propertyBag")
 		}
 
 		destination.Identity = &identity
@@ -438,7 +442,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *stora
 		var operatorSpec storage.ProfileOperatorSpec
 		err := profile.OperatorSpec.AssignProperties_To_ProfileOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ProfileOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ProfileOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -464,7 +468,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *stora
 		var sku storage.Sku
 		err := profile.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -486,7 +490,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *stora
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForProfile_Spec); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -527,13 +531,13 @@ func (profile *Profile_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.Profile_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = profile.AssignProperties_From_Profile_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -551,13 +555,13 @@ func (profile *Profile_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.Profile_STATUS{}
 	err := profile.AssignProperties_To_Profile_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -614,7 +618,7 @@ func (profile *Profile_STATUS) AssignProperties_From_Profile_STATUS(source *stor
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		profile.Sku = &sku
 	} else {
@@ -626,7 +630,7 @@ func (profile *Profile_STATUS) AssignProperties_From_Profile_STATUS(source *stor
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		profile.SystemData = &systemDatum
 	} else {
@@ -651,7 +655,7 @@ func (profile *Profile_STATUS) AssignProperties_From_Profile_STATUS(source *stor
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -672,7 +676,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *s
 		var extendedProperty map[string]string
 		err := propertyBag.Pull("ExtendedProperties", &extendedProperty)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ExtendedProperties' from propertyBag")
+			return eris.Wrap(err, "pulling 'ExtendedProperties' from propertyBag")
 		}
 
 		destination.ExtendedProperties = extendedProperty
@@ -691,7 +695,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *s
 		var identity storage.ManagedServiceIdentity_STATUS
 		err := propertyBag.Pull("Identity", &identity)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Identity' from propertyBag")
+			return eris.Wrap(err, "pulling 'Identity' from propertyBag")
 		}
 
 		destination.Identity = &identity
@@ -722,7 +726,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *s
 		var sku storage.Sku_STATUS
 		err := profile.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -734,7 +738,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *s
 		var systemDatum storage.SystemData_STATUS
 		err := profile.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -759,7 +763,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *s
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForProfile_STATUS); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -838,7 +842,7 @@ func (operator *ProfileOperatorSpec) AssignProperties_From_ProfileOperatorSpec(s
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForProfileOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -899,7 +903,7 @@ func (operator *ProfileOperatorSpec) AssignProperties_To_ProfileOperatorSpec(des
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForProfileOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -957,7 +961,7 @@ func (sku *Sku) AssignProperties_From_Sku(source *storage.Sku) error {
 	if augmentedSku, ok := skuAsAny.(augmentConversionForSku); ok {
 		err := augmentedSku.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -985,7 +989,7 @@ func (sku *Sku) AssignProperties_To_Sku(destination *storage.Sku) error {
 	if augmentedSku, ok := skuAsAny.(augmentConversionForSku); ok {
 		err := augmentedSku.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1043,7 +1047,7 @@ func (sku *Sku_STATUS) AssignProperties_From_Sku_STATUS(source *storage.Sku_STAT
 	if augmentedSku, ok := skuAsAny.(augmentConversionForSku_STATUS); ok {
 		err := augmentedSku.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1071,7 +1075,7 @@ func (sku *Sku_STATUS) AssignProperties_To_Sku_STATUS(destination *storage.Sku_S
 	if augmentedSku, ok := skuAsAny.(augmentConversionForSku_STATUS); ok {
 		err := augmentedSku.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1126,7 +1130,7 @@ func (data *SystemData_STATUS) AssignProperties_From_SystemData_STATUS(source *s
 	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
 		err := augmentedData.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1169,7 +1173,7 @@ func (data *SystemData_STATUS) AssignProperties_To_SystemData_STATUS(destination
 	if augmentedData, ok := dataAsAny.(augmentConversionForSystemData_STATUS); ok {
 		err := augmentedData.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

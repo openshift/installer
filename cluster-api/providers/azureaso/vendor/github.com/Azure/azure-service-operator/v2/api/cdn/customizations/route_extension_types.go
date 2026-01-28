@@ -36,7 +36,6 @@ func (e *RouteExtension) ClassifyError(
 		return core.CloudErrorDetails{}, err
 	}
 
-	// Override is to treat Conflict as retryable for Redis, if the message contains "try again later"
 	if isRouteRetryableBadRequest(cloudError) {
 		details.Classification = core.ErrorRetryable
 	}
@@ -44,7 +43,7 @@ func (e *RouteExtension) ClassifyError(
 	return details, nil
 }
 
-// isRetryableBadRequest checks the passed error to see if it is a retryable conflict, returning true if it is.
+// isRouteRetryableBadRequest checks the passed error to see if it is a retryable error, returning true if it is.
 func isRouteRetryableBadRequest(err *genericarmclient.CloudError) bool {
 	if err == nil {
 		return false

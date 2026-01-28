@@ -7,19 +7,16 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/datafactory/v1api20180601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -71,29 +68,6 @@ func (factory *Factory) ConvertTo(hub conversion.Hub) error {
 
 	return factory.AssignProperties_To_Factory(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-datafactory-azure-com-v1api20180601-factory,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=datafactory.azure.com,resources=factories,verbs=create;update,versions=v1api20180601,name=default.v1api20180601.factories.datafactory.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Factory{}
-
-// Default applies defaults to the Factory resource
-func (factory *Factory) Default() {
-	factory.defaultImpl()
-	var temp any = factory
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (factory *Factory) defaultAzureName() {
-	if factory.Spec.AzureName == "" {
-		factory.Spec.AzureName = factory.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Factory resource
-func (factory *Factory) defaultImpl() { factory.defaultAzureName() }
 
 var _ configmaps.Exporter = &Factory{}
 
@@ -174,6 +148,10 @@ func (factory *Factory) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (factory *Factory) Owner() *genruntime.ResourceReference {
+	if factory.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(factory.Spec)
 	return factory.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,114 +168,11 @@ func (factory *Factory) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Factory_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	factory.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-datafactory-azure-com-v1api20180601-factory,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=datafactory.azure.com,resources=factories,verbs=create;update,versions=v1api20180601,name=validate.v1api20180601.factories.datafactory.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Factory{}
-
-// ValidateCreate validates the creation of the resource
-func (factory *Factory) ValidateCreate() (admission.Warnings, error) {
-	validations := factory.createValidations()
-	var temp any = factory
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (factory *Factory) ValidateDelete() (admission.Warnings, error) {
-	validations := factory.deleteValidations()
-	var temp any = factory
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (factory *Factory) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := factory.updateValidations()
-	var temp any = factory
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (factory *Factory) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){factory.validateResourceReferences, factory.validateOwnerReference, factory.validateSecretDestinations, factory.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (factory *Factory) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (factory *Factory) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return factory.validateResourceReferences()
-		},
-		factory.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return factory.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return factory.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return factory.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (factory *Factory) validateConfigMapDestinations() (admission.Warnings, error) {
-	if factory.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(factory, nil, factory.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (factory *Factory) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(factory)
-}
-
-// validateResourceReferences validates all resource references
-func (factory *Factory) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&factory.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (factory *Factory) validateSecretDestinations() (admission.Warnings, error) {
-	if factory.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(factory, nil, factory.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (factory *Factory) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Factory)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, factory)
 }
 
 // AssignProperties_From_Factory populates our Factory from the provided source Factory
@@ -310,7 +185,7 @@ func (factory *Factory) AssignProperties_From_Factory(source *storage.Factory) e
 	var spec Factory_Spec
 	err := spec.AssignProperties_From_Factory_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Factory_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Factory_Spec() to populate field Spec")
 	}
 	factory.Spec = spec
 
@@ -318,7 +193,7 @@ func (factory *Factory) AssignProperties_From_Factory(source *storage.Factory) e
 	var status Factory_STATUS
 	err = status.AssignProperties_From_Factory_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Factory_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Factory_STATUS() to populate field Status")
 	}
 	factory.Status = status
 
@@ -336,7 +211,7 @@ func (factory *Factory) AssignProperties_To_Factory(destination *storage.Factory
 	var spec storage.Factory_Spec
 	err := factory.Spec.AssignProperties_To_Factory_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Factory_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Factory_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -344,7 +219,7 @@ func (factory *Factory) AssignProperties_To_Factory(destination *storage.Factory
 	var status storage.Factory_STATUS
 	err = factory.Status.AssignProperties_To_Factory_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Factory_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Factory_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -659,13 +534,13 @@ func (factory *Factory_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.Factory_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = factory.AssignProperties_From_Factory_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -683,13 +558,13 @@ func (factory *Factory_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.Factory_Spec{}
 	err := factory.AssignProperties_To_Factory_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -719,7 +594,7 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *storage.
 		var encryption EncryptionConfiguration
 		err := encryption.AssignProperties_From_EncryptionConfiguration(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionConfiguration() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionConfiguration() to populate field Encryption")
 		}
 		factory.Encryption = &encryption
 	} else {
@@ -735,7 +610,7 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *storage.
 			var globalParameter GlobalParameterSpecification
 			err := globalParameter.AssignProperties_From_GlobalParameterSpecification(&globalParameterValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_GlobalParameterSpecification() to populate field GlobalParameters")
+				return eris.Wrap(err, "calling AssignProperties_From_GlobalParameterSpecification() to populate field GlobalParameters")
 			}
 			globalParameterMap[globalParameterKey] = globalParameter
 		}
@@ -749,7 +624,7 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *storage.
 		var identity FactoryIdentity
 		err := identity.AssignProperties_From_FactoryIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryIdentity() to populate field Identity")
 		}
 		factory.Identity = &identity
 	} else {
@@ -764,7 +639,7 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *storage.
 		var operatorSpec FactoryOperatorSpec
 		err := operatorSpec.AssignProperties_From_FactoryOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryOperatorSpec() to populate field OperatorSpec")
 		}
 		factory.OperatorSpec = &operatorSpec
 	} else {
@@ -793,7 +668,7 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *storage.
 		var purviewConfiguration PurviewConfiguration
 		err := purviewConfiguration.AssignProperties_From_PurviewConfiguration(source.PurviewConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PurviewConfiguration() to populate field PurviewConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_PurviewConfiguration() to populate field PurviewConfiguration")
 		}
 		factory.PurviewConfiguration = &purviewConfiguration
 	} else {
@@ -805,7 +680,7 @@ func (factory *Factory_Spec) AssignProperties_From_Factory_Spec(source *storage.
 		var repoConfiguration FactoryRepoConfiguration
 		err := repoConfiguration.AssignProperties_From_FactoryRepoConfiguration(source.RepoConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryRepoConfiguration() to populate field RepoConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryRepoConfiguration() to populate field RepoConfiguration")
 		}
 		factory.RepoConfiguration = &repoConfiguration
 	} else {
@@ -845,7 +720,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *stora
 		var encryption storage.EncryptionConfiguration
 		err := factory.Encryption.AssignProperties_To_EncryptionConfiguration(&encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionConfiguration() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionConfiguration() to populate field Encryption")
 		}
 		destination.Encryption = &encryption
 	} else {
@@ -861,7 +736,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *stora
 			var globalParameter storage.GlobalParameterSpecification
 			err := globalParameterValue.AssignProperties_To_GlobalParameterSpecification(&globalParameter)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_GlobalParameterSpecification() to populate field GlobalParameters")
+				return eris.Wrap(err, "calling AssignProperties_To_GlobalParameterSpecification() to populate field GlobalParameters")
 			}
 			globalParameterMap[globalParameterKey] = globalParameter
 		}
@@ -875,7 +750,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *stora
 		var identity storage.FactoryIdentity
 		err := factory.Identity.AssignProperties_To_FactoryIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -890,7 +765,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *stora
 		var operatorSpec storage.FactoryOperatorSpec
 		err := factory.OperatorSpec.AssignProperties_To_FactoryOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -921,7 +796,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *stora
 		var purviewConfiguration storage.PurviewConfiguration
 		err := factory.PurviewConfiguration.AssignProperties_To_PurviewConfiguration(&purviewConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PurviewConfiguration() to populate field PurviewConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_PurviewConfiguration() to populate field PurviewConfiguration")
 		}
 		destination.PurviewConfiguration = &purviewConfiguration
 	} else {
@@ -933,7 +808,7 @@ func (factory *Factory_Spec) AssignProperties_To_Factory_Spec(destination *stora
 		var repoConfiguration storage.FactoryRepoConfiguration
 		err := factory.RepoConfiguration.AssignProperties_To_FactoryRepoConfiguration(&repoConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryRepoConfiguration() to populate field RepoConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryRepoConfiguration() to populate field RepoConfiguration")
 		}
 		destination.RepoConfiguration = &repoConfiguration
 	} else {
@@ -975,7 +850,7 @@ func (factory *Factory_Spec) Initialize_From_Factory_STATUS(source *Factory_STAT
 		var encryption EncryptionConfiguration
 		err := encryption.Initialize_From_EncryptionConfiguration_STATUS(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EncryptionConfiguration_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling Initialize_From_EncryptionConfiguration_STATUS() to populate field Encryption")
 		}
 		factory.Encryption = &encryption
 	} else {
@@ -991,7 +866,7 @@ func (factory *Factory_Spec) Initialize_From_Factory_STATUS(source *Factory_STAT
 			var globalParameter GlobalParameterSpecification
 			err := globalParameter.Initialize_From_GlobalParameterSpecification_STATUS(&globalParameterValue)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_GlobalParameterSpecification_STATUS() to populate field GlobalParameters")
+				return eris.Wrap(err, "calling Initialize_From_GlobalParameterSpecification_STATUS() to populate field GlobalParameters")
 			}
 			globalParameterMap[globalParameterKey] = globalParameter
 		}
@@ -1005,7 +880,7 @@ func (factory *Factory_Spec) Initialize_From_Factory_STATUS(source *Factory_STAT
 		var identity FactoryIdentity
 		err := identity.Initialize_From_FactoryIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_FactoryIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_FactoryIdentity_STATUS() to populate field Identity")
 		}
 		factory.Identity = &identity
 	} else {
@@ -1028,7 +903,7 @@ func (factory *Factory_Spec) Initialize_From_Factory_STATUS(source *Factory_STAT
 		var purviewConfiguration PurviewConfiguration
 		err := purviewConfiguration.Initialize_From_PurviewConfiguration_STATUS(source.PurviewConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PurviewConfiguration_STATUS() to populate field PurviewConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_PurviewConfiguration_STATUS() to populate field PurviewConfiguration")
 		}
 		factory.PurviewConfiguration = &purviewConfiguration
 	} else {
@@ -1040,7 +915,7 @@ func (factory *Factory_Spec) Initialize_From_Factory_STATUS(source *Factory_STAT
 		var repoConfiguration FactoryRepoConfiguration
 		err := repoConfiguration.Initialize_From_FactoryRepoConfiguration_STATUS(source.RepoConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_FactoryRepoConfiguration_STATUS() to populate field RepoConfiguration")
+			return eris.Wrap(err, "calling Initialize_From_FactoryRepoConfiguration_STATUS() to populate field RepoConfiguration")
 		}
 		factory.RepoConfiguration = &repoConfiguration
 	} else {
@@ -1129,13 +1004,13 @@ func (factory *Factory_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.Factory_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = factory.AssignProperties_From_Factory_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1153,13 +1028,13 @@ func (factory *Factory_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.Factory_STATUS{}
 	err := factory.AssignProperties_To_Factory_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1368,7 +1243,7 @@ func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *stor
 		var encryption EncryptionConfiguration_STATUS
 		err := encryption.AssignProperties_From_EncryptionConfiguration_STATUS(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionConfiguration_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionConfiguration_STATUS() to populate field Encryption")
 		}
 		factory.Encryption = &encryption
 	} else {
@@ -1384,7 +1259,7 @@ func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *stor
 			var globalParameter GlobalParameterSpecification_STATUS
 			err := globalParameter.AssignProperties_From_GlobalParameterSpecification_STATUS(&globalParameterValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_GlobalParameterSpecification_STATUS() to populate field GlobalParameters")
+				return eris.Wrap(err, "calling AssignProperties_From_GlobalParameterSpecification_STATUS() to populate field GlobalParameters")
 			}
 			globalParameterMap[globalParameterKey] = globalParameter
 		}
@@ -1401,7 +1276,7 @@ func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *stor
 		var identity FactoryIdentity_STATUS
 		err := identity.AssignProperties_From_FactoryIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryIdentity_STATUS() to populate field Identity")
 		}
 		factory.Identity = &identity
 	} else {
@@ -1431,7 +1306,7 @@ func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *stor
 		var purviewConfiguration PurviewConfiguration_STATUS
 		err := purviewConfiguration.AssignProperties_From_PurviewConfiguration_STATUS(source.PurviewConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PurviewConfiguration_STATUS() to populate field PurviewConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_PurviewConfiguration_STATUS() to populate field PurviewConfiguration")
 		}
 		factory.PurviewConfiguration = &purviewConfiguration
 	} else {
@@ -1443,7 +1318,7 @@ func (factory *Factory_STATUS) AssignProperties_From_Factory_STATUS(source *stor
 		var repoConfiguration FactoryRepoConfiguration_STATUS
 		err := repoConfiguration.AssignProperties_From_FactoryRepoConfiguration_STATUS(source.RepoConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryRepoConfiguration_STATUS() to populate field RepoConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryRepoConfiguration_STATUS() to populate field RepoConfiguration")
 		}
 		factory.RepoConfiguration = &repoConfiguration
 	} else {
@@ -1495,7 +1370,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *s
 		var encryption storage.EncryptionConfiguration_STATUS
 		err := factory.Encryption.AssignProperties_To_EncryptionConfiguration_STATUS(&encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionConfiguration_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionConfiguration_STATUS() to populate field Encryption")
 		}
 		destination.Encryption = &encryption
 	} else {
@@ -1511,7 +1386,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *s
 			var globalParameter storage.GlobalParameterSpecification_STATUS
 			err := globalParameterValue.AssignProperties_To_GlobalParameterSpecification_STATUS(&globalParameter)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_GlobalParameterSpecification_STATUS() to populate field GlobalParameters")
+				return eris.Wrap(err, "calling AssignProperties_To_GlobalParameterSpecification_STATUS() to populate field GlobalParameters")
 			}
 			globalParameterMap[globalParameterKey] = globalParameter
 		}
@@ -1528,7 +1403,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *s
 		var identity storage.FactoryIdentity_STATUS
 		err := factory.Identity.AssignProperties_To_FactoryIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1557,7 +1432,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *s
 		var purviewConfiguration storage.PurviewConfiguration_STATUS
 		err := factory.PurviewConfiguration.AssignProperties_To_PurviewConfiguration_STATUS(&purviewConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PurviewConfiguration_STATUS() to populate field PurviewConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_PurviewConfiguration_STATUS() to populate field PurviewConfiguration")
 		}
 		destination.PurviewConfiguration = &purviewConfiguration
 	} else {
@@ -1569,7 +1444,7 @@ func (factory *Factory_STATUS) AssignProperties_To_Factory_STATUS(destination *s
 		var repoConfiguration storage.FactoryRepoConfiguration_STATUS
 		err := factory.RepoConfiguration.AssignProperties_To_FactoryRepoConfiguration_STATUS(&repoConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryRepoConfiguration_STATUS() to populate field RepoConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryRepoConfiguration_STATUS() to populate field RepoConfiguration")
 		}
 		destination.RepoConfiguration = &repoConfiguration
 	} else {
@@ -1706,7 +1581,7 @@ func (configuration *EncryptionConfiguration) AssignProperties_From_EncryptionCo
 		var identity CMKIdentityDefinition
 		err := identity.AssignProperties_From_CMKIdentityDefinition(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CMKIdentityDefinition() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_CMKIdentityDefinition() to populate field Identity")
 		}
 		configuration.Identity = &identity
 	} else {
@@ -1736,7 +1611,7 @@ func (configuration *EncryptionConfiguration) AssignProperties_To_EncryptionConf
 		var identity storage.CMKIdentityDefinition
 		err := configuration.Identity.AssignProperties_To_CMKIdentityDefinition(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CMKIdentityDefinition() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_CMKIdentityDefinition() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1771,7 +1646,7 @@ func (configuration *EncryptionConfiguration) Initialize_From_EncryptionConfigur
 		var identity CMKIdentityDefinition
 		err := identity.Initialize_From_CMKIdentityDefinition_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CMKIdentityDefinition_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_CMKIdentityDefinition_STATUS() to populate field Identity")
 		}
 		configuration.Identity = &identity
 	} else {
@@ -1862,7 +1737,7 @@ func (configuration *EncryptionConfiguration_STATUS) AssignProperties_From_Encry
 		var identity CMKIdentityDefinition_STATUS
 		err := identity.AssignProperties_From_CMKIdentityDefinition_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CMKIdentityDefinition_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_CMKIdentityDefinition_STATUS() to populate field Identity")
 		}
 		configuration.Identity = &identity
 	} else {
@@ -1892,7 +1767,7 @@ func (configuration *EncryptionConfiguration_STATUS) AssignProperties_To_Encrypt
 		var identity storage.CMKIdentityDefinition_STATUS
 		err := configuration.Identity.AssignProperties_To_CMKIdentityDefinition_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CMKIdentityDefinition_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_CMKIdentityDefinition_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -2006,7 +1881,7 @@ func (identity *FactoryIdentity) AssignProperties_From_FactoryIdentity(source *s
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -2041,7 +1916,7 @@ func (identity *FactoryIdentity) AssignProperties_To_FactoryIdentity(destination
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -2443,7 +2318,7 @@ func (configuration *FactoryRepoConfiguration) AssignProperties_From_FactoryRepo
 		var factoryGitHub FactoryGitHubConfiguration
 		err := factoryGitHub.AssignProperties_From_FactoryGitHubConfiguration(source.FactoryGitHub)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryGitHubConfiguration() to populate field FactoryGitHub")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryGitHubConfiguration() to populate field FactoryGitHub")
 		}
 		configuration.FactoryGitHub = &factoryGitHub
 	} else {
@@ -2455,7 +2330,7 @@ func (configuration *FactoryRepoConfiguration) AssignProperties_From_FactoryRepo
 		var factoryVSTS FactoryVSTSConfiguration
 		err := factoryVSTS.AssignProperties_From_FactoryVSTSConfiguration(source.FactoryVSTS)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryVSTSConfiguration() to populate field FactoryVSTS")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryVSTSConfiguration() to populate field FactoryVSTS")
 		}
 		configuration.FactoryVSTS = &factoryVSTS
 	} else {
@@ -2476,7 +2351,7 @@ func (configuration *FactoryRepoConfiguration) AssignProperties_To_FactoryRepoCo
 		var factoryGitHub storage.FactoryGitHubConfiguration
 		err := configuration.FactoryGitHub.AssignProperties_To_FactoryGitHubConfiguration(&factoryGitHub)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryGitHubConfiguration() to populate field FactoryGitHub")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryGitHubConfiguration() to populate field FactoryGitHub")
 		}
 		destination.FactoryGitHub = &factoryGitHub
 	} else {
@@ -2488,7 +2363,7 @@ func (configuration *FactoryRepoConfiguration) AssignProperties_To_FactoryRepoCo
 		var factoryVSTS storage.FactoryVSTSConfiguration
 		err := configuration.FactoryVSTS.AssignProperties_To_FactoryVSTSConfiguration(&factoryVSTS)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryVSTSConfiguration() to populate field FactoryVSTS")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryVSTSConfiguration() to populate field FactoryVSTS")
 		}
 		destination.FactoryVSTS = &factoryVSTS
 	} else {
@@ -2514,7 +2389,7 @@ func (configuration *FactoryRepoConfiguration) Initialize_From_FactoryRepoConfig
 		var factoryGitHub FactoryGitHubConfiguration
 		err := factoryGitHub.Initialize_From_FactoryGitHubConfiguration_STATUS(source.FactoryGitHub)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_FactoryGitHubConfiguration_STATUS() to populate field FactoryGitHub")
+			return eris.Wrap(err, "calling Initialize_From_FactoryGitHubConfiguration_STATUS() to populate field FactoryGitHub")
 		}
 		configuration.FactoryGitHub = &factoryGitHub
 	} else {
@@ -2526,7 +2401,7 @@ func (configuration *FactoryRepoConfiguration) Initialize_From_FactoryRepoConfig
 		var factoryVSTS FactoryVSTSConfiguration
 		err := factoryVSTS.Initialize_From_FactoryVSTSConfiguration_STATUS(source.FactoryVSTS)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_FactoryVSTSConfiguration_STATUS() to populate field FactoryVSTS")
+			return eris.Wrap(err, "calling Initialize_From_FactoryVSTSConfiguration_STATUS() to populate field FactoryVSTS")
 		}
 		configuration.FactoryVSTS = &factoryVSTS
 	} else {
@@ -2593,7 +2468,7 @@ func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_From_Fact
 		var factoryGitHub FactoryGitHubConfiguration_STATUS
 		err := factoryGitHub.AssignProperties_From_FactoryGitHubConfiguration_STATUS(source.FactoryGitHub)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryGitHubConfiguration_STATUS() to populate field FactoryGitHub")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryGitHubConfiguration_STATUS() to populate field FactoryGitHub")
 		}
 		configuration.FactoryGitHub = &factoryGitHub
 	} else {
@@ -2605,7 +2480,7 @@ func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_From_Fact
 		var factoryVSTS FactoryVSTSConfiguration_STATUS
 		err := factoryVSTS.AssignProperties_From_FactoryVSTSConfiguration_STATUS(source.FactoryVSTS)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FactoryVSTSConfiguration_STATUS() to populate field FactoryVSTS")
+			return eris.Wrap(err, "calling AssignProperties_From_FactoryVSTSConfiguration_STATUS() to populate field FactoryVSTS")
 		}
 		configuration.FactoryVSTS = &factoryVSTS
 	} else {
@@ -2626,7 +2501,7 @@ func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_To_Factor
 		var factoryGitHub storage.FactoryGitHubConfiguration_STATUS
 		err := configuration.FactoryGitHub.AssignProperties_To_FactoryGitHubConfiguration_STATUS(&factoryGitHub)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryGitHubConfiguration_STATUS() to populate field FactoryGitHub")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryGitHubConfiguration_STATUS() to populate field FactoryGitHub")
 		}
 		destination.FactoryGitHub = &factoryGitHub
 	} else {
@@ -2638,7 +2513,7 @@ func (configuration *FactoryRepoConfiguration_STATUS) AssignProperties_To_Factor
 		var factoryVSTS storage.FactoryVSTSConfiguration_STATUS
 		err := configuration.FactoryVSTS.AssignProperties_To_FactoryVSTSConfiguration_STATUS(&factoryVSTS)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FactoryVSTSConfiguration_STATUS() to populate field FactoryVSTS")
+			return eris.Wrap(err, "calling AssignProperties_To_FactoryVSTSConfiguration_STATUS() to populate field FactoryVSTS")
 		}
 		destination.FactoryVSTS = &factoryVSTS
 	} else {
@@ -3448,7 +3323,7 @@ func (configuration *FactoryGitHubConfiguration) AssignProperties_From_FactoryGi
 		var clientSecret GitHubClientSecret
 		err := clientSecret.AssignProperties_From_GitHubClientSecret(source.ClientSecret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_GitHubClientSecret() to populate field ClientSecret")
+			return eris.Wrap(err, "calling AssignProperties_From_GitHubClientSecret() to populate field ClientSecret")
 		}
 		configuration.ClientSecret = &clientSecret
 	} else {
@@ -3507,7 +3382,7 @@ func (configuration *FactoryGitHubConfiguration) AssignProperties_To_FactoryGitH
 		var clientSecret storage.GitHubClientSecret
 		err := configuration.ClientSecret.AssignProperties_To_GitHubClientSecret(&clientSecret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_GitHubClientSecret() to populate field ClientSecret")
+			return eris.Wrap(err, "calling AssignProperties_To_GitHubClientSecret() to populate field ClientSecret")
 		}
 		destination.ClientSecret = &clientSecret
 	} else {
@@ -3570,7 +3445,7 @@ func (configuration *FactoryGitHubConfiguration) Initialize_From_FactoryGitHubCo
 		var clientSecret GitHubClientSecret
 		err := clientSecret.Initialize_From_GitHubClientSecret_STATUS(source.ClientSecret)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_GitHubClientSecret_STATUS() to populate field ClientSecret")
+			return eris.Wrap(err, "calling Initialize_From_GitHubClientSecret_STATUS() to populate field ClientSecret")
 		}
 		configuration.ClientSecret = &clientSecret
 	} else {
@@ -3742,7 +3617,7 @@ func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_From_Fa
 		var clientSecret GitHubClientSecret_STATUS
 		err := clientSecret.AssignProperties_From_GitHubClientSecret_STATUS(source.ClientSecret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_GitHubClientSecret_STATUS() to populate field ClientSecret")
+			return eris.Wrap(err, "calling AssignProperties_From_GitHubClientSecret_STATUS() to populate field ClientSecret")
 		}
 		configuration.ClientSecret = &clientSecret
 	} else {
@@ -3801,7 +3676,7 @@ func (configuration *FactoryGitHubConfiguration_STATUS) AssignProperties_To_Fact
 		var clientSecret storage.GitHubClientSecret_STATUS
 		err := configuration.ClientSecret.AssignProperties_To_GitHubClientSecret_STATUS(&clientSecret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_GitHubClientSecret_STATUS() to populate field ClientSecret")
+			return eris.Wrap(err, "calling AssignProperties_To_GitHubClientSecret_STATUS() to populate field ClientSecret")
 		}
 		destination.ClientSecret = &clientSecret
 	} else {

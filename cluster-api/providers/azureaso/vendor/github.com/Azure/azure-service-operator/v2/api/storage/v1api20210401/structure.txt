@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/storage/v1api20210401
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-04-01"
+
 StorageAccount: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (25 properties)
@@ -396,6 +397,7 @@ StorageAccount: Resource
     ├── SupportsHttpsTrafficOnly: *bool
     ├── Tags: map[string]string
     └── Type: *string
+
 StorageAccountsBlobService: Resource
 ├── Owner: StorageAccount
 ├── Spec: Object (11 properties)
@@ -501,6 +503,7 @@ StorageAccountsBlobService: Resource
     │       ├── "Premium"
     │       └── "Standard"
     └── Type: *string
+
 StorageAccountsBlobServicesContainer: Resource
 ├── Owner: StorageAccountsBlobService
 ├── Spec: Object (8 properties)
@@ -583,6 +586,7 @@ StorageAccountsBlobServicesContainer: Resource
     ├── RemainingRetentionDays: *int
     ├── Type: *string
     └── Version: *string
+
 StorageAccountsManagementPolicy: Resource
 ├── Owner: StorageAccount
 ├── Spec: Object (3 properties)
@@ -704,6 +708,7 @@ StorageAccountsManagementPolicy: Resource
     │       └── Type: *Enum (1 value)
     │           └── "Lifecycle"
     └── Type: *string
+
 StorageAccountsQueueService: Resource
 ├── Owner: StorageAccount
 ├── Spec: Object (3 properties)
@@ -744,6 +749,7 @@ StorageAccountsQueueService: Resource
     ├── Id: *string
     ├── Name: *string
     └── Type: *string
+
 StorageAccountsQueueServicesQueue: Resource
 ├── Owner: StorageAccountsQueueService
 ├── Spec: Object (4 properties)
@@ -762,3 +768,4 @@ StorageAccountsQueueServicesQueue: Resource
     ├── Metadata: map[string]string
     ├── Name: *string
     └── Type: *string
+

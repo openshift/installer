@@ -10,15 +10,16 @@ import (
 	"fmt"
 	"strings"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/containerservice/armcontainerservice"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	containerservice "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -45,7 +46,7 @@ func (ext *ManagedClusterExtension) ExportKubernetesSecrets(
 	// if the hub storage version changes.
 	typedObj, ok := obj.(*containerservice.ManagedCluster)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *containerservice.ManagedCluster", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *containerservice.ManagedCluster", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -71,7 +72,7 @@ func (ext *ManagedClusterExtension) ExportKubernetesSecrets(
 	var mcClient *armcontainerservice.ManagedClustersClient
 	mcClient, err = armcontainerservice.NewManagedClustersClient(subscription, armClient.Creds(), armClient.ClientOptions())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create new ManagedClustersClient")
+		return nil, eris.Wrapf(err, "failed to create new ManagedClustersClient")
 	}
 
 	// TODO: In the future we may need variants of these secret properties that configure usage of the public FQDN rather than the private one, see:
@@ -81,9 +82,9 @@ func (ext *ManagedClusterExtension) ExportKubernetesSecrets(
 		var resp armcontainerservice.ManagedClustersClientListClusterAdminCredentialsResponse
 		resp, err = mcClient.ListClusterAdminCredentials(ctx, id.ResourceGroupName, typedObj.AzureName(), nil)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed listing admin credentials")
+			return nil, eris.Wrapf(err, "failed listing admin credentials")
 		}
-		if len(resp.CredentialResults.Kubeconfigs) > 0 {
+		if len(resp.Kubeconfigs) > 0 {
 			// It's awkward that we're ignoring the other possible responses here, but that's what the AZ CLI does too:
 			// https://github.com/Azure/azure-cli/blob/6786b5014ae71eb6d93f95e1ad123e9171368e8f/src/azure-cli/azure/cli/command_modules/acs/custom.py#L2166
 			adminCredentials = string(resp.CredentialResults.Kubeconfigs[0].Value)
@@ -95,9 +96,9 @@ func (ext *ManagedClusterExtension) ExportKubernetesSecrets(
 		var resp armcontainerservice.ManagedClustersClientListClusterUserCredentialsResponse
 		resp, err = mcClient.ListClusterUserCredentials(ctx, id.ResourceGroupName, typedObj.AzureName(), nil)
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed listing admin credentials")
+			return nil, eris.Wrapf(err, "failed listing admin credentials")
 		}
-		if len(resp.CredentialResults.Kubeconfigs) > 0 {
+		if len(resp.Kubeconfigs) > 0 {
 			// It's awkward that we're ignoring the other possible responses here, but that's what the AZ CLI does too:
 			// https://github.com/Azure/azure-cli/blob/6786b5014ae71eb6d93f95e1ad123e9171368e8f/src/azure-cli/azure/cli/command_modules/acs/custom.py#L2166
 			userCredentials = string(resp.CredentialResults.Kubeconfigs[0].Value)
@@ -178,7 +179,7 @@ func (ext *ManagedClusterExtension) PreReconcileCheck(
 	managedCluster, ok := obj.(*containerservice.ManagedCluster)
 	if !ok {
 		return extensions.PreReconcileCheckResult{},
-			errors.Errorf("cannot run on unknown resource type %T, expected *containerservice.ManagedCluster", obj)
+			eris.Errorf("cannot run on unknown resource type %T, expected *containerservice.ManagedCluster", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if

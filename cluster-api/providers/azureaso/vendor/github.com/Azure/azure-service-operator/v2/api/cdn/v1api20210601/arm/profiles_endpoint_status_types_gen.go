@@ -411,30 +411,39 @@ func (action DeliveryRuleAction_STATUS) MarshalJSON() ([]byte, error) {
 	if action.CacheExpiration != nil {
 		return json.Marshal(action.CacheExpiration)
 	}
+
 	if action.CacheKeyQueryString != nil {
 		return json.Marshal(action.CacheKeyQueryString)
 	}
+
 	if action.ModifyRequestHeader != nil {
 		return json.Marshal(action.ModifyRequestHeader)
 	}
+
 	if action.ModifyResponseHeader != nil {
 		return json.Marshal(action.ModifyResponseHeader)
 	}
+
 	if action.OriginGroupOverride != nil {
 		return json.Marshal(action.OriginGroupOverride)
 	}
+
 	if action.RouteConfigurationOverride != nil {
 		return json.Marshal(action.RouteConfigurationOverride)
 	}
+
 	if action.UrlRedirect != nil {
 		return json.Marshal(action.UrlRedirect)
 	}
+
 	if action.UrlRewrite != nil {
 		return json.Marshal(action.UrlRewrite)
 	}
+
 	if action.UrlSigning != nil {
 		return json.Marshal(action.UrlSigning)
 	}
+
 	return nil, nil
 }
 
@@ -552,60 +561,79 @@ func (condition DeliveryRuleCondition_STATUS) MarshalJSON() ([]byte, error) {
 	if condition.ClientPort != nil {
 		return json.Marshal(condition.ClientPort)
 	}
+
 	if condition.Cookies != nil {
 		return json.Marshal(condition.Cookies)
 	}
+
 	if condition.HostName != nil {
 		return json.Marshal(condition.HostName)
 	}
+
 	if condition.HttpVersion != nil {
 		return json.Marshal(condition.HttpVersion)
 	}
+
 	if condition.IsDevice != nil {
 		return json.Marshal(condition.IsDevice)
 	}
+
 	if condition.PostArgs != nil {
 		return json.Marshal(condition.PostArgs)
 	}
+
 	if condition.QueryString != nil {
 		return json.Marshal(condition.QueryString)
 	}
+
 	if condition.RemoteAddress != nil {
 		return json.Marshal(condition.RemoteAddress)
 	}
+
 	if condition.RequestBody != nil {
 		return json.Marshal(condition.RequestBody)
 	}
+
 	if condition.RequestHeader != nil {
 		return json.Marshal(condition.RequestHeader)
 	}
+
 	if condition.RequestMethod != nil {
 		return json.Marshal(condition.RequestMethod)
 	}
+
 	if condition.RequestScheme != nil {
 		return json.Marshal(condition.RequestScheme)
 	}
+
 	if condition.RequestUri != nil {
 		return json.Marshal(condition.RequestUri)
 	}
+
 	if condition.ServerPort != nil {
 		return json.Marshal(condition.ServerPort)
 	}
+
 	if condition.SocketAddr != nil {
 		return json.Marshal(condition.SocketAddr)
 	}
+
 	if condition.SslProtocol != nil {
 		return json.Marshal(condition.SslProtocol)
 	}
+
 	if condition.UrlFileExtension != nil {
 		return json.Marshal(condition.UrlFileExtension)
 	}
+
 	if condition.UrlFileName != nil {
 		return json.Marshal(condition.UrlFileName)
 	}
+
 	if condition.UrlPath != nil {
 		return json.Marshal(condition.UrlPath)
 	}
+
 	return nil, nil
 }
 

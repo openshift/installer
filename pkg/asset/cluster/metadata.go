@@ -100,6 +100,7 @@ func (m *Metadata) Generate(_ context.Context, parents asset.Parents) (err error
 	case vspheretypes.Name:
 		metadata.ClusterPlatformMetadata.VSphere = vsphere.Metadata(installConfig.Config)
 	case powervctypes.Name:
+		metadata.ClusterPlatformMetadata.OpenStack = openstack.Metadata(clusterID.InfraID, installConfig.Config)
 		metadata.ClusterPlatformMetadata.PowerVC = powervc.Metadata(clusterID.InfraID, installConfig.Config)
 	case powervstypes.Name:
 		metadata.ClusterPlatformMetadata.PowerVS, err = powervs.Metadata(installConfig.Config, installConfig.PowerVS)

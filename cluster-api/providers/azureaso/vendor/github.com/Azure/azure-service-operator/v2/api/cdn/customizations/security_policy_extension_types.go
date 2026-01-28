@@ -35,7 +35,6 @@ func (e *SecurityPolicyExtension) ClassifyError(
 		return core.CloudErrorDetails{}, err
 	}
 
-	// Override is to treat Conflict as retryable for Redis, if the message contains "try again later"
 	if isSecurityPolicyRetryableBadRequest(cloudError) {
 		details.Classification = core.ErrorRetryable
 	}
@@ -43,7 +42,7 @@ func (e *SecurityPolicyExtension) ClassifyError(
 	return details, nil
 }
 
-// isRetryableBadRequest checks the passed error to see if it is a retryable conflict, returning true if it is.
+// isSecurityPolicyRetryableBadRequest checks the passed error to see if it is a retryable error, returning true if it is.
 func isSecurityPolicyRetryableBadRequest(err *genericarmclient.CloudError) bool {
 	if err == nil {
 		return false

@@ -2,5 +2,8 @@
 github.com/Azure/azure-service-operator/v2/api/dataprotection/customizations
 ----------------------------------------------------------------------------
 BackupVaultExtension: Object (0 properties)
+
 BackupVaultsBackupInstanceExtension: Object (0 properties)
+
 BackupVaultsBackupPolicyExtension: Object (0 properties)
+

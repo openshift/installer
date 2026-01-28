@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (queue *StorageAccountsQueueServicesQueue) NewEmptyStatus() genruntime.Conv
 
 // Owner returns the ResourceReference of the owner
 func (queue *StorageAccountsQueueServicesQueue) Owner() *genruntime.ResourceReference {
+	if queue.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(queue.Spec)
 	return queue.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (queue *StorageAccountsQueueServicesQueue) SetStatus(status genruntime.Conv
 	var st StorageAccountsQueueServicesQueue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	queue.Status = st
@@ -183,7 +187,7 @@ var _ genruntime.ConvertibleSpec = &StorageAccountsQueueServicesQueue_Spec{}
 // ConvertSpecFrom populates our StorageAccountsQueueServicesQueue_Spec from the provided source
 func (queue *StorageAccountsQueueServicesQueue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == queue {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(queue)
@@ -192,7 +196,7 @@ func (queue *StorageAccountsQueueServicesQueue_Spec) ConvertSpecFrom(source genr
 // ConvertSpecTo populates the provided destination from our StorageAccountsQueueServicesQueue_Spec
 func (queue *StorageAccountsQueueServicesQueue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == queue {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(queue)
@@ -214,7 +218,7 @@ var _ genruntime.ConvertibleStatus = &StorageAccountsQueueServicesQueue_STATUS{}
 // ConvertStatusFrom populates our StorageAccountsQueueServicesQueue_STATUS from the provided source
 func (queue *StorageAccountsQueueServicesQueue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == queue {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(queue)
@@ -223,7 +227,7 @@ func (queue *StorageAccountsQueueServicesQueue_STATUS) ConvertStatusFrom(source 
 // ConvertStatusTo populates the provided destination from our StorageAccountsQueueServicesQueue_STATUS
 func (queue *StorageAccountsQueueServicesQueue_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == queue {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(queue)

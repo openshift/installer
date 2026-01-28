@@ -45,11 +45,6 @@ type PSCEndpoint struct {
 	// Name contains the name of the private service connect endpoint.
 	Name string `json:"name"`
 
-	// Region is the region where the endpoint resides.
-	// When the region is empty, the location is assumed to be global.
-	// +optional
-	Region string `json:"region,omitempty"`
-
 	// ClusterUseOnly should be set to true when the installer should use
 	// the public api endpoints and all cluster operators should use the
 	// api endpoint overrides. The value should be false when the installer
@@ -121,10 +116,14 @@ type Platform struct {
 	// +optional
 	DNS *DNS `json:"dns,omitempty"`
 
-	// FirewallRulesManagement specifies the management policy for the cluster. Managed indicates that
-	// the firewall rules will be created and destroyed by the cluster. Unmanaged indicates that the
-	// user should create and destroy the firewall rules.
-	// +default="Managed"
+	// FirewallRulesManagement specifies the management policy for the cluster. "Managed" indicates that
+	// the firewall rules will be created and destroyed by the cluster. "Unmanaged" indicates that the
+	// user should create and destroy the firewall rules. For Shared VPC installation, if the installer
+	// credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+	// can be absent or set to "Unmanaged" explicitly. For non-Shared VPC installation, if the installer
+	// credential doesn't have firewall rules management permissions, the "firewallRulesManagement" settings
+	// must be set to "Unmanaged" explicitly. And in this case, the user needs to pre-configure the VPC network
+	// and the firewall rules before the installation.
 	// +optional
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
 }

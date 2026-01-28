@@ -7,6 +7,7 @@ import (
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types/dns"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 // aro is a setting to enable aro-only modifications
@@ -120,6 +121,18 @@ type Platform struct {
 	// +default="Disabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
+
+	// IPFamily specifies the IP address family for the cluster network.
+	// Use "IPv4" for IPv4-only networking, "DualStackIPv4Primary" for dual-stack networking
+	// with IPv4 as the primary address family, or "DualStackIPv6Primary" for dual-stack
+	// networking with IPv6 as the primary address family. When using dual-stack, the VNet
+	// and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
+	//
+	// +kubebuilder:default:="IPv4"
+	// +default="IPv4"
+	// +kubebuilder:validation:Enum="IPv4";"DualStackIPv4Primary";"DualStackIPv6Primary"
+	// +optional
+	IPFamily network.IPFamily `json:"ipFamily,omitempty"`
 }
 
 // SubnetSpec specifies the properties the subnet needs to be used in the cluster.

@@ -11,14 +11,15 @@ import (
 	"net/http"
 	"reflect"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	compute "github.com/Azure/azure-service-operator/v2/api/compute/v1api20220301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -69,7 +70,7 @@ func (e *VirtualMachineScaleSetExtension) ModifyARMResource(
 ) (genruntime.ARMResource, error) {
 	typedObj, ok := obj.(*compute.VirtualMachineScaleSet)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *compute.VirtualMachineScaleSet", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *compute.VirtualMachineScaleSet", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -84,7 +85,7 @@ func (e *VirtualMachineScaleSetExtension) ModifyARMResource(
 
 	apiVersion, err := genruntime.GetAPIVersion(typedObj, kubeClient.Scheme())
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
+		return nil, eris.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
 	}
 
 	// Get the raw resource
@@ -93,15 +94,15 @@ func (e *VirtualMachineScaleSetExtension) ModifyARMResource(
 	if err != nil {
 		// If the error is NotFound, the resource we're trying to Create doesn't exist and so no modification is needed
 		var responseError *azcore.ResponseError
-		if errors.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
+		if eris.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
 			return armObj, nil
 		}
-		return nil, errors.Wrapf(err, "getting resource with ID: %q", resourceID)
+		return nil, eris.Wrapf(err, "getting resource with ID: %q", resourceID)
 	}
 
 	azureExtensions, err := getRawChildCollection(raw, rawChildCollectionPath...)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get VMSS Extensions")
+		return nil, eris.Wrapf(err, "failed to get VMSS Extensions")
 	}
 
 	// If the child collection is not defined, We return the arm object as is here.
@@ -114,7 +115,7 @@ func (e *VirtualMachineScaleSetExtension) ModifyARMResource(
 
 	err = setChildCollection(armObj.Spec(), azureExtensions, childCollectionPathARM...)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to set VMSS Extensions")
+		return nil, eris.Wrapf(err, "failed to set VMSS Extensions")
 	}
 
 	return armObj, nil
@@ -129,7 +130,7 @@ func getExactParentRecursively(parentValue reflect.Value, childFieldName []strin
 	fieldName := childFieldName[i]
 	field := parentValue.FieldByName(fieldName)
 	if !field.IsValid() {
-		return reflect.Value{}, errors.Errorf("couldn't find %s field", fieldName)
+		return reflect.Value{}, eris.Errorf("couldn't find %s field", fieldName)
 	}
 
 	propertiesValue := reflect.Indirect(field)
@@ -146,7 +147,7 @@ func getExactParentRecursively(parentValue reflect.Value, childFieldName []strin
 func getChildCollectionField(parent any, fieldPath []string) (ret reflect.Value, err error) {
 	defer func() {
 		if x := recover(); x != nil {
-			err = errors.Errorf("caught panic: %s", x)
+			err = eris.Errorf("caught panic: %s", x)
 		}
 	}()
 
@@ -154,7 +155,7 @@ func getChildCollectionField(parent any, fieldPath []string) (ret reflect.Value,
 	parentValue := reflect.ValueOf(parent)
 	parentValue = reflect.Indirect(parentValue)
 	if !parentValue.IsValid() {
-		return reflect.Value{}, errors.Errorf("cannot assign to nil parent")
+		return reflect.Value{}, eris.Errorf("cannot assign to nil parent")
 	}
 
 	exactParent, err := getExactParentRecursively(parentValue, fieldPath, 0)
@@ -165,11 +166,11 @@ func getChildCollectionField(parent any, fieldPath []string) (ret reflect.Value,
 	childFieldName := fieldPath[len(fieldPath)-1]
 	childField := exactParent.FieldByName(childFieldName)
 	if !childField.IsValid() {
-		return reflect.Value{}, errors.Errorf("couldn't find %q field", fieldPath)
+		return reflect.Value{}, eris.Errorf("couldn't find %q field", fieldPath)
 	}
 
 	if childField.Type().Kind() != reflect.Slice {
-		return reflect.Value{}, errors.Errorf("%q field was not of kind Slice", fieldPath)
+		return reflect.Value{}, eris.Errorf("%q field was not of kind Slice", fieldPath)
 	}
 
 	return childField, nil
@@ -191,7 +192,7 @@ func getRawExactParentRecursively(parent map[string]any, fieldSlice []string, i 
 
 	propsMap, ok := props.(map[string]any)
 	if !ok {
-		return nil, errors.Errorf("%s field wasn't a map", prop)
+		return nil, eris.Errorf("%s field wasn't a map", prop)
 	}
 
 	return getRawExactParentRecursively(propsMap, fieldSlice, i+1)
@@ -210,12 +211,12 @@ func getRawChildCollection(parent map[string]any, fieldSlice ...string) ([]any, 
 	childFieldName := fieldSlice[len(fieldSlice)-1]
 	childField, ok := exactParent[childFieldName]
 	if !ok {
-		return nil, errors.Errorf("couldn't find %q field", fieldSlice)
+		return nil, eris.Errorf("couldn't find %q field", fieldSlice)
 	}
 
 	childSlice, ok := childField.([]any)
 	if !ok {
-		return nil, errors.Errorf("%q field wasn't a slice", fieldSlice)
+		return nil, eris.Errorf("%q field wasn't a slice", fieldSlice)
 	}
 
 	return childSlice, nil
@@ -224,7 +225,7 @@ func getRawChildCollection(parent map[string]any, fieldSlice ...string) ([]any, 
 func setChildCollection(parent genruntime.ARMResourceSpec, childCollectionFromAzure []any, childFieldPath ...string) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
-			err = errors.Errorf("caught panic: %s", x)
+			err = eris.Errorf("caught panic: %s", x)
 		}
 	}()
 
@@ -255,12 +256,12 @@ func setChildCollection(parent genruntime.ARMResourceSpec, childCollectionFromAz
 func fuzzySetResource(resource any, embeddedResource reflect.Value) error {
 	resourceJSON, err := json.Marshal(resource)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal resource JSON")
+		return eris.Wrap(err, "failed to marshal resource JSON")
 	}
 
 	err = json.Unmarshal(resourceJSON, embeddedResource.Interface())
 	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal resource JSON")
+		return eris.Wrap(err, "failed to unmarshal resource JSON")
 	}
 
 	// TODO: Can't do a trivial fuzzyEqualityComparison here because we don't know which fields are readonly
@@ -287,7 +288,7 @@ func mergeExtensions(extensionField reflect.Value, azureExtensionsSlice reflect.
 		azureExtension := azureExtensionsSlice.Index(i)
 		newExtensionName, err := getNameField(azureExtension)
 		if err != nil {
-			return reflect.Value{}, errors.Wrapf(err, "failed to get name for new extension")
+			return reflect.Value{}, eris.Wrapf(err, "failed to get name for new extension")
 		}
 		foundExistingExtension := false
 
@@ -296,7 +297,7 @@ func mergeExtensions(extensionField reflect.Value, azureExtensionsSlice reflect.
 			var existingName reflect.Value
 			existingName, err = getNameField(existingExtension)
 			if err != nil {
-				return reflect.Value{}, errors.Wrapf(err, "failed to get name for existing extension")
+				return reflect.Value{}, eris.Wrapf(err, "failed to get name for existing extension")
 			}
 
 			if existingName.String() == newExtensionName.String() {
@@ -316,13 +317,13 @@ func mergeExtensions(extensionField reflect.Value, azureExtensionsSlice reflect.
 func getNameField(natValue reflect.Value) (ret reflect.Value, err error) {
 	defer func() {
 		if x := recover(); x != nil {
-			err = errors.Errorf("caught panic: %s", x)
+			err = eris.Errorf("caught panic: %s", x)
 		}
 	}()
 
 	nameField := natValue.FieldByName("Name")
 	if !nameField.IsValid() {
-		return nameField, errors.Errorf("couldn't find name field")
+		return nameField, eris.Errorf("couldn't find name field")
 	}
 
 	nameField = reflect.Indirect(nameField)

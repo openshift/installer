@@ -60,6 +60,7 @@ ConfigurationStore_STATUS: Object (9 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 ConfigurationStore_Spec: Object (7 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -102,3 +103,4 @@ ConfigurationStore_Spec: Object (7 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Tags: map[string]string
+

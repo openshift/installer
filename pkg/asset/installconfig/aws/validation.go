@@ -10,10 +10,10 @@ import (
 	"sort"
 
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/iam"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -446,6 +446,14 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 			if len(arch) > 0 && !instanceArches.Has(arch) {
 				errMsg := fmt.Sprintf("instance type supported architectures %s do not match specified architecture %s", sets.List(instanceArches), arch)
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+			}
+
+			// dual-stack: the instance type must support IPv6 networking
+			if platform.IPFamily.DualStackEnabled() {
+				if !typeMeta.Networking.IPv6Supported {
+					errMsg := fmt.Sprintf("instance type %s does not support IPv6 networking", pool.InstanceType)
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+				}
 			}
 		} else {
 			errMsg := fmt.Sprintf("instance type %s not found", pool.InstanceType)
@@ -946,19 +954,22 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 }
 
 func validateInstanceProfile(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) *field.Error {
-	session, err := meta.Session(ctx)
+	client, err := NewIAMClient(ctx, EndpointOptions{
+		Region:    meta.Region,
+		Endpoints: meta.Services,
+	})
 	if err != nil {
-		return field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err))
+		return field.InternalError(fldPath, fmt.Errorf("unable to retrieve iam client: %w", err))
 	}
-	client := iam.New(session)
-	res, err := client.GetInstanceProfileWithContext(ctx, &iam.GetInstanceProfileInput{
+
+	res, err := client.GetInstanceProfile(ctx, &iam.GetInstanceProfileInput{
 		InstanceProfileName: aws.String(pool.IAMProfile),
 	})
 	if err != nil {
 		msg := fmt.Errorf("unable to retrieve instance profile: %w", err).Error()
 		return field.Invalid(fldPath, pool.IAMProfile, msg)
 	}
-	if len(res.InstanceProfile.Roles) == 0 || res.InstanceProfile.Roles[0] == nil {
+	if len(res.InstanceProfile.Roles) == 0 {
 		return field.Invalid(fldPath, pool.IAMProfile, "no role attached to instance profile")
 	}
 

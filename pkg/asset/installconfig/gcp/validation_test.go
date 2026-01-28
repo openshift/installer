@@ -186,6 +186,7 @@ var (
 		"n2d-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
 		"c3d-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
 		"c3-standard-4":     {GuestCpus: 4, MemoryMb: 16384},
+		"n4a-standard-4":    {GuestCpus: 4, MemoryMb: 16384},
 	}
 
 	subnetAPIResult = []*compute.Subnetwork{
@@ -1321,6 +1322,39 @@ func TestValidateInstanceType(t *testing.T) {
 			confidentialCompute: "IntelTrustedDomainExtensions",
 			expectedError:       false,
 			expectedErrMsg:      "",
+		},
+		{
+			name:                "Valid n4a ARM instance type with hyperdisk-balanced",
+			zones:               []string{"a"},
+			instanceType:        "n4a-standard-4",
+			diskType:            "hyperdisk-balanced",
+			arch:                "arm64",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       false,
+			expectedErrMsg:      "",
+		},
+		{
+			name:                "Invalid n4a instance with pd-ssd disk type",
+			zones:               []string{"a"},
+			instanceType:        "n4a-standard-4",
+			diskType:            "pd-ssd",
+			arch:                "arm64",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.diskType: Invalid value: \"pd\-ssd\": n4a\-standard\-4 instance requires one of the following disk types: \[hyperdisk\-balanced\]\]$`,
+		},
+		{
+			name:                "Invalid n4a instance with amd64 architecture",
+			zones:               []string{"a"},
+			instanceType:        "n4a-standard-4",
+			diskType:            "hyperdisk-balanced",
+			arch:                "amd64",
+			onHostMaintenance:   "Migrate",
+			confidentialCompute: "Disabled",
+			expectedError:       true,
+			expectedErrMsg:      `^\[instance.type: Invalid value: "n4a\-standard\-4": instance type architecture arm64 does not match specified architecture amd64\]$`,
 		},
 	}
 

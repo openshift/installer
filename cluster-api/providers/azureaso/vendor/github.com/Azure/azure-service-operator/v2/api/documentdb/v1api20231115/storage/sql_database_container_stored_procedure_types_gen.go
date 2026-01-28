@@ -4,22 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20240815/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources=sqldatabasecontainerstoredprocedures,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=documentdb.azure.com,resources={sqldatabasecontainerstoredprocedures/status,sqldatabasecontainerstoredprocedures/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,28 @@ func (procedure *SqlDatabaseContainerStoredProcedure) GetConditions() conditions
 // SetConditions sets the conditions on the resource status
 func (procedure *SqlDatabaseContainerStoredProcedure) SetConditions(conditions conditions.Conditions) {
 	procedure.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &SqlDatabaseContainerStoredProcedure{}
+
+// ConvertFrom populates our SqlDatabaseContainerStoredProcedure from the provided hub SqlDatabaseContainerStoredProcedure
+func (procedure *SqlDatabaseContainerStoredProcedure) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.SqlDatabaseContainerStoredProcedure)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/SqlDatabaseContainerStoredProcedure but received %T instead", hub)
+	}
+
+	return procedure.AssignProperties_From_SqlDatabaseContainerStoredProcedure(source)
+}
+
+// ConvertTo populates the provided hub SqlDatabaseContainerStoredProcedure from our SqlDatabaseContainerStoredProcedure
+func (procedure *SqlDatabaseContainerStoredProcedure) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.SqlDatabaseContainerStoredProcedure)
+	if !ok {
+		return fmt.Errorf("expected documentdb/v1api20240815/storage/SqlDatabaseContainerStoredProcedure but received %T instead", hub)
+	}
+
+	return procedure.AssignProperties_To_SqlDatabaseContainerStoredProcedure(destination)
 }
 
 var _ configmaps.Exporter = &SqlDatabaseContainerStoredProcedure{}
@@ -115,6 +136,10 @@ func (procedure *SqlDatabaseContainerStoredProcedure) NewEmptyStatus() genruntim
 
 // Owner returns the ResourceReference of the owner
 func (procedure *SqlDatabaseContainerStoredProcedure) Owner() *genruntime.ResourceReference {
+	if procedure.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(procedure.Spec)
 	return procedure.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,15 +156,82 @@ func (procedure *SqlDatabaseContainerStoredProcedure) SetStatus(status genruntim
 	var st SqlDatabaseContainerStoredProcedure_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	procedure.Status = st
 	return nil
 }
 
-// Hub marks that this SqlDatabaseContainerStoredProcedure is the hub type for conversion
-func (procedure *SqlDatabaseContainerStoredProcedure) Hub() {}
+// AssignProperties_From_SqlDatabaseContainerStoredProcedure populates our SqlDatabaseContainerStoredProcedure from the provided source SqlDatabaseContainerStoredProcedure
+func (procedure *SqlDatabaseContainerStoredProcedure) AssignProperties_From_SqlDatabaseContainerStoredProcedure(source *storage.SqlDatabaseContainerStoredProcedure) error {
+
+	// ObjectMeta
+	procedure.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec SqlDatabaseContainerStoredProcedure_Spec
+	err := spec.AssignProperties_From_SqlDatabaseContainerStoredProcedure_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerStoredProcedure_Spec() to populate field Spec")
+	}
+	procedure.Spec = spec
+
+	// Status
+	var status SqlDatabaseContainerStoredProcedure_STATUS
+	err = status.AssignProperties_From_SqlDatabaseContainerStoredProcedure_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerStoredProcedure_STATUS() to populate field Status")
+	}
+	procedure.Status = status
+
+	// Invoke the augmentConversionForSqlDatabaseContainerStoredProcedure interface (if implemented) to customize the conversion
+	var procedureAsAny any = procedure
+	if augmentedProcedure, ok := procedureAsAny.(augmentConversionForSqlDatabaseContainerStoredProcedure); ok {
+		err := augmentedProcedure.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerStoredProcedure populates the provided destination SqlDatabaseContainerStoredProcedure from our SqlDatabaseContainerStoredProcedure
+func (procedure *SqlDatabaseContainerStoredProcedure) AssignProperties_To_SqlDatabaseContainerStoredProcedure(destination *storage.SqlDatabaseContainerStoredProcedure) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *procedure.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.SqlDatabaseContainerStoredProcedure_Spec
+	err := procedure.Spec.AssignProperties_To_SqlDatabaseContainerStoredProcedure_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerStoredProcedure_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.SqlDatabaseContainerStoredProcedure_STATUS
+	err = procedure.Status.AssignProperties_To_SqlDatabaseContainerStoredProcedure_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerStoredProcedure_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForSqlDatabaseContainerStoredProcedure interface (if implemented) to customize the conversion
+	var procedureAsAny any = procedure
+	if augmentedProcedure, ok := procedureAsAny.(augmentConversionForSqlDatabaseContainerStoredProcedure); ok {
+		err := augmentedProcedure.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (procedure *SqlDatabaseContainerStoredProcedure) OriginalGVK() *schema.GroupVersionKind {
@@ -159,6 +251,11 @@ type SqlDatabaseContainerStoredProcedureList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []SqlDatabaseContainerStoredProcedure `json:"items"`
+}
+
+type augmentConversionForSqlDatabaseContainerStoredProcedure interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerStoredProcedure) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerStoredProcedure) error
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerStoredProcedure_Spec
@@ -185,20 +282,212 @@ var _ genruntime.ConvertibleSpec = &SqlDatabaseContainerStoredProcedure_Spec{}
 
 // ConvertSpecFrom populates our SqlDatabaseContainerStoredProcedure_Spec from the provided source
 func (procedure *SqlDatabaseContainerStoredProcedure_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == procedure {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.SqlDatabaseContainerStoredProcedure_Spec)
+	if ok {
+		// Populate our instance from source
+		return procedure.AssignProperties_From_SqlDatabaseContainerStoredProcedure_Spec(src)
 	}
 
-	return source.ConvertSpecTo(procedure)
+	// Convert to an intermediate form
+	src = &storage.SqlDatabaseContainerStoredProcedure_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = procedure.AssignProperties_From_SqlDatabaseContainerStoredProcedure_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our SqlDatabaseContainerStoredProcedure_Spec
 func (procedure *SqlDatabaseContainerStoredProcedure_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == procedure {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.SqlDatabaseContainerStoredProcedure_Spec)
+	if ok {
+		// Populate destination from our instance
+		return procedure.AssignProperties_To_SqlDatabaseContainerStoredProcedure_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(procedure)
+	// Convert to an intermediate form
+	dst = &storage.SqlDatabaseContainerStoredProcedure_Spec{}
+	err := procedure.AssignProperties_To_SqlDatabaseContainerStoredProcedure_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SqlDatabaseContainerStoredProcedure_Spec populates our SqlDatabaseContainerStoredProcedure_Spec from the provided source SqlDatabaseContainerStoredProcedure_Spec
+func (procedure *SqlDatabaseContainerStoredProcedure_Spec) AssignProperties_From_SqlDatabaseContainerStoredProcedure_Spec(source *storage.SqlDatabaseContainerStoredProcedure_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	procedure.AzureName = source.AzureName
+
+	// Location
+	procedure.Location = genruntime.ClonePointerToString(source.Location)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec SqlDatabaseContainerStoredProcedureOperatorSpec
+		err := operatorSpec.AssignProperties_From_SqlDatabaseContainerStoredProcedureOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerStoredProcedureOperatorSpec() to populate field OperatorSpec")
+		}
+		procedure.OperatorSpec = &operatorSpec
+	} else {
+		procedure.OperatorSpec = nil
+	}
+
+	// Options
+	if source.Options != nil {
+		var option CreateUpdateOptions
+		err := option.AssignProperties_From_CreateUpdateOptions(source.Options)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
+		}
+		procedure.Options = &option
+	} else {
+		procedure.Options = nil
+	}
+
+	// OriginalVersion
+	procedure.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		procedure.Owner = &owner
+	} else {
+		procedure.Owner = nil
+	}
+
+	// Resource
+	if source.Resource != nil {
+		var resource SqlStoredProcedureResource
+		err := resource.AssignProperties_From_SqlStoredProcedureResource(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlStoredProcedureResource() to populate field Resource")
+		}
+		procedure.Resource = &resource
+	} else {
+		procedure.Resource = nil
+	}
+
+	// Tags
+	procedure.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		procedure.PropertyBag = propertyBag
+	} else {
+		procedure.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerStoredProcedure_Spec interface (if implemented) to customize the conversion
+	var procedureAsAny any = procedure
+	if augmentedProcedure, ok := procedureAsAny.(augmentConversionForSqlDatabaseContainerStoredProcedure_Spec); ok {
+		err := augmentedProcedure.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerStoredProcedure_Spec populates the provided destination SqlDatabaseContainerStoredProcedure_Spec from our SqlDatabaseContainerStoredProcedure_Spec
+func (procedure *SqlDatabaseContainerStoredProcedure_Spec) AssignProperties_To_SqlDatabaseContainerStoredProcedure_Spec(destination *storage.SqlDatabaseContainerStoredProcedure_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(procedure.PropertyBag)
+
+	// AzureName
+	destination.AzureName = procedure.AzureName
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(procedure.Location)
+
+	// OperatorSpec
+	if procedure.OperatorSpec != nil {
+		var operatorSpec storage.SqlDatabaseContainerStoredProcedureOperatorSpec
+		err := procedure.OperatorSpec.AssignProperties_To_SqlDatabaseContainerStoredProcedureOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerStoredProcedureOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// Options
+	if procedure.Options != nil {
+		var option storage.CreateUpdateOptions
+		err := procedure.Options.AssignProperties_To_CreateUpdateOptions(&option)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
+		}
+		destination.Options = &option
+	} else {
+		destination.Options = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = procedure.OriginalVersion
+
+	// Owner
+	if procedure.Owner != nil {
+		owner := procedure.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// Resource
+	if procedure.Resource != nil {
+		var resource storage.SqlStoredProcedureResource
+		err := procedure.Resource.AssignProperties_To_SqlStoredProcedureResource(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlStoredProcedureResource() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(procedure.Tags)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerStoredProcedure_Spec interface (if implemented) to customize the conversion
+	var procedureAsAny any = procedure
+	if augmentedProcedure, ok := procedureAsAny.(augmentConversionForSqlDatabaseContainerStoredProcedure_Spec); ok {
+		err := augmentedProcedure.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerStoredProcedure_STATUS
@@ -217,20 +506,170 @@ var _ genruntime.ConvertibleStatus = &SqlDatabaseContainerStoredProcedure_STATUS
 
 // ConvertStatusFrom populates our SqlDatabaseContainerStoredProcedure_STATUS from the provided source
 func (procedure *SqlDatabaseContainerStoredProcedure_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == procedure {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.SqlDatabaseContainerStoredProcedure_STATUS)
+	if ok {
+		// Populate our instance from source
+		return procedure.AssignProperties_From_SqlDatabaseContainerStoredProcedure_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(procedure)
+	// Convert to an intermediate form
+	src = &storage.SqlDatabaseContainerStoredProcedure_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = procedure.AssignProperties_From_SqlDatabaseContainerStoredProcedure_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our SqlDatabaseContainerStoredProcedure_STATUS
 func (procedure *SqlDatabaseContainerStoredProcedure_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == procedure {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.SqlDatabaseContainerStoredProcedure_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return procedure.AssignProperties_To_SqlDatabaseContainerStoredProcedure_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(procedure)
+	// Convert to an intermediate form
+	dst = &storage.SqlDatabaseContainerStoredProcedure_STATUS{}
+	err := procedure.AssignProperties_To_SqlDatabaseContainerStoredProcedure_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_SqlDatabaseContainerStoredProcedure_STATUS populates our SqlDatabaseContainerStoredProcedure_STATUS from the provided source SqlDatabaseContainerStoredProcedure_STATUS
+func (procedure *SqlDatabaseContainerStoredProcedure_STATUS) AssignProperties_From_SqlDatabaseContainerStoredProcedure_STATUS(source *storage.SqlDatabaseContainerStoredProcedure_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	procedure.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// Id
+	procedure.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	procedure.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	procedure.Name = genruntime.ClonePointerToString(source.Name)
+
+	// Resource
+	if source.Resource != nil {
+		var resource SqlStoredProcedureGetProperties_Resource_STATUS
+		err := resource.AssignProperties_From_SqlStoredProcedureGetProperties_Resource_STATUS(source.Resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlStoredProcedureGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		procedure.Resource = &resource
+	} else {
+		procedure.Resource = nil
+	}
+
+	// Tags
+	procedure.Tags = genruntime.CloneMapOfStringToString(source.Tags)
+
+	// Type
+	procedure.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		procedure.PropertyBag = propertyBag
+	} else {
+		procedure.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerStoredProcedure_STATUS interface (if implemented) to customize the conversion
+	var procedureAsAny any = procedure
+	if augmentedProcedure, ok := procedureAsAny.(augmentConversionForSqlDatabaseContainerStoredProcedure_STATUS); ok {
+		err := augmentedProcedure.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerStoredProcedure_STATUS populates the provided destination SqlDatabaseContainerStoredProcedure_STATUS from our SqlDatabaseContainerStoredProcedure_STATUS
+func (procedure *SqlDatabaseContainerStoredProcedure_STATUS) AssignProperties_To_SqlDatabaseContainerStoredProcedure_STATUS(destination *storage.SqlDatabaseContainerStoredProcedure_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(procedure.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(procedure.Conditions)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(procedure.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(procedure.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(procedure.Name)
+
+	// Resource
+	if procedure.Resource != nil {
+		var resource storage.SqlStoredProcedureGetProperties_Resource_STATUS
+		err := procedure.Resource.AssignProperties_To_SqlStoredProcedureGetProperties_Resource_STATUS(&resource)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlStoredProcedureGetProperties_Resource_STATUS() to populate field Resource")
+		}
+		destination.Resource = &resource
+	} else {
+		destination.Resource = nil
+	}
+
+	// Tags
+	destination.Tags = genruntime.CloneMapOfStringToString(procedure.Tags)
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(procedure.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerStoredProcedure_STATUS interface (if implemented) to customize the conversion
+	var procedureAsAny any = procedure
+	if augmentedProcedure, ok := procedureAsAny.(augmentConversionForSqlDatabaseContainerStoredProcedure_STATUS); ok {
+		err := augmentedProcedure.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSqlDatabaseContainerStoredProcedure_Spec interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerStoredProcedure_Spec) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerStoredProcedure_Spec) error
+}
+
+type augmentConversionForSqlDatabaseContainerStoredProcedure_STATUS interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerStoredProcedure_STATUS) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerStoredProcedure_STATUS) error
 }
 
 // Storage version of v1api20231115.SqlDatabaseContainerStoredProcedureOperatorSpec
@@ -239,6 +678,128 @@ type SqlDatabaseContainerStoredProcedureOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_SqlDatabaseContainerStoredProcedureOperatorSpec populates our SqlDatabaseContainerStoredProcedureOperatorSpec from the provided source SqlDatabaseContainerStoredProcedureOperatorSpec
+func (operator *SqlDatabaseContainerStoredProcedureOperatorSpec) AssignProperties_From_SqlDatabaseContainerStoredProcedureOperatorSpec(source *storage.SqlDatabaseContainerStoredProcedureOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerStoredProcedureOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerStoredProcedureOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlDatabaseContainerStoredProcedureOperatorSpec populates the provided destination SqlDatabaseContainerStoredProcedureOperatorSpec from our SqlDatabaseContainerStoredProcedureOperatorSpec
+func (operator *SqlDatabaseContainerStoredProcedureOperatorSpec) AssignProperties_To_SqlDatabaseContainerStoredProcedureOperatorSpec(destination *storage.SqlDatabaseContainerStoredProcedureOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlDatabaseContainerStoredProcedureOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerStoredProcedureOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20231115.SqlStoredProcedureGetProperties_Resource_STATUS
@@ -251,12 +812,179 @@ type SqlStoredProcedureGetProperties_Resource_STATUS struct {
 	Ts          *float64               `json:"_ts,omitempty"`
 }
 
+// AssignProperties_From_SqlStoredProcedureGetProperties_Resource_STATUS populates our SqlStoredProcedureGetProperties_Resource_STATUS from the provided source SqlStoredProcedureGetProperties_Resource_STATUS
+func (resource *SqlStoredProcedureGetProperties_Resource_STATUS) AssignProperties_From_SqlStoredProcedureGetProperties_Resource_STATUS(source *storage.SqlStoredProcedureGetProperties_Resource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Body
+	resource.Body = genruntime.ClonePointerToString(source.Body)
+
+	// Etag
+	resource.Etag = genruntime.ClonePointerToString(source.Etag)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Rid
+	resource.Rid = genruntime.ClonePointerToString(source.Rid)
+
+	// Ts
+	if source.Ts != nil {
+		t := *source.Ts
+		resource.Ts = &t
+	} else {
+		resource.Ts = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlStoredProcedureGetProperties_Resource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlStoredProcedureGetProperties_Resource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlStoredProcedureGetProperties_Resource_STATUS populates the provided destination SqlStoredProcedureGetProperties_Resource_STATUS from our SqlStoredProcedureGetProperties_Resource_STATUS
+func (resource *SqlStoredProcedureGetProperties_Resource_STATUS) AssignProperties_To_SqlStoredProcedureGetProperties_Resource_STATUS(destination *storage.SqlStoredProcedureGetProperties_Resource_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// Body
+	destination.Body = genruntime.ClonePointerToString(resource.Body)
+
+	// Etag
+	destination.Etag = genruntime.ClonePointerToString(resource.Etag)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// Rid
+	destination.Rid = genruntime.ClonePointerToString(resource.Rid)
+
+	// Ts
+	if resource.Ts != nil {
+		t := *resource.Ts
+		destination.Ts = &t
+	} else {
+		destination.Ts = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlStoredProcedureGetProperties_Resource_STATUS interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlStoredProcedureGetProperties_Resource_STATUS); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20231115.SqlStoredProcedureResource
 // Cosmos DB SQL storedProcedure resource object
 type SqlStoredProcedureResource struct {
 	Body        *string                `json:"body,omitempty"`
 	Id          *string                `json:"id,omitempty"`
 	PropertyBag genruntime.PropertyBag `json:"$propertyBag,omitempty"`
+}
+
+// AssignProperties_From_SqlStoredProcedureResource populates our SqlStoredProcedureResource from the provided source SqlStoredProcedureResource
+func (resource *SqlStoredProcedureResource) AssignProperties_From_SqlStoredProcedureResource(source *storage.SqlStoredProcedureResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Body
+	resource.Body = genruntime.ClonePointerToString(source.Body)
+
+	// Id
+	resource.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		resource.PropertyBag = propertyBag
+	} else {
+		resource.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlStoredProcedureResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlStoredProcedureResource); ok {
+		err := augmentedResource.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlStoredProcedureResource populates the provided destination SqlStoredProcedureResource from our SqlStoredProcedureResource
+func (resource *SqlStoredProcedureResource) AssignProperties_To_SqlStoredProcedureResource(destination *storage.SqlStoredProcedureResource) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(resource.PropertyBag)
+
+	// Body
+	destination.Body = genruntime.ClonePointerToString(resource.Body)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(resource.Id)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlStoredProcedureResource interface (if implemented) to customize the conversion
+	var resourceAsAny any = resource
+	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlStoredProcedureResource); ok {
+		err := augmentedResource.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForSqlDatabaseContainerStoredProcedureOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.SqlDatabaseContainerStoredProcedureOperatorSpec) error
+	AssignPropertiesTo(dst *storage.SqlDatabaseContainerStoredProcedureOperatorSpec) error
+}
+
+type augmentConversionForSqlStoredProcedureGetProperties_Resource_STATUS interface {
+	AssignPropertiesFrom(src *storage.SqlStoredProcedureGetProperties_Resource_STATUS) error
+	AssignPropertiesTo(dst *storage.SqlStoredProcedureGetProperties_Resource_STATUS) error
+}
+
+type augmentConversionForSqlStoredProcedureResource interface {
+	AssignPropertiesFrom(src *storage.SqlStoredProcedureResource) error
+	AssignPropertiesTo(dst *storage.SqlStoredProcedureResource) error
 }
 
 func init() {

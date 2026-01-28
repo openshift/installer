@@ -8,12 +8,14 @@ package genruntime
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // ConfigMapReference is a reference to a Kubernetes configmap and key in the same namespace as
 // the resource it is on.
 // +kubebuilder:object:generate=true
+//
+//nolint:recvcheck
 type ConfigMapReference struct {
 	// Name is the name of the Kubernetes configmap being referenced.
 	// The configmap must be in the same namespace as the resource
@@ -89,11 +91,11 @@ func (c ConfigMapDestination) String() string {
 // LookupOptionalConfigMapReferenceValue looks up a ConfigMapReference if it's not nil, or else returns the provided value
 func LookupOptionalConfigMapReferenceValue(resolved Resolved[ConfigMapReference, string], ref *ConfigMapReference, value *string) (string, error) {
 	if ref == nil && value == nil {
-		return "", errors.Errorf("ref and value are both nil")
+		return "", eris.Errorf("ref and value are both nil")
 	}
 
 	if ref != nil && value != nil {
-		return "", errors.Errorf("ref and value cannot both be set")
+		return "", eris.Errorf("ref and value cannot both be set")
 	}
 
 	if ref == nil {

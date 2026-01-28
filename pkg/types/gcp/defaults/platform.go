@@ -8,10 +8,6 @@ func SetPlatformDefaults(p *gcp.Platform) {
 		return
 	}
 
-	if p.FirewallRulesManagement == "" {
-		p.FirewallRulesManagement = gcp.ManagedFirewallRules
-	}
-
 	if gcpDmp := p.DefaultMachinePlatform; gcpDmp != nil {
 		if ek := gcpDmp.EncryptionKey; ek != nil {
 			if kms := ek.KMSKey; kms != nil {

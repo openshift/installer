@@ -8,17 +8,19 @@ package reconcilers
 import (
 	"reflect"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/common/annotations"
 )
 
 // ParseReconcilePolicy parses the provided reconcile policy.
-func ParseReconcilePolicy(policy string) (annotations.ReconcilePolicyValue, error) {
+// defaultPolicyValue is read from DEFAULT_RECONCILE_POLICY env variable, it set to "manage" when not specified
+func ParseReconcilePolicy(policy string, defaultReconcilePolicy annotations.ReconcilePolicyValue) (annotations.ReconcilePolicyValue, error) {
+	// policy is read from CR annotation, if it's empty it being read from defaultReconcilePolicy
 	switch policy {
 	case "":
-		return annotations.ReconcilePolicyManage, nil
+		return defaultReconcilePolicy, nil
 	case string(annotations.ReconcilePolicyManage):
 		return annotations.ReconcilePolicyManage, nil
 	case string(annotations.ReconcilePolicySkip):
@@ -27,7 +29,7 @@ func ParseReconcilePolicy(policy string) (annotations.ReconcilePolicyValue, erro
 		return annotations.ReconcilePolicyDetachOnDelete, nil
 	default:
 		// Defaulting to manage.
-		return annotations.ReconcilePolicyManage, errors.Errorf("%q is not a known reconcile policy", policy)
+		return annotations.ReconcilePolicyManage, eris.Errorf("%q is not a known reconcile policy", policy)
 	}
 }
 

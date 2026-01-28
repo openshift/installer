@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/synapse/v1api20210601/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-06-01"
+
 Workspace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (22 properties)
@@ -150,6 +151,7 @@ Workspace: Resource
     │   ├── TenantId: *string
     │   └── Type: *string
     └── WorkspaceUID: *string
+
 WorkspacesBigDataPool: Resource
 ├── Owner: synapse/v1api20210601.Workspace
 ├── Spec: Object (24 properties)
@@ -258,3 +260,4 @@ WorkspacesBigDataPool: Resource
     ├── SparkVersion: *string
     ├── Tags: map[string]string
     └── Type: *string
+

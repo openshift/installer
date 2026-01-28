@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/subscription/v1api20211001/storag
 ---------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-10-01"
+
 Alias: Resource
 ├── Spec: Object (5 properties)
 │   ├── AzureName: string
@@ -53,3 +54,4 @@ Alias: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+

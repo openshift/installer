@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20210401preview/sto
 ------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-04-01-preview"
+
 Vault: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -128,25 +129,48 @@ Vault: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+
 augmentConversionForAccessPolicyEntry: Interface
+
 augmentConversionForAccessPolicyEntry_STATUS: Interface
+
 augmentConversionForIPRule: Interface
+
 augmentConversionForIPRule_STATUS: Interface
+
 augmentConversionForNetworkRuleSet: Interface
+
 augmentConversionForNetworkRuleSet_STATUS: Interface
+
 augmentConversionForPermissions: Interface
+
 augmentConversionForPermissions_STATUS: Interface
+
 augmentConversionForPrivateEndpointConnectionItem_STATUS: Interface
+
 augmentConversionForPrivateEndpoint_STATUS: Interface
+
 augmentConversionForPrivateLinkServiceConnectionState_STATUS: Interface
+
 augmentConversionForSku: Interface
+
 augmentConversionForSku_STATUS: Interface
+
 augmentConversionForSystemData_STATUS: Interface
+
 augmentConversionForVault: Interface
+
 augmentConversionForVaultOperatorSpec: Interface
+
 augmentConversionForVaultProperties: Interface
+
 augmentConversionForVaultProperties_STATUS: Interface
+
 augmentConversionForVault_STATUS: Interface
+
 augmentConversionForVault_Spec: Interface
+
 augmentConversionForVirtualNetworkRule: Interface
+
 augmentConversionForVirtualNetworkRule_STATUS: Interface
+

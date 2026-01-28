@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220701
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-07-01"
+
 ApplicationGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (38 properties)
@@ -605,6 +606,7 @@ ApplicationGateway: Resource
     │   ├── RuleSetType: *string
     │   └── RuleSetVersion: *string
     └── Zones: string[]
+
 BastionHost: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -663,6 +665,7 @@ BastionHost: Resource
     │       └── "Standard"
     ├── Tags: map[string]string
     └── Type: *string
+
 DnsForwardingRuleSetsForwardingRule: Resource
 ├── Owner: DnsForwardingRuleset
 ├── Spec: Object (7 properties)
@@ -716,6 +719,7 @@ DnsForwardingRuleSetsForwardingRule: Resource
     │   ├── IpAddress: *string
     │   └── Port: *int
     └── Type: *string
+
 DnsForwardingRuleSetsVirtualNetworkLink: Resource
 ├── Owner: DnsForwardingRuleset
 ├── Spec: Object (5 properties)
@@ -758,6 +762,7 @@ DnsForwardingRuleSetsVirtualNetworkLink: Resource
     ├── Type: *string
     └── VirtualNetwork: *Object (1 property)
         └── Id: *string
+
 DnsForwardingRuleset: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (6 properties)
@@ -803,6 +808,7 @@ DnsForwardingRuleset: Resource
     │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
+
 DnsResolver: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (6 properties)
@@ -851,6 +857,7 @@ DnsResolver: Resource
     ├── Type: *string
     └── VirtualNetwork: *Object (1 property)
         └── Id: *string
+
 DnsResolversInboundEndpoint: Resource
 ├── Owner: DnsResolver
 ├── Spec: Object (6 properties)
@@ -906,6 +913,7 @@ DnsResolversInboundEndpoint: Resource
     │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
+
 DnsResolversOutboundEndpoint: Resource
 ├── Owner: DnsResolver
 ├── Spec: Object (6 properties)
@@ -951,6 +959,7 @@ DnsResolversOutboundEndpoint: Resource
     │       └── "User"
     ├── Tags: map[string]string
     └── Type: *string
+
 NatGateway: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (10 properties)
@@ -995,6 +1004,7 @@ NatGateway: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 PrivateEndpoint: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (12 properties)
@@ -1107,6 +1117,7 @@ PrivateEndpoint: Resource
     │   └── Id: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 PrivateEndpointsPrivateDnsZoneGroup: Resource
 ├── Owner: PrivateEndpoint
 ├── Spec: Object (4 properties)
@@ -1142,6 +1153,7 @@ PrivateEndpointsPrivateDnsZoneGroup: Resource
         ├── "Failed"
         ├── "Succeeded"
         └── "Updating"
+
 PrivateLinkService: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (12 properties)
@@ -1228,6 +1240,7 @@ PrivateLinkService: Resource
     ├── Type: *string
     └── Visibility: *Object (1 property)
         └── Subscriptions: string[]
+
 PublicIPPrefix: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (13 properties)
@@ -1301,3 +1314,4 @@ PublicIPPrefix: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+

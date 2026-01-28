@@ -10,7 +10,7 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/Azure/azure-service-operator/v2/internal/set"
@@ -57,7 +57,7 @@ func FindReferences(obj interface{}, t reflect.Type) (map[interface{}]struct{}, 
 
 	err := visitor.Visit(obj, nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "scanning for references of type %s", t.String())
+		return nil, eris.Wrapf(err, "scanning for references of type %s", t.String())
 	}
 
 	return result, nil
@@ -105,7 +105,7 @@ func FindPropertiesWithTag(obj interface{}, tag string) (map[string][]interface{
 
 	err := visitor.Visit(obj, "")
 	if err != nil {
-		return nil, errors.Wrapf(err, "scanning for references to tag %s", tag)
+		return nil, eris.Wrapf(err, "scanning for references to tag %s", tag)
 	}
 
 	return result, nil
@@ -168,7 +168,7 @@ func FindOptionalConfigMapReferences(obj interface{}) ([]*configmaps.OptionalRef
 		for _, val := range values {
 			typedValue, ok := val.(*string)
 			if !ok {
-				return nil, errors.Errorf("value of property %s was not a *string like expected", key)
+				return nil, eris.Errorf("value of property %s was not a *string like expected", key)
 			}
 			collector[key] = append(collector[key], &configmaps.OptionalReferencePair{
 				Name:  key,
@@ -183,13 +183,13 @@ func FindOptionalConfigMapReferences(obj interface{}) ([]*configmaps.OptionalRef
 		}
 		idx := strings.TrimSuffix(key, suffix)
 		if len(values) != len(collector[idx]) {
-			return nil, errors.Errorf("number of Ref's didn't match number of Values for %s", idx)
+			return nil, eris.Errorf("number of Ref's didn't match number of Values for %s", idx)
 		}
 
 		for i, val := range values {
 			typedValue, ok := val.(*genruntime.ConfigMapReference)
 			if !ok {
-				return nil, errors.Errorf("value of property %s was not a genruntime.ConfigMapReference like expected", key)
+				return nil, eris.Errorf("value of property %s was not a genruntime.ConfigMapReference like expected", key)
 			}
 			collector[idx][i].RefName = key
 			collector[idx][i].Ref = typedValue
@@ -218,14 +218,14 @@ func GetObjectListItems(listPtr client.ObjectList) ([]client.Object, error) {
 
 		if item.Kind() == reflect.Struct {
 			if !item.CanAddr() {
-				return nil, errors.Errorf("provided list elements were not pointers, but cannot be addressed")
+				return nil, eris.Errorf("provided list elements were not pointers, but cannot be addressed")
 			}
 			item = item.Addr()
 		}
 
 		typedItem, ok := item.Interface().(client.Object)
 		if !ok {
-			return nil, errors.Errorf("provided list elements did not implement client.Object interface")
+			return nil, eris.Errorf("provided list elements did not implement client.Object interface")
 		}
 
 		result = append(result, typedItem)
@@ -242,11 +242,11 @@ func SetObjectListItems(listPtr client.ObjectList, items []client.Object) (retur
 	}
 
 	if !itemsField.CanSet() {
-		return errors.Errorf("cannot set items field of %T", listPtr)
+		return eris.Errorf("cannot set items field of %T", listPtr)
 	}
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			returnErr = errors.Errorf("failed to set items field of %T: %s", listPtr, recovered)
+			returnErr = eris.Errorf("failed to set items field of %T: %s", listPtr, recovered)
 		}
 	}()
 
@@ -267,21 +267,21 @@ func SetObjectListItems(listPtr client.ObjectList, items []client.Object) (retur
 func getItemsField(listPtr client.ObjectList) (reflect.Value, error) {
 	val := reflect.ValueOf(listPtr)
 	if val.Kind() != reflect.Ptr {
-		return reflect.Value{}, errors.Errorf("provided list was not a pointer, was %s", val.Kind())
+		return reflect.Value{}, eris.Errorf("provided list was not a pointer, was %s", val.Kind())
 	}
 
 	list := val.Elem()
 
 	if list.Kind() != reflect.Struct {
-		return reflect.Value{}, errors.Errorf("provided list was not a struct, was %s", val.Kind())
+		return reflect.Value{}, eris.Errorf("provided list was not a struct, was %s", val.Kind())
 	}
 
 	itemsField := list.FieldByName("Items")
 	if (itemsField == reflect.Value{}) {
-		return reflect.Value{}, errors.Errorf("provided list has no field \"Items\"")
+		return reflect.Value{}, eris.Errorf("provided list has no field \"Items\"")
 	}
 	if itemsField.Kind() != reflect.Slice {
-		return reflect.Value{}, errors.Errorf("provided list \"Items\" field was not of type slice")
+		return reflect.Value{}, eris.Errorf("provided list \"Items\" field was not of type slice")
 	}
 
 	return itemsField, nil
@@ -295,11 +295,11 @@ func getItemsField(listPtr client.ObjectList) (reflect.Value, error) {
 // or if the value provided is incompatible.
 func SetProperty(obj any, propertyPath string, value any) error {
 	if obj == nil {
-		return errors.Errorf("provided object was nil")
+		return eris.Errorf("provided object was nil")
 	}
 
 	if propertyPath == "" {
-		return errors.Errorf("property path was empty")
+		return eris.Errorf("property path was empty")
 	}
 
 	steps := strings.Split(propertyPath, ".")
@@ -310,7 +310,7 @@ func setPropertyCore(obj any, propertyPath []string, value any) (err error) {
 	// Catch any panic that occurs when setting the field and turn it into an error return
 	defer func() {
 		if recovered := recover(); recovered != nil {
-			err = errors.Errorf("failed to set property %s: %s", propertyPath[0], recovered)
+			err = eris.Errorf("failed to set property %s: %s", propertyPath[0], recovered)
 		}
 	}()
 
@@ -324,7 +324,7 @@ func setPropertyCore(obj any, propertyPath []string, value any) (err error) {
 
 	// Check we have a struct
 	if subject.Kind() != reflect.Struct {
-		return errors.Errorf("provided object was not a struct, was %s", subject.Kind())
+		return eris.Errorf("provided object was not a struct, was %s", subject.Kind())
 	}
 
 	// Get the field we need to modify
@@ -332,7 +332,7 @@ func setPropertyCore(obj any, propertyPath []string, value any) (err error) {
 
 	// Check the field exists
 	if field == (reflect.Value{}) {
-		return errors.Errorf("provided object did not have a field named %s", propertyPath[0])
+		return eris.Errorf("provided object did not have a field named %s", propertyPath[0])
 	}
 
 	// If this is not the last property in the path, we need to recurse
@@ -346,7 +346,7 @@ func setPropertyCore(obj any, propertyPath []string, value any) (err error) {
 
 			err = setPropertyCore(field.Interface(), propertyPath[1:], value)
 			if err != nil {
-				return errors.Wrapf(err, "failed to set property %s",
+				return eris.Wrapf(err, "failed to set property %s",
 					propertyPath[0])
 			}
 
@@ -356,7 +356,7 @@ func setPropertyCore(obj any, propertyPath []string, value any) (err error) {
 		// Field is not a pointer, so we need to pass the address of the field recursively
 		err = setPropertyCore(field.Addr().Interface(), propertyPath[1:], value)
 		if err != nil {
-			return errors.Wrapf(err, "failed to set property %s",
+			return eris.Wrapf(err, "failed to set property %s",
 				propertyPath[0])
 		}
 
@@ -365,13 +365,13 @@ func setPropertyCore(obj any, propertyPath []string, value any) (err error) {
 
 	// If this is the last property in the path, we need to set the value, if we can
 	if !field.CanSet() {
-		return errors.Errorf("field %s was not settable", propertyPath[0])
+		return eris.Errorf("field %s was not settable", propertyPath[0])
 	}
 
 	// Cast value to the type required by the field
 	valueKind := reflect.ValueOf(value)
 	if !valueKind.CanConvert(field.Type()) {
-		return errors.Errorf("value of kind %s was not compatible with field %s", valueKind, propertyPath[0])
+		return eris.Errorf("value of kind %s was not compatible with field %s", valueKind, propertyPath[0])
 	}
 
 	value = valueKind.Convert(field.Type()).Interface()

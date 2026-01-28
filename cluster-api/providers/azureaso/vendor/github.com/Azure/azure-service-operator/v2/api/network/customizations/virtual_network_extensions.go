@@ -8,14 +8,15 @@ import (
 	"net/http"
 	"reflect"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	network "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -38,7 +39,7 @@ func (extension *VirtualNetworkExtension) ModifyARMResource(
 ) (genruntime.ARMResource, error) {
 	typedObj, ok := obj.(*network.VirtualNetwork)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *network.VirtualNetwork", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *network.VirtualNetwork", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -53,7 +54,7 @@ func (extension *VirtualNetworkExtension) ModifyARMResource(
 
 	apiVersion, err := genruntime.GetAPIVersion(typedObj, kubeClient.Scheme())
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
+		return nil, eris.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
 	}
 
 	// Get the raw resource
@@ -62,22 +63,22 @@ func (extension *VirtualNetworkExtension) ModifyARMResource(
 	if err != nil {
 		// If the error is NotFound, the resource we're trying to Create doesn't exist and so no modification is needed
 		var responseError *azcore.ResponseError
-		if errors.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
+		if eris.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
 			return armObj, nil
 		}
-		return nil, errors.Wrapf(err, "getting resource with ID: %q", resourceID)
+		return nil, eris.Wrapf(err, "getting resource with ID: %q", resourceID)
 	}
 
 	azureSubnets, err := getRawChildCollection(raw, "subnets")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get subnets")
+		return nil, eris.Wrapf(err, "failed to get subnets")
 	}
 
 	log.V(Info).Info("Found subnets to include on VNET", "count", len(azureSubnets), "names", genruntime.RawNames(azureSubnets))
 
 	err = setChildCollection(armObj.Spec(), azureSubnets, "Subnets")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to set subnets")
+		return nil, eris.Wrapf(err, "failed to set subnets")
 	}
 
 	return armObj, nil
@@ -86,7 +87,7 @@ func (extension *VirtualNetworkExtension) ModifyARMResource(
 func getChildCollectionField(parent any, childFieldName string) (ret reflect.Value, err error) {
 	defer func() {
 		if x := recover(); x != nil {
-			err = errors.Errorf("caught panic: %s", x)
+			err = eris.Errorf("caught panic: %s", x)
 		}
 	}()
 
@@ -94,12 +95,12 @@ func getChildCollectionField(parent any, childFieldName string) (ret reflect.Val
 	parentValue := reflect.ValueOf(parent)
 	parentValue = reflect.Indirect(parentValue)
 	if !parentValue.IsValid() {
-		return reflect.Value{}, errors.Errorf("cannot assign to nil parent")
+		return reflect.Value{}, eris.Errorf("cannot assign to nil parent")
 	}
 
 	propertiesField := parentValue.FieldByName("Properties")
 	if !propertiesField.IsValid() {
-		return reflect.Value{}, errors.Errorf("couldn't find properties field")
+		return reflect.Value{}, eris.Errorf("couldn't find properties field")
 	}
 
 	propertiesValue := reflect.Indirect(propertiesField)
@@ -112,11 +113,11 @@ func getChildCollectionField(parent any, childFieldName string) (ret reflect.Val
 
 	childField := propertiesValue.FieldByName(childFieldName)
 	if !childField.IsValid() {
-		return reflect.Value{}, errors.Errorf("couldn't find %q field", childFieldName)
+		return reflect.Value{}, eris.Errorf("couldn't find %q field", childFieldName)
 	}
 
 	if childField.Type().Kind() != reflect.Slice {
-		return reflect.Value{}, errors.Errorf("%q field was not of kind Slice", childFieldName)
+		return reflect.Value{}, eris.Errorf("%q field was not of kind Slice", childFieldName)
 	}
 
 	return childField, nil
@@ -125,22 +126,22 @@ func getChildCollectionField(parent any, childFieldName string) (ret reflect.Val
 func getRawChildCollection(parent map[string]any, childJSONName string) ([]any, error) {
 	props, ok := parent["properties"]
 	if !ok {
-		return nil, errors.Errorf("couldn't find properties field")
+		return nil, eris.Errorf("couldn't find properties field")
 	}
 
 	propsMap, ok := props.(map[string]any)
 	if !ok {
-		return nil, errors.Errorf("properties field wasn't a map")
+		return nil, eris.Errorf("properties field wasn't a map")
 	}
 
 	childField, ok := propsMap[childJSONName]
 	if !ok {
-		return nil, errors.Errorf("couldn't find %q field", childJSONName)
+		return nil, eris.Errorf("couldn't find %q field", childJSONName)
 	}
 
 	childSlice, ok := childField.([]any)
 	if !ok {
-		return nil, errors.Errorf("%q field wasn't a slice", childJSONName)
+		return nil, eris.Errorf("%q field wasn't a slice", childJSONName)
 	}
 
 	return childSlice, nil
@@ -149,7 +150,7 @@ func getRawChildCollection(parent map[string]any, childJSONName string) ([]any, 
 func setChildCollection(parent genruntime.ARMResourceSpec, childCollectionFromAzure []any, childFieldName string) (err error) {
 	defer func() {
 		if x := recover(); x != nil {
-			err = errors.Errorf("caught panic: %s", x)
+			err = eris.Errorf("caught panic: %s", x)
 		}
 	}()
 
@@ -179,12 +180,12 @@ func setChildCollection(parent genruntime.ARMResourceSpec, childCollectionFromAz
 func fuzzySetResource(resource any, embeddedResource reflect.Value) error {
 	resourceJSON, err := json.Marshal(resource)
 	if err != nil {
-		return errors.Wrap(err, "failed to marshal resource JSON")
+		return eris.Wrap(err, "failed to marshal resource JSON")
 	}
 
 	err = json.Unmarshal(resourceJSON, embeddedResource.Interface())
 	if err != nil {
-		return errors.Wrap(err, "failed to unmarshal resource JSON")
+		return eris.Wrap(err, "failed to unmarshal resource JSON")
 	}
 
 	// TODO: Can't do a trivial fuzzyEqualityComparison here because we don't know which fields are readonly

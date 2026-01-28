@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 var (
@@ -154,6 +155,37 @@ func TestValidate(t *testing.T) {
 				VpcID:   validVPCID,
 			},
 			expectErr: `^compute\[1\].architecture: Invalid value: "arm64": all compute machine pools must be of the same architecture$`,
+		},
+		{
+			name:          "valid dual-stack with IPv6 supporting instance types",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m5.large"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+		},
+		{
+			name:          "invalid dual-stack control plane instance type does not support IPv6",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m1.xlarge", "m5.large"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `controlPlane\.platform\.aws\.type: Invalid value: "m1\.xlarge": instance type m1\.xlarge does not support IPv6 networking`,
+		},
+		{
+			name:          "invalid dual-stack compute instance type does not support IPv6",
+			installConfig: icBuild.build(icBuild.withInstanceType("m5.xlarge", "m5.xlarge", "m1.xlarge"), icBuild.withIPFamily(network.DualStackIPv4Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `compute\[0\]\.platform\.aws\.type: Invalid value: "m1\.xlarge": instance type m1\.xlarge does not support IPv6 networking`,
+		},
+		{
+			name:          "invalid dual-stack default machine platform instance types do not support IPv6",
+			installConfig: icBuild.build(icBuild.withInstanceType("m1.xlarge", "", ""), icBuild.withIPFamily(network.DualStackIPv6Primary)),
+			availRegions:  validAvailRegions(),
+			availZones:    validAvailZones(),
+			instanceTypes: validInstanceTypes(),
+			expectErr:     `controlPlane\.platform\.aws\.type: Invalid value: "m1\.xlarge": instance type m1\.xlarge does not support IPv6 networking.*compute\[0\]\.platform\.aws\.type: Invalid value: "m1\.xlarge": instance type m1\.xlarge does not support IPv6 networking`,
 		},
 		{
 			name: "invalid edge pool, missing zones",
@@ -1761,21 +1793,41 @@ func validInstanceTypes() map[string]InstanceType {
 			DefaultVCpus: 1,
 			MemInMiB:     2048,
 			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Networking: Networking{
+				IPv6Supported: true,
+			},
 		},
 		"m5.large": {
 			DefaultVCpus: 2,
 			MemInMiB:     8192,
 			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Networking: Networking{
+				IPv6Supported: true,
+			},
 		},
 		"m5.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     16384,
 			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Networking: Networking{
+				IPv6Supported: true,
+			},
 		},
 		"m6g.xlarge": {
 			DefaultVCpus: 4,
 			MemInMiB:     16384,
 			Arches:       []string{ec2.ArchitectureTypeArm64},
+			Networking: Networking{
+				IPv6Supported: true,
+			},
+		},
+		"m1.xlarge": {
+			DefaultVCpus: 4,
+			MemInMiB:     15360,
+			Arches:       []string{ec2.ArchitectureTypeX8664},
+			Networking: Networking{
+				IPv6Supported: false,
+			},
 		},
 	}
 }
@@ -2023,5 +2075,11 @@ func (icBuild icBuildForAWS) withDefaultPlatformMachine(awsMachine aws.MachinePo
 func (icBuild icBuildForAWS) withPublicIPv4Pool(publicIPv4Pool string) icOption {
 	return func(ic *types.InstallConfig) {
 		ic.Platform.AWS.PublicIpv4Pool = publicIPv4Pool
+	}
+}
+
+func (icBuild icBuildForAWS) withIPFamily(ipFamily network.IPFamily) icOption {
+	return func(ic *types.InstallConfig) {
+		ic.Platform.AWS.IPFamily = ipFamily
 	}
 }

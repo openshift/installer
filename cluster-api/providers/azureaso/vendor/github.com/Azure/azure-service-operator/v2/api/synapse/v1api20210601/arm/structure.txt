@@ -69,6 +69,7 @@ Workspace_STATUS: Object (7 properties)
 │   └── WorkspaceUID: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 Workspace_Spec: Object (5 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (3 values)
@@ -122,6 +123,7 @@ Workspace_Spec: Object (5 properties)
 │       ├── TenantId: *string
 │       └── Type: *string
 └── Tags: map[string]string
+
 WorkspacesBigDataPool_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -183,6 +185,7 @@ WorkspacesBigDataPool_STATUS: Object (6 properties)
 │   └── SparkVersion: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 WorkspacesBigDataPool_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -235,3 +238,4 @@ WorkspacesBigDataPool_Spec: Object (4 properties)
 │   ├── SparkEventsFolder: *string
 │   └── SparkVersion: *string
 └── Tags: map[string]string
+

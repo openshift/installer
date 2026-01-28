@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (versionSet *ApiVersionSet) ConvertTo(hub conversion.Hub) error {
 
 	return versionSet.AssignProperties_To_ApiVersionSet(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-apimanagement-azure-com-v1api20220801-apiversionset,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=apiversionsets,verbs=create;update,versions=v1api20220801,name=default.v1api20220801.apiversionsets.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ApiVersionSet{}
-
-// Default applies defaults to the ApiVersionSet resource
-func (versionSet *ApiVersionSet) Default() {
-	versionSet.defaultImpl()
-	var temp any = versionSet
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (versionSet *ApiVersionSet) defaultAzureName() {
-	if versionSet.Spec.AzureName == "" {
-		versionSet.Spec.AzureName = versionSet.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ApiVersionSet resource
-func (versionSet *ApiVersionSet) defaultImpl() { versionSet.defaultAzureName() }
 
 var _ configmaps.Exporter = &ApiVersionSet{}
 
@@ -174,6 +148,10 @@ func (versionSet *ApiVersionSet) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (versionSet *ApiVersionSet) Owner() *genruntime.ResourceReference {
+	if versionSet.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(versionSet.Spec)
 	return versionSet.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,114 +168,11 @@ func (versionSet *ApiVersionSet) SetStatus(status genruntime.ConvertibleStatus) 
 	var st ApiVersionSet_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	versionSet.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-apimanagement-azure-com-v1api20220801-apiversionset,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=apiversionsets,verbs=create;update,versions=v1api20220801,name=validate.v1api20220801.apiversionsets.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ApiVersionSet{}
-
-// ValidateCreate validates the creation of the resource
-func (versionSet *ApiVersionSet) ValidateCreate() (admission.Warnings, error) {
-	validations := versionSet.createValidations()
-	var temp any = versionSet
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (versionSet *ApiVersionSet) ValidateDelete() (admission.Warnings, error) {
-	validations := versionSet.deleteValidations()
-	var temp any = versionSet
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (versionSet *ApiVersionSet) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := versionSet.updateValidations()
-	var temp any = versionSet
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (versionSet *ApiVersionSet) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){versionSet.validateResourceReferences, versionSet.validateOwnerReference, versionSet.validateSecretDestinations, versionSet.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (versionSet *ApiVersionSet) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (versionSet *ApiVersionSet) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return versionSet.validateResourceReferences()
-		},
-		versionSet.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return versionSet.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return versionSet.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return versionSet.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (versionSet *ApiVersionSet) validateConfigMapDestinations() (admission.Warnings, error) {
-	if versionSet.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(versionSet, nil, versionSet.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (versionSet *ApiVersionSet) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(versionSet)
-}
-
-// validateResourceReferences validates all resource references
-func (versionSet *ApiVersionSet) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&versionSet.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (versionSet *ApiVersionSet) validateSecretDestinations() (admission.Warnings, error) {
-	if versionSet.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(versionSet, nil, versionSet.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (versionSet *ApiVersionSet) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ApiVersionSet)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, versionSet)
 }
 
 // AssignProperties_From_ApiVersionSet populates our ApiVersionSet from the provided source ApiVersionSet
@@ -310,7 +185,7 @@ func (versionSet *ApiVersionSet) AssignProperties_From_ApiVersionSet(source *sto
 	var spec ApiVersionSet_Spec
 	err := spec.AssignProperties_From_ApiVersionSet_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ApiVersionSet_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ApiVersionSet_Spec() to populate field Spec")
 	}
 	versionSet.Spec = spec
 
@@ -318,7 +193,7 @@ func (versionSet *ApiVersionSet) AssignProperties_From_ApiVersionSet(source *sto
 	var status ApiVersionSet_STATUS
 	err = status.AssignProperties_From_ApiVersionSet_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ApiVersionSet_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ApiVersionSet_STATUS() to populate field Status")
 	}
 	versionSet.Status = status
 
@@ -336,7 +211,7 @@ func (versionSet *ApiVersionSet) AssignProperties_To_ApiVersionSet(destination *
 	var spec storage.ApiVersionSet_Spec
 	err := versionSet.Spec.AssignProperties_To_ApiVersionSet_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ApiVersionSet_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ApiVersionSet_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -344,7 +219,7 @@ func (versionSet *ApiVersionSet) AssignProperties_To_ApiVersionSet(destination *
 	var status storage.ApiVersionSet_STATUS
 	err = versionSet.Status.AssignProperties_To_ApiVersionSet_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ApiVersionSet_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ApiVersionSet_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -546,13 +421,13 @@ func (versionSet *ApiVersionSet_Spec) ConvertSpecFrom(source genruntime.Converti
 	src = &storage.ApiVersionSet_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = versionSet.AssignProperties_From_ApiVersionSet_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -570,13 +445,13 @@ func (versionSet *ApiVersionSet_Spec) ConvertSpecTo(destination genruntime.Conve
 	dst = &storage.ApiVersionSet_Spec{}
 	err := versionSet.AssignProperties_To_ApiVersionSet_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -592,19 +467,14 @@ func (versionSet *ApiVersionSet_Spec) AssignProperties_From_ApiVersionSet_Spec(s
 	versionSet.Description = genruntime.ClonePointerToString(source.Description)
 
 	// DisplayName
-	if source.DisplayName != nil {
-		displayName := *source.DisplayName
-		versionSet.DisplayName = &displayName
-	} else {
-		versionSet.DisplayName = nil
-	}
+	versionSet.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// OperatorSpec
 	if source.OperatorSpec != nil {
 		var operatorSpec ApiVersionSetOperatorSpec
 		err := operatorSpec.AssignProperties_From_ApiVersionSetOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ApiVersionSetOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ApiVersionSetOperatorSpec() to populate field OperatorSpec")
 		}
 		versionSet.OperatorSpec = &operatorSpec
 	} else {
@@ -620,20 +490,10 @@ func (versionSet *ApiVersionSet_Spec) AssignProperties_From_ApiVersionSet_Spec(s
 	}
 
 	// VersionHeaderName
-	if source.VersionHeaderName != nil {
-		versionHeaderName := *source.VersionHeaderName
-		versionSet.VersionHeaderName = &versionHeaderName
-	} else {
-		versionSet.VersionHeaderName = nil
-	}
+	versionSet.VersionHeaderName = genruntime.ClonePointerToString(source.VersionHeaderName)
 
 	// VersionQueryName
-	if source.VersionQueryName != nil {
-		versionQueryName := *source.VersionQueryName
-		versionSet.VersionQueryName = &versionQueryName
-	} else {
-		versionSet.VersionQueryName = nil
-	}
+	versionSet.VersionQueryName = genruntime.ClonePointerToString(source.VersionQueryName)
 
 	// VersioningScheme
 	if source.VersioningScheme != nil {
@@ -660,19 +520,14 @@ func (versionSet *ApiVersionSet_Spec) AssignProperties_To_ApiVersionSet_Spec(des
 	destination.Description = genruntime.ClonePointerToString(versionSet.Description)
 
 	// DisplayName
-	if versionSet.DisplayName != nil {
-		displayName := *versionSet.DisplayName
-		destination.DisplayName = &displayName
-	} else {
-		destination.DisplayName = nil
-	}
+	destination.DisplayName = genruntime.ClonePointerToString(versionSet.DisplayName)
 
 	// OperatorSpec
 	if versionSet.OperatorSpec != nil {
 		var operatorSpec storage.ApiVersionSetOperatorSpec
 		err := versionSet.OperatorSpec.AssignProperties_To_ApiVersionSetOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ApiVersionSetOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ApiVersionSetOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -691,20 +546,10 @@ func (versionSet *ApiVersionSet_Spec) AssignProperties_To_ApiVersionSet_Spec(des
 	}
 
 	// VersionHeaderName
-	if versionSet.VersionHeaderName != nil {
-		versionHeaderName := *versionSet.VersionHeaderName
-		destination.VersionHeaderName = &versionHeaderName
-	} else {
-		destination.VersionHeaderName = nil
-	}
+	destination.VersionHeaderName = genruntime.ClonePointerToString(versionSet.VersionHeaderName)
 
 	// VersionQueryName
-	if versionSet.VersionQueryName != nil {
-		versionQueryName := *versionSet.VersionQueryName
-		destination.VersionQueryName = &versionQueryName
-	} else {
-		destination.VersionQueryName = nil
-	}
+	destination.VersionQueryName = genruntime.ClonePointerToString(versionSet.VersionQueryName)
 
 	// VersioningScheme
 	if versionSet.VersioningScheme != nil {
@@ -732,28 +577,13 @@ func (versionSet *ApiVersionSet_Spec) Initialize_From_ApiVersionSet_STATUS(sourc
 	versionSet.Description = genruntime.ClonePointerToString(source.Description)
 
 	// DisplayName
-	if source.DisplayName != nil {
-		displayName := *source.DisplayName
-		versionSet.DisplayName = &displayName
-	} else {
-		versionSet.DisplayName = nil
-	}
+	versionSet.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// VersionHeaderName
-	if source.VersionHeaderName != nil {
-		versionHeaderName := *source.VersionHeaderName
-		versionSet.VersionHeaderName = &versionHeaderName
-	} else {
-		versionSet.VersionHeaderName = nil
-	}
+	versionSet.VersionHeaderName = genruntime.ClonePointerToString(source.VersionHeaderName)
 
 	// VersionQueryName
-	if source.VersionQueryName != nil {
-		versionQueryName := *source.VersionQueryName
-		versionSet.VersionQueryName = &versionQueryName
-	} else {
-		versionSet.VersionQueryName = nil
-	}
+	versionSet.VersionQueryName = genruntime.ClonePointerToString(source.VersionQueryName)
 
 	// VersioningScheme
 	if source.VersioningScheme != nil {
@@ -821,13 +651,13 @@ func (versionSet *ApiVersionSet_STATUS) ConvertStatusFrom(source genruntime.Conv
 	src = &storage.ApiVersionSet_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = versionSet.AssignProperties_From_ApiVersionSet_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -845,13 +675,13 @@ func (versionSet *ApiVersionSet_STATUS) ConvertStatusTo(destination genruntime.C
 	dst = &storage.ApiVersionSet_STATUS{}
 	err := versionSet.AssignProperties_To_ApiVersionSet_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

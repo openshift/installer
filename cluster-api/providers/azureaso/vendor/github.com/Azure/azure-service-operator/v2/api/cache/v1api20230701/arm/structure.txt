@@ -66,6 +66,7 @@ RedisEnterpriseDatabase_STATUS: Object (4 properties)
 │       ├── "UpdateFailed"
 │       └── "Updating"
 └── Type: *string
+
 RedisEnterpriseDatabase_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (7 properties)
@@ -102,6 +103,7 @@ RedisEnterpriseDatabase_Spec: Object (2 properties)
     │       ├── "1h"
     │       └── "6h"
     └── Port: *int
+
 RedisEnterprise_STATUS: Object (8 properties)
 ├── Id: *string
 ├── Location: *string
@@ -148,6 +150,7 @@ RedisEnterprise_STATUS: Object (8 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 RedisEnterprise_Spec: Object (6 properties)
 ├── Location: *string
 ├── Name: string
@@ -168,3 +171,4 @@ RedisEnterprise_Spec: Object (6 properties)
 │       └── "Enterprise_E50"
 ├── Tags: map[string]string
 └── Zones: string[]
+

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20180501
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-05-01"
+
 DnsZone: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -39,6 +40,7 @@ DnsZone: Resource
     └── ZoneType: *Enum (2 values)
         ├── "Private"
         └── "Public"
+
 DnsZonesAAAARecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (16 properties)
@@ -127,6 +129,7 @@ DnsZonesAAAARecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+
 DnsZonesARecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (17 properties)
@@ -216,6 +219,7 @@ DnsZonesARecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+
 DnsZonesCAARecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (16 properties)
@@ -304,6 +308,7 @@ DnsZonesCAARecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+
 DnsZonesCNAMERecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (16 properties)
@@ -392,6 +397,7 @@ DnsZonesCNAMERecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+
 DnsZonesMXRecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (16 properties)
@@ -480,6 +486,7 @@ DnsZonesMXRecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+
 DnsZonesNSRecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (16 properties)
@@ -568,6 +575,7 @@ DnsZonesNSRecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+
 DnsZonesPTRRecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (16 properties)
@@ -656,6 +664,7 @@ DnsZonesPTRRecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+
 DnsZonesSRVRecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (16 properties)
@@ -744,6 +753,7 @@ DnsZonesSRVRecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+
 DnsZonesTXTRecord: Resource
 ├── Owner: DnsZone
 ├── Spec: Object (16 properties)
@@ -832,3 +842,4 @@ DnsZonesTXTRecord: Resource
     ├── TargetResource: *Object (1 property)
     │   └── Id: *string
     └── Type: *string
+

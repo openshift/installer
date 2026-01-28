@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (ruleSet *RuleSet) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (ruleSet *RuleSet) Owner() *genruntime.ResourceReference {
+	if ruleSet.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(ruleSet.Spec)
 	return ruleSet.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (ruleSet *RuleSet) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st RuleSet_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	ruleSet.Status = st
@@ -182,7 +186,7 @@ var _ genruntime.ConvertibleSpec = &RuleSet_Spec{}
 // ConvertSpecFrom populates our RuleSet_Spec from the provided source
 func (ruleSet *RuleSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == ruleSet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(ruleSet)
@@ -191,7 +195,7 @@ func (ruleSet *RuleSet_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 // ConvertSpecTo populates the provided destination from our RuleSet_Spec
 func (ruleSet *RuleSet_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == ruleSet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(ruleSet)
@@ -215,7 +219,7 @@ var _ genruntime.ConvertibleStatus = &RuleSet_STATUS{}
 // ConvertStatusFrom populates our RuleSet_STATUS from the provided source
 func (ruleSet *RuleSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == ruleSet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(ruleSet)
@@ -224,7 +228,7 @@ func (ruleSet *RuleSet_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 // ConvertStatusTo populates the provided destination from our RuleSet_STATUS
 func (ruleSet *RuleSet_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == ruleSet {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(ruleSet)

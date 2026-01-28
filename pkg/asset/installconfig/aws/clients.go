@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/servicequotas"
 	"github.com/aws/aws-sdk-go-v2/service/sts"
 )
@@ -115,4 +116,23 @@ func NewServiceQuotasClient(ctx context.Context, endpointOpts EndpointOptions, o
 	sqOpts = append(sqOpts, optFns...)
 
 	return servicequotas.NewFromConfig(cfg, sqOpts...), nil
+}
+
+// NewS3Client creates a new S3 API client.
+func NewS3Client(ctx context.Context, endpointOpts EndpointOptions, optFns ...func(*s3.Options)) (*s3.Client, error) {
+	cfg, err := GetConfigWithOptions(ctx, config.WithRegion(endpointOpts.Region))
+	if err != nil {
+		return nil, err
+	}
+
+	s3Opts := []func(*s3.Options){
+		func(o *s3.Options) {
+			o.EndpointResolverV2 = &S3EndpointResolver{
+				ServiceEndpointResolver: NewServiceEndpointResolver(endpointOpts),
+			}
+		},
+	}
+	s3Opts = append(s3Opts, optFns...)
+
+	return s3.NewFromConfig(cfg, s3Opts...), nil
 }

@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/client-go/tools/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -89,7 +89,7 @@ func NewAzureDeploymentReconciler(
 func (r *AzureDeploymentReconciler) asARMObj(obj genruntime.MetaObject) (genruntime.ARMMetaObject, error) {
 	typedObj, ok := obj.(genruntime.ARMMetaObject)
 	if !ok {
-		return nil, errors.Errorf("cannot modify resource that is not of type ARMMetaObject. Type is %T", obj)
+		return nil, eris.Errorf("cannot modify resource that is not of type ARMMetaObject. Type is %T", obj)
 	}
 
 	return typedObj, nil
@@ -156,7 +156,7 @@ func (r *AzureDeploymentReconciler) Claim(
 		return err
 	}
 
-	claimer := extensions.CreateClaimer(r.Extension, r.ARMOwnedResourceReconcilerCommon.ClaimResource)
+	claimer := extensions.CreateClaimer(r.Extension, r.ClaimResource)
 	err = claimer(ctx, log, typedObj)
 	if err != nil {
 		return err
@@ -169,7 +169,7 @@ func (r *AzureDeploymentReconciler) Claim(
 	// Add ARM specific details
 	err = instance.AddInitialResourceState(ctx)
 	if err != nil {
-		return errors.Wrapf(err, "failed to add initial resource state")
+		return eris.Wrapf(err, "failed to add initial resource state")
 	}
 
 	return nil

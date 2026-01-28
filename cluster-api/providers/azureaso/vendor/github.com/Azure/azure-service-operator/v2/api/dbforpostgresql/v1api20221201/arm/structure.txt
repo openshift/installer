@@ -115,6 +115,7 @@ FlexibleServer_STATUS: Object (9 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 FlexibleServer_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (2 values)
@@ -188,6 +189,7 @@ FlexibleServer_Spec: Object (6 properties)
 │       ├── "GeneralPurpose"
 │       └── "MemoryOptimized"
 └── Tags: map[string]string
+
 FlexibleServersConfiguration_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -223,11 +225,13 @@ FlexibleServersConfiguration_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 FlexibleServersConfiguration_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── Source: *string
     └── Value: *string
+
 FlexibleServersDatabase_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -250,11 +254,13 @@ FlexibleServersDatabase_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 FlexibleServersDatabase_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── Charset: *string
     └── Collation: *string
+
 FlexibleServersFirewallRule_STATUS: Object (5 properties)
 ├── Id: *string
 ├── Name: *string
@@ -277,8 +283,10 @@ FlexibleServersFirewallRule_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 FlexibleServersFirewallRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── EndIpAddress: *string
     └── StartIpAddress: *string
+

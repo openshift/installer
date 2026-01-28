@@ -81,8 +81,10 @@ aliases:
     - tthvo
   gcp-approvers:
     - patrickdillon
+    - barbacbd
   gcp-reviewers:
     - patrickdillon
+    - barbacbd
   azure-approvers:
     - jhixson74
     - rna-afk
@@ -147,6 +149,8 @@ aliases:
     - joelcapitao
     - Roshan-R
     - PeaceRebel
+    - angelcerveraroldan
+    - Rolv-Apneseth
   coreos-reviewers:
     - c4rt0
     - cgwalters
@@ -172,6 +176,8 @@ aliases:
     - joelcapitao
     - Roshan-R
     - PeaceRebel
+    - angelcerveraroldan
+    - Rolv-Apneseth
   agent-reviewers:
     - andfasano
     - bfournie

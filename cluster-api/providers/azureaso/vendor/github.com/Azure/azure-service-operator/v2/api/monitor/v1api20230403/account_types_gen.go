@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/monitor/v1api20230403/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/monitor/v1api20230403/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (account *Account) ConvertTo(hub conversion.Hub) error {
 
 	return account.AssignProperties_To_Account(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-monitor-azure-com-v1api20230403-account,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=monitor.azure.com,resources=accounts,verbs=create;update,versions=v1api20230403,name=default.v1api20230403.accounts.monitor.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Account{}
-
-// Default applies defaults to the Account resource
-func (account *Account) Default() {
-	account.defaultImpl()
-	var temp any = account
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (account *Account) defaultAzureName() {
-	if account.Spec.AzureName == "" {
-		account.Spec.AzureName = account.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Account resource
-func (account *Account) defaultImpl() { account.defaultAzureName() }
 
 var _ configmaps.Exporter = &Account{}
 
@@ -173,6 +147,10 @@ func (account *Account) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (account *Account) Owner() *genruntime.ResourceReference {
+	if account.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(account.Spec)
 	return account.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (account *Account) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Account_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	account.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-monitor-azure-com-v1api20230403-account,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=monitor.azure.com,resources=accounts,verbs=create;update,versions=v1api20230403,name=validate.v1api20230403.accounts.monitor.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Account{}
-
-// ValidateCreate validates the creation of the resource
-func (account *Account) ValidateCreate() (admission.Warnings, error) {
-	validations := account.createValidations()
-	var temp any = account
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (account *Account) ValidateDelete() (admission.Warnings, error) {
-	validations := account.deleteValidations()
-	var temp any = account
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (account *Account) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := account.updateValidations()
-	var temp any = account
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (account *Account) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){account.validateResourceReferences, account.validateOwnerReference, account.validateSecretDestinations, account.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (account *Account) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (account *Account) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return account.validateResourceReferences()
-		},
-		account.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return account.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return account.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return account.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (account *Account) validateConfigMapDestinations() (admission.Warnings, error) {
-	if account.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(account, nil, account.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (account *Account) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(account)
-}
-
-// validateResourceReferences validates all resource references
-func (account *Account) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&account.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (account *Account) validateSecretDestinations() (admission.Warnings, error) {
-	if account.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(account, nil, account.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (account *Account) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Account)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, account)
 }
 
 // AssignProperties_From_Account populates our Account from the provided source Account
@@ -309,7 +184,7 @@ func (account *Account) AssignProperties_From_Account(source *storage.Account) e
 	var spec Account_Spec
 	err := spec.AssignProperties_From_Account_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Account_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Account_Spec() to populate field Spec")
 	}
 	account.Spec = spec
 
@@ -317,7 +192,7 @@ func (account *Account) AssignProperties_From_Account(source *storage.Account) e
 	var status Account_STATUS
 	err = status.AssignProperties_From_Account_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Account_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Account_STATUS() to populate field Status")
 	}
 	account.Status = status
 
@@ -335,7 +210,7 @@ func (account *Account) AssignProperties_To_Account(destination *storage.Account
 	var spec storage.Account_Spec
 	err := account.Spec.AssignProperties_To_Account_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Account_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Account_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (account *Account) AssignProperties_To_Account(destination *storage.Account
 	var status storage.Account_STATUS
 	err = account.Status.AssignProperties_To_Account_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Account_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Account_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -501,13 +376,13 @@ func (account *Account_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.Account_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = account.AssignProperties_From_Account_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -525,13 +400,13 @@ func (account *Account_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.Account_Spec{}
 	err := account.AssignProperties_To_Account_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -551,7 +426,7 @@ func (account *Account_Spec) AssignProperties_From_Account_Spec(source *storage.
 		var operatorSpec AccountOperatorSpec
 		err := operatorSpec.AssignProperties_From_AccountOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AccountOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_AccountOperatorSpec() to populate field OperatorSpec")
 		}
 		account.OperatorSpec = &operatorSpec
 	} else {
@@ -598,7 +473,7 @@ func (account *Account_Spec) AssignProperties_To_Account_Spec(destination *stora
 		var operatorSpec storage.AccountOperatorSpec
 		err := account.OperatorSpec.AssignProperties_To_AccountOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AccountOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_AccountOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -726,13 +601,13 @@ func (account *Account_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.Account_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = account.AssignProperties_From_Account_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -750,13 +625,13 @@ func (account *Account_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.Account_STATUS{}
 	err := account.AssignProperties_To_Account_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -917,7 +792,7 @@ func (account *Account_STATUS) AssignProperties_From_Account_STATUS(source *stor
 		var defaultIngestionSetting IngestionSettings_STATUS
 		err := defaultIngestionSetting.AssignProperties_From_IngestionSettings_STATUS(source.DefaultIngestionSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IngestionSettings_STATUS() to populate field DefaultIngestionSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_IngestionSettings_STATUS() to populate field DefaultIngestionSettings")
 		}
 		account.DefaultIngestionSettings = &defaultIngestionSetting
 	} else {
@@ -938,7 +813,7 @@ func (account *Account_STATUS) AssignProperties_From_Account_STATUS(source *stor
 		var metric Metrics_STATUS
 		err := metric.AssignProperties_From_Metrics_STATUS(source.Metrics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Metrics_STATUS() to populate field Metrics")
+			return eris.Wrap(err, "calling AssignProperties_From_Metrics_STATUS() to populate field Metrics")
 		}
 		account.Metrics = &metric
 	} else {
@@ -957,7 +832,7 @@ func (account *Account_STATUS) AssignProperties_From_Account_STATUS(source *stor
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -989,7 +864,7 @@ func (account *Account_STATUS) AssignProperties_From_Account_STATUS(source *stor
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		account.SystemData = &systemDatum
 	} else {
@@ -1022,7 +897,7 @@ func (account *Account_STATUS) AssignProperties_To_Account_STATUS(destination *s
 		var defaultIngestionSetting storage.IngestionSettings_STATUS
 		err := account.DefaultIngestionSettings.AssignProperties_To_IngestionSettings_STATUS(&defaultIngestionSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IngestionSettings_STATUS() to populate field DefaultIngestionSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_IngestionSettings_STATUS() to populate field DefaultIngestionSettings")
 		}
 		destination.DefaultIngestionSettings = &defaultIngestionSetting
 	} else {
@@ -1043,7 +918,7 @@ func (account *Account_STATUS) AssignProperties_To_Account_STATUS(destination *s
 		var metric storage.Metrics_STATUS
 		err := account.Metrics.AssignProperties_To_Metrics_STATUS(&metric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Metrics_STATUS() to populate field Metrics")
+			return eris.Wrap(err, "calling AssignProperties_To_Metrics_STATUS() to populate field Metrics")
 		}
 		destination.Metrics = &metric
 	} else {
@@ -1062,7 +937,7 @@ func (account *Account_STATUS) AssignProperties_To_Account_STATUS(destination *s
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -1092,7 +967,7 @@ func (account *Account_STATUS) AssignProperties_To_Account_STATUS(destination *s
 		var systemDatum storage.SystemData_STATUS
 		err := account.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

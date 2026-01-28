@@ -24,12 +24,14 @@ FederatedIdentityCredential_STATUS: Object (5 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 FederatedIdentityCredential_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
     ├── Audiences: string[]
     ├── Issuer: *string
     └── Subject: *string
+
 UserAssignedIdentity_STATUS: Object (7 properties)
 ├── Id: *string
 ├── Location: *string
@@ -55,7 +57,9 @@ UserAssignedIdentity_STATUS: Object (7 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 UserAssignedIdentity_Spec: Object (3 properties)
 ├── Location: *string
 ├── Name: string
 └── Tags: map[string]string
+

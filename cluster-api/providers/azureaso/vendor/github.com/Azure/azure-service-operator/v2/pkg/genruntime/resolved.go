@@ -8,7 +8,7 @@ package genruntime
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 type reference interface {
@@ -34,7 +34,7 @@ func (r Resolved[T, V]) Lookup(ref T) (V, error) {
 	result, ok := r.resolved[ref]
 	if !ok {
 		var ret V
-		return ret, errors.Errorf("couldn't find resolved %T %s", ref, ref.String())
+		return ret, eris.Errorf("couldn't find resolved %T %s", ref, ref.String())
 	}
 	return result, nil
 }
@@ -44,7 +44,7 @@ func (r Resolved[T, V]) Lookup(ref T) (V, error) {
 func (r Resolved[T, V]) LookupFromPtr(ref *T) (V, error) {
 	if ref == nil {
 		var ret V
-		return ret, errors.Errorf("cannot look up secret from nil SecretReference")
+		return ret, eris.Errorf("cannot look up secret from nil SecretReference")
 	}
 
 	return r.Lookup(*ref)

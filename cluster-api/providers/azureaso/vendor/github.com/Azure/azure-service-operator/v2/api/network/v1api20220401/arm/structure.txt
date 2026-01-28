@@ -55,6 +55,7 @@ TrafficManagerProfile_STATUS: Object (6 properties)
 │       └── "Enabled"
 ├── Tags: map[string]string
 └── Type: *string
+
 TrafficManagerProfile_Spec: Object (5 properties)
 ├── Location: *string
 ├── Name: string
@@ -105,6 +106,7 @@ TrafficManagerProfile_Spec: Object (5 properties)
 │       └── "Enabled"
 ├── Tags: map[string]string
 └── Type: *string
+
 TrafficManagerProfilesAzureEndpoint_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -140,6 +142,7 @@ TrafficManagerProfilesAzureEndpoint_STATUS: Object (4 properties)
 │   ├── TargetResourceId: *string
 │   └── Weight: *int
 └── Type: *string
+
 TrafficManagerProfilesAzureEndpoint_Spec: Object (3 properties)
 ├── Name: string
 ├── Properties: *Object (14 properties)
@@ -174,6 +177,7 @@ TrafficManagerProfilesAzureEndpoint_Spec: Object (3 properties)
 │   ├── TargetResourceId: *string
 │   └── Weight: *int
 └── Type: *string
+
 TrafficManagerProfilesExternalEndpoint_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -209,6 +213,7 @@ TrafficManagerProfilesExternalEndpoint_STATUS: Object (4 properties)
 │   ├── TargetResourceId: *string
 │   └── Weight: *int
 └── Type: *string
+
 TrafficManagerProfilesExternalEndpoint_Spec: Object (3 properties)
 ├── Name: string
 ├── Properties: *Object (14 properties)
@@ -243,6 +248,7 @@ TrafficManagerProfilesExternalEndpoint_Spec: Object (3 properties)
 │   ├── TargetResourceId: *string
 │   └── Weight: *int
 └── Type: *string
+
 TrafficManagerProfilesNestedEndpoint_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -278,6 +284,7 @@ TrafficManagerProfilesNestedEndpoint_STATUS: Object (4 properties)
 │   ├── TargetResourceId: *string
 │   └── Weight: *int
 └── Type: *string
+
 TrafficManagerProfilesNestedEndpoint_Spec: Object (3 properties)
 ├── Name: string
 ├── Properties: *Object (14 properties)
@@ -312,3 +319,4 @@ TrafficManagerProfilesNestedEndpoint_Spec: Object (3 properties)
 │   ├── TargetResourceId: *string
 │   └── Weight: *int
 └── Type: *string
+

@@ -11,7 +11,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -137,6 +137,10 @@ func (compute *WorkspacesCompute) NewEmptyStatus() genruntime.ConvertibleStatus 
 
 // Owner returns the ResourceReference of the owner
 func (compute *WorkspacesCompute) Owner() *genruntime.ResourceReference {
+	if compute.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(compute.Spec)
 	return compute.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -153,7 +157,7 @@ func (compute *WorkspacesCompute) SetStatus(status genruntime.ConvertibleStatus)
 	var st WorkspacesCompute_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	compute.Status = st
@@ -170,7 +174,7 @@ func (compute *WorkspacesCompute) AssignProperties_From_WorkspacesCompute(source
 	var spec WorkspacesCompute_Spec
 	err := spec.AssignProperties_From_WorkspacesCompute_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_WorkspacesCompute_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_WorkspacesCompute_Spec() to populate field Spec")
 	}
 	compute.Spec = spec
 
@@ -178,7 +182,7 @@ func (compute *WorkspacesCompute) AssignProperties_From_WorkspacesCompute(source
 	var status WorkspacesCompute_STATUS
 	err = status.AssignProperties_From_WorkspacesCompute_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_WorkspacesCompute_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_WorkspacesCompute_STATUS() to populate field Status")
 	}
 	compute.Status = status
 
@@ -187,7 +191,7 @@ func (compute *WorkspacesCompute) AssignProperties_From_WorkspacesCompute(source
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForWorkspacesCompute); ok {
 		err := augmentedCompute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -205,7 +209,7 @@ func (compute *WorkspacesCompute) AssignProperties_To_WorkspacesCompute(destinat
 	var spec storage.WorkspacesCompute_Spec
 	err := compute.Spec.AssignProperties_To_WorkspacesCompute_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_WorkspacesCompute_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_WorkspacesCompute_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -213,7 +217,7 @@ func (compute *WorkspacesCompute) AssignProperties_To_WorkspacesCompute(destinat
 	var status storage.WorkspacesCompute_STATUS
 	err = compute.Status.AssignProperties_To_WorkspacesCompute_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_WorkspacesCompute_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_WorkspacesCompute_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -222,7 +226,7 @@ func (compute *WorkspacesCompute) AssignProperties_To_WorkspacesCompute(destinat
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForWorkspacesCompute); ok {
 		err := augmentedCompute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -291,13 +295,13 @@ func (compute *WorkspacesCompute_Spec) ConvertSpecFrom(source genruntime.Convert
 	src = &storage.WorkspacesCompute_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = compute.AssignProperties_From_WorkspacesCompute_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -315,13 +319,13 @@ func (compute *WorkspacesCompute_Spec) ConvertSpecTo(destination genruntime.Conv
 	dst = &storage.WorkspacesCompute_Spec{}
 	err := compute.AssignProperties_To_WorkspacesCompute_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -340,7 +344,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_From_WorkspacesCompute_S
 		var identity Identity
 		err := identity.AssignProperties_From_ManagedServiceIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity() to populate field Identity")
 		}
 		compute.Identity = &identity
 	} else {
@@ -355,7 +359,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_From_WorkspacesCompute_S
 		var operatorSpec WorkspacesComputeOperatorSpec
 		err := operatorSpec.AssignProperties_From_WorkspacesComputeOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WorkspacesComputeOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_WorkspacesComputeOperatorSpec() to populate field OperatorSpec")
 		}
 		compute.OperatorSpec = &operatorSpec
 	} else {
@@ -378,7 +382,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_From_WorkspacesCompute_S
 		var property Compute
 		err := property.AssignProperties_From_Compute(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Compute() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_Compute() to populate field Properties")
 		}
 		compute.Properties = &property
 	} else {
@@ -390,7 +394,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_From_WorkspacesCompute_S
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		compute.Sku = &sku
 	} else {
@@ -402,7 +406,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_From_WorkspacesCompute_S
 		var systemDatum SystemData
 		err := propertyBag.Pull("SystemData", &systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'SystemData' from propertyBag")
+			return eris.Wrap(err, "pulling 'SystemData' from propertyBag")
 		}
 
 		compute.SystemData = &systemDatum
@@ -425,7 +429,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_From_WorkspacesCompute_S
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForWorkspacesCompute_Spec); ok {
 		err := augmentedCompute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -446,7 +450,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_To_WorkspacesCompute_Spe
 		var identity storage.ManagedServiceIdentity
 		err := compute.Identity.AssignProperties_To_ManagedServiceIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -461,7 +465,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_To_WorkspacesCompute_Spe
 		var operatorSpec storage.WorkspacesComputeOperatorSpec
 		err := compute.OperatorSpec.AssignProperties_To_WorkspacesComputeOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WorkspacesComputeOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_WorkspacesComputeOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -484,7 +488,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_To_WorkspacesCompute_Spe
 		var property storage.Compute
 		err := compute.Properties.AssignProperties_To_Compute(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Compute() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_Compute() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -496,7 +500,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_To_WorkspacesCompute_Spe
 		var sku storage.Sku
 		err := compute.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -525,7 +529,7 @@ func (compute *WorkspacesCompute_Spec) AssignProperties_To_WorkspacesCompute_Spe
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForWorkspacesCompute_Spec); ok {
 		err := augmentedCompute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -562,13 +566,13 @@ func (compute *WorkspacesCompute_STATUS) ConvertStatusFrom(source genruntime.Con
 	src = &storage.WorkspacesCompute_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = compute.AssignProperties_From_WorkspacesCompute_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -586,13 +590,13 @@ func (compute *WorkspacesCompute_STATUS) ConvertStatusTo(destination genruntime.
 	dst = &storage.WorkspacesCompute_STATUS{}
 	err := compute.AssignProperties_To_WorkspacesCompute_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -614,7 +618,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_From_WorkspacesCompute
 		var identity Identity_STATUS
 		err := identity.AssignProperties_From_ManagedServiceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		compute.Identity = &identity
 	} else {
@@ -632,7 +636,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_From_WorkspacesCompute
 		var property Compute_STATUS
 		err := property.AssignProperties_From_Compute_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Compute_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_Compute_STATUS() to populate field Properties")
 		}
 		compute.Properties = &property
 	} else {
@@ -644,7 +648,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_From_WorkspacesCompute
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		compute.Sku = &sku
 	} else {
@@ -656,7 +660,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_From_WorkspacesCompute
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		compute.SystemData = &systemDatum
 	} else {
@@ -681,7 +685,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_From_WorkspacesCompute
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForWorkspacesCompute_STATUS); ok {
 		err := augmentedCompute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -705,7 +709,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_To_WorkspacesCompute_S
 		var identity storage.ManagedServiceIdentity_STATUS
 		err := compute.Identity.AssignProperties_To_ManagedServiceIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -723,7 +727,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_To_WorkspacesCompute_S
 		var property storage.Compute_STATUS
 		err := compute.Properties.AssignProperties_To_Compute_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Compute_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_Compute_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -735,7 +739,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_To_WorkspacesCompute_S
 		var sku storage.Sku_STATUS
 		err := compute.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -747,7 +751,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_To_WorkspacesCompute_S
 		var systemDatum storage.SystemData_STATUS
 		err := compute.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -772,7 +776,7 @@ func (compute *WorkspacesCompute_STATUS) AssignProperties_To_WorkspacesCompute_S
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForWorkspacesCompute_STATUS); ok {
 		err := augmentedCompute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -815,7 +819,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var aks AKS
 		err := aks.AssignProperties_From_AKS(source.AKS)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AKS() to populate field AKS")
+			return eris.Wrap(err, "calling AssignProperties_From_AKS() to populate field AKS")
 		}
 		compute.AKS = &aks
 	} else {
@@ -827,7 +831,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var amlCompute AmlCompute
 		err := amlCompute.AssignProperties_From_AmlCompute(source.AmlCompute)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AmlCompute() to populate field AmlCompute")
+			return eris.Wrap(err, "calling AssignProperties_From_AmlCompute() to populate field AmlCompute")
 		}
 		compute.AmlCompute = &amlCompute
 	} else {
@@ -839,7 +843,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var computeInstance ComputeInstance
 		err := computeInstance.AssignProperties_From_ComputeInstance(source.ComputeInstance)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstance() to populate field ComputeInstance")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstance() to populate field ComputeInstance")
 		}
 		compute.ComputeInstance = &computeInstance
 	} else {
@@ -851,7 +855,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var dataFactory DataFactory
 		err := dataFactory.AssignProperties_From_DataFactory(source.DataFactory)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DataFactory() to populate field DataFactory")
+			return eris.Wrap(err, "calling AssignProperties_From_DataFactory() to populate field DataFactory")
 		}
 		compute.DataFactory = &dataFactory
 	} else {
@@ -863,7 +867,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var dataLakeAnalytic DataLakeAnalytics
 		err := dataLakeAnalytic.AssignProperties_From_DataLakeAnalytics(source.DataLakeAnalytics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DataLakeAnalytics() to populate field DataLakeAnalytics")
+			return eris.Wrap(err, "calling AssignProperties_From_DataLakeAnalytics() to populate field DataLakeAnalytics")
 		}
 		compute.DataLakeAnalytics = &dataLakeAnalytic
 	} else {
@@ -875,7 +879,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var databrick Databricks
 		err := databrick.AssignProperties_From_Databricks(source.Databricks)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Databricks() to populate field Databricks")
+			return eris.Wrap(err, "calling AssignProperties_From_Databricks() to populate field Databricks")
 		}
 		compute.Databricks = &databrick
 	} else {
@@ -887,7 +891,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var hdInsight HDInsight
 		err := hdInsight.AssignProperties_From_HDInsight(source.HDInsight)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HDInsight() to populate field HDInsight")
+			return eris.Wrap(err, "calling AssignProperties_From_HDInsight() to populate field HDInsight")
 		}
 		compute.HDInsight = &hdInsight
 	} else {
@@ -899,7 +903,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var kubernete Kubernetes
 		err := kubernete.AssignProperties_From_Kubernetes(source.Kubernetes)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Kubernetes() to populate field Kubernetes")
+			return eris.Wrap(err, "calling AssignProperties_From_Kubernetes() to populate field Kubernetes")
 		}
 		compute.Kubernetes = &kubernete
 	} else {
@@ -911,7 +915,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var synapseSpark SynapseSpark
 		err := synapseSpark.AssignProperties_From_SynapseSpark(source.SynapseSpark)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SynapseSpark() to populate field SynapseSpark")
+			return eris.Wrap(err, "calling AssignProperties_From_SynapseSpark() to populate field SynapseSpark")
 		}
 		compute.SynapseSpark = &synapseSpark
 	} else {
@@ -923,7 +927,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 		var virtualMachine VirtualMachine
 		err := virtualMachine.AssignProperties_From_VirtualMachine(source.VirtualMachine)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachine() to populate field VirtualMachine")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachine() to populate field VirtualMachine")
 		}
 		compute.VirtualMachine = &virtualMachine
 	} else {
@@ -942,7 +946,7 @@ func (compute *Compute) AssignProperties_From_Compute(source *storage.Compute) e
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForCompute); ok {
 		err := augmentedCompute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -960,7 +964,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var aks storage.AKS
 		err := compute.AKS.AssignProperties_To_AKS(&aks)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AKS() to populate field AKS")
+			return eris.Wrap(err, "calling AssignProperties_To_AKS() to populate field AKS")
 		}
 		destination.AKS = &aks
 	} else {
@@ -972,7 +976,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var amlCompute storage.AmlCompute
 		err := compute.AmlCompute.AssignProperties_To_AmlCompute(&amlCompute)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AmlCompute() to populate field AmlCompute")
+			return eris.Wrap(err, "calling AssignProperties_To_AmlCompute() to populate field AmlCompute")
 		}
 		destination.AmlCompute = &amlCompute
 	} else {
@@ -984,7 +988,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var computeInstance storage.ComputeInstance
 		err := compute.ComputeInstance.AssignProperties_To_ComputeInstance(&computeInstance)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstance() to populate field ComputeInstance")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstance() to populate field ComputeInstance")
 		}
 		destination.ComputeInstance = &computeInstance
 	} else {
@@ -996,7 +1000,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var dataFactory storage.DataFactory
 		err := compute.DataFactory.AssignProperties_To_DataFactory(&dataFactory)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DataFactory() to populate field DataFactory")
+			return eris.Wrap(err, "calling AssignProperties_To_DataFactory() to populate field DataFactory")
 		}
 		destination.DataFactory = &dataFactory
 	} else {
@@ -1008,7 +1012,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var dataLakeAnalytic storage.DataLakeAnalytics
 		err := compute.DataLakeAnalytics.AssignProperties_To_DataLakeAnalytics(&dataLakeAnalytic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DataLakeAnalytics() to populate field DataLakeAnalytics")
+			return eris.Wrap(err, "calling AssignProperties_To_DataLakeAnalytics() to populate field DataLakeAnalytics")
 		}
 		destination.DataLakeAnalytics = &dataLakeAnalytic
 	} else {
@@ -1020,7 +1024,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var databrick storage.Databricks
 		err := compute.Databricks.AssignProperties_To_Databricks(&databrick)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Databricks() to populate field Databricks")
+			return eris.Wrap(err, "calling AssignProperties_To_Databricks() to populate field Databricks")
 		}
 		destination.Databricks = &databrick
 	} else {
@@ -1032,7 +1036,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var hdInsight storage.HDInsight
 		err := compute.HDInsight.AssignProperties_To_HDInsight(&hdInsight)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HDInsight() to populate field HDInsight")
+			return eris.Wrap(err, "calling AssignProperties_To_HDInsight() to populate field HDInsight")
 		}
 		destination.HDInsight = &hdInsight
 	} else {
@@ -1044,7 +1048,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var kubernete storage.Kubernetes
 		err := compute.Kubernetes.AssignProperties_To_Kubernetes(&kubernete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Kubernetes() to populate field Kubernetes")
+			return eris.Wrap(err, "calling AssignProperties_To_Kubernetes() to populate field Kubernetes")
 		}
 		destination.Kubernetes = &kubernete
 	} else {
@@ -1056,7 +1060,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var synapseSpark storage.SynapseSpark
 		err := compute.SynapseSpark.AssignProperties_To_SynapseSpark(&synapseSpark)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SynapseSpark() to populate field SynapseSpark")
+			return eris.Wrap(err, "calling AssignProperties_To_SynapseSpark() to populate field SynapseSpark")
 		}
 		destination.SynapseSpark = &synapseSpark
 	} else {
@@ -1068,7 +1072,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 		var virtualMachine storage.VirtualMachine
 		err := compute.VirtualMachine.AssignProperties_To_VirtualMachine(&virtualMachine)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachine() to populate field VirtualMachine")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachine() to populate field VirtualMachine")
 		}
 		destination.VirtualMachine = &virtualMachine
 	} else {
@@ -1087,7 +1091,7 @@ func (compute *Compute) AssignProperties_To_Compute(destination *storage.Compute
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForCompute); ok {
 		err := augmentedCompute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1120,7 +1124,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var aks AKS_STATUS
 		err := aks.AssignProperties_From_AKS_STATUS(source.AKS)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AKS_STATUS() to populate field AKS")
+			return eris.Wrap(err, "calling AssignProperties_From_AKS_STATUS() to populate field AKS")
 		}
 		compute.AKS = &aks
 	} else {
@@ -1132,7 +1136,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var amlCompute AmlCompute_STATUS
 		err := amlCompute.AssignProperties_From_AmlCompute_STATUS(source.AmlCompute)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AmlCompute_STATUS() to populate field AmlCompute")
+			return eris.Wrap(err, "calling AssignProperties_From_AmlCompute_STATUS() to populate field AmlCompute")
 		}
 		compute.AmlCompute = &amlCompute
 	} else {
@@ -1144,7 +1148,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var computeInstance ComputeInstance_STATUS
 		err := computeInstance.AssignProperties_From_ComputeInstance_STATUS(source.ComputeInstance)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstance_STATUS() to populate field ComputeInstance")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstance_STATUS() to populate field ComputeInstance")
 		}
 		compute.ComputeInstance = &computeInstance
 	} else {
@@ -1156,7 +1160,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var dataFactory DataFactory_STATUS
 		err := dataFactory.AssignProperties_From_DataFactory_STATUS(source.DataFactory)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DataFactory_STATUS() to populate field DataFactory")
+			return eris.Wrap(err, "calling AssignProperties_From_DataFactory_STATUS() to populate field DataFactory")
 		}
 		compute.DataFactory = &dataFactory
 	} else {
@@ -1168,7 +1172,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var dataLakeAnalytic DataLakeAnalytics_STATUS
 		err := dataLakeAnalytic.AssignProperties_From_DataLakeAnalytics_STATUS(source.DataLakeAnalytics)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DataLakeAnalytics_STATUS() to populate field DataLakeAnalytics")
+			return eris.Wrap(err, "calling AssignProperties_From_DataLakeAnalytics_STATUS() to populate field DataLakeAnalytics")
 		}
 		compute.DataLakeAnalytics = &dataLakeAnalytic
 	} else {
@@ -1180,7 +1184,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var databrick Databricks_STATUS
 		err := databrick.AssignProperties_From_Databricks_STATUS(source.Databricks)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Databricks_STATUS() to populate field Databricks")
+			return eris.Wrap(err, "calling AssignProperties_From_Databricks_STATUS() to populate field Databricks")
 		}
 		compute.Databricks = &databrick
 	} else {
@@ -1192,7 +1196,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var hdInsight HDInsight_STATUS
 		err := hdInsight.AssignProperties_From_HDInsight_STATUS(source.HDInsight)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HDInsight_STATUS() to populate field HDInsight")
+			return eris.Wrap(err, "calling AssignProperties_From_HDInsight_STATUS() to populate field HDInsight")
 		}
 		compute.HDInsight = &hdInsight
 	} else {
@@ -1204,7 +1208,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var kubernete Kubernetes_STATUS
 		err := kubernete.AssignProperties_From_Kubernetes_STATUS(source.Kubernetes)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Kubernetes_STATUS() to populate field Kubernetes")
+			return eris.Wrap(err, "calling AssignProperties_From_Kubernetes_STATUS() to populate field Kubernetes")
 		}
 		compute.Kubernetes = &kubernete
 	} else {
@@ -1216,7 +1220,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var synapseSpark SynapseSpark_STATUS
 		err := synapseSpark.AssignProperties_From_SynapseSpark_STATUS(source.SynapseSpark)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SynapseSpark_STATUS() to populate field SynapseSpark")
+			return eris.Wrap(err, "calling AssignProperties_From_SynapseSpark_STATUS() to populate field SynapseSpark")
 		}
 		compute.SynapseSpark = &synapseSpark
 	} else {
@@ -1228,7 +1232,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 		var virtualMachine VirtualMachine_STATUS
 		err := virtualMachine.AssignProperties_From_VirtualMachine_STATUS(source.VirtualMachine)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachine_STATUS() to populate field VirtualMachine")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachine_STATUS() to populate field VirtualMachine")
 		}
 		compute.VirtualMachine = &virtualMachine
 	} else {
@@ -1247,7 +1251,7 @@ func (compute *Compute_STATUS) AssignProperties_From_Compute_STATUS(source *stor
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForCompute_STATUS); ok {
 		err := augmentedCompute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1265,7 +1269,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var aks storage.AKS_STATUS
 		err := compute.AKS.AssignProperties_To_AKS_STATUS(&aks)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AKS_STATUS() to populate field AKS")
+			return eris.Wrap(err, "calling AssignProperties_To_AKS_STATUS() to populate field AKS")
 		}
 		destination.AKS = &aks
 	} else {
@@ -1277,7 +1281,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var amlCompute storage.AmlCompute_STATUS
 		err := compute.AmlCompute.AssignProperties_To_AmlCompute_STATUS(&amlCompute)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AmlCompute_STATUS() to populate field AmlCompute")
+			return eris.Wrap(err, "calling AssignProperties_To_AmlCompute_STATUS() to populate field AmlCompute")
 		}
 		destination.AmlCompute = &amlCompute
 	} else {
@@ -1289,7 +1293,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var computeInstance storage.ComputeInstance_STATUS
 		err := compute.ComputeInstance.AssignProperties_To_ComputeInstance_STATUS(&computeInstance)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstance_STATUS() to populate field ComputeInstance")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstance_STATUS() to populate field ComputeInstance")
 		}
 		destination.ComputeInstance = &computeInstance
 	} else {
@@ -1301,7 +1305,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var dataFactory storage.DataFactory_STATUS
 		err := compute.DataFactory.AssignProperties_To_DataFactory_STATUS(&dataFactory)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DataFactory_STATUS() to populate field DataFactory")
+			return eris.Wrap(err, "calling AssignProperties_To_DataFactory_STATUS() to populate field DataFactory")
 		}
 		destination.DataFactory = &dataFactory
 	} else {
@@ -1313,7 +1317,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var dataLakeAnalytic storage.DataLakeAnalytics_STATUS
 		err := compute.DataLakeAnalytics.AssignProperties_To_DataLakeAnalytics_STATUS(&dataLakeAnalytic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DataLakeAnalytics_STATUS() to populate field DataLakeAnalytics")
+			return eris.Wrap(err, "calling AssignProperties_To_DataLakeAnalytics_STATUS() to populate field DataLakeAnalytics")
 		}
 		destination.DataLakeAnalytics = &dataLakeAnalytic
 	} else {
@@ -1325,7 +1329,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var databrick storage.Databricks_STATUS
 		err := compute.Databricks.AssignProperties_To_Databricks_STATUS(&databrick)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Databricks_STATUS() to populate field Databricks")
+			return eris.Wrap(err, "calling AssignProperties_To_Databricks_STATUS() to populate field Databricks")
 		}
 		destination.Databricks = &databrick
 	} else {
@@ -1337,7 +1341,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var hdInsight storage.HDInsight_STATUS
 		err := compute.HDInsight.AssignProperties_To_HDInsight_STATUS(&hdInsight)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HDInsight_STATUS() to populate field HDInsight")
+			return eris.Wrap(err, "calling AssignProperties_To_HDInsight_STATUS() to populate field HDInsight")
 		}
 		destination.HDInsight = &hdInsight
 	} else {
@@ -1349,7 +1353,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var kubernete storage.Kubernetes_STATUS
 		err := compute.Kubernetes.AssignProperties_To_Kubernetes_STATUS(&kubernete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Kubernetes_STATUS() to populate field Kubernetes")
+			return eris.Wrap(err, "calling AssignProperties_To_Kubernetes_STATUS() to populate field Kubernetes")
 		}
 		destination.Kubernetes = &kubernete
 	} else {
@@ -1361,7 +1365,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var synapseSpark storage.SynapseSpark_STATUS
 		err := compute.SynapseSpark.AssignProperties_To_SynapseSpark_STATUS(&synapseSpark)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SynapseSpark_STATUS() to populate field SynapseSpark")
+			return eris.Wrap(err, "calling AssignProperties_To_SynapseSpark_STATUS() to populate field SynapseSpark")
 		}
 		destination.SynapseSpark = &synapseSpark
 	} else {
@@ -1373,7 +1377,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 		var virtualMachine storage.VirtualMachine_STATUS
 		err := compute.VirtualMachine.AssignProperties_To_VirtualMachine_STATUS(&virtualMachine)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachine_STATUS() to populate field VirtualMachine")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachine_STATUS() to populate field VirtualMachine")
 		}
 		destination.VirtualMachine = &virtualMachine
 	} else {
@@ -1392,7 +1396,7 @@ func (compute *Compute_STATUS) AssignProperties_To_Compute_STATUS(destination *s
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForCompute_STATUS); ok {
 		err := augmentedCompute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1461,7 +1465,7 @@ func (operator *WorkspacesComputeOperatorSpec) AssignProperties_From_WorkspacesC
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForWorkspacesComputeOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1522,7 +1526,7 @@ func (operator *WorkspacesComputeOperatorSpec) AssignProperties_To_WorkspacesCom
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForWorkspacesComputeOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1570,7 +1574,7 @@ func (aks *AKS) AssignProperties_From_AKS(source *storage.AKS) error {
 		var property AKS_Properties
 		err := property.AssignProperties_From_AKS_Properties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AKS_Properties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_AKS_Properties() to populate field Properties")
 		}
 		aks.Properties = &property
 	} else {
@@ -1597,7 +1601,7 @@ func (aks *AKS) AssignProperties_From_AKS(source *storage.AKS) error {
 	if augmentedAks, ok := aksAsAny.(augmentConversionForAKS); ok {
 		err := augmentedAks.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1632,7 +1636,7 @@ func (aks *AKS) AssignProperties_To_AKS(destination *storage.AKS) error {
 		var property storage.AKS_Properties
 		err := aks.Properties.AssignProperties_To_AKS_Properties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AKS_Properties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_AKS_Properties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -1659,7 +1663,7 @@ func (aks *AKS) AssignProperties_To_AKS(destination *storage.AKS) error {
 	if augmentedAks, ok := aksAsAny.(augmentConversionForAKS); ok {
 		err := augmentedAks.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1724,7 +1728,7 @@ func (aks *AKS_STATUS) AssignProperties_From_AKS_STATUS(source *storage.AKS_STAT
 		var property AKS_Properties_STATUS
 		err := property.AssignProperties_From_AKS_Properties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AKS_Properties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_AKS_Properties_STATUS() to populate field Properties")
 		}
 		aks.Properties = &property
 	} else {
@@ -1740,7 +1744,7 @@ func (aks *AKS_STATUS) AssignProperties_From_AKS_STATUS(source *storage.AKS_STAT
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -1767,7 +1771,7 @@ func (aks *AKS_STATUS) AssignProperties_From_AKS_STATUS(source *storage.AKS_STAT
 	if augmentedAks, ok := aksAsAny.(augmentConversionForAKS_STATUS); ok {
 		err := augmentedAks.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1816,7 +1820,7 @@ func (aks *AKS_STATUS) AssignProperties_To_AKS_STATUS(destination *storage.AKS_S
 		var property storage.AKS_Properties_STATUS
 		err := aks.Properties.AssignProperties_To_AKS_Properties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AKS_Properties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_AKS_Properties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -1832,7 +1836,7 @@ func (aks *AKS_STATUS) AssignProperties_To_AKS_STATUS(destination *storage.AKS_S
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -1859,7 +1863,7 @@ func (aks *AKS_STATUS) AssignProperties_To_AKS_STATUS(destination *storage.AKS_S
 	if augmentedAks, ok := aksAsAny.(augmentConversionForAKS_STATUS); ok {
 		err := augmentedAks.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1907,7 +1911,7 @@ func (compute *AmlCompute) AssignProperties_From_AmlCompute(source *storage.AmlC
 		var property AmlComputeProperties
 		err := property.AssignProperties_From_AmlComputeProperties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AmlComputeProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_AmlComputeProperties() to populate field Properties")
 		}
 		compute.Properties = &property
 	} else {
@@ -1934,7 +1938,7 @@ func (compute *AmlCompute) AssignProperties_From_AmlCompute(source *storage.AmlC
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForAmlCompute); ok {
 		err := augmentedCompute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1969,7 +1973,7 @@ func (compute *AmlCompute) AssignProperties_To_AmlCompute(destination *storage.A
 		var property storage.AmlComputeProperties
 		err := compute.Properties.AssignProperties_To_AmlComputeProperties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AmlComputeProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_AmlComputeProperties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -1996,7 +2000,7 @@ func (compute *AmlCompute) AssignProperties_To_AmlCompute(destination *storage.A
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForAmlCompute); ok {
 		err := augmentedCompute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2061,7 +2065,7 @@ func (compute *AmlCompute_STATUS) AssignProperties_From_AmlCompute_STATUS(source
 		var property AmlComputeProperties_STATUS
 		err := property.AssignProperties_From_AmlComputeProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AmlComputeProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_AmlComputeProperties_STATUS() to populate field Properties")
 		}
 		compute.Properties = &property
 	} else {
@@ -2077,7 +2081,7 @@ func (compute *AmlCompute_STATUS) AssignProperties_From_AmlCompute_STATUS(source
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -2104,7 +2108,7 @@ func (compute *AmlCompute_STATUS) AssignProperties_From_AmlCompute_STATUS(source
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForAmlCompute_STATUS); ok {
 		err := augmentedCompute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2153,7 +2157,7 @@ func (compute *AmlCompute_STATUS) AssignProperties_To_AmlCompute_STATUS(destinat
 		var property storage.AmlComputeProperties_STATUS
 		err := compute.Properties.AssignProperties_To_AmlComputeProperties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AmlComputeProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_AmlComputeProperties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -2169,7 +2173,7 @@ func (compute *AmlCompute_STATUS) AssignProperties_To_AmlCompute_STATUS(destinat
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -2196,7 +2200,7 @@ func (compute *AmlCompute_STATUS) AssignProperties_To_AmlCompute_STATUS(destinat
 	if augmentedCompute, ok := computeAsAny.(augmentConversionForAmlCompute_STATUS); ok {
 		err := augmentedCompute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2259,7 +2263,7 @@ func (instance *ComputeInstance) AssignProperties_From_ComputeInstance(source *s
 		var property ComputeInstanceProperties
 		err := property.AssignProperties_From_ComputeInstanceProperties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstanceProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstanceProperties() to populate field Properties")
 		}
 		instance.Properties = &property
 	} else {
@@ -2286,7 +2290,7 @@ func (instance *ComputeInstance) AssignProperties_From_ComputeInstance(source *s
 	if augmentedInstance, ok := instanceAsAny.(augmentConversionForComputeInstance); ok {
 		err := augmentedInstance.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2321,7 +2325,7 @@ func (instance *ComputeInstance) AssignProperties_To_ComputeInstance(destination
 		var property storage.ComputeInstanceProperties
 		err := instance.Properties.AssignProperties_To_ComputeInstanceProperties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstanceProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstanceProperties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -2348,7 +2352,7 @@ func (instance *ComputeInstance) AssignProperties_To_ComputeInstance(destination
 	if augmentedInstance, ok := instanceAsAny.(augmentConversionForComputeInstance); ok {
 		err := augmentedInstance.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2413,7 +2417,7 @@ func (instance *ComputeInstance_STATUS) AssignProperties_From_ComputeInstance_ST
 		var property ComputeInstanceProperties_STATUS
 		err := property.AssignProperties_From_ComputeInstanceProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstanceProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstanceProperties_STATUS() to populate field Properties")
 		}
 		instance.Properties = &property
 	} else {
@@ -2429,7 +2433,7 @@ func (instance *ComputeInstance_STATUS) AssignProperties_From_ComputeInstance_ST
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -2456,7 +2460,7 @@ func (instance *ComputeInstance_STATUS) AssignProperties_From_ComputeInstance_ST
 	if augmentedInstance, ok := instanceAsAny.(augmentConversionForComputeInstance_STATUS); ok {
 		err := augmentedInstance.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2505,7 +2509,7 @@ func (instance *ComputeInstance_STATUS) AssignProperties_To_ComputeInstance_STAT
 		var property storage.ComputeInstanceProperties_STATUS
 		err := instance.Properties.AssignProperties_To_ComputeInstanceProperties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstanceProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstanceProperties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -2521,7 +2525,7 @@ func (instance *ComputeInstance_STATUS) AssignProperties_To_ComputeInstance_STAT
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -2548,7 +2552,7 @@ func (instance *ComputeInstance_STATUS) AssignProperties_To_ComputeInstance_STAT
 	if augmentedInstance, ok := instanceAsAny.(augmentConversionForComputeInstance_STATUS); ok {
 		err := augmentedInstance.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2596,7 +2600,7 @@ func (databricks *Databricks) AssignProperties_From_Databricks(source *storage.D
 		var property DatabricksProperties
 		err := property.AssignProperties_From_DatabricksProperties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DatabricksProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_DatabricksProperties() to populate field Properties")
 		}
 		databricks.Properties = &property
 	} else {
@@ -2623,7 +2627,7 @@ func (databricks *Databricks) AssignProperties_From_Databricks(source *storage.D
 	if augmentedDatabricks, ok := databricksAsAny.(augmentConversionForDatabricks); ok {
 		err := augmentedDatabricks.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2658,7 +2662,7 @@ func (databricks *Databricks) AssignProperties_To_Databricks(destination *storag
 		var property storage.DatabricksProperties
 		err := databricks.Properties.AssignProperties_To_DatabricksProperties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DatabricksProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_DatabricksProperties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -2685,7 +2689,7 @@ func (databricks *Databricks) AssignProperties_To_Databricks(destination *storag
 	if augmentedDatabricks, ok := databricksAsAny.(augmentConversionForDatabricks); ok {
 		err := augmentedDatabricks.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2750,7 +2754,7 @@ func (databricks *Databricks_STATUS) AssignProperties_From_Databricks_STATUS(sou
 		var property DatabricksProperties_STATUS
 		err := property.AssignProperties_From_DatabricksProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DatabricksProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_DatabricksProperties_STATUS() to populate field Properties")
 		}
 		databricks.Properties = &property
 	} else {
@@ -2766,7 +2770,7 @@ func (databricks *Databricks_STATUS) AssignProperties_From_Databricks_STATUS(sou
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -2793,7 +2797,7 @@ func (databricks *Databricks_STATUS) AssignProperties_From_Databricks_STATUS(sou
 	if augmentedDatabricks, ok := databricksAsAny.(augmentConversionForDatabricks_STATUS); ok {
 		err := augmentedDatabricks.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2842,7 +2846,7 @@ func (databricks *Databricks_STATUS) AssignProperties_To_Databricks_STATUS(desti
 		var property storage.DatabricksProperties_STATUS
 		err := databricks.Properties.AssignProperties_To_DatabricksProperties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DatabricksProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_DatabricksProperties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -2858,7 +2862,7 @@ func (databricks *Databricks_STATUS) AssignProperties_To_Databricks_STATUS(desti
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -2885,7 +2889,7 @@ func (databricks *Databricks_STATUS) AssignProperties_To_Databricks_STATUS(desti
 	if augmentedDatabricks, ok := databricksAsAny.(augmentConversionForDatabricks_STATUS); ok {
 		err := augmentedDatabricks.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2947,7 +2951,7 @@ func (factory *DataFactory) AssignProperties_From_DataFactory(source *storage.Da
 	if augmentedFactory, ok := factoryAsAny.(augmentConversionForDataFactory); ok {
 		err := augmentedFactory.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2997,7 +3001,7 @@ func (factory *DataFactory) AssignProperties_To_DataFactory(destination *storage
 	if augmentedFactory, ok := factoryAsAny.(augmentConversionForDataFactory); ok {
 		err := augmentedFactory.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3065,7 +3069,7 @@ func (factory *DataFactory_STATUS) AssignProperties_From_DataFactory_STATUS(sour
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -3092,7 +3096,7 @@ func (factory *DataFactory_STATUS) AssignProperties_From_DataFactory_STATUS(sour
 	if augmentedFactory, ok := factoryAsAny.(augmentConversionForDataFactory_STATUS); ok {
 		err := augmentedFactory.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3145,7 +3149,7 @@ func (factory *DataFactory_STATUS) AssignProperties_To_DataFactory_STATUS(destin
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -3172,7 +3176,7 @@ func (factory *DataFactory_STATUS) AssignProperties_To_DataFactory_STATUS(destin
 	if augmentedFactory, ok := factoryAsAny.(augmentConversionForDataFactory_STATUS); ok {
 		err := augmentedFactory.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3220,7 +3224,7 @@ func (analytics *DataLakeAnalytics) AssignProperties_From_DataLakeAnalytics(sour
 		var property DataLakeAnalytics_Properties
 		err := property.AssignProperties_From_DataLakeAnalytics_Properties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DataLakeAnalytics_Properties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_DataLakeAnalytics_Properties() to populate field Properties")
 		}
 		analytics.Properties = &property
 	} else {
@@ -3247,7 +3251,7 @@ func (analytics *DataLakeAnalytics) AssignProperties_From_DataLakeAnalytics(sour
 	if augmentedAnalytics, ok := analyticsAsAny.(augmentConversionForDataLakeAnalytics); ok {
 		err := augmentedAnalytics.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3282,7 +3286,7 @@ func (analytics *DataLakeAnalytics) AssignProperties_To_DataLakeAnalytics(destin
 		var property storage.DataLakeAnalytics_Properties
 		err := analytics.Properties.AssignProperties_To_DataLakeAnalytics_Properties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DataLakeAnalytics_Properties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_DataLakeAnalytics_Properties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -3309,7 +3313,7 @@ func (analytics *DataLakeAnalytics) AssignProperties_To_DataLakeAnalytics(destin
 	if augmentedAnalytics, ok := analyticsAsAny.(augmentConversionForDataLakeAnalytics); ok {
 		err := augmentedAnalytics.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3374,7 +3378,7 @@ func (analytics *DataLakeAnalytics_STATUS) AssignProperties_From_DataLakeAnalyti
 		var property DataLakeAnalytics_Properties_STATUS
 		err := property.AssignProperties_From_DataLakeAnalytics_Properties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DataLakeAnalytics_Properties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_DataLakeAnalytics_Properties_STATUS() to populate field Properties")
 		}
 		analytics.Properties = &property
 	} else {
@@ -3390,7 +3394,7 @@ func (analytics *DataLakeAnalytics_STATUS) AssignProperties_From_DataLakeAnalyti
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -3417,7 +3421,7 @@ func (analytics *DataLakeAnalytics_STATUS) AssignProperties_From_DataLakeAnalyti
 	if augmentedAnalytics, ok := analyticsAsAny.(augmentConversionForDataLakeAnalytics_STATUS); ok {
 		err := augmentedAnalytics.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3466,7 +3470,7 @@ func (analytics *DataLakeAnalytics_STATUS) AssignProperties_To_DataLakeAnalytics
 		var property storage.DataLakeAnalytics_Properties_STATUS
 		err := analytics.Properties.AssignProperties_To_DataLakeAnalytics_Properties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DataLakeAnalytics_Properties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_DataLakeAnalytics_Properties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -3482,7 +3486,7 @@ func (analytics *DataLakeAnalytics_STATUS) AssignProperties_To_DataLakeAnalytics
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -3509,7 +3513,7 @@ func (analytics *DataLakeAnalytics_STATUS) AssignProperties_To_DataLakeAnalytics
 	if augmentedAnalytics, ok := analyticsAsAny.(augmentConversionForDataLakeAnalytics_STATUS); ok {
 		err := augmentedAnalytics.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3557,7 +3561,7 @@ func (insight *HDInsight) AssignProperties_From_HDInsight(source *storage.HDInsi
 		var property HDInsightProperties
 		err := property.AssignProperties_From_HDInsightProperties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HDInsightProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_HDInsightProperties() to populate field Properties")
 		}
 		insight.Properties = &property
 	} else {
@@ -3584,7 +3588,7 @@ func (insight *HDInsight) AssignProperties_From_HDInsight(source *storage.HDInsi
 	if augmentedInsight, ok := insightAsAny.(augmentConversionForHDInsight); ok {
 		err := augmentedInsight.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3619,7 +3623,7 @@ func (insight *HDInsight) AssignProperties_To_HDInsight(destination *storage.HDI
 		var property storage.HDInsightProperties
 		err := insight.Properties.AssignProperties_To_HDInsightProperties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HDInsightProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_HDInsightProperties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -3646,7 +3650,7 @@ func (insight *HDInsight) AssignProperties_To_HDInsight(destination *storage.HDI
 	if augmentedInsight, ok := insightAsAny.(augmentConversionForHDInsight); ok {
 		err := augmentedInsight.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3711,7 +3715,7 @@ func (insight *HDInsight_STATUS) AssignProperties_From_HDInsight_STATUS(source *
 		var property HDInsightProperties_STATUS
 		err := property.AssignProperties_From_HDInsightProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_HDInsightProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_HDInsightProperties_STATUS() to populate field Properties")
 		}
 		insight.Properties = &property
 	} else {
@@ -3727,7 +3731,7 @@ func (insight *HDInsight_STATUS) AssignProperties_From_HDInsight_STATUS(source *
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -3754,7 +3758,7 @@ func (insight *HDInsight_STATUS) AssignProperties_From_HDInsight_STATUS(source *
 	if augmentedInsight, ok := insightAsAny.(augmentConversionForHDInsight_STATUS); ok {
 		err := augmentedInsight.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3803,7 +3807,7 @@ func (insight *HDInsight_STATUS) AssignProperties_To_HDInsight_STATUS(destinatio
 		var property storage.HDInsightProperties_STATUS
 		err := insight.Properties.AssignProperties_To_HDInsightProperties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_HDInsightProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_HDInsightProperties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -3819,7 +3823,7 @@ func (insight *HDInsight_STATUS) AssignProperties_To_HDInsight_STATUS(destinatio
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -3846,7 +3850,7 @@ func (insight *HDInsight_STATUS) AssignProperties_To_HDInsight_STATUS(destinatio
 	if augmentedInsight, ok := insightAsAny.(augmentConversionForHDInsight_STATUS); ok {
 		err := augmentedInsight.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3894,7 +3898,7 @@ func (kubernetes *Kubernetes) AssignProperties_From_Kubernetes(source *storage.K
 		var property KubernetesProperties
 		err := property.AssignProperties_From_KubernetesProperties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KubernetesProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_KubernetesProperties() to populate field Properties")
 		}
 		kubernetes.Properties = &property
 	} else {
@@ -3921,7 +3925,7 @@ func (kubernetes *Kubernetes) AssignProperties_From_Kubernetes(source *storage.K
 	if augmentedKubernetes, ok := kubernetesAsAny.(augmentConversionForKubernetes); ok {
 		err := augmentedKubernetes.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3956,7 +3960,7 @@ func (kubernetes *Kubernetes) AssignProperties_To_Kubernetes(destination *storag
 		var property storage.KubernetesProperties
 		err := kubernetes.Properties.AssignProperties_To_KubernetesProperties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KubernetesProperties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_KubernetesProperties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -3983,7 +3987,7 @@ func (kubernetes *Kubernetes) AssignProperties_To_Kubernetes(destination *storag
 	if augmentedKubernetes, ok := kubernetesAsAny.(augmentConversionForKubernetes); ok {
 		err := augmentedKubernetes.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4048,7 +4052,7 @@ func (kubernetes *Kubernetes_STATUS) AssignProperties_From_Kubernetes_STATUS(sou
 		var property KubernetesProperties_STATUS
 		err := property.AssignProperties_From_KubernetesProperties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KubernetesProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_KubernetesProperties_STATUS() to populate field Properties")
 		}
 		kubernetes.Properties = &property
 	} else {
@@ -4064,7 +4068,7 @@ func (kubernetes *Kubernetes_STATUS) AssignProperties_From_Kubernetes_STATUS(sou
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -4091,7 +4095,7 @@ func (kubernetes *Kubernetes_STATUS) AssignProperties_From_Kubernetes_STATUS(sou
 	if augmentedKubernetes, ok := kubernetesAsAny.(augmentConversionForKubernetes_STATUS); ok {
 		err := augmentedKubernetes.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4140,7 +4144,7 @@ func (kubernetes *Kubernetes_STATUS) AssignProperties_To_Kubernetes_STATUS(desti
 		var property storage.KubernetesProperties_STATUS
 		err := kubernetes.Properties.AssignProperties_To_KubernetesProperties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KubernetesProperties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_KubernetesProperties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -4156,7 +4160,7 @@ func (kubernetes *Kubernetes_STATUS) AssignProperties_To_Kubernetes_STATUS(desti
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -4183,7 +4187,7 @@ func (kubernetes *Kubernetes_STATUS) AssignProperties_To_Kubernetes_STATUS(desti
 	if augmentedKubernetes, ok := kubernetesAsAny.(augmentConversionForKubernetes_STATUS); ok {
 		err := augmentedKubernetes.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4231,7 +4235,7 @@ func (spark *SynapseSpark) AssignProperties_From_SynapseSpark(source *storage.Sy
 		var property SynapseSpark_Properties
 		err := property.AssignProperties_From_SynapseSpark_Properties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SynapseSpark_Properties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_SynapseSpark_Properties() to populate field Properties")
 		}
 		spark.Properties = &property
 	} else {
@@ -4258,7 +4262,7 @@ func (spark *SynapseSpark) AssignProperties_From_SynapseSpark(source *storage.Sy
 	if augmentedSpark, ok := sparkAsAny.(augmentConversionForSynapseSpark); ok {
 		err := augmentedSpark.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4293,7 +4297,7 @@ func (spark *SynapseSpark) AssignProperties_To_SynapseSpark(destination *storage
 		var property storage.SynapseSpark_Properties
 		err := spark.Properties.AssignProperties_To_SynapseSpark_Properties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SynapseSpark_Properties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_SynapseSpark_Properties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -4320,7 +4324,7 @@ func (spark *SynapseSpark) AssignProperties_To_SynapseSpark(destination *storage
 	if augmentedSpark, ok := sparkAsAny.(augmentConversionForSynapseSpark); ok {
 		err := augmentedSpark.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4385,7 +4389,7 @@ func (spark *SynapseSpark_STATUS) AssignProperties_From_SynapseSpark_STATUS(sour
 		var property SynapseSpark_Properties_STATUS
 		err := property.AssignProperties_From_SynapseSpark_Properties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SynapseSpark_Properties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_SynapseSpark_Properties_STATUS() to populate field Properties")
 		}
 		spark.Properties = &property
 	} else {
@@ -4401,7 +4405,7 @@ func (spark *SynapseSpark_STATUS) AssignProperties_From_SynapseSpark_STATUS(sour
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -4428,7 +4432,7 @@ func (spark *SynapseSpark_STATUS) AssignProperties_From_SynapseSpark_STATUS(sour
 	if augmentedSpark, ok := sparkAsAny.(augmentConversionForSynapseSpark_STATUS); ok {
 		err := augmentedSpark.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4477,7 +4481,7 @@ func (spark *SynapseSpark_STATUS) AssignProperties_To_SynapseSpark_STATUS(destin
 		var property storage.SynapseSpark_Properties_STATUS
 		err := spark.Properties.AssignProperties_To_SynapseSpark_Properties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SynapseSpark_Properties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_SynapseSpark_Properties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -4493,7 +4497,7 @@ func (spark *SynapseSpark_STATUS) AssignProperties_To_SynapseSpark_STATUS(destin
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -4520,7 +4524,7 @@ func (spark *SynapseSpark_STATUS) AssignProperties_To_SynapseSpark_STATUS(destin
 	if augmentedSpark, ok := sparkAsAny.(augmentConversionForSynapseSpark_STATUS); ok {
 		err := augmentedSpark.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4568,7 +4572,7 @@ func (machine *VirtualMachine) AssignProperties_From_VirtualMachine(source *stor
 		var property VirtualMachine_Properties
 		err := property.AssignProperties_From_VirtualMachine_Properties(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachine_Properties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachine_Properties() to populate field Properties")
 		}
 		machine.Properties = &property
 	} else {
@@ -4595,7 +4599,7 @@ func (machine *VirtualMachine) AssignProperties_From_VirtualMachine(source *stor
 	if augmentedMachine, ok := machineAsAny.(augmentConversionForVirtualMachine); ok {
 		err := augmentedMachine.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4630,7 +4634,7 @@ func (machine *VirtualMachine) AssignProperties_To_VirtualMachine(destination *s
 		var property storage.VirtualMachine_Properties
 		err := machine.Properties.AssignProperties_To_VirtualMachine_Properties(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachine_Properties() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachine_Properties() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -4657,7 +4661,7 @@ func (machine *VirtualMachine) AssignProperties_To_VirtualMachine(destination *s
 	if augmentedMachine, ok := machineAsAny.(augmentConversionForVirtualMachine); ok {
 		err := augmentedMachine.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4722,7 +4726,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 		var property VirtualMachine_Properties_STATUS
 		err := property.AssignProperties_From_VirtualMachine_Properties_STATUS(source.Properties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachine_Properties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachine_Properties_STATUS() to populate field Properties")
 		}
 		machine.Properties = &property
 	} else {
@@ -4738,7 +4742,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 			var provisioningError ErrorResponse_STATUS
 			err := provisioningError.AssignProperties_From_ErrorResponse_STATUS(&provisioningErrorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -4765,7 +4769,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_From_VirtualMachine_STATU
 	if augmentedMachine, ok := machineAsAny.(augmentConversionForVirtualMachine_STATUS); ok {
 		err := augmentedMachine.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4814,7 +4818,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 		var property storage.VirtualMachine_Properties_STATUS
 		err := machine.Properties.AssignProperties_To_VirtualMachine_Properties_STATUS(&property)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachine_Properties_STATUS() to populate field Properties")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachine_Properties_STATUS() to populate field Properties")
 		}
 		destination.Properties = &property
 	} else {
@@ -4830,7 +4834,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 			var provisioningError storage.ErrorResponse_STATUS
 			err := provisioningErrorItem.AssignProperties_To_ErrorResponse_STATUS(&provisioningError)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field ProvisioningErrors")
 			}
 			provisioningErrorList[provisioningErrorIndex] = provisioningError
 		}
@@ -4857,7 +4861,7 @@ func (machine *VirtualMachine_STATUS) AssignProperties_To_VirtualMachine_STATUS(
 	if augmentedMachine, ok := machineAsAny.(augmentConversionForVirtualMachine_STATUS); ok {
 		err := augmentedMachine.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -4894,7 +4898,7 @@ func (properties *AKS_Properties) AssignProperties_From_AKS_Properties(source *s
 		var aksNetworkingConfiguration AksNetworkingConfiguration
 		err := aksNetworkingConfiguration.AssignProperties_From_AksNetworkingConfiguration(source.AksNetworkingConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AksNetworkingConfiguration() to populate field AksNetworkingConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_AksNetworkingConfiguration() to populate field AksNetworkingConfiguration")
 		}
 		properties.AksNetworkingConfiguration = &aksNetworkingConfiguration
 	} else {
@@ -4912,7 +4916,7 @@ func (properties *AKS_Properties) AssignProperties_From_AKS_Properties(source *s
 		var loadBalancerSubnet string
 		err := propertyBag.Pull("LoadBalancerSubnet", &loadBalancerSubnet)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'LoadBalancerSubnet' from propertyBag")
+			return eris.Wrap(err, "pulling 'LoadBalancerSubnet' from propertyBag")
 		}
 
 		properties.LoadBalancerSubnet = &loadBalancerSubnet
@@ -4935,7 +4939,7 @@ func (properties *AKS_Properties) AssignProperties_From_AKS_Properties(source *s
 		var sslConfiguration SslConfiguration
 		err := sslConfiguration.AssignProperties_From_SslConfiguration(source.SslConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SslConfiguration() to populate field SslConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SslConfiguration() to populate field SslConfiguration")
 		}
 		properties.SslConfiguration = &sslConfiguration
 	} else {
@@ -4954,7 +4958,7 @@ func (properties *AKS_Properties) AssignProperties_From_AKS_Properties(source *s
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAKS_Properties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -4978,7 +4982,7 @@ func (properties *AKS_Properties) AssignProperties_To_AKS_Properties(destination
 		var aksNetworkingConfiguration storage.AksNetworkingConfiguration
 		err := properties.AksNetworkingConfiguration.AssignProperties_To_AksNetworkingConfiguration(&aksNetworkingConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AksNetworkingConfiguration() to populate field AksNetworkingConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_AksNetworkingConfiguration() to populate field AksNetworkingConfiguration")
 		}
 		destination.AksNetworkingConfiguration = &aksNetworkingConfiguration
 	} else {
@@ -5003,7 +5007,7 @@ func (properties *AKS_Properties) AssignProperties_To_AKS_Properties(destination
 		var loadBalancerSubnetReference genruntime.ResourceReference
 		err := propertyBag.Pull("LoadBalancerSubnetReference", &loadBalancerSubnetReference)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'LoadBalancerSubnetReference' from propertyBag")
+			return eris.Wrap(err, "pulling 'LoadBalancerSubnetReference' from propertyBag")
 		}
 
 		destination.LoadBalancerSubnetReference = &loadBalancerSubnetReference
@@ -5019,7 +5023,7 @@ func (properties *AKS_Properties) AssignProperties_To_AKS_Properties(destination
 		var sslConfiguration storage.SslConfiguration
 		err := properties.SslConfiguration.AssignProperties_To_SslConfiguration(&sslConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SslConfiguration() to populate field SslConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SslConfiguration() to populate field SslConfiguration")
 		}
 		destination.SslConfiguration = &sslConfiguration
 	} else {
@@ -5038,7 +5042,7 @@ func (properties *AKS_Properties) AssignProperties_To_AKS_Properties(destination
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAKS_Properties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -5076,7 +5080,7 @@ func (properties *AKS_Properties_STATUS) AssignProperties_From_AKS_Properties_ST
 		var aksNetworkingConfiguration AksNetworkingConfiguration_STATUS
 		err := aksNetworkingConfiguration.AssignProperties_From_AksNetworkingConfiguration_STATUS(source.AksNetworkingConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AksNetworkingConfiguration_STATUS() to populate field AksNetworkingConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_AksNetworkingConfiguration_STATUS() to populate field AksNetworkingConfiguration")
 		}
 		properties.AksNetworkingConfiguration = &aksNetworkingConfiguration
 	} else {
@@ -5100,7 +5104,7 @@ func (properties *AKS_Properties_STATUS) AssignProperties_From_AKS_Properties_ST
 		var sslConfiguration SslConfiguration_STATUS
 		err := sslConfiguration.AssignProperties_From_SslConfiguration_STATUS(source.SslConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SslConfiguration_STATUS() to populate field SslConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_SslConfiguration_STATUS() to populate field SslConfiguration")
 		}
 		properties.SslConfiguration = &sslConfiguration
 	} else {
@@ -5116,7 +5120,7 @@ func (properties *AKS_Properties_STATUS) AssignProperties_From_AKS_Properties_ST
 			var systemService SystemService_STATUS
 			err := systemService.AssignProperties_From_SystemService_STATUS(&systemServiceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SystemService_STATUS() to populate field SystemServices")
+				return eris.Wrap(err, "calling AssignProperties_From_SystemService_STATUS() to populate field SystemServices")
 			}
 			systemServiceList[systemServiceIndex] = systemService
 		}
@@ -5137,7 +5141,7 @@ func (properties *AKS_Properties_STATUS) AssignProperties_From_AKS_Properties_ST
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAKS_Properties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -5161,7 +5165,7 @@ func (properties *AKS_Properties_STATUS) AssignProperties_To_AKS_Properties_STAT
 		var aksNetworkingConfiguration storage.AksNetworkingConfiguration_STATUS
 		err := properties.AksNetworkingConfiguration.AssignProperties_To_AksNetworkingConfiguration_STATUS(&aksNetworkingConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AksNetworkingConfiguration_STATUS() to populate field AksNetworkingConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_AksNetworkingConfiguration_STATUS() to populate field AksNetworkingConfiguration")
 		}
 		destination.AksNetworkingConfiguration = &aksNetworkingConfiguration
 	} else {
@@ -5185,7 +5189,7 @@ func (properties *AKS_Properties_STATUS) AssignProperties_To_AKS_Properties_STAT
 		var sslConfiguration storage.SslConfiguration_STATUS
 		err := properties.SslConfiguration.AssignProperties_To_SslConfiguration_STATUS(&sslConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SslConfiguration_STATUS() to populate field SslConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_SslConfiguration_STATUS() to populate field SslConfiguration")
 		}
 		destination.SslConfiguration = &sslConfiguration
 	} else {
@@ -5201,7 +5205,7 @@ func (properties *AKS_Properties_STATUS) AssignProperties_To_AKS_Properties_STAT
 			var systemService storage.SystemService_STATUS
 			err := systemServiceItem.AssignProperties_To_SystemService_STATUS(&systemService)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SystemService_STATUS() to populate field SystemServices")
+				return eris.Wrap(err, "calling AssignProperties_To_SystemService_STATUS() to populate field SystemServices")
 			}
 			systemServiceList[systemServiceIndex] = systemService
 		}
@@ -5222,7 +5226,7 @@ func (properties *AKS_Properties_STATUS) AssignProperties_To_AKS_Properties_STAT
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAKS_Properties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -5285,7 +5289,7 @@ func (properties *AmlComputeProperties) AssignProperties_From_AmlComputeProperti
 		var scaleSetting ScaleSettings
 		err := scaleSetting.AssignProperties_From_ScaleSettings(source.ScaleSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScaleSettings() to populate field ScaleSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ScaleSettings() to populate field ScaleSettings")
 		}
 		properties.ScaleSettings = &scaleSetting
 	} else {
@@ -5297,7 +5301,7 @@ func (properties *AmlComputeProperties) AssignProperties_From_AmlComputeProperti
 		var subnet ResourceId
 		err := subnet.AssignProperties_From_ResourceId(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceId() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceId() to populate field Subnet")
 		}
 		properties.Subnet = &subnet
 	} else {
@@ -5309,7 +5313,7 @@ func (properties *AmlComputeProperties) AssignProperties_From_AmlComputeProperti
 		var userAccountCredential UserAccountCredentials
 		err := userAccountCredential.AssignProperties_From_UserAccountCredentials(source.UserAccountCredentials)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserAccountCredentials() to populate field UserAccountCredentials")
+			return eris.Wrap(err, "calling AssignProperties_From_UserAccountCredentials() to populate field UserAccountCredentials")
 		}
 		properties.UserAccountCredentials = &userAccountCredential
 	} else {
@@ -5321,7 +5325,7 @@ func (properties *AmlComputeProperties) AssignProperties_From_AmlComputeProperti
 		var virtualMachineImage VirtualMachineImage
 		err := virtualMachineImage.AssignProperties_From_VirtualMachineImage(source.VirtualMachineImage)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineImage() to populate field VirtualMachineImage")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineImage() to populate field VirtualMachineImage")
 		}
 		properties.VirtualMachineImage = &virtualMachineImage
 	} else {
@@ -5346,7 +5350,7 @@ func (properties *AmlComputeProperties) AssignProperties_From_AmlComputeProperti
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAmlComputeProperties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -5383,7 +5387,7 @@ func (properties *AmlComputeProperties) AssignProperties_To_AmlComputeProperties
 		var propertyBagRead map[string]v1.JSON
 		err := propertyBag.Pull("PropertyBag", &propertyBagRead)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PropertyBag' from propertyBag")
+			return eris.Wrap(err, "pulling 'PropertyBag' from propertyBag")
 		}
 
 		destination.PropertyBag = propertyBagRead
@@ -5399,7 +5403,7 @@ func (properties *AmlComputeProperties) AssignProperties_To_AmlComputeProperties
 		var scaleSetting storage.ScaleSettings
 		err := properties.ScaleSettings.AssignProperties_To_ScaleSettings(&scaleSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScaleSettings() to populate field ScaleSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ScaleSettings() to populate field ScaleSettings")
 		}
 		destination.ScaleSettings = &scaleSetting
 	} else {
@@ -5411,7 +5415,7 @@ func (properties *AmlComputeProperties) AssignProperties_To_AmlComputeProperties
 		var subnet storage.ResourceId
 		err := properties.Subnet.AssignProperties_To_ResourceId(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceId() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceId() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -5423,7 +5427,7 @@ func (properties *AmlComputeProperties) AssignProperties_To_AmlComputeProperties
 		var userAccountCredential storage.UserAccountCredentials
 		err := properties.UserAccountCredentials.AssignProperties_To_UserAccountCredentials(&userAccountCredential)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserAccountCredentials() to populate field UserAccountCredentials")
+			return eris.Wrap(err, "calling AssignProperties_To_UserAccountCredentials() to populate field UserAccountCredentials")
 		}
 		destination.UserAccountCredentials = &userAccountCredential
 	} else {
@@ -5435,7 +5439,7 @@ func (properties *AmlComputeProperties) AssignProperties_To_AmlComputeProperties
 		var virtualMachineImage storage.VirtualMachineImage
 		err := properties.VirtualMachineImage.AssignProperties_To_VirtualMachineImage(&virtualMachineImage)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineImage() to populate field VirtualMachineImage")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineImage() to populate field VirtualMachineImage")
 		}
 		destination.VirtualMachineImage = &virtualMachineImage
 	} else {
@@ -5460,7 +5464,7 @@ func (properties *AmlComputeProperties) AssignProperties_To_AmlComputeProperties
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAmlComputeProperties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -5521,7 +5525,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_From_AmlComputeP
 			var error ErrorResponse_STATUS
 			err := error.AssignProperties_From_ErrorResponse_STATUS(&errorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field Errors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field Errors")
 			}
 			errorList[errorIndex] = error
 		}
@@ -5543,7 +5547,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_From_AmlComputeP
 		var nodeStateCount NodeStateCounts_STATUS
 		err := nodeStateCount.AssignProperties_From_NodeStateCounts_STATUS(source.NodeStateCounts)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NodeStateCounts_STATUS() to populate field NodeStateCounts")
+			return eris.Wrap(err, "calling AssignProperties_From_NodeStateCounts_STATUS() to populate field NodeStateCounts")
 		}
 		properties.NodeStateCounts = &nodeStateCount
 	} else {
@@ -5568,7 +5572,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_From_AmlComputeP
 		var scaleSetting ScaleSettings_STATUS
 		err := scaleSetting.AssignProperties_From_ScaleSettings_STATUS(source.ScaleSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScaleSettings_STATUS() to populate field ScaleSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ScaleSettings_STATUS() to populate field ScaleSettings")
 		}
 		properties.ScaleSettings = &scaleSetting
 	} else {
@@ -5580,7 +5584,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_From_AmlComputeP
 		var subnet ResourceId_STATUS
 		err := subnet.AssignProperties_From_ResourceId_STATUS(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceId_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceId_STATUS() to populate field Subnet")
 		}
 		properties.Subnet = &subnet
 	} else {
@@ -5595,7 +5599,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_From_AmlComputeP
 		var userAccountCredential UserAccountCredentials_STATUS
 		err := userAccountCredential.AssignProperties_From_UserAccountCredentials_STATUS(source.UserAccountCredentials)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UserAccountCredentials_STATUS() to populate field UserAccountCredentials")
+			return eris.Wrap(err, "calling AssignProperties_From_UserAccountCredentials_STATUS() to populate field UserAccountCredentials")
 		}
 		properties.UserAccountCredentials = &userAccountCredential
 	} else {
@@ -5607,7 +5611,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_From_AmlComputeP
 		var virtualMachineImage VirtualMachineImage_STATUS
 		err := virtualMachineImage.AssignProperties_From_VirtualMachineImage_STATUS(source.VirtualMachineImage)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineImage_STATUS() to populate field VirtualMachineImage")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineImage_STATUS() to populate field VirtualMachineImage")
 		}
 		properties.VirtualMachineImage = &virtualMachineImage
 	} else {
@@ -5632,7 +5636,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_From_AmlComputeP
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAmlComputeProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -5671,7 +5675,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_To_AmlComputePro
 			var error storage.ErrorResponse_STATUS
 			err := errorItem.AssignProperties_To_ErrorResponse_STATUS(&error)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field Errors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field Errors")
 			}
 			errorList[errorIndex] = error
 		}
@@ -5693,7 +5697,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_To_AmlComputePro
 		var nodeStateCount storage.NodeStateCounts_STATUS
 		err := properties.NodeStateCounts.AssignProperties_To_NodeStateCounts_STATUS(&nodeStateCount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NodeStateCounts_STATUS() to populate field NodeStateCounts")
+			return eris.Wrap(err, "calling AssignProperties_To_NodeStateCounts_STATUS() to populate field NodeStateCounts")
 		}
 		destination.NodeStateCounts = &nodeStateCount
 	} else {
@@ -5708,7 +5712,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_To_AmlComputePro
 		var propertyBagRead map[string]v1.JSON
 		err := propertyBag.Pull("PropertyBag", &propertyBagRead)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'PropertyBag' from propertyBag")
+			return eris.Wrap(err, "pulling 'PropertyBag' from propertyBag")
 		}
 
 		destination.PropertyBag = propertyBagRead
@@ -5724,7 +5728,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_To_AmlComputePro
 		var scaleSetting storage.ScaleSettings_STATUS
 		err := properties.ScaleSettings.AssignProperties_To_ScaleSettings_STATUS(&scaleSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScaleSettings_STATUS() to populate field ScaleSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ScaleSettings_STATUS() to populate field ScaleSettings")
 		}
 		destination.ScaleSettings = &scaleSetting
 	} else {
@@ -5736,7 +5740,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_To_AmlComputePro
 		var subnet storage.ResourceId_STATUS
 		err := properties.Subnet.AssignProperties_To_ResourceId_STATUS(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceId_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceId_STATUS() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -5751,7 +5755,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_To_AmlComputePro
 		var userAccountCredential storage.UserAccountCredentials_STATUS
 		err := properties.UserAccountCredentials.AssignProperties_To_UserAccountCredentials_STATUS(&userAccountCredential)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UserAccountCredentials_STATUS() to populate field UserAccountCredentials")
+			return eris.Wrap(err, "calling AssignProperties_To_UserAccountCredentials_STATUS() to populate field UserAccountCredentials")
 		}
 		destination.UserAccountCredentials = &userAccountCredential
 	} else {
@@ -5763,7 +5767,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_To_AmlComputePro
 		var virtualMachineImage storage.VirtualMachineImage_STATUS
 		err := properties.VirtualMachineImage.AssignProperties_To_VirtualMachineImage_STATUS(&virtualMachineImage)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineImage_STATUS() to populate field VirtualMachineImage")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineImage_STATUS() to populate field VirtualMachineImage")
 		}
 		destination.VirtualMachineImage = &virtualMachineImage
 	} else {
@@ -5788,7 +5792,7 @@ func (properties *AmlComputeProperties_STATUS) AssignProperties_To_AmlComputePro
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAmlComputeProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -5939,7 +5943,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_From_ComputeInstan
 		var personalComputeInstanceSetting PersonalComputeInstanceSettings
 		err := personalComputeInstanceSetting.AssignProperties_From_PersonalComputeInstanceSettings(source.PersonalComputeInstanceSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PersonalComputeInstanceSettings() to populate field PersonalComputeInstanceSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_PersonalComputeInstanceSettings() to populate field PersonalComputeInstanceSettings")
 		}
 		properties.PersonalComputeInstanceSettings = &personalComputeInstanceSetting
 	} else {
@@ -5958,7 +5962,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_From_ComputeInstan
 		var setupScript SetupScripts
 		err := setupScript.AssignProperties_From_SetupScripts(source.SetupScripts)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SetupScripts() to populate field SetupScripts")
+			return eris.Wrap(err, "calling AssignProperties_From_SetupScripts() to populate field SetupScripts")
 		}
 		properties.SetupScripts = &setupScript
 	} else {
@@ -5970,7 +5974,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_From_ComputeInstan
 		var sshSetting ComputeInstanceSshSettings
 		err := sshSetting.AssignProperties_From_ComputeInstanceSshSettings(source.SshSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstanceSshSettings() to populate field SshSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstanceSshSettings() to populate field SshSettings")
 		}
 		properties.SshSettings = &sshSetting
 	} else {
@@ -5982,7 +5986,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_From_ComputeInstan
 		var subnet ResourceId
 		err := subnet.AssignProperties_From_ResourceId(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceId() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceId() to populate field Subnet")
 		}
 		properties.Subnet = &subnet
 	} else {
@@ -6004,7 +6008,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_From_ComputeInstan
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForComputeInstanceProperties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6028,7 +6032,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_To_ComputeInstance
 		var customService []storage.CustomService
 		err := propertyBag.Pull("CustomServices", &customService)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'CustomServices' from propertyBag")
+			return eris.Wrap(err, "pulling 'CustomServices' from propertyBag")
 		}
 
 		destination.CustomServices = customService
@@ -6041,7 +6045,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_To_ComputeInstance
 		var enableNodePublicIp bool
 		err := propertyBag.Pull("EnableNodePublicIp", &enableNodePublicIp)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'EnableNodePublicIp' from propertyBag")
+			return eris.Wrap(err, "pulling 'EnableNodePublicIp' from propertyBag")
 		}
 
 		destination.EnableNodePublicIp = &enableNodePublicIp
@@ -6054,7 +6058,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_To_ComputeInstance
 		var personalComputeInstanceSetting storage.PersonalComputeInstanceSettings
 		err := properties.PersonalComputeInstanceSettings.AssignProperties_To_PersonalComputeInstanceSettings(&personalComputeInstanceSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PersonalComputeInstanceSettings() to populate field PersonalComputeInstanceSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_PersonalComputeInstanceSettings() to populate field PersonalComputeInstanceSettings")
 		}
 		destination.PersonalComputeInstanceSettings = &personalComputeInstanceSetting
 	} else {
@@ -6066,7 +6070,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_To_ComputeInstance
 		var schedule storage.ComputeSchedules
 		err := propertyBag.Pull("Schedules", &schedule)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Schedules' from propertyBag")
+			return eris.Wrap(err, "pulling 'Schedules' from propertyBag")
 		}
 
 		destination.Schedules = &schedule
@@ -6079,7 +6083,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_To_ComputeInstance
 		var setupScript storage.SetupScripts
 		err := properties.SetupScripts.AssignProperties_To_SetupScripts(&setupScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SetupScripts() to populate field SetupScripts")
+			return eris.Wrap(err, "calling AssignProperties_To_SetupScripts() to populate field SetupScripts")
 		}
 		destination.SetupScripts = &setupScript
 	} else {
@@ -6091,7 +6095,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_To_ComputeInstance
 		var sshSetting storage.ComputeInstanceSshSettings
 		err := properties.SshSettings.AssignProperties_To_ComputeInstanceSshSettings(&sshSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstanceSshSettings() to populate field SshSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstanceSshSettings() to populate field SshSettings")
 		}
 		destination.SshSettings = &sshSetting
 	} else {
@@ -6103,7 +6107,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_To_ComputeInstance
 		var subnet storage.ResourceId
 		err := properties.Subnet.AssignProperties_To_ResourceId(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceId() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceId() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -6125,7 +6129,7 @@ func (properties *ComputeInstanceProperties) AssignProperties_To_ComputeInstance
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForComputeInstanceProperties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6169,7 +6173,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 			var application ComputeInstanceApplication_STATUS
 			err := application.AssignProperties_From_ComputeInstanceApplication_STATUS(&applicationItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ComputeInstanceApplication_STATUS() to populate field Applications")
+				return eris.Wrap(err, "calling AssignProperties_From_ComputeInstanceApplication_STATUS() to populate field Applications")
 			}
 			applicationList[applicationIndex] = application
 		}
@@ -6186,7 +6190,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 		var connectivityEndpoint ComputeInstanceConnectivityEndpoints_STATUS
 		err := connectivityEndpoint.AssignProperties_From_ComputeInstanceConnectivityEndpoints_STATUS(source.ConnectivityEndpoints)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstanceConnectivityEndpoints_STATUS() to populate field ConnectivityEndpoints")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstanceConnectivityEndpoints_STATUS() to populate field ConnectivityEndpoints")
 		}
 		properties.ConnectivityEndpoints = &connectivityEndpoint
 	} else {
@@ -6205,7 +6209,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 		var createdBy ComputeInstanceCreatedBy_STATUS
 		err := createdBy.AssignProperties_From_ComputeInstanceCreatedBy_STATUS(source.CreatedBy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstanceCreatedBy_STATUS() to populate field CreatedBy")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstanceCreatedBy_STATUS() to populate field CreatedBy")
 		}
 		properties.CreatedBy = &createdBy
 	} else {
@@ -6249,7 +6253,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 			var error ErrorResponse_STATUS
 			err := error.AssignProperties_From_ErrorResponse_STATUS(&errorItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field Errors")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorResponse_STATUS() to populate field Errors")
 			}
 			errorList[errorIndex] = error
 		}
@@ -6263,7 +6267,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 		var lastOperation ComputeInstanceLastOperation_STATUS
 		err := lastOperation.AssignProperties_From_ComputeInstanceLastOperation_STATUS(source.LastOperation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstanceLastOperation_STATUS() to populate field LastOperation")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstanceLastOperation_STATUS() to populate field LastOperation")
 		}
 		properties.LastOperation = &lastOperation
 	} else {
@@ -6282,7 +6286,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 		var personalComputeInstanceSetting PersonalComputeInstanceSettings_STATUS
 		err := personalComputeInstanceSetting.AssignProperties_From_PersonalComputeInstanceSettings_STATUS(source.PersonalComputeInstanceSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PersonalComputeInstanceSettings_STATUS() to populate field PersonalComputeInstanceSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_PersonalComputeInstanceSettings_STATUS() to populate field PersonalComputeInstanceSettings")
 		}
 		properties.PersonalComputeInstanceSettings = &personalComputeInstanceSetting
 	} else {
@@ -6301,7 +6305,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 		var setupScript SetupScripts_STATUS
 		err := setupScript.AssignProperties_From_SetupScripts_STATUS(source.SetupScripts)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SetupScripts_STATUS() to populate field SetupScripts")
+			return eris.Wrap(err, "calling AssignProperties_From_SetupScripts_STATUS() to populate field SetupScripts")
 		}
 		properties.SetupScripts = &setupScript
 	} else {
@@ -6313,7 +6317,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 		var sshSetting ComputeInstanceSshSettings_STATUS
 		err := sshSetting.AssignProperties_From_ComputeInstanceSshSettings_STATUS(source.SshSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeInstanceSshSettings_STATUS() to populate field SshSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeInstanceSshSettings_STATUS() to populate field SshSettings")
 		}
 		properties.SshSettings = &sshSetting
 	} else {
@@ -6328,7 +6332,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 		var subnet ResourceId_STATUS
 		err := subnet.AssignProperties_From_ResourceId_STATUS(source.Subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceId_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceId_STATUS() to populate field Subnet")
 		}
 		properties.Subnet = &subnet
 	} else {
@@ -6357,7 +6361,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_From_Comput
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForComputeInstanceProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6382,7 +6386,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 			var application storage.ComputeInstanceApplication_STATUS
 			err := applicationItem.AssignProperties_To_ComputeInstanceApplication_STATUS(&application)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ComputeInstanceApplication_STATUS() to populate field Applications")
+				return eris.Wrap(err, "calling AssignProperties_To_ComputeInstanceApplication_STATUS() to populate field Applications")
 			}
 			applicationList[applicationIndex] = application
 		}
@@ -6399,7 +6403,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var connectivityEndpoint storage.ComputeInstanceConnectivityEndpoints_STATUS
 		err := properties.ConnectivityEndpoints.AssignProperties_To_ComputeInstanceConnectivityEndpoints_STATUS(&connectivityEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstanceConnectivityEndpoints_STATUS() to populate field ConnectivityEndpoints")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstanceConnectivityEndpoints_STATUS() to populate field ConnectivityEndpoints")
 		}
 		destination.ConnectivityEndpoints = &connectivityEndpoint
 	} else {
@@ -6411,7 +6415,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var container []storage.ComputeInstanceContainer_STATUS
 		err := propertyBag.Pull("Containers", &container)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Containers' from propertyBag")
+			return eris.Wrap(err, "pulling 'Containers' from propertyBag")
 		}
 
 		destination.Containers = container
@@ -6424,7 +6428,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var createdBy storage.ComputeInstanceCreatedBy_STATUS
 		err := properties.CreatedBy.AssignProperties_To_ComputeInstanceCreatedBy_STATUS(&createdBy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstanceCreatedBy_STATUS() to populate field CreatedBy")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstanceCreatedBy_STATUS() to populate field CreatedBy")
 		}
 		destination.CreatedBy = &createdBy
 	} else {
@@ -6436,7 +6440,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var customService []storage.CustomService_STATUS
 		err := propertyBag.Pull("CustomServices", &customService)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'CustomServices' from propertyBag")
+			return eris.Wrap(err, "pulling 'CustomServices' from propertyBag")
 		}
 
 		destination.CustomServices = customService
@@ -6449,7 +6453,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var dataDisk []storage.ComputeInstanceDataDisk_STATUS
 		err := propertyBag.Pull("DataDisks", &dataDisk)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DataDisks' from propertyBag")
+			return eris.Wrap(err, "pulling 'DataDisks' from propertyBag")
 		}
 
 		destination.DataDisks = dataDisk
@@ -6462,7 +6466,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var dataMount []storage.ComputeInstanceDataMount_STATUS
 		err := propertyBag.Pull("DataMounts", &dataMount)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'DataMounts' from propertyBag")
+			return eris.Wrap(err, "pulling 'DataMounts' from propertyBag")
 		}
 
 		destination.DataMounts = dataMount
@@ -6475,7 +6479,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var enableNodePublicIp bool
 		err := propertyBag.Pull("EnableNodePublicIp", &enableNodePublicIp)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'EnableNodePublicIp' from propertyBag")
+			return eris.Wrap(err, "pulling 'EnableNodePublicIp' from propertyBag")
 		}
 
 		destination.EnableNodePublicIp = &enableNodePublicIp
@@ -6492,7 +6496,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 			var error storage.ErrorResponse_STATUS
 			err := errorItem.AssignProperties_To_ErrorResponse_STATUS(&error)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field Errors")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorResponse_STATUS() to populate field Errors")
 			}
 			errorList[errorIndex] = error
 		}
@@ -6506,7 +6510,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var lastOperation storage.ComputeInstanceLastOperation_STATUS
 		err := properties.LastOperation.AssignProperties_To_ComputeInstanceLastOperation_STATUS(&lastOperation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstanceLastOperation_STATUS() to populate field LastOperation")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstanceLastOperation_STATUS() to populate field LastOperation")
 		}
 		destination.LastOperation = &lastOperation
 	} else {
@@ -6518,7 +6522,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var osImageMetadatum storage.ImageMetadata_STATUS
 		err := propertyBag.Pull("OsImageMetadata", &osImageMetadatum)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'OsImageMetadata' from propertyBag")
+			return eris.Wrap(err, "pulling 'OsImageMetadata' from propertyBag")
 		}
 
 		destination.OsImageMetadata = &osImageMetadatum
@@ -6531,7 +6535,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var personalComputeInstanceSetting storage.PersonalComputeInstanceSettings_STATUS
 		err := properties.PersonalComputeInstanceSettings.AssignProperties_To_PersonalComputeInstanceSettings_STATUS(&personalComputeInstanceSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PersonalComputeInstanceSettings_STATUS() to populate field PersonalComputeInstanceSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_PersonalComputeInstanceSettings_STATUS() to populate field PersonalComputeInstanceSettings")
 		}
 		destination.PersonalComputeInstanceSettings = &personalComputeInstanceSetting
 	} else {
@@ -6543,7 +6547,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var schedule storage.ComputeSchedules_STATUS
 		err := propertyBag.Pull("Schedules", &schedule)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Schedules' from propertyBag")
+			return eris.Wrap(err, "pulling 'Schedules' from propertyBag")
 		}
 
 		destination.Schedules = &schedule
@@ -6556,7 +6560,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var setupScript storage.SetupScripts_STATUS
 		err := properties.SetupScripts.AssignProperties_To_SetupScripts_STATUS(&setupScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SetupScripts_STATUS() to populate field SetupScripts")
+			return eris.Wrap(err, "calling AssignProperties_To_SetupScripts_STATUS() to populate field SetupScripts")
 		}
 		destination.SetupScripts = &setupScript
 	} else {
@@ -6568,7 +6572,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var sshSetting storage.ComputeInstanceSshSettings_STATUS
 		err := properties.SshSettings.AssignProperties_To_ComputeInstanceSshSettings_STATUS(&sshSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeInstanceSshSettings_STATUS() to populate field SshSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeInstanceSshSettings_STATUS() to populate field SshSettings")
 		}
 		destination.SshSettings = &sshSetting
 	} else {
@@ -6583,7 +6587,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var subnet storage.ResourceId_STATUS
 		err := properties.Subnet.AssignProperties_To_ResourceId_STATUS(&subnet)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceId_STATUS() to populate field Subnet")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceId_STATUS() to populate field Subnet")
 		}
 		destination.Subnet = &subnet
 	} else {
@@ -6595,7 +6599,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 		var version storage.ComputeInstanceVersion_STATUS
 		err := propertyBag.Pull("Versions", &version)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Versions' from propertyBag")
+			return eris.Wrap(err, "pulling 'Versions' from propertyBag")
 		}
 
 		destination.Versions = &version
@@ -6618,7 +6622,7 @@ func (properties *ComputeInstanceProperties_STATUS) AssignProperties_To_ComputeI
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForComputeInstanceProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6662,7 +6666,7 @@ func (properties *DatabricksProperties) AssignProperties_From_DatabricksProperti
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForDatabricksProperties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6698,7 +6702,7 @@ func (properties *DatabricksProperties) AssignProperties_To_DatabricksProperties
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForDatabricksProperties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6733,7 +6737,7 @@ func (properties *DatabricksProperties_STATUS) AssignProperties_From_DatabricksP
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForDatabricksProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6761,7 +6765,7 @@ func (properties *DatabricksProperties_STATUS) AssignProperties_To_DatabricksPro
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForDatabricksProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6795,7 +6799,7 @@ func (properties *DataLakeAnalytics_Properties) AssignProperties_From_DataLakeAn
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForDataLakeAnalytics_Properties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6823,7 +6827,7 @@ func (properties *DataLakeAnalytics_Properties) AssignProperties_To_DataLakeAnal
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForDataLakeAnalytics_Properties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6857,7 +6861,7 @@ func (properties *DataLakeAnalytics_Properties_STATUS) AssignProperties_From_Dat
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForDataLakeAnalytics_Properties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6885,7 +6889,7 @@ func (properties *DataLakeAnalytics_Properties_STATUS) AssignProperties_To_DataL
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForDataLakeAnalytics_Properties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6911,7 +6915,7 @@ func (response *ErrorResponse_STATUS) AssignProperties_From_ErrorResponse_STATUS
 		var error ErrorDetail_STATUS
 		err := error.AssignProperties_From_ErrorDetail_STATUS(source.Error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS() to populate field Error")
 		}
 		response.Error = &error
 	} else {
@@ -6930,7 +6934,7 @@ func (response *ErrorResponse_STATUS) AssignProperties_From_ErrorResponse_STATUS
 	if augmentedResponse, ok := responseAsAny.(augmentConversionForErrorResponse_STATUS); ok {
 		err := augmentedResponse.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -6948,7 +6952,7 @@ func (response *ErrorResponse_STATUS) AssignProperties_To_ErrorResponse_STATUS(d
 		var error storage.ErrorDetail_STATUS
 		err := response.Error.AssignProperties_To_ErrorDetail_STATUS(&error)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS() to populate field Error")
+			return eris.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS() to populate field Error")
 		}
 		destination.Error = &error
 	} else {
@@ -6967,7 +6971,7 @@ func (response *ErrorResponse_STATUS) AssignProperties_To_ErrorResponse_STATUS(d
 	if augmentedResponse, ok := responseAsAny.(augmentConversionForErrorResponse_STATUS); ok {
 		err := augmentedResponse.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -6997,7 +7001,7 @@ func (properties *HDInsightProperties) AssignProperties_From_HDInsightProperties
 		var administratorAccount VirtualMachineSshCredentials
 		err := administratorAccount.AssignProperties_From_VirtualMachineSshCredentials(source.AdministratorAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineSshCredentials() to populate field AdministratorAccount")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineSshCredentials() to populate field AdministratorAccount")
 		}
 		properties.AdministratorAccount = &administratorAccount
 	} else {
@@ -7019,7 +7023,7 @@ func (properties *HDInsightProperties) AssignProperties_From_HDInsightProperties
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForHDInsightProperties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7040,7 +7044,7 @@ func (properties *HDInsightProperties) AssignProperties_To_HDInsightProperties(d
 		var administratorAccount storage.VirtualMachineSshCredentials
 		err := properties.AdministratorAccount.AssignProperties_To_VirtualMachineSshCredentials(&administratorAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineSshCredentials() to populate field AdministratorAccount")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineSshCredentials() to populate field AdministratorAccount")
 		}
 		destination.AdministratorAccount = &administratorAccount
 	} else {
@@ -7062,7 +7066,7 @@ func (properties *HDInsightProperties) AssignProperties_To_HDInsightProperties(d
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForHDInsightProperties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7092,7 +7096,7 @@ func (properties *HDInsightProperties_STATUS) AssignProperties_From_HDInsightPro
 		var administratorAccount VirtualMachineSshCredentials_STATUS
 		err := administratorAccount.AssignProperties_From_VirtualMachineSshCredentials_STATUS(source.AdministratorAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineSshCredentials_STATUS() to populate field AdministratorAccount")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineSshCredentials_STATUS() to populate field AdministratorAccount")
 		}
 		properties.AdministratorAccount = &administratorAccount
 	} else {
@@ -7114,7 +7118,7 @@ func (properties *HDInsightProperties_STATUS) AssignProperties_From_HDInsightPro
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForHDInsightProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7135,7 +7139,7 @@ func (properties *HDInsightProperties_STATUS) AssignProperties_To_HDInsightPrope
 		var administratorAccount storage.VirtualMachineSshCredentials_STATUS
 		err := properties.AdministratorAccount.AssignProperties_To_VirtualMachineSshCredentials_STATUS(&administratorAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineSshCredentials_STATUS() to populate field AdministratorAccount")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineSshCredentials_STATUS() to populate field AdministratorAccount")
 		}
 		destination.AdministratorAccount = &administratorAccount
 	} else {
@@ -7157,7 +7161,7 @@ func (properties *HDInsightProperties_STATUS) AssignProperties_To_HDInsightPrope
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForHDInsightProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7209,7 +7213,7 @@ func (properties *KubernetesProperties) AssignProperties_From_KubernetesProperti
 			var instanceType InstanceTypeSchema
 			err := instanceType.AssignProperties_From_InstanceTypeSchema(&instanceTypeValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InstanceTypeSchema() to populate field InstanceTypes")
+				return eris.Wrap(err, "calling AssignProperties_From_InstanceTypeSchema() to populate field InstanceTypes")
 			}
 			instanceTypeMap[instanceTypeKey] = instanceType
 		}
@@ -7252,7 +7256,7 @@ func (properties *KubernetesProperties) AssignProperties_From_KubernetesProperti
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKubernetesProperties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7279,7 +7283,7 @@ func (properties *KubernetesProperties) AssignProperties_To_KubernetesProperties
 		var extensionPrincipalIdFromConfig genruntime.ConfigMapReference
 		err := propertyBag.Pull("ExtensionPrincipalIdFromConfig", &extensionPrincipalIdFromConfig)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ExtensionPrincipalIdFromConfig' from propertyBag")
+			return eris.Wrap(err, "pulling 'ExtensionPrincipalIdFromConfig' from propertyBag")
 		}
 
 		destination.ExtensionPrincipalIdFromConfig = &extensionPrincipalIdFromConfig
@@ -7296,7 +7300,7 @@ func (properties *KubernetesProperties) AssignProperties_To_KubernetesProperties
 			var instanceType storage.InstanceTypeSchema
 			err := instanceTypeValue.AssignProperties_To_InstanceTypeSchema(&instanceType)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InstanceTypeSchema() to populate field InstanceTypes")
+				return eris.Wrap(err, "calling AssignProperties_To_InstanceTypeSchema() to populate field InstanceTypes")
 			}
 			instanceTypeMap[instanceTypeKey] = instanceType
 		}
@@ -7339,7 +7343,7 @@ func (properties *KubernetesProperties) AssignProperties_To_KubernetesProperties
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKubernetesProperties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7382,7 +7386,7 @@ func (properties *KubernetesProperties_STATUS) AssignProperties_From_KubernetesP
 			var instanceType InstanceTypeSchema_STATUS
 			err := instanceType.AssignProperties_From_InstanceTypeSchema_STATUS(&instanceTypeValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_InstanceTypeSchema_STATUS() to populate field InstanceTypes")
+				return eris.Wrap(err, "calling AssignProperties_From_InstanceTypeSchema_STATUS() to populate field InstanceTypes")
 			}
 			instanceTypeMap[instanceTypeKey] = instanceType
 		}
@@ -7409,7 +7413,7 @@ func (properties *KubernetesProperties_STATUS) AssignProperties_From_KubernetesP
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKubernetesProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7440,7 +7444,7 @@ func (properties *KubernetesProperties_STATUS) AssignProperties_To_KubernetesPro
 			var instanceType storage.InstanceTypeSchema_STATUS
 			err := instanceTypeValue.AssignProperties_To_InstanceTypeSchema_STATUS(&instanceType)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_InstanceTypeSchema_STATUS() to populate field InstanceTypes")
+				return eris.Wrap(err, "calling AssignProperties_To_InstanceTypeSchema_STATUS() to populate field InstanceTypes")
 			}
 			instanceTypeMap[instanceTypeKey] = instanceType
 		}
@@ -7467,7 +7471,7 @@ func (properties *KubernetesProperties_STATUS) AssignProperties_To_KubernetesPro
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKubernetesProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7500,7 +7504,7 @@ func (properties *SynapseSpark_Properties) AssignProperties_From_SynapseSpark_Pr
 		var autoPauseProperty AutoPauseProperties
 		err := autoPauseProperty.AssignProperties_From_AutoPauseProperties(source.AutoPauseProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AutoPauseProperties() to populate field AutoPauseProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_AutoPauseProperties() to populate field AutoPauseProperties")
 		}
 		properties.AutoPauseProperties = &autoPauseProperty
 	} else {
@@ -7512,7 +7516,7 @@ func (properties *SynapseSpark_Properties) AssignProperties_From_SynapseSpark_Pr
 		var autoScaleProperty AutoScaleProperties
 		err := autoScaleProperty.AssignProperties_From_AutoScaleProperties(source.AutoScaleProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AutoScaleProperties() to populate field AutoScaleProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_AutoScaleProperties() to populate field AutoScaleProperties")
 		}
 		properties.AutoScaleProperties = &autoScaleProperty
 	} else {
@@ -7555,7 +7559,7 @@ func (properties *SynapseSpark_Properties) AssignProperties_From_SynapseSpark_Pr
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForSynapseSpark_Properties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7573,7 +7577,7 @@ func (properties *SynapseSpark_Properties) AssignProperties_To_SynapseSpark_Prop
 		var autoPauseProperty storage.AutoPauseProperties
 		err := properties.AutoPauseProperties.AssignProperties_To_AutoPauseProperties(&autoPauseProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AutoPauseProperties() to populate field AutoPauseProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_AutoPauseProperties() to populate field AutoPauseProperties")
 		}
 		destination.AutoPauseProperties = &autoPauseProperty
 	} else {
@@ -7585,7 +7589,7 @@ func (properties *SynapseSpark_Properties) AssignProperties_To_SynapseSpark_Prop
 		var autoScaleProperty storage.AutoScaleProperties
 		err := properties.AutoScaleProperties.AssignProperties_To_AutoScaleProperties(&autoScaleProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AutoScaleProperties() to populate field AutoScaleProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_AutoScaleProperties() to populate field AutoScaleProperties")
 		}
 		destination.AutoScaleProperties = &autoScaleProperty
 	} else {
@@ -7628,7 +7632,7 @@ func (properties *SynapseSpark_Properties) AssignProperties_To_SynapseSpark_Prop
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForSynapseSpark_Properties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7661,7 +7665,7 @@ func (properties *SynapseSpark_Properties_STATUS) AssignProperties_From_SynapseS
 		var autoPauseProperty AutoPauseProperties_STATUS
 		err := autoPauseProperty.AssignProperties_From_AutoPauseProperties_STATUS(source.AutoPauseProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AutoPauseProperties_STATUS() to populate field AutoPauseProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_AutoPauseProperties_STATUS() to populate field AutoPauseProperties")
 		}
 		properties.AutoPauseProperties = &autoPauseProperty
 	} else {
@@ -7673,7 +7677,7 @@ func (properties *SynapseSpark_Properties_STATUS) AssignProperties_From_SynapseS
 		var autoScaleProperty AutoScaleProperties_STATUS
 		err := autoScaleProperty.AssignProperties_From_AutoScaleProperties_STATUS(source.AutoScaleProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AutoScaleProperties_STATUS() to populate field AutoScaleProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_AutoScaleProperties_STATUS() to populate field AutoScaleProperties")
 		}
 		properties.AutoScaleProperties = &autoScaleProperty
 	} else {
@@ -7716,7 +7720,7 @@ func (properties *SynapseSpark_Properties_STATUS) AssignProperties_From_SynapseS
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForSynapseSpark_Properties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7734,7 +7738,7 @@ func (properties *SynapseSpark_Properties_STATUS) AssignProperties_To_SynapseSpa
 		var autoPauseProperty storage.AutoPauseProperties_STATUS
 		err := properties.AutoPauseProperties.AssignProperties_To_AutoPauseProperties_STATUS(&autoPauseProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AutoPauseProperties_STATUS() to populate field AutoPauseProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_AutoPauseProperties_STATUS() to populate field AutoPauseProperties")
 		}
 		destination.AutoPauseProperties = &autoPauseProperty
 	} else {
@@ -7746,7 +7750,7 @@ func (properties *SynapseSpark_Properties_STATUS) AssignProperties_To_SynapseSpa
 		var autoScaleProperty storage.AutoScaleProperties_STATUS
 		err := properties.AutoScaleProperties.AssignProperties_To_AutoScaleProperties_STATUS(&autoScaleProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AutoScaleProperties_STATUS() to populate field AutoScaleProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_AutoScaleProperties_STATUS() to populate field AutoScaleProperties")
 		}
 		destination.AutoScaleProperties = &autoScaleProperty
 	} else {
@@ -7789,7 +7793,7 @@ func (properties *SynapseSpark_Properties_STATUS) AssignProperties_To_SynapseSpa
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForSynapseSpark_Properties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7820,7 +7824,7 @@ func (properties *VirtualMachine_Properties) AssignProperties_From_VirtualMachin
 		var administratorAccount VirtualMachineSshCredentials
 		err := administratorAccount.AssignProperties_From_VirtualMachineSshCredentials(source.AdministratorAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineSshCredentials() to populate field AdministratorAccount")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineSshCredentials() to populate field AdministratorAccount")
 		}
 		properties.AdministratorAccount = &administratorAccount
 	} else {
@@ -7860,7 +7864,7 @@ func (properties *VirtualMachine_Properties) AssignProperties_From_VirtualMachin
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForVirtualMachine_Properties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -7881,7 +7885,7 @@ func (properties *VirtualMachine_Properties) AssignProperties_To_VirtualMachine_
 		var administratorAccount storage.VirtualMachineSshCredentials
 		err := properties.AdministratorAccount.AssignProperties_To_VirtualMachineSshCredentials(&administratorAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineSshCredentials() to populate field AdministratorAccount")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineSshCredentials() to populate field AdministratorAccount")
 		}
 		destination.AdministratorAccount = &administratorAccount
 	} else {
@@ -7901,7 +7905,7 @@ func (properties *VirtualMachine_Properties) AssignProperties_To_VirtualMachine_
 		var notebookServerPort int
 		err := propertyBag.Pull("NotebookServerPort", &notebookServerPort)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'NotebookServerPort' from propertyBag")
+			return eris.Wrap(err, "pulling 'NotebookServerPort' from propertyBag")
 		}
 
 		destination.NotebookServerPort = &notebookServerPort
@@ -7927,7 +7931,7 @@ func (properties *VirtualMachine_Properties) AssignProperties_To_VirtualMachine_
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForVirtualMachine_Properties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -7958,7 +7962,7 @@ func (properties *VirtualMachine_Properties_STATUS) AssignProperties_From_Virtua
 		var administratorAccount VirtualMachineSshCredentials_STATUS
 		err := administratorAccount.AssignProperties_From_VirtualMachineSshCredentials_STATUS(source.AdministratorAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_VirtualMachineSshCredentials_STATUS() to populate field AdministratorAccount")
+			return eris.Wrap(err, "calling AssignProperties_From_VirtualMachineSshCredentials_STATUS() to populate field AdministratorAccount")
 		}
 		properties.AdministratorAccount = &administratorAccount
 	} else {
@@ -7998,7 +8002,7 @@ func (properties *VirtualMachine_Properties_STATUS) AssignProperties_From_Virtua
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForVirtualMachine_Properties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8019,7 +8023,7 @@ func (properties *VirtualMachine_Properties_STATUS) AssignProperties_To_VirtualM
 		var administratorAccount storage.VirtualMachineSshCredentials_STATUS
 		err := properties.AdministratorAccount.AssignProperties_To_VirtualMachineSshCredentials_STATUS(&administratorAccount)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_VirtualMachineSshCredentials_STATUS() to populate field AdministratorAccount")
+			return eris.Wrap(err, "calling AssignProperties_To_VirtualMachineSshCredentials_STATUS() to populate field AdministratorAccount")
 		}
 		destination.AdministratorAccount = &administratorAccount
 	} else {
@@ -8039,7 +8043,7 @@ func (properties *VirtualMachine_Properties_STATUS) AssignProperties_To_VirtualM
 		var notebookServerPort int
 		err := propertyBag.Pull("NotebookServerPort", &notebookServerPort)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'NotebookServerPort' from propertyBag")
+			return eris.Wrap(err, "pulling 'NotebookServerPort' from propertyBag")
 		}
 
 		destination.NotebookServerPort = &notebookServerPort
@@ -8065,7 +8069,7 @@ func (properties *VirtualMachine_Properties_STATUS) AssignProperties_To_VirtualM
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForVirtualMachine_Properties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8119,7 +8123,7 @@ func (configuration *AksNetworkingConfiguration) AssignProperties_From_AksNetwor
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForAksNetworkingConfiguration); ok {
 		err := augmentedConfiguration.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8161,7 +8165,7 @@ func (configuration *AksNetworkingConfiguration) AssignProperties_To_AksNetworki
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForAksNetworkingConfiguration); ok {
 		err := augmentedConfiguration.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8208,7 +8212,7 @@ func (configuration *AksNetworkingConfiguration_STATUS) AssignProperties_From_Ak
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForAksNetworkingConfiguration_STATUS); ok {
 		err := augmentedConfiguration.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8245,7 +8249,7 @@ func (configuration *AksNetworkingConfiguration_STATUS) AssignProperties_To_AksN
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForAksNetworkingConfiguration_STATUS); ok {
 		err := augmentedConfiguration.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8384,7 +8388,7 @@ func (properties *AutoPauseProperties) AssignProperties_From_AutoPauseProperties
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoPauseProperties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8420,7 +8424,7 @@ func (properties *AutoPauseProperties) AssignProperties_To_AutoPauseProperties(d
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoPauseProperties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8464,7 +8468,7 @@ func (properties *AutoPauseProperties_STATUS) AssignProperties_From_AutoPausePro
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoPauseProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8500,7 +8504,7 @@ func (properties *AutoPauseProperties_STATUS) AssignProperties_To_AutoPausePrope
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoPauseProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8548,7 +8552,7 @@ func (properties *AutoScaleProperties) AssignProperties_From_AutoScaleProperties
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoScaleProperties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8587,7 +8591,7 @@ func (properties *AutoScaleProperties) AssignProperties_To_AutoScaleProperties(d
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoScaleProperties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8635,7 +8639,7 @@ func (properties *AutoScaleProperties_STATUS) AssignProperties_From_AutoScalePro
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoScaleProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8674,7 +8678,7 @@ func (properties *AutoScaleProperties_STATUS) AssignProperties_To_AutoScalePrope
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForAutoScaleProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8713,7 +8717,7 @@ func (application *ComputeInstanceApplication_STATUS) AssignProperties_From_Comp
 	if augmentedApplication, ok := applicationAsAny.(augmentConversionForComputeInstanceApplication_STATUS); ok {
 		err := augmentedApplication.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8744,7 +8748,7 @@ func (application *ComputeInstanceApplication_STATUS) AssignProperties_To_Comput
 	if augmentedApplication, ok := applicationAsAny.(augmentConversionForComputeInstanceApplication_STATUS); ok {
 		err := augmentedApplication.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8783,7 +8787,7 @@ func (endpoints *ComputeInstanceConnectivityEndpoints_STATUS) AssignProperties_F
 	if augmentedEndpoints, ok := endpointsAsAny.(augmentConversionForComputeInstanceConnectivityEndpoints_STATUS); ok {
 		err := augmentedEndpoints.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8814,7 +8818,7 @@ func (endpoints *ComputeInstanceConnectivityEndpoints_STATUS) AssignProperties_T
 	if augmentedEndpoints, ok := endpointsAsAny.(augmentConversionForComputeInstanceConnectivityEndpoints_STATUS); ok {
 		err := augmentedEndpoints.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8857,7 +8861,7 @@ func (createdBy *ComputeInstanceCreatedBy_STATUS) AssignProperties_From_ComputeI
 	if augmentedCreatedBy, ok := createdByAsAny.(augmentConversionForComputeInstanceCreatedBy_STATUS); ok {
 		err := augmentedCreatedBy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8891,7 +8895,7 @@ func (createdBy *ComputeInstanceCreatedBy_STATUS) AssignProperties_To_ComputeIns
 	if augmentedCreatedBy, ok := createdByAsAny.(augmentConversionForComputeInstanceCreatedBy_STATUS); ok {
 		err := augmentedCreatedBy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -8941,7 +8945,7 @@ func (operation *ComputeInstanceLastOperation_STATUS) AssignProperties_From_Comp
 	if augmentedOperation, ok := operationAsAny.(augmentConversionForComputeInstanceLastOperation_STATUS); ok {
 		err := augmentedOperation.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -8968,7 +8972,7 @@ func (operation *ComputeInstanceLastOperation_STATUS) AssignProperties_To_Comput
 		var operationTrigger string
 		err := propertyBag.Pull("OperationTrigger", &operationTrigger)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'OperationTrigger' from propertyBag")
+			return eris.Wrap(err, "pulling 'OperationTrigger' from propertyBag")
 		}
 
 		destination.OperationTrigger = &operationTrigger
@@ -8988,7 +8992,7 @@ func (operation *ComputeInstanceLastOperation_STATUS) AssignProperties_To_Comput
 	if augmentedOperation, ok := operationAsAny.(augmentConversionForComputeInstanceLastOperation_STATUS); ok {
 		err := augmentedOperation.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9027,7 +9031,7 @@ func (settings *ComputeInstanceSshSettings) AssignProperties_From_ComputeInstanc
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForComputeInstanceSshSettings); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9058,7 +9062,7 @@ func (settings *ComputeInstanceSshSettings) AssignProperties_To_ComputeInstanceS
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForComputeInstanceSshSettings); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9105,7 +9109,7 @@ func (settings *ComputeInstanceSshSettings_STATUS) AssignProperties_From_Compute
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForComputeInstanceSshSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9142,7 +9146,7 @@ func (settings *ComputeInstanceSshSettings_STATUS) AssignProperties_To_ComputeIn
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForComputeInstanceSshSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9175,7 +9179,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -9196,7 +9200,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 			var detailLocal ErrorDetail_STATUS_Unrolled
 			err := detailLocal.AssignProperties_From_ErrorDetail_STATUS_Unrolled(&detailItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS_Unrolled() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorDetail_STATUS_Unrolled() to populate field Details")
 			}
 			detailList[detailIndex] = detailLocal
 		}
@@ -9223,7 +9227,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_From_ErrorDetail_STATUS(sourc
 	if augmentedDetail, ok := detailAsAny.(augmentConversionForErrorDetail_STATUS); ok {
 		err := augmentedDetail.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9245,7 +9249,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -9266,7 +9270,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 			var detailLocal storage.ErrorDetail_STATUS_Unrolled
 			err := detailItem.AssignProperties_To_ErrorDetail_STATUS_Unrolled(&detailLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS_Unrolled() to populate field Details")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorDetail_STATUS_Unrolled() to populate field Details")
 			}
 			detailList[detailIndex] = detailLocal
 		}
@@ -9293,7 +9297,7 @@ func (detail *ErrorDetail_STATUS) AssignProperties_To_ErrorDetail_STATUS(destina
 	if augmentedDetail, ok := detailAsAny.(augmentConversionForErrorDetail_STATUS); ok {
 		err := augmentedDetail.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9322,7 +9326,7 @@ func (schema *InstanceTypeSchema) AssignProperties_From_InstanceTypeSchema(sourc
 		var resource InstanceTypeSchema_Resources
 		err := resource.AssignProperties_From_InstanceTypeSchema_Resources(source.Resources)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InstanceTypeSchema_Resources() to populate field Resources")
+			return eris.Wrap(err, "calling AssignProperties_From_InstanceTypeSchema_Resources() to populate field Resources")
 		}
 		schema.Resources = &resource
 	} else {
@@ -9341,7 +9345,7 @@ func (schema *InstanceTypeSchema) AssignProperties_From_InstanceTypeSchema(sourc
 	if augmentedSchema, ok := schemaAsAny.(augmentConversionForInstanceTypeSchema); ok {
 		err := augmentedSchema.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9362,7 +9366,7 @@ func (schema *InstanceTypeSchema) AssignProperties_To_InstanceTypeSchema(destina
 		var resource storage.InstanceTypeSchema_Resources
 		err := schema.Resources.AssignProperties_To_InstanceTypeSchema_Resources(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InstanceTypeSchema_Resources() to populate field Resources")
+			return eris.Wrap(err, "calling AssignProperties_To_InstanceTypeSchema_Resources() to populate field Resources")
 		}
 		destination.Resources = &resource
 	} else {
@@ -9381,7 +9385,7 @@ func (schema *InstanceTypeSchema) AssignProperties_To_InstanceTypeSchema(destina
 	if augmentedSchema, ok := schemaAsAny.(augmentConversionForInstanceTypeSchema); ok {
 		err := augmentedSchema.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9410,7 +9414,7 @@ func (schema *InstanceTypeSchema_STATUS) AssignProperties_From_InstanceTypeSchem
 		var resource InstanceTypeSchema_Resources_STATUS
 		err := resource.AssignProperties_From_InstanceTypeSchema_Resources_STATUS(source.Resources)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_InstanceTypeSchema_Resources_STATUS() to populate field Resources")
+			return eris.Wrap(err, "calling AssignProperties_From_InstanceTypeSchema_Resources_STATUS() to populate field Resources")
 		}
 		schema.Resources = &resource
 	} else {
@@ -9429,7 +9433,7 @@ func (schema *InstanceTypeSchema_STATUS) AssignProperties_From_InstanceTypeSchem
 	if augmentedSchema, ok := schemaAsAny.(augmentConversionForInstanceTypeSchema_STATUS); ok {
 		err := augmentedSchema.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9450,7 +9454,7 @@ func (schema *InstanceTypeSchema_STATUS) AssignProperties_To_InstanceTypeSchema_
 		var resource storage.InstanceTypeSchema_Resources_STATUS
 		err := schema.Resources.AssignProperties_To_InstanceTypeSchema_Resources_STATUS(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_InstanceTypeSchema_Resources_STATUS() to populate field Resources")
+			return eris.Wrap(err, "calling AssignProperties_To_InstanceTypeSchema_Resources_STATUS() to populate field Resources")
 		}
 		destination.Resources = &resource
 	} else {
@@ -9469,7 +9473,7 @@ func (schema *InstanceTypeSchema_STATUS) AssignProperties_To_InstanceTypeSchema_
 	if augmentedSchema, ok := schemaAsAny.(augmentConversionForInstanceTypeSchema_STATUS); ok {
 		err := augmentedSchema.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9524,7 +9528,7 @@ func (counts *NodeStateCounts_STATUS) AssignProperties_From_NodeStateCounts_STAT
 	if augmentedCounts, ok := countsAsAny.(augmentConversionForNodeStateCounts_STATUS); ok {
 		err := augmentedCounts.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9567,7 +9571,7 @@ func (counts *NodeStateCounts_STATUS) AssignProperties_To_NodeStateCounts_STATUS
 	if augmentedCounts, ok := countsAsAny.(augmentConversionForNodeStateCounts_STATUS); ok {
 		err := augmentedCounts.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9592,7 +9596,7 @@ func (settings *PersonalComputeInstanceSettings) AssignProperties_From_PersonalC
 		var assignedUser AssignedUser
 		err := assignedUser.AssignProperties_From_AssignedUser(source.AssignedUser)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AssignedUser() to populate field AssignedUser")
+			return eris.Wrap(err, "calling AssignProperties_From_AssignedUser() to populate field AssignedUser")
 		}
 		settings.AssignedUser = &assignedUser
 	} else {
@@ -9611,7 +9615,7 @@ func (settings *PersonalComputeInstanceSettings) AssignProperties_From_PersonalC
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPersonalComputeInstanceSettings); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9629,7 +9633,7 @@ func (settings *PersonalComputeInstanceSettings) AssignProperties_To_PersonalCom
 		var assignedUser storage.AssignedUser
 		err := settings.AssignedUser.AssignProperties_To_AssignedUser(&assignedUser)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AssignedUser() to populate field AssignedUser")
+			return eris.Wrap(err, "calling AssignProperties_To_AssignedUser() to populate field AssignedUser")
 		}
 		destination.AssignedUser = &assignedUser
 	} else {
@@ -9648,7 +9652,7 @@ func (settings *PersonalComputeInstanceSettings) AssignProperties_To_PersonalCom
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPersonalComputeInstanceSettings); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9673,7 +9677,7 @@ func (settings *PersonalComputeInstanceSettings_STATUS) AssignProperties_From_Pe
 		var assignedUser AssignedUser_STATUS
 		err := assignedUser.AssignProperties_From_AssignedUser_STATUS(source.AssignedUser)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AssignedUser_STATUS() to populate field AssignedUser")
+			return eris.Wrap(err, "calling AssignProperties_From_AssignedUser_STATUS() to populate field AssignedUser")
 		}
 		settings.AssignedUser = &assignedUser
 	} else {
@@ -9692,7 +9696,7 @@ func (settings *PersonalComputeInstanceSettings_STATUS) AssignProperties_From_Pe
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPersonalComputeInstanceSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9710,7 +9714,7 @@ func (settings *PersonalComputeInstanceSettings_STATUS) AssignProperties_To_Pers
 		var assignedUser storage.AssignedUser_STATUS
 		err := settings.AssignedUser.AssignProperties_To_AssignedUser_STATUS(&assignedUser)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AssignedUser_STATUS() to populate field AssignedUser")
+			return eris.Wrap(err, "calling AssignProperties_To_AssignedUser_STATUS() to populate field AssignedUser")
 		}
 		destination.AssignedUser = &assignedUser
 	} else {
@@ -9729,7 +9733,7 @@ func (settings *PersonalComputeInstanceSettings_STATUS) AssignProperties_To_Pers
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForPersonalComputeInstanceSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9772,7 +9776,7 @@ func (resourceId *ResourceId) AssignProperties_From_ResourceId(source *storage.R
 	if augmentedResourceId, ok := resourceIdAsAny.(augmentConversionForResourceId); ok {
 		err := augmentedResourceId.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9805,7 +9809,7 @@ func (resourceId *ResourceId) AssignProperties_To_ResourceId(destination *storag
 	if augmentedResourceId, ok := resourceIdAsAny.(augmentConversionForResourceId); ok {
 		err := augmentedResourceId.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9840,7 +9844,7 @@ func (resourceId *ResourceId_STATUS) AssignProperties_From_ResourceId_STATUS(sou
 	if augmentedResourceId, ok := resourceIdAsAny.(augmentConversionForResourceId_STATUS); ok {
 		err := augmentedResourceId.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9868,7 +9872,7 @@ func (resourceId *ResourceId_STATUS) AssignProperties_To_ResourceId_STATUS(desti
 	if augmentedResourceId, ok := resourceIdAsAny.(augmentConversionForResourceId_STATUS); ok {
 		err := augmentedResourceId.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9911,7 +9915,7 @@ func (settings *ScaleSettings) AssignProperties_From_ScaleSettings(source *stora
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForScaleSettings); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -9945,7 +9949,7 @@ func (settings *ScaleSettings) AssignProperties_To_ScaleSettings(destination *st
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForScaleSettings); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -9988,7 +9992,7 @@ func (settings *ScaleSettings_STATUS) AssignProperties_From_ScaleSettings_STATUS
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForScaleSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10022,7 +10026,7 @@ func (settings *ScaleSettings_STATUS) AssignProperties_To_ScaleSettings_STATUS(d
 	if augmentedSettings, ok := settingsAsAny.(augmentConversionForScaleSettings_STATUS); ok {
 		err := augmentedSettings.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10047,7 +10051,7 @@ func (scripts *SetupScripts) AssignProperties_From_SetupScripts(source *storage.
 		var script ScriptsToExecute
 		err := script.AssignProperties_From_ScriptsToExecute(source.Scripts)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScriptsToExecute() to populate field Scripts")
+			return eris.Wrap(err, "calling AssignProperties_From_ScriptsToExecute() to populate field Scripts")
 		}
 		scripts.Scripts = &script
 	} else {
@@ -10066,7 +10070,7 @@ func (scripts *SetupScripts) AssignProperties_From_SetupScripts(source *storage.
 	if augmentedScripts, ok := scriptsAsAny.(augmentConversionForSetupScripts); ok {
 		err := augmentedScripts.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10084,7 +10088,7 @@ func (scripts *SetupScripts) AssignProperties_To_SetupScripts(destination *stora
 		var script storage.ScriptsToExecute
 		err := scripts.Scripts.AssignProperties_To_ScriptsToExecute(&script)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScriptsToExecute() to populate field Scripts")
+			return eris.Wrap(err, "calling AssignProperties_To_ScriptsToExecute() to populate field Scripts")
 		}
 		destination.Scripts = &script
 	} else {
@@ -10103,7 +10107,7 @@ func (scripts *SetupScripts) AssignProperties_To_SetupScripts(destination *stora
 	if augmentedScripts, ok := scriptsAsAny.(augmentConversionForSetupScripts); ok {
 		err := augmentedScripts.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10128,7 +10132,7 @@ func (scripts *SetupScripts_STATUS) AssignProperties_From_SetupScripts_STATUS(so
 		var script ScriptsToExecute_STATUS
 		err := script.AssignProperties_From_ScriptsToExecute_STATUS(source.Scripts)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScriptsToExecute_STATUS() to populate field Scripts")
+			return eris.Wrap(err, "calling AssignProperties_From_ScriptsToExecute_STATUS() to populate field Scripts")
 		}
 		scripts.Scripts = &script
 	} else {
@@ -10147,7 +10151,7 @@ func (scripts *SetupScripts_STATUS) AssignProperties_From_SetupScripts_STATUS(so
 	if augmentedScripts, ok := scriptsAsAny.(augmentConversionForSetupScripts_STATUS); ok {
 		err := augmentedScripts.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10165,7 +10169,7 @@ func (scripts *SetupScripts_STATUS) AssignProperties_To_SetupScripts_STATUS(dest
 		var script storage.ScriptsToExecute_STATUS
 		err := scripts.Scripts.AssignProperties_To_ScriptsToExecute_STATUS(&script)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScriptsToExecute_STATUS() to populate field Scripts")
+			return eris.Wrap(err, "calling AssignProperties_To_ScriptsToExecute_STATUS() to populate field Scripts")
 		}
 		destination.Scripts = &script
 	} else {
@@ -10184,7 +10188,7 @@ func (scripts *SetupScripts_STATUS) AssignProperties_To_SetupScripts_STATUS(dest
 	if augmentedScripts, ok := scriptsAsAny.(augmentConversionForSetupScripts_STATUS); ok {
 		err := augmentedScripts.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10254,7 +10258,7 @@ func (configuration *SslConfiguration) AssignProperties_From_SslConfiguration(so
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForSslConfiguration); ok {
 		err := augmentedConfiguration.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10312,7 +10316,7 @@ func (configuration *SslConfiguration) AssignProperties_To_SslConfiguration(dest
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForSslConfiguration); ok {
 		err := augmentedConfiguration.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10364,7 +10368,7 @@ func (configuration *SslConfiguration_STATUS) AssignProperties_From_SslConfigura
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForSslConfiguration_STATUS); ok {
 		err := augmentedConfiguration.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10406,7 +10410,7 @@ func (configuration *SslConfiguration_STATUS) AssignProperties_To_SslConfigurati
 	if augmentedConfiguration, ok := configurationAsAny.(augmentConversionForSslConfiguration_STATUS); ok {
 		err := augmentedConfiguration.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10449,7 +10453,7 @@ func (service *SystemService_STATUS) AssignProperties_From_SystemService_STATUS(
 	if augmentedService, ok := serviceAsAny.(augmentConversionForSystemService_STATUS); ok {
 		err := augmentedService.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10483,7 +10487,7 @@ func (service *SystemService_STATUS) AssignProperties_To_SystemService_STATUS(de
 	if augmentedService, ok := serviceAsAny.(augmentConversionForSystemService_STATUS); ok {
 		err := augmentedService.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10536,7 +10540,7 @@ func (credentials *UserAccountCredentials) AssignProperties_From_UserAccountCred
 	if augmentedCredentials, ok := credentialsAsAny.(augmentConversionForUserAccountCredentials); ok {
 		err := augmentedCredentials.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10580,7 +10584,7 @@ func (credentials *UserAccountCredentials) AssignProperties_To_UserAccountCreden
 	if augmentedCredentials, ok := credentialsAsAny.(augmentConversionForUserAccountCredentials); ok {
 		err := augmentedCredentials.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10615,7 +10619,7 @@ func (credentials *UserAccountCredentials_STATUS) AssignProperties_From_UserAcco
 	if augmentedCredentials, ok := credentialsAsAny.(augmentConversionForUserAccountCredentials_STATUS); ok {
 		err := augmentedCredentials.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10643,7 +10647,7 @@ func (credentials *UserAccountCredentials_STATUS) AssignProperties_To_UserAccoun
 	if augmentedCredentials, ok := credentialsAsAny.(augmentConversionForUserAccountCredentials_STATUS); ok {
 		err := augmentedCredentials.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10686,7 +10690,7 @@ func (image *VirtualMachineImage) AssignProperties_From_VirtualMachineImage(sour
 	if augmentedImage, ok := imageAsAny.(augmentConversionForVirtualMachineImage); ok {
 		err := augmentedImage.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10719,7 +10723,7 @@ func (image *VirtualMachineImage) AssignProperties_To_VirtualMachineImage(destin
 	if augmentedImage, ok := imageAsAny.(augmentConversionForVirtualMachineImage); ok {
 		err := augmentedImage.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10754,7 +10758,7 @@ func (image *VirtualMachineImage_STATUS) AssignProperties_From_VirtualMachineIma
 	if augmentedImage, ok := imageAsAny.(augmentConversionForVirtualMachineImage_STATUS); ok {
 		err := augmentedImage.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10782,7 +10786,7 @@ func (image *VirtualMachineImage_STATUS) AssignProperties_To_VirtualMachineImage
 	if augmentedImage, ok := imageAsAny.(augmentConversionForVirtualMachineImage_STATUS); ok {
 		err := augmentedImage.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10844,7 +10848,7 @@ func (credentials *VirtualMachineSshCredentials) AssignProperties_From_VirtualMa
 	if augmentedCredentials, ok := credentialsAsAny.(augmentConversionForVirtualMachineSshCredentials); ok {
 		err := augmentedCredentials.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10896,7 +10900,7 @@ func (credentials *VirtualMachineSshCredentials) AssignProperties_To_VirtualMach
 	if augmentedCredentials, ok := credentialsAsAny.(augmentConversionForVirtualMachineSshCredentials); ok {
 		err := augmentedCredentials.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -10931,7 +10935,7 @@ func (credentials *VirtualMachineSshCredentials_STATUS) AssignProperties_From_Vi
 	if augmentedCredentials, ok := credentialsAsAny.(augmentConversionForVirtualMachineSshCredentials_STATUS); ok {
 		err := augmentedCredentials.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -10959,7 +10963,7 @@ func (credentials *VirtualMachineSshCredentials_STATUS) AssignProperties_To_Virt
 	if augmentedCredentials, ok := credentialsAsAny.(augmentConversionForVirtualMachineSshCredentials_STATUS); ok {
 		err := augmentedCredentials.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11012,7 +11016,7 @@ func (user *AssignedUser) AssignProperties_From_AssignedUser(source *storage.Ass
 	if augmentedUser, ok := userAsAny.(augmentConversionForAssignedUser); ok {
 		err := augmentedUser.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11033,7 +11037,7 @@ func (user *AssignedUser) AssignProperties_To_AssignedUser(destination *storage.
 		var objectIdFromConfig genruntime.ConfigMapReference
 		err := propertyBag.Pull("ObjectIdFromConfig", &objectIdFromConfig)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ObjectIdFromConfig' from propertyBag")
+			return eris.Wrap(err, "pulling 'ObjectIdFromConfig' from propertyBag")
 		}
 
 		destination.ObjectIdFromConfig = &objectIdFromConfig
@@ -11049,7 +11053,7 @@ func (user *AssignedUser) AssignProperties_To_AssignedUser(destination *storage.
 		var tenantIdFromConfig genruntime.ConfigMapReference
 		err := propertyBag.Pull("TenantIdFromConfig", &tenantIdFromConfig)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'TenantIdFromConfig' from propertyBag")
+			return eris.Wrap(err, "pulling 'TenantIdFromConfig' from propertyBag")
 		}
 
 		destination.TenantIdFromConfig = &tenantIdFromConfig
@@ -11069,7 +11073,7 @@ func (user *AssignedUser) AssignProperties_To_AssignedUser(destination *storage.
 	if augmentedUser, ok := userAsAny.(augmentConversionForAssignedUser); ok {
 		err := augmentedUser.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11108,7 +11112,7 @@ func (user *AssignedUser_STATUS) AssignProperties_From_AssignedUser_STATUS(sourc
 	if augmentedUser, ok := userAsAny.(augmentConversionForAssignedUser_STATUS); ok {
 		err := augmentedUser.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11139,7 +11143,7 @@ func (user *AssignedUser_STATUS) AssignProperties_To_AssignedUser_STATUS(destina
 	if augmentedUser, ok := userAsAny.(augmentConversionForAssignedUser_STATUS); ok {
 		err := augmentedUser.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11353,7 +11357,7 @@ func (info *ErrorAdditionalInfo_STATUS) AssignProperties_From_ErrorAdditionalInf
 	if augmentedInfo, ok := infoAsAny.(augmentConversionForErrorAdditionalInfo_STATUS); ok {
 		err := augmentedInfo.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11394,7 +11398,7 @@ func (info *ErrorAdditionalInfo_STATUS) AssignProperties_To_ErrorAdditionalInfo_
 	if augmentedInfo, ok := infoAsAny.(augmentConversionForErrorAdditionalInfo_STATUS); ok {
 		err := augmentedInfo.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11425,7 +11429,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_S
 			var additionalInfo ErrorAdditionalInfo_STATUS
 			err := additionalInfo.AssignProperties_From_ErrorAdditionalInfo_STATUS(&additionalInfoItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_From_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -11455,7 +11459,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_From_ErrorDetail_S
 	if augmentedUnrolled, ok := unrolledAsAny.(augmentConversionForErrorDetail_STATUS_Unrolled); ok {
 		err := augmentedUnrolled.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11477,7 +11481,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STA
 			var additionalInfo storage.ErrorAdditionalInfo_STATUS
 			err := additionalInfoItem.AssignProperties_To_ErrorAdditionalInfo_STATUS(&additionalInfo)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
+				return eris.Wrap(err, "calling AssignProperties_To_ErrorAdditionalInfo_STATUS() to populate field AdditionalInfo")
 			}
 			additionalInfoList[additionalInfoIndex] = additionalInfo
 		}
@@ -11507,7 +11511,7 @@ func (unrolled *ErrorDetail_STATUS_Unrolled) AssignProperties_To_ErrorDetail_STA
 	if augmentedUnrolled, ok := unrolledAsAny.(augmentConversionForErrorDetail_STATUS_Unrolled); ok {
 		err := augmentedUnrolled.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11545,7 +11549,7 @@ func (resources *InstanceTypeSchema_Resources) AssignProperties_From_InstanceTyp
 	if augmentedResources, ok := resourcesAsAny.(augmentConversionForInstanceTypeSchema_Resources); ok {
 		err := augmentedResources.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11576,7 +11580,7 @@ func (resources *InstanceTypeSchema_Resources) AssignProperties_To_InstanceTypeS
 	if augmentedResources, ok := resourcesAsAny.(augmentConversionForInstanceTypeSchema_Resources); ok {
 		err := augmentedResources.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11614,7 +11618,7 @@ func (resources *InstanceTypeSchema_Resources_STATUS) AssignProperties_From_Inst
 	if augmentedResources, ok := resourcesAsAny.(augmentConversionForInstanceTypeSchema_Resources_STATUS); ok {
 		err := augmentedResources.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11645,7 +11649,7 @@ func (resources *InstanceTypeSchema_Resources_STATUS) AssignProperties_To_Instan
 	if augmentedResources, ok := resourcesAsAny.(augmentConversionForInstanceTypeSchema_Resources_STATUS); ok {
 		err := augmentedResources.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11671,7 +11675,7 @@ func (execute *ScriptsToExecute) AssignProperties_From_ScriptsToExecute(source *
 		var creationScript ScriptReference
 		err := creationScript.AssignProperties_From_ScriptReference(source.CreationScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScriptReference() to populate field CreationScript")
+			return eris.Wrap(err, "calling AssignProperties_From_ScriptReference() to populate field CreationScript")
 		}
 		execute.CreationScript = &creationScript
 	} else {
@@ -11683,7 +11687,7 @@ func (execute *ScriptsToExecute) AssignProperties_From_ScriptsToExecute(source *
 		var startupScript ScriptReference
 		err := startupScript.AssignProperties_From_ScriptReference(source.StartupScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScriptReference() to populate field StartupScript")
+			return eris.Wrap(err, "calling AssignProperties_From_ScriptReference() to populate field StartupScript")
 		}
 		execute.StartupScript = &startupScript
 	} else {
@@ -11702,7 +11706,7 @@ func (execute *ScriptsToExecute) AssignProperties_From_ScriptsToExecute(source *
 	if augmentedExecute, ok := executeAsAny.(augmentConversionForScriptsToExecute); ok {
 		err := augmentedExecute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11720,7 +11724,7 @@ func (execute *ScriptsToExecute) AssignProperties_To_ScriptsToExecute(destinatio
 		var creationScript storage.ScriptReference
 		err := execute.CreationScript.AssignProperties_To_ScriptReference(&creationScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScriptReference() to populate field CreationScript")
+			return eris.Wrap(err, "calling AssignProperties_To_ScriptReference() to populate field CreationScript")
 		}
 		destination.CreationScript = &creationScript
 	} else {
@@ -11732,7 +11736,7 @@ func (execute *ScriptsToExecute) AssignProperties_To_ScriptsToExecute(destinatio
 		var startupScript storage.ScriptReference
 		err := execute.StartupScript.AssignProperties_To_ScriptReference(&startupScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScriptReference() to populate field StartupScript")
+			return eris.Wrap(err, "calling AssignProperties_To_ScriptReference() to populate field StartupScript")
 		}
 		destination.StartupScript = &startupScript
 	} else {
@@ -11751,7 +11755,7 @@ func (execute *ScriptsToExecute) AssignProperties_To_ScriptsToExecute(destinatio
 	if augmentedExecute, ok := executeAsAny.(augmentConversionForScriptsToExecute); ok {
 		err := augmentedExecute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11777,7 +11781,7 @@ func (execute *ScriptsToExecute_STATUS) AssignProperties_From_ScriptsToExecute_S
 		var creationScript ScriptReference_STATUS
 		err := creationScript.AssignProperties_From_ScriptReference_STATUS(source.CreationScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScriptReference_STATUS() to populate field CreationScript")
+			return eris.Wrap(err, "calling AssignProperties_From_ScriptReference_STATUS() to populate field CreationScript")
 		}
 		execute.CreationScript = &creationScript
 	} else {
@@ -11789,7 +11793,7 @@ func (execute *ScriptsToExecute_STATUS) AssignProperties_From_ScriptsToExecute_S
 		var startupScript ScriptReference_STATUS
 		err := startupScript.AssignProperties_From_ScriptReference_STATUS(source.StartupScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ScriptReference_STATUS() to populate field StartupScript")
+			return eris.Wrap(err, "calling AssignProperties_From_ScriptReference_STATUS() to populate field StartupScript")
 		}
 		execute.StartupScript = &startupScript
 	} else {
@@ -11808,7 +11812,7 @@ func (execute *ScriptsToExecute_STATUS) AssignProperties_From_ScriptsToExecute_S
 	if augmentedExecute, ok := executeAsAny.(augmentConversionForScriptsToExecute_STATUS); ok {
 		err := augmentedExecute.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11826,7 +11830,7 @@ func (execute *ScriptsToExecute_STATUS) AssignProperties_To_ScriptsToExecute_STA
 		var creationScript storage.ScriptReference_STATUS
 		err := execute.CreationScript.AssignProperties_To_ScriptReference_STATUS(&creationScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScriptReference_STATUS() to populate field CreationScript")
+			return eris.Wrap(err, "calling AssignProperties_To_ScriptReference_STATUS() to populate field CreationScript")
 		}
 		destination.CreationScript = &creationScript
 	} else {
@@ -11838,7 +11842,7 @@ func (execute *ScriptsToExecute_STATUS) AssignProperties_To_ScriptsToExecute_STA
 		var startupScript storage.ScriptReference_STATUS
 		err := execute.StartupScript.AssignProperties_To_ScriptReference_STATUS(&startupScript)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ScriptReference_STATUS() to populate field StartupScript")
+			return eris.Wrap(err, "calling AssignProperties_To_ScriptReference_STATUS() to populate field StartupScript")
 		}
 		destination.StartupScript = &startupScript
 	} else {
@@ -11857,7 +11861,7 @@ func (execute *ScriptsToExecute_STATUS) AssignProperties_To_ScriptsToExecute_STA
 	if augmentedExecute, ok := executeAsAny.(augmentConversionForScriptsToExecute_STATUS); ok {
 		err := augmentedExecute.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -11944,7 +11948,7 @@ func (reference *ScriptReference) AssignProperties_From_ScriptReference(source *
 	if augmentedReference, ok := referenceAsAny.(augmentConversionForScriptReference); ok {
 		err := augmentedReference.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -11981,7 +11985,7 @@ func (reference *ScriptReference) AssignProperties_To_ScriptReference(destinatio
 	if augmentedReference, ok := referenceAsAny.(augmentConversionForScriptReference); ok {
 		err := augmentedReference.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -12028,7 +12032,7 @@ func (reference *ScriptReference_STATUS) AssignProperties_From_ScriptReference_S
 	if augmentedReference, ok := referenceAsAny.(augmentConversionForScriptReference_STATUS); ok {
 		err := augmentedReference.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -12065,7 +12069,7 @@ func (reference *ScriptReference_STATUS) AssignProperties_To_ScriptReference_STA
 	if augmentedReference, ok := referenceAsAny.(augmentConversionForScriptReference_STATUS); ok {
 		err := augmentedReference.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

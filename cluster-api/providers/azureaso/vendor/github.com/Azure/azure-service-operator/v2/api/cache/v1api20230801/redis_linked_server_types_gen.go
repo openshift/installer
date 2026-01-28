@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/cache/v1api20230801/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (server *RedisLinkedServer) ConvertTo(hub conversion.Hub) error {
 
 	return server.AssignProperties_To_RedisLinkedServer(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-cache-azure-com-v1api20230801-redislinkedserver,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cache.azure.com,resources=redislinkedservers,verbs=create;update,versions=v1api20230801,name=default.v1api20230801.redislinkedservers.cache.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &RedisLinkedServer{}
-
-// Default applies defaults to the RedisLinkedServer resource
-func (server *RedisLinkedServer) Default() {
-	server.defaultImpl()
-	var temp any = server
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (server *RedisLinkedServer) defaultAzureName() {
-	if server.Spec.AzureName == "" {
-		server.Spec.AzureName = server.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the RedisLinkedServer resource
-func (server *RedisLinkedServer) defaultImpl() { server.defaultAzureName() }
 
 var _ configmaps.Exporter = &RedisLinkedServer{}
 
@@ -173,6 +147,10 @@ func (server *RedisLinkedServer) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (server *RedisLinkedServer) Owner() *genruntime.ResourceReference {
+	if server.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(server.Spec)
 	return server.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (server *RedisLinkedServer) SetStatus(status genruntime.ConvertibleStatus) 
 	var st Redis_LinkedServer_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	server.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-cache-azure-com-v1api20230801-redislinkedserver,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cache.azure.com,resources=redislinkedservers,verbs=create;update,versions=v1api20230801,name=validate.v1api20230801.redislinkedservers.cache.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &RedisLinkedServer{}
-
-// ValidateCreate validates the creation of the resource
-func (server *RedisLinkedServer) ValidateCreate() (admission.Warnings, error) {
-	validations := server.createValidations()
-	var temp any = server
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (server *RedisLinkedServer) ValidateDelete() (admission.Warnings, error) {
-	validations := server.deleteValidations()
-	var temp any = server
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (server *RedisLinkedServer) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := server.updateValidations()
-	var temp any = server
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (server *RedisLinkedServer) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){server.validateResourceReferences, server.validateOwnerReference, server.validateSecretDestinations, server.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (server *RedisLinkedServer) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (server *RedisLinkedServer) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return server.validateResourceReferences()
-		},
-		server.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return server.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return server.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return server.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (server *RedisLinkedServer) validateConfigMapDestinations() (admission.Warnings, error) {
-	if server.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(server, nil, server.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (server *RedisLinkedServer) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(server)
-}
-
-// validateResourceReferences validates all resource references
-func (server *RedisLinkedServer) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&server.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (server *RedisLinkedServer) validateSecretDestinations() (admission.Warnings, error) {
-	if server.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(server, nil, server.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (server *RedisLinkedServer) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*RedisLinkedServer)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, server)
 }
 
 // AssignProperties_From_RedisLinkedServer populates our RedisLinkedServer from the provided source RedisLinkedServer
@@ -309,7 +184,7 @@ func (server *RedisLinkedServer) AssignProperties_From_RedisLinkedServer(source 
 	var spec RedisLinkedServer_Spec
 	err := spec.AssignProperties_From_RedisLinkedServer_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_RedisLinkedServer_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_RedisLinkedServer_Spec() to populate field Spec")
 	}
 	server.Spec = spec
 
@@ -317,7 +192,7 @@ func (server *RedisLinkedServer) AssignProperties_From_RedisLinkedServer(source 
 	var status Redis_LinkedServer_STATUS
 	err = status.AssignProperties_From_Redis_LinkedServer_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Redis_LinkedServer_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Redis_LinkedServer_STATUS() to populate field Status")
 	}
 	server.Status = status
 
@@ -335,7 +210,7 @@ func (server *RedisLinkedServer) AssignProperties_To_RedisLinkedServer(destinati
 	var spec storage.RedisLinkedServer_Spec
 	err := server.Spec.AssignProperties_To_RedisLinkedServer_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_RedisLinkedServer_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_RedisLinkedServer_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (server *RedisLinkedServer) AssignProperties_To_RedisLinkedServer(destinati
 	var status storage.Redis_LinkedServer_STATUS
 	err = server.Status.AssignProperties_To_Redis_LinkedServer_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Redis_LinkedServer_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Redis_LinkedServer_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -419,13 +294,13 @@ func (server *Redis_LinkedServer_STATUS) ConvertStatusFrom(source genruntime.Con
 	src = &storage.Redis_LinkedServer_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = server.AssignProperties_From_Redis_LinkedServer_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -443,13 +318,13 @@ func (server *Redis_LinkedServer_STATUS) ConvertStatusTo(destination genruntime.
 	dst = &storage.Redis_LinkedServer_STATUS{}
 	err := server.AssignProperties_To_Redis_LinkedServer_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -773,13 +648,13 @@ func (server *RedisLinkedServer_Spec) ConvertSpecFrom(source genruntime.Converti
 	src = &storage.RedisLinkedServer_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = server.AssignProperties_From_RedisLinkedServer_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -797,13 +672,13 @@ func (server *RedisLinkedServer_Spec) ConvertSpecTo(destination genruntime.Conve
 	dst = &storage.RedisLinkedServer_Spec{}
 	err := server.AssignProperties_To_RedisLinkedServer_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -831,7 +706,7 @@ func (server *RedisLinkedServer_Spec) AssignProperties_From_RedisLinkedServer_Sp
 		var operatorSpec RedisLinkedServerOperatorSpec
 		err := operatorSpec.AssignProperties_From_RedisLinkedServerOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_RedisLinkedServerOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_RedisLinkedServerOperatorSpec() to populate field OperatorSpec")
 		}
 		server.OperatorSpec = &operatorSpec
 	} else {
@@ -883,7 +758,7 @@ func (server *RedisLinkedServer_Spec) AssignProperties_To_RedisLinkedServer_Spec
 		var operatorSpec storage.RedisLinkedServerOperatorSpec
 		err := server.OperatorSpec.AssignProperties_To_RedisLinkedServerOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_RedisLinkedServerOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_RedisLinkedServerOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {

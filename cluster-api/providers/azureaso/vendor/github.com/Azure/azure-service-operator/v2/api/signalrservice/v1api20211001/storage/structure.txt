@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20211001/stor
 -----------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-10-01"
+
 SignalR: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (19 properties)
@@ -172,3 +173,80 @@ SignalR: Resource
     │       ├── PropertyBag: genruntime.PropertyBag
     │       └── UrlTemplate: *string
     └── Version: *string
+
+augmentConversionForManagedIdentity: Interface
+
+augmentConversionForManagedIdentitySettings: Interface
+
+augmentConversionForManagedIdentitySettings_STATUS: Interface
+
+augmentConversionForManagedIdentity_STATUS: Interface
+
+augmentConversionForNetworkACL: Interface
+
+augmentConversionForNetworkACL_STATUS: Interface
+
+augmentConversionForPrivateEndpointACL: Interface
+
+augmentConversionForPrivateEndpointACL_STATUS: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded: Interface
+
+augmentConversionForResourceLogCategory: Interface
+
+augmentConversionForResourceLogCategory_STATUS: Interface
+
+augmentConversionForResourceLogConfiguration: Interface
+
+augmentConversionForResourceLogConfiguration_STATUS: Interface
+
+augmentConversionForResourceSku: Interface
+
+augmentConversionForResourceSku_STATUS: Interface
+
+augmentConversionForServerlessUpstreamSettings: Interface
+
+augmentConversionForServerlessUpstreamSettings_STATUS: Interface
+
+augmentConversionForSharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded: Interface
+
+augmentConversionForSignalR: Interface
+
+augmentConversionForSignalRCorsSettings: Interface
+
+augmentConversionForSignalRCorsSettings_STATUS: Interface
+
+augmentConversionForSignalRFeature: Interface
+
+augmentConversionForSignalRFeature_STATUS: Interface
+
+augmentConversionForSignalRNetworkACLs: Interface
+
+augmentConversionForSignalRNetworkACLs_STATUS: Interface
+
+augmentConversionForSignalROperatorSecrets: Interface
+
+augmentConversionForSignalROperatorSpec: Interface
+
+augmentConversionForSignalRTlsSettings: Interface
+
+augmentConversionForSignalRTlsSettings_STATUS: Interface
+
+augmentConversionForSignalR_STATUS: Interface
+
+augmentConversionForSignalR_Spec: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForUpstreamAuthSettings: Interface
+
+augmentConversionForUpstreamAuthSettings_STATUS: Interface
+
+augmentConversionForUpstreamTemplate: Interface
+
+augmentConversionForUpstreamTemplate_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserAssignedIdentityProperty_STATUS: Interface
+

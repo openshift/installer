@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/dbformariadb/v1api20180601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (database *Database) ConvertTo(hub conversion.Hub) error {
 
 	return database.AssignProperties_To_Database(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-dbformariadb-azure-com-v1api20180601-database,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformariadb.azure.com,resources=databases,verbs=create;update,versions=v1api20180601,name=default.v1api20180601.databases.dbformariadb.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Database{}
-
-// Default applies defaults to the Database resource
-func (database *Database) Default() {
-	database.defaultImpl()
-	var temp any = database
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (database *Database) defaultAzureName() {
-	if database.Spec.AzureName == "" {
-		database.Spec.AzureName = database.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Database resource
-func (database *Database) defaultImpl() { database.defaultAzureName() }
 
 var _ configmaps.Exporter = &Database{}
 
@@ -173,6 +147,10 @@ func (database *Database) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (database *Database) Owner() *genruntime.ResourceReference {
+	if database.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(database.Spec)
 	return database.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (database *Database) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Database_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	database.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-dbformariadb-azure-com-v1api20180601-database,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=dbformariadb.azure.com,resources=databases,verbs=create;update,versions=v1api20180601,name=validate.v1api20180601.databases.dbformariadb.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Database{}
-
-// ValidateCreate validates the creation of the resource
-func (database *Database) ValidateCreate() (admission.Warnings, error) {
-	validations := database.createValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (database *Database) ValidateDelete() (admission.Warnings, error) {
-	validations := database.deleteValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (database *Database) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := database.updateValidations()
-	var temp any = database
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (database *Database) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){database.validateResourceReferences, database.validateOwnerReference, database.validateSecretDestinations, database.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (database *Database) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (database *Database) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateResourceReferences()
-		},
-		database.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return database.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (database *Database) validateConfigMapDestinations() (admission.Warnings, error) {
-	if database.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(database, nil, database.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (database *Database) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(database)
-}
-
-// validateResourceReferences validates all resource references
-func (database *Database) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&database.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (database *Database) validateSecretDestinations() (admission.Warnings, error) {
-	if database.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(database, nil, database.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (database *Database) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Database)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, database)
 }
 
 // AssignProperties_From_Database populates our Database from the provided source Database
@@ -309,7 +184,7 @@ func (database *Database) AssignProperties_From_Database(source *storage.Databas
 	var spec Database_Spec
 	err := spec.AssignProperties_From_Database_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Database_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Database_Spec() to populate field Spec")
 	}
 	database.Spec = spec
 
@@ -317,7 +192,7 @@ func (database *Database) AssignProperties_From_Database(source *storage.Databas
 	var status Database_STATUS
 	err = status.AssignProperties_From_Database_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Database_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Database_STATUS() to populate field Status")
 	}
 	database.Status = status
 
@@ -335,7 +210,7 @@ func (database *Database) AssignProperties_To_Database(destination *storage.Data
 	var spec storage.Database_Spec
 	err := database.Spec.AssignProperties_To_Database_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Database_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Database_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (database *Database) AssignProperties_To_Database(destination *storage.Data
 	var status storage.Database_STATUS
 	err = database.Status.AssignProperties_To_Database_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Database_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Database_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -478,13 +353,13 @@ func (database *Database_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec
 	src = &storage.Database_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_Database_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -502,13 +377,13 @@ func (database *Database_Spec) ConvertSpecTo(destination genruntime.ConvertibleS
 	dst = &storage.Database_Spec{}
 	err := database.AssignProperties_To_Database_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -531,7 +406,7 @@ func (database *Database_Spec) AssignProperties_From_Database_Spec(source *stora
 		var operatorSpec DatabaseOperatorSpec
 		err := operatorSpec.AssignProperties_From_DatabaseOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_DatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		database.OperatorSpec = &operatorSpec
 	} else {
@@ -569,7 +444,7 @@ func (database *Database_Spec) AssignProperties_To_Database_Spec(destination *st
 		var operatorSpec storage.DatabaseOperatorSpec
 		err := database.OperatorSpec.AssignProperties_To_DatabaseOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DatabaseOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_DatabaseOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -654,13 +529,13 @@ func (database *Database_STATUS) ConvertStatusFrom(source genruntime.Convertible
 	src = &storage.Database_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = database.AssignProperties_From_Database_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -678,13 +553,13 @@ func (database *Database_STATUS) ConvertStatusTo(destination genruntime.Converti
 	dst = &storage.Database_STATUS{}
 	err := database.AssignProperties_To_Database_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

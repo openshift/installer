@@ -37,6 +37,7 @@ BastionHost_STATUS: Object (9 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 BastionHost_Spec: Object (6 properties)
 ├── Location: *string
 ├── Name: string
@@ -73,6 +74,7 @@ BastionHost_Spec: Object (6 properties)
 │       └── "Standard"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 LoadBalancer_STATUS: Object (9 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -324,6 +326,7 @@ LoadBalancer_STATUS: Object (9 properties)
 │       └── "Regional"
 ├── Tags: map[string]string
 └── Type: *string
+
 LoadBalancer_Spec: Object (6 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -482,6 +485,7 @@ LoadBalancer_Spec: Object (6 properties)
 │       ├── "Global"
 │       └── "Regional"
 └── Tags: map[string]string
+
 LoadBalancersInboundNatRule_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -510,6 +514,7 @@ LoadBalancersInboundNatRule_STATUS: Object (5 properties)
 │       ├── "Succeeded"
 │       └── "Updating"
 └── Type: *string
+
 LoadBalancersInboundNatRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (10 properties)
@@ -528,6 +533,7 @@ LoadBalancersInboundNatRule_Spec: Object (2 properties)
         ├── "All"
         ├── "Tcp"
         └── "Udp"
+
 NatGateway_STATUS: Object (9 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -553,6 +559,7 @@ NatGateway_STATUS: Object (9 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 NatGateway_Spec: Object (6 properties)
 ├── Location: *string
 ├── Name: string
@@ -567,6 +574,7 @@ NatGateway_Spec: Object (6 properties)
 │       └── "Standard"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -671,6 +679,7 @@ NetworkInterface_STATUS_NetworkInterface_SubResourceEmbedded: Object (8 properti
 │   └── WorkloadType: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 NetworkInterface_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -733,6 +742,7 @@ NetworkInterface_Spec: Object (5 properties)
 │   │   └── Id: *string
 │   └── WorkloadType: *string
 └── Tags: map[string]string
+
 NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Object (7 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -797,6 +807,7 @@ NetworkSecurityGroup_STATUS_NetworkSecurityGroup_SubResourceEmbedded: Object (7 
 │       └── Id: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 NetworkSecurityGroup_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -835,6 +846,7 @@ NetworkSecurityGroup_Spec: Object (4 properties)
 │       │   └── SourcePortRanges: string[]
 │       └── Type: *string
 └── Tags: map[string]string
+
 NetworkSecurityGroupsSecurityRule_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -873,6 +885,7 @@ NetworkSecurityGroupsSecurityRule_STATUS: Object (5 properties)
 │   ├── SourcePortRange: *string
 │   └── SourcePortRanges: string[]
 └── Type: *string
+
 NetworkSecurityGroupsSecurityRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (15 properties)
@@ -903,6 +916,7 @@ NetworkSecurityGroupsSecurityRule_Spec: Object (2 properties)
     │   └── Id: *string
     ├── SourcePortRange: *string
     └── SourcePortRanges: string[]
+
 PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -974,6 +988,7 @@ PrivateEndpoint_STATUS_PrivateEndpoint_SubResourceEmbedded: Object (8 properties
 │       └── Id: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 PrivateEndpoint_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1014,6 +1029,7 @@ PrivateEndpoint_Spec: Object (5 properties)
 │   └── Subnet: *Object (1 property)
 │       └── Id: *string
 └── Tags: map[string]string
+
 PrivateEndpointsPrivateDnsZoneGroup_STATUS: Object (4 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -1039,6 +1055,7 @@ PrivateEndpointsPrivateDnsZoneGroup_STATUS: Object (4 properties)
         ├── "Failed"
         ├── "Succeeded"
         └── "Updating"
+
 PrivateEndpointsPrivateDnsZoneGroup_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -1046,6 +1063,7 @@ PrivateEndpointsPrivateDnsZoneGroup_Spec: Object (2 properties)
         ├── Name: *string
         └── Properties: *Object (1 property)
             └── PrivateDnsZoneId: *string
+
 PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1098,6 +1116,7 @@ PrivateLinkService_STATUS_PrivateLinkService_SubResourceEmbedded: Object (8 prop
 │       └── Subscriptions: string[]
 ├── Tags: map[string]string
 └── Type: *string
+
 PrivateLinkService_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1129,6 +1148,7 @@ PrivateLinkService_Spec: Object (5 properties)
 │   └── Visibility: *Object (1 property)
 │       └── Subscriptions: string[]
 └── Tags: map[string]string
+
 PublicIPAddress_STATUS: Object (10 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1197,6 +1217,7 @@ PublicIPAddress_STATUS: Object (10 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 PublicIPAddress_Spec: Object (7 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1252,6 +1273,7 @@ PublicIPAddress_Spec: Object (7 properties)
 │       └── "Regional"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 PublicIPPrefix_STATUS: Object (10 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1293,6 +1315,7 @@ PublicIPPrefix_STATUS: Object (10 properties)
 ├── Tags: map[string]string
 ├── Type: *string
 └── Zones: string[]
+
 PublicIPPrefix_Spec: Object (7 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1320,6 +1343,7 @@ PublicIPPrefix_Spec: Object (7 properties)
 │       └── "Regional"
 ├── Tags: map[string]string
 └── Zones: string[]
+
 RouteTable_STATUS: Object (7 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -1335,6 +1359,7 @@ RouteTable_STATUS: Object (7 properties)
 │   └── ResourceGuid: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 RouteTable_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -1354,6 +1379,7 @@ RouteTable_Spec: Object (4 properties)
 │       │       └── "VnetLocal"
 │       └── Type: *string
 └── Tags: map[string]string
+
 RouteTablesRoute_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -1374,6 +1400,7 @@ RouteTablesRoute_STATUS: Object (5 properties)
 │       ├── "Succeeded"
 │       └── "Updating"
 └── Type: *string
+
 RouteTablesRoute_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (3 properties)
@@ -1385,6 +1412,7 @@ RouteTablesRoute_Spec: Object (2 properties)
         ├── "VirtualAppliance"
         ├── "VirtualNetworkGateway"
         └── "VnetLocal"
+
 VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded: Object (9 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1659,6 +1687,7 @@ VirtualNetworkGateway_STATUS_VirtualNetworkGateway_SubResourceEmbedded: Object (
 │       └── "RouteBased"
 ├── Tags: map[string]string
 └── Type: *string
+
 VirtualNetworkGateway_Spec: Object (6 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -1877,6 +1906,7 @@ VirtualNetworkGateway_Spec: Object (6 properties)
 │       ├── "PolicyBased"
 │       └── "RouteBased"
 └── Tags: map[string]string
+
 VirtualNetwork_STATUS: Object (8 properties)
 ├── Etag: *string
 ├── ExtendedLocation: *Object (2 properties)
@@ -1919,6 +1949,7 @@ VirtualNetwork_STATUS: Object (8 properties)
 │   └── ResourceGuid: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 VirtualNetwork_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -2024,6 +2055,7 @@ VirtualNetwork_Spec: Object (5 properties)
 │       │   └── UseRemoteGateways: *bool
 │       └── Type: *string
 └── Tags: map[string]string
+
 VirtualNetworksSubnet_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -2095,6 +2127,7 @@ VirtualNetworksSubnet_STATUS: Object (5 properties)
 │       ├── "DelegatedServices"
 │       └── "Tenant"
 └── Type: *string
+
 VirtualNetworksSubnet_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (14 properties)
@@ -2133,6 +2166,7 @@ VirtualNetworksSubnet_Spec: Object (2 properties)
     └── SharingScope: *Enum (2 values)
         ├── "DelegatedServices"
         └── "Tenant"
+
 VirtualNetworksVirtualNetworkPeering_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -2181,6 +2215,7 @@ VirtualNetworksVirtualNetworkPeering_STATUS: Object (5 properties)
 │   ├── ResourceGuid: *string
 │   └── UseRemoteGateways: *bool
 └── Type: *string
+
 VirtualNetworksVirtualNetworkPeering_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (17 properties)
@@ -2214,3 +2249,4 @@ VirtualNetworksVirtualNetworkPeering_Spec: Object (2 properties)
     ├── RemoteVirtualNetworkAddressSpace: *Object (1 property)
     │   └── AddressPrefixes: string[]
     └── UseRemoteGateways: *bool
+

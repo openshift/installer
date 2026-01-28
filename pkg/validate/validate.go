@@ -148,6 +148,48 @@ func GCPClusterName(v string) error {
 	return nil
 }
 
+// AzureClusterName checks if the provided cluster name contains Azure reserved words.
+// Azure prohibits certain reserved words and trademarks in resource names that have
+// accessible endpoints (such as FQDNs). This validation prevents deployment failures
+// with ReservedResourceName or DomainNameLabelReserved errors.
+// See: https://learn.microsoft.com/en-us/azure/azure-resource-manager/troubleshooting/error-reserved-resource-name
+func AzureClusterName(v string) error {
+	upperName := strings.ToUpper(v)
+
+	// Words that are completely reserved (cannot be used as whole word)
+	// These words are forbidden only when used as the complete cluster name
+	completelyReservedWords := []string{
+		"ACCESS", "APP_CODE", "APP_THEMES", "APP_DATA", "APP_GLOBALRESOURCES",
+		"APP_LOCALRESOURCES", "APP_WEBREFERENCES", "APP_BROWSERS", "AZURE", "BING",
+		"BIZSPARK", "BIZTALK", "CORTANA", "DIRECTX", "DOTNET", "DYNAMICS",
+		"EXCEL", "EXCHANGE", "FOREFRONT", "GROOVE", "HOLOLENS", "HYPERV",
+		"KINECT", "LYNC", "MSDN", "O365", "OFFICE", "OFFICE365",
+		"ONEDRIVE", "ONENOTE", "OUTLOOK", "POWERPOINT", "SHAREPOINT", "SKYPE",
+		"VISIO", "VISUALSTUDIO", "WEB.CONFIG", "XBOX",
+	}
+
+	for _, reserved := range completelyReservedWords {
+		if upperName == reserved {
+			return fmt.Errorf("cluster name must not be the reserved word %q", strings.ToLower(reserved))
+		}
+	}
+
+	// Words that cannot be used as whole word or substring
+	forbiddenSubstrings := []string{"MICROSOFT", "WINDOWS"}
+	for _, forbidden := range forbiddenSubstrings {
+		if strings.Contains(upperName, forbidden) {
+			return fmt.Errorf("cluster name must not contain the reserved word %q", strings.ToLower(forbidden))
+		}
+	}
+
+	// Words that cannot be used at the start
+	if strings.HasPrefix(upperName, "LOGIN") {
+		return errors.New("cluster name must not start with the reserved word \"login\"")
+	}
+
+	return nil
+}
+
 // ClusterNameMaxLength validates if the string provided length is
 // greater than maxlen argument.
 func ClusterNameMaxLength(v string, maxlen int) error {

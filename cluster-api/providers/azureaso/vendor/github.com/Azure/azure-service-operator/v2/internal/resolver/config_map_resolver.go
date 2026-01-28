@@ -8,7 +8,7 @@ package resolver
 import (
 	"context"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/types"
@@ -40,7 +40,10 @@ func NewKubeConfigMapResolver(client kubeclient.Client) ConfigMapResolver {
 
 // ResolveConfigMapReference resolves the configmap reference and returns the corresponding value, or an error
 // if it could not be found
-func (r *kubeConfigMapResolver) ResolveConfigMapReference(ctx context.Context, ref genruntime.NamespacedConfigMapReference) (string, error) {
+func (r *kubeConfigMapResolver) ResolveConfigMapReference(
+	ctx context.Context,
+	ref genruntime.NamespacedConfigMapReference,
+) (string, error) {
 	refNamespacedName := types.NamespacedName{
 		Namespace: ref.Namespace,
 		Name:      ref.Name,
@@ -51,15 +54,20 @@ func (r *kubeConfigMapResolver) ResolveConfigMapReference(ctx context.Context, r
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			err := core.NewConfigMapNotFoundError(refNamespacedName, err)
-			return "", errors.WithStack(err)
+			return "", eris.Wrapf(
+				err,
+				"couldn't resolve config map reference %s/%s.%s",
+				ref.Namespace,
+				ref.Name,
+				ref.Key)
 		}
 
-		return "", errors.Wrapf(err, "couldn't resolve config map reference %s", ref.String())
+		return "", eris.Wrapf(err, "couldn't resolve config map reference %s", ref.String())
 	}
 
 	value, ok := configMap.Data[ref.Key] // TODO: Do we need to also check the binaryData field?
 	if !ok {
-		return "", core.NewConfigMapNotFoundError(refNamespacedName, errors.Errorf("ConfigMap %q does not contain key %q", refNamespacedName.String(), ref.Key))
+		return "", core.NewConfigMapNotFoundError(refNamespacedName, eris.Errorf("ConfigMap %q does not contain key %q", refNamespacedName.String(), ref.Key))
 	}
 
 	return value, nil

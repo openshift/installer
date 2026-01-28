@@ -13,8 +13,10 @@ import (
 	"strings"
 	"time"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/conversion"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -27,10 +29,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	mysqlv1 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1"
+	mysqlv1webhook "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1/webhook"
 	postgresqlv1 "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1"
+	postgresqlv1webhook "github.com/Azure/azure-service-operator/v2/api/dbforpostgresql/v1/webhook"
 	azuresqlv1 "github.com/Azure/azure-service-operator/v2/api/sql/v1"
+	azuresqlv1webhook "github.com/Azure/azure-service-operator/v2/api/sql/v1/webhook"
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers/arm"
 	azuresqlreconciler "github.com/Azure/azure-service-operator/v2/internal/reconcilers/azuresql"
@@ -173,13 +177,13 @@ func getGeneratedStorageTypes(
 
 	err := resourceResolver.IndexStorageTypes(schemer.GetScheme(), knownStorageTypes)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed add storage types to resource resolver")
+		return nil, eris.Wrap(err, "failed add storage types to resource resolver")
 	}
 
 	var extensions map[schema.GroupVersionKind]genruntime.ResourceExtension
 	extensions, err = GetResourceExtensions(schemer.GetScheme())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed getting extensions")
+		return nil, eris.Wrap(err, "failed getting extensions")
 	}
 
 	for _, t := range knownStorageTypes {
@@ -187,7 +191,7 @@ func getGeneratedStorageTypes(
 		var gvk schema.GroupVersionKind
 		gvk, err = apiutil.GVKForObject(t.Obj, schemer.GetScheme())
 		if err != nil {
-			return nil, errors.Wrapf(err, "creating GVK for obj %T", t.Obj)
+			return nil, eris.Wrapf(err, "creating GVK for obj %T", t.Obj)
 		}
 		extension := extensions[gvk]
 
@@ -241,7 +245,7 @@ func makeStandardPredicate() predicate.Predicate {
 func augmentWithControllerName(t *registration.StorageType) error {
 	controllerName, err := getControllerName(t.Obj)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get controller name for obj %T", t.Obj)
+		return eris.Wrapf(err, "failed to get controller name for obj %T", t.Obj)
 	}
 
 	t.Name = controllerName
@@ -254,32 +258,44 @@ var groupRegex = regexp.MustCompile(`.*/v2/api/([a-zA-Z0-9.]+)/`)
 func getControllerName(obj client.Object) (string, error) {
 	v, err := conversion.EnforcePtr(obj)
 	if err != nil {
-		return "", errors.Wrap(err, "t.Obj was expected to be ptr but was not")
+		return "", eris.Wrap(err, "t.Obj was expected to be ptr but was not")
 	}
 
 	typ := v.Type()
 	pkgPath := typ.PkgPath()
 	matches := groupRegex.FindStringSubmatch(pkgPath)
 	if len(matches) == 0 {
-		return "", errors.Errorf("couldn't parse package path %s", pkgPath)
+		return "", eris.Errorf("couldn't parse package path %s", pkgPath)
 	}
-	group := strings.Replace(matches[1], ".", "", -1) // elide . for groups like network.frontdoor
+	group := strings.ReplaceAll(matches[1], ".", "") // elide . for groups like network.frontdoor
 	name := fmt.Sprintf("%s_%s", group, strings.ToLower(typ.Name()))
 	return name, nil
 }
 
-func GetKnownTypes() []client.Object {
+func GetKnownTypes() []*registration.KnownType {
 	knownTypes := getKnownTypes()
 
 	knownTypes = append(
 		knownTypes,
-		&mysqlv1.User{})
+		&registration.KnownType{
+			Obj:       &mysqlv1.User{},
+			Defaulter: &mysqlv1webhook.User_Webhook{},
+			Validator: &mysqlv1webhook.User_Webhook{},
+		})
 	knownTypes = append(
 		knownTypes,
-		&postgresqlv1.User{})
+		&registration.KnownType{
+			Obj:       &postgresqlv1.User{},
+			Defaulter: &postgresqlv1webhook.User_Webhook{},
+			Validator: &postgresqlv1webhook.User_Webhook{},
+		})
 	knownTypes = append(
 		knownTypes,
-		&azuresqlv1.User{})
+		&registration.KnownType{
+			Obj:       &azuresqlv1.User{},
+			Defaulter: &azuresqlv1webhook.User_Webhook{},
+			Validator: &azuresqlv1webhook.User_Webhook{},
+		})
 	return knownTypes
 }
 
@@ -301,7 +317,7 @@ func GetResourceExtensions(scheme *runtime.Scheme) (map[schema.GroupVersionKind]
 			// Make sure the type casting goes well, and we can extract the GVK successfully.
 			resourceObj, ok := resource.(runtime.Object)
 			if !ok {
-				err := errors.Errorf("unexpected resource type for resource '%s', found '%T'", resource.AzureName(), resource)
+				err := eris.Errorf("unexpected resource type for resource '%s', found '%T'", resource.AzureName(), resource)
 				return nil, err
 			}
 

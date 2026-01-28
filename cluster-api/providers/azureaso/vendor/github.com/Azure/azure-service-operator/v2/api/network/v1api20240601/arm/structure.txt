@@ -23,11 +23,13 @@ PrivateDnsZone_STATUS: Object (7 properties)
 │       └── "Updating"
 ├── Tags: map[string]string
 └── Type: *string
+
 PrivateDnsZone_Spec: Object (4 properties)
 ├── Etag: *string
 ├── Location: *string
 ├── Name: string
 └── Tags: map[string]string
+
 PrivateDnsZonesAAAARecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -64,6 +66,7 @@ PrivateDnsZonesAAAARecord_STATUS: Object (5 properties)
 │   └── TxtRecords: Object (1 property)[]
 │       └── Value: string[]
 └── Type: *string
+
 PrivateDnsZonesAAAARecord_Spec: Object (3 properties)
 ├── Etag: *string
 ├── Name: string
@@ -96,6 +99,7 @@ PrivateDnsZonesAAAARecord_Spec: Object (3 properties)
     ├── Ttl: *int
     └── TxtRecords: Object (1 property)[]
         └── Value: string[]
+
 PrivateDnsZonesARecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -132,6 +136,7 @@ PrivateDnsZonesARecord_STATUS: Object (5 properties)
 │   └── TxtRecords: Object (1 property)[]
 │       └── Value: string[]
 └── Type: *string
+
 PrivateDnsZonesARecord_Spec: Object (3 properties)
 ├── Etag: *string
 ├── Name: string
@@ -164,6 +169,7 @@ PrivateDnsZonesARecord_Spec: Object (3 properties)
     ├── Ttl: *int
     └── TxtRecords: Object (1 property)[]
         └── Value: string[]
+
 PrivateDnsZonesCNAMERecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -200,6 +206,7 @@ PrivateDnsZonesCNAMERecord_STATUS: Object (5 properties)
 │   └── TxtRecords: Object (1 property)[]
 │       └── Value: string[]
 └── Type: *string
+
 PrivateDnsZonesCNAMERecord_Spec: Object (3 properties)
 ├── Etag: *string
 ├── Name: string
@@ -232,6 +239,7 @@ PrivateDnsZonesCNAMERecord_Spec: Object (3 properties)
     ├── Ttl: *int
     └── TxtRecords: Object (1 property)[]
         └── Value: string[]
+
 PrivateDnsZonesMXRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -268,6 +276,7 @@ PrivateDnsZonesMXRecord_STATUS: Object (5 properties)
 │   └── TxtRecords: Object (1 property)[]
 │       └── Value: string[]
 └── Type: *string
+
 PrivateDnsZonesMXRecord_Spec: Object (3 properties)
 ├── Etag: *string
 ├── Name: string
@@ -300,6 +309,7 @@ PrivateDnsZonesMXRecord_Spec: Object (3 properties)
     ├── Ttl: *int
     └── TxtRecords: Object (1 property)[]
         └── Value: string[]
+
 PrivateDnsZonesPTRRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -336,6 +346,7 @@ PrivateDnsZonesPTRRecord_STATUS: Object (5 properties)
 │   └── TxtRecords: Object (1 property)[]
 │       └── Value: string[]
 └── Type: *string
+
 PrivateDnsZonesPTRRecord_Spec: Object (3 properties)
 ├── Etag: *string
 ├── Name: string
@@ -368,6 +379,7 @@ PrivateDnsZonesPTRRecord_Spec: Object (3 properties)
     ├── Ttl: *int
     └── TxtRecords: Object (1 property)[]
         └── Value: string[]
+
 PrivateDnsZonesSRVRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -404,6 +416,7 @@ PrivateDnsZonesSRVRecord_STATUS: Object (5 properties)
 │   └── TxtRecords: Object (1 property)[]
 │       └── Value: string[]
 └── Type: *string
+
 PrivateDnsZonesSRVRecord_Spec: Object (3 properties)
 ├── Etag: *string
 ├── Name: string
@@ -436,6 +449,7 @@ PrivateDnsZonesSRVRecord_Spec: Object (3 properties)
     ├── Ttl: *int
     └── TxtRecords: Object (1 property)[]
         └── Value: string[]
+
 PrivateDnsZonesTXTRecord_STATUS: Object (5 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -472,6 +486,7 @@ PrivateDnsZonesTXTRecord_STATUS: Object (5 properties)
 │   └── TxtRecords: Object (1 property)[]
 │       └── Value: string[]
 └── Type: *string
+
 PrivateDnsZonesTXTRecord_Spec: Object (3 properties)
 ├── Etag: *string
 ├── Name: string
@@ -504,6 +519,7 @@ PrivateDnsZonesTXTRecord_Spec: Object (3 properties)
     ├── Ttl: *int
     └── TxtRecords: Object (1 property)[]
         └── Value: string[]
+
 PrivateDnsZonesVirtualNetworkLink_STATUS: Object (7 properties)
 ├── Etag: *string
 ├── Id: *string
@@ -528,6 +544,7 @@ PrivateDnsZonesVirtualNetworkLink_STATUS: Object (7 properties)
 │       └── "InProgress"
 ├── Tags: map[string]string
 └── Type: *string
+
 PrivateDnsZonesVirtualNetworkLink_Spec: Object (5 properties)
 ├── Etag: *string
 ├── Location: *string
@@ -540,3 +557,4 @@ PrivateDnsZonesVirtualNetworkLink_Spec: Object (5 properties)
 │   └── VirtualNetwork: *Object (1 property)
 │       └── Id: *string
 └── Tags: map[string]string
+

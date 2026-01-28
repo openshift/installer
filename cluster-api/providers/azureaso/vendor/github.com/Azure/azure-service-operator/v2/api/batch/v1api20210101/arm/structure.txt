@@ -54,6 +54,7 @@ BatchAccount_STATUS: Object (7 properties)
 │       └── "Enabled"
 ├── Tags: map[string]string
 └── Type: *string
+
 BatchAccount_Spec: Object (5 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (3 values)
@@ -82,3 +83,4 @@ BatchAccount_Spec: Object (5 properties)
 │       ├── "Disabled"
 │       └── "Enabled"
 └── Tags: map[string]string
+

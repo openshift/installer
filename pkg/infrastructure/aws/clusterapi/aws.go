@@ -456,19 +456,13 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 
 // removeS3Bucket deletes an s3 bucket given its name.
 func removeS3Bucket(ctx context.Context, region string, bucketName string, endpoints []awstypes.ServiceEndpoint) error {
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(region))
-	if err != nil {
-		return fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := s3.NewFromConfig(cfg, func(options *s3.Options) {
-		options.Region = region
-		for _, endpoint := range endpoints {
-			if strings.EqualFold(endpoint.Name, "s3") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	client, err := awsconfig.NewS3Client(ctx, awsconfig.EndpointOptions{
+		Region:    region,
+		Endpoints: endpoints,
 	})
+	if err != nil {
+		return fmt.Errorf("failed to create s3 client: %w", err)
+	}
 
 	paginator := s3.NewListObjectsV2Paginator(client, &s3.ListObjectsV2Input{Bucket: aws.String(bucketName)})
 	for paginator.HasMorePages() {

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101/storage
 -----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-11-01"
+
 Namespace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (17 properties)
@@ -110,6 +111,7 @@ Namespace: Resource
     ├── Type: *string
     ├── UpdatedAt: *string
     └── ZoneRedundant: *bool
+
 NamespacesAuthorizationRule: Resource
 ├── Owner: eventhub/v1api20211101.Namespace
 ├── Spec: Object (6 properties)
@@ -144,6 +146,7 @@ NamespacesAuthorizationRule: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 NamespacesEventhub: Resource
 ├── Owner: eventhub/v1api20211101.Namespace
 ├── Spec: Object (8 properties)
@@ -210,6 +213,7 @@ NamespacesEventhub: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── UpdatedAt: *string
+
 NamespacesEventhubsAuthorizationRule: Resource
 ├── Owner: eventhub/v1api20211101.NamespacesEventhub
 ├── Spec: Object (6 properties)
@@ -244,6 +248,7 @@ NamespacesEventhubsAuthorizationRule: Resource
     │   ├── LastModifiedByType: *string
     │   └── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 NamespacesEventhubsConsumerGroup: Resource
 ├── Owner: eventhub/v1api20211101.NamespacesEventhub
 ├── Spec: Object (6 properties)
@@ -274,3 +279,86 @@ NamespacesEventhubsConsumerGroup: Resource
     ├── Type: *string
     ├── UpdatedAt: *string
     └── UserMetadata: *string
+
+augmentConversionForCaptureDescription: Interface
+
+augmentConversionForCaptureDescription_STATUS: Interface
+
+augmentConversionForDestination: Interface
+
+augmentConversionForDestination_STATUS: Interface
+
+augmentConversionForEncryption: Interface
+
+augmentConversionForEncryption_STATUS: Interface
+
+augmentConversionForIdentity: Interface
+
+augmentConversionForIdentity_STATUS: Interface
+
+augmentConversionForKeyVaultProperties: Interface
+
+augmentConversionForKeyVaultProperties_STATUS: Interface
+
+augmentConversionForNamespace: Interface
+
+augmentConversionForNamespaceOperatorSecrets: Interface
+
+augmentConversionForNamespaceOperatorSpec: Interface
+
+augmentConversionForNamespace_STATUS: Interface
+
+augmentConversionForNamespace_Spec: Interface
+
+augmentConversionForNamespacesAuthorizationRule: Interface
+
+augmentConversionForNamespacesAuthorizationRuleOperatorSecrets: Interface
+
+augmentConversionForNamespacesAuthorizationRuleOperatorSpec: Interface
+
+augmentConversionForNamespacesAuthorizationRule_STATUS: Interface
+
+augmentConversionForNamespacesAuthorizationRule_Spec: Interface
+
+augmentConversionForNamespacesEventhub: Interface
+
+augmentConversionForNamespacesEventhubOperatorSpec: Interface
+
+augmentConversionForNamespacesEventhub_STATUS: Interface
+
+augmentConversionForNamespacesEventhub_Spec: Interface
+
+augmentConversionForNamespacesEventhubsAuthorizationRule: Interface
+
+augmentConversionForNamespacesEventhubsAuthorizationRuleOperatorSecrets: Interface
+
+augmentConversionForNamespacesEventhubsAuthorizationRuleOperatorSpec: Interface
+
+augmentConversionForNamespacesEventhubsAuthorizationRule_STATUS: Interface
+
+augmentConversionForNamespacesEventhubsAuthorizationRule_Spec: Interface
+
+augmentConversionForNamespacesEventhubsConsumerGroup: Interface
+
+augmentConversionForNamespacesEventhubsConsumerGroupOperatorSpec: Interface
+
+augmentConversionForNamespacesEventhubsConsumerGroup_STATUS: Interface
+
+augmentConversionForNamespacesEventhubsConsumerGroup_Spec: Interface
+
+augmentConversionForPrivateEndpointConnection_STATUS: Interface
+
+augmentConversionForSku: Interface
+
+augmentConversionForSku_STATUS: Interface
+
+augmentConversionForSystemData_STATUS: Interface
+
+augmentConversionForUserAssignedIdentityDetails: Interface
+
+augmentConversionForUserAssignedIdentityProperties: Interface
+
+augmentConversionForUserAssignedIdentityProperties_STATUS: Interface
+
+augmentConversionForUserAssignedIdentity_STATUS: Interface
+

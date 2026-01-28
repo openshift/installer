@@ -377,12 +377,12 @@ func (m *Metadata) InstanceTypes(ctx context.Context) (map[string]InstanceType, 
 	defer m.mutex.Unlock()
 
 	if len(m.instanceTypes) == 0 {
-		session, err := m.unlockedSession(ctx)
+		client, err := m.EC2Client(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		m.instanceTypes, err = instanceTypes(ctx, session, m.Region)
+		m.instanceTypes, err = instanceTypes(ctx, client)
 		if err != nil {
 			return nil, fmt.Errorf("error listing instance types: %w", err)
 		}

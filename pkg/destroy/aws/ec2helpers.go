@@ -5,16 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2v2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/elb"
-	"github.com/aws/aws-sdk-go/service/elbv2"
-	"github.com/aws/aws-sdk-go/service/iam"
-	"github.com/aws/smithy-go"
+	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
+	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
+	iamv2 "github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -85,7 +82,7 @@ func findEC2Instances(ctx context.Context, ec2Client *ec2v2.Client, deleted sets
 }
 
 // DeleteEC2Instances terminates all EC2 instances found.
-func (o *ClusterUninstaller) DeleteEC2Instances(ctx context.Context, awsSession *session.Session, toDelete sets.Set[string], deleted sets.Set[string], tracker *ErrorTracker) error {
+func (o *ClusterUninstaller) DeleteEC2Instances(ctx context.Context, toDelete sets.Set[string], deleted sets.Set[string], tracker *ErrorTracker) error {
 	lastTerminateTime := time.Now()
 	err := wait.PollUntilContextCancel(
 		ctx,
@@ -105,7 +102,7 @@ func (o *ClusterUninstaller) DeleteEC2Instances(ctx context.Context, awsSession 
 				instancesToDelete = instancesNotTerminated
 				lastTerminateTime = time.Now()
 			}
-			newlyDeleted, err := o.DeleteResources(ctx, awsSession, instancesToDelete, tracker)
+			newlyDeleted, err := o.DeleteResources(ctx, instancesToDelete, tracker)
 			// Delete from the resources-to-delete set so that the current state of the resources to delete can be
 			// returned if the context is completed.
 			toDelete = toDelete.Difference(newlyDeleted)
@@ -119,7 +116,7 @@ func (o *ClusterUninstaller) DeleteEC2Instances(ctx context.Context, awsSession 
 	return err
 }
 
-func (o *ClusterUninstaller) deleteEC2(ctx context.Context, session *session.Session, arn arn.ARN, logger logrus.FieldLogger) error {
+func (o *ClusterUninstaller) deleteEC2(ctx context.Context, arn arn.ARN, logger logrus.FieldLogger) error {
 	resourceType, id, err := splitSlash("resource", arn.Resource)
 	if err != nil {
 		return err
@@ -134,7 +131,7 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, session *session.Ses
 	case "image":
 		return deleteEC2Image(ctx, o.EC2Client, id, logger)
 	case "instance":
-		return terminateEC2Instance(ctx, o.EC2Client, iam.New(session), id, logger)
+		return terminateEC2Instance(ctx, o.EC2Client, o.IAMClient, id, logger)
 	case "internet-gateway":
 		return deleteEC2InternetGateway(ctx, o.EC2Client, id, logger)
 	case "carrier-gateway":
@@ -156,7 +153,7 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, session *session.Ses
 	case "volume":
 		return deleteEC2Volume(ctx, o.EC2Client, id, logger)
 	case "vpc":
-		return deleteEC2VPC(ctx, o.EC2Client, elb.New(session), elbv2.New(session), id, logger)
+		return deleteEC2VPC(ctx, o.EC2Client, o.ELBClient, o.ELBV2Client, id, logger)
 	case "vpc-endpoint":
 		return deleteEC2VPCEndpoint(ctx, o.EC2Client, id, logger)
 	case "vpc-peering-connection":
@@ -198,6 +195,16 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		return err
 	}
 	for _, image := range response.Images {
+		// Early detection: Check if the AMI is managed by AWS Backup service.
+		// AWS Backup-managed AMIs cannot be deleted via EC2 APIs and will fail with
+		// AuthFailure. Detecting this early via tags avoids unnecessary API calls.
+		for _, tag := range image.Tags {
+			if aws.ToString(tag.Key) == "aws:backup:source-resource" {
+				logger.Warnf("Skipping AMI image %s deletion since it is managed by the AWS Backup service. To delete this image, please use the AWS Backup APIs, CLI, or console", id)
+				return nil
+			}
+		}
+
 		var snapshots []string
 		for _, bdm := range image.BlockDeviceMappings {
 			if bdm.Ebs != nil && bdm.Ebs.SnapshotId != nil {
@@ -219,7 +226,18 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		ImageId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidAMI.NotFound" {
+		errCode := HandleErrorCode(err)
+		switch errCode {
+		case "InvalidAMI.NotFound":
+			return nil
+		case "AuthFailure":
+			// AMIs, managed by AWS Backup service, cannot be deleted via EC2 APIs. When attempting to delete, the following error is returned
+			//
+			// AuthFailure: This image is managed by AWS Backup and cannot be deleted via EC2 APIs. To delete this image, please use the AWS Backup APIs, CLI, or console.
+			//
+			// The installer cannot handle this case automatically. Users must manually delete the AMI, following AWS instructions.
+			// This is a fallback in case the tag check above didn't catch it (e.g., if AWS Backup tags were removed or not present).
+			logger.WithError(err).Warnf("Skipping AMI image %s deletion", id)
 			return nil
 		}
 		return err
@@ -244,7 +262,7 @@ func deleteEC2ElasticIP(ctx context.Context, client *ec2v2.Client, id string, lo
 	return nil
 }
 
-func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iam.IAM, id string, logger logrus.FieldLogger) error {
+func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iamv2.Client, id string, logger logrus.FieldLogger) error {
 	response, err := ec2Client.DescribeInstances(ctx, &ec2v2.DescribeInstancesInput{
 		InstanceIds: []string{id},
 	})
@@ -266,7 +284,7 @@ func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClien
 	return nil
 }
 
-func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iam.IAM, instance *ec2v2types.Instance, logger logrus.FieldLogger) error {
+func terminateEC2InstanceByInstance(ctx context.Context, ec2Client *ec2v2.Client, iamClient *iamv2.Client, instance *ec2v2types.Instance, logger logrus.FieldLogger) error {
 	// Ignore instances that are already terminated
 	if instance.State == nil || instance.State.Name == "terminated" {
 		return nil
@@ -650,7 +668,19 @@ func deleteEC2Snapshot(ctx context.Context, client *ec2v2.Client, id string, log
 		SnapshotId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidSnapshot.NotFound" {
+		errCode := HandleErrorCode(err)
+		switch errCode {
+		case "InvalidSnapshot.NotFound":
+			return nil
+		case "InvalidParameterValue":
+			// An InvalidParameterValue indicates the AWS request parameter is not valid, is unsupported, or cannot be used.
+			// For example, snapshots, managed by the AWS Backup service, cannot be deleted via EC2 APIs. When attempting to delete, the following error is returned:
+			//
+			// InvalidParameterValue: This snapshot is managed by the AWS Backup service and cannot be deleted via EC2 APIs.
+			// If you wish to delete this snapshot, please do so via the Backup console.
+			//
+			// The installer should not try to delete these backup snapshots, but leave it to the users to clean them up.
+			logger.WithError(err).Warnf("Skipping snapshot %s deletion", id)
 			return nil
 		}
 		return err
@@ -778,7 +808,7 @@ func deleteEC2Volume(ctx context.Context, client *ec2v2.Client, id string, logge
 	return nil
 }
 
-func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, elbClient *elb.ELB, elbv2Client *elbv2.ELBV2, id string, logger logrus.FieldLogger) error {
+func deleteEC2VPC(ctx context.Context, ec2Client *ec2v2.Client, elbClient *elb.Client, elbv2Client *elbv2.Client, id string, logger logrus.FieldLogger) error {
 	// first delete any Load Balancers under this VPC (not all of them are tagged)
 	v1lbError := deleteElasticLoadBalancerClassicByVPC(ctx, elbClient, id, logger)
 	v2lbError := deleteElasticLoadBalancerV2ByVPC(ctx, elbv2Client, id, logger)
@@ -847,7 +877,7 @@ func deleteEC2VPCEndpointsByVPC(ctx context.Context, client *ec2v2.Client, vpc s
 	for _, endpoint := range response.VpcEndpoints {
 		err := deleteEC2VPCEndpoint(ctx, client, *endpoint.VpcEndpointId, logger.WithField("VPC endpoint", *endpoint.VpcEndpointId))
 		if err != nil {
-			if err.(awserr.Error).Code() == "InvalidVpcID.NotFound" {
+			if HandleErrorCode(err) == "InvalidVpcID.NotFound" {
 				return nil
 			}
 			return err
@@ -931,13 +961,4 @@ func deleteEgressOnlyInternetGateway(ctx context.Context, client *ec2v2.Client, 
 
 	logger.Info("Deleted")
 	return nil
-}
-
-// HandleErrorCode takes the error and extracts the error code if it was successfully cast as an API Error.
-func HandleErrorCode(err error) string {
-	var apiErr smithy.APIError
-	if errors.As(err, &apiErr) {
-		return apiErr.ErrorCode()
-	}
-	return ""
 }

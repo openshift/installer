@@ -3,7 +3,7 @@ set -euo pipefail
 
 ostree_checkout=/ostree/repo/tmp/node-image
 if [ ! -d "${ostree_checkout}" ]; then
-    ostree_checkout=/var/ostree-container/checkout
+    ostree_checkout=/var/ostreecontainer/checkout
 fi
 
 echo "Overlaying node image content"

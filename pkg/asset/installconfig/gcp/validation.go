@@ -94,7 +94,7 @@ func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, ar
 		return field.NotFound(fldPath.Child("type"), family)
 	}
 
-	acceptedArmFamilies := sets.New("c4a", "t2a")
+	acceptedArmFamilies := sets.New("c4a", "n4a", "t2a")
 	if arch == types.ArchitectureARM64 && !acceptedArmFamilies.Has(family) {
 		return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedArmFamilies))
 	}
@@ -493,6 +493,38 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	}
 
 	allErrs := field.ErrorList{}
+
+	if ic.GCP.FirewallRulesManagement == gcp.UnmanagedFirewallRules && ic.GCP.Network == "" {
+		// this is usually a static check, however it is validated here after the
+		// create install-config process to ensure that the create install-config
+		// does not fail in cases where the firewall rules management is set to
+		// unmanaged when the permissions do not exist.
+		allErrs = append(allErrs, field.Required(
+			field.NewPath("platform").Child("gcp").Child("network"),
+			"a network must be specified when firewall rules are unmanaged"),
+		)
+	} else if ic.GCP.FirewallRulesManagement == gcp.ManagedFirewallRules {
+		projectID := ic.GCP.ProjectID
+		configField := "projectID"
+		if ic.GCP.NetworkProjectID != "" {
+			projectID = ic.GCP.NetworkProjectID
+			configField = "networkProjectID"
+		}
+
+		hasPermissions, err := HasPermission(context.TODO(), projectID, []string{
+			CreateFirewallPermission,
+			DeleteFirewallPermission,
+			UpdateNetworksPermission,
+		}, ic.GCP.Endpoint)
+		if err != nil {
+			allErrs = append(allErrs, field.InternalError(field.NewPath("platform").Child("gcp").Child(configField), err))
+		} else if !hasPermissions {
+			allErrs = append(allErrs, field.Invalid(
+				field.NewPath("platform").Child("gcp").Child("firewallRulesManagement"),
+				ic.GCP.FirewallRulesManagement,
+				"firewall permissions are required when firewall rules management is set to Managed"))
+		}
+	}
 
 	return allErrs.ToAggregate()
 }

@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -53,46 +50,37 @@ var _ conversion.Convertible = &NamespacesTopicsSubscriptionsRule{}
 
 // ConvertFrom populates our NamespacesTopicsSubscriptionsRule from the provided hub NamespacesTopicsSubscriptionsRule
 func (rule *NamespacesTopicsSubscriptionsRule) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.NamespacesTopicsSubscriptionsRule)
-	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopicsSubscriptionsRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.NamespacesTopicsSubscriptionsRule
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule(source)
+	err = rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to rule")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub NamespacesTopicsSubscriptionsRule from our NamespacesTopicsSubscriptionsRule
 func (rule *NamespacesTopicsSubscriptionsRule) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.NamespacesTopicsSubscriptionsRule)
-	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopicsSubscriptionsRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.NamespacesTopicsSubscriptionsRule
+	err := rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from rule")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-servicebus-azure-com-v1api20211101-namespacestopicssubscriptionsrule,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=servicebus.azure.com,resources=namespacestopicssubscriptionsrules,verbs=create;update,versions=v1api20211101,name=default.v1api20211101.namespacestopicssubscriptionsrules.servicebus.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &NamespacesTopicsSubscriptionsRule{}
-
-// Default applies defaults to the NamespacesTopicsSubscriptionsRule resource
-func (rule *NamespacesTopicsSubscriptionsRule) Default() {
-	rule.defaultImpl()
-	var temp any = rule
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (rule *NamespacesTopicsSubscriptionsRule) defaultAzureName() {
-	if rule.Spec.AzureName == "" {
-		rule.Spec.AzureName = rule.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the NamespacesTopicsSubscriptionsRule resource
-func (rule *NamespacesTopicsSubscriptionsRule) defaultImpl() { rule.defaultAzureName() }
 
 var _ configmaps.Exporter = &NamespacesTopicsSubscriptionsRule{}
 
@@ -112,17 +100,6 @@ func (rule *NamespacesTopicsSubscriptionsRule) SecretDestinationExpressions() []
 		return nil
 	}
 	return rule.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &NamespacesTopicsSubscriptionsRule{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (rule *NamespacesTopicsSubscriptionsRule) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*NamespacesTopicsSubscriptionsRule_STATUS); ok {
-		return rule.Spec.Initialize_From_NamespacesTopicsSubscriptionsRule_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type NamespacesTopicsSubscriptionsRule_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &NamespacesTopicsSubscriptionsRule{}
@@ -173,6 +150,10 @@ func (rule *NamespacesTopicsSubscriptionsRule) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (rule *NamespacesTopicsSubscriptionsRule) Owner() *genruntime.ResourceReference {
+	if rule.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(rule.Spec)
 	return rule.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +170,11 @@ func (rule *NamespacesTopicsSubscriptionsRule) SetStatus(status genruntime.Conve
 	var st NamespacesTopicsSubscriptionsRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	rule.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-servicebus-azure-com-v1api20211101-namespacestopicssubscriptionsrule,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=servicebus.azure.com,resources=namespacestopicssubscriptionsrules,verbs=create;update,versions=v1api20211101,name=validate.v1api20211101.namespacestopicssubscriptionsrules.servicebus.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &NamespacesTopicsSubscriptionsRule{}
-
-// ValidateCreate validates the creation of the resource
-func (rule *NamespacesTopicsSubscriptionsRule) ValidateCreate() (admission.Warnings, error) {
-	validations := rule.createValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (rule *NamespacesTopicsSubscriptionsRule) ValidateDelete() (admission.Warnings, error) {
-	validations := rule.deleteValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (rule *NamespacesTopicsSubscriptionsRule) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := rule.updateValidations()
-	var temp any = rule
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (rule *NamespacesTopicsSubscriptionsRule) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){rule.validateResourceReferences, rule.validateOwnerReference, rule.validateSecretDestinations, rule.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (rule *NamespacesTopicsSubscriptionsRule) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (rule *NamespacesTopicsSubscriptionsRule) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateResourceReferences()
-		},
-		rule.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return rule.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (rule *NamespacesTopicsSubscriptionsRule) validateConfigMapDestinations() (admission.Warnings, error) {
-	if rule.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(rule, nil, rule.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (rule *NamespacesTopicsSubscriptionsRule) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(rule)
-}
-
-// validateResourceReferences validates all resource references
-func (rule *NamespacesTopicsSubscriptionsRule) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&rule.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (rule *NamespacesTopicsSubscriptionsRule) validateSecretDestinations() (admission.Warnings, error) {
-	if rule.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(rule, nil, rule.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (rule *NamespacesTopicsSubscriptionsRule) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*NamespacesTopicsSubscriptionsRule)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, rule)
 }
 
 // AssignProperties_From_NamespacesTopicsSubscriptionsRule populates our NamespacesTopicsSubscriptionsRule from the provided source NamespacesTopicsSubscriptionsRule
@@ -309,7 +187,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_From_NamespacesT
 	var spec NamespacesTopicsSubscriptionsRule_Spec
 	err := spec.AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
 	}
 	rule.Spec = spec
 
@@ -317,7 +195,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_From_NamespacesT
 	var status NamespacesTopicsSubscriptionsRule_STATUS
 	err = status.AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
 	}
 	rule.Status = status
 
@@ -335,7 +213,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_To_NamespacesTop
 	var spec storage.NamespacesTopicsSubscriptionsRule_Spec
 	err := rule.Spec.AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +221,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_To_NamespacesTop
 	var status storage.NamespacesTopicsSubscriptionsRule_STATUS
 	err = rule.Status.AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -547,13 +425,13 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) ConvertSpecFrom(source genru
 	src = &storage.NamespacesTopicsSubscriptionsRule_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -571,13 +449,13 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) ConvertSpecTo(destination ge
 	dst = &storage.NamespacesTopicsSubscriptionsRule_Spec{}
 	err := rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -591,7 +469,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 		var action Action
 		err := action.AssignProperties_From_Action(source.Action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Action() to populate field Action")
+			return eris.Wrap(err, "calling AssignProperties_From_Action() to populate field Action")
 		}
 		rule.Action = &action
 	} else {
@@ -606,7 +484,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 		var correlationFilter CorrelationFilter
 		err := correlationFilter.AssignProperties_From_CorrelationFilter(source.CorrelationFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CorrelationFilter() to populate field CorrelationFilter")
+			return eris.Wrap(err, "calling AssignProperties_From_CorrelationFilter() to populate field CorrelationFilter")
 		}
 		rule.CorrelationFilter = &correlationFilter
 	} else {
@@ -627,7 +505,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 		var operatorSpec NamespacesTopicsSubscriptionsRuleOperatorSpec
 		err := operatorSpec.AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		rule.OperatorSpec = &operatorSpec
 	} else {
@@ -647,7 +525,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 		var sqlFilter SqlFilter
 		err := sqlFilter.AssignProperties_From_SqlFilter(source.SqlFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlFilter() to populate field SqlFilter")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlFilter() to populate field SqlFilter")
 		}
 		rule.SqlFilter = &sqlFilter
 	} else {
@@ -668,7 +546,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		var action storage.Action
 		err := rule.Action.AssignProperties_To_Action(&action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Action() to populate field Action")
+			return eris.Wrap(err, "calling AssignProperties_To_Action() to populate field Action")
 		}
 		destination.Action = &action
 	} else {
@@ -683,7 +561,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		var correlationFilter storage.CorrelationFilter
 		err := rule.CorrelationFilter.AssignProperties_To_CorrelationFilter(&correlationFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CorrelationFilter() to populate field CorrelationFilter")
+			return eris.Wrap(err, "calling AssignProperties_To_CorrelationFilter() to populate field CorrelationFilter")
 		}
 		destination.CorrelationFilter = &correlationFilter
 	} else {
@@ -703,7 +581,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		var operatorSpec storage.NamespacesTopicsSubscriptionsRuleOperatorSpec
 		err := rule.OperatorSpec.AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -726,7 +604,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		var sqlFilter storage.SqlFilter
 		err := rule.SqlFilter.AssignProperties_To_SqlFilter(&sqlFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlFilter() to populate field SqlFilter")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlFilter() to populate field SqlFilter")
 		}
 		destination.SqlFilter = &sqlFilter
 	} else {
@@ -738,57 +616,6 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NamespacesTopicsSubscriptionsRule_STATUS populates our NamespacesTopicsSubscriptionsRule_Spec from the provided source NamespacesTopicsSubscriptionsRule_STATUS
-func (rule *NamespacesTopicsSubscriptionsRule_Spec) Initialize_From_NamespacesTopicsSubscriptionsRule_STATUS(source *NamespacesTopicsSubscriptionsRule_STATUS) error {
-
-	// Action
-	if source.Action != nil {
-		var action Action
-		err := action.Initialize_From_Action_STATUS(source.Action)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Action_STATUS() to populate field Action")
-		}
-		rule.Action = &action
-	} else {
-		rule.Action = nil
-	}
-
-	// CorrelationFilter
-	if source.CorrelationFilter != nil {
-		var correlationFilter CorrelationFilter
-		err := correlationFilter.Initialize_From_CorrelationFilter_STATUS(source.CorrelationFilter)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CorrelationFilter_STATUS() to populate field CorrelationFilter")
-		}
-		rule.CorrelationFilter = &correlationFilter
-	} else {
-		rule.CorrelationFilter = nil
-	}
-
-	// FilterType
-	if source.FilterType != nil {
-		filterType := genruntime.ToEnum(string(*source.FilterType), filterType_Values)
-		rule.FilterType = &filterType
-	} else {
-		rule.FilterType = nil
-	}
-
-	// SqlFilter
-	if source.SqlFilter != nil {
-		var sqlFilter SqlFilter
-		err := sqlFilter.Initialize_From_SqlFilter_STATUS(source.SqlFilter)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SqlFilter_STATUS() to populate field SqlFilter")
-		}
-		rule.SqlFilter = &sqlFilter
-	} else {
-		rule.SqlFilter = nil
 	}
 
 	// No error
@@ -853,13 +680,13 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) ConvertStatusFrom(source g
 	src = &storage.NamespacesTopicsSubscriptionsRule_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -877,13 +704,13 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) ConvertStatusTo(destinatio
 	dst = &storage.NamespacesTopicsSubscriptionsRule_STATUS{}
 	err := rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1005,7 +832,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 		var action Action_STATUS
 		err := action.AssignProperties_From_Action_STATUS(source.Action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Action_STATUS() to populate field Action")
+			return eris.Wrap(err, "calling AssignProperties_From_Action_STATUS() to populate field Action")
 		}
 		rule.Action = &action
 	} else {
@@ -1020,7 +847,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 		var correlationFilter CorrelationFilter_STATUS
 		err := correlationFilter.AssignProperties_From_CorrelationFilter_STATUS(source.CorrelationFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CorrelationFilter_STATUS() to populate field CorrelationFilter")
+			return eris.Wrap(err, "calling AssignProperties_From_CorrelationFilter_STATUS() to populate field CorrelationFilter")
 		}
 		rule.CorrelationFilter = &correlationFilter
 	} else {
@@ -1050,7 +877,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 		var sqlFilter SqlFilter_STATUS
 		err := sqlFilter.AssignProperties_From_SqlFilter_STATUS(source.SqlFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlFilter_STATUS() to populate field SqlFilter")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlFilter_STATUS() to populate field SqlFilter")
 		}
 		rule.SqlFilter = &sqlFilter
 	} else {
@@ -1062,7 +889,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		rule.SystemData = &systemDatum
 	} else {
@@ -1086,7 +913,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var action storage.Action_STATUS
 		err := rule.Action.AssignProperties_To_Action_STATUS(&action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Action_STATUS() to populate field Action")
+			return eris.Wrap(err, "calling AssignProperties_To_Action_STATUS() to populate field Action")
 		}
 		destination.Action = &action
 	} else {
@@ -1101,7 +928,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var correlationFilter storage.CorrelationFilter_STATUS
 		err := rule.CorrelationFilter.AssignProperties_To_CorrelationFilter_STATUS(&correlationFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CorrelationFilter_STATUS() to populate field CorrelationFilter")
+			return eris.Wrap(err, "calling AssignProperties_To_CorrelationFilter_STATUS() to populate field CorrelationFilter")
 		}
 		destination.CorrelationFilter = &correlationFilter
 	} else {
@@ -1130,7 +957,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var sqlFilter storage.SqlFilter_STATUS
 		err := rule.SqlFilter.AssignProperties_To_SqlFilter_STATUS(&sqlFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlFilter_STATUS() to populate field SqlFilter")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlFilter_STATUS() to populate field SqlFilter")
 		}
 		destination.SqlFilter = &sqlFilter
 	} else {
@@ -1142,7 +969,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var systemDatum storage.SystemData_STATUS
 		err := rule.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1286,27 +1113,6 @@ func (action *Action) AssignProperties_To_Action(destination *storage.Action) er
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_Action_STATUS populates our Action from the provided source Action_STATUS
-func (action *Action) Initialize_From_Action_STATUS(source *Action_STATUS) error {
-
-	// CompatibilityLevel
-	action.CompatibilityLevel = genruntime.ClonePointerToInt(source.CompatibilityLevel)
-
-	// RequiresPreprocessing
-	if source.RequiresPreprocessing != nil {
-		requiresPreprocessing := *source.RequiresPreprocessing
-		action.RequiresPreprocessing = &requiresPreprocessing
-	} else {
-		action.RequiresPreprocessing = nil
-	}
-
-	// SqlExpression
-	action.SqlExpression = genruntime.ClonePointerToString(source.SqlExpression)
 
 	// No error
 	return nil
@@ -1685,48 +1491,6 @@ func (filter *CorrelationFilter) AssignProperties_To_CorrelationFilter(destinati
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_CorrelationFilter_STATUS populates our CorrelationFilter from the provided source CorrelationFilter_STATUS
-func (filter *CorrelationFilter) Initialize_From_CorrelationFilter_STATUS(source *CorrelationFilter_STATUS) error {
-
-	// ContentType
-	filter.ContentType = genruntime.ClonePointerToString(source.ContentType)
-
-	// CorrelationId
-	filter.CorrelationId = genruntime.ClonePointerToString(source.CorrelationId)
-
-	// Label
-	filter.Label = genruntime.ClonePointerToString(source.Label)
-
-	// MessageId
-	filter.MessageId = genruntime.ClonePointerToString(source.MessageId)
-
-	// Properties
-	filter.Properties = genruntime.CloneMapOfStringToString(source.Properties)
-
-	// ReplyTo
-	filter.ReplyTo = genruntime.ClonePointerToString(source.ReplyTo)
-
-	// ReplyToSessionId
-	filter.ReplyToSessionId = genruntime.ClonePointerToString(source.ReplyToSessionId)
-
-	// RequiresPreprocessing
-	if source.RequiresPreprocessing != nil {
-		requiresPreprocessing := *source.RequiresPreprocessing
-		filter.RequiresPreprocessing = &requiresPreprocessing
-	} else {
-		filter.RequiresPreprocessing = nil
-	}
-
-	// SessionId
-	filter.SessionId = genruntime.ClonePointerToString(source.SessionId)
-
-	// To
-	filter.To = genruntime.ClonePointerToString(source.To)
 
 	// No error
 	return nil
@@ -2193,27 +1957,6 @@ func (filter *SqlFilter) AssignProperties_To_SqlFilter(destination *storage.SqlF
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SqlFilter_STATUS populates our SqlFilter from the provided source SqlFilter_STATUS
-func (filter *SqlFilter) Initialize_From_SqlFilter_STATUS(source *SqlFilter_STATUS) error {
-
-	// CompatibilityLevel
-	filter.CompatibilityLevel = genruntime.ClonePointerToInt(source.CompatibilityLevel)
-
-	// RequiresPreprocessing
-	if source.RequiresPreprocessing != nil {
-		requiresPreprocessing := *source.RequiresPreprocessing
-		filter.RequiresPreprocessing = &requiresPreprocessing
-	} else {
-		filter.RequiresPreprocessing = nil
-	}
-
-	// SqlExpression
-	filter.SqlExpression = genruntime.ClonePointerToString(source.SqlExpression)
 
 	// No error
 	return nil

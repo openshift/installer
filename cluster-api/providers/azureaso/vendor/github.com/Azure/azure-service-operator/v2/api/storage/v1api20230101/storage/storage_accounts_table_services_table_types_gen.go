@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (table *StorageAccountsTableServicesTable) NewEmptyStatus() genruntime.Conv
 
 // Owner returns the ResourceReference of the owner
 func (table *StorageAccountsTableServicesTable) Owner() *genruntime.ResourceReference {
+	if table.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(table.Spec)
 	return table.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (table *StorageAccountsTableServicesTable) SetStatus(status genruntime.Conv
 	var st StorageAccountsTableServicesTable_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	table.Status = st
@@ -183,7 +187,7 @@ var _ genruntime.ConvertibleSpec = &StorageAccountsTableServicesTable_Spec{}
 // ConvertSpecFrom populates our StorageAccountsTableServicesTable_Spec from the provided source
 func (table *StorageAccountsTableServicesTable_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == table {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(table)
@@ -192,7 +196,7 @@ func (table *StorageAccountsTableServicesTable_Spec) ConvertSpecFrom(source genr
 // ConvertSpecTo populates the provided destination from our StorageAccountsTableServicesTable_Spec
 func (table *StorageAccountsTableServicesTable_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == table {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(table)
@@ -214,7 +218,7 @@ var _ genruntime.ConvertibleStatus = &StorageAccountsTableServicesTable_STATUS{}
 // ConvertStatusFrom populates our StorageAccountsTableServicesTable_STATUS from the provided source
 func (table *StorageAccountsTableServicesTable_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == table {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(table)
@@ -223,7 +227,7 @@ func (table *StorageAccountsTableServicesTable_STATUS) ConvertStatusFrom(source 
 // ConvertStatusTo populates the provided destination from our StorageAccountsTableServicesTable_STATUS
 func (table *StorageAccountsTableServicesTable_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == table {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(table)

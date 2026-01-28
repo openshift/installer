@@ -770,13 +770,7 @@ func GetPrivateServiceConnectEndpoint(client *compute.Service, project string, e
 		return nil, nil
 	}
 
-	var forwardingRules *compute.ForwardingRuleList
-	var forwardingRuleErr error
-	if endpoint.Region != "" {
-		forwardingRules, forwardingRuleErr = client.ForwardingRules.List(project, endpoint.Region).Do()
-	} else {
-		forwardingRules, forwardingRuleErr = client.GlobalForwardingRules.List(project).Do()
-	}
+	forwardingRules, forwardingRuleErr := client.GlobalForwardingRules.List(project).Do()
 	if forwardingRuleErr != nil {
 		return nil, fmt.Errorf("failed to list forwarding rules: %w", forwardingRuleErr)
 	}

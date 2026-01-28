@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101
 ----------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-11-01"
+
 Server: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (16 properties)
@@ -118,6 +119,7 @@ Server: Resource
     └── WorkspaceFeature: *Enum (2 values)
         ├── "Connected"
         └── "Disconnected"
+
 ServersAdministrator: Resource
 ├── Owner: Server
 ├── Spec: Object (8 properties)
@@ -145,6 +147,7 @@ ServersAdministrator: Resource
     ├── Sid: *string
     ├── TenantId: *string
     └── Type: *string
+
 ServersAdvancedThreatProtectionSetting: Resource
 ├── Owner: Server
 ├── Spec: Object (3 properties)
@@ -181,6 +184,7 @@ ServersAdvancedThreatProtectionSetting: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 ServersAuditingSetting: Resource
 ├── Owner: Server
 ├── Spec: Object (13 properties)
@@ -219,6 +223,7 @@ ServersAuditingSetting: Resource
     ├── StorageAccountSubscriptionId: *string
     ├── StorageEndpoint: *string
     └── Type: *string
+
 ServersAzureADOnlyAuthentication: Resource
 ├── Owner: Server
 ├── Spec: Object (3 properties)
@@ -233,6 +238,7 @@ ServersAzureADOnlyAuthentication: Resource
     ├── Id: *string
     ├── Name: *string
     └── Type: *string
+
 ServersConnectionPolicy: Resource
 ├── Owner: Server
 ├── Spec: Object (3 properties)
@@ -255,6 +261,7 @@ ServersConnectionPolicy: Resource
     ├── Location: *string
     ├── Name: *string
     └── Type: *string
+
 ServersDatabase: Resource
 ├── Owner: Server
 ├── Spec: Object (32 properties)
@@ -448,6 +455,7 @@ ServersDatabase: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── ZoneRedundant: *bool
+
 ServersDatabasesAdvancedThreatProtectionSetting: Resource
 ├── Owner: ServersDatabase
 ├── Spec: Object (3 properties)
@@ -484,6 +492,7 @@ ServersDatabasesAdvancedThreatProtectionSetting: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 ServersDatabasesAuditingSetting: Resource
 ├── Owner: ServersDatabase
 ├── Spec: Object (12 properties)
@@ -521,6 +530,7 @@ ServersDatabasesAuditingSetting: Resource
     ├── StorageAccountSubscriptionId: *string
     ├── StorageEndpoint: *string
     └── Type: *string
+
 ServersDatabasesBackupLongTermRetentionPolicy: Resource
 ├── Owner: ServersDatabase
 ├── Spec: Object (6 properties)
@@ -541,6 +551,7 @@ ServersDatabasesBackupLongTermRetentionPolicy: Resource
     ├── WeekOfYear: *int
     ├── WeeklyRetention: *string
     └── YearlyRetention: *string
+
 ServersDatabasesBackupShortTermRetentionPolicy: Resource
 ├── Owner: ServersDatabase
 ├── Spec: Object (4 properties)
@@ -561,6 +572,7 @@ ServersDatabasesBackupShortTermRetentionPolicy: Resource
     ├── Name: *string
     ├── RetentionDays: *int
     └── Type: *string
+
 ServersDatabasesSecurityAlertPolicy: Resource
 ├── Owner: ServersDatabase
 ├── Spec: Object (9 properties)
@@ -606,6 +618,7 @@ ServersDatabasesSecurityAlertPolicy: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 ServersDatabasesTransparentDataEncryption: Resource
 ├── Owner: ServersDatabase
 ├── Spec: Object (3 properties)
@@ -624,6 +637,7 @@ ServersDatabasesTransparentDataEncryption: Resource
     │   ├── "Disabled"
     │   └── "Enabled"
     └── Type: *string
+
 ServersDatabasesVulnerabilityAssessment: Resource
 ├── Owner: ServersDatabase
 ├── Spec: Object (7 properties)
@@ -649,6 +663,7 @@ ServersDatabasesVulnerabilityAssessment: Resource
     │   └── IsEnabled: *bool
     ├── StorageContainerPath: *string
     └── Type: *string
+
 ServersElasticPool: Resource
 ├── Owner: Server
 ├── Spec: Object (13 properties)
@@ -706,6 +721,7 @@ ServersElasticPool: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── ZoneRedundant: *bool
+
 ServersFailoverGroup: Resource
 ├── Owner: Server
 ├── Spec: Object (8 properties)
@@ -754,6 +770,7 @@ ServersFailoverGroup: Resource
     ├── ReplicationState: *string
     ├── Tags: map[string]string
     └── Type: *string
+
 ServersFirewallRule: Resource
 ├── Owner: Server
 ├── Spec: Object (5 properties)
@@ -771,6 +788,7 @@ ServersFirewallRule: Resource
     ├── Name: *string
     ├── StartIpAddress: *string
     └── Type: *string
+
 ServersIPV6FirewallRule: Resource
 ├── Owner: Server
 ├── Spec: Object (5 properties)
@@ -788,6 +806,7 @@ ServersIPV6FirewallRule: Resource
     ├── Name: *string
     ├── StartIPv6Address: *string
     └── Type: *string
+
 ServersOutboundFirewallRule: Resource
 ├── Owner: Server
 ├── Spec: Object (3 properties)
@@ -802,6 +821,7 @@ ServersOutboundFirewallRule: Resource
     ├── Name: *string
     ├── ProvisioningState: *string
     └── Type: *string
+
 ServersSecurityAlertPolicy: Resource
 ├── Owner: Server
 ├── Spec: Object (9 properties)
@@ -847,6 +867,7 @@ ServersSecurityAlertPolicy: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 ServersVirtualNetworkRule: Resource
 ├── Owner: Server
 ├── Spec: Object (5 properties)
@@ -871,6 +892,7 @@ ServersVirtualNetworkRule: Resource
     │   └── "Unknown"
     ├── Type: *string
     └── VirtualNetworkSubnetId: *string
+
 ServersVulnerabilityAssessment: Resource
 ├── Owner: Server
 ├── Spec: Object (7 properties)
@@ -896,3 +918,4 @@ ServersVulnerabilityAssessment: Resource
     │   └── IsEnabled: *bool
     ├── StorageContainerPath: *string
     └── Type: *string
+

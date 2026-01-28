@@ -6,4 +6,4 @@ podman run --rm \
     --volume "${PWD}:/go/src/github.com/openshift/installer:z" \
     --workdir /go/src/github.com/openshift/installer \
     docker.io/golangci/golangci-lint:v2.3.1 \
-    golangci-lint run -v --new-from-rev=dcf8122 "${@}"
+    golangci-lint run -c .golangci-lint-v2.yaml -v --new-from-rev=dcf8122 "${@}"

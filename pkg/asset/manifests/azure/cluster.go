@@ -93,6 +93,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Destination:      ptr.To("*"),
 					Action:           capz.SecurityRuleActionAllow,
 				},
+				{
+					Name:             fmt.Sprintf("%s_ssh_in", clusterID.InfraID),
+					Protocol:         capz.SecurityGroupProtocolTCP,
+					Direction:        capz.SecurityRuleDirectionInbound,
+					Priority:         220,
+					SourcePorts:      ptr.To("*"),
+					DestinationPorts: ptr.To("22"),
+					Source:           ptr.To(source),
+					Destination:      ptr.To("*"),
+					Action:           capz.SecurityRuleActionAllow,
+				},
 			},
 		},
 	}
@@ -495,13 +506,14 @@ func getSubnet(installConfig *installconfig.InstallConfig, subnetType capz.Subne
 	}
 	ctx := context.TODO()
 
-	if subnetType == capz.SubnetControlPlane {
+	switch subnetType {
+	case capz.SubnetControlPlane:
 		subnet, err = azClient.GetControlPlaneSubnet(ctx,
 			installConfig.Config.Azure.NetworkResourceGroupName,
 			installConfig.Config.Azure.VirtualNetwork,
 			subnetName,
 		)
-	} else if subnetType == capz.SubnetNode {
+	case capz.SubnetNode:
 		subnet, err = azClient.GetComputeSubnet(ctx,
 			installConfig.Config.Azure.NetworkResourceGroupName,
 			installConfig.Config.Azure.VirtualNetwork,

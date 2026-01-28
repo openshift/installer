@@ -11,12 +11,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/internal/util/randextensions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/retry"
 )
 
 // Calculator calculates an interval
@@ -25,10 +26,18 @@ type Calculator interface {
 }
 
 type CalculatorParameters struct {
-	Rand                 *rand.Rand
-	ErrorBaseDelay       time.Duration
-	ErrorMaxFastDelay    time.Duration
-	ErrorMaxSlowDelay    time.Duration
+	Rand *rand.Rand
+	// ErrorBaseDelay is the base delay for exponential backoff of errors.
+	ErrorBaseDelay time.Duration
+	// ErrorMaxFastDelay is the maximum delay duration (computed via exponential backoff) for retry.Fast errors.
+	ErrorMaxFastDelay time.Duration
+	// ErrorMaxSlowDelay is the maximum delay duration (computed via exponential backoff) for retry.Slow errors.
+	ErrorMaxSlowDelay time.Duration
+	// ErrorVerySlowDelay is the retry.VerySlow error delay. These errors do not follow an exponential backoff and
+	// instead jump straight to this delay, with some jitter to avoid retry storms.
+	ErrorVerySlowDelay time.Duration
+	// SyncPeriod is the duration after which to re-sync healthy (non-error) requests. If omitted, requests are not
+	// re-synced periodically.
 	SyncPeriod           *time.Duration
 	RequeueDelayOverride time.Duration
 }
@@ -38,6 +47,7 @@ func NewCalculator(params CalculatorParameters) Calculator {
 	return &calculator{
 		failures:             make(map[ctrl.Request]int),
 		errorBaseDelay:       params.ErrorBaseDelay,
+		errorVerySlowDelay:   params.ErrorVerySlowDelay,
 		errorMaxSlowDelay:    params.ErrorMaxSlowDelay,
 		errorMaxFastDelay:    params.ErrorMaxFastDelay,
 		syncPeriod:           params.SyncPeriod,
@@ -51,9 +61,10 @@ type calculator struct {
 	failures     map[ctrl.Request]int
 
 	// Used only if there is an error
-	errorBaseDelay    time.Duration
-	errorMaxSlowDelay time.Duration
-	errorMaxFastDelay time.Duration
+	errorBaseDelay     time.Duration
+	errorMaxSlowDelay  time.Duration
+	errorMaxFastDelay  time.Duration
+	errorVerySlowDelay time.Duration
 
 	// Used only if there is not an error
 	syncPeriod           *time.Duration
@@ -122,30 +133,38 @@ func (i *calculator) failureResult(req ctrl.Request, err error) (ctrl.Result, er
 	}
 
 	// Now we have a readyErr
-	if readyErr.Severity == conditions.ConditionSeverityError {
+	switch readyErr.Severity {
+	case conditions.ConditionSeverityError:
 		// Severity error is fatal, return fast and block requeue
 		// Since this is fatal, stop tracking the req
 		delete(i.failures, req)
 		return ctrl.Result{}, nil
-	} else if readyErr.Severity == conditions.ConditionSeverityWarning {
+	case conditions.ConditionSeverityWarning:
 		switch readyErr.RetryClassification {
-		case conditions.RetrySlow:
+		case retry.VerySlow:
+			// For VerySlow, we don't start at baseDelay and go up via exponential, instead
+			// we jump straight to the slow delay interval w/ jitter
+			delay := i.delayWithJitter(i.errorVerySlowDelay)
+			return ctrl.Result{RequeueAfter: delay}, nil
+		case retry.Slow:
 			delay := i.calculateExponentialDelay(i.errorBaseDelay, exp, i.errorMaxSlowDelay)
 			return ctrl.Result{RequeueAfter: delay}, nil
-		case conditions.RetryFast:
+		case retry.Fast:
 			delay := i.calculateExponentialDelay(i.errorBaseDelay, exp, i.errorMaxFastDelay)
 			return ctrl.Result{RequeueAfter: delay}, nil
-		case conditions.RetryNone:
+		case retry.None:
 			// This shouldn't happen, return an error
-			return ctrl.Result{}, errors.New("didn't expect RetryNone classification for error")
+			return ctrl.Result{}, eris.New("didn't expect RetryNone classification for error")
 		default:
 			// This shouldn't happen, return an error
-			return ctrl.Result{}, errors.Errorf("unknown RetryClassification %q", readyErr.RetryClassification)
+			return ctrl.Result{}, eris.Errorf("unknown RetryClassification %q", readyErr.RetryClassification)
 		}
+	default:
+		// fall out to error, below
 	}
 
 	// This shouldn't happen, return an error
-	return ctrl.Result{}, errors.Errorf("Error with severity %q is unexpected", readyErr.Severity)
+	return ctrl.Result{}, eris.Errorf("Error with severity %q is unexpected", readyErr.Severity)
 }
 
 func (i *calculator) makeSuccessResult() ctrl.Result {
@@ -154,10 +173,15 @@ func (i *calculator) makeSuccessResult() ctrl.Result {
 	// potential drift from the state in Azure. Note that we cannot use mgr.Options.SyncPeriod for this because we filter
 	// our events by predicate.GenerationChangedPredicate and the generation will not have changed.
 	if i.syncPeriod != nil {
-		result.RequeueAfter = randextensions.Jitter(i.rand, *i.syncPeriod, 0.25)
+		result.RequeueAfter = i.delayWithJitter(*i.syncPeriod)
 	}
 
 	return result
+}
+
+// calculateSyncPeriodDelay calculates a delay from the syncPeriod, with some jitter applied
+func (i *calculator) delayWithJitter(delay time.Duration) time.Duration {
+	return randextensions.Jitter(i.rand, delay, 0.25)
 }
 
 func (i *calculator) calculateExponentialDelay(base time.Duration, exp int, max time.Duration) time.Duration {

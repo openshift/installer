@@ -10,6 +10,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
@@ -48,6 +49,18 @@ type StorageType struct {
 	Predicate predicate.Predicate
 	// Name is the friendly name of this storage type
 	Name string
+}
+
+// KnownType describes a type "known" by the operator. It includes the Obj as well
+// as validating and defaulting webhooks associated with that particular obj (== GVK)
+type KnownType struct {
+	// Obj is the object for which the webhook should be registered
+	Obj client.Object
+
+	// Validator defines the checks performed by a validating webhook
+	Validator webhook.CustomValidator
+	// Default defines the checks performed by a mutating webhook
+	Defaulter webhook.CustomDefaulter
 }
 
 // NewStorageType makes a new storage type for the specified object

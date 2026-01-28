@@ -58,5 +58,13 @@ func isRetryableError(err *genericarmclient.CloudError) bool {
 		return true
 	}
 
+	// When a managed identity is used, if the role assignment was not created yet
+	// we get a BadRequest error with a message like:
+	// "The provided credentials have insufficient access to perform the requested operation"
+	// These should be retried to allow the role assignment to be created once the identity is ready.
+	if err.Code() == "BadRequest" && strings.Contains(err.Message(), "insufficient access") {
+		return true
+	}
+
 	return false
 }

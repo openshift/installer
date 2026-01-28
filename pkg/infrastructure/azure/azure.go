@@ -537,16 +537,6 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		}
 
 		sshRuleName := fmt.Sprintf("%s_ssh_in", in.InfraID)
-		if err = addSecurityGroupRule(ctx, &securityGroupInput{
-			resourceGroupName:    p.ResourceGroupName,
-			securityGroupName:    fmt.Sprintf("%s-nsg", in.InfraID),
-			securityRuleName:     sshRuleName,
-			securityRulePort:     "22",
-			securityRulePriority: 220,
-			networkClientFactory: p.NetworkClientFactory,
-		}); err != nil {
-			return fmt.Errorf("failed to add security rule: %w", err)
-		}
 
 		loadBalancerName := in.InfraID
 		frontendIPConfigName := "public-lb-ip-v4"
@@ -651,7 +641,15 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		if err != nil {
 			return fmt.Errorf("failed to delete security rule: %w", err)
 		}
-
+	}
+	_, err = networkClientFactory.NewInboundNatRulesClient().Get(
+		ctx,
+		resourceGroupName,
+		in.Metadata.InfraID,
+		sshRuleName,
+		nil,
+	)
+	if err == nil {
 		err = deleteInboundNatRule(ctx, &inboundNatRuleInput{
 			resourceGroupName:    resourceGroupName,
 			loadBalancerName:     in.Metadata.InfraID,
@@ -662,7 +660,6 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 			return fmt.Errorf("failed to delete inbound nat rule: %w", err)
 		}
 	}
-
 	return nil
 }
 

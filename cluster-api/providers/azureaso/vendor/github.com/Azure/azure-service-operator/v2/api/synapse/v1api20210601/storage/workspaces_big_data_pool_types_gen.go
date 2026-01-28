@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (pool *WorkspacesBigDataPool) NewEmptyStatus() genruntime.ConvertibleStatus
 
 // Owner returns the ResourceReference of the owner
 func (pool *WorkspacesBigDataPool) Owner() *genruntime.ResourceReference {
+	if pool.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(pool.Spec)
 	return pool.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (pool *WorkspacesBigDataPool) SetStatus(status genruntime.ConvertibleStatus
 	var st WorkspacesBigDataPool_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	pool.Status = st
@@ -202,7 +206,7 @@ var _ genruntime.ConvertibleSpec = &WorkspacesBigDataPool_Spec{}
 // ConvertSpecFrom populates our WorkspacesBigDataPool_Spec from the provided source
 func (pool *WorkspacesBigDataPool_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == pool {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(pool)
@@ -211,7 +215,7 @@ func (pool *WorkspacesBigDataPool_Spec) ConvertSpecFrom(source genruntime.Conver
 // ConvertSpecTo populates the provided destination from our WorkspacesBigDataPool_Spec
 func (pool *WorkspacesBigDataPool_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == pool {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(pool)
@@ -252,7 +256,7 @@ var _ genruntime.ConvertibleStatus = &WorkspacesBigDataPool_STATUS{}
 // ConvertStatusFrom populates our WorkspacesBigDataPool_STATUS from the provided source
 func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == pool {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(pool)
@@ -261,7 +265,7 @@ func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusFrom(source genruntime.Co
 // ConvertStatusTo populates the provided destination from our WorkspacesBigDataPool_STATUS
 func (pool *WorkspacesBigDataPool_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == pool {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(pool)

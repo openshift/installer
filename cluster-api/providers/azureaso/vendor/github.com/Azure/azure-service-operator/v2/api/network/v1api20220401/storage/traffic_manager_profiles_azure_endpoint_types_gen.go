@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint) NewEmptyStatus() genruntime
 
 // Owner returns the ResourceReference of the owner
 func (endpoint *TrafficManagerProfilesAzureEndpoint) Owner() *genruntime.ResourceReference {
+	if endpoint.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(endpoint.Spec)
 	return endpoint.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint) SetStatus(status genruntime
 	var st TrafficManagerProfilesAzureEndpoint_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	endpoint.Status = st
@@ -201,7 +205,7 @@ var _ genruntime.ConvertibleSpec = &TrafficManagerProfilesAzureEndpoint_Spec{}
 // ConvertSpecFrom populates our TrafficManagerProfilesAzureEndpoint_Spec from the provided source
 func (endpoint *TrafficManagerProfilesAzureEndpoint_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == endpoint {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(endpoint)
@@ -210,7 +214,7 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint_Spec) ConvertSpecFrom(source
 // ConvertSpecTo populates the provided destination from our TrafficManagerProfilesAzureEndpoint_Spec
 func (endpoint *TrafficManagerProfilesAzureEndpoint_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == endpoint {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(endpoint)
@@ -244,7 +248,7 @@ var _ genruntime.ConvertibleStatus = &TrafficManagerProfilesAzureEndpoint_STATUS
 // ConvertStatusFrom populates our TrafficManagerProfilesAzureEndpoint_STATUS from the provided source
 func (endpoint *TrafficManagerProfilesAzureEndpoint_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == endpoint {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(endpoint)
@@ -253,7 +257,7 @@ func (endpoint *TrafficManagerProfilesAzureEndpoint_STATUS) ConvertStatusFrom(so
 // ConvertStatusTo populates the provided destination from our TrafficManagerProfilesAzureEndpoint_STATUS
 func (endpoint *TrafficManagerProfilesAzureEndpoint_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == endpoint {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(endpoint)

@@ -60,7 +60,8 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	if err != nil {
 		return nil, fmt.Errorf("failed to create machineapi.TagSpecifications from UserTags: %w", err)
 	}
-	image := capzImage(mpool.OSImage, in.Environment, in.HyperVGen, resourceGroup, subscriptionID, clusterID, in.RHCOS)
+	confidentialVM := mpool.Settings != nil && mpool.Settings.SecurityType != ""
+	image := capzImage(mpool.OSImage, in.Environment, confidentialVM, in.HyperVGen, resourceGroup, subscriptionID, clusterID, in.RHCOS)
 	// Set up OSDisk
 	osDisk := capz.OSDisk{
 		OSType:     "Linux",
@@ -203,13 +204,16 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 		}
 
 		if in.Platform.CloudName == aztypes.StackCloud {
-			azureMachine.Spec.Diagnostics = &capz.Diagnostics{
-				Boot: &capz.BootDiagnostics{
-					StorageAccountType: capz.UserManagedDiagnosticsStorage,
-					UserManaged: &capz.UserManagedBootDiagnostics{
-						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+			// For Azure Stack Cloud, apply default diagnostics only if user hasn't specified bootDiagnostics
+			if mpool.BootDiagnostics == nil {
+				azureMachine.Spec.Diagnostics = &capz.Diagnostics{
+					Boot: &capz.BootDiagnostics{
+						StorageAccountType: capz.UserManagedDiagnosticsStorage,
+						UserManaged: &capz.UserManagedBootDiagnostics{
+							StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+						},
 					},
-				},
+				}
 			}
 		}
 
@@ -277,13 +281,16 @@ func GenerateMachines(clusterID, resourceGroup, subscriptionID string, session *
 	}
 
 	if in.Platform.CloudName == aztypes.StackCloud {
-		bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
-			Boot: &capz.BootDiagnostics{
-				StorageAccountType: capz.UserManagedDiagnosticsStorage,
-				UserManaged: &capz.UserManagedBootDiagnostics{
-					StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+		// For Azure Stack Cloud, apply default diagnostics only if user hasn't specified bootDiagnostics
+		if mpool.BootDiagnostics == nil {
+			bootstrapAzureMachine.Spec.Diagnostics = &capz.Diagnostics{
+				Boot: &capz.BootDiagnostics{
+					StorageAccountType: capz.UserManagedDiagnosticsStorage,
+					UserManaged: &capz.UserManagedBootDiagnostics{
+						StorageAccountURI: fmt.Sprintf("https://%s.blob.%s", storageAccountName, in.StorageSuffix),
+					},
 				},
-			},
+			}
 		}
 	}
 
@@ -354,7 +361,7 @@ func bootDiagStorageURIBuilder(diag *aztypes.BootDiagnostics, storageEndpointSuf
 	return ""
 }
 
-func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, gen, rg, sub, infraID, rhcosImg string) *capz.Image {
+func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, confidentialVM bool, gen, rg, sub, infraID, rhcosImg string) *capz.Image {
 	switch {
 	case osImage.Publisher != "":
 		return &capz.Image{
@@ -386,7 +393,11 @@ func capzImage(osImage aztypes.OSImage, azEnv aztypes.CloudEnvironment, gen, rg,
 				ThirdPartyImage: false,
 			},
 		}
-	default: // Installer-created image gallery, should only be OKD.
+	case rhcosImg == "" && !confidentialVM:
+		// hive calls the machines function, but may pass an empty
+		// string for rhcos. In which case, allow MAO to choose default.
+		return &capz.Image{} // can't be nil or mapiImage will panic
+	default: // Installer-created image gallery, for OKD && confidential VMs.
 		// image gallery names cannot have dashes
 		galleryName := strings.ReplaceAll(infraID, "-", "_")
 		imageID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Compute/galleries/gallery_%s/images/%s", sub, rg, galleryName, infraID)

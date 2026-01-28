@@ -11,8 +11,10 @@ import (
 	"reflect"
 	"time"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -24,7 +26,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/Azure/azure-service-operator/v2/internal/config"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/reconcilers"
 	"github.com/Azure/azure-service-operator/v2/internal/util/interval"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
@@ -81,7 +82,7 @@ func (gr *GenericReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 	// Ensure the resource is tagged with the operator's namespace.
 	ownershipResult, err := gr.takeOwnership(ctx, log, metaObj)
 	if err != nil {
-		err = errors.Wrapf(err, "failed to take ownership of %s", metaObj.GetName())
+		err = eris.Wrapf(err, "failed to take ownership of %s", metaObj.GetName())
 		log.Error(err, "failed to take ownership of object")
 		return ctrl.Result{}, err
 	}
@@ -181,7 +182,7 @@ func (gr *GenericReconciler) getObjectToReconcile(ctx context.Context, req ctrl.
 	// convert itself to/from the corresponding Azure types.
 	metaObj, ok := obj.(genruntime.MetaObject)
 	if !ok {
-		return nil, errors.Errorf("object is not a genruntime.MetaObject, found type: %T", obj)
+		return nil, eris.Errorf("object is not a genruntime.MetaObject, found type: %T", obj)
 	}
 
 	return metaObj, nil
@@ -234,7 +235,7 @@ func (gr *GenericReconciler) createOrUpdate(ctx context.Context, log logr.Logger
 	}
 
 	// Check the reconcile-policy to ensure we're allowed to issue a CreateOrUpdate
-	reconcilePolicy := reconcilers.GetReconcilePolicy(metaObj, log)
+	reconcilePolicy := reconcilers.GetReconcilePolicy(metaObj, log, gr.Config.DefaultReconcilePolicy)
 	if !reconcilePolicy.AllowsModify() {
 		return ctrl.Result{}, gr.handleSkipReconcile(ctx, log, metaObj)
 	}
@@ -246,7 +247,7 @@ func (gr *GenericReconciler) createOrUpdate(ctx context.Context, log logr.Logger
 
 func (gr *GenericReconciler) delete(ctx context.Context, log logr.Logger, metaObj genruntime.MetaObject) (ctrl.Result, error) {
 	// Check the reconcile policy to ensure we're allowed to issue a delete
-	reconcilePolicy := reconcilers.GetReconcilePolicy(metaObj, log)
+	reconcilePolicy := reconcilers.GetReconcilePolicy(metaObj, log, gr.Config.DefaultReconcilePolicy)
 	if !reconcilePolicy.AllowsDelete() {
 		log.V(Info).Info("Bypassing delete of resource due to policy", "policy", reconcilePolicy)
 		controllerutil.RemoveFinalizer(metaObj, genruntime.ReconcilerFinalizer)
@@ -295,7 +296,7 @@ func (gr *GenericReconciler) WriteReadyConditionError(ctx context.Context, log l
 		err.Cause().Error())) // Don't use err.Error() here because it also includes details about Reason, Severity, which are getting displayed as part of the condition structure
 	commitErr := gr.CommitUpdate(ctx, log, nil, obj, kubeclient.SpecAndStatus)
 	if commitErr != nil {
-		return errors.Wrap(commitErr, "updating resource error")
+		return eris.Wrap(commitErr, "updating resource error")
 	}
 
 	return err
@@ -350,7 +351,7 @@ func (gr *GenericReconciler) CommitUpdate(
 }
 
 func (gr *GenericReconciler) handleSkipReconcile(ctx context.Context, log logr.Logger, obj genruntime.MetaObject) error {
-	reconcilePolicy := reconcilers.GetReconcilePolicy(obj, log) // TODO: Pull this whole method up here
+	reconcilePolicy := reconcilers.GetReconcilePolicy(obj, log, gr.Config.DefaultReconcilePolicy) // TODO: Pull this whole method up here
 	log.V(Status).Info(
 		"Skipping creation/update of resource due to policy",
 		annotations.ReconcilePolicy, reconcilePolicy)

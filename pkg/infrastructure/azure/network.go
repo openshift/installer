@@ -11,7 +11,6 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
-	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -54,7 +53,6 @@ type securityGroupInput struct {
 	securityGroupName    string
 	securityRuleName     string
 	securityRulePort     string
-	securityRulePriority int32
 	networkClientFactory *armnetwork.ClientFactory
 }
 
@@ -365,40 +363,6 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 			return fmt.Errorf("vm %s does not have a single nic: %w", vmName, err)
 		}
 	}
-	return nil
-}
-
-func addSecurityGroupRule(ctx context.Context, in *securityGroupInput) error {
-	securityRulesClient := in.networkClientFactory.NewSecurityRulesClient()
-
-	// Assume inbound tcp connections from any port to destination port for now
-	securityRuleResp, err := securityRulesClient.BeginCreateOrUpdate(ctx,
-		in.resourceGroupName,
-		in.securityGroupName,
-		in.securityRuleName,
-		armnetwork.SecurityRule{
-			Name: ptr.To(in.securityRuleName),
-			Properties: &armnetwork.SecurityRulePropertiesFormat{
-				Access:                   ptr.To(armnetwork.SecurityRuleAccessAllow),
-				Direction:                ptr.To(armnetwork.SecurityRuleDirectionInbound),
-				Protocol:                 ptr.To(armnetwork.SecurityRuleProtocolTCP),
-				DestinationAddressPrefix: ptr.To("*"),
-				DestinationPortRange:     ptr.To(in.securityRulePort),
-				Priority:                 ptr.To[int32](in.securityRulePriority),
-				SourceAddressPrefix:      ptr.To("*"),
-				SourcePortRange:          ptr.To("*"),
-			},
-		},
-		nil,
-	)
-	if err != nil {
-		return fmt.Errorf("failed to add security rule: %w", err)
-	}
-	_, err = securityRuleResp.PollUntilDone(ctx, nil)
-	if err != nil {
-		return fmt.Errorf("failed to add security rule: %w", err)
-	}
-
 	return nil
 }
 

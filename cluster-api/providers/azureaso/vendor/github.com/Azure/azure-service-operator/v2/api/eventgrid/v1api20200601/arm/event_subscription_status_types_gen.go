@@ -64,6 +64,7 @@ func (destination DeadLetterDestination_STATUS) MarshalJSON() ([]byte, error) {
 	if destination.StorageBlob != nil {
 		return json.Marshal(destination.StorageBlob)
 	}
+
 	return nil, nil
 }
 
@@ -112,24 +113,31 @@ func (destination EventSubscriptionDestination_STATUS) MarshalJSON() ([]byte, er
 	if destination.AzureFunction != nil {
 		return json.Marshal(destination.AzureFunction)
 	}
+
 	if destination.EventHub != nil {
 		return json.Marshal(destination.EventHub)
 	}
+
 	if destination.HybridConnection != nil {
 		return json.Marshal(destination.HybridConnection)
 	}
+
 	if destination.ServiceBusQueue != nil {
 		return json.Marshal(destination.ServiceBusQueue)
 	}
+
 	if destination.ServiceBusTopic != nil {
 		return json.Marshal(destination.ServiceBusTopic)
 	}
+
 	if destination.StorageQueue != nil {
 		return json.Marshal(destination.StorageQueue)
 	}
+
 	if destination.WebHook != nil {
 		return json.Marshal(destination.WebHook)
 	}
+
 	return nil, nil
 }
 
@@ -287,39 +295,51 @@ func (filter AdvancedFilter_STATUS) MarshalJSON() ([]byte, error) {
 	if filter.BoolEquals != nil {
 		return json.Marshal(filter.BoolEquals)
 	}
+
 	if filter.NumberGreaterThan != nil {
 		return json.Marshal(filter.NumberGreaterThan)
 	}
+
 	if filter.NumberGreaterThanOrEquals != nil {
 		return json.Marshal(filter.NumberGreaterThanOrEquals)
 	}
+
 	if filter.NumberIn != nil {
 		return json.Marshal(filter.NumberIn)
 	}
+
 	if filter.NumberLessThan != nil {
 		return json.Marshal(filter.NumberLessThan)
 	}
+
 	if filter.NumberLessThanOrEquals != nil {
 		return json.Marshal(filter.NumberLessThanOrEquals)
 	}
+
 	if filter.NumberNotIn != nil {
 		return json.Marshal(filter.NumberNotIn)
 	}
+
 	if filter.StringBeginsWith != nil {
 		return json.Marshal(filter.StringBeginsWith)
 	}
+
 	if filter.StringContains != nil {
 		return json.Marshal(filter.StringContains)
 	}
+
 	if filter.StringEndsWith != nil {
 		return json.Marshal(filter.StringEndsWith)
 	}
+
 	if filter.StringIn != nil {
 		return json.Marshal(filter.StringIn)
 	}
+
 	if filter.StringNotIn != nil {
 		return json.Marshal(filter.StringNotIn)
 	}
+
 	return nil, nil
 }
 

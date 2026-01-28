@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/stora
 ----------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-08-01"
+
 Api: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (30 properties)
@@ -137,6 +138,7 @@ Api: Resource
     ├── SubscriptionRequired: *bool
     ├── TermsOfServiceUrl: *string
     └── Type: *string
+
 ApiVersionSet: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (10 properties)
@@ -164,6 +166,7 @@ ApiVersionSet: Resource
     ├── VersionHeaderName: *string
     ├── VersionQueryName: *string
     └── VersioningScheme: *string
+
 AuthorizationProvider: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (8 properties)
@@ -199,6 +202,7 @@ AuthorizationProvider: Resource
     │   └── RedirectUrl: *string
     ├── PropertyBag: genruntime.PropertyBag
     └── Type: *string
+
 AuthorizationProvidersAuthorization: Resource
 ├── Owner: apimanagement/v1api20220801.AuthorizationProvider
 ├── Spec: Object (8 properties)
@@ -227,6 +231,7 @@ AuthorizationProvidersAuthorization: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── Status: *string
     └── Type: *string
+
 AuthorizationProvidersAuthorizationsAccessPolicy: Resource
 ├── Owner: apimanagement/v1api20220801.AuthorizationProvidersAuthorization
 ├── Spec: Object (9 properties)
@@ -250,6 +255,7 @@ AuthorizationProvidersAuthorizationsAccessPolicy: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── TenantId: *string
     └── Type: *string
+
 Backend: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (14 properties)
@@ -340,6 +346,7 @@ Backend: Resource
     │   └── ValidateCertificateName: *bool
     ├── Type: *string
     └── Url: *string
+
 NamedValue: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (10 properties)
@@ -379,6 +386,7 @@ NamedValue: Resource
     ├── Tags: string[]
     ├── Type: *string
     └── Value: *string
+
 Policy: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (6 properties)
@@ -399,6 +407,7 @@ Policy: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── Value: *string
+
 PolicyFragment: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (8 properties)
@@ -422,6 +431,7 @@ PolicyFragment: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── Value: *string
+
 Product: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (12 properties)
@@ -453,6 +463,7 @@ Product: Resource
     ├── SubscriptionsLimit: *int
     ├── Terms: *string
     └── Type: *string
+
 ProductApi: Resource
 ├── Owner: apimanagement/v1api20220801.Product
 ├── Spec: Object (5 properties)
@@ -467,6 +478,7 @@ ProductApi: Resource
 └── Status: Object (2 properties)
     ├── Conditions: conditions.Condition[]
     └── PropertyBag: genruntime.PropertyBag
+
 ProductPolicy: Resource
 ├── Owner: apimanagement/v1api20220801.Product
 ├── Spec: Object (6 properties)
@@ -487,6 +499,7 @@ ProductPolicy: Resource
     ├── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── Value: *string
+
 Service: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (26 properties)
@@ -700,6 +713,7 @@ Service: Resource
     │   └── Vnetid: *string
     ├── VirtualNetworkType: *string
     └── Zones: string[]
+
 Subscription: Resource
 ├── Owner: apimanagement/v1api20220801.Service
 ├── Spec: Object (12 properties)
@@ -739,3 +753,4 @@ Subscription: Resource
     ├── State: *string
     ├── StateComment: *string
     └── Type: *string
+

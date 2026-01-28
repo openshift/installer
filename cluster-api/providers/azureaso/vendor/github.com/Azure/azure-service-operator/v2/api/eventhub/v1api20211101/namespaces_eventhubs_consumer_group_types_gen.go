@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20211101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -53,46 +50,37 @@ var _ conversion.Convertible = &NamespacesEventhubsConsumerGroup{}
 
 // ConvertFrom populates our NamespacesEventhubsConsumerGroup from the provided hub NamespacesEventhubsConsumerGroup
 func (group *NamespacesEventhubsConsumerGroup) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.NamespacesEventhubsConsumerGroup)
-	if !ok {
-		return fmt.Errorf("expected eventhub/v1api20211101/storage/NamespacesEventhubsConsumerGroup but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.NamespacesEventhubsConsumerGroup
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return group.AssignProperties_From_NamespacesEventhubsConsumerGroup(source)
+	err = group.AssignProperties_From_NamespacesEventhubsConsumerGroup(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to group")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub NamespacesEventhubsConsumerGroup from our NamespacesEventhubsConsumerGroup
 func (group *NamespacesEventhubsConsumerGroup) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.NamespacesEventhubsConsumerGroup)
-	if !ok {
-		return fmt.Errorf("expected eventhub/v1api20211101/storage/NamespacesEventhubsConsumerGroup but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.NamespacesEventhubsConsumerGroup
+	err := group.AssignProperties_To_NamespacesEventhubsConsumerGroup(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from group")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return group.AssignProperties_To_NamespacesEventhubsConsumerGroup(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-eventhub-azure-com-v1api20211101-namespaceseventhubsconsumergroup,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=eventhub.azure.com,resources=namespaceseventhubsconsumergroups,verbs=create;update,versions=v1api20211101,name=default.v1api20211101.namespaceseventhubsconsumergroups.eventhub.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &NamespacesEventhubsConsumerGroup{}
-
-// Default applies defaults to the NamespacesEventhubsConsumerGroup resource
-func (group *NamespacesEventhubsConsumerGroup) Default() {
-	group.defaultImpl()
-	var temp any = group
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (group *NamespacesEventhubsConsumerGroup) defaultAzureName() {
-	if group.Spec.AzureName == "" {
-		group.Spec.AzureName = group.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the NamespacesEventhubsConsumerGroup resource
-func (group *NamespacesEventhubsConsumerGroup) defaultImpl() { group.defaultAzureName() }
 
 var _ configmaps.Exporter = &NamespacesEventhubsConsumerGroup{}
 
@@ -112,17 +100,6 @@ func (group *NamespacesEventhubsConsumerGroup) SecretDestinationExpressions() []
 		return nil
 	}
 	return group.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &NamespacesEventhubsConsumerGroup{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (group *NamespacesEventhubsConsumerGroup) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*NamespacesEventhubsConsumerGroup_STATUS); ok {
-		return group.Spec.Initialize_From_NamespacesEventhubsConsumerGroup_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type NamespacesEventhubsConsumerGroup_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &NamespacesEventhubsConsumerGroup{}
@@ -173,6 +150,10 @@ func (group *NamespacesEventhubsConsumerGroup) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (group *NamespacesEventhubsConsumerGroup) Owner() *genruntime.ResourceReference {
+	if group.Spec.Owner == nil {
+		return nil
+	}
+
 	ownerGroup, ownerKind := genruntime.LookupOwnerGroupKind(group.Spec)
 	return group.Spec.Owner.AsResourceReference(ownerGroup, ownerKind)
 }
@@ -189,114 +170,11 @@ func (group *NamespacesEventhubsConsumerGroup) SetStatus(status genruntime.Conve
 	var st NamespacesEventhubsConsumerGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	group.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-eventhub-azure-com-v1api20211101-namespaceseventhubsconsumergroup,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=eventhub.azure.com,resources=namespaceseventhubsconsumergroups,verbs=create;update,versions=v1api20211101,name=validate.v1api20211101.namespaceseventhubsconsumergroups.eventhub.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &NamespacesEventhubsConsumerGroup{}
-
-// ValidateCreate validates the creation of the resource
-func (group *NamespacesEventhubsConsumerGroup) ValidateCreate() (admission.Warnings, error) {
-	validations := group.createValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (group *NamespacesEventhubsConsumerGroup) ValidateDelete() (admission.Warnings, error) {
-	validations := group.deleteValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (group *NamespacesEventhubsConsumerGroup) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := group.updateValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (group *NamespacesEventhubsConsumerGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (group *NamespacesEventhubsConsumerGroup) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (group *NamespacesEventhubsConsumerGroup) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateResourceReferences()
-		},
-		group.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (group *NamespacesEventhubsConsumerGroup) validateConfigMapDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (group *NamespacesEventhubsConsumerGroup) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(group)
-}
-
-// validateResourceReferences validates all resource references
-func (group *NamespacesEventhubsConsumerGroup) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&group.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (group *NamespacesEventhubsConsumerGroup) validateSecretDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (group *NamespacesEventhubsConsumerGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*NamespacesEventhubsConsumerGroup)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, group)
 }
 
 // AssignProperties_From_NamespacesEventhubsConsumerGroup populates our NamespacesEventhubsConsumerGroup from the provided source NamespacesEventhubsConsumerGroup
@@ -309,7 +187,7 @@ func (group *NamespacesEventhubsConsumerGroup) AssignProperties_From_NamespacesE
 	var spec NamespacesEventhubsConsumerGroup_Spec
 	err := spec.AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec() to populate field Spec")
 	}
 	group.Spec = spec
 
@@ -317,7 +195,7 @@ func (group *NamespacesEventhubsConsumerGroup) AssignProperties_From_NamespacesE
 	var status NamespacesEventhubsConsumerGroup_STATUS
 	err = status.AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS() to populate field Status")
 	}
 	group.Status = status
 
@@ -335,7 +213,7 @@ func (group *NamespacesEventhubsConsumerGroup) AssignProperties_To_NamespacesEve
 	var spec storage.NamespacesEventhubsConsumerGroup_Spec
 	err := group.Spec.AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +221,7 @@ func (group *NamespacesEventhubsConsumerGroup) AssignProperties_To_NamespacesEve
 	var status storage.NamespacesEventhubsConsumerGroup_STATUS
 	err = group.Status.AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -466,13 +344,13 @@ func (group *NamespacesEventhubsConsumerGroup_Spec) ConvertSpecFrom(source genru
 	src = &storage.NamespacesEventhubsConsumerGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -490,13 +368,13 @@ func (group *NamespacesEventhubsConsumerGroup_Spec) ConvertSpecTo(destination ge
 	dst = &storage.NamespacesEventhubsConsumerGroup_Spec{}
 	err := group.AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -513,7 +391,7 @@ func (group *NamespacesEventhubsConsumerGroup_Spec) AssignProperties_From_Namesp
 		var operatorSpec NamespacesEventhubsConsumerGroupOperatorSpec
 		err := operatorSpec.AssignProperties_From_NamespacesEventhubsConsumerGroupOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		group.OperatorSpec = &operatorSpec
 	} else {
@@ -548,7 +426,7 @@ func (group *NamespacesEventhubsConsumerGroup_Spec) AssignProperties_To_Namespac
 		var operatorSpec storage.NamespacesEventhubsConsumerGroupOperatorSpec
 		err := group.OperatorSpec.AssignProperties_To_NamespacesEventhubsConsumerGroupOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -575,16 +453,6 @@ func (group *NamespacesEventhubsConsumerGroup_Spec) AssignProperties_To_Namespac
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NamespacesEventhubsConsumerGroup_STATUS populates our NamespacesEventhubsConsumerGroup_Spec from the provided source NamespacesEventhubsConsumerGroup_STATUS
-func (group *NamespacesEventhubsConsumerGroup_Spec) Initialize_From_NamespacesEventhubsConsumerGroup_STATUS(source *NamespacesEventhubsConsumerGroup_STATUS) error {
-
-	// UserMetadata
-	group.UserMetadata = genruntime.ClonePointerToString(source.UserMetadata)
 
 	// No error
 	return nil
@@ -646,13 +514,13 @@ func (group *NamespacesEventhubsConsumerGroup_STATUS) ConvertStatusFrom(source g
 	src = &storage.NamespacesEventhubsConsumerGroup_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -670,13 +538,13 @@ func (group *NamespacesEventhubsConsumerGroup_STATUS) ConvertStatusTo(destinatio
 	dst = &storage.NamespacesEventhubsConsumerGroup_STATUS{}
 	err := group.AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -787,7 +655,7 @@ func (group *NamespacesEventhubsConsumerGroup_STATUS) AssignProperties_From_Name
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		group.SystemData = &systemDatum
 	} else {
@@ -832,7 +700,7 @@ func (group *NamespacesEventhubsConsumerGroup_STATUS) AssignProperties_To_Namesp
 		var systemDatum storage.SystemData_STATUS
 		err := group.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

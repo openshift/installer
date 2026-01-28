@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -53,46 +50,37 @@ var _ conversion.Convertible = &NamespacesQueue{}
 
 // ConvertFrom populates our NamespacesQueue from the provided hub NamespacesQueue
 func (queue *NamespacesQueue) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.NamespacesQueue)
-	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesQueue but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.NamespacesQueue
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return queue.AssignProperties_From_NamespacesQueue(source)
+	err = queue.AssignProperties_From_NamespacesQueue(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to queue")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub NamespacesQueue from our NamespacesQueue
 func (queue *NamespacesQueue) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.NamespacesQueue)
-	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesQueue but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.NamespacesQueue
+	err := queue.AssignProperties_To_NamespacesQueue(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from queue")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return queue.AssignProperties_To_NamespacesQueue(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-servicebus-azure-com-v1api20211101-namespacesqueue,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=servicebus.azure.com,resources=namespacesqueues,verbs=create;update,versions=v1api20211101,name=default.v1api20211101.namespacesqueues.servicebus.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &NamespacesQueue{}
-
-// Default applies defaults to the NamespacesQueue resource
-func (queue *NamespacesQueue) Default() {
-	queue.defaultImpl()
-	var temp any = queue
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (queue *NamespacesQueue) defaultAzureName() {
-	if queue.Spec.AzureName == "" {
-		queue.Spec.AzureName = queue.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the NamespacesQueue resource
-func (queue *NamespacesQueue) defaultImpl() { queue.defaultAzureName() }
 
 var _ configmaps.Exporter = &NamespacesQueue{}
 
@@ -112,17 +100,6 @@ func (queue *NamespacesQueue) SecretDestinationExpressions() []*core.Destination
 		return nil
 	}
 	return queue.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &NamespacesQueue{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (queue *NamespacesQueue) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*NamespacesQueue_STATUS); ok {
-		return queue.Spec.Initialize_From_NamespacesQueue_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type NamespacesQueue_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &NamespacesQueue{}
@@ -173,6 +150,10 @@ func (queue *NamespacesQueue) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (queue *NamespacesQueue) Owner() *genruntime.ResourceReference {
+	if queue.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(queue.Spec)
 	return queue.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +170,11 @@ func (queue *NamespacesQueue) SetStatus(status genruntime.ConvertibleStatus) err
 	var st NamespacesQueue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	queue.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-servicebus-azure-com-v1api20211101-namespacesqueue,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=servicebus.azure.com,resources=namespacesqueues,verbs=create;update,versions=v1api20211101,name=validate.v1api20211101.namespacesqueues.servicebus.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &NamespacesQueue{}
-
-// ValidateCreate validates the creation of the resource
-func (queue *NamespacesQueue) ValidateCreate() (admission.Warnings, error) {
-	validations := queue.createValidations()
-	var temp any = queue
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (queue *NamespacesQueue) ValidateDelete() (admission.Warnings, error) {
-	validations := queue.deleteValidations()
-	var temp any = queue
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (queue *NamespacesQueue) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := queue.updateValidations()
-	var temp any = queue
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (queue *NamespacesQueue) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){queue.validateResourceReferences, queue.validateOwnerReference, queue.validateSecretDestinations, queue.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (queue *NamespacesQueue) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (queue *NamespacesQueue) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return queue.validateResourceReferences()
-		},
-		queue.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return queue.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return queue.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return queue.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (queue *NamespacesQueue) validateConfigMapDestinations() (admission.Warnings, error) {
-	if queue.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(queue, nil, queue.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (queue *NamespacesQueue) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(queue)
-}
-
-// validateResourceReferences validates all resource references
-func (queue *NamespacesQueue) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&queue.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (queue *NamespacesQueue) validateSecretDestinations() (admission.Warnings, error) {
-	if queue.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(queue, nil, queue.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (queue *NamespacesQueue) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*NamespacesQueue)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, queue)
 }
 
 // AssignProperties_From_NamespacesQueue populates our NamespacesQueue from the provided source NamespacesQueue
@@ -309,7 +187,7 @@ func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *stor
 	var spec NamespacesQueue_Spec
 	err := spec.AssignProperties_From_NamespacesQueue_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueue_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueue_Spec() to populate field Spec")
 	}
 	queue.Spec = spec
 
@@ -317,7 +195,7 @@ func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *stor
 	var status NamespacesQueue_STATUS
 	err = status.AssignProperties_From_NamespacesQueue_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueue_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueue_STATUS() to populate field Status")
 	}
 	queue.Status = status
 
@@ -335,7 +213,7 @@ func (queue *NamespacesQueue) AssignProperties_To_NamespacesQueue(destination *s
 	var spec storage.NamespacesQueue_Spec
 	err := queue.Spec.AssignProperties_To_NamespacesQueue_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueue_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueue_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +221,7 @@ func (queue *NamespacesQueue) AssignProperties_To_NamespacesQueue(destination *s
 	var status storage.NamespacesQueue_STATUS
 	err = queue.Status.AssignProperties_To_NamespacesQueue_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueue_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueue_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -711,13 +589,13 @@ func (queue *NamespacesQueue_Spec) ConvertSpecFrom(source genruntime.Convertible
 	src = &storage.NamespacesQueue_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = queue.AssignProperties_From_NamespacesQueue_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -735,13 +613,13 @@ func (queue *NamespacesQueue_Spec) ConvertSpecTo(destination genruntime.Converti
 	dst = &storage.NamespacesQueue_Spec{}
 	err := queue.AssignProperties_To_NamespacesQueue_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -817,7 +695,7 @@ func (queue *NamespacesQueue_Spec) AssignProperties_From_NamespacesQueue_Spec(so
 		var operatorSpec NamespacesQueueOperatorSpec
 		err := operatorSpec.AssignProperties_From_NamespacesQueueOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
 		}
 		queue.OperatorSpec = &operatorSpec
 	} else {
@@ -924,7 +802,7 @@ func (queue *NamespacesQueue_Spec) AssignProperties_To_NamespacesQueue_Spec(dest
 		var operatorSpec storage.NamespacesQueueOperatorSpec
 		err := queue.OperatorSpec.AssignProperties_To_NamespacesQueueOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -963,88 +841,6 @@ func (queue *NamespacesQueue_Spec) AssignProperties_To_NamespacesQueue_Spec(dest
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_NamespacesQueue_STATUS populates our NamespacesQueue_Spec from the provided source NamespacesQueue_STATUS
-func (queue *NamespacesQueue_Spec) Initialize_From_NamespacesQueue_STATUS(source *NamespacesQueue_STATUS) error {
-
-	// AutoDeleteOnIdle
-	queue.AutoDeleteOnIdle = genruntime.ClonePointerToString(source.AutoDeleteOnIdle)
-
-	// DeadLetteringOnMessageExpiration
-	if source.DeadLetteringOnMessageExpiration != nil {
-		deadLetteringOnMessageExpiration := *source.DeadLetteringOnMessageExpiration
-		queue.DeadLetteringOnMessageExpiration = &deadLetteringOnMessageExpiration
-	} else {
-		queue.DeadLetteringOnMessageExpiration = nil
-	}
-
-	// DefaultMessageTimeToLive
-	queue.DefaultMessageTimeToLive = genruntime.ClonePointerToString(source.DefaultMessageTimeToLive)
-
-	// DuplicateDetectionHistoryTimeWindow
-	queue.DuplicateDetectionHistoryTimeWindow = genruntime.ClonePointerToString(source.DuplicateDetectionHistoryTimeWindow)
-
-	// EnableBatchedOperations
-	if source.EnableBatchedOperations != nil {
-		enableBatchedOperation := *source.EnableBatchedOperations
-		queue.EnableBatchedOperations = &enableBatchedOperation
-	} else {
-		queue.EnableBatchedOperations = nil
-	}
-
-	// EnableExpress
-	if source.EnableExpress != nil {
-		enableExpress := *source.EnableExpress
-		queue.EnableExpress = &enableExpress
-	} else {
-		queue.EnableExpress = nil
-	}
-
-	// EnablePartitioning
-	if source.EnablePartitioning != nil {
-		enablePartitioning := *source.EnablePartitioning
-		queue.EnablePartitioning = &enablePartitioning
-	} else {
-		queue.EnablePartitioning = nil
-	}
-
-	// ForwardDeadLetteredMessagesTo
-	queue.ForwardDeadLetteredMessagesTo = genruntime.ClonePointerToString(source.ForwardDeadLetteredMessagesTo)
-
-	// ForwardTo
-	queue.ForwardTo = genruntime.ClonePointerToString(source.ForwardTo)
-
-	// LockDuration
-	queue.LockDuration = genruntime.ClonePointerToString(source.LockDuration)
-
-	// MaxDeliveryCount
-	queue.MaxDeliveryCount = genruntime.ClonePointerToInt(source.MaxDeliveryCount)
-
-	// MaxMessageSizeInKilobytes
-	queue.MaxMessageSizeInKilobytes = genruntime.ClonePointerToInt(source.MaxMessageSizeInKilobytes)
-
-	// MaxSizeInMegabytes
-	queue.MaxSizeInMegabytes = genruntime.ClonePointerToInt(source.MaxSizeInMegabytes)
-
-	// RequiresDuplicateDetection
-	if source.RequiresDuplicateDetection != nil {
-		requiresDuplicateDetection := *source.RequiresDuplicateDetection
-		queue.RequiresDuplicateDetection = &requiresDuplicateDetection
-	} else {
-		queue.RequiresDuplicateDetection = nil
-	}
-
-	// RequiresSession
-	if source.RequiresSession != nil {
-		requiresSession := *source.RequiresSession
-		queue.RequiresSession = &requiresSession
-	} else {
-		queue.RequiresSession = nil
 	}
 
 	// No error
@@ -1170,13 +966,13 @@ func (queue *NamespacesQueue_STATUS) ConvertStatusFrom(source genruntime.Convert
 	src = &storage.NamespacesQueue_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = queue.AssignProperties_From_NamespacesQueue_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1194,13 +990,13 @@ func (queue *NamespacesQueue_STATUS) ConvertStatusTo(destination genruntime.Conv
 	dst = &storage.NamespacesQueue_STATUS{}
 	err := queue.AssignProperties_To_NamespacesQueue_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1483,7 +1279,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_From_NamespacesQueue_STATU
 		var countDetail MessageCountDetails_STATUS
 		err := countDetail.AssignProperties_From_MessageCountDetails_STATUS(source.CountDetails)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MessageCountDetails_STATUS() to populate field CountDetails")
+			return eris.Wrap(err, "calling AssignProperties_From_MessageCountDetails_STATUS() to populate field CountDetails")
 		}
 		queue.CountDetails = &countDetail
 	} else {
@@ -1594,7 +1390,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_From_NamespacesQueue_STATU
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		queue.SystemData = &systemDatum
 	} else {
@@ -1630,7 +1426,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_To_NamespacesQueue_STATUS(
 		var countDetail storage.MessageCountDetails_STATUS
 		err := queue.CountDetails.AssignProperties_To_MessageCountDetails_STATUS(&countDetail)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MessageCountDetails_STATUS() to populate field CountDetails")
+			return eris.Wrap(err, "calling AssignProperties_To_MessageCountDetails_STATUS() to populate field CountDetails")
 		}
 		destination.CountDetails = &countDetail
 	} else {
@@ -1740,7 +1536,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_To_NamespacesQueue_STATUS(
 		var systemDatum storage.SystemData_STATUS
 		err := queue.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
