@@ -1,6 +1,7 @@
 package validation
 
 import (
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/url"
@@ -60,6 +61,10 @@ const hostCryptBypassedAnnotation = "install.openshift.io/hostcrypt-check-bypass
 
 // list of known plugins that require hostPrefix to be set
 var pluginsUsingHostPrefix = sets.NewString(string(operv1.NetworkTypeOVNKubernetes))
+
+type imagePullSecret struct {
+	Auths map[string]map[string]interface{} `json:"auths"`
+}
 
 // ValidateInstallConfig checks that the specified install config is valid.
 //
@@ -163,11 +168,11 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	if c.Proxy != nil {
 		allErrs = append(allErrs, validateProxy(c.Proxy, c, field.NewPath("proxy"))...)
 	}
-	allErrs = append(allErrs, validateImageContentSources(c.DeprecatedImageContentSources, field.NewPath("imageContentSources"))...)
+	allErrs = append(allErrs, validateImageContentSources(c.DeprecatedImageContentSources, c.PullSecret, field.NewPath("imageContentSources"))...)
 	if _, ok := validPublishingStrategies[c.Publish]; !ok {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
-	allErrs = append(allErrs, validateImageDigestSources(c.ImageDigestSources, field.NewPath("imageDigestSources"))...)
+	allErrs = append(allErrs, validateImageDigestSources(c.ImageDigestSources, c.PullSecret, field.NewPath("imageDigestSources"))...)
 	if _, ok := validPublishingStrategies[c.Publish]; !ok {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("publish"), c.Publish, validPublishingStrategyValues))
 	}
@@ -1218,8 +1223,11 @@ func validateProxy(p *types.Proxy, c *types.InstallConfig, fldPath *field.Path) 
 	return allErrs
 }
 
-func validateImageContentSources(groups []types.ImageContentSource, fldPath *field.Path) field.ErrorList {
+func validateImageContentSources(groups []types.ImageContentSource, pullSecret string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	var allMirrors []string
+
 	for gidx, group := range groups {
 		groupf := fldPath.Index(gidx)
 		if err := validateNamedRepository(group.Source); err != nil {
@@ -1231,13 +1239,19 @@ func validateImageContentSources(groups []types.ImageContentSource, fldPath *fie
 				allErrs = append(allErrs, field.Invalid(groupf.Child("mirrors").Index(midx), mirror, err.Error()))
 				continue
 			}
+
+			allMirrors = append(allMirrors, mirror)
 		}
 	}
+	allErrs = append(allErrs, validateMirrorCredentials(allMirrors, pullSecret)...)
 	return allErrs
 }
 
-func validateImageDigestSources(groups []types.ImageDigestSource, fldPath *field.Path) field.ErrorList {
+func validateImageDigestSources(groups []types.ImageDigestSource, pullSecret string, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
+
+	var allMirrors []string
+
 	for gidx, group := range groups {
 		groupf := fldPath.Index(gidx)
 		if err := validateNamedRepository(group.Source); err != nil {
@@ -1249,6 +1263,8 @@ func validateImageDigestSources(groups []types.ImageDigestSource, fldPath *field
 				allErrs = append(allErrs, field.Invalid(groupf.Child("mirrors").Index(midx), mirror, err.Error()))
 				continue
 			}
+
+			allMirrors = append(allMirrors, mirror)
 		}
 		if group.SourcePolicy != "" {
 			if len(group.Mirrors) == 0 {
@@ -1259,6 +1275,7 @@ func validateImageDigestSources(groups []types.ImageDigestSource, fldPath *field
 			}
 		}
 	}
+	allErrs = append(allErrs, validateMirrorCredentials(allMirrors, pullSecret)...)
 	return allErrs
 }
 
@@ -1701,4 +1718,52 @@ func sortedPresenceKeys(presence ipAddressTypeByField) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// validateMirrorCredentials checks if mirror registry hosts are present in the pull secret.
+func validateMirrorCredentials(mirrors []string, pullSecret string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	var ps imagePullSecret
+	if err := validate.ImagePullSecret(pullSecret); err != nil {
+		return allErrs
+	}
+	if err := json.Unmarshal([]byte(pullSecret), &ps); err != nil {
+		return allErrs
+	}
+
+	missingHosts := sets.New[string]()
+	for _, mirror := range mirrors {
+		mirrorHost, err := extractRegistryHost(mirror)
+		if err != nil {
+			continue // Skip if we can't extract the host
+		}
+		if _, found := ps.Auths[mirrorHost]; !found {
+			missingHosts.Insert(mirrorHost)
+		}
+	}
+
+	for host := range missingHosts {
+		// Log warnings for registries without credentials
+		logrus.Warnf("Mirror registry %q is not found in pullSecret", host)
+	}
+
+	return allErrs
+}
+
+// extractRegistryHost extracts the registry host (with port if any) from a repository string.
+// For example: "registry.example.com:5000/namespace/repo" -> "registry.example.com:5000".
+// Returns an error if the repository string cannot be parsed as either a named reference or a host.
+func extractRegistryHost(repository string) (string, error) {
+	ref, err := dockerref.ParseNamed(repository)
+	if err != nil {
+		// ErrNameNotCanonical indicates the input is not a fully-qualified repository reference
+		// (e.g., "registry.example.com:5000" without a path, or short names like "ocp/release").
+		// In these cases, return the input as-is.
+		if errors.Is(err, dockerref.ErrNameNotCanonical) {
+			return repository, nil
+		}
+		return "", err
+	}
+	return dockerref.Domain(ref), nil
 }
