@@ -9,8 +9,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/aws/aws-sdk-go/service/ec2"
-	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/jarcoal/httpmock"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -1332,7 +1333,7 @@ func TestIsHostedZoneDomainParentOfClusterDomain(t *testing.T) {
 	}}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			zone := &route53.HostedZone{Name: &tc.hostedZoneDomain}
+			zone := &route53types.HostedZone{Name: &tc.hostedZoneDomain}
 			actual := isHostedZoneDomainParentOfClusterDomain(zone, tc.clusterDomain)
 			assert.Equal(t, tc.expected, actual)
 		})
@@ -1377,21 +1378,21 @@ func TestValidateForProvisioning(t *testing.T) {
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
-	route53Client := mock.NewMockAPI(mockCtrl)
+	route53Client := mock.NewMockRoute53API(mockCtrl)
 
 	validHostedZoneOutput := createValidHostedZoneOutput()
 	validDomainOutput := createBaseDomainHostedZoneOutput()
 
-	route53Client.EXPECT().GetBaseDomain(validDomainName).Return(&validDomainOutput, nil).AnyTimes()
-	route53Client.EXPECT().GetBaseDomain("").Return(nil, fmt.Errorf("invalid value: \"\": cannot find base domain")).AnyTimes()
-	route53Client.EXPECT().GetBaseDomain(invalidBaseDomain).Return(nil, fmt.Errorf("invalid value: \"%s\": cannot find base domain", invalidBaseDomain)).AnyTimes()
+	route53Client.EXPECT().GetBaseDomain(t.Context(), validDomainName).Return(&validDomainOutput, nil).AnyTimes()
+	route53Client.EXPECT().GetBaseDomain(t.Context(), "").Return(nil, fmt.Errorf("invalid value: \"\": cannot find base domain")).AnyTimes()
+	route53Client.EXPECT().GetBaseDomain(t.Context(), invalidBaseDomain).Return(nil, fmt.Errorf("invalid value: \"%s\": cannot find base domain", invalidBaseDomain)).AnyTimes()
 
-	route53Client.EXPECT().ValidateZoneRecords(&validDomainOutput, gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
-	route53Client.EXPECT().ValidateZoneRecords(gomock.Any(), validHostedZoneName, gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
+	route53Client.EXPECT().ValidateZoneRecords(t.Context(), &validDomainOutput, gomock.Any(), gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
+	route53Client.EXPECT().ValidateZoneRecords(t.Context(), gomock.Any(), validHostedZoneName, gomock.Any(), gomock.Any()).Return(field.ErrorList{}).AnyTimes()
 
 	// An invalid hosted zone should provide an error
-	route53Client.EXPECT().GetHostedZone(validHostedZoneName, gomock.Any()).Return(&validHostedZoneOutput, nil).AnyTimes()
-	route53Client.EXPECT().GetHostedZone(gomock.Not(validHostedZoneName), gomock.Any()).Return(nil, fmt.Errorf("invalid value: \"invalid-hosted-zone\": cannot find hosted zone")).AnyTimes()
+	route53Client.EXPECT().GetHostedZone(t.Context(), validHostedZoneName).Return(&validHostedZoneOutput, nil).AnyTimes()
+	route53Client.EXPECT().GetHostedZone(t.Context(), gomock.Not(validHostedZoneName)).Return(nil, fmt.Errorf("invalid value: \"invalid-hosted-zone\": cannot find hosted zone")).AnyTimes()
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
@@ -1412,7 +1413,7 @@ func TestValidateForProvisioning(t *testing.T) {
 				ProvidedSubnets: ic.Platform.AWS.VPC.Subnets,
 			}
 
-			err := ValidateForProvisioning(route53Client, ic, meta)
+			err := ValidateForProvisioning(t.Context(), route53Client, route53Client, ic, meta)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1455,7 +1456,7 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
-	route53Client := mock.NewMockAPI(mockCtrl)
+	route53Client := mock.NewMockRoute53API(mockCtrl)
 
 	for _, test := range cases {
 
@@ -1463,7 +1464,7 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 			ic := icBuild.build(icBuild.withBaseDomain(test.baseDomain))
 			if test.expectedErr != "" {
 				if test.problematicRecords == nil {
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, fmt.Errorf("%s", test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(t.Context(), &validDomainOutput, ic).Return(nil, fmt.Errorf("%s", test.expectedErr)).AnyTimes()
 				} else {
 					// mimic the results of what should happen in the internal function passed to
 					// ListResourceRecordSetsPages by GetSubDomainDNSRecords. Skip certain problematicRecords
@@ -1474,13 +1475,13 @@ func TestGetSubDomainDNSRecords(t *testing.T) {
 							returnedProblems = append(returnedProblems, pr)
 						}
 					}
-					route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(returnedProblems, fmt.Errorf("%s", test.expectedErr)).AnyTimes()
+					route53Client.EXPECT().GetSubDomainDNSRecords(t.Context(), &validDomainOutput, ic).Return(returnedProblems, fmt.Errorf("%s", test.expectedErr)).AnyTimes()
 				}
 			} else {
-				route53Client.EXPECT().GetSubDomainDNSRecords(&validDomainOutput, ic, gomock.Any()).Return(nil, nil).AnyTimes()
+				route53Client.EXPECT().GetSubDomainDNSRecords(t.Context(), &validDomainOutput, ic).Return(nil, nil).AnyTimes()
 			}
 
-			_, err := route53Client.GetSubDomainDNSRecords(&validDomainOutput, ic, nil)
+			_, err := route53Client.GetSubDomainDNSRecords(t.Context(), &validDomainOutput, ic)
 			if test.expectedErr == "" {
 				assert.NoError(t, err)
 			} else {
@@ -1832,8 +1833,8 @@ func validInstanceTypes() map[string]InstanceType {
 	}
 }
 
-func createBaseDomainHostedZoneOutput() route53.HostedZone {
-	return route53.HostedZone{
+func createBaseDomainHostedZoneOutput() route53types.HostedZone {
+	return route53types.HostedZone{
 		CallerReference: &validCallerRef,
 		Id:              &validDSId,
 		Name:            &validDomainName,
@@ -1841,14 +1842,9 @@ func createBaseDomainHostedZoneOutput() route53.HostedZone {
 }
 
 func createValidHostedZoneOutput() route53.GetHostedZoneOutput {
-	ptrValidNameServers := []*string{}
-	for i := range validNameServers {
-		ptrValidNameServers = append(ptrValidNameServers, &validNameServers[i])
-	}
-
-	validDelegationSet := route53.DelegationSet{CallerReference: &validCallerRef, Id: &validDSId, NameServers: ptrValidNameServers}
-	validHostedZone := route53.HostedZone{CallerReference: &validCallerRef, Id: &validDSId, Name: &validHostedZoneName}
-	validVPCs := []*route53.VPC{{VPCId: &validVPCID, VPCRegion: &validAvailRegions()[0]}}
+	validDelegationSet := route53types.DelegationSet{CallerReference: &validCallerRef, Id: &validDSId, NameServers: validNameServers}
+	validHostedZone := route53types.HostedZone{CallerReference: &validCallerRef, Id: &validDSId, Name: &validHostedZoneName}
+	validVPCs := []route53types.VPC{{VPCId: &validVPCID, VPCRegion: route53types.VPCRegion(validAvailRegions()[0])}}
 
 	return route53.GetHostedZoneOutput{
 		DelegationSet: &validDelegationSet,
