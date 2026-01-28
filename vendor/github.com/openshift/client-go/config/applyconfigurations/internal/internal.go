@@ -164,6 +164,10 @@ var schemaYAML = typed.YAMLObject(`types:
         namedType: com.github.openshift.api.config.v1.CloudLoadBalancerConfig
       default:
         dnsType: PlatformDefault
+    - name: ipFamily
+      type:
+        scalar: string
+      default: IPv4
     - name: region
       type:
         scalar: string
@@ -363,6 +367,10 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: cloudName
       type:
         scalar: string
+    - name: ipFamily
+      type:
+        scalar: string
+      default: IPv4
     - name: networkResourceGroupName
       type:
         scalar: string
@@ -429,6 +437,9 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             scalar: string
           elementRelationship: atomic
+    - name: dnsRecordsType
+      type:
+        scalar: string
     - name: ingressIP
       type:
         scalar: string
@@ -1386,14 +1397,6 @@ var schemaYAML = typed.YAMLObject(`types:
           elementRelationship: associative
           keys:
           - key
-    - name: serviceEndpoints
-      type:
-        list:
-          elementType:
-            namedType: com.github.openshift.api.config.v1.GCPServiceEndpoint
-          elementRelationship: associative
-          keys:
-          - name
 - name: com.github.openshift.api.config.v1.GCPResourceLabel
   map:
     fields:
@@ -1417,17 +1420,6 @@ var schemaYAML = typed.YAMLObject(`types:
         scalar: string
       default: ""
     - name: value
-      type:
-        scalar: string
-      default: ""
-- name: com.github.openshift.api.config.v1.GCPServiceEndpoint
-  map:
-    fields:
-    - name: name
-      type:
-        scalar: string
-      default: ""
-    - name: url
       type:
         scalar: string
       default: ""
@@ -2499,6 +2491,9 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             scalar: string
           elementRelationship: associative
+    - name: dnsRecordsType
+      type:
+        scalar: string
     - name: ingressIP
       type:
         scalar: string
@@ -2860,6 +2855,9 @@ var schemaYAML = typed.YAMLObject(`types:
     - name: cloudName
       type:
         scalar: string
+    - name: dnsRecordsType
+      type:
+        scalar: string
     - name: ingressIP
       type:
         scalar: string
@@ -2969,6 +2967,9 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             scalar: string
           elementRelationship: associative
+    - name: dnsRecordsType
+      type:
+        scalar: string
     - name: ingressIP
       type:
         scalar: string
@@ -3970,6 +3971,9 @@ var schemaYAML = typed.YAMLObject(`types:
           elementType:
             scalar: string
           elementRelationship: atomic
+    - name: dnsRecordsType
+      type:
+        scalar: string
     - name: ingressIP
       type:
         scalar: string
