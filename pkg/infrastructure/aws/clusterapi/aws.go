@@ -115,11 +115,6 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		return fmt.Errorf("failed to get AWSCluster: %w", err)
 	}
 
-	awsSession, err := in.InstallConfig.AWS.Session(ctx)
-	if err != nil {
-		return fmt.Errorf("failed to get aws session: %w", err)
-	}
-
 	subnetIDs := make([]string, 0, len(awsCluster.Spec.NetworkSpec.Subnets))
 	for _, s := range awsCluster.Spec.NetworkSpec.Subnets {
 		subnetIDs = append(subnetIDs, s.ResourceID)
@@ -128,13 +123,17 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	vpcID := awsCluster.Spec.NetworkSpec.VPC.ID
 	if len(subnetIDs) > 0 && len(vpcID) == 0 {
 		// All subnets belong to the same VPC, so we only need one
-		vpcID, err = getVPCFromSubnets(ctx, in.InstallConfig, subnetIDs[:1])
+		id, err := getVPCFromSubnets(ctx, in.InstallConfig, subnetIDs[:1])
 		if err != nil {
 			return err
 		}
+		vpcID = id
 	}
 
-	client := awsconfig.NewClient(awsSession)
+	clientset := awsconfig.NewRoute53Clientset(awsconfig.EndpointOptions{
+		Region:    in.InstallConfig.AWS.Region,
+		Endpoints: in.InstallConfig.AWS.Services,
+	})
 
 	// The user has selected to provision their own DNS solution. Skip the creation of the
 	// Hosted Zone(s) and the records for those zones.
@@ -145,11 +144,24 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 
 	logrus.Infoln("Creating Route53 records for control plane load balancer")
 
+	publicHzClient, err := clientset.WithDefault(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create route 53 client: %w", err)
+	}
+
+	privHzClient := publicHzClient
+	if len(in.InstallConfig.Config.AWS.HostedZoneRole) > 0 {
+		privHzClient, err = clientset.WithAssumedRole(ctx, in.InstallConfig.Config.AWS.HostedZoneRole)
+		if err != nil {
+			return fmt.Errorf("failed to create route 53 client: %w", err)
+		}
+	}
+
 	phzID := in.InstallConfig.Config.AWS.HostedZone
 	if len(phzID) == 0 {
 		logrus.Debugln("Creating private Hosted Zone")
 
-		res, err := client.CreateHostedZone(ctx, &awsconfig.HostedZoneInput{
+		res, err := privHzClient.CreateHostedZone(ctx, &awsconfig.HostedZoneInput{
 			InfraID:  in.InfraID,
 			VpcID:    vpcID,
 			Region:   awsCluster.Spec.Region,
@@ -169,7 +181,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 
 	// Create api record in public zone
 	if in.InstallConfig.Config.PublicAPI() {
-		zone, err := client.GetBaseDomain(in.InstallConfig.Config.BaseDomain)
+		zone, err := publicHzClient.GetBaseDomain(ctx, in.InstallConfig.Config.BaseDomain)
 		if err != nil {
 			return err
 		}
@@ -180,13 +192,12 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			return fmt.Errorf("failed to find HostedZone ID for NLB: %w", err)
 		}
 
-		if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-			Name:           apiName,
-			Region:         awsCluster.Spec.Region,
-			DNSTarget:      pubLB.DNSName,
-			ZoneID:         *zone.Id,
-			AliasZoneID:    aliasZoneID,
-			HostedZoneRole: "", // we dont want to assume role here
+		if err := publicHzClient.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
+			Name:        apiName,
+			Region:      awsCluster.Spec.Region,
+			DNSTarget:   pubLB.DNSName,
+			ZoneID:      *zone.Id,
+			AliasZoneID: aliasZoneID,
 		}); err != nil {
 			return fmt.Errorf("failed to create records for api in public zone: %w", err)
 		}
@@ -199,26 +210,24 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	}
 
 	// Create api record in private zone
-	if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-		Name:           apiName,
-		Region:         awsCluster.Spec.Region,
-		DNSTarget:      awsCluster.Spec.ControlPlaneEndpoint.Host,
-		ZoneID:         phzID,
-		AliasZoneID:    aliasZoneID,
-		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+	if err := privHzClient.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
+		Name:        apiName,
+		Region:      awsCluster.Spec.Region,
+		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
+		ZoneID:      phzID,
+		AliasZoneID: aliasZoneID,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api in private zone: %w", err)
 	}
 	logrus.Debugln("Created public API record in private zone")
 
 	// Create api-int record in private zone
-	if err := client.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
-		Name:           apiIntName,
-		Region:         awsCluster.Spec.Region,
-		DNSTarget:      awsCluster.Spec.ControlPlaneEndpoint.Host,
-		ZoneID:         phzID,
-		AliasZoneID:    aliasZoneID,
-		HostedZoneRole: in.InstallConfig.Config.AWS.HostedZoneRole,
+	if err := privHzClient.CreateOrUpdateRecord(ctx, &awsconfig.CreateRecordInput{
+		Name:        apiIntName,
+		Region:      awsCluster.Spec.Region,
+		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
+		ZoneID:      phzID,
+		AliasZoneID: aliasZoneID,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
@@ -269,7 +278,7 @@ func getVPCFromSubnets(ctx context.Context, ic *installconfig.InstallConfig, sub
 
 // getHostedZoneIDForNLB returns the HostedZone ID for a region from a known table or queries it from the LB instead.
 func getHostedZoneIDForNLB(ctx context.Context, ic *installconfig.InstallConfig, lbName string) (string, error) {
-	if hzID, ok := awsconfig.HostedZoneIDPerRegionNLBMap[ic.Config.AWS.Region]; ok {
+	if hzID, ok := awstypes.HostedZoneIDPerRegionNLBMap[ic.Config.AWS.Region]; ok {
 		return hzID, nil
 	}
 

@@ -5,12 +5,11 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/credentials/stscreds"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
-	awss "github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"k8s.io/apimachinery/pkg/util/rand"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -20,38 +19,75 @@ import (
 
 //go:generate mockgen -source=./route53.go -destination=mock/awsroute53_generated.go -package=mock
 
-// regions for which ALIAS records are not available
+const (
+	// RecordChangeMaxWaitTime defines the max duration to wait for a record set
+	// to apply changes.
+	RecordChangeMaxWaitTime = 5 * time.Minute
+)
+
 // https://docs.aws.amazon.com/govcloud-us/latest/UserGuide/govcloud-r53.html
-var cnameRegions = sets.New[string]("us-gov-west-1", "us-gov-east-1")
+// cnameRegions defines regions for which ALIAS records are not available.
+var cnameRegions = sets.New("us-gov-west-1", "us-gov-east-1")
 
-// API represents the calls made to the API.
-type API interface {
-	GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.GetHostedZoneOutput, error)
-	ValidateZoneRecords(zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig, cfg *aws.Config) field.ErrorList
-	GetBaseDomain(baseDomainName string) (*route53.HostedZone, error)
-	GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *types.InstallConfig, cfg *aws.Config) ([]string, error)
+// Route53Clientset is the Route 53 API client set.
+type Route53Clientset struct {
+	// clients is the map of clients indexed by IAM role if any.
+	// An empty role ARN means using loaded credentials without assuming any IAM role.
+	clients map[string]*Route53Client
+
+	// endpointOpts is the configurations for AWS SDK client's endpoint resolver.
+	endpointOpts EndpointOptions
 }
 
-// Client makes calls to the AWS Route53 API.
-type Client struct {
-	ssn *awss.Session
-}
-
-// NewClient initializes a client with a session.
-func NewClient(ssn *awss.Session) *Client {
-	client := &Client{
-		ssn: ssn,
+// WithAssumedRole returns a Route 53 client using credentials obtained from assuming an IAM role.
+func (c *Route53Clientset) WithAssumedRole(ctx context.Context, roleArn string) (*Route53Client, error) {
+	if client, ok := c.clients[roleArn]; ok {
+		return client, nil
 	}
-	return client
+
+	client, err := NewRoute53Client(ctx, c.endpointOpts, roleArn)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create route 53 client: %w", err)
+	}
+
+	c.clients[roleArn] = &Route53Client{client}
+	return c.clients[roleArn], nil
 }
 
-// GetHostedZone attempts to get the hosted zone from the AWS Route53 instance
-func (c *Client) GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.GetHostedZoneOutput, error) {
-	// build a new Route53 instance from the same session that made it here
-	r53 := route53.New(c.ssn, cfg)
+// WithDefault returns a Route 53 client using credentials loaded directly from environment
+// without assuming an IAM role.
+func (c *Route53Clientset) WithDefault(ctx context.Context) (*Route53Client, error) {
+	return c.WithAssumedRole(ctx, "")
+}
 
+// NewRoute53Clientset initializes a client with a session.
+func NewRoute53Clientset(endpointOpts EndpointOptions) *Route53Clientset {
+	return &Route53Clientset{
+		endpointOpts: endpointOpts,
+		clients:      make(map[string]*Route53Client),
+	}
+}
+
+// Route53API defines the Route 53 API interface.
+type Route53API interface {
+	GetHostedZone(ctx context.Context, hostedZone string) (*route53.GetHostedZoneOutput, error)
+	ValidateZoneRecords(ctx context.Context, zone *route53types.HostedZone, zoneName string, fldPath *field.Path, ic *types.InstallConfig) field.ErrorList
+	GetBaseDomain(ctx context.Context, baseDomainName string) (*route53types.HostedZone, error)
+	GetSubDomainDNSRecords(ctx context.Context, hostedZone *route53types.HostedZone, ic *types.InstallConfig) ([]string, error)
+}
+
+// Route53Client is the Route 53 API client.
+type Route53Client struct {
+	client *route53.Client
+}
+
+// Make sure Client implements the API interface.
+var _ Route53API = (*Route53Client)(nil)
+
+// GetHostedZone attempts to get the hosted zone from the AWS Route53 instance.
+func (c *Route53Client) GetHostedZone(ctx context.Context, hostedZone string) (*route53.GetHostedZoneOutput, error) {
 	// validate that the hosted zone exists
-	hostedZoneOutput, err := r53.GetHostedZone(&route53.GetHostedZoneInput{Id: aws.String(hostedZone)})
+	hostedZoneOutput, err := c.client.GetHostedZone(ctx, &route53.GetHostedZoneInput{Id: aws.String(hostedZone)})
 	if err != nil {
 		return nil, fmt.Errorf("could not get hosted zone: %s: %w", hostedZone, err)
 	}
@@ -59,10 +95,10 @@ func (c *Client) GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.Get
 }
 
 // ValidateZoneRecords Attempts to validate each of the candidate HostedZones against the Config
-func (c *Client) ValidateZoneRecords(zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig, cfg *aws.Config) field.ErrorList {
+func (c *Route53Client) ValidateZoneRecords(ctx context.Context, zone *route53types.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	problematicRecords, err := c.GetSubDomainDNSRecords(zone, ic, cfg)
+	problematicRecords, err := c.GetSubDomainDNSRecords(ctx, zone, ic)
 	if err != nil {
 		allErrs = append(allErrs, field.InternalError(zonePath,
 			fmt.Errorf("could not list record sets for domain %q: %w", zoneName, err)))
@@ -81,7 +117,7 @@ func (c *Client) ValidateZoneRecords(zone *route53.HostedZone, zoneName string, 
 
 // GetSubDomainDNSRecords Validates the hostedZone against the cluster domain, and ensures that the
 // cluster domain does not have a current record set for the hostedZone
-func (c *Client) GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *types.InstallConfig, cfg *aws.Config) ([]string, error) {
+func (c *Route53Client) GetSubDomainDNSRecords(ctx context.Context, hostedZone *route53types.HostedZone, ic *types.InstallConfig) ([]string, error) {
 	dottedClusterDomain := ic.ClusterDomain() + "."
 
 	// validate that the domain of the hosted zone is the cluster domain or a parent of the cluster domain
@@ -89,24 +125,23 @@ func (c *Client) GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *type
 		return nil, fmt.Errorf("hosted zone domain %q is not a parent of the cluster domain %q", *hostedZone.Name, dottedClusterDomain)
 	}
 
-	r53 := route53.New(c.ssn, cfg)
-
 	var problematicRecords []string
+
 	// validate that the hosted zone does not already have any record sets for the cluster domain
-	if err := r53.ListResourceRecordSetsPages(
-		&route53.ListResourceRecordSetsInput{HostedZoneId: hostedZone.Id},
-		func(out *route53.ListResourceRecordSetsOutput, lastPage bool) bool {
-			for _, recordSet := range out.ResourceRecordSets {
-				name := aws.StringValue(recordSet.Name)
-				if skipRecord(name, dottedClusterDomain) {
-					continue
-				}
-				problematicRecords = append(problematicRecords, fmt.Sprintf("%s (%s)", name, aws.StringValue(recordSet.Type)))
+	paginator := route53.NewListResourceRecordSetsPaginator(c.client, &route53.ListResourceRecordSetsInput{HostedZoneId: hostedZone.Id})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list record sets for zone %s: %w", aws.ToString(hostedZone.Id), err)
+		}
+
+		for _, recordSet := range page.ResourceRecordSets {
+			name := aws.ToString(recordSet.Name)
+			if skipRecord(name, dottedClusterDomain) {
+				continue
 			}
-			return !lastPage
-		},
-	); err != nil {
-		return nil, err
+			problematicRecords = append(problematicRecords, fmt.Sprintf("%s (%s)", name, recordSet.Type))
+		}
 	}
 
 	return problematicRecords, nil
@@ -128,31 +163,20 @@ func skipRecord(recordName string, dottedClusterDomain string) bool {
 	return false
 }
 
-func isHostedZoneDomainParentOfClusterDomain(hostedZone *route53.HostedZone, dottedClusterDomain string) bool {
-	if *hostedZone.Name == dottedClusterDomain {
+func isHostedZoneDomainParentOfClusterDomain(hostedZone *route53types.HostedZone, dottedClusterDomain string) bool {
+	if aws.ToString(hostedZone.Name) == dottedClusterDomain {
 		return true
 	}
-	return strings.HasSuffix(dottedClusterDomain, "."+*hostedZone.Name)
+	return strings.HasSuffix(dottedClusterDomain, "."+aws.ToString(hostedZone.Name))
 }
 
 // GetBaseDomain Gets the Domain Zone with the matching domain name from the session
-func (c *Client) GetBaseDomain(baseDomainName string) (*route53.HostedZone, error) {
-	baseDomainZone, err := GetPublicZone(c.ssn, baseDomainName)
+func (c *Route53Client) GetBaseDomain(ctx context.Context, baseDomainName string) (*route53types.HostedZone, error) {
+	baseDomainZone, err := GetPublicZone(ctx, c.client, baseDomainName)
 	if err != nil {
 		return nil, fmt.Errorf("could not find public zone: %s: %w", baseDomainName, err)
 	}
 	return baseDomainZone, nil
-}
-
-// GetR53ClientCfg creates a config for the route53 client by determining
-// whether it is needed to obtain STS assume role credentials.
-func GetR53ClientCfg(sess *awss.Session, roleARN string) *aws.Config {
-	if roleARN == "" {
-		return nil
-	}
-
-	creds := stscreds.NewCredentials(sess, roleARN)
-	return &aws.Config{Credentials: creds}
 }
 
 // CreateRecordInput collects information for creating a record.
@@ -167,46 +191,42 @@ type CreateRecordInput struct {
 	ZoneID string
 	// ID of the Hosted Zone for Alias record.
 	AliasZoneID string
-	// Role to assume to create the record. Leave empty to not assume role.
-	HostedZoneRole string
 }
 
 // CreateOrUpdateRecord Creates or Updates the Route53 Record for the cluster endpoint.
-func (c *Client) CreateOrUpdateRecord(ctx context.Context, in *CreateRecordInput) error {
-	recordSet := &route53.ResourceRecordSet{
+func (c *Route53Client) CreateOrUpdateRecord(ctx context.Context, in *CreateRecordInput) error {
+	recordSet := &route53types.ResourceRecordSet{
 		Name: aws.String(in.Name),
 	}
 	if cnameRegions.Has(in.Region) {
-		recordSet.SetType("CNAME")
-		recordSet.SetTTL(10)
-		recordSet.SetResourceRecords([]*route53.ResourceRecord{
+		recordSet.Type = route53types.RRTypeCname
+		recordSet.TTL = aws.Int64(10)
+		recordSet.ResourceRecords = []route53types.ResourceRecord{
 			{Value: aws.String(in.DNSTarget)},
-		})
+		}
 	} else {
-		recordSet.SetType("A")
-		recordSet.SetAliasTarget(&route53.AliasTarget{
+		recordSet.Type = route53types.RRTypeA
+		recordSet.AliasTarget = &route53types.AliasTarget{
 			DNSName:              aws.String(in.DNSTarget),
 			HostedZoneId:         aws.String(in.AliasZoneID),
-			EvaluateTargetHealth: aws.Bool(false),
-		})
+			EvaluateTargetHealth: false,
+		}
 	}
 	input := &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: aws.String(in.ZoneID),
-		ChangeBatch: &route53.ChangeBatch{
+		ChangeBatch: &route53types.ChangeBatch{
 			Comment: aws.String(fmt.Sprintf("Creating record %s", in.Name)),
-			Changes: []*route53.Change{
+			Changes: []route53types.Change{
 				{
-					Action:            aws.String("UPSERT"),
+					Action:            route53types.ChangeActionUpsert,
 					ResourceRecordSet: recordSet,
 				},
 			},
 		},
 	}
 
-	// Create service with assumed role, if set
-	svc := route53.New(c.ssn, GetR53ClientCfg(c.ssn, in.HostedZoneRole))
+	_, err := c.client.ChangeResourceRecordSets(ctx, input)
 
-	_, err := svc.ChangeResourceRecordSetsWithContext(ctx, input)
 	return err
 }
 
@@ -221,34 +241,31 @@ type HostedZoneInput struct {
 }
 
 // CreateHostedZone creates a private hosted zone.
-func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (*route53.HostedZone, error) {
-	cfg := GetR53ClientCfg(c.ssn, input.Role)
-	svc := route53.New(c.ssn, cfg)
-
+func (c *Route53Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (*route53types.HostedZone, error) {
 	// CallerReference needs to be a unique string. We include the infra id,
 	// which is unique, in case that is helpful for human debugging. A random
 	// string of an arbitrary length is appended in case the infra id is reused
 	// which is generally not supposed to happen but does in some edge cases.
 	callerRef := aws.String(fmt.Sprintf("%s-%s", input.InfraID, rand.String(5)))
 
-	res, err := svc.CreateHostedZoneWithContext(ctx, &route53.CreateHostedZoneInput{
+	res, err := c.client.CreateHostedZone(ctx, &route53.CreateHostedZoneInput{
 		CallerReference: callerRef,
 		Name:            aws.String(input.Name),
-		HostedZoneConfig: &route53.HostedZoneConfig{
-			PrivateZone: aws.Bool(true),
+		HostedZoneConfig: &route53types.HostedZoneConfig{
+			PrivateZone: true,
 			Comment:     aws.String("Created by Openshift Installer"),
 		},
-		VPC: &route53.VPC{
+		VPC: &route53types.VPC{
 			VPCId:     aws.String(input.VpcID),
-			VPCRegion: aws.String(input.Region),
+			VPCRegion: route53types.VPCRegion(input.Region),
 		},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("error creating private hosted zone: %w", err)
+		return nil, fmt.Errorf("failed to create private hosted zone: %w", err)
 	}
 
 	if res == nil {
-		return nil, fmt.Errorf("error creating private hosted zone: %w", err)
+		return nil, fmt.Errorf("failed to create private hosted zone")
 	}
 
 	// Tag the hosted zone
@@ -256,9 +273,12 @@ func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (
 		"Name": fmt.Sprintf("%s-int", input.InfraID),
 		fmt.Sprintf("kubernetes.io/cluster/%s", input.InfraID): "owned",
 	})
-	_, err = svc.ChangeTagsForResourceWithContext(ctx, &route53.ChangeTagsForResourceInput{
-		ResourceType: aws.String("hostedzone"),
-		ResourceId:   res.HostedZone.Id,
+
+	// Of all the route53 actions being used in the installer, the AWS SDK v2 does sanitize the hosted zone ID to remove any resource prefix except ChangeTagsForResource.
+	hostedZoneID := sanitizeHostedZoneID(aws.ToString(res.HostedZone.Id))
+	_, err = c.client.ChangeTagsForResource(ctx, &route53.ChangeTagsForResourceInput{
+		ResourceType: route53types.TagResourceTypeHostedzone,
+		ResourceId:   aws.String(hostedZoneID),
 		AddTags:      r53Tags(tags),
 	})
 	if err != nil {
@@ -266,26 +286,26 @@ func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (
 	}
 
 	// Set SOA minimum TTL
-	recordSet, err := existingRecordSet(ctx, svc, res.HostedZone.Id, input.Name, "SOA")
+	recordSet, err := existingRecordSet(ctx, c.client, res.HostedZone.Id, input.Name, route53types.RRTypeSoa)
 	if err != nil {
 		return nil, fmt.Errorf("failed to find SOA record set for private zone: %w", err)
 	}
-	if len(recordSet.ResourceRecords) == 0 || recordSet.ResourceRecords[0] == nil || recordSet.ResourceRecords[0].Value == nil {
+	if len(recordSet.ResourceRecords) == 0 || recordSet.ResourceRecords[0].Value == nil {
 		return nil, fmt.Errorf("failed to find SOA record for private zone")
 	}
 	record := recordSet.ResourceRecords[0]
-	fields := strings.Split(aws.StringValue(record.Value), " ")
+	fields := strings.Split(aws.ToString(record.Value), " ")
 	if len(fields) != 7 {
 		return nil, fmt.Errorf("SOA record value has %d fields, expected 7", len(fields))
 	}
 	fields[0] = "60"
 	record.Value = aws.String(strings.Join(fields, " "))
-	req, err := svc.ChangeResourceRecordSetsWithContext(ctx, &route53.ChangeResourceRecordSetsInput{
+	req, err := c.client.ChangeResourceRecordSets(ctx, &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: res.HostedZone.Id,
-		ChangeBatch: &route53.ChangeBatch{
-			Changes: []*route53.Change{
+		ChangeBatch: &route53types.ChangeBatch{
+			Changes: []route53types.Change{
 				{
-					Action:            aws.String("UPSERT"),
+					Action:            route53types.ChangeActionUpsert,
 					ResourceRecordSet: recordSet,
 				},
 			},
@@ -295,33 +315,35 @@ func (c *Client) CreateHostedZone(ctx context.Context, input *HostedZoneInput) (
 		return nil, fmt.Errorf("failed to set SOA TTL to minimum: %w", err)
 	}
 
-	if err = svc.WaitUntilResourceRecordSetsChangedWithContext(ctx, &route53.GetChangeInput{Id: req.ChangeInfo.Id}); err != nil {
+	waiter := route53.NewResourceRecordSetsChangedWaiter(c.client)
+
+	if err := waiter.Wait(ctx, &route53.GetChangeInput{Id: req.ChangeInfo.Id}, RecordChangeMaxWaitTime); err != nil {
 		return nil, fmt.Errorf("failed to wait for SOA TTL change: %w", err)
 	}
 
 	return res.HostedZone, nil
 }
 
-func existingRecordSet(ctx context.Context, client *route53.Route53, zoneID *string, recordName string, recordType string) (*route53.ResourceRecordSet, error) {
+func existingRecordSet(ctx context.Context, client *route53.Client, zoneID *string, recordName string, recordType route53types.RRType) (*route53types.ResourceRecordSet, error) {
 	name := fqdn(strings.ToLower(recordName))
-	res, err := client.ListResourceRecordSetsWithContext(ctx, &route53.ListResourceRecordSetsInput{
+	res, err := client.ListResourceRecordSets(ctx, &route53.ListResourceRecordSetsInput{
 		HostedZoneId:    zoneID,
 		StartRecordName: aws.String(name),
-		StartRecordType: aws.String(recordType),
-		MaxItems:        aws.String("1"),
+		StartRecordType: recordType,
+		MaxItems:        aws.Int32(1),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to list record sets: %w", err)
 	}
 	for _, rs := range res.ResourceRecordSets {
-		resName := strings.ToLower(cleanRecordName(aws.StringValue(rs.Name)))
-		resType := strings.ToUpper(aws.StringValue(rs.Type))
+		resName := strings.ToLower(cleanRecordName(aws.ToString(rs.Name)))
+		resType := rs.Type
 		if resName == name && resType == recordType {
-			return rs, nil
+			return &rs, nil
 		}
 	}
 
-	return nil, fmt.Errorf("not found")
+	return nil, fmt.Errorf("record set not found for type %s, name %s", recordType, recordName)
 }
 
 func fqdn(name string) string {
@@ -351,10 +373,11 @@ func mergeTags(lhsTags, rhsTags map[string]string) map[string]string {
 	return merged
 }
 
-func r53Tags(tags map[string]string) []*route53.Tag {
-	rtags := make([]*route53.Tag, 0, len(tags))
+// r53Tags converts go map to SDK route53 tag list representation.
+func r53Tags(tags map[string]string) []route53types.Tag {
+	rtags := make([]route53types.Tag, 0, len(tags))
 	for k, v := range tags {
-		rtags = append(rtags, &route53.Tag{
+		rtags = append(rtags, route53types.Tag{
 			Key:   aws.String(k),
 			Value: aws.String(v),
 		})
@@ -362,39 +385,12 @@ func r53Tags(tags map[string]string) []*route53.Tag {
 	return rtags
 }
 
-// See https://docs.aws.amazon.com/general/latest/gr/elb.html#elb_region
-
-// HostedZoneIDPerRegionNLBMap maps HostedZoneIDs from known regions.
-var HostedZoneIDPerRegionNLBMap = map[string]string{
-	endpoints.AfSouth1RegionID:     "Z203XCE67M25HM",
-	endpoints.ApEast1RegionID:      "Z12Y7K3UBGUAD1",
-	endpoints.ApNortheast1RegionID: "Z31USIVHYNEOWT",
-	endpoints.ApNortheast2RegionID: "ZIBE1TIR4HY56",
-	endpoints.ApNortheast3RegionID: "Z1GWIQ4HH19I5X",
-	endpoints.ApSouth1RegionID:     "ZVDDRBQ08TROA",
-	endpoints.ApSouth2RegionID:     "Z0711778386UTO08407HT",
-	endpoints.ApSoutheast1RegionID: "ZKVM4W9LS7TM",
-	endpoints.ApSoutheast2RegionID: "ZCT6FZBF4DROD",
-	endpoints.ApSoutheast3RegionID: "Z01971771FYVNCOVWJU1G",
-	endpoints.ApSoutheast4RegionID: "Z01156963G8MIIL7X90IV",
-	endpoints.CaCentral1RegionID:   "Z2EPGBW3API2WT",
-	endpoints.CnNorth1RegionID:     "Z3QFB96KMJ7ED6",
-	endpoints.CnNorthwest1RegionID: "ZQEIKTCZ8352D",
-	endpoints.EuCentral1RegionID:   "Z3F0SRJ5LGBH90",
-	endpoints.EuCentral2RegionID:   "Z02239872DOALSIDCX66S",
-	endpoints.EuNorth1RegionID:     "Z1UDT6IFJ4EJM",
-	endpoints.EuSouth1RegionID:     "Z23146JA1KNAFP",
-	endpoints.EuSouth2RegionID:     "Z1011216NVTVYADP1SSV",
-	endpoints.EuWest1RegionID:      "Z2IFOLAFXWLO4F",
-	endpoints.EuWest2RegionID:      "ZD4D7Y8KGAS4G",
-	endpoints.EuWest3RegionID:      "Z1CMS0P5QUZ6D5",
-	endpoints.MeCentral1RegionID:   "Z00282643NTTLPANJJG2P",
-	endpoints.MeSouth1RegionID:     "Z3QSRYVP46NYYV",
-	endpoints.SaEast1RegionID:      "ZTK26PT1VY4CU",
-	endpoints.UsEast1RegionID:      "Z26RNL4JYFTOTI",
-	endpoints.UsEast2RegionID:      "ZLMOA37VPKANP",
-	endpoints.UsGovEast1RegionID:   "Z1ZSMQQ6Q24QQ8",
-	endpoints.UsGovWest1RegionID:   "ZMG1MZ2THAWF1",
-	endpoints.UsWest1RegionID:      "Z24FKFUX50B4VW",
-	endpoints.UsWest2RegionID:      "Z18D5FSROUN65G",
+// sanitizeHostedZoneID splits apart the Route53 hostedZone ID and returns the last piece.
+// For example, an input of /hostedzone/Z12345678ABCDEFGHIJK will return Z12345678ABCDEFGHIJK.
+func sanitizeHostedZoneID(hostedZoneID string) string {
+	idx := strings.LastIndex(hostedZoneID, "/")
+	if idx > 0 {
+		return hostedZoneID[idx+1:]
+	}
+	return hostedZoneID
 }
