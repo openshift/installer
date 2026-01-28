@@ -51,6 +51,11 @@ type Platform struct {
 	// +optional
 	BaseDomainResourceGroupName string `json:"baseDomainResourceGroupName,omitempty"`
 
+	// DisallowSharedKeyAccess specifies if shared access key should be disabled for the storage account.
+	//
+	// +optional
+	DisallowSharedKeyAccess bool `json:"disallowSharedKeyAccess,omitempty"`
+
 	// DefaultMachinePlatform is the default configuration used when
 	// installing on Azure for machine pools which do not define their own
 	// platform configuration.
