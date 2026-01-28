@@ -1,52 +1,40 @@
 package aws
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"sort"
 	"strings"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/AlecAivazis/survey/v2/core"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/awserr"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/route53"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/sirupsen/logrus"
 )
 
-// IsForbidden returns true if and only if the input error is an HTTP
-// 403 error from the AWS API.
-func IsForbidden(err error) bool {
-	var requestError awserr.RequestFailure
-	return errors.As(err, &requestError) && requestError.StatusCode() == http.StatusForbidden
-}
-
 // GetBaseDomain returns a base domain chosen from among the account's
 // public routes.
-func GetBaseDomain() (string, error) {
-	session, err := GetSession()
-	if err != nil {
-		return "", err
-	}
-
+func GetBaseDomain(ctx context.Context, client *route53.Client) (string, error) {
 	logrus.Debugf("listing AWS hosted zones")
-	client := route53.New(session)
+
 	publicZoneMap := map[string]struct{}{}
 	exists := struct{}{}
-	if err := client.ListHostedZonesPages(
-		&route53.ListHostedZonesInput{},
-		func(resp *route53.ListHostedZonesOutput, lastPage bool) (shouldContinue bool) {
-			for _, zone := range resp.HostedZones {
-				if zone.Config != nil && !aws.BoolValue(zone.Config.PrivateZone) {
-					publicZoneMap[strings.TrimSuffix(*zone.Name, ".")] = exists
-				}
+
+	paginator := route53.NewListHostedZonesPaginator(client, &route53.ListHostedZonesInput{})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return "", fmt.Errorf("failed to list hosted zones: %w", err)
+		}
+
+		for _, zone := range page.HostedZones {
+			if zone.Config != nil && !zone.Config.PrivateZone {
+				publicZoneMap[strings.TrimSuffix(aws.ToString(zone.Name), ".")] = exists
 			}
-			return !lastPage
-		},
-	); err != nil {
-		return "", fmt.Errorf("list hosted zones: %w", err)
+		}
 	}
 
 	publicZones := make([]string, 0, len(publicZoneMap))
@@ -82,24 +70,20 @@ func GetBaseDomain() (string, error) {
 }
 
 // GetPublicZone returns a public route53 zone that matches the name.
-func GetPublicZone(sess *session.Session, name string) (*route53.HostedZone, error) {
-	var res *route53.HostedZone
-	f := func(resp *route53.ListHostedZonesOutput, lastPage bool) (shouldContinue bool) {
-		for idx, zone := range resp.HostedZones {
-			if zone.Config != nil && !aws.BoolValue(zone.Config.PrivateZone) && strings.TrimSuffix(aws.StringValue(zone.Name), ".") == strings.TrimSuffix(name, ".") {
-				res = resp.HostedZones[idx]
-				return false
+func GetPublicZone(ctx context.Context, client *route53.Client, name string) (*route53types.HostedZone, error) {
+	paginator := route53.NewListHostedZonesPaginator(client, &route53.ListHostedZonesInput{})
+	for paginator.HasMorePages() {
+		page, err := paginator.NextPage(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to list hosted zones: %w", err)
+		}
+
+		for _, zone := range page.HostedZones {
+			if zone.Config != nil && !zone.Config.PrivateZone && strings.TrimSuffix(aws.ToString(zone.Name), ".") == strings.TrimSuffix(name, ".") {
+				return &zone, nil
 			}
 		}
-		return !lastPage
 	}
 
-	client := route53.New(sess)
-	if err := client.ListHostedZonesPages(&route53.ListHostedZonesInput{}, f); err != nil {
-		return nil, fmt.Errorf("listing hosted zones: %w", err)
-	}
-	if res == nil {
-		return nil, fmt.Errorf("no public route53 zone found matching name %q", name)
-	}
-	return res, nil
+	return nil, fmt.Errorf("no public route53 zone found matching name %q", name)
 }
