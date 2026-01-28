@@ -1,9 +1,10 @@
 # Install: User-Provided Infrastructure
-The steps for performing a user-provided infrastructure install are outlined here. Several
-[Deployment Manager][deploymentmanager] templates are provided to assist in
-completing these steps or to help model your own. You are also free to create
-the required resources through other methods; the templates are just an
-example.
+The steps for performing a user-provided infrastructure install are outlined here. 
+You are also free to create the required resources through other methods; the snippets
+(below) are just an example.
+
+_Note_: The example assumes that the `publish` value in the install-config is set to `External`.
+There are comments in the snippets for installs where `publish` is set to `Internal`.
 
 ## Prerequisites
 * all prerequisites from [README](README.md)
@@ -11,10 +12,7 @@ example.
   * gcloud
   * gsutil
 * gcloud authenticated to an account with [additional](iam.md) roles:
-  * Deployment Manager Editor
   * Service Account Key Admin
-* the following API Services enabled:
-  * Cloud Deployment Manager V2 API (deploymentmanager.googleapis.com)
 
 ## Create Ignition configs
 The machines will be started manually. Therefore, it is required to generate
@@ -249,6 +247,7 @@ export REGION=$(jq -r .gcp.region metadata.json)
 export ZONE_0=$(gcloud compute regions describe ${REGION} --format=json | jq -r .zones[0] | cut -d "/" -f9)
 export ZONE_1=$(gcloud compute regions describe ${REGION} --format=json | jq -r .zones[1] | cut -d "/" -f9)
 export ZONE_2=$(gcloud compute regions describe ${REGION} --format=json | jq -r .zones[2] | cut -d "/" -f9)
+export ZONES=("${ZONE_0}" "${ZONE_1}" "${ZONE_2}")
 
 export MASTER_IGNITION=$(cat master.ign)
 export WORKER_IGNITION=$(cat worker.ign)
@@ -258,37 +257,48 @@ export WORKER_IGNITION=$(cat worker.ign)
 Create the VPC, network, and subnets for the cluster.
 This step can be skipped if installing into a pre-existing VPC, such as a [Shared VPC (XPN)][sharedvpc].
 
-Copy [`01_vpc.py`](../../../upi/gcp/01_vpc.py) locally.
-
-Create a resource definition file: `01_vpc.yaml`
+Create a shell script: `01_vpc.sh`, or create a single shell script to contain all snippets in this file.
 
 ```console
-$ cat <<EOF >01_vpc.yaml
-imports:
-- path: 01_vpc.py
-resources:
-- name: cluster-vpc
-  type: 01_vpc.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    master_subnet_cidr: '${MASTER_SUBNET_CIDR}'
-    worker_subnet_cidr: '${WORKER_SUBNET_CIDR}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `master_subnet_cidr`: the CIDR for the master subnet (for example 10.0.0.0/17)
-- `worker_subnet_cidr`: the CIDR for the worker subnet (for example 10.0.128.0/17)
+# create network                                                                                                                                                                                                                                                              
+gcloud compute networks create ${INFRA_ID}-network --subnet-mode=custom
 
-Create the deployment using gcloud.
+# create subnets                                                                                                                                                                                                                                                              
+gcloud compute networks subnets create ${INFRA_ID}-master-subnet --network=${INFRA_ID}-network --range=${MASTER_SUBNET_CIDR} --region=${REGION}
+gcloud compute networks subnets create ${INFRA_ID}-worker-subnet --network=${INFRA_ID}-network --range=${WORKER_SUBNET_CIDR} --region=${REGION}
+
+# create router                                                                                                                                                                                                                                                               
+gcloud compute routers create ${INFRA_ID}-router --network=${INFRA_ID}-network --region=${REGION}
+
+# create nats                                                                                                                                                                                                                                                                 
+gcloud compute routers nats create ${INFRA_ID}-nat-master --router=${INFRA_ID}-router --auto-allocate-nat-external-ips --nat-custom-subnet-ip-ranges=${INFRA_ID}-master-subnet --region=${REGION}
+gcloud compute routers nats create ${INFRA_ID}-nat-worker --router=${INFRA_ID}-router --auto-allocate-nat-external-ips --nat-custom-subnet-ip-ranges=${INFRA_ID}-worker-subnet --region=${REGION}
+
+# [optional] These lines will streamline the deprovision process                                                                                                                                                                                                              
+cat << EOF >> "${deprovision_commands_file}"                                                                                                                                                                                                                                  
+gcloud compute routers nats delete -q ${INFRA_ID}-nat-master --router ${INFRA_ID}-router --region ${REGION}                                                                                                                                                                   
+gcloud compute routers nats delete -q ${INFRA_ID}-nat-worker --router ${INFRA_ID}-router --region ${REGION}                                                                                                                                                                   
+gcloud compute routers delete -q ${INFRA_ID}-router --region ${region}                                                                                                                                                                                                        
+gcloud compute networks subnets delete -q ${INFRA_ID}-master-subnet --region ${REGION}                                                                                                                                                                                        
+gcloud compute networks subnets delete -q ${INFRA_ID}-worker-subnet --region ${REGION}                                                                                                                                                                                        
+gcloud compute networks delete -q ${INFRA_ID}-network                                                                                                                                                                                                                         
+EOF   
+```
+
+- `deprovision_commands_file`: the filename (including the path) where the deprovision commands will be added
+- `INFRA_ID`: the name of the cluster followed by a unique hash
+- `MASTER_SUBNET_CIDR`: the CIDR for the master subnet (for example 10.0.0.0/17)
+- `WORKER_SUBNET_CIDR`:the CIDR for the worker subnet (for example 10.0.128.0/17)
+- `REGION`: the region to deploy the cluster into (for example us-east1)
+
+Execute the commands in the file above to create the network resources.
 
 ```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-vpc --config 01_vpc.yaml
+./01_vpc.sh
 ```
 
 ## Configure VPC variables
-Configure the variables based on the VPC created with `01_vpc.yaml`.
+Configure the variables based on the VPC created with `01_vpc.sh`.
 If you are using a pre-existing VPC, such as a [Shared VPC (XPN)][sharedvpc], set these to the `.selfLink` of the targeted resources.
 
 ```sh
@@ -299,64 +309,95 @@ export COMPUTE_SUBNET=$(gcloud compute networks subnets describe ${INFRA_ID}-wor
 
 ## Create DNS entries and load balancers
 Create the DNS zone and load balancers for the cluster.
-You can exclude the DNS zone or external load balancer by removing their associated section(s) from the `02_infra.yaml`.
+You can exclude the DNS zone or external load balancer by removing their associated section(s) from the `02_infra.sh`.
 If you choose to exclude the DNS zone, you will need to create it some other way and ensure it is populated with the necessary records as documented below.
 
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 exclude the DNS section as it must be created in the host project.
 
-Copy [`02_dns.py`](../../../upi/gcp/02_dns.py) locally.
-Copy [`02_lb_ext.py`](../../../upi/gcp/02_lb_ext.py) locally.
-Copy [`02_lb_int.py`](../../../upi/gcp/02_lb_int.py) locally.
-
-Create a resource definition file: `02_infra.yaml`
+Create a shell script: `02_infra.sh`, or add to the original.
 
 ```console
-$ cat <<EOF >02_infra.yaml
-imports:
-- path: 02_dns.py
-- path: 02_lb_ext.py
-- path: 02_lb_int.py
-resources:
-- name: cluster-dns
-  type: 02_dns.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    cluster_domain: '${CLUSTER_NAME}.${BASE_DOMAIN}'
-    cluster_network: '${CLUSTER_NETWORK}'
-- name: cluster-lb-ext
-  type: 02_lb_ext.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-- name: cluster-lb-int
-  type: 02_lb_int.py
-  properties:
-    cluster_network: '${CLUSTER_NETWORK}'
-    control_subnet: '${CONTROL_SUBNET}'
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    zones:
-    - '${ZONE_0}'
-    - '${ZONE_1}'
-    - '${ZONE_2}'
+# ---------------------------------------------------------
+# Create the Private DNS Zone
+# ---------------------------------------------------------
+gcloud dns managed-zones create ${INFRA_ID}-private-zone --description="Pre-created private DNS zone" --dns-name=${CLUSTER_NAME}.${BASE_DOMAIN}. --visibility="private" --networks=${CLUSTER_NETWORK}
+
+# ---------------------------------------------------------
+# Create the resources for the external load balancer
+# Note: This can be skipped for internal installs
+# ---------------------------------------------------------
+gcloud compute addresses create ${INFRA_ID}-cluster-public-ip --region=${REGION}
+sleep 3
+address_selflink=$(gcloud compute addresses describe ${INFRA_ID}-cluster-public-ip --region=${REGION} --format=json | jq -r .selfLink)
+
+gcloud compute http-health-checks create ${INFRA_ID}-api-http-health-check --port=6080 --request-path="/readyz"
+sleep 3
+hc_selflink=$(gcloud compute http-health-checks describe ${INFRA_ID}-api-http-health-check --format=json | jq -r .selfLink)
+
+gcloud compute target-pools create ${INFRA_ID}-api-target-pool --http-health-check=${hc_selflink} --region=${REGION}
+sleep 3
+tp_selflink=$(gcloud compute target-pools describe ${INFRA_ID}-api-target-pool --region=${REGION} --format=json | jq -r .selfLink)
+
+gcloud compute forwarding-rules create ${INFRA_ID}-api-forwarding-rule --region=${REGION} --address=${address_selflink} --target-pool=${tp_selflink} --ports=6443
+sleep 3
+
+# [optional] These lines will streamline the deprovision process 
+cat << EOF >> "${deprovision_commands_file}"
+gcloud compute forwarding-rules delete -q ${INFRA_ID}-api-forwarding-rule --region=${REGION}
+gcloud compute target-pools delete -q ${INFRA_ID}-api-target-pool --region=${REGION}
+gcloud compute http-health-checks delete -q ${INFRA_ID}-api-http-health-check
+gcloud compute addresses delete -q ${INFRA_ID}-cluster-public-ip --region=${REGION}
 EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `cluster_domain`: the domain for the cluster (for example openshift.example.com)
-- `cluster_network`: the URI to the cluster network
-- `control_subnet`: the URI to the control subnet
-- `zones`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
 
-Create the deployment using gcloud.
+# ---------------------------------------------------------
+# Create the resources for the internal load balancer
+# ---------------------------------------------------------
+gcloud compute addresses create ${INFRA_ID}-cluster-ip --region=${REGION} --subnet=${CONTROL_SUBNET}
+sleep 3
+int_address_selflink=$(gcloud compute addresses describe ${INFRA_ID}-cluster-ip --region=${REGION} --format=json | jq -r .selfLink)
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-infra --config 02_infra.yaml
+gcloud compute health-checks create https ${INFRA_ID}-api-internal-health-check --port=6443 --request-path="/readyz"
+sleep 3
+int_hc_selflink=$(gcloud compute health-checks describe ${INFRA_ID}-api-internal-health-check --format=json | jq -r .selfLink)
+
+gcloud compute backend-services create ${INFRA_ID}-api-internal --region=${REGION} --protocol=TCP --load-balancing-scheme=INTERNAL --health-checks=${int_hc_selflink} --timeout=120
+sleep 3
+int_bs_selflink=$(gcloud compute backend-services describe ${INFRA_ID}-api-internal --region=${REGION} --format=json | jq -r .selfLink)
+
+for zone in "${ZONES[@]}"; do
+    gcloud compute instance-groups unmanaged create ${INFRA_ID}-master-${zone}-ig --zone=${zone}
+    sleep 3
+    gcloud compute instance-groups unmanaged set-named-ports ${INFRA_ID}-master-${zone}-ig --zone=${zone} --named-ports=ignition:22623,https:6443
+    sleep 3
+done
+
+gcloud compute forwarding-rules create ${INFRA_ID}-api-internal-forwarding-rule --region=${REGION} --load-balancing-scheme=INTERNAL --ports=6443,22623 --backend-service=${int_bs_selflink} --address=${int_address_selflink} --subnet=${CONTROL_SUBNET}
+
+# [optional] These lines will streamline the deprovision process 
+cat << EOF >> "${deprovision_commands_file}"
+gcloud compute forwarding-rules delete -q ${infra_id}-api-internal-forwarding-rule --region=${region}
+gcloud compute backend-services delete -q ${infra_id}-api-internal --region=${region}
+gcloud compute health-checks delete -q https ${infra_id}-api-internal-health-check
+gcloud compute addresses delete -q ${infra_id}-cluster-ip --region=${region}
+EOF
+# [optional] These lines will streamline the deprovision process 
+for zone in "${ZONES[@]}"; do
+  cat << EOF >> "${deprovision_commands_file}"
+gcloud compute instance-groups unmanaged delete -q ${infra_id}-master-${zone}-ig --zone=${zone}
+EOF
+done
 ```
+
+- `INFRA_ID`: the infrastructure name (INFRA_ID above)
+- `REGION`: the region to deploy the cluster into (for example us-east1)
+- `CLUSTER_NAME`: Name of the cluster (from the cluster metadata and install-config)
+- `BASE_DOMAIN`: Base domain from the install-config
+- `CLUSTER_NETWORK`: the URI to the cluster network
+- `CONTROL_SUBNET`: the URI to the control subnet
+- `ZONES`: the zones to deploy (consists of all zones declared above ex: $ZONE_0 ...)
 
 ## Configure infra variables
-If you excluded the `cluster-lb-ext` section above, then skip `CLUSTER_PUBLIC_IP`.
 
 ```sh
 export CLUSTER_IP=$(gcloud compute addresses describe ${INFRA_ID}-cluster-ip --region=${REGION} --format json | jq -r .address)
@@ -364,7 +405,7 @@ export CLUSTER_PUBLIC_IP=$(gcloud compute addresses describe ${INFRA_ID}-cluster
 ```
 
 ## Add DNS entries
-The templates do not create DNS entries due to limitations of Deployment Manager, so we must create them manually.
+Create the DNS entries.
 
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 use the `--account` and `--project` parameters to perform these actions in the host project.
@@ -380,7 +421,7 @@ gcloud dns record-sets transaction execute --zone ${INFRA_ID}-private-zone
 ```
 
 ### Add external DNS entries (optional)
-If you deployed external load balancers with `02_infra.yaml`, you can deploy external DNS entries.
+If you deployed external load balancers with `02_infra.sh`, you can deploy external DNS entries.
 
 ```sh
 if [ -f transaction.yaml ]; then rm transaction.yaml; fi
@@ -391,51 +432,48 @@ gcloud dns record-sets transaction execute --zone ${BASE_DOMAIN_ZONE_NAME}
 
 ## Create firewall rules and IAM roles
 Create the firewall rules and IAM roles for the cluster.
-You can exclude either of these by removing their associated section(s) from the `02_infra.yaml`.
+You can exclude either of these by removing their associated section(s) from the `02_infra.sh`.
 If you choose to do so, you will need to create the required resources some other way.
-Details about these resources can be found in the imported python templates.
 
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 exclude the firewall section as they must be created in the host project.
 
-Copy [`03_firewall.py`](../../../upi/gcp/03_firewall.py) locally.
-Copy [`03_iam.py`](../../../upi/gcp/03_iam.py) locally.
-
-Create a resource definition file: `03_security.yaml`
+Create a shell script: `03_security.sh`, or add to the original.
 
 ```console
-$ cat <<EOF >03_security.yaml
-imports:
-- path: 03_firewall.py
-- path: 03_iam.py
-resources:
-- name: cluster-firewall
-  type: 03_firewall.py
-  properties:
-    allowed_external_cidr: '0.0.0.0/0'
-    infra_id: '${INFRA_ID}'
-    cluster_network: '${CLUSTER_NETWORK}'
-    network_cidr: '${NETWORK_CIDR}'
-- name: cluster-iam
-  type: 03_iam.py
-  properties:
-    infra_id: '${INFRA_ID}'
+# ---------------------------------------------------------
+# Create the service accounts
+# ---------------------------------------------------------
+gcloud iam service-accounts create ${INFRA_ID}-m --display-name=${INFRA_ID}-master-node
+sleep 3
+
+gcloud iam service-accounts create ${INFRA_ID}-w --display-name=${INFRA_ID}-worker-node
+sleep 3
+
+# ---------------------------------------------------------
+# Create the firewall rules
+# ---------------------------------------------------------
+allowed_external_cidr="0.0.0.0/0"
+
+gcloud compute firewall-rules create ${INFRA_ID}-bootstrap-in-ssh --network=${CLUSTER_NETWORK} --allow=tcp:22 --source-ranges=${allowed_external_cidr} --target-tags=${INFRA_ID}-bootstrap
+gcloud compute firewall-rules create ${INFRA_ID}-api --network=${CLUSTER_NETWORK} --allow=tcp:6443 --source-ranges=${allowed_external_cidr} --target-tags=${INFRA_ID}-master
+gcloud compute firewall-rules create ${INFRA_ID}-health-checks --network=${CLUSTER_NETWORK} --allow=tcp:6080,tcp:6443,tcp:22624 --source-ranges=35.191.0.0/16,130.211.0.0/22,209.85.152.0/22,209.85.204.0/22 --target-tags=${INFRA_ID}-master
+gcloud compute firewall-rules create ${INFRA_ID}-etcd --network=${CLUSTER_NETWORK} --allow=tcp:2379-2380 --source-tags=${INFRA_ID}-master --target-tags=${INFRA_ID}-master
+gcloud compute firewall-rules create ${INFRA_ID}-control-plane --network=${CLUSTER_NETWORK} --allow=tcp:10257,tcp:10259,tcp:22623 --source-tags=${INFRA_ID}-master,${INFRA_ID}-worker --target-tags=${INFRA_ID}-master
+gcloud compute firewall-rules create ${INFRA_ID}-internal-network --network=${CLUSTER_NETWORK} --allow=icmp,tcp:22 --source-ranges=${NETWORK_CIDR} --target-tags=${INFRA_ID}-master,${INFRA_ID}-worker
+gcloud compute firewall-rules create ${INFRA_ID}-internal-cluster --network=${CLUSTER_NETWORK} --allow=udp:4789,udp:6081,udp:500,udp:4500,esp,tcp:9000-9999,udp:9000-9999,tcp:10250,tcp:30000-32767,udp:30000-32767 --source-tags=${INFRA_ID}-master,${INFRA_ID}-worker --target-tags=${INFRA_ID}-master,${INFRA_ID}-worker
+
+# [optional] These lines will streamline the deprovision process 
+cat << EOF >> "${deprovision_commands_file}"
+gcloud compute firewall-rules delete -q ${INFRA_ID}-bootstrap-in-ssh ${INFRA_ID}-api ${INFRA_ID}-health-checks ${INFRA_ID}-etcd ${INFRA_ID}-control-plane ${INFRA_ID}-internal-network ${INFRA_ID}-internal-cluster
 EOF
 ```
 - `allowed_external_cidr`: limits access to the cluster API and ssh to the bootstrap host. (for example External: 0.0.0.0/0, Internal: ${NETWORK_CIDR})
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `cluster_network`: the URI to the cluster network
-- `network_cidr`: the CIDR of the vpc network (for example 10.0.0.0/16)
-
-Create the deployment using gcloud.
-
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-security --config 03_security.yaml
-```
+- `INFRA_ID`: the infrastructure name (INFRA_ID above)
+- `REGION`: the region to deploy the cluster into (for example us-east1)
+- `CLUSTER_NETWORK`: the URI to the cluster network
 
 ## Configure security variables
-Configure the variables based on the `03_security.yaml` deployment.
 If you excluded the IAM section, ensure these are set to the `.email` of their associated resources.
 
 ```sh
@@ -444,7 +482,7 @@ export WORKER_SERVICE_ACCOUNT=$(gcloud iam service-accounts list --filter "email
 ```
 
 ## Add required roles to IAM service accounts
-The templates do not create the policy bindings due to limitations of Deployment Manager, so we must create them manually.
+Create the policy bindings.
 
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 ensure these service accounts have `roles/compute.networkUser` access to each of the host project subnets used by the cluster so the instances can use the networks.
@@ -461,6 +499,34 @@ gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member "serviceAccount:
 gcloud projects add-iam-policy-binding ${PROJECT_NAME} --member "serviceAccount:${WORKER_SERVICE_ACCOUNT}" --role "roles/storage.admin"
 ```
 
+Adding policy bindings can take time to apply. It may be helpful to include a backoff function similar to the one below:
+
+```sh
+function backoff() {
+    local attempt=0
+    local failed=0
+    while true; do
+        eval "$*" && failed=0 || failed=1
+        if [[ $failed -eq 0 ]]; then
+            break
+        fi
+        attempt=$(( attempt + 1 ))
+        if [[ $attempt -gt 5 ]]; then
+            break
+        fi
+        echo "command failed, retrying in $(( 2 ** attempt )) seconds"
+        sleep $(( 2 ** attempt ))
+    done
+    return $failed
+}
+```
+
+Pass the gcloud function calls above to the backoff function:
+
+```sh
+backoff gcloud projects add-iam-policy-binding "${PROJECT_NAME}" --member "serviceAccount:${MASTER_SERVICE_ACCOUNT}" --role "roles/compute.instanceAdmin" 1> /dev/null
+```
+
 ## Generate a service-account-key for signing the bootstrap.ign url
 
 ```sh
@@ -471,7 +537,7 @@ gcloud iam service-accounts keys create service-account-key.json --iam-account=$
 Locate the RHCOS image source and create a cluster image.
 
 ```sh
-export IMAGE_SOURCE=$(curl https://raw.githubusercontent.com/openshift/installer/master/data/data/coreos/rhcos.json | jq -r '.architecture.x86_64.images.gcp')
+export IMAGE_SOURCE=$(curl https://raw.githubusercontent.com/openshift/installer/master/data/data/coreos/rhcos.json | jq -r '.architectures.x86_64.images.gcp')
 export IMAGE_NAME=$(echo "${IMAGE_SOURCE}" | jq -r '.name')
 export IMAGE_PROJECT=$(echo "${IMAGE_SOURCE}" | jq -r '.project')
 export CLUSTER_IMAGE=$(gcloud compute images describe ${IMAGE_NAME} --project ${IMAGE_PROJECT} --format json | jq -r .selfLink)
@@ -494,139 +560,125 @@ export BOOTSTRAP_IGN=$(gsutil signurl -d 1h service-account-key.json gs://${INFR
 
 ## Launch temporary bootstrap resources
 
-Copy [`04_bootstrap.py`](../../../upi/gcp/04_bootstrap.py) locally.
-
-Create a resource definition file: `04_bootstrap.yaml`
+Create a shell script: `04_bootstrap.sh`, or add to the original.
 
 ```console
-$ cat <<EOF >04_bootstrap.yaml
-imports:
-- path: 04_bootstrap.py
-resources:
-- name: cluster-bootstrap
-  type: 04_bootstrap.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    zone: '${ZONE_0}'
-    cluster_network: '${CLUSTER_NETWORK}'
-    control_subnet: '${CONTROL_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    bootstrap_ign: '${BOOTSTRAP_IGN}'
+# ---------------------------------------------------------
+# Launch temporary bootstrap resources
+# ---------------------------------------------------------
+# [optional] for external installs only
+gcloud compute addresses create ${INFRA_ID}-bootstrap-public-ip --region=${REGION}
+sleep 3
+public_ip=$(gcloud compute addresses describe ${INFRA_ID}-bootstrap-public-ip --region=${REGION} --format=json | jq -r .address)
+
+# The following section is for external installs
+# If this is an internal install remove the --address parameter and add --no-address
+gcloud compute instances create ${INFRA_ID}-bootstrap --boot-disk-size=128GB --image=${CLUSTER_IMAGE} --metadata=^#^user-data='{\"ignition\":{\"config\":{\"replace\":{\"source\":\"${ignition}\"}},\"version\":\"3.2.0\"}}' --machine-type=${MACHINE_TYPE} --zone=${ZONE_0} --tags=${INFRA_ID}-master,${INFRA_ID}-bootstrap --subnet=${CONTROL_SUBNET} --address=${public_ip}
+sleep 3
+
+gcloud compute instance-groups unmanaged create ${INFRA_ID}-bootstrap-ig --zone=${ZONE_0}
+sleep 3
+gcloud compute instance-groups unmanaged set-named-ports ${INFRA_ID}-bootstrap-ig --zone=${ZONE_0} --named-ports=ignition:22623,https:6443
+sleep 3
+
+cat << EOF >> "${deprovision_commands_file}"
+gcloud compute instance-groups unmanaged delete -q ${INFRA_ID}-bootstrap-ig --zone=${ZONE_0}
+gcloud compute instances delete -q ${INFRA_ID}-bootstrap --zone=${ZONE_0}
 EOF
+
+# Comment out during internal installs
+cat << EOF >> "${deprovision_commands_file}"
+gcloud compute addresses delete -q ${INFRA_ID}-bootstrap-public-ip --region=${REGION}
+EOF
+
+BOOTSTRAP_INSTANCE_GROUP=$(gcloud compute instance-groups list --filter="name~^${INFRA_ID}-bootstrap-" --format "value(name)")
+
+# Add bootstrap instance to internal load balancer instance group
+gcloud compute instance-groups unmanaged add-instances ${BOOTSTRAP_INSTANCE_GROUP} --zone=${ZONE_0} --instances=${INFRA_ID}-bootstrap
+
+# Add bootstrap instance group to the internal load balancer backend service
+gcloud compute backend-services add-backend ${API_INTERNAL_BACKEND_SVC} --region=${REGION} --instance-group=${BOOTSTRAP_INSTANCE_GROUP} --instance-group-zone=${ZONE_0}
+
+# The following 2 lines are only intended for external installs.
+gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone=${ZONE_0} --instances=${INFRA_ID}-bootstrap
+BOOTSTRAP_IP="$(gcloud compute addresses describe --region "${REGION}" "${INFRA_ID}-bootstrap-public-ip" --format json | jq -r .address)"
+# The following line is used for internal installs only
+# BOOTSTRAP_IP="$(gcloud compute instances describe --zone "${ZONE_0}" "${INFRA_ID}-bootstrap" --format=json | jq -r .networkInterfaces[].networkIP)"
 ```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `zone`: the zone to deploy the bootstrap instance into (for example us-east1-b)
-- `cluster_network`: the URI to the cluster network
-- `control_subnet`: the URI to the control subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: the machine type of the instance (for example n1-standard-4)
-- `bootstrap_ign`: the URL output when creating a signed URL above.
-
-You can add custom tags to `04_bootstrap.py` as needed
-
-```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-master',
-                    context.properties['infra_id'] + '-bootstrap',
-                    'my-custom-tag-example'
-                ]
-            },
-```
-
-Create the deployment using gcloud.
-
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-bootstrap --config 04_bootstrap.yaml
-```
-
-## Add the bootstrap instance to the load balancers
-The templates do not manage load balancer membership due to limitations of Deployment
-Manager, so we must add the bootstrap node manually.
-
-### Add bootstrap instance to internal load balancer instance group
-
-```sh
-gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-bootstrap-ig --zone=${ZONE_0} --instances=${INFRA_ID}-bootstrap
-```
-
-### Add bootstrap instance group to the internal load balancer backend service
-
-```sh
-gcloud compute backend-services add-backend ${INFRA_ID}-api-internal --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-ig --instance-group-zone=${ZONE_0}
-```
+- `INFRA_ID`: the infrastructure name (INFRA_ID above)
+- `REGION`: the region to deploy the cluster into (for example us-east1)
+- `ZONE_0`: the zone to deploy the bootstrap instance into
+- `CLUSTER_NETWORK`: the URI to the cluster network
+- `CONTROL_SUBNET`: the URI to the control subnet
+- `CLUSTER_IMAGE`: the URI to the RHCOS image
+- `MACHINE_TYPE`: the machine type of the instance (for example n1-standard-4)
+- `BOOTSTRAP_IGN`: the URL output when creating a signed URL above.
 
 ## Launch permanent control plane
 
-Copy [`05_control_plane.py`](../../../upi/gcp/05_control_plane.py) locally.
-
-Create a resource definition file: `05_control_plane.yaml`
+Create a shell script: `05_control_plane.sh`, or add to the original.
 
 ```console
-$ cat <<EOF >05_control_plane.yaml
-imports:
-- path: 05_control_plane.py
-resources:
-- name: cluster-control-plane
-  type: 05_control_plane.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zones:
-    - '${ZONE_0}'
-    - '${ZONE_1}'
-    - '${ZONE_2}'
-    control_subnet: '${CONTROL_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${MASTER_SERVICE_ACCOUNT}'
-    ignition: '${MASTER_IGNITION}'
+machine_role="master"
+index=0
+
+for zone in "${ZONES[@]}"; do
+    gcloud compute instances create ${INFRA_ID}-${machine_role}-${index} --boot-disk-size=${DISK_SIZE}GB --boot-disk-type=pd-ssd --image=${CLUSTER_IMAGE} --metadata=^#^user-data='${ignition}' --machine-type=${MACHINE_TYPE} --zone=${zone} --no-address --service-account=${MASTER_SERVICE_ACCOUNT} --scopes=https://www.googleapis.com/auth/cloud-platform --tags=${INFRA_ID}-${machine_role} --subnet=${CONTROL_SUBNET}
+    sleep 3
+    
+    cat <<EOF > "${deprovision_commands_file}"
+gcloud compute instances delete -q ${INFRA_ID}-${machine_role}-${index} --zone=${zone}
 EOF
+  index=$(( $index + 1))
+done
+
+# configure control plane variables
+MASTER0_IP="$(gcloud compute instances describe "${INFRA_ID}-master-0" --zone "${ZONE_0}" --format json | jq -r .networkInterfaces[0].networkIP)"
+MASTER1_IP="$(gcloud compute instances describe "${INFRA_ID}-master-1" --zone "${ZONE_1}" --format json | jq -r .networkInterfaces[0].networkIP)"
+MASTER2_IP="$(gcloud compute instances describe "${INFRA_ID}-master-2" --zone "${ZONE_2}" --format json | jq -r .networkInterfaces[0].networkIP)"
+
+GATHER_BOOTSTRAP_ARGS+=('--master' "${MASTER0_IP}" '--master' "${MASTER1_IP}" '--master' "${MASTER2_IP}")
+
+# Add DNS entries for control plane etcd
+export PRIVATE_ZONE_NAME="${INFRA_ID}-private-zone"
+gcloud dns record-sets transaction start --zone "${PRIVATE_ZONE_NAME}"
+gcloud dns record-sets transaction add "${MASTER0_IP}" --name "etcd-0.${CLUSTER_NAME}.${BASE_DOMAIN}." --ttl 60 --type A --zone "${PRIVATE_ZONE_NAME}"
+gcloud dns record-sets transaction add "${MASTER1_IP}" --name "etcd-1.${CLUSTER_NAME}.${BASE_DOMAIN}." --ttl 60 --type A --zone "${PRIVATE_ZONE_NAME}"
+gcloud dns record-sets transaction add "${MASTER2_IP}" --name "etcd-2.${CLUSTER_NAME}.${BASE_DOMAIN}." --ttl 60 --type A --zone "${PRIVATE_ZONE_NAME}"
+gcloud dns record-sets transaction add \
+  "0 10 2380 etcd-0.${CLUSTER_NAME}.${BASE_DOMAIN}." \
+  "0 10 2380 etcd-1.${CLUSTER_NAME}.${BASE_DOMAIN}." \
+  "0 10 2380 etcd-2.${CLUSTER_NAME}.${BASE_DOMAIN}." \
+  --name "_etcd-server-ssl._tcp.${CLUSTER_NAME}.${BASE_DOMAIN}." --ttl 60 --type SRV --zone "${PRIVATE_ZONE_NAME}"
+gcloud dns record-sets transaction execute --zone "${PRIVATE_ZONE_NAME}"
+
+MASTER_IG_0="$(gcloud compute instance-groups list --filter "name~^${INFRA_ID}-master-${ZONE_0}-" --format "value(name)")"
+MASTER_IG_1="$(gcloud compute instance-groups list --filter "name~^${INFRA_ID}-master-${ZONE_1}-" --format "value(name)")"
+MASTER_IG_2="$(gcloud compute instance-groups list --filter "name~^${INFRA_ID}-master-${ZONE_2}-" --format "value(name)")"
+
+# Add control plane instances to instance groups
+gcloud compute instance-groups unmanaged add-instances ${MASTER_IG_0} --zone=${ZONE_0} --instances=${INFRA_ID}-master-0
+gcloud compute instance-groups unmanaged add-instances ${MASTER_IG_1} --zone=${ZONE_1} --instances=${INFRA_ID}-master-1
+gcloud compute instance-groups unmanaged add-instances ${MASTER_IG_2} --zone=${ZONE_2} --instances=${INFRA_ID}-master-2
+
+# Add control plane instances to internal load balancer backend-service
+gcloud compute backend-services add-backend ${API_INTERNAL_BACKEND_SVC} --region=${REGION} --instance-group=${MASTER_IG_0} --instance-group-zone=${ZONE_0}
+gcloud compute backend-services add-backend ${API_INTERNAL_BACKEND_SVC} --region=${REGION} --instance-group=${MASTER_IG_1} --instance-group-zone=${ZONE_1}
+gcloud compute backend-services add-backend ${API_INTERNAL_BACKEND_SVC} --region=${REGION} --instance-group=${MASTER_IG_2} --instance-group-zone=${ZONE_2}
 ```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `zones`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
-- `control_subnet`: the URI to the control subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: the machine type of the instance (for example n1-standard-4)
-- `service_account_email`: the email address for the master service account created above
+- `INFRA_ID`: the infrastructure name (INFRA_ID above)
+- `REGION`: the region to deploy the cluster into (for example us-east1)
+- `ZONES`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
+- `CONTROL_SUBNET`: the URI to the control subnet
+- `CLUSTER_IMAGE`: the URI to the RHCOS image
+- `MACHINE_TYPE`: the machine type of the instance (for example n1-standard-4)
+- `DISK_SIZE`: The machine boot disk size (in GB).
+- `MASTER_SERVICE_ACCOUNT`: the email address for the master service account created above
 - `ignition`: the contents of the master.ign file
 
-You can add custom tags to `05_control_plane.py` as needed
-
-```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-master',
-                    'my-custom-tag-example'
-                ]
-            },
-```
-
-Create the deployment using gcloud.
-
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-control-plane --config 05_control_plane.yaml
-```
-
-## Add control plane instances to load balancers
-The templates do not manage load balancer membership due to limitations of Deployment
-Manager, so we must add the control plane nodes manually.
-
-### Add control plane instances to internal load balancer instance groups
-
-```sh
-gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-master-${ZONE_0}-ig --zone=${ZONE_0} --instances=${INFRA_ID}-master-0
-gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-master-${ZONE_1}-ig --zone=${ZONE_1} --instances=${INFRA_ID}-master-1
-gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-master-${ZONE_2}-ig --zone=${ZONE_2} --instances=${INFRA_ID}-master-2
-```
 
 ### Add control plane instances to external load balancer target pools (optional)
-If you deployed external load balancers with `02_infra.yaml`, add the control plane instances to the target pool.
+If you deployed external load balancers with `02_infra.sh`, add the control plane instances to the target pool.
 
 ```sh
 gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-master-0
@@ -639,68 +691,49 @@ You may create compute nodes by launching individual instances discretely
 or by automated processes outside the cluster (e.g. Auto Scaling Groups). You
 can also take advantage of the built in cluster scaling mechanisms and the
 machine API in OpenShift, as mentioned [above](#create-ignition-configs). In
-this example, we'll manually launch one instance via the Deployment Manager
-template. Additional instances can be launched by including additional
-resources of type 06_worker.py in the file.
+this example, we'll manually launch one instance.
 
-Copy [`06_worker.py`](../../../upi/gcp/06_worker.py) locally.
-
-Create a resource definition file: `06_worker.yaml`
+Create a resource definition file: `06_worker.sh`
 ```console
-$ cat <<EOF >06_worker.yaml
-imports:
-- path: 06_worker.py
-resources:
-- name: 'worker-0'
-  type: 06_worker.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zone: '${ZONE_0}'
-    compute_subnet: '${COMPUTE_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${WORKER_SERVICE_ACCOUNT}'
-    ignition: '${WORKER_IGNITION}'
-- name: 'worker-1'
-  type: 06_worker.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zone: '${ZONE_1}'
-    compute_subnet: '${COMPUTE_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${WORKER_SERVICE_ACCOUNT}'
-    ignition: '${WORKER_IGNITION}'
+# Available zones and instance zones might be different in region for arm64 machines
+
+if [[ ${BASH_VERSION%%.*} -lt 4 ]]; then
+  zones=`(gcloud compute regions describe "${REGION}" --format=json | jq -r '.zones[]' | cut -d "/" -f9)`
+  AVAILABILITY_ZONES=( $zones )
+
+  worker_instance_zones=`gcloud compute machine-types list --filter="zone:(${REGION}) AND name=(${MACHINE_TYPE})" --format=json | jq -r '.[].zone'`
+  WORKER_INSTANCE_ZONES=( $worker_instance_zones )
+
+  worker_zones=`echo "${AVAILABILITY_ZONES[@]}" "${WORKER_INSTANCE_ZONES[@]}" | sed 's/ /\n/g' | sort -R | uniq -d`
+  WORKER_ZONES=( $worker_zones )
+else
+  mapfile -t AVAILABILITY_ZONES < <(gcloud compute regions describe "${REGION}" --format=json | jq -r '.zones[]' | cut -d "/" -f9)
+  mapfile -t WORKER_INSTANCE_ZONES < <(gcloud compute machine-types list --filter="zone:(${REGION}) AND name=(${MACHINE_TYPE})" --format=json | jq -r '.[].zone')
+  mapfile -t WORKER_ZONES < <(echo "${AVAILABILITY_ZONES[@]}" "${WORKER_INSTANCE_ZONES[@]}" | sed 's/ /\n/g' | sort -R | uniq -d)
+fi
+
+machine_role="worker"
+index=0
+
+for zone in "${WORKER_ZONES[@]}"; do
+    gcloud compute instances create ${INFRA_ID}-${machine_role}-${index} --boot-disk-size=${DISK_SIZE}GB --boot-disk-type=pd-ssd --image=${CLUSTER_IMAGE} --metadata=^#^user-data='${ignition}' --machine-type=${MACHINE_TYPE} --zone=${zone} --no-address --service-account=${WORKER_SERVICE_ACCOUNT} --scopes=https://www.googleapis.com/auth/cloud-platform --tags=${INFRA_ID}-${machine_role} --subnet=${COMPUTE_SUBNET}
+    sleep 3
+
+    cat << EOF > "${deprovision_commands_file}"
+gcloud compute instances delete -q ${INFRA_ID}-${machine_role}-${index} --zone=${zone}
 EOF
+
+    index=$(( $index + 1))
+done
 ```
-- `name`: the name of the compute node (for example worker-0)
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `zone`: the zone to deploy the worker node into (for example us-east1-b)
-- `compute_subnet`: the URI to the compute subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: The machine type of the instance (for example n1-standard-4)
-- `service_account_email`: the email address for the worker service account created above
+- `INFRA_ID`: the infrastructure name (INFRA_ID above)
+- `COMPUTE_SUBNET`: the URI to the compute subnet
+- `CLUSTER_IMAGE`: the URI to the RHCOS image
+- `MACHINE_TYPE`: The machine type of the instance (for example n1-standard-4)
+- `DISK_SIZE`: The machine boot disk size (in GB).
+- `WORKER_SERVICE_ACCOUNT`: the email address for the worker service account created above
 - `ignition`: the contents of the worker.ign file
-
-You can add custom tags to `06_worker.py` as needed
-
-```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-worker',
-                    'my-custom-tag-example'
-                ]
-            },
-```
-
-Create the deployment using gcloud.
-
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-worker --config 06_worker.yaml
-```
-
+- 
 ## Monitor for `bootstrap-complete`
 
 ```console
@@ -720,7 +753,6 @@ it is safe to remove any bootstrap-specific firewall rules at this time.
 gcloud compute backend-services remove-backend ${INFRA_ID}-api-internal --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-instance-group --instance-group-zone=${ZONE_0}
 gsutil rm gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign
 gsutil rb gs://${INFRA_ID}-bootstrap-ignition
-gcloud deployment-manager deployments delete ${INFRA_ID}-bootstrap
 ```
 
 ## Approving the CSR requests for nodes
@@ -891,7 +923,6 @@ openshift-service-catalog-apiserver-operator            openshift-service-catalo
 openshift-service-catalog-controller-manager-operator   openshift-service-catalog-controller-manager-operator-b78cr2lnm     1/1       Running     0          31m
 ```
 
-[deploymentmanager]: https://cloud.google.com/deployment-manager/docs
 [ingress-operator]: https://github.com/openshift/cluster-ingress-operator
 [kubernetes-service-load-balancers-exclude-masters]: https://github.com/kubernetes/kubernetes/issues/65618
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
