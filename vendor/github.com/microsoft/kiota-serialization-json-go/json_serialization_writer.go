@@ -1,10 +1,12 @@
 package jsonserialization
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,9 +15,16 @@ import (
 	absser "github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
+var buffPool = sync.Pool{
+	New: func() interface{} {
+		return new(bytes.Buffer)
+	},
+}
+
 // JsonSerializationWriter implements SerializationWriter for JSON.
 type JsonSerializationWriter struct {
-	writer                     []string
+	writer                     *bytes.Buffer
+	separatorIndices           []int
 	onBeforeAssignFieldValues  absser.ParsableAction
 	onAfterAssignFieldValues   absser.ParsableAction
 	onStartObjectSerialization absser.ParsableWriter
@@ -24,39 +33,58 @@ type JsonSerializationWriter struct {
 // NewJsonSerializationWriter creates a new instance of the JsonSerializationWriter.
 func NewJsonSerializationWriter() *JsonSerializationWriter {
 	return &JsonSerializationWriter{
-		writer: make([]string, 0),
+		writer:           buffPool.Get().(*bytes.Buffer),
+		separatorIndices: make([]int, 0),
 	}
 }
-func (w *JsonSerializationWriter) writeRawValue(value string) {
-	w.writer = append(w.writer, value)
+func (w *JsonSerializationWriter) getWriter() *bytes.Buffer {
+	if w.writer == nil {
+		panic("The writer has already been closed. Call Reset instead of Close to reuse it or instantiate a new one.")
+	}
+
+	return w.writer
+}
+func (w *JsonSerializationWriter) writeRawValue(value ...string) {
+	writer := w.getWriter()
+
+	for _, v := range value {
+		writer.WriteString(v)
+	}
 }
 func (w *JsonSerializationWriter) writeStringValue(value string) {
+	builder := &strings.Builder{}
+	// Allocate at least enough space for the string and quotes. However, it's
+	// possible that slightly overallocating may be a better strategy because then
+	// it would at least be able to handle a few character escape sequences
+	// without another allocation.
+	builder.Grow(len(value) + 2)
 
-	value = strings.ReplaceAll(
-		strings.ReplaceAll(
-			strings.ReplaceAll(value,
-				"\\", "\\\\",
-			),
-			"\"",
-			"\\\""),
-		"\n",
-		"\\n")
-	value = strings.ReplaceAll(strings.ReplaceAll(value, "\t", "\\t"), "\r", "\\r")
-	w.writeRawValue("\"" + value + "\"")
+	// Turning off HTML escaping may not be strictly necessary but it matches with
+	// the current behavior. Testing with Exchange mail shows that it will
+	// accept and properly interpret data sent with and without HTML escaping
+	// enabled when creating emails with body content type HTML and HTML tags in
+	// the body content.
+	enc := json.NewEncoder(builder)
+	enc.SetEscapeHTML(false)
+	enc.SetIndent("", "")
+	enc.Encode(value)
+
+	// Note that builder.String() returns a slice referencing the internal memory
+	// of builder. This means it's unsafe to continue holding that reference once
+	// this function exits (for example some conditions where a pool was used to
+	// reduce strings.Builder allocations). We can use it here directly since
+	// writeRawValue calls WriteString on a different buffer which should cause a
+	// copy of the contents. If that's changed though this will need updated.
+	s := builder.String()
+	// Need to trim off the trailing newline the encoder adds.
+	w.writeRawValue(s[:len(s)-1])
 }
 func (w *JsonSerializationWriter) writePropertyName(key string) {
-	w.writeRawValue("\"" + key + "\":")
+	w.writeRawValue("\"", key, "\":")
 }
 func (w *JsonSerializationWriter) writePropertySeparator() {
+	w.separatorIndices = append(w.separatorIndices, w.getWriter().Len())
 	w.writeRawValue(",")
-}
-func (w *JsonSerializationWriter) trimLastPropertySeparator() {
-	for idx, s := range w.writer {
-		writerLen := len(w.writer)
-		if s == "," && (idx == writerLen-1 || (idx < writerLen-1 && (w.writer[idx+1] == "]" || w.writer[idx+1] == "}" || w.writer[idx+1] == ","))) {
-			w.writer[idx] = ""
-		}
-	}
 }
 func (w *JsonSerializationWriter) writeArrayStart() {
 	w.writeRawValue("[")
@@ -251,11 +279,80 @@ func (w *JsonSerializationWriter) WriteByteArrayValue(key string, value []byte) 
 func (w *JsonSerializationWriter) WriteObjectValue(key string, item absser.Parsable, additionalValuesToMerge ...absser.Parsable) error {
 	additionalValuesLen := len(additionalValuesToMerge)
 	if item != nil || additionalValuesLen > 0 {
+		untypedNode, isUntypedNode := item.(absser.UntypedNodeable)
+		if isUntypedNode {
+			switch value := untypedNode.(type) {
+			case *absser.UntypedBoolean:
+				w.WriteBoolValue(key, value.GetValue())
+				return nil
+			case *absser.UntypedFloat:
+				w.WriteFloat32Value(key, value.GetValue())
+				return nil
+			case *absser.UntypedDouble:
+				w.WriteFloat64Value(key, value.GetValue())
+				return nil
+			case *absser.UntypedInteger:
+				w.WriteInt32Value(key, value.GetValue())
+				return nil
+			case *absser.UntypedLong:
+				w.WriteInt64Value(key, value.GetValue())
+				return nil
+			case *absser.UntypedNull:
+				w.WriteNullValue(key)
+				return nil
+			case *absser.UntypedString:
+				w.WriteStringValue(key, value.GetValue())
+				return nil
+			case *absser.UntypedObject:
+				if key != "" {
+					w.writePropertyName(key)
+				}
+				properties := value.GetValue()
+				if properties != nil {
+					w.writeObjectStart()
+					for objectKey, val := range properties {
+						err := w.WriteObjectValue(objectKey, val)
+						if err != nil {
+							return err
+						}
+					}
+					w.writeObjectEnd()
+					if key != "" {
+						w.writePropertySeparator()
+					}
+				}
+				return nil
+			case *absser.UntypedArray:
+				if key != "" {
+					w.writePropertyName(key)
+				}
+				values := value.GetValue()
+				if values != nil {
+					w.writeArrayStart()
+					for _, val := range values {
+						err := w.WriteObjectValue("", val)
+						if err != nil {
+							return err
+						}
+						w.writePropertySeparator()
+					}
+					w.writeArrayEnd()
+				}
+				if key != "" {
+					w.writePropertySeparator()
+				}
+				return nil
+			}
+		}
+
 		if key != "" {
 			w.writePropertyName(key)
 		}
 		abstractions.InvokeParsableAction(w.GetOnBeforeSerialization(), item)
-		w.writeObjectStart()
+		_, isComposedTypeWrapper := item.(absser.ComposedTypeWrapper)
+		if !isComposedTypeWrapper {
+			w.writeObjectStart()
+		}
 		if item != nil {
 			err := abstractions.InvokeParsableWriter(w.GetOnStartObjectSerialization(), item, w)
 			if err != nil {
@@ -282,7 +379,9 @@ func (w *JsonSerializationWriter) WriteObjectValue(key string, item absser.Parsa
 			abstractions.InvokeParsableAction(w.GetOnAfterObjectSerialization(), additionalValue)
 		}
 
-		w.writeObjectEnd()
+		if !isComposedTypeWrapper {
+			w.writeObjectEnd()
+		}
 		if key != "" {
 			w.writePropertySeparator()
 		}
@@ -298,9 +397,16 @@ func (w *JsonSerializationWriter) WriteCollectionOfObjectValues(key string, coll
 		}
 		w.writeArrayStart()
 		for _, item := range collection {
-			err := w.WriteObjectValue("", item)
-			if err != nil {
-				return err
+			if item != nil {
+				err := w.WriteObjectValue("", item)
+				if err != nil {
+					return err
+				}
+			} else {
+				err := w.WriteNullValue("")
+				if err != nil {
+					return err
+				}
 			}
 			w.writePropertySeparator()
 		}
@@ -614,14 +720,27 @@ func (w *JsonSerializationWriter) WriteCollectionOfInt8Values(key string, collec
 
 // GetSerializedContent returns the resulting byte array from the serialization writer.
 func (w *JsonSerializationWriter) GetSerializedContent() ([]byte, error) {
-	w.trimLastPropertySeparator()
-	resultStr := strings.Join(w.writer, "")
-	return []byte(resultStr), nil
+	trimmed := w.getWriter().Bytes()
+	buffLen := len(trimmed)
+
+	for i := len(w.separatorIndices) - 1; i >= 0; i-- {
+		idx := w.separatorIndices[i]
+
+		if idx == buffLen-1 {
+			trimmed = trimmed[:idx]
+		} else if trimmed[idx+1] == byte(']') || trimmed[idx+1] == byte('}') {
+			trimmed = append(trimmed[:idx], trimmed[idx+1:]...)
+		}
+	}
+
+	trimmedCopy := make([]byte, len(trimmed))
+	copy(trimmedCopy, trimmed)
+
+	return trimmedCopy, nil
 }
 
 // WriteAnyValue an unknown value as a parameter.
 func (w *JsonSerializationWriter) WriteAnyValue(key string, value interface{}) error {
-
 	if value != nil {
 		body, err := json.Marshal(value)
 		if err != nil {
@@ -769,6 +888,8 @@ func (w *JsonSerializationWriter) WriteAdditionalData(value map[string]interface
 				err = w.WriteDateOnlyValue(key, value)
 			case absser.DateOnly:
 				err = w.WriteDateOnlyValue(key, &value)
+			case absser.UntypedNodeable:
+				err = w.WriteObjectValue(key, value)
 			default:
 				err = w.WriteAnyValue(key, &value)
 			}
@@ -777,8 +898,24 @@ func (w *JsonSerializationWriter) WriteAdditionalData(value map[string]interface
 	return err
 }
 
-// Close clears the internal buffer.
+// Reset sets the internal buffer to empty, allowing the writer to be reused.
+func (w *JsonSerializationWriter) Reset() error {
+	w.getWriter().Reset()
+	w.separatorIndices = w.separatorIndices[:0]
+	return nil
+}
+
+// Close relases the internal buffer. Subsequent calls to the writer will panic.
 func (w *JsonSerializationWriter) Close() error {
-	w.writer = make([]string, 0)
+	if w.writer == nil {
+		return nil
+	}
+
+	w.writer.Reset()
+	buffPool.Put(w.writer)
+
+	w.writer = nil
+	w.separatorIndices = nil
+
 	return nil
 }

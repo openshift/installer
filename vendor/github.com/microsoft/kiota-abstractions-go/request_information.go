@@ -13,7 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	s "github.com/microsoft/kiota-abstractions-go/serialization"
-	t "github.com/yosida95/uritemplate/v3"
+	stduritemplate "github.com/std-uritemplate/std-uritemplate/go/v2"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -27,11 +27,17 @@ type RequestInformation struct {
 	// The Request Headers.
 	Headers *RequestHeaders
 	// The Query Parameters of the request.
+	// Deprecated: use QueryParametersAny instead
 	QueryParameters map[string]string
+	// The Query Parameters of the request.
+	QueryParametersAny map[string]any
 	// The Request Body.
 	Content []byte
 	// The path parameters to use for the URL template when generating the URI.
+	// Deprecated: use PathParametersAny instead
 	PathParameters map[string]string
+	// The path parameters to use for the URL template when generating the URI.
+	PathParametersAny map[string]any
 	// The Url template for the current request.
 	UrlTemplate string
 	options     map[string]RequestOption
@@ -42,11 +48,35 @@ const raw_url_key = "request-raw-url"
 // NewRequestInformation creates a new RequestInformation object with default values.
 func NewRequestInformation() *RequestInformation {
 	return &RequestInformation{
-		Headers:         NewRequestHeaders(),
-		QueryParameters: make(map[string]string),
-		options:         make(map[string]RequestOption),
-		PathParameters:  make(map[string]string),
+		Headers:            NewRequestHeaders(),
+		QueryParameters:    make(map[string]string),
+		QueryParametersAny: make(map[string]any),
+		options:            make(map[string]RequestOption),
+		PathParameters:     make(map[string]string),
+		PathParametersAny:  make(map[string]any),
 	}
+}
+
+// NewRequestInformationWithMethodAndUrlTemplateAndPathParameters creates a new RequestInformation object with the specified method and URL template and path parameters.
+func NewRequestInformationWithMethodAndUrlTemplateAndPathParameters(method HttpMethod, urlTemplate string, pathParameters map[string]string) *RequestInformation {
+	value := NewRequestInformation()
+	value.Method = method
+	value.UrlTemplate = urlTemplate
+	value.PathParameters = pathParameters
+	return value
+}
+func ConfigureRequestInformation[T any](request *RequestInformation, config *RequestConfiguration[T]) {
+	if request == nil {
+		return
+	}
+	if config == nil {
+		return
+	}
+	if config.QueryParameters != nil {
+		request.AddQueryParameters(*(config.QueryParameters))
+	}
+	request.Headers.AddAll(config.Headers)
+	request.AddRequestOptions(config.Options)
 }
 
 // GetUri returns the URI of the request.
@@ -58,6 +88,8 @@ func (request *RequestInformation) GetUri() (*u.URL, error) {
 	} else if request.PathParameters == nil {
 		return nil, errors.New("uri template parameters cannot be nil")
 	} else if request.QueryParameters == nil {
+		return nil, errors.New("uri query parameters cannot be nil")
+	} else if request.QueryParametersAny == nil {
 		return nil, errors.New("uri query parameters cannot be nil")
 	} else if request.PathParameters[raw_url_key] != "" {
 		uri, err := u.Parse(request.PathParameters[raw_url_key])
@@ -72,23 +104,20 @@ func (request *RequestInformation) GetUri() (*u.URL, error) {
 			return nil, errors.New("pathParameters must contain a value for \"baseurl\" for the url to be built")
 		}
 
-		uriTemplate, err := t.New(request.UrlTemplate)
-		if err != nil {
-			return nil, err
-		}
-		values := t.Values{}
-		varNames := uriTemplate.Varnames()
-		normalizedNames := make(map[string]string)
-		for _, varName := range varNames {
-			normalizedNames[strings.ToLower(varName)] = varName
-		}
+		substitutions := make(map[string]any)
 		for key, value := range request.PathParameters {
-			addParameterWithOriginalName(key, value, normalizedNames, values)
+			substitutions[key] = request.sanitizeValue(value)
+		}
+		for key, value := range request.PathParametersAny {
+			substitutions[key] = request.normalizeParameters(reflect.ValueOf(value), request.sanitizeValue(value), false)
 		}
 		for key, value := range request.QueryParameters {
-			addParameterWithOriginalName(key, value, normalizedNames, values)
+			substitutions[key] = request.sanitizeValue(value)
 		}
-		url, err := uriTemplate.Expand(values)
+		for key, value := range request.QueryParametersAny {
+			substitutions[key] = request.sanitizeValue(value)
+		}
+		url, err := stduritemplate.Expand(request.UrlTemplate, substitutions)
 		if err != nil {
 			return nil, err
 		}
@@ -97,14 +126,74 @@ func (request *RequestInformation) GetUri() (*u.URL, error) {
 	}
 }
 
-// addParameterWithOriginalName adds the URI template parameter to the template using the right casing, because of go conventions, casing might have changed for the generated property
-func addParameterWithOriginalName(key string, value string, normalizedNames map[string]string, values t.Values) {
-	lowercaseKey := strings.ToLower(key)
-	if paramName, ok := normalizedNames[lowercaseKey]; ok {
-		values.Set(paramName, t.String(value))
-	} else {
-		values.Set(key, t.String(value))
+func castItem[T any, R interface{}](collection []T, mutator func(t T) R) []R {
+	if len(collection) > 0 {
+		cast := make([]R, len(collection))
+		for i, v := range collection {
+			cast[i] = mutator(v)
+		}
+		return cast
 	}
+	return nil
+}
+
+func (request *RequestInformation) sanitizeValue(value any) any {
+	if value == nil {
+		return nil
+	}
+
+	switch v := value.(type) {
+	case *time.Time:
+		return v.Format(time.RFC3339)
+	case time.Time:
+		return v.Format(time.RFC3339)
+	case []*time.Time:
+		return castItem(v, func(t *time.Time) string {
+			return t.Format(time.RFC3339)
+		})
+	case []time.Time:
+		return castItem(v, func(t time.Time) string {
+			return t.Format(time.RFC3339)
+		})
+	case *s.ISODuration:
+		return v.String()
+	case s.ISODuration:
+		return v.String()
+	case []*s.ISODuration:
+		return castItem(v, func(v *s.ISODuration) string {
+			return v.String()
+		})
+	case []s.ISODuration:
+		return castItem(v, func(v s.ISODuration) string {
+			return v.String()
+		})
+	case *s.TimeOnly:
+		return v.String()
+	case s.TimeOnly:
+		return v.String()
+	case []*s.TimeOnly:
+		return castItem(v, func(v *s.TimeOnly) string {
+			return v.String()
+		})
+	case []s.TimeOnly:
+		return castItem(v, func(v s.TimeOnly) string {
+			return v.String()
+		})
+	case *s.DateOnly:
+		return v.String()
+	case s.DateOnly:
+		return v.String()
+	case []*s.DateOnly:
+		return castItem(v, func(v *s.DateOnly) string {
+			return v.String()
+		})
+	case []s.DateOnly:
+		return castItem(v, func(v s.DateOnly) string {
+			return v.String()
+		})
+	}
+
+	return value
 }
 
 // SetUri updates the URI for the request from a raw URL.
@@ -115,6 +204,9 @@ func (request *RequestInformation) SetUri(url u.URL) {
 	}
 	for k := range request.QueryParameters {
 		delete(request.QueryParameters, k)
+	}
+	for k := range request.QueryParametersAny {
+		delete(request.QueryParametersAny, k)
 	}
 }
 
@@ -146,13 +238,19 @@ func (request *RequestInformation) GetRequestOptions() []RequestOption {
 }
 
 const contentTypeHeader = "Content-Type"
-const binaryContentType = "application/octet-steam"
+const binaryContentType = "application/octet-stream"
 
 // SetStreamContent sets the request body to a binary stream.
+// Deprecated: Use SetStreamContentAndContentType instead.
 func (request *RequestInformation) SetStreamContent(content []byte) {
+	request.SetStreamContentAndContentType(content, binaryContentType)
+}
+
+// SetStreamContentAndContentType sets the request body to a binary stream with the specified content type.
+func (request *RequestInformation) SetStreamContentAndContentType(content []byte, contentType string) {
 	request.Content = content
 	if request.Headers != nil {
-		request.Headers.Add(contentTypeHeader, binaryContentType)
+		request.Headers.Add(contentTypeHeader, contentType)
 	}
 }
 
@@ -165,7 +263,7 @@ func (request *RequestInformation) setContentAndContentType(writer s.Serializati
 	}
 	request.Content = content
 	if request.Headers != nil {
-		request.Headers.Add(contentTypeHeader, contentType)
+		request.Headers.TryAdd(contentTypeHeader, contentType)
 	}
 	return nil
 }
@@ -211,6 +309,10 @@ func (request *RequestInformation) SetContentFromParsable(ctx context.Context, r
 		return err
 	}
 	defer writer.Close()
+	if multipartBody, ok := item.(MultipartBody); ok {
+		contentType += "; boundary=" + multipartBody.GetBoundary()
+		multipartBody.SetRequestAdapter(requestAdapter)
+	}
 	request.setRequestType(item, span)
 	err = writer.WriteObjectValue("", item)
 	if err != nil {
@@ -443,7 +545,7 @@ func (request *RequestInformation) SetContentFromScalarCollection(ctx context.Co
 }
 
 // AddQueryParameters adds the query parameters to the request by reading the properties from the provided object.
-func (request *RequestInformation) AddQueryParameters(source interface{}) {
+func (request *RequestInformation) AddQueryParameters(source any) {
 	if source == nil || request == nil {
 		return
 	}
@@ -458,12 +560,13 @@ func (request *RequestInformation) AddQueryParameters(source interface{}) {
 		if tagValue != "" {
 			fieldName = tagValue
 		}
-		value := fieldValue.Interface()
-		if value == nil {
+		value := request.sanitizeValue(fieldValue.Interface())
+		valueOfValue := reflect.ValueOf(value)
+		if valueOfValue.IsNil() {
 			continue
 		}
 		str, ok := value.(*string)
-		if ok && str != nil && *str != "" {
+		if ok && str != nil {
 			request.QueryParameters[fieldName] = *str
 		}
 		bl, ok := value.(*bool)
@@ -474,9 +577,60 @@ func (request *RequestInformation) AddQueryParameters(source interface{}) {
 		if ok && it != nil {
 			request.QueryParameters[fieldName] = strconv.FormatInt(int64(*it), 10)
 		}
-		arr, ok := value.([]string)
-		if ok && len(arr) > 0 {
-			request.QueryParameters[fieldName] = strings.Join(arr, ",")
+		strArr, ok := value.([]string)
+		if ok && len(strArr) > 0 {
+			// populating both query parameter fields to avoid breaking compatibility with code reading this field
+			request.QueryParameters[fieldName] = strings.Join(strArr, ",")
+
+			tmp := make([]any, len(strArr))
+			for i, v := range strArr {
+				tmp[i] = v
+			}
+			request.QueryParametersAny[fieldName] = tmp
+		}
+		if arr, ok := value.([]any); ok && len(arr) > 0 {
+			request.QueryParametersAny[fieldName] = arr
+		}
+		normalizedValue := request.normalizeParameters(valueOfValue, value, true)
+		if normalizedValue != nil {
+			request.QueryParametersAny[fieldName] = normalizedValue
 		}
 	}
+}
+
+// Normalize different types to values that can be rendered in an URL:
+// enum -> string (name)
+// []enum -> []string (containing names)
+// []non_interface -> []any (like []int64 -> []any)
+func (request *RequestInformation) normalizeParameters(valueOfValue reflect.Value, value any, returnNilIfNotNormalizable bool) any {
+	if valueOfValue.Kind() == reflect.Slice && valueOfValue.Len() > 0 {
+		//type assertions to "enums" don't work if you don't know the enum type in advance, we need to use reflection
+		enumArr := valueOfValue.Slice(0, valueOfValue.Len())
+		if _, ok := enumArr.Index(0).Interface().(kiotaEnum); ok {
+			// testing the first value is an enum to avoid iterating over the whole array if it's not
+			strRepresentations := make([]string, valueOfValue.Len())
+			for i := range strRepresentations {
+				strRepresentations[i] = enumArr.Index(i).Interface().(kiotaEnum).String()
+			}
+			return strRepresentations
+		} else {
+			anySlice := make([]any, valueOfValue.Len())
+			for i := range anySlice {
+				anySlice[i] = enumArr.Index(i).Interface()
+			}
+			return anySlice
+		}
+	} else if enum, ok := value.(kiotaEnum); ok {
+		return enum.String()
+	}
+
+	if returnNilIfNotNormalizable {
+		return nil
+	} else {
+		return value
+	}
+}
+
+type kiotaEnum interface {
+	String() string
 }

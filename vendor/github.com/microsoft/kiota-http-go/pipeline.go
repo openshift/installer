@@ -60,7 +60,11 @@ func (transport *customTransport) RoundTrip(req *nethttp.Request) (*nethttp.Resp
 
 // GetDefaultTransport returns the default http transport used by the library
 func GetDefaultTransport() nethttp.RoundTripper {
-	defaultTransport := nethttp.DefaultTransport.(*nethttp.Transport).Clone()
+	defaultTransport, ok := nethttp.DefaultTransport.(*nethttp.Transport)
+	if !ok {
+		return nethttp.DefaultTransport
+	}
+	defaultTransport = defaultTransport.Clone()
 	defaultTransport.ForceAttemptHTTP2 = true
 	defaultTransport.DisableCompression = false
 	return defaultTransport

@@ -1,18 +1,19 @@
 package aws
 
 import (
+	"context"
 	"fmt"
 
 	log "github.com/sirupsen/logrus"
 
 	minterv1 "github.com/openshift/cloud-credential-operator/pkg/apis/cloudcredential/v1"
 
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/arn"
-	"github.com/aws/aws-sdk-go/service/iam"
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/aws/arn"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
+	iamtypes "github.com/aws/aws-sdk-go-v2/service/iam/types"
 
 	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 )
 
 // credMintingActions is a list of AWS verbs needed to run in the mode where the
@@ -92,11 +93,6 @@ var (
 	}
 
 	credentailRequestScheme = runtime.NewScheme()
-	credentialRequestCodec  = serializer.NewCodecFactory(credentailRequestScheme)
-)
-
-const (
-	infrastructureConfigName = "cluster"
 )
 
 func init() {
@@ -112,19 +108,19 @@ type SimulateParams struct {
 }
 
 // CheckCloudCredCreation will see whether we have enough permissions to create new sub-creds
-func CheckCloudCredCreation(awsClient Client, logger log.FieldLogger) (bool, error) {
+func CheckCloudCredCreation(ctx context.Context, awsClient Client, logger log.FieldLogger) (bool, error) {
 	// Empty SimulateParams{} b/c creating IAM users and assigning policies
 	// are all IAM API alls which are not region-specific
-	return CheckPermissionsAgainstActions(awsClient, credMintingActions, &SimulateParams{}, logger)
+	return CheckPermissionsAgainstActions(ctx, awsClient, credMintingActions, &SimulateParams{}, logger)
 }
 
 // getClientDetails will return the *iam.User associated with the provided client's credentials,
 // a boolean indicating whether the user is the 'root' account, and any error encountered
 // while trying to gather the info.
-func getClientDetails(awsClient Client) (*iam.User, bool, error) {
+func getClientDetails(ctx context.Context, awsClient Client) (*iamtypes.User, bool, error) {
 	rootUser := false
 
-	user, err := awsClient.GetUser(nil)
+	user, err := awsClient.GetUser(ctx, &iam.GetUserInput{})
 	if err != nil {
 		return nil, rootUser, fmt.Errorf("error querying username: %v", err)
 	}
@@ -143,9 +139,9 @@ func getClientDetails(awsClient Client) (*iam.User, bool, error) {
 
 // CheckPermissionsUsingQueryClient will use queryClient to query whether the credentials in targetClient can perform the actions
 // listed in the statementEntries. queryClient will need iam:GetUser and iam:SimulatePrincipalPolicy
-func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statementEntries []minterv1.StatementEntry,
+func CheckPermissionsUsingQueryClient(ctx context.Context, queryClient, targetClient Client, statementEntries []minterv1.StatementEntry,
 	params *SimulateParams, logger log.FieldLogger) (bool, error) {
-	targetUser, isRoot, err := getClientDetails(targetClient)
+	targetUser, isRoot, err := getClientDetails(ctx, targetClient)
 	if err != nil {
 		return false, fmt.Errorf("error gathering AWS credentials details: %v", err)
 	}
@@ -155,25 +151,23 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statemen
 		return true, nil
 	}
 
-	allowList := []*string{}
+	allowList := []string{}
 	for _, statement := range statementEntries {
-		for _, action := range statement.Action {
-			allowList = append(allowList, aws.String(action))
-		}
+		allowList = append(allowList, statement.Action...)
 	}
 
 	input := &iam.SimulatePrincipalPolicyInput{
 		PolicySourceArn: targetUser.Arn,
 		ActionNames:     allowList,
-		ContextEntries:  []*iam.ContextEntry{},
+		ContextEntries:  []iamtypes.ContextEntry{},
 	}
 
 	if params != nil {
 		if params.Region != "" {
-			input.ContextEntries = append(input.ContextEntries, &iam.ContextEntry{
-				ContextKeyName:   aws.String("aws:RequestedRegion"),
-				ContextKeyType:   aws.String("string"),
-				ContextKeyValues: []*string{aws.String(params.Region)},
+			input.ContextEntries = append(input.ContextEntries, iamtypes.ContextEntry{
+				ContextKeyName:   awssdk.String("aws:RequestedRegion"),
+				ContextKeyType:   iamtypes.ContextKeyTypeEnumString,
+				ContextKeyValues: []string{params.Region},
 			})
 		}
 	}
@@ -181,20 +175,21 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statemen
 	// Either all actions are allowed and we'll return 'true', or it's a failure
 	allClear := true
 
-	err = queryClient.SimulatePrincipalPolicyPages(input, func(response *iam.SimulatePolicyResponse, lastPage bool) bool {
+	paginator := iam.NewSimulatePrincipalPolicyPaginator(queryClient, input)
+	for paginator.HasMorePages() {
+		response, err := paginator.NextPage(ctx)
+		if err != nil {
+			return false, fmt.Errorf("error simulating policy: %v", err)
+		}
 
 		for _, result := range response.EvaluationResults {
-			if *result.EvalDecision != "allowed" {
+			if result.EvalDecision != iamtypes.PolicyEvaluationDecisionTypeAllowed {
 				// Don't bail out after the first failure, so we can log the full list
 				// of failed/denied actions
 				logger.WithField("action", *result.EvalActionName).Warning("Action not allowed with tested creds")
 				allClear = false
 			}
 		}
-		return !lastPage
-	})
-	if err != nil {
-		return false, fmt.Errorf("error simulating policy: %v", err)
 	}
 
 	if !allClear {
@@ -208,15 +203,15 @@ func CheckPermissionsUsingQueryClient(queryClient, targetClient Client, statemen
 
 // CheckPermissionsAgainstStatementList will test to see whether the list of actions in the provided
 // list of StatementEntries can work with the credentials used by the passed-in awsClient
-func CheckPermissionsAgainstStatementList(awsClient Client, statementEntries []minterv1.StatementEntry,
+func CheckPermissionsAgainstStatementList(ctx context.Context, awsClient Client, statementEntries []minterv1.StatementEntry,
 	params *SimulateParams, logger log.FieldLogger) (bool, error) {
-	return CheckPermissionsUsingQueryClient(awsClient, awsClient, statementEntries, params, logger)
+	return CheckPermissionsUsingQueryClient(ctx, awsClient, awsClient, statementEntries, params, logger)
 }
 
 // CheckPermissionsAgainstActions will take the static list of Actions to check whether the provided
 // awsClient creds have sufficient permissions to perform the actions.
 // Will return true/false indicating whether the permissions are sufficient.
-func CheckPermissionsAgainstActions(awsClient Client, actionList []string, params *SimulateParams, logger log.FieldLogger) (bool, error) {
+func CheckPermissionsAgainstActions(ctx context.Context, awsClient Client, actionList []string, params *SimulateParams, logger log.FieldLogger) (bool, error) {
 	statementList := []minterv1.StatementEntry{
 		{
 			Action:   actionList,
@@ -225,41 +220,13 @@ func CheckPermissionsAgainstActions(awsClient Client, actionList []string, param
 		},
 	}
 
-	return CheckPermissionsAgainstStatementList(awsClient, statementList, params, logger)
+	return CheckPermissionsAgainstStatementList(ctx, awsClient, statementList, params, logger)
 }
 
 // CheckCloudCredPassthrough will see if the provided creds are good enough to pass through
 // to other components as-is based on the static list of permissions needed by the various
 // users of CredentialsRequests
 // TODO: move away from static list (to dynamic passthrough validation?)
-func CheckCloudCredPassthrough(awsClient Client, params *SimulateParams, logger log.FieldLogger) (bool, error) {
-	return CheckPermissionsAgainstActions(awsClient, credPassthroughActions, params, logger)
-}
-
-func readCredentialRequest(cr []byte) (*minterv1.CredentialsRequest, error) {
-
-	newObj, err := runtime.Decode(credentialRequestCodec.UniversalDecoder(minterv1.SchemeGroupVersion), cr)
-	if err != nil {
-		return nil, fmt.Errorf("error decoding credentialrequest: %v", err)
-	}
-	return newObj.(*minterv1.CredentialsRequest), nil
-}
-
-func getCredentialRequestStatements(crBytes []byte) ([]minterv1.StatementEntry, error) {
-	statementList := []minterv1.StatementEntry{}
-
-	cr, err := readCredentialRequest(crBytes)
-	if err != nil {
-		return statementList, err
-	}
-
-	awsSpec := minterv1.AWSProviderSpec{}
-	err = minterv1.Codec.DecodeProviderSpec(cr.Spec.ProviderSpec, &awsSpec)
-	if err != nil {
-		return statementList, fmt.Errorf("error decoding spec.ProviderSpec: %v", err)
-	}
-
-	statementList = append(statementList, awsSpec.StatementEntries...)
-
-	return statementList, nil
+func CheckCloudCredPassthrough(ctx context.Context, awsClient Client, params *SimulateParams, logger log.FieldLogger) (bool, error) {
+	return CheckPermissionsAgainstActions(ctx, awsClient, credPassthroughActions, params, logger)
 }

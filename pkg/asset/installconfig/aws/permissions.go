@@ -2,11 +2,12 @@
 package aws
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"regexp"
 
-	"github.com/aws/aws-sdk-go/aws/session"
+	awssdk "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 
@@ -434,13 +435,17 @@ var permissions = map[PermissionGroup][]string{
 // are sufficient to perform an installation, and that they can be used for cluster runtime
 // as either capable of creating new credentials for components that interact with the cloud or
 // being able to be passed through as-is to the components that need cloud credentials
-func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string) error {
+func ValidateCreds(ctx context.Context, awsconfig awssdk.Config, groups []PermissionGroup, region string, iamEndpoint string) error {
 	requiredPermissions, err := PermissionsList(groups)
 	if err != nil {
 		return err
 	}
 
-	client := ccaws.NewClientFromSession(ssn)
+	// The CCO helper only accepts a single endpoint for IAM API call
+	client, err := ccaws.NewClientFromConfig(awsconfig, iamEndpoint)
+	if err != nil {
+		return err
+	}
 
 	sParams := &ccaws.SimulateParams{
 		Region: region,
@@ -448,7 +453,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 
 	// Check whether we can do an installation
 	logger := logrus.StandardLogger()
-	canInstall, err := ccaws.CheckPermissionsAgainstActions(client, requiredPermissions, sParams, logger)
+	canInstall, err := ccaws.CheckPermissionsAgainstActions(ctx, client, requiredPermissions, sParams, logger)
 	if err != nil {
 		return fmt.Errorf("checking install permissions: %w", err)
 	}
@@ -457,7 +462,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 	}
 
 	// Check whether we can mint new creds for cluster services needing to interact with the cloud
-	canMint, err := ccaws.CheckCloudCredCreation(client, logger)
+	canMint, err := ccaws.CheckCloudCredCreation(ctx, client, logger)
 	if err != nil {
 		return fmt.Errorf("mint credentials check: %w", err)
 	}
@@ -467,7 +472,7 @@ func ValidateCreds(ssn *session.Session, groups []PermissionGroup, region string
 
 	// Check whether we can use the current credentials in passthrough mode to satisfy
 	// cluster services needing to interact with the cloud
-	canPassthrough, err := ccaws.CheckCloudCredPassthrough(client, sParams, logger)
+	canPassthrough, err := ccaws.CheckCloudCredPassthrough(ctx, client, sParams, logger)
 	if err != nil {
 		return fmt.Errorf("passthrough credentials check: %w", err)
 	}
