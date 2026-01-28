@@ -10,6 +10,7 @@ import (
 	kms "cloud.google.com/go/kms/apiv1"
 	"cloud.google.com/go/kms/apiv1/kmspb"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	googleoauth "golang.org/x/oauth2/google"
 	"google.golang.org/api/cloudresourcemanager/v3"
 	compute "google.golang.org/api/compute/v1"
@@ -545,7 +546,7 @@ func GetZones(ctx context.Context, svc *compute.Service, project, region string)
 	defer cancel()
 	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
 		for _, zone := range page.Items {
-			if strings.HasSuffix(zone.Region, region) && strings.EqualFold(zone.Status, "UP") {
+			if strings.HasSuffix(zone.Region, region) && strings.EqualFold(zone.Status, "UP") && !aiZone(zone.Name) {
 				zones = append(zones, zone)
 			}
 		}
@@ -793,4 +794,16 @@ func (c *Client) GetPrivateServiceConnectEndpoint(ctx context.Context, project s
 		return nil, fmt.Errorf("failed to create Compute service: %w", err)
 	}
 	return GetPrivateServiceConnectEndpoint(svc, project, endpoint)
+}
+
+// aiZone returns true if the GCP zone follows the AI naming convention
+// e.g. us-south1-ai1b, us-central1-ai1a.
+// See: https://docs.cloud.google.com/compute/docs/regions-zones/ai-zones
+func aiZone(zone string) bool {
+	parts := strings.Split(zone, "-")
+	if len(parts) < 3 {
+		logrus.Warnf("Found zone %s, but it does not follow expected zone naming convention", zone)
+		return false
+	}
+	return strings.Contains(parts[2], "ai")
 }
