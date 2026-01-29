@@ -10,7 +10,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	v1 "github.com/openshift/api/config/v1"
 	machinev1 "github.com/openshift/api/machine/v1"
@@ -194,7 +193,7 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 	managedIdentity := ""
 	if len(mpool.Identity.UserAssignedIdentities) > 0 {
 		managedIdentity = mpool.Identity.UserAssignedIdentities[0].ProviderID()
-	} else if mpool.Identity.Type == capz.VMIdentityUserAssigned {
+	} else if mpool.Identity.Type == azure.VMIdentityUserAssigned {
 		// In this case, the installer will create the user-assigned identity.
 		managedIdentity = fmt.Sprintf("%s-identity", clusterID)
 	}
@@ -243,7 +242,9 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 			}
 
 			if disk.ManagedDisk.DiskEncryptionSet != nil {
-				dataDisk.ManagedDisk.DiskEncryptionSet = (*machineapi.DiskEncryptionSetParameters)(disk.ManagedDisk.SecurityProfile.DiskEncryptionSet)
+				dataDisk.ManagedDisk.DiskEncryptionSet = &machineapi.DiskEncryptionSetParameters{
+					ID: disk.ManagedDisk.DiskEncryptionSet.ToID(),
+				}
 			}
 		}
 
@@ -308,11 +309,11 @@ func getBootDiagnosticObject(diag *azure.BootDiagnostics, cloudName string, role
 		}
 		return nil
 	}
-	if diag.Type == capz.DisabledDiagnosticsStorage {
+	if diag.Type == azure.DisabledDiagnosticsStorage {
 		return nil
 	}
 	bootDiagnostics := &machineapi.AzureDiagnostics{Boot: &machineapi.AzureBootDiagnostics{}}
-	if diag.Type == capz.ManagedDiagnosticsStorage {
+	if diag.Type == azure.ManagedDiagnosticsStorage {
 		bootDiagnostics.Boot.StorageAccountType = machineapi.AzureManagedAzureDiagnosticsStorage
 	} else {
 		bootDiagnostics.Boot.StorageAccountType = machineapi.CustomerManagedAzureDiagnosticsStorage
@@ -345,14 +346,14 @@ func getNetworkInfo(platform *azure.Platform, clusterID, role string, subnetZone
 		networkResourceGroupName = platform.ClusterResourceGroupName(clusterID)
 	}
 	virtualNetworkName := platform.VirtualNetworkName(clusterID)
-	var subnetRole capz.SubnetRole
+	var subnetRole azure.SubnetRole
 	var defaultSubnet string
 	switch role {
 	case "worker":
-		subnetRole = capz.SubnetNode
+		subnetRole = azure.SubnetNode
 		defaultSubnet = platform.ComputeSubnetName(clusterID)
 	case controlPlaneRoleName:
-		subnetRole = capz.SubnetControlPlane
+		subnetRole = azure.SubnetControlPlane
 		defaultSubnet = platform.ControlPlaneSubnetName(clusterID)
 	default:
 		return "", "", nil, fmt.Errorf("unrecognized machine role %s", role)
@@ -367,7 +368,7 @@ func getNetworkInfo(platform *azure.Platform, clusterID, role string, subnetZone
 
 	if len(subnets) == 0 {
 		subnets = append(subnets, defaultSubnet)
-		if platform.OutboundType == azure.NATGatewayMultiZoneOutboundType && subnetRole == capz.SubnetNode {
+		if platform.OutboundType == azure.NATGatewayMultiZoneOutboundType && subnetRole == azure.SubnetNode {
 			// Starting from 2 here since there is one already added. For default installs, there has to
 			// be one guaranteed and then for multi zone, we need to add extra per availability zone.
 			// This code will only run if multi zone so the first one is already set and we start from 2.

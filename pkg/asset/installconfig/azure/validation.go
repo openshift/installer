@@ -17,7 +17,6 @@ import (
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 
 	"github.com/openshift/installer/pkg/types"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
@@ -563,9 +562,9 @@ func validateNetworks(client API, p *aztypes.Platform, fieldPath *field.Path) fi
 		var computeSubnetName string
 		var controlPlaneSubnetName string
 		for _, subnet := range p.Subnets {
-			if subnet.Role == capz.SubnetControlPlane && controlPlaneSubnetName == "" {
+			if subnet.Role == aztypes.SubnetControlPlane && controlPlaneSubnetName == "" {
 				controlPlaneSubnetName = subnet.Name
-			} else if subnet.Role == capz.SubnetNode && computeSubnetName == "" {
+			} else if subnet.Role == aztypes.SubnetNode && computeSubnetName == "" {
 				computeSubnetName = subnet.Name
 			}
 		}
@@ -954,7 +953,7 @@ func validateBootDiagnostics(client API, ic *types.InstallConfig) (allErrs field
 func checkBootDiagnosticsURI(client API, diag *aztypes.BootDiagnostics, region string) error {
 	missingErrorMessage := "missing %s for user managed boot diagnostics"
 	errorField := ""
-	if diag != nil && diag.Type == capz.UserManagedDiagnosticsStorage {
+	if diag != nil && diag.Type == aztypes.UserManagedDiagnosticsStorage {
 		if diag.StorageAccountName != "" && diag.ResourceGroup != "" {
 			return client.CheckIfExistsStorageAccount(context.TODO(), diag.ResourceGroup, diag.StorageAccountName, region)
 		}
@@ -970,7 +969,7 @@ func checkBootDiagnosticsURI(client API, diag *aztypes.BootDiagnostics, region s
 }
 
 // validateSubnetNatGateway checks whether a NAT Gateway is already attached to a compute subnet.
-func validateSubnetNatGateway(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, outboundType aztypes.OutboundType, role capz.SubnetRole, resourceGroup, virtualNetwork string) field.ErrorList {
+func validateSubnetNatGateway(client API, fieldPath *field.Path, subnet *aznetwork.Subnet, outboundType aztypes.OutboundType, role aztypes.SubnetRole, resourceGroup, virtualNetwork string) field.ErrorList {
 	var allErrs field.ErrorList
 	if outboundType != aztypes.NATGatewayMultiZoneOutboundType && outboundType != aztypes.NATGatewaySingleZoneOutboundType {
 		return allErrs
