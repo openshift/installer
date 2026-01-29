@@ -170,7 +170,7 @@ func osImage(ctx context.Context, ic *installconfig.InstallConfig, machinePool *
 		return azi, nil
 	case baremetal.Name:
 		// Check for image URL override
-		if oi := platform.BareMetal.ClusterOSImage; oi != "" {
+		if oi := platform.BareMetal.DeprecatedClusterOSImage; oi != "" {
 			return oi, nil
 		}
 		// Use image from release payload
