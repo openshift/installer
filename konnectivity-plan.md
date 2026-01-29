@@ -28,15 +28,185 @@ All investigation tasks must be completed before proceeding to implementation.
 
 **Objective**: Identify where and how the bootstrap environment is created in the installer.
 
-**Deliverables**:
-- Document which assets create the bootstrap machine configuration
-- Identify where the bootstrap KAS is configured
-- Locate the bootstrap Ignition config generation code
-- List the relevant source files and their responsibilities
+**Status**: ✅ Complete
 
-**Search starting points**:
-- `pkg/asset/` directory
-- Bootstrap-related assets and ignition configs
+#### Findings
+
+##### Bootstrap Ignition Assets
+
+The bootstrap environment is created through a chain of assets in `pkg/asset/ignition/bootstrap/`:
+
+| File | Responsibility |
+|------|----------------|
+| [common.go](pkg/asset/ignition/bootstrap/common.go) | Core bootstrap config generation (774 lines). Defines `bootstrapTemplateData`, gathers dependencies, adds files/units from `data/data/bootstrap/` |
+| [bootstrap.go](pkg/asset/ignition/bootstrap/bootstrap.go) | Main `Bootstrap` asset wrapper, produces `bootstrap.ign` |
+| [bootstrap_in_place.go](pkg/asset/ignition/bootstrap/bootstrap_in_place.go) | Single-node variant, produces `bootstrap-in-place-for-live-iso.ign` |
+| [cvoignore.go](pkg/asset/ignition/bootstrap/cvoignore.go) | CVO manifest overrides |
+
+Platform-specific modules exist in subdirectories (e.g., `bootstrap/baremetal/`, `bootstrap/aws/`).
+
+##### Bootstrap KAS Configuration
+
+The bootstrap KAS is **not pre-generated as a static pod manifest**. Instead, it is dynamically rendered during bootstrap execution by the `cluster-kube-apiserver-operator`:
+
+1. The bootstrap machine boots with `bootstrap.ign`
+2. `bootkube.service` starts and runs `/usr/local/bin/bootkube.sh`
+3. The **kube-apiserver-bootstrap** stage (lines 247-279 in [bootkube.sh.template](data/data/bootstrap/files/usr/local/bin/bootkube.sh.template)) renders the KAS:
+   ```bash
+   KUBE_APISERVER_OPERATOR_IMAGE=$(image_for cluster-kube-apiserver-operator)
+   bootkube_podman_run \
+     --name kube-apiserver-render \
+     "${KUBE_APISERVER_OPERATOR_IMAGE}" \
+     /usr/bin/cluster-kube-apiserver-operator render \
+       --manifest-etcd-serving-ca=etcd-ca-bundle.crt \
+       --manifest-etcd-server-urls="${ETCD_ENDPOINTS}" \
+       ...
+   ```
+4. The rendered config is copied to `/etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml`
+5. Static pod manifests are placed in `/etc/kubernetes/manifests/` for kubelet to pick up
+
+##### Bootstrap Ignition Generation Flow
+
+```
+InstallConfig
+    ↓
+├─→ Manifests (cluster-config.yaml, etc.)
+├─→ TLS Assets (177+ certificate/key pairs)
+├─→ KubeConfigs (Admin, Kubelet, Loopback)
+├─→ Machines (Master, Worker definitions)
+├─→ ReleaseImage
+└─→ RHCOS Image
+    ↓
+Common.generateConfig() → bootstrap.ign
+```
+
+Key operations in `generateConfig()`:
+1. Initialize Ignition v3.2 config
+2. Add files from `data/data/bootstrap/files/` (processed as Go templates)
+3. Add systemd units from `data/data/bootstrap/systemd/`
+4. Inject manifests, TLS assets, and kubeconfigs via `addParentFiles()`
+5. Apply platform-specific customizations
+6. Serialize to JSON
+
+##### Data Files and Templates
+
+Bootstrap templates live in `data/data/bootstrap/`:
+
+```
+bootstrap/
+├── files/
+│   └── usr/local/bin/
+│       ├── bootkube.sh.template      # Main bootstrap orchestrator
+│       ├── kubelet.sh.template
+│       └── ...
+├── systemd/common/units/
+│   ├── bootkube.service              # Runs bootkube.sh
+│   ├── kubelet.service.template
+│   └── ...
+└── <platform>/                       # Platform-specific overrides
+```
+
+##### Key Insight for Konnectivity Integration
+
+Since the bootstrap KAS is rendered at runtime by `cluster-kube-apiserver-operator`, adding EgressSelectorConfiguration requires:
+1. **Option A**: Modify the `cluster-kube-apiserver-operator` to support EgressSelectorConfiguration during bootstrap render (requires changes outside installer)
+2. **Option B**: Post-process the rendered KAS config in `bootkube.sh` to inject EgressSelectorConfiguration
+3. **Option C**: Add EgressSelectorConfiguration support to the installer's bootstrap TLS/config assets that get passed to the operator
+
+The Konnectivity server itself can be added as a static pod or systemd unit in the bootstrap Ignition, similar to how other bootstrap components are configured.
+
+**DECISION**: Based on task 1.1.1, use the existing capabilities of cluster-kube-apiserver-operator to render the EgressSelectorConfiguration.
+
+---
+
+### Task 1.1.1: Investigate KAS Operator Render Command Extensibility
+
+**Objective**: Determine if `cluster-kube-apiserver-operator render` can be extended to output additional KAS arguments (specifically EgressSelectorConfiguration), or if post-processing is required.
+
+**Source**: `/home/mbooth/src/openshift/cluster-kube-apiserver-operator`
+
+**Status**: ✅ Complete
+
+#### Findings
+
+##### Built-in Extensibility Mechanism
+
+**Good news**: The render command already supports config overrides via `--config-override-files` flag.
+
+The flag can be specified multiple times and each file is:
+1. Rendered as a Go text/template
+2. Merged into the final `KubeAPIServerConfig` using `resourcemerge.MergeProcessConfig()`
+
+Merge order: `defaultConfig` → `bootstrapOverrides` → `--config-override-files` (in order provided)
+
+##### Render Command Output
+
+| Output | Format | Location |
+|--------|--------|----------|
+| KubeAPIServerConfig | YAML | `--config-output-file` (e.g., `/assets/kube-apiserver-bootstrap/config`) |
+| Bootstrap manifests | YAML | `--asset-output-dir/bootstrap-manifests/` |
+| Runtime manifests | YAML | `--asset-output-dir/manifests/` |
+
+##### EgressSelectorConfiguration Injection
+
+EgressSelectorConfiguration is a top-level field in `KubeAPIServerConfig`:
+
+```yaml
+apiVersion: kubecontrolplane.config.openshift.io/v1
+kind: KubeAPIServerConfig
+egressSelectorConfiguration:
+  egressSelections:
+  - name: "cluster"
+    connection:
+      proxyProtocol: "CONNECT"
+      transport:
+        type: "TCP"
+        tcp:
+          url: "http://127.0.0.1:<konnectivity-port>"
+```
+
+##### Recommended Approach: Config Override File ✅
+
+**No operator modifications required.** Use the existing `--config-override-files` mechanism:
+
+1. Create `data/data/bootstrap/files/opt/openshift/egress-selector-config.yaml.template`:
+   ```yaml
+   apiVersion: kubecontrolplane.config.openshift.io/v1
+   kind: KubeAPIServerConfig
+   egressSelectorConfiguration:
+     egressSelections:
+     - name: "cluster"
+       connection:
+         proxyProtocol: "CONNECT"
+         transport:
+           type: "TCP"
+           tcp:
+             url: "http://127.0.0.1:{{.KonnectivityPort}}"
+   ```
+
+2. Modify [bootkube.sh.template](data/data/bootstrap/files/usr/local/bin/bootkube.sh.template) to add the flag:
+   ```bash
+   /usr/bin/cluster-kube-apiserver-operator render \
+     ... existing args ...
+     --config-override-files=/assets/egress-selector-config.yaml \
+     ...
+   ```
+
+##### Key Implementation Details
+
+- The bootstrap KAS reads config via `--openshift-config` flag from a YAML file
+- EgressSelectorConfiguration in the merged YAML is picked up automatically
+- Konnectivity server URL should use `127.0.0.1` since it runs on the same bootstrap node
+- Transport can be plain TCP (simplest) or TLS (requires additional cert provisioning)
+
+##### Key Files
+
+| Component | Location |
+|-----------|----------|
+| Render command | `cluster-kube-apiserver-operator/pkg/cmd/render/render.go` |
+| Config merge logic | `vendor/github.com/openshift/library-go/pkg/operator/render/options/generic.go:210-259` |
+| Bootstrap KAS pod template | `cluster-kube-apiserver-operator/bindata/bootkube/bootstrap-manifests/kube-apiserver-pod.yaml` |
+| Current render invocation | `installer/data/data/bootstrap/files/usr/local/bin/bootkube.sh.template:247-269`
 
 ---
 
