@@ -307,11 +307,85 @@ When a webhook is deployed in the pod network:
 
 **Objective**: Find the existing mechanism for cleaning up bootstrap resources and determine how to integrate Konnectivity agent removal.
 
-**Deliverables**:
-- Document the bootstrap teardown/completion flow
-- Identify where cluster resources are cleaned up when bootstrap completes
-- Determine how to add the Konnectivity DaemonSet removal to this flow
-- List relevant source files
+**Status**: ✅ Complete
+
+#### Findings
+
+##### Bootstrap Teardown Flow
+
+```
+Bootstrap Node (bootkube.sh):
+├─ cluster-bootstrap completes
+├─ CVO overrides restored
+├─ CEO wait completes
+├─ touch /opt/openshift/.bootkube.done    ← Bootstrap script complete
+└─ bootkube.service exits
+
+Installer Process (cmd/openshift-install/create.go):
+├─ waitForBootstrapComplete()             ← Polls ConfigMap status
+├─ gatherBootstrapLogs() (optional)
+├─ destroybootstrap.Destroy()             ← Deletes bootstrap infrastructure
+│   └─ Platform-specific VM/network deletion
+└─ WaitForInstallComplete()               ← Waits for cluster ready
+```
+
+##### Cluster Resource Cleanup: Current State
+
+**Key finding**: The installer has **NO built-in mechanism** to delete cluster resources (DaemonSets, Deployments, etc.) after bootstrap completes. It only deletes infrastructure (VMs, networks, etc.).
+
+Evidence:
+- No kubectl/oc calls in `DestroyBootstrap()`
+- No manifest deletion in post-bootstrap flow
+- The only cleanup example is removing the MCO bootstrap static pod from the bootstrap node's local filesystem (line 621 in bootkube.sh.template)
+
+##### Integration Point for Konnectivity Cleanup
+
+**Location**: [pkg/destroy/bootstrap/bootstrap.go](pkg/destroy/bootstrap/bootstrap.go)
+
+**Timing**: Delete the DaemonSet **after** infrastructure teardown completes.
+
+**Rationale**:
+- Konnectivity tunnel remains available until the bootstrap node is destroyed
+- Agents become orphaned when bootstrap disappears (expected)
+- We then clean up the orphaned DaemonSet resources
+- Cluster API remains accessible via production KAS (already running on cluster nodes)
+
+```go
+// In pkg/destroy/bootstrap/bootstrap.go
+func Destroy(ctx context.Context, dir string) error {
+    // ... existing platform setup ...
+
+    // EXISTING: Platform-specific infrastructure cleanup
+    if err := provider.DestroyBootstrap(ctx, dir); err != nil {
+        return fmt.Errorf("error destroying bootstrap resources %w", err)
+    }
+
+    // NEW: Clean up bootstrap-only cluster resources after infrastructure is gone
+    if err := deleteBootstrapClusterResources(ctx, dir); err != nil {
+        logrus.Warningf("Failed to clean up bootstrap cluster resources: %v", err)
+        // Don't fail - infrastructure is already destroyed
+    }
+
+    return nil
+}
+```
+
+##### Key Files
+
+| Purpose | File |
+|---------|------|
+| Bootstrap completion detection | [cmd/openshift-install/create.go:164](cmd/openshift-install/create.go) |
+| Bootstrap infrastructure destroy | [pkg/destroy/bootstrap/bootstrap.go](pkg/destroy/bootstrap/bootstrap.go) |
+| CAPI machine deletion | [pkg/infrastructure/clusterapi/clusterapi.go](pkg/infrastructure/clusterapi/clusterapi.go) |
+| Bootstrap script | [bootkube.sh.template:574-655](data/data/bootstrap/files/usr/local/bin/bootkube.sh.template) |
+
+##### Recommendation
+
+Add Konnectivity cleanup to `pkg/destroy/bootstrap/bootstrap.go`:
+1. Create function to delete Konnectivity DaemonSet (and any related resources)
+2. Call it **after** `provider.DestroyBootstrap()` returns successfully
+3. Handle errors gracefully (warn but don't fail - infrastructure is already gone)
+4. Delete order: DaemonSet → ConfigMaps → Namespace (if bootstrap-only)
 
 ---
 
