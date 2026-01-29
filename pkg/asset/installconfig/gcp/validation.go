@@ -91,12 +91,12 @@ func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, ar
 	}
 	diskTypes, ok := gcp.InstanceTypeToDiskTypeMap[family]
 	if !ok {
-		return field.NotFound(fldPath.Child("type"), family)
+		logrus.Warnf("unrecognized instance type %s with family %s", instanceType, family)
 	}
 
-	acceptedArmFamilies := sets.New("c4a", "n4a", "t2a")
+	acceptedArmFamilies := sets.New("c4a", "n4a", "t2a", "a4x")
 	if arch == types.ArchitectureARM64 && !acceptedArmFamilies.Has(family) {
-		return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedArmFamilies))
+		logrus.Warnf("unrecognized instance type %s with arm architecture family %s", instanceType, family)
 	}
 
 	if diskType != "" {
@@ -147,10 +147,6 @@ func ValidateInstanceType(client API, fieldPath *field.Path, project, region str
 			return append(allErrs, field.Invalid(fieldPath.Child("type"), instanceType, err.Error()))
 		}
 		return append(allErrs, field.InternalError(nil, err))
-	}
-
-	if fieldErr := validateInstanceAndDiskType(fieldPath, diskType, instanceType, arch); fieldErr != nil {
-		return append(allErrs, fieldErr)
 	}
 
 	allErrs = append(allErrs,
@@ -212,6 +208,35 @@ func DefaultInstanceTypeForArch(arch types.Architecture) string {
 	return "n2-standard-4"
 }
 
+func getInstanceFamily(instanceType string) string {
+	family, _, _ := strings.Cut(instanceType, "-")
+	if family == "custom" {
+		family = gcp.DefaultCustomInstanceType
+	}
+	return family
+}
+
+func defaultDiskTypeForInstance(instanceType string) string {
+	defaultDiskType := gcp.PDSSD
+
+	family := getInstanceFamily(instanceType)
+	diskTypes, ok := gcp.InstanceTypeToDiskTypeMap[family]
+	if ok {
+		supportedDiskTypes := sets.New(diskTypes...)
+		switch {
+		case supportedDiskTypes.Has(gcp.PDSSD):
+			defaultDiskType = gcp.PDSSD
+		case supportedDiskTypes.Has(gcp.HyperDiskBalanced):
+			defaultDiskType = gcp.HyperDiskBalanced
+		default:
+			// this shouldn't happen because all supported instance types
+			// have either pd-ssd or hyperdisk balanced
+			defaultDiskType = diskTypes[0]
+		}
+	}
+	return defaultDiskType
+}
+
 // validateInstanceTypes checks that the user-provided instance types are valid.
 func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
@@ -234,6 +259,8 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 		defaultInstanceType = ic.GCP.DefaultMachinePlatform.InstanceType
 		if ic.GCP.DefaultMachinePlatform.DiskType != "" {
 			defaultDiskType = ic.GCP.DefaultMachinePlatform.DiskType
+		} else {
+			defaultDiskType = defaultDiskTypeForInstance(defaultInstanceType)
 		}
 
 		if ic.GCP.DefaultMachinePlatform.OnHostMaintenance != "" {
@@ -282,6 +309,15 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			}
 			if ic.ControlPlane.Platform.GCP.DiskType != "" {
 				cpDiskType = ic.ControlPlane.Platform.GCP.DiskType
+			} else {
+				// When the user-provided instance type is not recognized and
+				// the disk type is not specified, add an error asking for disk type.
+				family := getInstanceFamily(instanceType)
+				if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
+					return append(allErrs, field.Required(field.NewPath("controlPlane", "diskType"), fmt.Sprintf("instance type %s requires a disk type to be set", instanceType)))
+				} else {
+					cpDiskType = defaultDiskTypeForInstance(instanceType)
+				}
 			}
 			if ic.ControlPlane.Platform.GCP.OnHostMaintenance != "" {
 				cpOnHostMaintenance = ic.ControlPlane.Platform.GCP.OnHostMaintenance
@@ -343,10 +379,18 @@ func validateInstanceTypes(client API, ic *types.InstallConfig) field.ErrorList 
 			if compute.Platform.GCP.ConfidentialCompute != "" {
 				confidentialCompute = compute.Platform.GCP.ConfidentialCompute
 			}
-		}
-
-		if compute.Platform.GCP != nil && compute.Platform.GCP.DiskType != "" {
-			diskType = compute.Platform.GCP.DiskType
+			if compute.Platform.GCP.DiskType != "" {
+				diskType = compute.Platform.GCP.DiskType
+			} else {
+				// When the user-provided instance type is not recognized and
+				// the disk type is not specified, add an error asking for disk type.
+				family := getInstanceFamily(instanceType)
+				if _, ok := gcp.InstanceTypeToDiskTypeMap[family]; !ok {
+					return append(allErrs, field.Required(field.NewPath("controlPlane", "diskType"), fmt.Sprintf("instance type %s requires a disk type to be set", instanceType)))
+				} else {
+					diskType = defaultDiskTypeForInstance(instanceType)
+				}
+			}
 		}
 
 		allErrs = append(allErrs,
