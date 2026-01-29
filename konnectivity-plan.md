@@ -545,11 +545,55 @@ For our proof-of-concept, we can simplify:
 
 **Objective**: Determine how the Konnectivity agent authenticates to the Konnectivity server.
 
-**Deliverables**:
-- Document the authentication mechanism (mTLS, tokens, etc.)
-- Identify what certificates or credentials need to be generated
-- Determine how to provision these credentials in the bootstrap environment
-- Reference upstream Konnectivity documentation as needed
+**Status**: ✅ Complete
+
+#### Decision: No Authentication for PoC
+
+For the proof-of-concept, **we will skip authentication entirely**:
+
+1. **KAS → Konnectivity Server**: The bootstrap KAS connects to the Konnectivity server over `localhost` (127.0.0.1). Since both run on the same bootstrap node, no authentication is required for this connection.
+
+2. **Agents → Konnectivity Server**: Agents connect to the Konnectivity server over **unauthenticated TCP**. The server will accept connections without mTLS client certificates.
+
+##### Security Considerations
+
+This approach is **insecure** but acceptable for a PoC because:
+- The bootstrap environment is temporary and isolated
+- The Konnectivity server only exists during cluster bootstrap
+- Production-ready implementations should use mTLS (as HyperShift does)
+
+##### Server Configuration (Unauthenticated)
+
+```bash
+/usr/bin/proxy-server
+  --logtostderr=true
+  --server-port 8090          # KAS connects here (localhost)
+  --agent-port 8091           # Agents connect here (no auth)
+  --health-port 2041
+  --mode http-connect
+  --proxy-strategies destHost,defaultRoute
+  --keepalive-time 30s
+  --frontend-keepalive-time 30s
+  --uds-name ""               # Disable UDS, use TCP only
+```
+
+##### Agent Configuration (Unauthenticated)
+
+```bash
+/usr/bin/proxy-agent
+  --logtostderr=true
+  --proxy-server-host <bootstrap-node-ip>
+  --proxy-server-port 8091
+  --health-server-port 2041
+  --agent-identifiers default-route=true
+  --keepalive-time 30s
+  --probe-interval 5s
+  --sync-interval 5s
+```
+
+##### Future Work
+
+For production readiness, Task 2.1 (certificate generation) would need to be completed to add mTLS authentication. This is out of scope for the initial PoC.
 
 ---
 
@@ -573,13 +617,11 @@ For our proof-of-concept, we can simplify:
 
 ### Task 2.1: Generate Konnectivity Certificates
 
+**Status**: ⏭️ Skipped (out of scope for PoC)
+
 **Objective**: Create the necessary certificates for Konnectivity server and agent authentication.
 
-**Deliverables**:
-- Add certificate generation to the installer's asset pipeline
-- Generate server certificate/key
-- Generate agent certificate/key (or CA for agent authentication)
-- Ensure certificates are included in appropriate Ignition configs
+**Note**: Per Task 1.6 decision, the PoC uses unauthenticated TCP connections. Certificate generation is deferred to future production-ready work.
 
 ---
 
