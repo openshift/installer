@@ -163,7 +163,7 @@ egressSelectorConfiguration:
       proxyProtocol: "HTTPConnect"
       transport:
         uds:
-          udsName: "/etc/kubernetes/konnectivity-server/konnectivity-server.socket"
+          udsName: "/etc/kubernetes/bootstrap-configs/konnectivity-server.socket"
 ```
 
 ##### Recommended Approach: Config Override File ✅
@@ -181,7 +181,7 @@ egressSelectorConfiguration:
          proxyProtocol: "HTTPConnect"
          transport:
            uds:
-             udsName: "/etc/kubernetes/konnectivity-server/konnectivity-server.socket"
+             udsName: "/etc/kubernetes/bootstrap-configs/konnectivity-server.socket"
    ```
 
 2. Modify [bootkube.sh.template](data/data/bootstrap/files/usr/local/bin/bootkube.sh.template) to add the flag:
@@ -549,7 +549,7 @@ For our proof-of-concept, we can simplify:
 
 For the proof-of-concept, **we will skip authentication entirely**:
 
-1. **KAS → Konnectivity Server**: The bootstrap KAS connects to the Konnectivity server via **Unix Domain Socket (UDS)**. Since both run on the same bootstrap node, UDS is the recommended transport and no authentication is required.
+1. **KAS → Konnectivity Server**: The bootstrap KAS connects to the Konnectivity server via **Unix Domain Socket (UDS)** at `/etc/kubernetes/bootstrap-configs/konnectivity-server.socket`. This path is already mounted in the KAS pod (as the `config` volume), so no additional volume mounts are needed. Since both run on the same bootstrap node, UDS is the recommended transport and no authentication is required.
 
 2. **Agents → Konnectivity Server**: Agents connect to the Konnectivity server over **unauthenticated TCP**. The server will accept connections without mTLS client certificates.
 
@@ -565,7 +565,7 @@ This approach is **insecure** but acceptable for a PoC because:
 ```bash
 /usr/bin/proxy-server
   --logtostderr=true
-  --uds-name=/etc/kubernetes/konnectivity-server/konnectivity-server.socket  # KAS connects via UDS
+  --uds-name=/etc/kubernetes/bootstrap-configs/konnectivity-server.socket  # KAS connects via UDS (already mounted in KAS pod)
   --agent-port 8091           # Agents connect here (TCP, no auth)
   --health-port 2041
   --mode http-connect
@@ -657,11 +657,62 @@ When no `--egress-selector-config-file` flag is set, the KAS uses direct connect
 
 **Objective**: Add a Konnectivity server to the bootstrap environment.
 
-**Deliverables**:
-- Create Konnectivity server configuration
-- Add server deployment to bootstrap Ignition config (likely as a static pod or systemd unit)
-- Configure server to listen for agent connections
-- Ensure server starts before or alongside the bootstrap KAS
+**Approach**: Deploy as a **static pod** (consistent with other bootstrap components like KAS, etcd).
+
+**Files to modify**:
+
+| File | Purpose |
+|------|---------|
+| `data/data/bootstrap/files/usr/local/bin/bootkube.sh.template` | Add `KONNECTIVITY_IMAGE` variable and create static pod manifest inline |
+
+**Image injection approach**:
+
+The Konnectivity image is obtained using the `image_for` shell function (defined in [release-image.sh.template](data/data/bootstrap/files/usr/local/bin/release-image.sh.template)), which extracts images from the release payload.
+
+1. Add to bootkube.sh.template (around line 49-68 with other image definitions):
+   ```bash
+   KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
+   ```
+
+2. Create the static pod manifest inline in bootkube.sh.template (before the KAS render stage), using the shell variable:
+   ```bash
+   # Create Konnectivity server static pod manifest
+   cat > /etc/kubernetes/manifests/konnectivity-server-pod.yaml <<EOF
+   apiVersion: v1
+   kind: Pod
+   metadata:
+     name: konnectivity-server
+     namespace: kube-system
+   spec:
+     hostNetwork: true
+     containers:
+     - name: konnectivity-server
+       image: ${KONNECTIVITY_IMAGE}
+       command:
+       - /usr/bin/proxy-server
+       args:
+       - --logtostderr=true
+       - --uds-name=/etc/kubernetes/bootstrap-configs/konnectivity-server.socket
+       - --agent-port=8091
+       - --health-port=2041
+       - --mode=http-connect
+       - --proxy-strategies=destHost,defaultRoute
+       volumeMounts:
+       - name: config-dir
+         mountPath: /etc/kubernetes/bootstrap-configs
+     volumes:
+     - name: config-dir
+       hostPath:
+         path: /etc/kubernetes/bootstrap-configs
+         type: Directory
+   EOF
+   ```
+
+   The socket is placed in `/etc/kubernetes/bootstrap-configs/` which is already mounted in the KAS pod as the `config` volume, eliminating the need for any KAS pod manifest modifications.
+
+This follows the same pattern used for other bootstrap components where images are extracted from the release payload and injected into manifests at runtime.
+
+**Startup ordering**: Static pods are started by kubelet in parallel. The KAS will retry connecting to the UDS socket until the Konnectivity server is ready. No explicit ordering mechanism is needed.
 
 ---
 
@@ -669,10 +720,42 @@ When no `--egress-selector-config-file` flag is set, the KAS uses direct connect
 
 **Objective**: Configure the bootstrap KAS to proxy cluster-bound traffic through Konnectivity.
 
-**Deliverables**:
-- Create EgressSelectorConfiguration for the bootstrap KAS
-- Configure the KAS to use Konnectivity for "Cluster" egress traffic
-- Add configuration to bootstrap KAS static pod manifest
+**Approach**: Use `--config-override-files` flag (validated in Task 1.1.1).
+
+**Files to create/modify**:
+
+| File | Purpose |
+|------|---------|
+| `data/data/bootstrap/files/opt/openshift/egress-selector-config.yaml` | EgressSelectorConfiguration override |
+| `data/data/bootstrap/files/usr/local/bin/bootkube.sh.template` | Add `--config-override-files` flag to render command |
+
+**EgressSelectorConfiguration**:
+```yaml
+apiVersion: kubecontrolplane.config.openshift.io/v1
+kind: KubeAPIServerConfig
+egressSelectorConfiguration:
+  egressSelections:
+  - name: "cluster"
+    connection:
+      proxyProtocol: "HTTPConnect"
+      transport:
+        uds:
+          udsName: "/etc/kubernetes/bootstrap-configs/konnectivity-server.socket"
+```
+
+**bootkube.sh.template modification** (around line 247-269):
+```bash
+/usr/bin/cluster-kube-apiserver-operator render \
+  ... existing args ...
+  --config-override-files=/assets/egress-selector-config.yaml \
+  ...
+```
+
+**KAS pod volume mount**: No additional volume mounts are needed.
+
+The KAS pod template already mounts `/etc/kubernetes/bootstrap-configs` as the `config` volume (see [kube-apiserver-pod.yaml](cluster-kube-apiserver-operator/bindata/bootkube/bootstrap-manifests/kube-apiserver-pod.yaml)). By placing the Konnectivity UDS socket at `/etc/kubernetes/bootstrap-configs/konnectivity-server.socket`, the KAS pod can access it through the existing volume mount.
+
+This avoids any need for pod manifest post-processing.
 
 ---
 
@@ -680,11 +763,124 @@ When no `--egress-selector-config-file` flag is set, the KAS uses direct connect
 
 **Objective**: Deploy Konnectivity agents on cluster nodes to connect back to the bootstrap server.
 
-**Deliverables**:
-- Create DaemonSet manifest for Konnectivity agent
-- Configure agent to connect to the bootstrap node's Konnectivity server
-- Include necessary certificates/credentials for authentication
-- Add manifest to bootstrap resources that get applied to the cluster
+**Important**: The DaemonSet runs on **cluster nodes** (masters/workers), not the bootstrap node. The bootstrap node's kubelet runs in standalone mode and doesn't connect to the API server. The DaemonSet must be deployed into the cluster via the bootstrap KAS.
+
+**Deployment mechanism**: Manifests placed in the `manifests/` directory on the bootstrap node are applied to the cluster by `cluster-bootstrap` (see [bootkube.sh.template:582](data/data/bootstrap/files/usr/local/bin/bootkube.sh.template)). This is how all cluster resources (ConfigMaps, Secrets, CRDs, operators, etc.) are initially deployed.
+
+#### Option A: Go Asset (Recommended for Production)
+
+Create a proper Go asset in `pkg/asset/manifests/` that generates the DaemonSet YAML. This follows the existing pattern for cluster manifests.
+
+**Files to create**:
+
+| File | Purpose |
+|------|---------|
+| `pkg/asset/manifests/konnectivity.go` | New asset that generates the DaemonSet manifest |
+
+**Advantages**:
+- Manifest generated at `openshift-install create manifests` time
+- Can be inspected/modified before cluster creation
+- Single templating mechanism (Go)
+- Follows existing patterns in the codebase
+- Easier to test
+
+**Implementation sketch**:
+```go
+// KonnectivityAgent generates the Konnectivity agent DaemonSet manifest
+type KonnectivityAgent struct {
+    FileList []*asset.File
+}
+
+func (k *KonnectivityAgent) Dependencies() []asset.Asset {
+    return []asset.Asset{
+        &installconfig.InstallConfig{},
+        // Need bootstrap IP from somewhere - may require new dependency
+    }
+}
+
+func (k *KonnectivityAgent) Generate(ctx context.Context, dependencies asset.Parents) error {
+    // Generate DaemonSet YAML with bootstrap IP and image reference
+}
+```
+
+**Challenge**: The Go asset runs at `openshift-install create manifests` time, before the bootstrap node exists. We need access to:
+- Bootstrap node IP (available via install config or derived from network config)
+- Konnectivity image reference (available from release image)
+
+#### Option B: Inline in bootkube.sh (Simpler for PoC)
+
+Create the manifest at bootstrap runtime and write it to `manifests/` before cluster-bootstrap runs.
+
+**Files to modify**:
+
+| File | Purpose |
+|------|---------|
+| `data/data/bootstrap/files/usr/local/bin/bootkube.sh.template` | Add DaemonSet creation |
+
+**Key configuration decisions**:
+- **Namespace**: `kube-system` (standard for infrastructure components)
+- **hostNetwork**: `true` (agent needs to reach bootstrap node IP)
+- **Tolerations**: Tolerate all taints (must run on all nodes including control plane)
+- **Bootstrap IP**: Use `{{.BootstrapNodeIP}}` Go template variable
+- **Image**: Use `${KONNECTIVITY_IMAGE}` shell variable
+
+**Implementation in bootkube.sh.template** (before cluster-bootstrap, after manifest collection):
+```bash
+# Create Konnectivity agent DaemonSet manifest for cluster deployment
+cat > manifests/konnectivity-agent-daemonset.yaml <<EOF
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: konnectivity-agent
+  namespace: kube-system
+  labels:
+    app: konnectivity-agent
+    openshift.io/bootstrap-only: "true"
+spec:
+  selector:
+    matchLabels:
+      app: konnectivity-agent
+  template:
+    metadata:
+      labels:
+        app: konnectivity-agent
+    spec:
+      hostNetwork: true
+      dnsPolicy: Default
+      tolerations:
+      - operator: Exists
+      containers:
+      - name: konnectivity-agent
+        image: ${KONNECTIVITY_IMAGE}
+        command:
+        - /usr/bin/proxy-agent
+        args:
+        - --logtostderr=true
+        - --proxy-server-host={{.BootstrapNodeIP}}
+        - --proxy-server-port=8091
+        - --health-server-port=2041
+        - --agent-identifiers=default-route=true
+        - --keepalive-time=30s
+        - --probe-interval=5s
+        - --sync-interval=5s
+EOF
+```
+
+**How this works**:
+1. `{{.BootstrapNodeIP}}` is resolved when bootkube.sh.template → bootkube.sh (ignition generation)
+2. `${KONNECTIVITY_IMAGE}` is resolved when bootkube.sh runs on bootstrap node
+3. The manifest is written to `manifests/konnectivity-agent-daemonset.yaml`
+4. `cluster-bootstrap` applies all manifests in `manifests/` to the cluster
+5. The DaemonSet is created in the cluster and schedules pods on cluster nodes
+
+**Disadvantages**:
+- Manifest not visible until bootstrap runtime
+- Mixed templating (Go + shell) is confusing
+- Harder to test
+
+#### Decision: Option B (Inline)
+
+For the PoC, use **Option B (inline in bootkube.sh)** to reduce implementation complexity. Option A (Go asset) is deferred to post-PoC work.
 
 ---
 
@@ -692,10 +888,25 @@ When no `--egress-selector-config-file` flag is set, the KAS uses direct connect
 
 **Objective**: Remove the Konnectivity agent DaemonSet when bootstrap completes.
 
-**Deliverables**:
-- Add Konnectivity DaemonSet deletion to the bootstrap teardown flow
-- Ensure clean removal without impacting cluster operation
-- Test that non-bootstrap KAS continues operating normally after removal
+**Approach**: Add cleanup logic to `pkg/destroy/bootstrap/bootstrap.go` (per Task 1.3).
+
+**Files to modify**:
+
+| File | Purpose |
+|------|---------|
+| `pkg/destroy/bootstrap/bootstrap.go` | Add `deleteKonnectivityResources()` function |
+
+**Implementation**:
+```go
+func deleteKonnectivityResources(ctx context.Context, dir string) error {
+    // Load kubeconfig from asset directory
+    // Create Kubernetes client
+    // Delete DaemonSet kube-system/konnectivity-agent
+    // Log warning on failure (don't fail the teardown)
+}
+```
+
+**Timing**: Called after `provider.DestroyBootstrap()` returns successfully.
 
 ---
 
@@ -705,17 +916,96 @@ When no `--egress-selector-config-file` flag is set, the KAS uses direct connect
 
 **Validation steps**:
 1. Deploy a cluster with the modified installer
-2. Verify Konnectivity server is running on bootstrap node
-3. Verify Konnectivity agents are running on cluster nodes
-4. Deploy a test webhook in the cluster
-5. Confirm the bootstrap KAS can reach the webhook
+2. Verify Konnectivity server static pod is running on bootstrap node
+3. Verify Konnectivity agent pods are running on cluster nodes (check `kubectl get pods -n kube-system -l app=konnectivity-agent`)
+4. Deploy a test webhook in the cluster (e.g., a simple validating webhook)
+5. Confirm the bootstrap KAS can reach the webhook (create a resource that triggers the webhook)
 6. Complete bootstrap teardown and verify agent DaemonSet is removed
-7. Confirm non-bootstrap KAS can still reach webhooks normally
+7. Confirm production KAS on cluster nodes can still reach webhooks normally
 
 ---
 
 ## Open Questions
 
-- Which port should the Konnectivity server listen on?
-- Should the Konnectivity server be a static pod or systemd service?
-- What is the expected lifecycle overlap between bootstrap and cluster control plane?
+### Resolved
+
+| Question | Answer | Source |
+|----------|--------|--------|
+| Which port should the Konnectivity server listen on? | UDS socket for KAS, TCP port 8091 for agents | Task 1.5 (HyperShift), Task 1.6 |
+| Should the Konnectivity server be a static pod or systemd service? | Static pod (consistent with KAS, etcd) | Task 1.1 |
+| What is the expected lifecycle overlap between bootstrap and cluster control plane? | Pod network is operational before bootstrap completes; production KAS instances are running | Task 1.2, Task 1.3 |
+
+### Remaining Uncertainties
+
+These should be investigated during implementation if they become blocking:
+
+1. **Bootstrap node IP discovery** ✅ Resolved
+   - **Issue**: The agent DaemonSet needs to know the bootstrap node's IP address to connect to the Konnectivity server.
+   - **Solution**: Use `{{.BootstrapNodeIP}}` Go template variable, which is already available in `bootstrapTemplateData` (see [common.go:94](pkg/asset/ignition/bootstrap/common.go)). This is the same variable used by `kubelet.sh.template` for the `--node-ip` flag.
+
+2. **KAS pod volume mount for UDS socket** ✅ Resolved
+   - **Issue**: The bootstrap KAS pod needs access to the Konnectivity UDS socket.
+   - **Solution**: Place the socket at `/etc/kubernetes/bootstrap-configs/konnectivity-server.socket`. This directory is already mounted in the KAS pod as the `config` volume, so no additional volume mounts or manifest modifications are needed.
+
+3. **Static pod startup timing**
+   - **Issue**: If KAS starts before Konnectivity server, initial webhook calls may fail until the server is ready.
+   - **Mitigation**: KAS should retry connections to the UDS socket. Webhook calls during early bootstrap may fail and retry.
+   - **Risk**: Low - the KAS has retry logic, and webhooks are not typically needed in the earliest bootstrap stages.
+
+4. **Agent connectivity before CNI**
+   - **Issue**: Agents run in hostNetwork mode and connect to bootstrap via infrastructure network. This should work, but needs validation.
+   - **Mitigation**: Agents use hostNetwork (bypasses CNI) and connect via bootstrap node's infrastructure IP.
+   - **Risk**: Low - this is the same network path used by kubelets to reach the bootstrap KAS.
+
+---
+
+## Post-PoC Considerations
+
+The following items are out of scope for the initial proof-of-concept but should be addressed for a production-ready implementation:
+
+### 1. UDS Socket Location
+
+**Current approach**: The UDS socket is placed at `/etc/kubernetes/bootstrap-configs/konnectivity-server.socket` to reuse an existing volume mount in the KAS pod.
+
+**Concerns**:
+- This directory is intended for configuration files, not runtime sockets
+- The socket persists in the config directory after Konnectivity server terminates
+- May cause confusion during debugging or log analysis
+
+**Post-PoC options**:
+- Create a dedicated `/etc/kubernetes/konnectivity/` directory and add proper volume mounts to the KAS pod via operator changes
+- Use a runtime directory like `/run/konnectivity/` with appropriate volume mounts
+- Coordinate with cluster-kube-apiserver-operator maintainers on the preferred approach
+
+### 2. Konnectivity Agent DaemonSet as Go Asset
+
+**Current approach**: The DaemonSet manifest is created inline in bootkube.sh.template using mixed Go/shell templating.
+
+**Concerns**:
+- Manifest not visible until bootstrap runtime
+- Mixed templating (Go + shell) is confusing and error-prone
+- Harder to test and validate
+- Doesn't follow established patterns for cluster manifests
+
+**Post-PoC implementation**:
+- Create `pkg/asset/manifests/konnectivity.go` as a proper Go asset
+- Generate DaemonSet YAML at `openshift-install create manifests` time
+- Manifest can be inspected/modified before cluster creation
+- Follows existing patterns (similar to other manifests in `pkg/asset/manifests/`)
+- Requires solving bootstrap IP availability at manifest generation time
+
+### 3. Agent-to-Server Authentication (mTLS)
+
+**Current approach**: Agents connect to the Konnectivity server over unauthenticated TCP on port 8091.
+
+**Security risks**:
+- Any process on the infrastructure network could connect to the Konnectivity server
+- Potential for unauthorized tunnel access during the bootstrap window
+- Does not meet production security requirements
+
+**Post-PoC implementation** (see Task 2.1 for deferred work):
+- Generate a Konnectivity CA certificate as part of the installer's TLS asset pipeline
+- Generate server certificate for the Konnectivity server (agent endpoint)
+- Generate agent certificates or use a shared CA for agent authentication
+- Configure mTLS on both server (`--cluster-cert`, `--cluster-key`, `--server-ca-cert`) and agents (`--ca-cert`, `--agent-cert`, `--agent-key`)
+- Reference HyperShift's implementation in `control-plane-operator/controllers/hostedcontrolplane/pki/konnectivity.go`
