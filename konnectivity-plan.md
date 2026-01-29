@@ -63,7 +63,9 @@ The bootstrap KAS is **not pre-generated as a static pod manifest**. Instead, it
        ...
    ```
 4. The rendered config is copied to `/etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml`
-5. Static pod manifests are placed in `/etc/kubernetes/manifests/` for kubelet to pick up
+5. Static pod manifests are placed in `/etc/kubernetes/manifests/` for the bootstrap kubelet
+
+**Note on bootstrap kubelet**: The bootstrap node runs a kubelet in "standalone" mode ([kubelet.sh.template](data/data/bootstrap/files/usr/local/bin/kubelet.sh.template)). It watches `--pod-manifest-path=/etc/kubernetes/manifests` for static pods but has no `--kubeconfig`, so it never connects to the API server and does not register as a Node object.
 
 ##### Bootstrap Ignition Generation Flow
 
@@ -108,14 +110,14 @@ bootstrap/
 
 ##### Key Insight for Konnectivity Integration
 
-Since the bootstrap KAS is rendered at runtime by `cluster-kube-apiserver-operator`, adding EgressSelectorConfiguration requires:
-1. **Option A**: Modify the `cluster-kube-apiserver-operator` to support EgressSelectorConfiguration during bootstrap render (requires changes outside installer)
-2. **Option B**: Post-process the rendered KAS config in `bootkube.sh` to inject EgressSelectorConfiguration
-3. **Option C**: Add EgressSelectorConfiguration support to the installer's bootstrap TLS/config assets that get passed to the operator
+Since the bootstrap KAS is rendered at runtime by `cluster-kube-apiserver-operator`, adding EgressSelectorConfiguration requires passing a config override file to the render command.
 
-The Konnectivity server itself can be added as a static pod or systemd unit in the bootstrap Ignition, similar to how other bootstrap components are configured.
+**Approach** (validated in Task 1.1.1):
+1. Create an egress selector config template in `data/data/bootstrap/files/`
+2. Add `--config-override-files=<path>` to the existing render invocation in `bootkube.sh.template`
+3. The operator's built-in config merging will inject `egressSelectorConfiguration` into the final KubeAPIServerConfig
 
-**DECISION**: Based on task 1.1.1, use the existing capabilities of cluster-kube-apiserver-operator to render the EgressSelectorConfiguration.
+The Konnectivity server itself can be added as a static pod manifest in `/etc/kubernetes/manifests/`, similar to how the bootstrap KAS, etcd, and other control plane components run.
 
 ---
 
