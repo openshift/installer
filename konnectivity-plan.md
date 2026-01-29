@@ -216,10 +216,90 @@ egressSelectorConfiguration:
 
 **Objective**: Determine why the bootstrap KAS cannot route to the pod network.
 
-**Deliverables**:
-- Document the network topology of the bootstrap environment
-- Explain why pod network connectivity is unavailable from the bootstrap node
-- Identify any existing documentation on bootstrap networking constraints
+**Status**: ✅ Complete
+
+#### Findings
+
+##### Bootstrap Network Topology
+
+The bootstrap node operates in **host network mode only**:
+
+1. **All containers use host networking** - From [bootkube.sh.template](data/data/bootstrap/files/usr/local/bin/bootkube.sh.template) line 24-27:
+   ```bash
+   bootkube_podman_run() {
+       # we run all commands in the host-network to prevent IP conflicts with
+       # end-user infrastructure.
+       podman run --quiet --net=host --rm --log-driver=k8s-file "${@}"
+   }
+   ```
+
+2. **Bootstrap kubelet has no CNI** - The standalone kubelet ([kubelet.sh.template](data/data/bootstrap/files/usr/local/bin/kubelet.sh.template)) runs without:
+   - `--cni-bin-dir`
+   - `--cni-conf-dir`
+   - Any network plugin configuration
+
+3. **Static pods run in host network namespace** - They get host IPs, not pod network IPs
+
+##### Why Pod Network is Unreachable
+
+| Bootstrap Node | Cluster Nodes |
+|----------------|---------------|
+| Host network only (`--net=host`) | Pod network + host network |
+| No CNI plugin | OVN-Kubernetes or OpenShift-SDN |
+| Infrastructure network (e.g., 10.0.0.0/24) | Pod CIDR routable (e.g., 10.128.0.0/14) |
+| No routes to pod/service CIDRs | Full CNI routing stack |
+
+**Root cause**: The cluster-network-operator is deployed **after** bootstrap completes. During bootstrap:
+- No CNI plugin is installed
+- No VXLAN/Geneve tunnels exist
+- No routes to pod CIDR (10.128.0.0/14) or service CIDR (172.30.0.0/16)
+
+##### Bootstrap Lifecycle vs Network Operator
+
+1. **Bootstrap phase**: Bootstrap KAS runs on host network, applies manifests via cluster-bootstrap
+2. **CVO deploys operators**: Including the cluster-network-operator
+3. **Pod network becomes operational**: CNI is configured, pod CIDR is routable on cluster nodes
+4. **Teardown conditions met**: Required control plane pods running, CEO complete, etc.
+5. **Bootstrap node exits**: After all teardown conditions are satisfied
+
+The pod network is operational *before* bootstrap completes. However, the bootstrap node itself never gains access to the pod network - it remains on host networking throughout its lifecycle. This is intentional: the bootstrap node is temporary and isolated from the production network by design.
+
+##### Bootstrap Teardown Conditions
+
+The bootstrap node marks itself complete (`/opt/openshift/.bootkube.done`) after these conditions are met:
+
+1. **cluster-bootstrap succeeds** - Applies manifests and waits for required pods:
+   ```
+   openshift-kube-apiserver/kube-apiserver
+   openshift-kube-scheduler/openshift-kube-scheduler
+   openshift-kube-controller-manager/kube-controller-manager
+   openshift-cluster-version/cluster-version-operator
+   ```
+
+2. **CVO overrides restored** - Patches `clusterversion.config.openshift.io/version`
+
+3. **CEO (Cluster Etcd Operator) completes** - Runs `wait-for-ceo` command
+
+4. **API DNS checks pass** - Both `API_URL` and `API_INT_URL` are reachable
+
+For HA clusters, the installer's `wait-for-bootstrap-complete` stage additionally waits for:
+- At least 2 nodes with successful KAS revision rollout (checked via `kubeapiservers.operator.openshift.io/cluster` status)
+
+**Key insight**: Bootstrap teardown happens when the *control plane pods* are running on cluster nodes, but the *network operator* may still be initializing. The pod network becomes fully operational after bootstrap exits.
+
+##### Webhook Reachability Problem
+
+When a webhook is deployed in the pod network:
+- Bootstrap KAS tries to call webhook at pod IP (e.g., `10.128.2.5:8443`)
+- Pod lives in cluster network CIDR
+- Bootstrap node has no route to that CIDR
+- Result: **connection refused / no route to host**
+
+##### Why CNI Cannot Run on Bootstrap
+
+1. **Dependency cycle**: CNI operator needs API server, but API server needs network for webhooks
+2. **Bootstrap is temporary**: Not part of production cluster topology
+3. **Design isolation**: Host network prevents conflicts with user infrastructure
 
 ---
 
