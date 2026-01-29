@@ -91,12 +91,12 @@ func validateInstanceAndDiskType(fldPath *field.Path, diskType, instanceType, ar
 	}
 	diskTypes, ok := gcp.InstanceTypeToDiskTypeMap[family]
 	if !ok {
-		return field.NotFound(fldPath.Child("type"), family)
+		logrus.Warnf("unrecognized instance type %s with family %s", instanceType, family)
 	}
 
-	acceptedArmFamilies := sets.New("c4a", "n4a", "t2a")
+	acceptedArmFamilies := sets.New("c4a", "n4a", "t2a", "a4x")
 	if arch == types.ArchitectureARM64 && !acceptedArmFamilies.Has(family) {
-		return field.NotSupported(fldPath.Child("type"), family, sets.List(acceptedArmFamilies))
+		logrus.Warnf("unrecognized instance type %s with arm architecture family %s", instanceType, family)
 	}
 
 	if diskType != "" {
