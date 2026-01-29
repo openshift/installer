@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	nonetypes "github.com/openshift/installer/pkg/types/none"
 	ibmcloudapi "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
 )
@@ -115,8 +116,8 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	if ic.Arbiter == nil {
 		return nil
 	}
-	if ic.Platform.Name() != baremetaltypes.Name {
-		return fmt.Errorf("only BareMetal platform is supported for Arbiter deployments")
+	if ic.Platform.Name() != baremetaltypes.Name && ic.Platform.Name() != nonetypes.Name {
+		return fmt.Errorf("only BareMetal and None platforms are supported for Arbiter deployments")
 	}
 
 	pool := *ic.Arbiter
@@ -125,43 +126,47 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	var ipClaims []ipamv1.IPAddressClaim
 	var ipAddrs []ipamv1.IPAddress
 
-	mpool := defaultBareMetalMachinePoolPlatform()
-	mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
-	mpool.Set(pool.Platform.BareMetal)
-	pool.Platform.BareMetal = &mpool
-
 	// Use managed user data secret, since we always have up to date images
 	// available in the cluster
 	arbiterUserDataSecretName := "arbiter-user-data-managed" // #nosec G101
-	enabledCaps := installConfig.Config.GetEnabledCapabilities()
-	if enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
-		machines, err = baremetal.Machines(clusterID.InfraID, ic, &pool, "arbiter", arbiterUserDataSecretName)
-		if err != nil {
-			return fmt.Errorf("failed to create arbiter machine objects: %w", err)
-		}
 
-		hostSettings, err := baremetal.ArbiterHosts(ic, machines, arbiterUserDataSecretName)
-		if err != nil {
-			return fmt.Errorf("failed to assemble host data: %w", err)
-		}
+	// BareMetal-specific: configure machine pool and generate Machine API objects
+	if ic.Platform.BareMetal != nil {
+		mpool := defaultBareMetalMachinePoolPlatform()
+		mpool.Set(ic.Platform.BareMetal.DefaultMachinePlatform)
+		mpool.Set(pool.Platform.BareMetal)
+		pool.Platform.BareMetal = &mpool
 
-		hosts, err := createHostAssetFiles(hostSettings.Hosts, arbiterHostFileName)
-		if err != nil {
-			return err
-		}
-		m.HostFiles = append(m.HostFiles, hosts...)
+		enabledCaps := installConfig.Config.GetEnabledCapabilities()
+		if enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) {
+			machines, err = baremetal.Machines(clusterID.InfraID, ic, &pool, "arbiter", arbiterUserDataSecretName)
+			if err != nil {
+				return fmt.Errorf("failed to create arbiter machine objects: %w", err)
+			}
 
-		secrets, err := createSecretAssetFiles(hostSettings.Secrets, arbiterSecretFileName)
-		if err != nil {
-			return err
-		}
-		m.SecretFiles = append(m.SecretFiles, secrets...)
+			hostSettings, err := baremetal.ArbiterHosts(ic, machines, arbiterUserDataSecretName)
+			if err != nil {
+				return fmt.Errorf("failed to assemble host data: %w", err)
+			}
 
-		networkSecrets, err := createSecretAssetFiles(hostSettings.NetworkConfigSecrets, arbiterNetworkConfigSecretFileName)
-		if err != nil {
-			return err
+			hosts, err := createHostAssetFiles(hostSettings.Hosts, arbiterHostFileName)
+			if err != nil {
+				return err
+			}
+			m.HostFiles = append(m.HostFiles, hosts...)
+
+			secrets, err := createSecretAssetFiles(hostSettings.Secrets, arbiterSecretFileName)
+			if err != nil {
+				return err
+			}
+			m.SecretFiles = append(m.SecretFiles, secrets...)
+
+			networkSecrets, err := createSecretAssetFiles(hostSettings.NetworkConfigSecrets, arbiterNetworkConfigSecretFileName)
+			if err != nil {
+				return err
+			}
+			m.NetworkConfigSecretFiles = append(m.NetworkConfigSecretFiles, networkSecrets...)
 		}
-		m.NetworkConfigSecretFiles = append(m.NetworkConfigSecretFiles, networkSecrets...)
 	}
 
 	data, err := UserDataSecret(arbiterUserDataSecretName, mign.File.Data)
