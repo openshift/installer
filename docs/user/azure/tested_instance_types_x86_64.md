@@ -74,8 +74,11 @@
 * `standardMSMediumMemoryv2Family`
 * `standardMSMediumMemoryv3Family`
 * `StandardNCADSA100v4Family`
+* `StandardNCadsH100v5Family`
 * `Standard NCASv3_T4 Family`
 * `standardNCSv3Family`
+* `standardNDISRH200V5Family`
+* `standardNDSH100v5Family`
 * `standardNDSv2Family`
 * `StandardNGADSV620v1Family`
 * `standardNPSFamily`
