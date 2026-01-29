@@ -393,10 +393,22 @@ Add Konnectivity cleanup to `pkg/destroy/bootstrap/bootstrap.go`:
 
 **Objective**: Determine if Konnectivity components are already available in the OpenShift payload.
 
-**Deliverables**:
-- Confirm whether Konnectivity server and agent images are in the payload
-- If present, document the image references and how to obtain them
-- If not present, document alternative sources for Konnectivity binaries/images
+**Status**: ✅ Complete (answered by Task 1.5)
+
+#### Findings
+
+**Image name**: `apiserver-network-proxy`
+
+**Availability**: Present in OpenShift release payload
+
+**Binaries included**:
+- `/usr/bin/proxy-server` - Konnectivity server
+- `/usr/bin/proxy-agent` - Konnectivity agent
+
+**How to obtain**: Use the existing `image_for` function in bootkube.sh:
+```bash
+KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
+```
 
 ---
 
@@ -404,13 +416,128 @@ Add Konnectivity cleanup to `pkg/destroy/bootstrap/bootstrap.go`:
 
 **Objective**: Examine how HyperShift deploys Konnectivity to inform our implementation.
 
-**Deliverables**:
-- Document where HyperShift obtains Konnectivity components
-- Extract relevant configuration patterns (server config, agent config, certificates)
-- Identify any reusable manifests or configuration templates
-- Note any authentication/certificate setup between agent and server
-
 **Source**: `/home/mbooth/src/openshift/hypershift`
+
+**Status**: ✅ Complete
+
+#### Findings
+
+##### Image Source
+
+**Image name**: `apiserver-network-proxy`
+- Available in OpenShift release payload
+- Contains both `/usr/bin/proxy-server` and `/usr/bin/proxy-agent`
+
+##### Konnectivity Server Configuration
+
+HyperShift runs the server as a **sidecar container** in the kube-apiserver pod:
+
+```bash
+/usr/bin/proxy-server
+  --logtostderr=true
+  --cluster-cert /etc/konnectivity/cluster/tls.crt
+  --cluster-key /etc/konnectivity/cluster/tls.key
+  --server-cert /etc/konnectivity/server/tls.crt
+  --server-key /etc/konnectivity/server/tls.key
+  --server-ca-cert /etc/konnectivity/ca/ca.crt
+  --server-port 8090          # Client endpoint (KAS connects here)
+  --agent-port 8091           # Agent endpoint (agents connect here)
+  --health-port 2041
+  --admin-port 8093
+  --mode http-connect
+  --proxy-strategies destHost,defaultRoute
+  --keepalive-time 30s
+  --frontend-keepalive-time 30s
+```
+
+**Key ports**:
+- **8090**: Server endpoint (for KAS/proxy clients via HTTPConnect)
+- **8091**: Agent endpoint (where agents connect)
+- **2041**: Health check
+
+##### Konnectivity Agent Configuration
+
+HyperShift runs agents as a **DaemonSet** on worker nodes:
+
+```bash
+/usr/bin/proxy-agent
+  --logtostderr=true
+  --ca-cert /etc/konnectivity/ca/ca.crt
+  --agent-cert /etc/konnectivity/agent/tls.crt
+  --agent-key /etc/konnectivity/agent/tls.key
+  --proxy-server-host <server-address>
+  --proxy-server-port 8091
+  --health-server-port 2041
+  --agent-identifiers default-route=true
+  --keepalive-time 30s
+  --probe-interval 5s
+  --sync-interval 5s
+  --sync-interval-cap 30s
+```
+
+**DaemonSet settings**:
+- `hostNetwork: true` (except IBMCloud)
+- `dnsPolicy: Default` (use host resolver)
+- Tolerates all taints
+- Rolling update with 10% maxUnavailable
+
+##### Authentication: mTLS
+
+All Konnectivity communication uses **mutual TLS**. HyperShift generates these certificates:
+
+| Secret | Purpose |
+|--------|---------|
+| `konnectivity-signer` | Self-signed CA (signs all other certs) |
+| `konnectivity-server` | Server cert for client endpoint (port 8090) |
+| `konnectivity-cluster` | Server cert for agent endpoint (port 8091) |
+| `konnectivity-client` | Client cert for KAS/proxies → server |
+| `konnectivity-agent` | Agent cert for agents → server |
+
+##### EgressSelectorConfiguration
+
+HyperShift configures KAS with this egress selector:
+
+```yaml
+apiVersion: apiserver.k8s.io/v1beta1
+kind: EgressSelectorConfiguration
+egressSelections:
+- name: controlplane
+  connection:
+    proxyProtocol: Direct
+- name: etcd
+  connection:
+    proxyProtocol: Direct
+- name: cluster
+  connection:
+    proxyProtocol: HTTPConnect
+    transport:
+      tcp:
+        url: https://konnectivity-server-local:8090
+        tlsConfig:
+          caBundle: /etc/kubernetes/certs/konnectivity-ca/ca.crt
+          clientCert: /etc/kubernetes/certs/konnectivity-client/tls.crt
+          clientKey: /etc/kubernetes/certs/konnectivity-client/tls.key
+```
+
+**Key insight**: The `cluster` egress type uses `HTTPConnect` protocol with TLS, not plain TCP.
+
+##### Simplifications for Bootstrap POC
+
+For our proof-of-concept, we can simplify:
+
+1. **Server location**: Static pod on bootstrap node (not sidecar)
+2. **Agent connection**: Agents connect to bootstrap node IP directly (no Route/Service)
+3. **Authentication**: Can start with plain TCP, add mTLS later
+4. **Single server**: No need for HA server count
+
+##### Key HyperShift Files
+
+| Component | File |
+|-----------|------|
+| PKI setup | `control-plane-operator/controllers/hostedcontrolplane/pki/konnectivity.go` |
+| Server config | `control-plane-operator/controllers/hostedcontrolplane/v2/kas/deployment.go` |
+| Agent DaemonSet | `control-plane-operator/hostedclusterconfigoperator/controllers/resources/konnectivity/reconcile.go` |
+| Egress selector | `control-plane-operator/controllers/hostedcontrolplane/v2/assets/kube-apiserver/egress-selector-config.yaml` |
 
 ---
 
