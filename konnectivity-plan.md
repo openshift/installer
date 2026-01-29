@@ -15,8 +15,8 @@ Enable the bootstrap kube-apiserver (KAS) to access webhooks hosted in the pod n
 
 ## Assumptions to Validate
 
-- [ ] The bootstrap KAS will be able to access cluster-hosted webhooks via Konnectivity
-- [ ] Non-bootstrap KAS instances will not be impacted and will continue routing normally
+- [x] The bootstrap KAS will be able to access cluster-hosted webhooks via Konnectivity (validated in Task 1.7)
+- [x] Non-bootstrap KAS instances will not be impacted and will continue routing normally (validated in Task 1.7)
 
 ---
 
@@ -160,11 +160,10 @@ egressSelectorConfiguration:
   egressSelections:
   - name: "cluster"
     connection:
-      proxyProtocol: "CONNECT"
+      proxyProtocol: "HTTPConnect"
       transport:
-        type: "TCP"
-        tcp:
-          url: "http://127.0.0.1:<konnectivity-port>"
+        uds:
+          udsName: "/etc/kubernetes/konnectivity-server/konnectivity-server.socket"
 ```
 
 ##### Recommended Approach: Config Override File ✅
@@ -179,11 +178,10 @@ egressSelectorConfiguration:
      egressSelections:
      - name: "cluster"
        connection:
-         proxyProtocol: "CONNECT"
+         proxyProtocol: "HTTPConnect"
          transport:
-           type: "TCP"
-           tcp:
-             url: "http://127.0.0.1:{{.KonnectivityPort}}"
+           uds:
+             udsName: "/etc/kubernetes/konnectivity-server/konnectivity-server.socket"
    ```
 
 2. Modify [bootkube.sh.template](data/data/bootstrap/files/usr/local/bin/bootkube.sh.template) to add the flag:
@@ -551,7 +549,7 @@ For our proof-of-concept, we can simplify:
 
 For the proof-of-concept, **we will skip authentication entirely**:
 
-1. **KAS → Konnectivity Server**: The bootstrap KAS connects to the Konnectivity server over `localhost` (127.0.0.1). Since both run on the same bootstrap node, no authentication is required for this connection.
+1. **KAS → Konnectivity Server**: The bootstrap KAS connects to the Konnectivity server via **Unix Domain Socket (UDS)**. Since both run on the same bootstrap node, UDS is the recommended transport and no authentication is required.
 
 2. **Agents → Konnectivity Server**: Agents connect to the Konnectivity server over **unauthenticated TCP**. The server will accept connections without mTLS client certificates.
 
@@ -567,14 +565,13 @@ This approach is **insecure** but acceptable for a PoC because:
 ```bash
 /usr/bin/proxy-server
   --logtostderr=true
-  --server-port 8090          # KAS connects here (localhost)
-  --agent-port 8091           # Agents connect here (no auth)
+  --uds-name=/etc/kubernetes/konnectivity-server/konnectivity-server.socket  # KAS connects via UDS
+  --agent-port 8091           # Agents connect here (TCP, no auth)
   --health-port 2041
   --mode http-connect
   --proxy-strategies destHost,defaultRoute
   --keepalive-time 30s
   --frontend-keepalive-time 30s
-  --uds-name ""               # Disable UDS, use TCP only
 ```
 
 ##### Agent Configuration (Unauthenticated)
@@ -601,15 +598,46 @@ For production readiness, Task 2.1 (certificate generation) would need to be com
 
 **Objective**: Verify the architectural assumptions through documentation research.
 
-**Deliverables**:
-- Confirm that EgressSelectorConfiguration can route webhook traffic through Konnectivity
-- Confirm that non-bootstrap KAS instances (without EgressSelectorConfiguration) route normally
-- Document any caveats or limitations found
+**Status**: ✅ Complete
 
-**Sources**:
-- Kubernetes EgressSelectorConfiguration documentation
-- Konnectivity project documentation
-- Existing OpenShift/HyperShift design docs
+#### Assumption 1: EgressSelectorConfiguration Routes Webhook Traffic ✅ Confirmed
+
+The `cluster` egress selector covers **all traffic destined for the cluster**, including:
+- Webhooks (ValidatingWebhookConfiguration, MutatingWebhookConfiguration)
+- Aggregated API servers (APIService resources)
+- Pod operations (exec, attach, logs, port-forward)
+- Node and service proxy requests
+
+From the [KEP-1281 Network Proxy](https://github.com/kubernetes/enhancements/blob/master/keps/sig-api-machinery/1281-network-proxy/README.md):
+> "Pod requests (and pod sub-resource requests) are meant for the cluster and will be routed based on the 'cluster' NetworkContext."
+
+#### Assumption 2: Non-Bootstrap KAS Routes Normally ✅ Confirmed
+
+The Konnectivity feature is **opt-in** and disabled by default. From KEP-1281:
+> "The feature is turned off in the KAS by default. Enabled by adding ConnectivityServiceConfiguration."
+
+When no `--egress-selector-config-file` flag is set, the KAS uses direct connections via standard network routing. This means:
+- Production KAS instances on cluster nodes (without EgressSelectorConfiguration) will continue to route traffic directly
+- Only the bootstrap KAS (with explicit configuration) will use the Konnectivity tunnel
+
+#### Caveats and Limitations
+
+1. **Flat network requirement**: The proxy requires non-overlapping IP ranges between control plane and cluster networks. This is satisfied in OpenShift since bootstrap and cluster networks are distinct.
+
+2. **DNS resolution**: DNS lookups are performed by the Konnectivity server/agent, not the KAS. This should be transparent but may affect debugging.
+
+3. **Protocol consistency**: The `proxyProtocol` (GRPC or HTTPConnect) must match between the KAS EgressSelectorConfiguration and Konnectivity server arguments.
+
+4. **Transport options**:
+   - **UDS (Unix Domain Socket)**: Recommended when KAS and Konnectivity server are co-located. **We will use UDS** for KAS → Konnectivity server communication since both run on the bootstrap node.
+   - **TCP**: Used for agent → server communication (agents connect from cluster nodes to bootstrap node)
+
+#### Sources
+
+- [Set up Konnectivity service | Kubernetes](https://kubernetes.io/docs/tasks/extend-kubernetes/setup-konnectivity/)
+- [KEP-1281: Network Proxy](https://github.com/kubernetes/enhancements/blob/master/keps/sig-api-machinery/1281-network-proxy/README.md)
+- [apiserver-network-proxy (Konnectivity)](https://github.com/kubernetes-sigs/apiserver-network-proxy)
+- [Konnectivity in HyperShift](https://hypershift.pages.dev/reference/konnectivity/)
 
 ---
 
