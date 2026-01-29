@@ -40,6 +40,12 @@ func SetPlatformDefaults(p *aws.Platform) {
 		p.IPFamily = network.IPv4
 		logrus.Infof("ipFamily is not specified in install-config; defaulting to %q", network.IPv4)
 	}
+
+	if p.LBType == "" {
+		if p.IPFamily.DualStackEnabled() {
+			p.LBType = configv1.NLB
+		}
+	}
 }
 
 // InstanceTypes returns a list of instance types, in decreasing priority order, which we should use for a given
