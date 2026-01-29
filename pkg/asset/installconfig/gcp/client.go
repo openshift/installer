@@ -387,7 +387,7 @@ func GetZones(ctx context.Context, svc *compute.Service, project, region string)
 	defer cancel()
 	if err := req.Pages(ctx, func(page *compute.ZoneList) error {
 		for _, zone := range page.Items {
-			if strings.HasSuffix(zone.Region, region) && strings.EqualFold(zone.Status, "UP") {
+			if strings.HasSuffix(zone.Region, region) && strings.EqualFold(zone.Status, "UP") && !aiZone(zone.Name) {
 				zones = append(zones, zone)
 			}
 		}
@@ -571,4 +571,13 @@ func (c *Client) GetNamespacedTagValue(ctx context.Context, tagNamespacedName st
 	}
 
 	return tagValue, nil
+}
+
+// aiZone returns true if the GCP zone follows the AI naming convention.
+// Uses the regular expression pattern as documented in GCP API docs:
+// "To match zones containing ai in their name, use the filter query parameter with the regular expression name eq '.*-ai.*'."
+// e.g. us-south1-ai1b, us-central1-ai1a.
+// See: https://docs.cloud.google.com/compute/docs/regions-zones/ai-zones
+func aiZone(zone string) bool {
+	return strings.Contains(zone, "-ai")
 }
