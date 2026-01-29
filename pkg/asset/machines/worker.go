@@ -132,11 +132,12 @@ func defaultAzureMachinePoolPlatform(env azuretypes.CloudEnvironment) azuretypes
 }
 
 func defaultGCPMachinePoolPlatform(arch types.Architecture) gcptypes.MachinePool {
+	instanceType := icgcp.DefaultInstanceTypeForArch(arch)
 	return gcptypes.MachinePool{
-		InstanceType: icgcp.DefaultInstanceTypeForArch(arch),
+		InstanceType: instanceType,
 		OSDisk: gcptypes.OSDisk{
 			DiskSizeGB: powerOfTwoRootVolumeSize,
-			DiskType:   "pd-ssd",
+			DiskType:   gcptypes.DefaultDiskTypeForInstance(instanceType),
 		},
 	}
 }
