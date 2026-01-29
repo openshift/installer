@@ -910,18 +910,63 @@ func deleteKonnectivityResources(ctx context.Context, dir string) error {
 
 ---
 
-### Task 2.6: Manual Validation
+### Task 2.6: Ignition Config Validation
 
-**Objective**: Verify the proof-of-concept works end-to-end.
+**Objective**: Validate implementation without deploying a cluster.
 
-**Validation steps**:
-1. Deploy a cluster with the modified installer
-2. Verify Konnectivity server static pod is running on bootstrap node
-3. Verify Konnectivity agent pods are running on cluster nodes (check `kubectl get pods -n kube-system -l app=konnectivity-agent`)
-4. Deploy a test webhook in the cluster (e.g., a simple validating webhook)
-5. Confirm the bootstrap KAS can reach the webhook (create a resource that triggers the webhook)
-6. Complete bootstrap teardown and verify agent DaemonSet is removed
-7. Confirm production KAS on cluster nodes can still reach webhooks normally
+Generate and inspect ignition configs to verify template processing:
+
+```bash
+# Create manifests (intermediate step, allows inspection)
+openshift-install --dir test-cluster create manifests
+
+# Create full ignition configs
+openshift-install --dir test-cluster create ignition-configs
+```
+
+#### Validation Checklist
+
+After generating ignition configs, verify:
+
+1. **EgressSelectorConfiguration file exists**:
+   ```bash
+   jq -r '.storage.files[] | select(.path == "/opt/openshift/egress-selector-config.yaml") | .contents.source' \
+     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d
+   ```
+   Expected: YAML with `egressSelectorConfiguration` containing UDS path `/etc/kubernetes/bootstrap-configs/konnectivity-server.socket`
+
+2. **bootkube.sh contains Konnectivity additions**:
+   ```bash
+   jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
+     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A5 "KONNECTIVITY_IMAGE"
+   ```
+   Expected: `KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)`
+
+3. **Konnectivity server static pod manifest creation in bootkube.sh**:
+   ```bash
+   jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
+     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A20 "konnectivity-server-pod.yaml"
+   ```
+   Expected: Static pod manifest with correct image variable and UDS socket path
+
+4. **Konnectivity agent DaemonSet manifest creation in bootkube.sh**:
+   ```bash
+   jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
+     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A30 "konnectivity-agent-daemonset.yaml"
+   ```
+   Expected: DaemonSet manifest with `hostNetwork: true`, bootstrap node IP, and correct image variable
+
+5. **KAS render command includes config override**:
+   ```bash
+   jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
+     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep "config-override-files"
+   ```
+   Expected: `--config-override-files=/assets/egress-selector-config.yaml`
+
+**Limitations**:
+- Runtime behavior (shell script execution) not tested
+- Image extraction from release payload not tested
+- Actual Konnectivity connectivity not validated
 
 ---
 
@@ -956,6 +1001,94 @@ These should be investigated during implementation if they become blocking:
    - **Issue**: Agents run in hostNetwork mode and connect to bootstrap via infrastructure network. This should work, but needs validation.
    - **Mitigation**: Agents use hostNetwork (bypasses CNI) and connect via bootstrap node's infrastructure IP.
    - **Risk**: Low - this is the same network path used by kubelets to reach the bootstrap KAS.
+
+---
+
+## Manual Testing
+
+This section describes manual testing procedures for validating the Konnectivity integration on a real cluster.
+
+### Obtaining the Bootstrap IP
+
+The bootstrap node's public IP can be extracted from the CAPI Machine manifest stored in `.clusterapi_output/`:
+
+```bash
+# Find the bootstrap machine manifest and extract the external IP
+yq '.status.addresses[] | select(.type == "ExternalIP") | .address' \
+  .clusterapi_output/Machine-openshift-cluster-api-guests-*-bootstrap.yaml
+```
+
+Alternatively, view all addresses:
+```bash
+cat .clusterapi_output/Machine-openshift-cluster-api-guests-*-bootstrap.yaml | grep -A10 "addresses:"
+```
+
+Note: The `openshift-install gather bootstrap` command will automatically extract this IP if the `--bootstrap` flag is not provided.
+
+### SSH Access to Bootstrap Node
+
+The installer always generates a bootstrap SSH key pair (see [bootstrapsshkeypair.go](pkg/asset/tls/bootstrapsshkeypair.go)). The public key is embedded in the bootstrap ignition and added to the `core` user's authorized_keys alongside any user-provided SSH key.
+
+**Option 1**: Use user-provided SSH key (if configured in install-config.yaml):
+```bash
+ssh -i ~/.ssh/<your-key> core@<bootstrap-ip>
+```
+
+**Option 2**: Extract the generated key from the installer state file:
+```bash
+# Extract the private key from .openshift_install_state.json
+jq -r '.["*tls.BootstrapSSHKeyPair"]["Priv"]' .openshift_install_state.json | base64 -d > bootstrap-ssh.key
+chmod 600 bootstrap-ssh.key
+
+# SSH to bootstrap node
+ssh -i bootstrap-ssh.key core@<bootstrap-ip>
+```
+
+Note: The `openshift-install gather bootstrap` command automatically uses the generated key, so manual extraction is only needed for interactive debugging sessions.
+
+### Bootstrap Service Debugging
+
+If bootstrap changes cause issues, use the service recording mechanism documented in [bootstrap_services.md](docs/dev/bootstrap_services.md):
+
+- Progress tracked in `/var/log/openshift/<service>.json`
+- Use `record_service_stage_start` / `record_service_stage_success` functions in shell scripts
+- Failed-units captured in log bundle via `openshift-install gather bootstrap`
+
+### Log Gathering on Failure
+
+```bash
+openshift-install gather bootstrap --bootstrap <IP> --master <IP1> --master <IP2> --master <IP3>
+```
+
+The log bundle includes:
+- `bootstrap/journals/bootkube.log` - Main bootstrap orchestration
+- `bootstrap/containers/` - Container logs and descriptions
+- `bootstrap/pods/` - Render command outputs
+
+### End-to-End Validation Steps
+
+1. Deploy a cluster with the modified installer
+2. SSH to the bootstrap node and verify:
+   - Konnectivity server static pod is running: `crictl ps | grep konnectivity-server`
+   - UDS socket exists: `ls -la /etc/kubernetes/bootstrap-configs/konnectivity-server.socket`
+   - Server is listening on agent port: `ss -tlnp | grep 8091`
+3. Verify Konnectivity agent pods are running on cluster nodes:
+   ```bash
+   kubectl get pods -n kube-system -l app=konnectivity-agent
+   ```
+4. Check agent connectivity to server (from bootstrap node):
+   ```bash
+   # Check server logs for agent connections
+   crictl logs $(crictl ps -q --name konnectivity-server)
+   ```
+5. Deploy a test webhook in the cluster (e.g., a simple validating webhook)
+6. Confirm the bootstrap KAS can reach the webhook (create a resource that triggers the webhook)
+7. Complete bootstrap teardown and verify agent DaemonSet is removed:
+   ```bash
+   kubectl get daemonset -n kube-system konnectivity-agent
+   # Should return "not found" after teardown
+   ```
+8. Confirm production KAS on cluster nodes can still reach webhooks normally
 
 ---
 
