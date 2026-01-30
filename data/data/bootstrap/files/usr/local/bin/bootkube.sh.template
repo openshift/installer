@@ -334,10 +334,11 @@ spec:
     - /usr/bin/proxy-server
     args:
     - --logtostderr=true
-    - --uds-name=/etc/kubernetes/bootstrap-configs/konnectivity-server.socket
     - --cluster-cert=/etc/konnectivity/server.crt
     - --cluster-key=/etc/konnectivity/server.key
     - --cluster-ca-cert=/etc/konnectivity/ca.crt
+    - --uds-name=/etc/kubernetes/bootstrap-configs/konnectivity-server.socket
+    - --server-port=0
     - --agent-port=8091
     - --health-port=2041
     - --mode=http-connect

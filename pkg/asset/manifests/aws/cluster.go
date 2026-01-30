@@ -142,6 +142,13 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
 					},
 					{
+						Description:              "Konnectivity agent traffic from cluster nodes",
+						Protocol:                 capa.SecurityGroupProtocolTCP,
+						FromPort:                 8091,
+						ToPort:                   8091,
+						SourceSecurityGroupRoles: []capa.SecurityGroupRole{"controlplane", "node"},
+					},
+					{
 						Description: BootstrapSSHDescription,
 						Protocol:    capa.SecurityGroupProtocolTCP,
 						FromPort:    22,
