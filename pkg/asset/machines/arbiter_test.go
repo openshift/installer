@@ -15,6 +15,7 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/baremetal"
+	"github.com/openshift/installer/pkg/types/none"
 )
 
 func TestArbiterGenerateMachineConfigs(t *testing.T) {
@@ -219,7 +220,51 @@ func TestArbiterInstallOnlyForBaremetal(t *testing.T) {
 	arbiter := &Arbiter{}
 	err := arbiter.Generate(context.Background(), parents)
 	assert.NotNil(t, err, "expected arbiter generate to fail for non baremetal platforms")
-	assert.Contains(t, err.Error(), "only BareMetal platform is supported for Arbiter deployments")
+	assert.Contains(t, err.Error(), "only BareMetal and None platforms are supported for Arbiter deployments")
+}
+
+func TestArbiterInstallNonePlatform(t *testing.T) {
+	parents := asset.Parents{}
+	installConfig := installconfig.MakeAsset(
+		&types.InstallConfig{
+			ObjectMeta: metav1.ObjectMeta{
+				Name: "test-cluster",
+			},
+			SSHKey:     "ssh-rsa: dummy-key",
+			BaseDomain: "test-domain",
+			Platform: types.Platform{
+				None: &none.Platform{},
+			},
+			Arbiter: &types.MachinePool{
+				Hyperthreading: types.HyperthreadingDisabled,
+				Replicas:       ptr.To(int64(1)),
+			},
+		})
+
+	parents.Add(
+		&installconfig.ClusterID{
+			UUID:    "test-uuid",
+			InfraID: "test-infra-id",
+		},
+		installConfig,
+		rhcos.MakeAsset("test-image"),
+		(*rhcos.Release)(ptr.To("412.86.202208101040-0")),
+		&machine.Arbiter{
+			File: &asset.File{
+				Filename: "arbiter-ignition",
+				Data:     []byte("test-ignition"),
+			},
+		},
+	)
+	arbiter := &Arbiter{}
+	err := arbiter.Generate(context.Background(), parents)
+	assert.Nil(t, err, "expected arbiter generate to succeed for None platform")
+	// For None platform, no Machine API objects or BareMetalHost CRs should be generated
+	assert.Equal(t, 0, len(arbiter.MachineFiles), "expected no machine files for None platform")
+	assert.Equal(t, 0, len(arbiter.HostFiles), "expected no host files for None platform")
+	assert.Equal(t, 0, len(arbiter.SecretFiles), "expected no secret files for None platform")
+	// MachineConfigs should still be generated (hyperthreading disabled + SSH key)
+	assert.Greater(t, len(arbiter.MachineConfigFiles), 0, "expected machine config files for None platform")
 }
 
 func TestArbiterIsNotModified(t *testing.T) {
