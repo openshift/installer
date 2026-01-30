@@ -590,7 +590,9 @@ This approach is **insecure** but acceptable for a PoC because:
 
 ##### Future Work
 
-For production readiness, Task 2.1 (certificate generation) would need to be completed to add mTLS authentication. This is out of scope for the initial PoC.
+~~For production readiness, Task 2.1 (certificate generation) would need to be completed to add mTLS authentication. This is out of scope for the initial PoC.~~
+
+**Update**: mTLS authentication is now implemented via Task 2.1 using a self-signed Konnectivity CA generated at runtime.
 
 ---
 
@@ -789,7 +791,9 @@ The installer generates ~10 Certificate Authorities in `pkg/asset/tls/`. Key CAs
 | AggregatorSignerCertKey | `tls/aggregator-signer.crt` | 1 day | Signs aggregator client | No (short-lived) |
 | KubeAPIServerToKubeletSignerCertKey | `tls/kube-apiserver-to-kubelet-signer.crt` | 1 year | KAS→kubelet auth | No (wrong purpose) |
 
-**Recommended CA**: Reuse the existing **RootCA** (`/opt/openshift/tls/root-ca.crt` and `.key`) which is already available on the bootstrap node. This avoids creating new installer TLS assets while providing full mTLS support. Certificates signed by RootCA will have 1-day validity, appropriate for the temporary bootstrap phase.
+~~**Recommended CA**: Reuse the existing **RootCA** (`/opt/openshift/tls/root-ca.crt` and `.key`) which is already available on the bootstrap node.~~
+
+**Correction**: The RootCA private key (`root-ca.key`) is **NOT available on the bootstrap node** - only the certificate is copied (see [common.go:688-690](pkg/asset/ignition/bootstrap/common.go#L688-L690)). The recommended approach is to generate a **self-signed Konnectivity CA** at runtime on the bootstrap node using `openssl`. This is simpler (no Go code changes), more secure (isolated from RootCA), and allows the server certificate to include the correct bootstrap IP SAN. See Task 2.1 for implementation.
 
 ##### 4. HyperShift Konnectivity PKI Implementation
 
@@ -861,12 +865,14 @@ For the bootstrap scenario, the minimum configuration is:
 
 #### Recommended Implementation Approach
 
-Generate certificates at **runtime on the bootstrap node** using the existing `RootCA`. This approach is simpler than creating new installer TLS assets and solves the "bootstrap IP not known at ignition time" problem.
+Generate certificates at **runtime on the bootstrap node** using a **self-signed Konnectivity CA**. This approach is simpler than creating new installer TLS assets and solves the "bootstrap IP not known at ignition time" problem.
+
+**Note**: The original plan recommended using RootCA, but `root-ca.key` is not available on the bootstrap node. A self-signed Konnectivity CA is more secure (isolated) and equally effective.
 
 1. **Certificate generation** (in `bootkube.sh` at runtime):
-   - Use `openssl` to generate Konnectivity server cert (1-day validity, signed by RootCA)
-   - Use `openssl` to generate shared agent client cert (1-day validity, signed by RootCA)
-   - RootCA is already available at `/opt/openshift/tls/root-ca.{crt,key}`
+   - Use `openssl` to generate a self-signed Konnectivity CA (1-day validity)
+   - Use `openssl` to generate Konnectivity server cert (1-day validity, signed by Konnectivity CA)
+   - Use `openssl` to generate shared agent client cert (1-day validity, signed by Konnectivity CA)
 
 2. **Certificate deployment**:
    - Server certs: Written to bootstrap node filesystem, mounted into Konnectivity server static pod
@@ -876,10 +882,12 @@ Generate certificates at **runtime on the bootstrap node** using the existing `R
    ```
    bootkube.sh (runtime on bootstrap node)
        │
-       ├─→ Generate konnectivity-server.{crt,key} (signed by RootCA)
+       ├─→ Generate konnectivity-signer.{crt,key} (self-signed CA)
+       │
+       ├─→ Generate konnectivity-server.{crt,key} (signed by Konnectivity CA)
        │   └─→ Mount in Konnectivity server static pod
        │
-       ├─→ Generate konnectivity-agent.{crt,key} (signed by RootCA)
+       ├─→ Generate konnectivity-agent.{crt,key} (signed by Konnectivity CA)
        │   └─→ Package into Secret manifest
        │
        └─→ Write manifests/konnectivity-agent-certs.yaml
@@ -893,10 +901,11 @@ Generate certificates at **runtime on the bootstrap node** using the existing `R
 
 5. **Benefits**:
    - No new Go TLS assets required
-   - Certificates generated when bootstrap IP is known
-   - Short 1-day validity appropriate for temporary bootstrap agents
+   - Certificates generated when bootstrap IP is known (allows correct IP SAN)
+   - Short 1-day validity appropriate for temporary bootstrap components
    - Full mTLS authentication between server and agents
    - All agents share a single client certificate
+   - Isolated from RootCA (more secure)
 
 #### Unauthenticated Mode: Validated as Broken ❌
 
@@ -926,11 +935,13 @@ E0130 "cannot connect once" err="...dial tcp 127.0.0.1:8091: connect: connection
 
 ### Task 2.1: Generate Konnectivity Certificates at Runtime
 
-**Status**: ✅ Complete
+**Status**: 🔄 In Progress
 
-**Objective**: Generate Konnectivity server and agent certificates at runtime on the bootstrap node using the existing RootCA.
+**Objective**: Generate Konnectivity server and agent certificates at runtime on the bootstrap node using a self-signed Konnectivity CA.
 
-**Approach**: Use `openssl` commands in `bootkube.sh` to generate certificates signed by `/opt/openshift/tls/root-ca.{crt,key}`.
+**Approach**: Use `openssl` commands in `bootkube.sh` to generate a self-signed Konnectivity CA, then sign the server and agent certificates with it. This approach is entirely self-contained on the bootstrap node and requires no Go code changes.
+
+**Why self-signed CA**: The original approach attempted to use RootCA, but `root-ca.key` is not available on the bootstrap node (only the certificate is copied). A self-signed Konnectivity CA is simpler, more secure (isolated from RootCA), and can be generated entirely at runtime.
 
 **Files to modify**:
 
@@ -941,9 +952,16 @@ E0130 "cannot connect once" err="...dial tcp 127.0.0.1:8091: connect: connection
 **Implementation** (add to bootkube.sh.template before Konnectivity server static pod creation):
 
 ```bash
-    # Generate Konnectivity certificates signed by RootCA (1-day validity)
+    # Generate Konnectivity certificates with self-signed CA (1-day validity)
     KONNECTIVITY_CERT_DIR=/opt/openshift/tls/konnectivity
     mkdir -p "${KONNECTIVITY_CERT_DIR}"
+
+    # Generate self-signed Konnectivity CA
+    openssl req -x509 -newkey rsa:2048 -nodes \
+        -keyout "${KONNECTIVITY_CERT_DIR}/ca.key" \
+        -out "${KONNECTIVITY_CERT_DIR}/ca.crt" \
+        -days 1 \
+        -subj "/CN=konnectivity-signer/O=openshift"
 
     # Server certificate for agent endpoint
     openssl req -new -newkey rsa:2048 -nodes \
@@ -952,8 +970,8 @@ E0130 "cannot connect once" err="...dial tcp 127.0.0.1:8091: connect: connection
         -subj "/CN=konnectivity-server/O=openshift"
 
     openssl x509 -req -in "${KONNECTIVITY_CERT_DIR}/server.csr" \
-        -CA /opt/openshift/tls/root-ca.crt \
-        -CAkey /opt/openshift/tls/root-ca.key \
+        -CA "${KONNECTIVITY_CERT_DIR}/ca.crt" \
+        -CAkey "${KONNECTIVITY_CERT_DIR}/ca.key" \
         -CAcreateserial \
         -out "${KONNECTIVITY_CERT_DIR}/server.crt" \
         -days 1 \
@@ -966,15 +984,12 @@ E0130 "cannot connect once" err="...dial tcp 127.0.0.1:8091: connect: connection
         -subj "/CN=konnectivity-agent/O=openshift"
 
     openssl x509 -req -in "${KONNECTIVITY_CERT_DIR}/agent.csr" \
-        -CA /opt/openshift/tls/root-ca.crt \
-        -CAkey /opt/openshift/tls/root-ca.key \
+        -CA "${KONNECTIVITY_CERT_DIR}/ca.crt" \
+        -CAkey "${KONNECTIVITY_CERT_DIR}/ca.key" \
         -CAcreateserial \
         -out "${KONNECTIVITY_CERT_DIR}/agent.crt" \
         -days 1 \
         -extfile <(printf "extendedKeyUsage=clientAuth")
-
-    # Copy CA cert to konnectivity directory for server to validate agents
-    cp /opt/openshift/tls/root-ca.crt "${KONNECTIVITY_CERT_DIR}/ca.crt"
 
     # Clean up CSR files
     rm -f "${KONNECTIVITY_CERT_DIR}"/*.csr
@@ -986,9 +1001,9 @@ E0130 "cannot connect once" err="...dial tcp 127.0.0.1:8091: connect: connection
 
 | File | CN | ExtKeyUsage | Validity | SAN |
 |------|-------|-------------|----------|-----|
+| `ca.crt` | `konnectivity-signer` | CA | 1 day | None |
 | `server.crt` | `konnectivity-server` | `serverAuth` | 1 day | `IP:${BOOTSTRAP_NODE_IP}` |
 | `agent.crt` | `konnectivity-agent` | `clientAuth` | 1 day | None |
-| `ca.crt` | `root-ca` | N/A | 10 years | N/A (copy of RootCA) |
 
 **Ordering dependency**: Certificate generation must occur **after** `BOOTSTRAP_NODE_IP` detection (Task 2.7) and **before** static pod manifest creation (Task 2.2).
 
@@ -1854,7 +1869,7 @@ The following items are out of scope for the initial proof-of-concept but should
 
 **Status**: This is now implemented in the PoC via Task 2.1 and Task 2.1.1.
 
-The implementation uses the existing `RootCA` to sign both server and agent certificates at runtime on the bootstrap node. Certificates have 1-day validity, appropriate for the temporary bootstrap phase.
+The implementation generates a self-signed Konnectivity CA at runtime on the bootstrap node, then uses it to sign both server and agent certificates. This approach is more secure than using RootCA (isolation) and simpler than creating Go assets (no code changes required). Certificates have 1-day validity, appropriate for the temporary bootstrap phase.
 
 ### 4. Bootstrap Node IP Detection Refinement
 
