@@ -1,6 +1,11 @@
 #!/bin/bash
 set -euo pipefail
 
+# shellcheck source=bootstrap-service-record.sh
+. /usr/local/bin/bootstrap-service-record.sh
+
+record_service_stage_start "node-image-pull"
+
 # shellcheck source=release-image.sh.template
 . /usr/local/bin/release-image.sh
 
@@ -64,6 +69,7 @@ ref=$(ostree refs --repo "${ostree_repo}" | grep ^ostree/container/image/docker)
 if [ $(echo "$ref" | wc -l) != 1 ]; then
     echo "Expected single docker ref, found:"
     echo "$ref"
+    record_service_stage_failure
     exit 1
 fi
 ostree refs --repo "${ostree_repo}" "$ref" --create coreos/node-image
@@ -90,3 +96,5 @@ if grep -q coreos.liveiso= /proc/cmdline; then
     rm -rf "${ostree_repo}"
     df -h "${ostree_checkout}"
 fi
+
+record_service_stage_success
