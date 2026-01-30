@@ -129,5 +129,13 @@ func deleteBootstrapClusterResources(ctx context.Context, dir string) error {
 		logrus.Debugf("Failed to delete konnectivity-agent DaemonSet: %v", err)
 	}
 
+	// Delete the Konnectivity agent certificate Secret
+	logrus.Info("Deleting bootstrap Konnectivity agent certificate Secret")
+	err = client.CoreV1().Secrets("kube-system").Delete(ctx, "konnectivity-agent-certs", metav1.DeleteOptions{})
+	if err != nil {
+		// Log but don't fail if the Secret doesn't exist or can't be deleted
+		logrus.Debugf("Failed to delete konnectivity-agent-certs Secret: %v", err)
+	}
+
 	return nil
 }

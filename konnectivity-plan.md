@@ -926,7 +926,7 @@ E0130 "cannot connect once" err="...dial tcp 127.0.0.1:8091: connect: connection
 
 ### Task 2.1: Generate Konnectivity Certificates at Runtime
 
-**Status**: ⏳ Pending
+**Status**: ✅ Complete
 
 **Objective**: Generate Konnectivity server and agent certificates at runtime on the bootstrap node using the existing RootCA.
 
@@ -996,7 +996,7 @@ E0130 "cannot connect once" err="...dial tcp 127.0.0.1:8091: connect: connection
 
 ### Task 2.1.1: Create Agent Certificate Secret
 
-**Status**: ⏳ Pending
+**Status**: ✅ Complete
 
 **Objective**: Package the agent certificate into a Kubernetes Secret for deployment to cluster nodes.
 
@@ -1315,7 +1315,7 @@ For the PoC, use **Option B (inline in bootkube.sh)** to reduce implementation c
 
 ### Task 2.5: Integrate Teardown with Bootstrap Completion
 
-**Status**: ⏳ Partially Complete (design complete, implementation pending)
+**Status**: ✅ Complete
 
 **Objective**: Remove all Konnectivity bootstrap-only resources when bootstrap completes.
 
@@ -1379,7 +1379,7 @@ func deleteKonnectivityResources(ctx context.Context, dir string) error {
 
 ### Task 2.6: Ignition Config Validation
 
-**Status**: ⏳ Needs Re-validation (prior validation was for unauthenticated mode; now includes mTLS)
+**Status**: ✅ Complete
 
 **Objective**: Validate implementation without deploying a cluster.
 
@@ -1596,8 +1596,11 @@ rm -rf /tmp/konnectivity-test
 |-------|--------|-------|
 | EgressSelectorConfiguration file | ✅ Pass | Correctly embedded at `/opt/openshift/egress-selector-config.yaml` |
 | KONNECTIVITY_IMAGE variable | ✅ Pass | Defined and used in both server and agent manifests |
-| Konnectivity server static pod | ✅ Pass | Complete manifest with UDS socket and correct args |
-| Konnectivity agent DaemonSet | ✅ Pass | Complete manifest with hostNetwork, tolerations |
+| Konnectivity server static pod | ✅ Pass | Complete manifest with UDS socket, TLS args, and cert volume mounts |
+| Certificate generation stage | ✅ Pass | Generates server.crt, agent.crt signed by RootCA |
+| Bootstrap IP detection | ✅ Pass | Uses `ip route get` with IPv4/IPv6 conditional |
+| Agent certificate Secret | ✅ Pass | Creates Secret with base64-encoded certs |
+| Konnectivity agent DaemonSet | ✅ Pass | Complete manifest with TLS args, hostNetwork, tolerations, Secret volume |
 | --config-override-files flag | ✅ Pass | Added to KAS render command |
 
 #### Limitations
@@ -1605,13 +1608,13 @@ rm -rf /tmp/konnectivity-test
 - Runtime behavior (shell script execution) not tested
 - Image extraction from release payload not tested
 - Actual Konnectivity connectivity not validated
-- Bootstrap node IP only populated on IPI platforms with infrastructure provisioning
+- Air-gapped environments may require IP detection refinement (see Post-PoC #4)
 
 ---
 
 ### Task 2.7: Fix Bootstrap IP Detection for Konnectivity Agent
 
-**Status**: ⏳ Pending
+**Status**: ✅ Complete
 
 **Objective**: Replace the Go template variable `{{.BootstrapNodeIP}}` with runtime shell IP detection.
 
@@ -1831,4 +1834,20 @@ The following items are out of scope for the initial proof-of-concept but should
 **Status**: This is now implemented in the PoC via Task 2.1 and Task 2.1.1.
 
 The implementation uses the existing `RootCA` to sign both server and agent certificates at runtime on the bootstrap node. Certificates have 1-day validity, appropriate for the temporary bootstrap phase.
+
+### 4. Bootstrap Node IP Detection Refinement
+
+**Current approach**: The bootstrap node IP is detected at runtime using `ip route get` to find the source IP for reaching an external destination (1.1.1.1 for IPv4 or 2001:4860:4860::8888 for IPv6).
+
+**Concerns**:
+- The approach assumes outbound connectivity to determine the correct interface
+- On multi-homed systems, this may not return the IP that cluster nodes should use to reach the bootstrap
+- The external destination IPs (Google Public DNS) are arbitrary and may not be reachable in air-gapped environments
+- IPv6 detection assumes a dual-stack or IPv6-only configuration based on `UseIPv6ForNodeIP`
+
+**Post-PoC investigation**:
+- Evaluate whether using the machine network CIDR from install-config would provide more reliable results
+- Consider using the existing `{{.BootstrapNodeIP}}` template variable where available (UPI scenarios)
+- Test behavior in air-gapped environments where external IPs are unreachable
+- Investigate platform-specific solutions (e.g., metadata service for cloud platforms)
 

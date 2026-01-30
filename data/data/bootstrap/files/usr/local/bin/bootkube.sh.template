@@ -245,6 +245,64 @@ then
     record_service_stage_success
 fi
 
+# Detect bootstrap node IP at runtime using the default route source address
+# This is needed for Konnectivity agents to connect back to the bootstrap server.
+{{- if .UseIPv6ForNodeIP }}
+BOOTSTRAP_NODE_IP=$(ip -6 route get 2001:4860:4860::8888 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="src") print $(i+1); exit}')
+{{- else }}
+BOOTSTRAP_NODE_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="src") print $(i+1); exit}')
+{{- end }}
+echo "Detected bootstrap node IP: ${BOOTSTRAP_NODE_IP}"
+
+# Generate Konnectivity certificates signed by RootCA (1-day validity)
+# These are needed for mTLS between Konnectivity server and agents.
+if [ ! -f konnectivity-certs.done ]
+then
+    record_service_stage_start "konnectivity-certs"
+    echo "Generating Konnectivity certificates..."
+
+    KONNECTIVITY_CERT_DIR=/opt/openshift/tls/konnectivity
+    mkdir -p "${KONNECTIVITY_CERT_DIR}"
+
+    # Server certificate for agent endpoint
+    openssl req -new -newkey rsa:2048 -nodes \
+        -keyout "${KONNECTIVITY_CERT_DIR}/server.key" \
+        -out "${KONNECTIVITY_CERT_DIR}/server.csr" \
+        -subj "/CN=konnectivity-server/O=openshift"
+
+    openssl x509 -req -in "${KONNECTIVITY_CERT_DIR}/server.csr" \
+        -CA /opt/openshift/tls/root-ca.crt \
+        -CAkey /opt/openshift/tls/root-ca.key \
+        -CAcreateserial \
+        -out "${KONNECTIVITY_CERT_DIR}/server.crt" \
+        -days 1 \
+        -extfile <(printf "extendedKeyUsage=serverAuth\nsubjectAltName=IP:${BOOTSTRAP_NODE_IP}")
+
+    # Agent client certificate (shared by all agents)
+    openssl req -new -newkey rsa:2048 -nodes \
+        -keyout "${KONNECTIVITY_CERT_DIR}/agent.key" \
+        -out "${KONNECTIVITY_CERT_DIR}/agent.csr" \
+        -subj "/CN=konnectivity-agent/O=openshift"
+
+    openssl x509 -req -in "${KONNECTIVITY_CERT_DIR}/agent.csr" \
+        -CA /opt/openshift/tls/root-ca.crt \
+        -CAkey /opt/openshift/tls/root-ca.key \
+        -CAcreateserial \
+        -out "${KONNECTIVITY_CERT_DIR}/agent.crt" \
+        -days 1 \
+        -extfile <(printf "extendedKeyUsage=clientAuth")
+
+    # Copy CA cert to konnectivity directory for server to validate agents
+    cp /opt/openshift/tls/root-ca.crt "${KONNECTIVITY_CERT_DIR}/ca.crt"
+
+    # Clean up CSR files
+    rm -f "${KONNECTIVITY_CERT_DIR}"/*.csr
+
+    echo "Generated Konnectivity certificates in ${KONNECTIVITY_CERT_DIR}"
+    touch konnectivity-certs.done
+    record_service_stage_success
+fi
+
 # Create Konnectivity server static pod manifest
 # This runs on the bootstrap node and provides a proxy for the bootstrap KAS
 # to reach webhooks in the cluster's pod network.
@@ -272,6 +330,9 @@ spec:
     args:
     - --logtostderr=true
     - --uds-name=/etc/kubernetes/bootstrap-configs/konnectivity-server.socket
+    - --cluster-cert=/etc/konnectivity/server.crt
+    - --cluster-key=/etc/konnectivity/server.key
+    - --cluster-ca-cert=/etc/konnectivity/ca.crt
     - --agent-port=8091
     - --health-port=2041
     - --mode=http-connect
@@ -287,11 +348,18 @@ spec:
     volumeMounts:
     - name: config-dir
       mountPath: /etc/kubernetes/bootstrap-configs
+    - name: konnectivity-certs
+      mountPath: /etc/konnectivity
+      readOnly: true
   volumes:
   - name: config-dir
     hostPath:
       path: /etc/kubernetes/bootstrap-configs
       type: DirectoryOrCreate
+  - name: konnectivity-certs
+    hostPath:
+      path: /opt/openshift/tls/konnectivity
+      type: Directory
 EOF
 
     touch konnectivity-server-bootstrap.done
@@ -620,6 +688,34 @@ then
     record_service_stage_success
 fi
 
+# Create Konnectivity agent certificate Secret manifest for cluster deployment
+# This Secret contains the TLS certs agents use to authenticate to the server.
+if [ ! -f konnectivity-agent-certs-manifest.done ]
+then
+    record_service_stage_start "konnectivity-agent-certs-manifest"
+    echo "Creating Konnectivity agent certificate Secret manifest..."
+
+    KONNECTIVITY_CERT_DIR=/opt/openshift/tls/konnectivity
+    cat > manifests/konnectivity-agent-certs.yaml <<EOF
+apiVersion: v1
+kind: Secret
+metadata:
+  name: konnectivity-agent-certs
+  namespace: kube-system
+  labels:
+    app: konnectivity-agent
+    openshift.io/bootstrap-only: "true"
+type: Opaque
+data:
+  tls.crt: $(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.crt")
+  tls.key: $(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.key")
+  ca.crt: $(base64 -w0 /opt/openshift/tls/root-ca.crt)
+EOF
+
+    touch konnectivity-agent-certs-manifest.done
+    record_service_stage_success
+fi
+
 # Create Konnectivity agent DaemonSet manifest for cluster deployment
 # This manifest will be applied by cluster-bootstrap and runs agents on cluster nodes
 # that connect back to the Konnectivity server on the bootstrap node.
@@ -662,7 +758,10 @@ spec:
         - /usr/bin/proxy-agent
         args:
         - --logtostderr=true
-        - --proxy-server-host={{.BootstrapNodeIP}}
+        - --ca-cert=/etc/konnectivity/ca.crt
+        - --agent-cert=/etc/konnectivity/tls.crt
+        - --agent-key=/etc/konnectivity/tls.key
+        - --proxy-server-host=${BOOTSTRAP_NODE_IP}
         - --proxy-server-port=8091
         - --health-server-port=2041
         - --agent-identifiers=default-route=true
@@ -676,6 +775,14 @@ spec:
             port: 2041
           initialDelaySeconds: 10
           periodSeconds: 10
+        volumeMounts:
+        - name: konnectivity-certs
+          mountPath: /etc/konnectivity
+          readOnly: true
+      volumes:
+      - name: konnectivity-certs
+        secret:
+          secretName: konnectivity-agent-certs
 EOF
 
     touch konnectivity-agent-manifest.done
