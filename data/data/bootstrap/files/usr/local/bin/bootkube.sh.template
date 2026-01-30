@@ -397,9 +397,11 @@ then
 		--rendered-manifest-files=/assets/manifests \
 		--payload-version=$VERSION \
 		--operand-kubernetes-version="${KUBERNETES_VERSION}" \
-		--config-override-files=/assets/egress-selector-config.yaml
+		--config-override-files=/assets/konnectivity-config-override.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
+	# Copy egress selector config to bootstrap-configs where KAS can read it
+	cp /opt/openshift/egress-selector-config.yaml /etc/kubernetes/bootstrap-configs/egress-selector-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-apiserver-bootstrap/manifests/* manifests/
 
