@@ -935,7 +935,7 @@ E0130 "cannot connect once" err="...dial tcp 127.0.0.1:8091: connect: connection
 
 ### Task 2.1: Generate Konnectivity Certificates at Runtime
 
-**Status**: 🔄 In Progress
+**Status**: ✅ Complete
 
 **Objective**: Generate Konnectivity server and agent certificates at runtime on the bootstrap node using a self-signed Konnectivity CA.
 
@@ -1072,6 +1072,8 @@ volumeMounts:
 
 ### Task 2.2: Deploy Konnectivity Server on Bootstrap
 
+**Status**: ✅ Complete
+
 **Objective**: Add a Konnectivity server to the bootstrap environment.
 
 **Approach**: Deploy as a **static pod** (consistent with other bootstrap components like KAS, etcd).
@@ -1150,6 +1152,8 @@ This follows the same pattern used for other bootstrap components where images a
 
 ### Task 2.3: Configure Bootstrap KAS with EgressSelectorConfiguration
 
+**Status**: ✅ Complete
+
 **Objective**: Configure the bootstrap KAS to proxy cluster-bound traffic through Konnectivity.
 
 **Approach**: Use `--config-override-files` flag (validated in Task 1.1.1).
@@ -1192,6 +1196,8 @@ This avoids any need for pod manifest post-processing.
 ---
 
 ### Task 2.4: Create Konnectivity Agent DaemonSet
+
+**Status**: ✅ Complete
 
 **Objective**: Deploy Konnectivity agents on cluster nodes to connect back to the bootstrap server.
 

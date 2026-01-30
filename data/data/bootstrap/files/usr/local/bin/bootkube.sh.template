@@ -254,8 +254,9 @@ BOOTSTRAP_NODE_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{for(i=1;i<=NF;i++) 
 {{- end }}
 echo "Detected bootstrap node IP: ${BOOTSTRAP_NODE_IP}"
 
-# Generate Konnectivity certificates signed by RootCA (1-day validity)
+# Generate Konnectivity certificates with self-signed CA (1-day validity)
 # These are needed for mTLS between Konnectivity server and agents.
+# We use a self-signed CA because root-ca.key is not available on the bootstrap node.
 if [ ! -f konnectivity-certs.done ]
 then
     record_service_stage_start "konnectivity-certs"
@@ -264,6 +265,13 @@ then
     KONNECTIVITY_CERT_DIR=/opt/openshift/tls/konnectivity
     mkdir -p "${KONNECTIVITY_CERT_DIR}"
 
+    # Generate self-signed Konnectivity CA
+    openssl req -x509 -newkey rsa:2048 -nodes \
+        -keyout "${KONNECTIVITY_CERT_DIR}/ca.key" \
+        -out "${KONNECTIVITY_CERT_DIR}/ca.crt" \
+        -days 1 \
+        -subj "/CN=konnectivity-signer/O=openshift"
+
     # Server certificate for agent endpoint
     openssl req -new -newkey rsa:2048 -nodes \
         -keyout "${KONNECTIVITY_CERT_DIR}/server.key" \
@@ -271,8 +279,8 @@ then
         -subj "/CN=konnectivity-server/O=openshift"
 
     openssl x509 -req -in "${KONNECTIVITY_CERT_DIR}/server.csr" \
-        -CA /opt/openshift/tls/root-ca.crt \
-        -CAkey /opt/openshift/tls/root-ca.key \
+        -CA "${KONNECTIVITY_CERT_DIR}/ca.crt" \
+        -CAkey "${KONNECTIVITY_CERT_DIR}/ca.key" \
         -CAcreateserial \
         -out "${KONNECTIVITY_CERT_DIR}/server.crt" \
         -days 1 \
@@ -285,15 +293,12 @@ then
         -subj "/CN=konnectivity-agent/O=openshift"
 
     openssl x509 -req -in "${KONNECTIVITY_CERT_DIR}/agent.csr" \
-        -CA /opt/openshift/tls/root-ca.crt \
-        -CAkey /opt/openshift/tls/root-ca.key \
+        -CA "${KONNECTIVITY_CERT_DIR}/ca.crt" \
+        -CAkey "${KONNECTIVITY_CERT_DIR}/ca.key" \
         -CAcreateserial \
         -out "${KONNECTIVITY_CERT_DIR}/agent.crt" \
         -days 1 \
         -extfile <(printf "extendedKeyUsage=clientAuth")
-
-    # Copy CA cert to konnectivity directory for server to validate agents
-    cp /opt/openshift/tls/root-ca.crt "${KONNECTIVITY_CERT_DIR}/ca.crt"
 
     # Clean up CSR files
     rm -f "${KONNECTIVITY_CERT_DIR}"/*.csr
@@ -709,7 +714,7 @@ type: Opaque
 data:
   tls.crt: $(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.crt")
   tls.key: $(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.key")
-  ca.crt: $(base64 -w0 /opt/openshift/tls/root-ca.crt)
+  ca.crt: $(base64 -w0 "${KONNECTIVITY_CERT_DIR}/ca.crt")
 EOF
 
     touch konnectivity-agent-certs-manifest.done
