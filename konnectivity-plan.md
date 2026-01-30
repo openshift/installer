@@ -1709,6 +1709,27 @@ These should be investigated during implementation if they become blocking:
 
 This section describes manual testing procedures for validating the Konnectivity integration on a real cluster.
 
+### Preserving the Bootstrap Node for Debugging
+
+By default, the installer destroys the bootstrap node after cluster creation completes. To preserve it for debugging:
+
+```bash
+export OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP=true
+openshift-install create cluster --dir <install-dir>
+```
+
+When set, the installer will:
+- Skip destroying bootstrap infrastructure
+- Log a warning: "OPENSHIFT_INSTALL_PRESERVE_BOOTSTRAP is set, not destroying bootstrap resources."
+- Still shut down the local CAPI control plane
+
+After debugging, manually destroy the bootstrap resources:
+```bash
+openshift-install destroy bootstrap --dir <install-dir>
+```
+
+**Warning**: Do not leave bootstrap resources running long-term. The bootstrap node has elevated privileges and should be removed once debugging is complete.
+
 ### Obtaining the Bootstrap IP
 
 The bootstrap node's public IP can be extracted from the CAPI Machine manifest stored in `.clusterapi_output/`:
