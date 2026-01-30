@@ -9,6 +9,9 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/asset/cluster/metadata"
@@ -86,6 +89,44 @@ func Destroy(ctx context.Context, dir string) (err error) {
 
 	if err := provider.DestroyBootstrap(ctx, dir); err != nil {
 		return fmt.Errorf("error destroying bootstrap resources %w", err)
+	}
+
+	// Clean up bootstrap-only cluster resources (e.g., Konnectivity agent DaemonSet)
+	// This runs after infrastructure is destroyed, so failures are warnings only.
+	if err := deleteBootstrapClusterResources(ctx, dir); err != nil {
+		logrus.Warnf("Failed to clean up bootstrap cluster resources: %v", err)
+	}
+
+	return nil
+}
+
+// deleteBootstrapClusterResources removes cluster resources that were only needed
+// during bootstrap, such as the Konnectivity agent DaemonSet.
+func deleteBootstrapClusterResources(ctx context.Context, dir string) error {
+	kubeconfigPath := filepath.Join(dir, "auth", "kubeconfig")
+
+	// Check if kubeconfig exists
+	if _, err := os.Stat(kubeconfigPath); os.IsNotExist(err) {
+		logrus.Debug("Kubeconfig not found, skipping bootstrap cluster resource cleanup")
+		return nil
+	}
+
+	config, err := clientcmd.BuildConfigFromFlags("", kubeconfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to build kubeconfig: %w", err)
+	}
+
+	client, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to create kubernetes client: %w", err)
+	}
+
+	// Delete the Konnectivity agent DaemonSet
+	logrus.Info("Deleting bootstrap Konnectivity agent DaemonSet")
+	err = client.AppsV1().DaemonSets("kube-system").Delete(ctx, "konnectivity-agent", metav1.DeleteOptions{})
+	if err != nil {
+		// Log but don't fail if the DaemonSet doesn't exist or can't be deleted
+		logrus.Debugf("Failed to delete konnectivity-agent DaemonSet: %v", err)
 	}
 
 	return nil

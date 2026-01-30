@@ -1,0 +1,10 @@
+apiVersion: kubecontrolplane.config.openshift.io/v1
+kind: KubeAPIServerConfig
+egressSelectorConfiguration:
+  egressSelections:
+  - name: "cluster"
+    connection:
+      proxyProtocol: "HTTPConnect"
+      transport:
+        uds:
+          udsName: "/etc/kubernetes/bootstrap-configs/konnectivity-server.socket"

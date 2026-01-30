@@ -66,6 +66,7 @@ OPENSHIFT_HYPERKUBE_IMAGE=$(image_for hyperkube)
 OPENSHIFT_CLUSTER_POLICY_IMAGE=$(image_for cluster-policy-controller)
 
 CLUSTER_BOOTSTRAP_IMAGE=$(image_for cluster-bootstrap)
+KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
 
 mkdir --parents ./{bootstrap-manifests,manifests}
 
@@ -244,6 +245,59 @@ then
     record_service_stage_success
 fi
 
+# Create Konnectivity server static pod manifest
+# This runs on the bootstrap node and provides a proxy for the bootstrap KAS
+# to reach webhooks in the cluster's pod network.
+if [ ! -f konnectivity-server-bootstrap.done ]
+then
+    record_service_stage_start "konnectivity-server-bootstrap"
+    echo "Creating Konnectivity server static pod manifest..."
+
+    cat > /etc/kubernetes/manifests/konnectivity-server-pod.yaml <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: konnectivity-server
+  namespace: kube-system
+  labels:
+    app: konnectivity-server
+spec:
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  containers:
+  - name: konnectivity-server
+    image: ${KONNECTIVITY_IMAGE}
+    command:
+    - /usr/bin/proxy-server
+    args:
+    - --logtostderr=true
+    - --uds-name=/etc/kubernetes/bootstrap-configs/konnectivity-server.socket
+    - --agent-port=8091
+    - --health-port=2041
+    - --mode=http-connect
+    - --proxy-strategies=destHost,defaultRoute
+    - --keepalive-time=30s
+    - --frontend-keepalive-time=30s
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 2041
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    volumeMounts:
+    - name: config-dir
+      mountPath: /etc/kubernetes/bootstrap-configs
+  volumes:
+  - name: config-dir
+    hostPath:
+      path: /etc/kubernetes/bootstrap-configs
+      type: DirectoryOrCreate
+EOF
+
+    touch konnectivity-server-bootstrap.done
+    record_service_stage_success
+fi
+
 if [ ! -f kube-apiserver-bootstrap.done ]
 then
     record_service_stage_start "kube-apiserver-bootstrap"
@@ -268,7 +322,8 @@ then
 		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
 		--rendered-manifest-files=/assets/manifests \
 		--payload-version=$VERSION \
-		--operand-kubernetes-version="${KUBERNETES_VERSION}"
+		--operand-kubernetes-version="${KUBERNETES_VERSION}" \
+		--config-override-files=/assets/egress-selector-config.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
@@ -562,6 +617,68 @@ then
     record_service_stage_start "wait-for-etcd"
 	# Wait for the etcd cluster to come up.
 	wait_for_etcd_cluster
+    record_service_stage_success
+fi
+
+# Create Konnectivity agent DaemonSet manifest for cluster deployment
+# This manifest will be applied by cluster-bootstrap and runs agents on cluster nodes
+# that connect back to the Konnectivity server on the bootstrap node.
+if [ ! -f konnectivity-agent-manifest.done ]
+then
+    record_service_stage_start "konnectivity-agent-manifest"
+    echo "Creating Konnectivity agent DaemonSet manifest..."
+
+    cat > manifests/konnectivity-agent-daemonset.yaml <<EOF
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: konnectivity-agent
+  namespace: kube-system
+  labels:
+    app: konnectivity-agent
+    openshift.io/bootstrap-only: "true"
+spec:
+  selector:
+    matchLabels:
+      app: konnectivity-agent
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+  template:
+    metadata:
+      labels:
+        app: konnectivity-agent
+    spec:
+      hostNetwork: true
+      dnsPolicy: Default
+      priorityClassName: system-node-critical
+      tolerations:
+      - operator: Exists
+      containers:
+      - name: konnectivity-agent
+        image: ${KONNECTIVITY_IMAGE}
+        command:
+        - /usr/bin/proxy-agent
+        args:
+        - --logtostderr=true
+        - --proxy-server-host={{.BootstrapNodeIP}}
+        - --proxy-server-port=8091
+        - --health-server-port=2041
+        - --agent-identifiers=default-route=true
+        - --keepalive-time=30s
+        - --probe-interval=5s
+        - --sync-interval=5s
+        - --sync-interval-cap=30s
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 2041
+          initialDelaySeconds: 10
+          periodSeconds: 10
+EOF
+
+    touch konnectivity-agent-manifest.done
     record_service_stage_success
 fi
 
