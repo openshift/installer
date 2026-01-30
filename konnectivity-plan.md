@@ -912,61 +912,233 @@ func deleteKonnectivityResources(ctx context.Context, dir string) error {
 
 ### Task 2.6: Ignition Config Validation
 
+**Status**: ✅ Complete
+
 **Objective**: Validate implementation without deploying a cluster.
 
-Generate and inspect ignition configs to verify template processing:
+#### Prerequisites
+
+Build the installer with the Konnectivity changes:
 
 ```bash
-# Create manifests (intermediate step, allows inspection)
-openshift-install --dir test-cluster create manifests
+SKIP_TERRAFORM=y hack/build.sh
+```
 
-# Create full ignition configs
-openshift-install --dir test-cluster create ignition-configs
+#### Test Setup
+
+Create a test directory with a minimal install-config.yaml. The "none" platform is used because it doesn't require cloud provider credentials or infrastructure validation:
+
+```bash
+# Create test directory
+mkdir -p /tmp/konnectivity-test
+cd /tmp/konnectivity-test
+
+# Generate an SSH key for the test
+ssh-keygen -t ed25519 -f /tmp/konnectivity-test/test-key -N "" -q
+
+# Create install-config.yaml
+cat > install-config.yaml << EOF
+apiVersion: v1
+baseDomain: example.com
+metadata:
+  name: test-cluster
+networking:
+  networkType: OVNKubernetes
+  clusterNetwork:
+  - cidr: 10.128.0.0/14
+    hostPrefix: 23
+  serviceNetwork:
+  - 172.30.0.0/16
+  machineNetwork:
+  - cidr: 192.168.1.0/24
+controlPlane:
+  name: master
+  replicas: 3
+compute:
+- name: worker
+  replicas: 2
+platform:
+  none: {}
+pullSecret: '{"auths":{"fake":{"auth":"aWQ6cGFzcwo="}}}'
+sshKey: '$(cat /tmp/konnectivity-test/test-key.pub)'
+EOF
+```
+
+#### Generate Ignition Configs
+
+```bash
+cd /tmp/konnectivity-test
+/path/to/installer/bin/openshift-install create ignition-configs
+```
+
+Expected output:
+```
+level=warning msg=Release Image Architecture not detected. Release Image Architecture is unknown
+level=info msg=Consuming Install Config from target directory
+level=info msg=Successfully populated MCS CA cert information: root-ca ...
+level=info msg=Successfully populated MCS TLS cert information: root-ca ...
+level=info msg=Ignition-Configs created in: . and auth
 ```
 
 #### Validation Checklist
 
-After generating ignition configs, verify:
+After generating ignition configs, run these validation commands:
 
-1. **EgressSelectorConfiguration file exists**:
-   ```bash
-   jq -r '.storage.files[] | select(.path == "/opt/openshift/egress-selector-config.yaml") | .contents.source' \
-     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d
-   ```
-   Expected: YAML with `egressSelectorConfiguration` containing UDS path `/etc/kubernetes/bootstrap-configs/konnectivity-server.socket`
+##### 1. EgressSelectorConfiguration file exists
 
-2. **bootkube.sh contains Konnectivity additions**:
-   ```bash
-   jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
-     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A5 "KONNECTIVITY_IMAGE"
-   ```
-   Expected: `KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)`
+```bash
+jq -r '.storage.files[] | select(.path == "/opt/openshift/egress-selector-config.yaml") | .contents.source' \
+  bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d
+```
 
-3. **Konnectivity server static pod manifest creation in bootkube.sh**:
-   ```bash
-   jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
-     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A20 "konnectivity-server-pod.yaml"
-   ```
-   Expected: Static pod manifest with correct image variable and UDS socket path
+**Expected output**:
+```yaml
+apiVersion: kubecontrolplane.config.openshift.io/v1
+kind: KubeAPIServerConfig
+egressSelectorConfiguration:
+  egressSelections:
+  - name: "cluster"
+    connection:
+      proxyProtocol: "HTTPConnect"
+      transport:
+        uds:
+          udsName: "/etc/kubernetes/bootstrap-configs/konnectivity-server.socket"
+```
 
-4. **Konnectivity agent DaemonSet manifest creation in bootkube.sh**:
-   ```bash
-   jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
-     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A30 "konnectivity-agent-daemonset.yaml"
-   ```
-   Expected: DaemonSet manifest with `hostNetwork: true`, bootstrap node IP, and correct image variable
+##### 2. KONNECTIVITY_IMAGE variable defined
 
-5. **KAS render command includes config override**:
-   ```bash
-   jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
-     test-cluster/bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep "config-override-files"
-   ```
-   Expected: `--config-override-files=/assets/egress-selector-config.yaml`
+```bash
+jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
+  bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A2 "KONNECTIVITY_IMAGE"
+```
 
-**Limitations**:
+**Expected output**:
+```
+KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
+
+mkdir --parents ./{bootstrap-manifests,manifests}
+--
+    image: ${KONNECTIVITY_IMAGE}
+    command:
+    - /usr/bin/proxy-server
+--
+        image: ${KONNECTIVITY_IMAGE}
+        command:
+        - /usr/bin/proxy-agent
+```
+
+##### 3. Konnectivity server static pod manifest creation
+
+```bash
+jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
+  bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A40 "konnectivity-server-pod.yaml" | head -45
+```
+
+**Expected output** (partial):
+```yaml
+    cat > /etc/kubernetes/manifests/konnectivity-server-pod.yaml <<EOF
+apiVersion: v1
+kind: Pod
+metadata:
+  name: konnectivity-server
+  namespace: kube-system
+  labels:
+    app: konnectivity-server
+spec:
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  containers:
+  - name: konnectivity-server
+    image: ${KONNECTIVITY_IMAGE}
+    command:
+    - /usr/bin/proxy-server
+    args:
+    - --logtostderr=true
+    - --uds-name=/etc/kubernetes/bootstrap-configs/konnectivity-server.socket
+    - --agent-port=8091
+    - --health-port=2041
+    - --mode=http-connect
+    - --proxy-strategies=destHost,defaultRoute
+    ...
+```
+
+##### 4. Konnectivity agent DaemonSet manifest creation
+
+```bash
+jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
+  bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep -A55 "konnectivity-agent-daemonset.yaml" | head -55
+```
+
+**Expected output** (partial):
+```yaml
+    cat > manifests/konnectivity-agent-daemonset.yaml <<EOF
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: konnectivity-agent
+  namespace: kube-system
+  labels:
+    app: konnectivity-agent
+    openshift.io/bootstrap-only: "true"
+spec:
+  selector:
+    matchLabels:
+      app: konnectivity-agent
+  ...
+    spec:
+      hostNetwork: true
+      dnsPolicy: Default
+      priorityClassName: system-node-critical
+      tolerations:
+      - operator: Exists
+      containers:
+      - name: konnectivity-agent
+        image: ${KONNECTIVITY_IMAGE}
+        command:
+        - /usr/bin/proxy-agent
+        args:
+        - --logtostderr=true
+        - --proxy-server-host=
+        - --proxy-server-port=8091
+        ...
+```
+
+**Note**: The `--proxy-server-host=` is empty because the "none" platform doesn't have an installer-managed bootstrap IP. On IPI platforms (AWS, GCP, Azure, etc.), this would contain the actual bootstrap node IP address via the `{{.BootstrapNodeIP}}` template variable.
+
+##### 5. KAS render command includes config override
+
+```bash
+jq -r '.storage.files[] | select(.path == "/usr/local/bin/bootkube.sh") | .contents.source' \
+  bootstrap.ign | sed 's/data:text\/plain;charset=utf-8;base64,//' | base64 -d | grep "config-override-files"
+```
+
+**Expected output**:
+```
+		--config-override-files=/assets/egress-selector-config.yaml
+```
+
+#### Cleanup
+
+```bash
+rm -rf /tmp/konnectivity-test
+```
+
+#### Validation Results Summary
+
+| Check | Status | Notes |
+|-------|--------|-------|
+| EgressSelectorConfiguration file | ✅ Pass | Correctly embedded at `/opt/openshift/egress-selector-config.yaml` |
+| KONNECTIVITY_IMAGE variable | ✅ Pass | Defined and used in both server and agent manifests |
+| Konnectivity server static pod | ✅ Pass | Complete manifest with UDS socket and correct args |
+| Konnectivity agent DaemonSet | ✅ Pass | Complete manifest with hostNetwork, tolerations |
+| --config-override-files flag | ✅ Pass | Added to KAS render command |
+
+#### Limitations
+
 - Runtime behavior (shell script execution) not tested
 - Image extraction from release payload not tested
 - Actual Konnectivity connectivity not validated
+- Bootstrap node IP only populated on IPI platforms with infrastructure provisioning
 
 ---
 
