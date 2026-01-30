@@ -1893,3 +1893,25 @@ The implementation generates a self-signed Konnectivity CA at runtime on the boo
 - Test behavior in air-gapped environments where external IPs are unreachable
 - Investigate platform-specific solutions (e.g., metadata service for cloud platforms)
 
+### 5. Firewall Rules for Konnectivity Port on All Platforms
+
+**Current approach**: AWS security group rules for port 8091 were added to [pkg/asset/manifests/aws/cluster.go](pkg/asset/manifests/aws/cluster.go) in `AdditionalControlPlaneIngressRules`. This allows Konnectivity agents on cluster nodes to connect to the Konnectivity server on the bootstrap node.
+
+**Platforms requiring similar changes**:
+
+| Platform | File/Location | Mechanism |
+|----------|---------------|-----------|
+| AWS | `pkg/asset/manifests/aws/cluster.go` | ✅ Implemented - `AdditionalControlPlaneIngressRules` |
+| Azure | `pkg/asset/manifests/azure/` | Network Security Group rules |
+| GCP | `pkg/asset/manifests/gcp/` | Firewall rules |
+| vSphere | N/A (typically no installer-managed firewall) | Documentation only |
+| OpenStack | `pkg/asset/manifests/openstack/` | Security group rules |
+| Nutanix | `pkg/asset/manifests/nutanix/` | Security group rules |
+| IBM Cloud | `pkg/asset/manifests/ibmcloud/` | Security group rules |
+| Bare Metal | N/A (no installer-managed firewall) | Documentation only |
+
+**Post-PoC implementation**:
+- Add port 8091 ingress rules to each platform's infrastructure manifests
+- For platforms without installer-managed firewalls (vSphere, bare metal), document the requirement in UPI documentation
+- Test Konnectivity connectivity on each platform during cluster bootstrap
+
