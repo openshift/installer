@@ -641,6 +641,63 @@ When no `--egress-selector-config-file` flag is set, the KAS uses direct connect
 
 ---
 
+### Task 1.8: Investigate Konnectivity Agent Authentication Options
+
+**Status**: 🔄 Pending
+
+**Objective**: Determine how to authenticate Konnectivity agents to the server, leveraging existing bootstrap certificate infrastructure where possible.
+
+**Context**: The current PoC implementation fails because the Konnectivity agent requires a CA certificate to validate the server connection:
+
+```
+Error: failed to run proxy connection with failed to read CA cert : read .: is a directory
+```
+
+The agent expects `--ca-cert`, `--agent-cert`, and `--agent-key` flags, which were intentionally omitted in the unauthenticated PoC design (Task 1.6). However, the agent appears to require at least a CA cert to function.
+
+#### Questions to Answer
+
+1. **Bootstrap TLS Assets Inventory**
+   - What certificates are already generated during bootstrap?
+   - Is there a CA that could sign Konnectivity certificates?
+   - Can we reuse an existing certificate (e.g., kubelet client cert, aggregator CA)?
+   - Where is the TLS asset generation code in the installer? (likely `pkg/asset/tls/`)
+
+2. **HyperShift Agent Authentication Deep Dive**
+   - How does HyperShift generate agent certificates?
+   - Does each agent pod require a unique client certificate, or do all agents share one?
+   - What CA signs the agent certificates?
+   - How are certificates distributed to the DaemonSet pods?
+   - Review: `control-plane-operator/controllers/hostedcontrolplane/pki/konnectivity.go`
+
+3. **Konnectivity Server Certificate Requirements**
+   - What certificates does the server need for the agent-facing endpoint (port 8091)?
+   - Can the server use an existing bootstrap certificate for client validation?
+   - What is the minimum viable certificate configuration?
+
+4. **Certificate Distribution Mechanism**
+   - How would certificates be mounted into the agent DaemonSet pods?
+   - Can we use a Kubernetes Secret created during bootstrap?
+   - How does HyperShift distribute certificates to agents?
+
+#### Files to Investigate
+
+| Area | Files |
+|------|-------|
+| Installer TLS assets | `pkg/asset/tls/*.go` |
+| HyperShift Konnectivity PKI | `hypershift/control-plane-operator/controllers/hostedcontrolplane/pki/konnectivity.go` |
+| HyperShift agent deployment | `hypershift/control-plane-operator/hostedclusterconfigoperator/controllers/resources/konnectivity/reconcile.go` |
+| Bootstrap certificate usage | `data/data/bootstrap/files/usr/local/bin/bootkube.sh.template` |
+
+#### Expected Outcomes
+
+- Identify whether a shared agent certificate (single cert for all agents) or per-agent certificates are needed
+- Determine if an existing bootstrap CA can sign Konnectivity certificates
+- Define the minimum certificate configuration to get agents connecting
+- Propose an implementation approach that integrates with the installer's existing TLS pipeline
+
+---
+
 ## Phase 2: Implementation
 
 ### Task 2.1: Generate Konnectivity Certificates
