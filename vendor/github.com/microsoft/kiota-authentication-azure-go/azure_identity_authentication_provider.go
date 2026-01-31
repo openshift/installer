@@ -29,7 +29,12 @@ func NewAzureIdentityAuthenticationProviderWithScopesAndValidHosts(credential az
 
 // NewAzureIdentityAuthenticationProviderWithScopesAndValidHostsAndObservabilityOptions creates a new instance of the AzureIdentityAuthenticationProvider.
 func NewAzureIdentityAuthenticationProviderWithScopesAndValidHostsAndObservabilityOptions(credential azcore.TokenCredential, scopes []string, validHosts []string, observabilityOptions ObservabilityOptions) (*AzureIdentityAuthenticationProvider, error) {
-	accessTokenProvider, err := NewAzureIdentityAccessTokenProviderWithScopesAndValidHostsAndObservabilityOptions(credential, scopes, validHosts, observabilityOptions)
+	return NewAzureIdentityAuthenticationProviderWithScopesAndValidHostsAndObservabilityOptionsAndIsCaeEnabled(credential, scopes, validHosts, observabilityOptions, true)
+}
+
+// NewAzureIdentityAuthenticationProviderWithScopesAndValidHostsAndObservabilityOptionsAndIsCaeEnabled creates a new instance of the AzureIdentityAuthenticationProvider.
+func NewAzureIdentityAuthenticationProviderWithScopesAndValidHostsAndObservabilityOptionsAndIsCaeEnabled(credential azcore.TokenCredential, scopes []string, validHosts []string, observabilityOptions ObservabilityOptions, isCaeEnabled bool) (*AzureIdentityAuthenticationProvider, error) {
+	accessTokenProvider, err := NewAzureIdentityAccessTokenProviderWithScopesAndValidHostsAndObservabilityOptionsAndIsCaeEnabled(credential, scopes, validHosts, observabilityOptions, isCaeEnabled)
 	if err != nil {
 		return nil, err
 	}
