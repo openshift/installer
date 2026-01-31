@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	elbv2types "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2/types"
@@ -275,19 +274,13 @@ func getHostedZoneIDForNLB(ctx context.Context, ic *installconfig.InstallConfig,
 		return hzID, nil
 	}
 
-	cfg, err := configv2.LoadDefaultConfig(ctx, configv2.WithRegion(ic.Config.Platform.AWS.Region))
-	if err != nil {
-		return "", fmt.Errorf("failed to load AWS config: %w", err)
-	}
-
-	client := elbv2.NewFromConfig(cfg, func(options *elbv2.Options) {
-		options.Region = ic.Config.Platform.AWS.Region
-		for _, endpoint := range ic.Config.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
-				options.BaseEndpoint = aws.String(endpoint.URL)
-			}
-		}
+	client, err := awsconfig.NewELBV2Client(ctx, awsconfig.EndpointOptions{
+		Region:    ic.Config.AWS.Region,
+		Endpoints: ic.Config.AWS.ServiceEndpoints,
 	})
+	if err != nil {
+		return "", fmt.Errorf("failed to create elbv2 client: %w", err)
+	}
 
 	// If the HostedZoneID is not known, query from the LoadBalancer
 	input := elbv2.DescribeLoadBalancersInput{
