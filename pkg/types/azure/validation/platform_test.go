@@ -278,6 +278,17 @@ func TestValidatePlatform(t *testing.T) {
 			}(),
 			expected: `^test-path\.ipFamily: Unsupported value: "DualStack"`,
 		},
+		{
+			name: "Azure Stack Hub with userProvisionedDNS enabled",
+			platform: func() *azure.Platform {
+				p := validPlatform()
+				p.CloudName = azure.StackCloud
+				p.ARMEndpoint = "https://management.local.azurestack.external"
+				p.UserProvisionedDNS = "Enabled"
+				return p
+			}(),
+			expected: `^test-path\.userProvisionedDNS: Invalid value: "Enabled": userProvisionedDNS is not supported on Azure Stack Hub$`,
+		},
 	}
 	ic := types.InstallConfig{}
 	for _, tc := range cases {

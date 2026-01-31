@@ -311,5 +311,8 @@ func validateAzureStack(p *azure.Platform, fldPath *field.Path) field.ErrorList 
 	if p.OutboundType != azure.LoadbalancerOutboundType {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("outboundType"), p.OutboundType, "Azure Stack does not support this routing currently"))
 	}
+	if p.UserProvisionedDNS != "" {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("userProvisionedDNS"), p.UserProvisionedDNS, "userProvisionedDNS is not supported on Azure Stack Hub"))
+	}
 	return allErrs
 }
