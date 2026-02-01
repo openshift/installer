@@ -1642,6 +1642,96 @@ func TestValidateInstallConfig(t *testing.T) {
 			expectedError: `cannot set imageContentSources and imageDigestSources at the same time`,
 		},
 		{
+			name: "valid imageContentSources with mirror in pull secret",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PullSecret = `{"auths":{"mirror.example.com":{"auth":"authorization value"}}}`
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
+					Source:  "q.io/ocp/source1",
+					Mirrors: []string{"mirror.example.com/ocp/release"},
+				}, {
+					Source:  "q.io/ocp/source2",
+					Mirrors: []string{"mirror.example.com/ocp/release"},
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "imageContentSources with mirror with port not in pull secret - warning only",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PullSecret = `{"auths":{"mirror.example.com:5000":{"auth":"authorization value"}}}`
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
+					Source:  "q.io/ocp/source1",
+					Mirrors: []string{"not-in-pullsecret-mirror.example.com:5000/ocp/release"},
+				}, {
+					Source:  "q.io/ocp/source2",
+					Mirrors: []string{"not-in-pullsecret-mirror.example.com:5000/ocp/release"},
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "imageContentSources with mirror not in pull secret - warning only",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PullSecret = `{"auths":{"mirror.example.com":{"auth":"authorization value"}}}`
+				c.DeprecatedImageContentSources = []types.ImageContentSource{{
+					Source:  "q.io/ocp/source1",
+					Mirrors: []string{"not-in-pullsecret-mirror.example.com/ocp/release"},
+				}, {
+					Source:  "q.io/ocp/source2",
+					Mirrors: []string{"not-in-pullsecret-mirror.example.com/ocp/release"},
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "valid imageDigestSources with mirror in pull secret",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PullSecret = `{"auths":{"mirror.example.com":{"auth":"authorization value"}}}`
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:  "q.io/ocp/source1",
+					Mirrors: []string{"mirror.example.com/ocp/release"},
+				}, {
+					Source:  "q.io/ocp/source2",
+					Mirrors: []string{"mirror.example.com/ocp/release"},
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "imageDigestSources with mirror with port not in pull secret - warning only",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PullSecret = `{"auths":{"mirror.example.com:5000":{"auth":"authorization value"}}}`
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:  "q.io/ocp/source1",
+					Mirrors: []string{"not-in-pullsecret-mirror.example.com:5000/ocp/release"},
+				}, {
+					Source:  "q.io/ocp/source2",
+					Mirrors: []string{"not-in-pullsecret-mirror.example.com:5000/ocp/release"},
+				}}
+				return c
+			}(),
+		},
+		{
+			name: "imageDigestSources with mirror not in pull secret - warning only",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PullSecret = `{"auths":{"mirror.example.com":{"auth":"authorization value"}}}`
+				c.ImageDigestSources = []types.ImageDigestSource{{
+					Source:  "q.io/ocp/source1",
+					Mirrors: []string{"not-in-pullsecret-mirror.example.com/ocp/release"},
+				}, {
+					Source:  "q.io/ocp/source2",
+					Mirrors: []string{"not-in-pullsecret-mirror.example.com/ocp/release"},
+				}}
+				return c
+			}(),
+		},
+		{
 			name: "invalid publishing strategy",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -2807,6 +2897,63 @@ func TestValidateInstallConfig(t *testing.T) {
 			} else {
 				assert.Regexp(t, tc.expectedError, err)
 			}
+		})
+	}
+}
+
+func Test_extractRegistryHost(t *testing.T) {
+	tests := []struct {
+		name       string
+		repository string
+		want       string
+		wantErr    bool
+	}{
+		{
+			name:       "custom registry with port",
+			repository: "registry.example.com:5000/namespace/repo",
+			want:       "registry.example.com:5000",
+			wantErr:    false,
+		},
+		{
+			name:       "quay.io registry",
+			repository: "quay.io/openshift/release",
+			want:       "quay.io",
+			wantErr:    false,
+		},
+		{
+			name:       "IP address with custom port",
+			repository: "192.168.1.1:8080/myimage",
+			want:       "192.168.1.1:8080",
+			wantErr:    false,
+		},
+		{
+			name:       "single domain name - non-canonical",
+			repository: "registry.example.com",
+			want:       "registry.example.com",
+			wantErr:    false,
+		},
+		{
+			name:       "simple name with namespace - non-canonical",
+			repository: "ocp/release",
+			want:       "ocp/release",
+			wantErr:    false,
+		},
+		{
+			name:       "invalid registry host with leading/trailing hyphens",
+			repository: "--invalid--/repo",
+			want:       "",
+			wantErr:    true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := extractRegistryHost(tt.repository)
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
