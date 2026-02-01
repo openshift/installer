@@ -5706,6 +5706,10 @@ spec:
                           type: string
                         type: array
                     type: object
+                  disallowSharedKeyAccess:
+                    description: DisallowSharedKeyAccess specifies if shared access
+                      key should be disabled for the storage account.
+                    type: boolean
                   ipFamily:
                     default: IPv4
                     description: |-
