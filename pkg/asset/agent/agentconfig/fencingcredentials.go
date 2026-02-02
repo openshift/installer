@@ -20,7 +20,7 @@ import (
 // fencingCredentialsFilename is the asset output path for fencing credentials.
 // Note: This is the asset's local filename, not the ignition embedding path.
 // The file is embedded at /etc/assisted/hostconfig/fencing-credentials.yaml by ignition.go.
-var fencingCredentialsFilename = "fencing-credentials.yaml"
+var fencingCredentialsFilename = "fencing-credentials.yaml" //nolint:gosec // G101: this is a filename, not hardcoded credentials
 
 // FencingCredentialsConfig represents the structure of the fencing-credentials.yaml file.
 type FencingCredentialsConfig struct {
