@@ -692,6 +692,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 			},
 		},
 		&agentconfig.AgentHosts{},
+		&agentconfig.FencingCredentials{},
 		&manifests.ExtraManifests{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
