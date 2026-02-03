@@ -450,6 +450,13 @@ func (b icBuildNamespace) withAWSIPFamily(ipFamily network.IPFamily) icOption {
 	}
 }
 
+func (b icBuildNamespace) withAWSRegion(region string) icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAWS()(ic)
+		ic.Platform.AWS.Region = region
+	}
+}
+
 func (b icBuildNamespace) withVSphereAPIVIP(vip string) icOption {
 	return func(ic *types.InstallConfig) {
 		b.forVSphere()(ic)

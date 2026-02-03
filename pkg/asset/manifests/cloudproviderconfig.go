@@ -33,6 +33,7 @@ import (
 	externaltypes "github.com/openshift/installer/pkg/types/external"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	networktypes "github.com/openshift/installer/pkg/types/network"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
@@ -113,12 +114,27 @@ func (cpc *CloudProviderConfig) Generate(ctx context.Context, dependencies asset
 			cm.Data[cloudProviderConfigCABundleDataKey] = trustBundle
 		}
 
-		// Include a non-empty kube config to appease components--such as the kube-apiserver--that
-		// expect there to be a kube config if the cloud-provider-config ConfigMap exists. See
-		// https://bugzilla.redhat.com/show_bug.cgi?id=1926975.
-		// Note that the newline is required in order to be valid yaml.
-		cm.Data[cloudProviderConfigDataKey] = `[Global]
+		var cloudCfg string
+		switch installConfig.Config.AWS.IPFamily {
+		case networktypes.DualStackIPv4Primary:
+			cloudCfg = `[Global]
+NodeIPFamilies=ipv4
+NodeIPFamilies=ipv6
 `
+		case networktypes.DualStackIPv6Primary:
+			cloudCfg = `[Global]
+NodeIPFamilies=ipv6
+NodeIPFamilies=ipv4
+`
+		default:
+			// Include a non-empty kube config to appease components--such as the kube-apiserver--that
+			// expect there to be a kube config if the cloud-provider-config ConfigMap exists. See
+			// https://bugzilla.redhat.com/show_bug.cgi?id=1926975.
+			// Note that the newline is required in order to be valid yaml.
+			cloudCfg = `[Global]
+`
+		}
+		cm.Data[cloudProviderConfigDataKey] = cloudCfg
 	case openstacktypes.Name, powervctypes.Name:
 		cloudProviderConfigData, cloudProviderConfigCABundleData, err := openstackmanifests.GenerateCloudProviderConfig(ctx, *installConfig.Config)
 		if err != nil {
