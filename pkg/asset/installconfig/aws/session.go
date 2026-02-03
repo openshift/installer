@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"sync"
 
 	survey "github.com/AlecAivazis/survey/v2"
@@ -137,19 +136,6 @@ func getCredentialsFromSession(options session.Options) (*credentials.Credential
 	})
 
 	return creds, nil
-}
-
-// IsStaticCredentials returns whether the credentials value provider are
-// static credentials safe for installer to transfer to cluster for use as-is.
-func IsStaticCredentials(credsValue credentials.Value) bool {
-	switch credsValue.ProviderName {
-	case credentials.EnvProviderName, credentials.StaticProviderName, credentials.SharedCredsProviderName, session.EnvProviderName:
-		return credsValue.SessionToken == ""
-	}
-	if strings.HasPrefix(credsValue.ProviderName, "SharedConfigCredentials") {
-		return credsValue.SessionToken == ""
-	}
-	return false
 }
 
 // errCodeEquals returns true if the error matches all these conditions:
