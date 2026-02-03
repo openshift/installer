@@ -3,6 +3,7 @@ package iso9660
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path"
 	"path/filepath"
@@ -12,11 +13,13 @@ import (
 	"time"
 
 	"github.com/diskfs/go-diskfs/util"
+	"github.com/djherbis/times"
 )
 
 const (
 	dataStartSector         = 16
 	defaultVolumeIdentifier = "ISOIMAGE"
+	elToritoBootTableOffset = 8
 )
 
 // FinalizeOptions options to pass to finalize
@@ -41,6 +44,14 @@ type FinalizeOptions struct {
 //	IsDir() bool        // abbreviation for Mode().IsDir()
 //	Sys() interface{}   // underlying data source (can return nil)
 //
+// Also supports:
+//
+//	AccessTime() time.Time
+//	ChangeTime() time.Time
+//	Nlink() uint32         // number of hardlinks, if supported
+//	Uid()   uint32         // uid, if supported
+//	Gid()   uint32         // gid, if supported
+//
 //nolint:structcheck // keep unused members so that we can know their references
 type finalizeFileInfo struct {
 	path               string
@@ -56,6 +67,8 @@ type finalizeFileInfo struct {
 	size               int64
 	mode               os.FileMode
 	modTime            time.Time
+	accessTime         time.Time
+	changeTime         time.Time
 	isDir              bool
 	isRoot             bool
 	bytes              [][]byte
@@ -64,7 +77,55 @@ type finalizeFileInfo struct {
 	trueParent         *finalizeFileInfo
 	trueChild          *finalizeFileInfo
 	elToritoEntry      *ElToritoEntry
-	content            []byte
+	linkTarget         string
+	uid                uint32
+	gid                uint32
+	nlink              uint32
+	// content in memory content of file. If this is anything other than nil, including a zero-length slice,
+	// then this content is used, rather than anything on disk.
+	content []byte
+	serial  uint64
+}
+
+func finalizeFileInfoFromFile(p, fullPath string, fi fs.FileInfo) (*finalizeFileInfo, error) {
+	isRoot := p == "."
+	name := fi.Name()
+	shortname, _ := calculateShortnameExtension(name)
+
+	if isRoot {
+		name = string([]byte{0x00})
+		shortname = name
+	}
+	t, err := times.Lstat(fullPath)
+	if err != nil {
+		return nil, fmt.Errorf("could not get times information for %s: %w", fullPath, err)
+	}
+	mode := fi.Mode()
+	var target string
+	if fi.Mode()&os.ModeSymlink == os.ModeSymlink {
+		target, err = os.Readlink(fullPath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read link for %s: %w", fullPath, err)
+		}
+	}
+	nlink, uid, gid := statt(fi)
+
+	return &finalizeFileInfo{
+		path:       p,
+		name:       name,
+		isDir:      fi.IsDir(),
+		isRoot:     isRoot,
+		modTime:    fi.ModTime(),
+		accessTime: t.AccessTime(),
+		changeTime: t.ChangeTime(),
+		mode:       mode,
+		size:       fi.Size(),
+		shortname:  shortname,
+		linkTarget: target,
+		uid:        uid,
+		gid:        gid,
+		nlink:      nlink,
+	}, nil
 }
 
 func (fi *finalizeFileInfo) Name() string {
@@ -100,8 +161,26 @@ func (fi *finalizeFileInfo) updateDepth(depth int) {
 		}
 	}
 }
+func (fi *finalizeFileInfo) AccessTime() time.Time {
+	return fi.accessTime
+}
+func (fi *finalizeFileInfo) ChangeTime() time.Time {
+	return fi.changeTime
+}
+func (fi *finalizeFileInfo) LinkTarget() string {
+	return fi.linkTarget
+}
+func (fi *finalizeFileInfo) Nlink() uint32 {
+	return fi.nlink
+}
+func (fi *finalizeFileInfo) UID() uint32 {
+	return fi.uid
+}
+func (fi *finalizeFileInfo) GID() uint32 {
+	return fi.gid
+}
 
-func (fi *finalizeFileInfo) toDirectoryEntry(fs *FileSystem, isSelf, isParent bool) (*directoryEntry, error) {
+func (fi *finalizeFileInfo) toDirectoryEntry(fsm *FileSystem, isSelf, isParent bool) (*directoryEntry, error) {
 	de := &directoryEntry{
 		extAttrSize:              0,
 		location:                 fi.location,
@@ -116,18 +195,22 @@ func (fi *finalizeFileInfo) toDirectoryEntry(fs *FileSystem, isSelf, isParent bo
 		isSelf:                   isSelf,
 		isParent:                 isParent,
 		volumeSequence:           1,
-		filesystem:               fs,
+		filesystem:               fsm,
 		// we keep the full filename until after processing
 		filename: fi.Name(),
 	}
 	// if it is root, and we have susp enabled, add the necessary entries
-	if fs.suspEnabled {
+	if fsm.suspEnabled {
 		if fi.isRoot && isSelf {
 			de.extensions = append(de.extensions, directoryEntrySystemUseExtensionSharingProtocolIndicator{skipBytes: 0})
 		}
 		// add appropriate PX, TF, SL, NM extensions
-		for _, e := range fs.suspExtensions {
-			ext, err := e.GetFileExtensions(path.Join(fs.workspace, fi.path), isSelf, isParent)
+		for _, e := range fsm.suspExtensions {
+			var (
+				ext []directoryEntrySystemUseExtension
+				err error
+			)
+			ext, err = e.GetFileExtensions(fi, isSelf, isParent)
 			if err != nil {
 				return nil, fmt.Errorf("error getting extensions for %s at path %s: %v", e.ID(), fi.path, err)
 			}
@@ -140,14 +223,14 @@ func (fi *finalizeFileInfo) toDirectoryEntry(fs *FileSystem, isSelf, isParent bo
 		}
 
 		if fi.isRoot && isSelf {
-			for _, e := range fs.suspExtensions {
+			for _, e := range fsm.suspExtensions {
 				de.extensions = append(de.extensions, directoryEntrySystemUseExtensionReference{id: e.ID(), descriptor: e.Descriptor(), source: e.Source(), extensionVersion: e.Version()})
 			}
 		}
 	}
 	return de, nil
 }
-func (fi *finalizeFileInfo) toDirectory(fs *FileSystem) (*Directory, error) {
+func (fi *finalizeFileInfo) toDirectory(fsm *FileSystem) (*Directory, error) {
 	// also need to add self and parent to it
 	var (
 		self, parent, dirEntry *directoryEntry
@@ -156,7 +239,7 @@ func (fi *finalizeFileInfo) toDirectory(fs *FileSystem) (*Directory, error) {
 	if !fi.IsDir() {
 		return nil, fmt.Errorf("cannot convert a file entry to a directtory")
 	}
-	self, err = fi.toDirectoryEntry(fs, true, false)
+	self, err = fi.toDirectoryEntry(fsm, true, false)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert self entry %s to dirEntry: %v", fi.path, err)
 	}
@@ -167,14 +250,14 @@ func (fi *finalizeFileInfo) toDirectory(fs *FileSystem) (*Directory, error) {
 	if fi.isRoot {
 		parentEntry = fi
 	}
-	parent, err = parentEntry.toDirectoryEntry(fs, false, true)
+	parent, err = parentEntry.toDirectoryEntry(fsm, false, true)
 	if err != nil {
 		return nil, fmt.Errorf("could not convert parent entry %s to dirEntry: %v", fi.parent.path, err)
 	}
 
 	entries := []*directoryEntry{self, parent}
 	for _, child := range fi.children {
-		dirEntry, err = child.toDirectoryEntry(fs, false, false)
+		dirEntry, err = child.toDirectoryEntry(fsm, false, false)
 		if err != nil {
 			return nil, fmt.Errorf("could not convert child entry %s to dirEntry: %v", child.path, err)
 		}
@@ -188,10 +271,10 @@ func (fi *finalizeFileInfo) toDirectory(fs *FileSystem) (*Directory, error) {
 }
 
 // calculate the size of a directory entry single record
-func (fi *finalizeFileInfo) calculateRecordSize(fs *FileSystem, isSelf, isParent bool) (dirEntrySize, continuationBlocksSize int, err error) {
+func (fi *finalizeFileInfo) calculateRecordSize(fsm *FileSystem, isSelf, isParent bool) (dirEntrySize, continuationBlocksSize int, err error) {
 	// we do not actually need the the continuation blocks to calculate size, just length, so use an empty slice
 	extTmpBlocks := make([]uint32, 100)
-	dirEntry, err := fi.toDirectoryEntry(fs, isSelf, isParent)
+	dirEntry, err := fi.toDirectoryEntry(fsm, isSelf, isParent)
 	if err != nil {
 		return 0, 0, fmt.Errorf("could not convert to dirEntry: %v", err)
 	}
@@ -205,21 +288,21 @@ func (fi *finalizeFileInfo) calculateRecordSize(fs *FileSystem, isSelf, isParent
 }
 
 // calculate the size of a directory, similar to a file size
-func (fi *finalizeFileInfo) calculateDirectorySize(fs *FileSystem) (dirEntrySize, continuationBlocksSize int, err error) {
+func (fi *finalizeFileInfo) calculateDirectorySize(fsm *FileSystem) (dirEntrySize, continuationBlocksSize int, err error) {
 	var (
 		recSize, recCE int
 	)
 	if !fi.IsDir() {
-		return 0, 0, fmt.Errorf("cannot convert a file entry to a directtory")
+		return 0, 0, fmt.Errorf("cannot convert a file entry to a directory")
 	}
-	recSize, recCE, err = fi.calculateRecordSize(fs, true, false)
+	recSize, recCE, err = fi.calculateRecordSize(fsm, true, false)
 	if err != nil {
 		return 0, 0, fmt.Errorf("could not calculate self entry size %s: %v", fi.path, err)
 	}
 	dirEntrySize += recSize
 	continuationBlocksSize += recCE
 
-	recSize, recCE, err = fi.calculateRecordSize(fs, false, true)
+	recSize, recCE, err = fi.calculateRecordSize(fsm, false, true)
 	if err != nil {
 		return 0, 0, fmt.Errorf("could not calculate parent entry size %s: %v", fi.path, err)
 	}
@@ -228,13 +311,13 @@ func (fi *finalizeFileInfo) calculateDirectorySize(fs *FileSystem) (dirEntrySize
 
 	for _, e := range fi.children {
 		// get size of data and CE blocks
-		recSize, recCE, err = e.calculateRecordSize(fs, false, false)
+		recSize, recCE, err = e.calculateRecordSize(fsm, false, false)
 		if err != nil {
 			return 0, 0, fmt.Errorf("could not calculate child %s entry size %s: %v", e.path, fi.path, err)
 		}
 		// do not go over a block boundary; pad if necessary
 		newSize := dirEntrySize + recSize
-		blocksize := int(fs.blocksize)
+		blocksize := int(fsm.blocksize)
 		left := blocksize - dirEntrySize%blocksize
 		if left != 0 && newSize/blocksize > dirEntrySize/blocksize {
 			dirEntrySize += left
@@ -341,21 +424,21 @@ func (fi *finalizeFileInfo) addChild(entry *finalizeFileInfo) {
 // Finalize finalize a read-only filesystem by writing it out to a read-only format
 //
 //nolint:gocyclo // this finalize function is complex and needs to be. We might be better off refactoring it to multiple functions, but it does not buy all that much.
-func (fs *FileSystem) Finalize(options FinalizeOptions) error {
-	if fs.workspace == "" {
+func (fsm *FileSystem) Finalize(options FinalizeOptions) error {
+	if fsm.workspace == "" {
 		return fmt.Errorf("cannot finalize an already finalized filesystem")
 	}
 
 	// did we ask for susp?
 	if options.RockRidge {
-		fs.suspEnabled = true
-		fs.suspExtensions = append(fs.suspExtensions, getRockRidgeExtension(rockRidge112))
+		fsm.suspEnabled = true
+		fsm.suspExtensions = append(fsm.suspExtensions, getRockRidgeExtension(rockRidge112))
 	}
 
 	/*
 		There is nothing in the iso9660 spec about the order of directories and files,
 		other than that they must be accessible in the location specified in directory entry and/or path table
-		However, most implementations seem to it as follows:
+		However, most implementations seem to do it as follows:
 		- each directory follows its parent
 		- data (i.e. file) sectors in each directory are immediately after its directory and immediately before the next sibling directory to its parent
 
@@ -380,11 +463,11 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 		 10- write volume descriptor set terminator
 	*/
 
-	f := fs.file
-	blocksize := int(fs.blocksize)
+	f := fsm.file
+	blocksize := int(fsm.blocksize)
 
 	// 1- blank out sectors 0-15
-	b := make([]byte, dataStartSector*fs.blocksize)
+	b := make([]byte, dataStartSector*fsm.blocksize)
 	n, err := f.WriteAt(b, 0)
 	if err != nil {
 		return fmt.Errorf("could not write blank system area: %v", err)
@@ -394,7 +477,7 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 	}
 
 	// 3- build out file tree
-	fileList, dirList, err := walkTree(fs.Workspace())
+	fileList, dirList, err := walkTree(fsm.Workspace())
 	if err != nil {
 		return fmt.Errorf("error walking tree: %v", err)
 	}
@@ -406,9 +489,9 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 	// if we need to relocate directories, must do them here, before finalizing order and sizes
 	// do not bother if enabled DeepDirectories, i.e. non-ISO9660 compliant
 	if !options.DeepDirectories {
-		if fs.suspEnabled {
+		if fsm.suspEnabled {
 			var handler suspExtension
-			for _, e := range fs.suspExtensions {
+			for _, e := range fsm.suspExtensions {
 				if e.Relocatable() {
 					handler = e
 					break
@@ -431,7 +514,7 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 
 	// convert sizes to required blocks for files
 	for _, e := range fileList {
-		e.blocks = calculateBlocks(e.size, fs.blocksize)
+		e.blocks = calculateBlocks(e.size, fsm.blocksize)
 	}
 
 	// we now have list of all of the files and directories and their properties, as well as children of every directory
@@ -467,14 +550,18 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 		shortname, extension := calculateShortnameExtension(path.Base(catname))
 		// break down the catalog basename from the parent dir
 		catSize := int64(len(bootcat))
+		now := time.Now()
 		catEntry = &finalizeFileInfo{
-			content:   bootcat,
-			size:      catSize,
-			path:      catname,
-			name:      path.Base(catname),
-			shortname: shortname,
-			extension: extension,
-			blocks:    calculateBlocks(catSize, fs.blocksize),
+			content:    bootcat,
+			size:       catSize,
+			path:       catname,
+			name:       path.Base(catname),
+			shortname:  shortname,
+			extension:  extension,
+			blocks:     calculateBlocks(catSize, fsm.blocksize),
+			modTime:    now,
+			accessTime: now,
+			changeTime: now,
 		}
 		// make it the first file
 		files = append([]*finalizeFileInfo{catEntry}, files...)
@@ -503,8 +590,11 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 					return fmt.Errorf("unable to find image child %s: %v", e.BootFile, err)
 				}
 			}
+			if child == nil {
+				return fmt.Errorf("unable to find image child %s: %v", e.BootFile, err)
+			}
 			// save the child so we can add location late
-			e.size = uint16(child.size)
+			e.size = uint32(child.size)
 			child.elToritoEntry = e
 		}
 	}
@@ -512,7 +602,7 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 	var size, ceBlocks int
 	for _, dir := range dirs {
 		dir.location = location
-		size, ceBlocks, err = dir.calculateDirectorySize(fs)
+		size, ceBlocks, err = dir.calculateDirectorySize(fsm)
 		if err != nil {
 			return fmt.Errorf("unable to calculate size of directory for %s: %v", dir.path, err)
 		}
@@ -566,7 +656,7 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 	for _, e := range dirs {
 		writeAt := int64(e.location) * int64(blocksize)
 		var d *Directory
-		d, err = e.toDirectory(fs)
+		d, err = e.toDirectory(fsm)
 		if err != nil {
 			return fmt.Errorf("unable to convert entry to directory: %v", err)
 		}
@@ -601,13 +691,14 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 	}()
 	for _, e := range files {
 		var (
-			from   *os.File
-			copied int
+			from             *os.File
+			copied           int
+			bootTableMinSize int
 		)
 		writeAt := int64(e.location) * int64(blocksize)
 		if e.content == nil {
 			// for file, just copy the data across
-			from, err = os.Open(path.Join(fs.workspace, e.path))
+			from, err = os.Open(path.Join(fsm.workspace, e.path))
 			if err != nil {
 				return fmt.Errorf("failed to open file for reading %s: %v", e.path, err)
 			}
@@ -617,21 +708,23 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 				var count int
 
 				// first 8 bytes
-				count, err = copyFileData(from, f, 0, writeAt, 8)
+				count, err = copyFileData(from, f, 0, writeAt, elToritoBootTableOffset)
 				if err != nil {
 					return fmt.Errorf("failed to copy first bytes 0-8 of boot file to disk %s: %v", e.path, err)
 				}
 				copied += count
 				// insert El Torito Boot Information Table
-				bootTable, err := e.elToritoEntry.generateBootTable(dataStartSector, path.Join(fs.workspace, e.path))
+				bootTable, err := e.elToritoEntry.generateBootTable(dataStartSector, path.Join(fsm.workspace, e.path))
 				if err != nil {
 					return fmt.Errorf("failed to generate boot table for %s: %v", e.path, err)
 				}
-				count, err = f.WriteAt(bootTable, writeAt+8)
+				count, err = f.WriteAt(bootTable, writeAt+elToritoBootTableOffset)
 				if err != nil {
 					return fmt.Errorf("failed to write 56 byte boot table to disk %s: %v", e.path, err)
 				}
 				copied += count
+				// file with boot table file must be a minimum of boot table size and the offset
+				bootTableMinSize = count
 				// remainder of file
 				count, err = copyFileData(from, f, 64, writeAt+64, 0)
 				if err != nil {
@@ -644,8 +737,12 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 					return fmt.Errorf("failed to copy file to disk %s: %v", e.path, err)
 				}
 			}
-			if copied != int(e.Size()) {
-				return fmt.Errorf("error copying file %s to disk, copied %d bytes, expected %d", e.path, copied, e.Size())
+			targetSize := e.Size()
+			if targetSize < int64(bootTableMinSize) {
+				targetSize = int64(bootTableMinSize)
+			}
+			if copied != int(targetSize) {
+				return fmt.Errorf("error copying file %s to disk, copied %d bytes, expected %d", e.path, copied, targetSize)
 			}
 		} else {
 			copied = len(e.content)
@@ -665,7 +762,7 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 	location = dataStartSector
 	// create and write the primary volume descriptor, supplementary and boot, and volume descriptor set terminator
 	now := time.Now()
-	rootDE, err := root.toDirectoryEntry(fs, true, false)
+	rootDE, err := root.toDirectoryEntry(fsm, true, false)
 	if err != nil {
 		return fmt.Errorf("could not convert root entry for primary volume descriptor to dirEntry: %v", err)
 	}
@@ -676,7 +773,7 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 		volumeSize:                 totalSize,
 		setSize:                    1,
 		sequenceNumber:             1,
-		blocksize:                  uint16(fs.blocksize),
+		blocksize:                  uint16(fsm.blocksize),
 		pathTableSize:              uint32(pathTableSize),
 		pathTableLLocation:         pathTableLLocation,
 		pathTableLOptionalLocation: 0,
@@ -710,10 +807,10 @@ func (fs *FileSystem) Finalize(options FinalizeOptions) error {
 	b = terminator.toBytes()
 	_, _ = f.WriteAt(b, int64(location)*int64(blocksize))
 
-	_ = os.RemoveAll(fs.workspace)
+	_ = os.RemoveAll(fsm.workspace)
 
 	// finish by setting as finalized
-	fs.workspace = ""
+	fsm.workspace = ""
 	return nil
 }
 
@@ -772,16 +869,16 @@ func sortFinalizeFileInfoPathTable(left, right *finalizeFileInfo) bool {
 // create a path table from a slice of *finalizeFileInfo that are directories
 func createPathTable(fi []*finalizeFileInfo) *pathTable {
 	// copy so we do not modify the original
-	fs := make([]*finalizeFileInfo, len(fi))
-	copy(fs, fi)
+	fis := make([]*finalizeFileInfo, len(fi))
+	copy(fis, fi)
 	// sort via the rules
-	sort.Slice(fs, func(i, j int) bool {
-		return sortFinalizeFileInfoPathTable(fs[i], fs[j])
+	sort.Slice(fis, func(i, j int) bool {
+		return sortFinalizeFileInfoPathTable(fis[i], fis[j])
 	})
 	indexMap := make(map[*finalizeFileInfo]int)
 	// now that it is sorted, create the ordered path table entries
 	entries := make([]*pathTableEntry, 0)
-	for i, e := range fs {
+	for i, e := range fis {
 		name := e.Name()
 		nameSize := len(name)
 		size := 8 + uint16(nameSize)
@@ -811,28 +908,34 @@ func createPathTable(fi []*finalizeFileInfo) *pathTable {
 }
 
 func walkTree(workspace string) ([]*finalizeFileInfo, map[string]*finalizeFileInfo, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return nil, nil, fmt.Errorf("could not get pwd: %v", err)
-	}
-	// make everything relative to the workspace
-	_ = os.Chdir(workspace)
-	dirList := make(map[string]*finalizeFileInfo)
-	fileList := make([]*finalizeFileInfo, 0)
-	var entry *finalizeFileInfo
-	err = filepath.Walk(".", func(fp string, fi os.FileInfo, err error) error {
+	var (
+		dirList  = make(map[string]*finalizeFileInfo)
+		fileList = make([]*finalizeFileInfo, 0)
+		entry    *finalizeFileInfo
+		serial   uint64
+	)
+	err := filepath.WalkDir(workspace, func(actualPath string, d fs.DirEntry, err error) error {
 		if err != nil {
-			return fmt.Errorf("error walking path %s: %v", fp, err)
+			return fmt.Errorf("error walking path %s: %v", actualPath, err)
 		}
-		isRoot := fp == "."
-		name := fi.Name()
-		shortname, extension := calculateShortnameExtension(name)
+		fp := strings.TrimPrefix(actualPath, workspace)
+		fp = strings.TrimPrefix(fp, string(filepath.Separator))
+		if fp == "" {
+			fp = "."
+		}
+		name := d.Name()
+		_, extension := calculateShortnameExtension(name)
 
-		if isRoot {
-			name = string([]byte{0x00})
-			shortname = name
+		fi, err := d.Info()
+		if err != nil {
+			return fmt.Errorf("could not get file info for %s: %v", fp, err)
 		}
-		entry = &finalizeFileInfo{path: fp, name: name, isDir: fi.IsDir(), isRoot: isRoot, modTime: fi.ModTime(), mode: fi.Mode(), size: fi.Size(), shortname: shortname}
+		entry, err = finalizeFileInfoFromFile(fp, actualPath, fi)
+		if err != nil {
+			return err
+		}
+		entry.serial = serial
+		serial++
 
 		// we will have to save it as its parent
 		parentDir := filepath.Dir(fp)
@@ -841,7 +944,7 @@ func walkTree(workspace string) ([]*finalizeFileInfo, map[string]*finalizeFileIn
 		if fi.IsDir() {
 			entry.children = make([]*finalizeFileInfo, 0, 20)
 			dirList[fp] = entry
-			if !isRoot {
+			if !entry.isRoot {
 				parentDirInfo.children = append(parentDirInfo.children, entry)
 				dirList[parentDir] = parentDirInfo
 			}
@@ -858,8 +961,6 @@ func walkTree(workspace string) ([]*finalizeFileInfo, map[string]*finalizeFileIn
 	if err != nil {
 		return nil, nil, err
 	}
-	// reset the workspace
-	_ = os.Chdir(cwd)
 	return fileList, dirList, nil
 }
 
