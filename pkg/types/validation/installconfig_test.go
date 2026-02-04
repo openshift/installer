@@ -3234,6 +3234,20 @@ func TestValidateArbiter(t *testing.T) {
 		},
 		{
 			config: installConfig().
+				PlatformExternal().
+				MachinePoolArbiter(
+					machinePool().
+						Name("arbiter").
+						Hyperthreading(types.HyperthreadingEnabled).
+						Architecture(types.ArchitectureAMD64)).
+				MachinePoolCP(machinePool()).
+				ArbiterReplicas(1).
+				CpReplicas(2).build(),
+			name:     "valid_platform_external",
+			expected: "",
+		},
+		{
+			config: installConfig().
 				PlatformAWS().
 				MachinePoolArbiter(machinePool().
 					Name("arbiter").
@@ -3243,7 +3257,7 @@ func TestValidateArbiter(t *testing.T) {
 				ArbiterReplicas(1).
 				CpReplicas(2).build(),
 			name:     "invalid_platform",
-			expected: `supported values: "baremetal", "none"`,
+			expected: `supported values: "baremetal", "external", "none"`,
 		},
 		{
 			config: installConfig().

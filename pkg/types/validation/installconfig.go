@@ -779,8 +779,8 @@ func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Pat
 
 func validateArbiter(platform *types.Platform, arbiterPool, masterPool *types.MachinePool, fldPath *field.Path) field.ErrorList {
 	allErrs := field.ErrorList{}
-	if platform != nil && platform.BareMetal == nil && platform.None == nil {
-		allErrs = append(allErrs, field.NotSupported(fldPath.Child("platform"), platform.Name(), []string{baremetal.Name, none.Name}))
+	if platform != nil && platform.BareMetal == nil && platform.External == nil && platform.None == nil {
+		allErrs = append(allErrs, field.NotSupported(fldPath.Child("platform"), platform.Name(), []string{baremetal.Name, external.Name, none.Name}))
 	}
 	if arbiterPool.Name != types.MachinePoolArbiterRoleName {
 		allErrs = append(allErrs, field.NotSupported(fldPath.Child("name"), arbiterPool.Name, []string{types.MachinePoolArbiterRoleName}))

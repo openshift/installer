@@ -31,6 +31,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
+	externaltypes "github.com/openshift/installer/pkg/types/external"
 	nonetypes "github.com/openshift/installer/pkg/types/none"
 	ibmcloudapi "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis"
 	ibmcloudprovider "github.com/openshift/machine-api-provider-ibmcloud/pkg/apis/ibmcloudprovider/v1"
@@ -116,8 +117,8 @@ func (m *Arbiter) Generate(ctx context.Context, dependencies asset.Parents) erro
 	if ic.Arbiter == nil {
 		return nil
 	}
-	if ic.Platform.Name() != baremetaltypes.Name && ic.Platform.Name() != nonetypes.Name {
-		return fmt.Errorf("only BareMetal and None platforms are supported for Arbiter deployments")
+	if ic.Platform.Name() != baremetaltypes.Name && ic.Platform.Name() != externaltypes.Name && ic.Platform.Name() != nonetypes.Name {
+		return fmt.Errorf("only BareMetal, External, and None platforms are supported for Arbiter deployments")
 	}
 
 	pool := *ic.Arbiter
