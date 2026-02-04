@@ -21,22 +21,22 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/resourcehealth/armresourcehealth"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
 )
 
 // SDKAvailabilityStatusToCondition converts an Azure Resource Health availability status to a status condition.
-func SDKAvailabilityStatusToCondition(availStatus armresourcehealth.AvailabilityStatus) *clusterv1.Condition {
+func SDKAvailabilityStatusToCondition(availStatus armresourcehealth.AvailabilityStatus) *clusterv1beta1.Condition {
 	if availStatus.Properties == nil {
-		return conditions.FalseCondition(infrav1.AzureResourceAvailableCondition, "", "", "")
+		return v1beta1conditions.FalseCondition(infrav1.AzureResourceAvailableCondition, "", "", "")
 	}
 
 	state := availStatus.Properties.AvailabilityState
 
 	if ptr.Deref(state, "") == armresourcehealth.AvailabilityStateValuesAvailable {
-		return conditions.TrueCondition(infrav1.AzureResourceAvailableCondition)
+		return v1beta1conditions.TrueCondition(infrav1.AzureResourceAvailableCondition)
 	}
 
 	var reason strings.Builder
@@ -54,12 +54,12 @@ func SDKAvailabilityStatusToCondition(availStatus armresourcehealth.Availability
 		}
 	}
 
-	var severity clusterv1.ConditionSeverity
+	var severity clusterv1beta1.ConditionSeverity
 	switch ptr.Deref(availStatus.Properties.AvailabilityState, "") {
 	case armresourcehealth.AvailabilityStateValuesUnavailable:
-		severity = clusterv1.ConditionSeverityError
+		severity = clusterv1beta1.ConditionSeverityError
 	case armresourcehealth.AvailabilityStateValuesDegraded, armresourcehealth.AvailabilityStateValuesUnknown:
-		severity = clusterv1.ConditionSeverityWarning
+		severity = clusterv1beta1.ConditionSeverityWarning
 	}
 
 	var message string
@@ -67,5 +67,5 @@ func SDKAvailabilityStatusToCondition(availStatus armresourcehealth.Availability
 		message = *availStatus.Properties.Summary
 	}
 
-	return conditions.FalseCondition(infrav1.AzureResourceAvailableCondition, reason.String(), severity, "%s", message)
+	return v1beta1conditions.FalseCondition(infrav1.AzureResourceAvailableCondition, reason.String(), severity, "%s", message)
 }

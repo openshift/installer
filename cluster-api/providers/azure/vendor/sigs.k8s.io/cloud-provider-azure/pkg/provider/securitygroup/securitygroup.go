@@ -194,7 +194,7 @@ func (helper *RuleHelper) addAllowRule(
 		// Destination
 		addresses := append(ListDestinationPrefixes(rule), dstPrefixes...)
 		SetDestinationPrefixes(rule, addresses)
-		rule.Properties.DestinationPortRanges = to.SliceOfPtrs(dstPortRanges...)
+		SetDestinationPortRanges(rule, dstPorts)
 	}
 
 	helper.logger.V(4).Info("Patched a rule for allow", "rule-name", name)
@@ -285,7 +285,7 @@ func (helper *RuleHelper) AddRuleForDenyAll(dstAddresses []netip.Addr) error {
 		addresses := fnutil.Map(func(ip netip.Addr) string { return ip.String() }, dstAddresses)
 		addresses = append(addresses, ListDestinationPrefixes(rule)...)
 		SetDestinationPrefixes(rule, addresses)
-		rule.Properties.DestinationPortRange = ptr.To("*")
+		SetAsteriskDestinationPortRange(rule)
 	}
 
 	helper.logger.V(4).Info("Patched a rule for deny all", "rule-name", ptr.To(rule.Name))
@@ -304,12 +304,8 @@ func (helper *RuleHelper) RemoveDestinationFromRules(
 	logger.V(10).Info("Cleaning destination from SecurityGroup")
 
 	for _, rule := range helper.rules {
-		if rule.Properties.Priority == nil {
-			continue
-		}
-		priority := *rule.Properties.Priority
-		if priority < consts.LoadBalancerMinimumPriority || consts.LoadBalancerMaximumPriority < priority {
-			logger.V(4).Info("Skip rule with not-in-range priority", "rule-name", *rule.Name, "priority", priority)
+		if !IsManagedSecurityRule(rule) {
+			logger.V(4).Info("Skip rule with not-managed priority", "rule-name", *rule.Name)
 			continue
 		}
 
@@ -319,7 +315,41 @@ func (helper *RuleHelper) RemoveDestinationFromRules(
 
 		if err := helper.removeDestinationFromRule(rule, dstPrefixes, retainDstPorts); err != nil {
 			logger.Error(err, "Failed to remove destination from rule", "rule-name", *rule.Name)
+			return err
 		}
+	}
+
+	return nil
+}
+
+// RetainDestinationFromRules retains the given destination prefixes from the rules.
+func (helper *RuleHelper) RetainDestinationFromRules(dstPrefixes []string) error {
+	logger := helper.logger.WithName("RetainDestinationFromRules").WithValues("num-dst-prefixes", len(dstPrefixes))
+	logger.V(10).Info("Start retaining")
+	defer logger.V(10).Info("Completed retaining")
+
+	for _, rule := range helper.rules {
+		if !IsManagedSecurityRule(rule) {
+			logger.V(4).Info("Skip rule with not-managed priority", "rule-name", *rule.Name)
+			continue
+		}
+
+		var (
+			currentPrefixes  = ListDestinationPrefixes(rule)
+			expectedPrefixes = fnutil.Intersection(currentPrefixes, dstPrefixes) // The prefixes to keep.
+		)
+
+		if len(expectedPrefixes) == len(currentPrefixes) {
+			continue
+		}
+
+		logger.Info("Removing destination prefixes from rule",
+			"rule-name", *rule.Name,
+			"current-prefixes", currentPrefixes,
+			"retained-prefixes", dstPrefixes,
+			"expected-prefixes", expectedPrefixes,
+		)
+		SetDestinationPrefixes(rule, expectedPrefixes)
 	}
 
 	return nil

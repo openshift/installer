@@ -28,7 +28,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
@@ -83,7 +83,7 @@ func (r *AzureJSONMachineReconciler) SetupWithManager(ctx context.Context, mgr c
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(azureMachineMapper),
 			builder.WithPredicates(
-				predicates.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ClusterPausedTransitionsOrInfrastructureProvisioned(mgr.GetScheme(), log),
 				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
 			),
 		).
@@ -96,7 +96,9 @@ type filterUnclonedMachinesPredicate struct {
 }
 
 func (f filterUnclonedMachinesPredicate) Create(e event.CreateEvent) bool {
-	return f.Generic(event.GenericEvent(e))
+	return f.Generic(event.GenericEvent{
+		Object: e.Object,
+	})
 }
 
 func (f filterUnclonedMachinesPredicate) Update(e event.UpdateEvent) bool {
@@ -168,8 +170,8 @@ func (r *AzureJSONMachineReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	_, kind := infrav1.GroupVersion.WithKind(infrav1.AzureClusterKind).ToAPIVersionAndKind()
 
 	// only look at azure clusters
-	if cluster.Spec.InfrastructureRef == nil {
-		log.Info("infra ref is nil")
+	if !cluster.Spec.InfrastructureRef.IsDefined() {
+		log.Info("infra ref is not defined")
 		return ctrl.Result{}, nil
 	}
 	if cluster.Spec.InfrastructureRef.Kind != kind {
@@ -235,7 +237,7 @@ func (r *AzureJSONMachineReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		}
 	}
 
-	if azureMachine.Spec.Identity == infrav1.VMIdentityNone {
+	if azureMachine.Spec.Identity == infrav1.VMIdentityNone && isUsingSPCredentials(ctx, r.Client, azureCluster) {
 		log.Info(fmt.Sprintf("WARNING, %s", spIdentityWarning))
 		r.Recorder.Eventf(azureMachine, corev1.EventTypeWarning, "VMIdentityNone", spIdentityWarning)
 	}

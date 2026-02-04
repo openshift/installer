@@ -27,13 +27,12 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/external"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	utilexp "sigs.k8s.io/cluster-api/exp/util"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/patch"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -86,12 +85,12 @@ func (r *AzureASOManagedMachinePoolReconciler) SetupWithManager(ctx context.Cont
 				predicates.ResourceHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
 				predicates.Any(mgr.GetScheme(), log,
 					predicates.ClusterControlPlaneInitialized(mgr.GetScheme(), log),
-					ClusterUpdatePauseChange(log),
+					predicates.ClusterPausedTransitions(mgr.GetScheme(), log),
 				),
 			),
 		).
 		Watches(
-			&expv1.MachinePool{},
+			&clusterv1.MachinePool{},
 			handler.EnqueueRequestsFromMapFunc(utilexp.MachinePoolToInfrastructureMapFunc(ctx,
 				infrav1.GroupVersion.WithKind(infrav1.AzureASOManagedMachinePoolKind)),
 			),
@@ -143,7 +142,7 @@ func (r *AzureASOManagedMachinePoolReconciler) Reconcile(ctx context.Context, re
 		return ctrl.Result{}, client.IgnoreNotFound(err)
 	}
 
-	patchHelper, err := patch.NewHelper(asoManagedMachinePool, r.Client)
+	patchHelper, err := v1beta1patch.NewHelper(asoManagedMachinePool, r.Client)
 	if err != nil {
 		return ctrl.Result{}, fmt.Errorf("failed to create patch helper: %w", err)
 	}
@@ -157,7 +156,7 @@ func (r *AzureASOManagedMachinePoolReconciler) Reconcile(ctx context.Context, re
 
 	asoManagedMachinePool.Status.Ready = false
 
-	machinePool, err := utilexp.GetOwnerMachinePool(ctx, r.Client, asoManagedMachinePool.ObjectMeta)
+	machinePool, err := GetOwnerMachinePool(ctx, r.Client, asoManagedMachinePool.ObjectMeta)
 	if err != nil {
 		return ctrl.Result{}, err
 	}
@@ -184,8 +183,8 @@ func (r *AzureASOManagedMachinePoolReconciler) Reconcile(ctx context.Context, re
 		log.Info(fmt.Sprintf("Waiting for MachinePool controller to set %s label on MachinePool", clusterv1.ClusterNameLabel))
 		return ctrl.Result{}, nil
 	}
-	if cluster.Spec.ControlPlaneRef == nil ||
-		!matchesASOManagedAPIGroup(cluster.Spec.ControlPlaneRef.APIVersion) ||
+	if !cluster.Spec.ControlPlaneRef.IsDefined() ||
+		!groupMatchesASOManagedAPIGroup(cluster.Spec.ControlPlaneRef.APIGroup) ||
 		cluster.Spec.ControlPlaneRef.Kind != infrav1.AzureASOManagedControlPlaneKind {
 		return ctrl.Result{}, reconcile.TerminalError(fmt.Errorf("AzureASOManagedMachinePool cannot be used without AzureASOManagedControlPlane"))
 	}
@@ -201,7 +200,7 @@ func (r *AzureASOManagedMachinePoolReconciler) Reconcile(ctx context.Context, re
 	return r.reconcileNormal(ctx, asoManagedMachinePool, machinePool, cluster)
 }
 
-func (r *AzureASOManagedMachinePoolReconciler) reconcileNormal(ctx context.Context, asoManagedMachinePool *infrav1.AzureASOManagedMachinePool, machinePool *expv1.MachinePool, cluster *clusterv1.Cluster) (ctrl.Result, error) {
+func (r *AzureASOManagedMachinePoolReconciler) reconcileNormal(ctx context.Context, asoManagedMachinePool *infrav1.AzureASOManagedMachinePool, machinePool *clusterv1.MachinePool, cluster *clusterv1.Cluster) (ctrl.Result, error) {
 	ctx, log, done := tele.StartSpanWithLogger(ctx,
 		"controllers.AzureASOManagedMachinePoolReconciler.reconcileNormal",
 	)

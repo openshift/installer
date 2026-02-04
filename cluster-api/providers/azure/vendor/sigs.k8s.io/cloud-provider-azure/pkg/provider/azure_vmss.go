@@ -825,7 +825,15 @@ func (ss *ScaleSet) listScaleSetVMs(scaleSetName, resourceGroup string) ([]*armc
 	ctx, cancel := getContextWithCancel()
 	defer cancel()
 
-	allVMs, rerr := ss.ComputeClientFactory.GetVirtualMachineScaleSetVMClient().ListVMInstanceView(ctx, resourceGroup, scaleSetName)
+	var allVMs []*armcompute.VirtualMachineScaleSetVM
+	var rerr error
+	if ss.Config.ListVmssVirtualMachinesWithoutInstanceView {
+		klog.V(6).Info("listScaleSetVMs called for scaleSetName: ", scaleSetName, " resourceGroup: ", resourceGroup)
+		allVMs, rerr = ss.ComputeClientFactory.GetVirtualMachineScaleSetVMClient().List(ctx, resourceGroup, scaleSetName)
+	} else {
+		klog.V(6).Info("listScaleSetVMs called for scaleSetName with instanceView: ", scaleSetName, " resourceGroup: ", resourceGroup)
+		allVMs, rerr = ss.ComputeClientFactory.GetVirtualMachineScaleSetVMClient().ListVMInstanceView(ctx, resourceGroup, scaleSetName)
+	}
 	if rerr != nil {
 		klog.Errorf("ComputeClientFactory.GetVirtualMachineScaleSetVMClient().List(%s, %s) failed: %v", resourceGroup, scaleSetName, rerr)
 		if exists, err := errutils.CheckResourceExistsFromAzcoreError(rerr); !exists && err == nil {
@@ -968,7 +976,7 @@ func (ss *ScaleSet) GetPrimaryInterface(ctx context.Context, nodeName string) (*
 
 	ctx, cancel := getContextWithCancel()
 	defer cancel()
-	nic, rerr := ss.NetworkClientFactory.GetInterfaceClient().GetVirtualMachineScaleSetNetworkInterface(ctx, resourceGroup, vm.VMSSName,
+	nic, rerr := ss.ComputeClientFactory.GetInterfaceClient().GetVirtualMachineScaleSetNetworkInterface(ctx, resourceGroup, vm.VMSSName,
 		vm.InstanceID,
 		nicName)
 	if rerr != nil {
@@ -1056,6 +1064,12 @@ func (ss *ScaleSet) EnsureHostInPool(ctx context.Context, _ *v1.Service, nodeNam
 		if !errors.Is(err, ErrorNotVmssInstance) {
 			return "", "", "", nil, err
 		}
+	}
+	// In some cases (e.g., BYO nodes), we may get an ErrorNotVmssInstance error,
+	// but it has been ignored above, so a nil check is needed here to prevent panic.
+	if vm == nil {
+		logger.Info("vmss vm not found, skip adding to backend pool", "vmName", vmName)
+		return "", "", "", nil, nil
 	}
 	statuses := vm.GetInstanceViewStatus()
 	vmPowerState := vmutil.GetVMPowerState(vm.Name, statuses)

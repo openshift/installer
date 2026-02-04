@@ -197,93 +197,162 @@ func (s *Service) validateSpec(ctx context.Context) error {
 		return errors.Wrapf(err, "failed to get SKU %s in compute api", scaleSetSpec.Size)
 	}
 
-	// Checking if the requested VM size has at least 2 vCPUS
+	if err := s.validateVMCapabilities(sku, scaleSetSpec); err != nil {
+		return err
+	}
+
+	if err := s.validateUltraDiskSupport(ctx, sku, scaleSetSpec); err != nil {
+		return err
+	}
+
+	if err := validateDiagnosticsProfile(scaleSetSpec); err != nil {
+		return err
+	}
+
+	return s.validateAvailabilityZones(ctx, scaleSetSpec)
+}
+
+// validateVMCapabilities validates the VM size capabilities (vCPU, memory, ephemeral OS, encryption).
+func (s *Service) validateVMCapabilities(sku resourceskus.SKU, spec *ScaleSetSpec) error {
+	// Validate minimum vCPU requirement.
 	vCPUCapability, err := sku.HasCapabilityWithCapacity(resourceskus.VCPUs, resourceskus.MinimumVCPUS)
 	if err != nil {
 		return azure.WithTerminalError(errors.Wrap(err, "failed to validate the vCPU capability"))
 	}
-
 	if !vCPUCapability {
 		return azure.WithTerminalError(errors.New("vm size should be bigger or equal to at least 2 vCPUs"))
 	}
 
-	// Checking if the requested VM size has at least 2 Gi of memory
-	MemoryCapability, err := sku.HasCapabilityWithCapacity(resourceskus.MemoryGB, resourceskus.MinimumMemory)
+	// Validate minimum memory requirement.
+	memoryCapability, err := sku.HasCapabilityWithCapacity(resourceskus.MemoryGB, resourceskus.MinimumMemory)
 	if err != nil {
 		return azure.WithTerminalError(errors.Wrap(err, "failed to validate the memory capability"))
 	}
-
-	if !MemoryCapability {
+	if !memoryCapability {
 		return azure.WithTerminalError(errors.New("vm memory should be bigger or equal to at least 2Gi"))
 	}
 
-	// enable ephemeral OS
-	if scaleSetSpec.OSDisk.DiffDiskSettings != nil && !sku.HasCapability(resourceskus.EphemeralOSDisk) {
-		return azure.WithTerminalError(fmt.Errorf("vm size %s does not support ephemeral os. select a different vm size or disable ephemeral os", scaleSetSpec.Size))
+	// Validate ephemeral OS disk support.
+	if spec.OSDisk.DiffDiskSettings != nil && !sku.HasCapability(resourceskus.EphemeralOSDisk) {
+		return azure.WithTerminalError(fmt.Errorf("vm size %s does not support ephemeral os. select a different vm size or disable ephemeral os", spec.Size))
 	}
 
-	if scaleSetSpec.SecurityProfile != nil && !sku.HasCapability(resourceskus.EncryptionAtHost) {
-		return azure.WithTerminalError(errors.Errorf("encryption at host is not supported for VM type %s", scaleSetSpec.Size))
+	// Validate encryption at host support.
+	if spec.SecurityProfile != nil && !sku.HasCapability(resourceskus.EncryptionAtHost) {
+		return azure.WithTerminalError(errors.Errorf("encryption at host is not supported for VM type %s", spec.Size))
 	}
 
-	// Fetch location and zone to check for their support of ultra disks.
-	zones, err := s.resourceSKUCache.GetZones(ctx, scaleSetSpec.Location)
+	return nil
+}
+
+// validateUltraDiskSupport validates ultra disk support for the specified location and zones.
+func (s *Service) validateUltraDiskSupport(ctx context.Context, sku resourceskus.SKU, spec *ScaleSetSpec) error {
+	if !s.requiresUltraDiskValidation(spec) {
+		return nil
+	}
+
+	zones, err := s.resourceSKUCache.GetZones(ctx, spec.Location)
 	if err != nil {
-		return azure.WithTerminalError(errors.Wrapf(err, "failed to get the zones for location %s", scaleSetSpec.Location))
+		return azure.WithTerminalError(errors.Wrapf(err, "failed to get the zones for location %s", spec.Location))
 	}
 
 	for _, zone := range zones {
-		hasLocationCapability := sku.HasLocationCapability(resourceskus.UltraSSDAvailable, scaleSetSpec.Location, zone)
-		err := fmt.Errorf("vm size %s does not support ultra disks in location %s. select a different vm size or disable ultra disks", scaleSetSpec.Size, scaleSetSpec.Location)
-
-		// Check support for ultra disks as data disks.
-		for _, disks := range scaleSetSpec.DataDisks {
-			if disks.ManagedDisk != nil &&
-				disks.ManagedDisk.StorageAccountType == string(armcompute.StorageAccountTypesUltraSSDLRS) &&
-				!hasLocationCapability {
-				return azure.WithTerminalError(err)
-			}
-		}
-		// Check support for ultra disks as persistent volumes.
-		if scaleSetSpec.AdditionalCapabilities != nil && scaleSetSpec.AdditionalCapabilities.UltraSSDEnabled != nil {
-			if *scaleSetSpec.AdditionalCapabilities.UltraSSDEnabled &&
-				!hasLocationCapability {
-				return azure.WithTerminalError(err)
-			}
+		hasLocationCapability := sku.HasLocationCapability(resourceskus.UltraSSDAvailable, spec.Location, zone)
+		if err := s.validateUltraDiskInZone(spec, hasLocationCapability); err != nil {
+			return err
 		}
 	}
 
-	// Validate DiagnosticProfile spec
-	if scaleSetSpec.DiagnosticsProfile != nil && scaleSetSpec.DiagnosticsProfile.Boot != nil {
-		if scaleSetSpec.DiagnosticsProfile.Boot.StorageAccountType == infrav1.UserManagedDiagnosticsStorage {
-			if scaleSetSpec.DiagnosticsProfile.Boot.UserManaged == nil {
-				return azure.WithTerminalError(fmt.Errorf("userManaged must be specified when storageAccountType is '%s'", infrav1.UserManagedDiagnosticsStorage))
-			} else if scaleSetSpec.DiagnosticsProfile.Boot.UserManaged.StorageAccountURI == "" {
-				return azure.WithTerminalError(fmt.Errorf("storageAccountURI cannot be empty when storageAccountType is '%s'", infrav1.UserManagedDiagnosticsStorage))
-			}
-		}
+	return nil
+}
 
-		possibleStorageAccountTypeValues := []string{
-			string(infrav1.DisabledDiagnosticsStorage),
-			string(infrav1.ManagedDiagnosticsStorage),
-			string(infrav1.UserManagedDiagnosticsStorage),
-		}
-
-		if !slice.Contains(possibleStorageAccountTypeValues, string(scaleSetSpec.DiagnosticsProfile.Boot.StorageAccountType)) {
-			return azure.WithTerminalError(fmt.Errorf("invalid storageAccountType: %s. Allowed values are %v",
-				scaleSetSpec.DiagnosticsProfile.Boot.StorageAccountType, possibleStorageAccountTypeValues))
+// requiresUltraDiskValidation checks if ultra disk validation is needed.
+func (s *Service) requiresUltraDiskValidation(spec *ScaleSetSpec) bool {
+	// Check if any data disk uses ultra SSD.
+	for _, disk := range spec.DataDisks {
+		if disk.ManagedDisk != nil && disk.ManagedDisk.StorageAccountType == string(armcompute.StorageAccountTypesUltraSSDLRS) {
+			return true
 		}
 	}
 
-	// Checking if selected availability zones are available selected VM type in location
-	azsInLocation, err := s.resourceSKUCache.GetZonesWithVMSize(ctx, scaleSetSpec.Size, scaleSetSpec.Location)
+	// Check if ultra SSD is enabled via additional capabilities.
+	if spec.AdditionalCapabilities != nil && spec.AdditionalCapabilities.UltraSSDEnabled != nil {
+		return *spec.AdditionalCapabilities.UltraSSDEnabled
+	}
+
+	return false
+}
+
+// validateUltraDiskInZone validates ultra disk support for a specific zone.
+func (s *Service) validateUltraDiskInZone(spec *ScaleSetSpec, hasLocationCapability bool) error {
+	if hasLocationCapability {
+		return nil
+	}
+
+	ultraDiskErr := fmt.Errorf("vm size %s does not support ultra disks in location %s. select a different vm size or disable ultra disks", spec.Size, spec.Location)
+
+	// Check data disks.
+	for _, disk := range spec.DataDisks {
+		if disk.ManagedDisk != nil && disk.ManagedDisk.StorageAccountType == string(armcompute.StorageAccountTypesUltraSSDLRS) {
+			return azure.WithTerminalError(ultraDiskErr)
+		}
+	}
+
+	// Check additional capabilities.
+	if spec.AdditionalCapabilities != nil && spec.AdditionalCapabilities.UltraSSDEnabled != nil {
+		if *spec.AdditionalCapabilities.UltraSSDEnabled {
+			return azure.WithTerminalError(ultraDiskErr)
+		}
+	}
+
+	return nil
+}
+
+// validateDiagnosticsProfile validates the diagnostics profile configuration.
+func validateDiagnosticsProfile(spec *ScaleSetSpec) error {
+	if spec.DiagnosticsProfile == nil || spec.DiagnosticsProfile.Boot == nil {
+		return nil
+	}
+
+	boot := spec.DiagnosticsProfile.Boot
+
+	// Validate user-managed storage account configuration.
+	if boot.StorageAccountType == infrav1.UserManagedDiagnosticsStorage {
+		if boot.UserManaged == nil {
+			return azure.WithTerminalError(fmt.Errorf("userManaged must be specified when storageAccountType is '%s'", infrav1.UserManagedDiagnosticsStorage))
+		}
+		if boot.UserManaged.StorageAccountURI == "" {
+			return azure.WithTerminalError(fmt.Errorf("storageAccountURI cannot be empty when storageAccountType is '%s'", infrav1.UserManagedDiagnosticsStorage))
+		}
+	}
+
+	// Validate storage account type is valid.
+	validStorageTypes := []string{
+		string(infrav1.DisabledDiagnosticsStorage),
+		string(infrav1.ManagedDiagnosticsStorage),
+		string(infrav1.UserManagedDiagnosticsStorage),
+	}
+	if !slice.Contains(validStorageTypes, string(boot.StorageAccountType)) {
+		return azure.WithTerminalError(fmt.Errorf("invalid storageAccountType: %s. Allowed values are %v", boot.StorageAccountType, validStorageTypes))
+	}
+
+	return nil
+}
+
+// validateAvailabilityZones validates that the requested availability zones are available for the VM size.
+func (s *Service) validateAvailabilityZones(ctx context.Context, spec *ScaleSetSpec) error {
+	if len(spec.FailureDomains) == 0 {
+		return nil
+	}
+
+	azsInLocation, err := s.resourceSKUCache.GetZonesWithVMSize(ctx, spec.Size, spec.Location)
 	if err != nil {
-		return errors.Wrapf(err, "failed to get zones for VM type %s in location %s", scaleSetSpec.Size, scaleSetSpec.Location)
+		return errors.Wrapf(err, "failed to get zones for VM type %s in location %s", spec.Size, spec.Location)
 	}
 
-	for _, az := range scaleSetSpec.FailureDomains {
+	for _, az := range spec.FailureDomains {
 		if !slice.Contains(azsInLocation, az) {
-			return azure.WithTerminalError(errors.Errorf("availability zone %s is not available for VM type %s in location %s", az, scaleSetSpec.Size, scaleSetSpec.Location))
+			return azure.WithTerminalError(errors.Errorf("availability zone %s is not available for VM type %s in location %s", az, spec.Size, spec.Location))
 		}
 	}
 
