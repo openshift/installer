@@ -67,10 +67,21 @@ func (i *InstallConfig) loadFromFile(f asset.FileFetcher) (found bool, err error
 			return false, fmt.Errorf("%s, err: %w", asset.InstallConfigError, err)
 		}
 		err = fmt.Errorf("failed to parse first occurrence of unknown field, err: %w", err)
-		logrus.Warn(err.Error())
-		logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
-		if err = yaml.Unmarshal(file.Data, config); err != nil {
-			err = fmt.Errorf("failed to unmarshal %s, err: %w", InstallConfigFilename, err)
+
+		// Check if invoked by automation tool (Hive, assisted-service, etc.)
+		// These tools may generate install-config with fields from newer versions
+		// that aren't recognized by older installer versions.
+		invoker := os.Getenv("OPENSHIFT_INSTALL_INVOKER")
+		if invoker != "" {
+			// Legacy behavior for automation tools: warn and continue
+			logrus.Warn(err.Error())
+			logrus.Info("Attempting to unmarshal while ignoring unknown keys because strict unmarshaling failed")
+			if err = yaml.Unmarshal(file.Data, config); err != nil {
+				err = fmt.Errorf("failed to unmarshal %s, err: %w", InstallConfigFilename, err)
+				return false, fmt.Errorf("%s, err: %w", asset.InstallConfigError, err)
+			}
+		} else {
+			// Strict behavior for direct user invocations: fail on unknown fields
 			return false, fmt.Errorf("%s, err: %w", asset.InstallConfigError, err)
 		}
 	}

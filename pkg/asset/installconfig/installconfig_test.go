@@ -88,6 +88,7 @@ func TestInstallConfigLoad(t *testing.T) {
 		name           string
 		data           string
 		fetchError     error
+		invoker        string
 		expectedFound  bool
 		expectedError  bool
 		expectedConfig *types.InstallConfig
@@ -175,7 +176,7 @@ metadata:
 			expectedError: true,
 		},
 		{
-			name: "unknown field",
+			name: "unknown field fails for user",
 			data: `
 apiVersion: v1
 metadata:
@@ -185,7 +186,23 @@ baseDomain: test-domain
 platform:
   none: {}
 pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
-wrong_key: wrong_value 
+wrong_key: wrong_value
+`,
+			expectedError: true,
+		},
+		{
+			name:    "unknown field warns for automation tools",
+			invoker: "hive",
+			data: `
+apiVersion: v1
+metadata:
+  name: test-cluster
+additionalTrustBundlePolicy: Proxyonly
+baseDomain: test-domain
+platform:
+  none: {}
+pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
+wrong_key: wrong_value
 `,
 			expectedFound: true,
 			expectedConfig: &types.InstallConfig{
@@ -289,6 +306,21 @@ pullSecret: "{\"auths\":{\"example.com\":{\"auth\":\"authorization value\"}}}"
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Set OPENSHIFT_INSTALL_INVOKER if specified, and restore it after the test
+			oldInvoker, hadInvoker := os.LookupEnv("OPENSHIFT_INSTALL_INVOKER")
+			if tc.invoker != "" {
+				os.Setenv("OPENSHIFT_INSTALL_INVOKER", tc.invoker)
+			} else {
+				os.Unsetenv("OPENSHIFT_INSTALL_INVOKER")
+			}
+			defer func() {
+				if hadInvoker {
+					os.Setenv("OPENSHIFT_INSTALL_INVOKER", oldInvoker)
+				} else {
+					os.Unsetenv("OPENSHIFT_INSTALL_INVOKER")
+				}
+			}()
+
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
