@@ -3,6 +3,7 @@ package baremetal
 import (
 	"fmt"
 
+	"github.com/coreos/stream-metadata-go/arch"
 	baremetalhost "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1"
 	hardware "github.com/metal3-io/baremetal-operator/apis/metal3.io/v1alpha1/profile"
 	"github.com/pkg/errors"
@@ -121,6 +122,17 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 
 	numRequiredMasters := len(machines)
 	numMasters := 0
+
+	controlPlaneArch := ""
+	if config.ControlPlane != nil {
+		controlPlaneArch = arch.RpmArch(string(config.ControlPlane.Architecture))
+	}
+	computeArch := ""
+
+	if len(config.Compute) > 0 {
+		computeArch = arch.RpmArch(string(config.Compute[0].Architecture))
+	}
+
 	for _, host := range config.Platform.BareMetal.Hosts {
 
 		// We only infer arbiter hosts if we are in an arbiter deployment
@@ -177,11 +189,13 @@ func Hosts(config *types.InstallConfig, machines []machineapi.Machine, userDataS
 				Name:       machine.ObjectMeta.Name,
 			}
 			newHost.Spec.Online = true
+			newHost.Spec.Architecture = controlPlaneArch
 
 			// userDataSecret carries a reference to the master ignition file
 			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}
 			numMasters++
 		} else {
+			newHost.Spec.Architecture = computeArch
 			// Pause workers until the real control plane is up.
 			newHost.ObjectMeta.Annotations = map[string]string{
 				"baremetalhost.metal3.io/paused": "",
@@ -213,6 +227,12 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 
 	numRequiredArbiters := len(machines)
 	numArbiters := 0
+
+	arbiterArch := ""
+	if config.Arbiter != nil {
+		arbiterArch = arch.RpmArch(string(config.Arbiter.Architecture))
+	}
+
 	for _, host := range config.Platform.BareMetal.Hosts {
 		// We make sure to keep an accurate count of known masters when explicitly set
 		if host.IsMaster() {
@@ -270,6 +290,7 @@ func ArbiterHosts(config *types.InstallConfig, machines []machineapi.Machine, us
 				Name:       machine.ObjectMeta.Name,
 			}
 			newHost.Spec.Online = true
+			newHost.Spec.Architecture = arbiterArch
 
 			// userDataSecret carries a reference to the arbiter ignition file
 			newHost.Spec.UserData = &corev1.SecretReference{Name: userDataSecret}

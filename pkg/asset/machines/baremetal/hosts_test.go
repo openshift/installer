@@ -62,7 +62,7 @@ routes:
 
 			ExpectedSetting: settings().
 				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
-				hosts(host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy()).build(),
+				hosts(host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64")).build(),
 		},
 		{
 			Scenario: "default-norole",
@@ -71,7 +71,7 @@ routes:
 
 			ExpectedSetting: settings().
 				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
-				hosts(host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy()).build(),
+				hosts(host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64")).build(),
 		},
 		{
 			Scenario: "network-config",
@@ -90,7 +90,8 @@ routes:
 						consumerRef("machine-0").
 						userDataRef("user-data-secret").
 						preprovisioningNetworkDataName("master-0-network-config-secret").
-						customDeploy()).build(),
+						customDeploy().
+						architecture("x86_64")).build(),
 		},
 		{
 			Scenario: "3-hosts-3-machines-norole-all",
@@ -109,9 +110,9 @@ routes:
 					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy()).build(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy().architecture("x86_64")).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines",
@@ -132,10 +133,10 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
 					secret("worker-0-bmc-secret").creds("usr3", "pwd3")).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
-					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy().architecture("x86_64"),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64"),
 				).build(),
 		},
 		{
@@ -157,10 +158,10 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0")).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
-					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy().architecture("x86_64"),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64"),
 				).build(),
 		},
 		{
@@ -184,11 +185,11 @@ routes:
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0"),
 					secret("worker-1-bmc-secret").creds("wrk1", "pwd1")).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
-					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
-					host("worker-1").annotation("baremetalhost.metal3.io/paused", ""),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy().architecture("x86_64"),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64"),
+					host("worker-1").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64"),
 				).build(),
 		},
 		{
@@ -212,11 +213,11 @@ routes:
 					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
-					host("worker-1").annotation("baremetalhost.metal3.io/paused", ""),
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy()).build(),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64"),
+					host("worker-1").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64"),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy().architecture("x86_64")).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines-norole-master",
@@ -237,10 +238,10 @@ routes:
 					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
 					secret("master-2-bmc-secret").creds("usr2", "pwd2")).
 				hosts(
-					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy()).build(),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64"),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy().architecture("x86_64")).build(),
 		},
 		{
 			Scenario: "4-hosts-3-machines-norole-worker",
@@ -261,10 +262,10 @@ routes:
 					secret("master-2-bmc-secret").creds("usr2", "pwd2"),
 					secret("worker-0-bmc-secret").creds("wrk0", "pwd0")).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
-					host("worker-0").annotation("baremetalhost.metal3.io/paused", "")).build(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy().architecture("x86_64"),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64")).build(),
 		},
 		{
 			Scenario: "3-hosts-2-masters-no-arbiter-render",
@@ -283,8 +284,8 @@ routes:
 					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
 				).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy()).build(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64")).build(),
 		},
 		{
 			Scenario: "3-hosts-2-masters-1-arbiter",
@@ -306,9 +307,9 @@ routes:
 					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
 				).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy().architecture("x86_64"),
 				).build(),
 		},
 		{
@@ -331,9 +332,9 @@ routes:
 					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
 				).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy().architecture("x86_64"),
 				).build(),
 		},
 		{
@@ -356,9 +357,9 @@ routes:
 					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
 				).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy().architecture("x86_64"),
 				).build(),
 		},
 		{
@@ -381,9 +382,9 @@ routes:
 					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
 				).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy().architecture("x86_64"),
 				).build(),
 		},
 		{
@@ -412,11 +413,11 @@ routes:
 					secret("arbiter-1-bmc-secret").creds("usr4", "pwd4"),
 				).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy(),
-					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-3").customDeploy(),
-					host("arbiter-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-4").customDeploy(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("master-2").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-2").customDeploy().architecture("x86_64"),
+					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-3").customDeploy().architecture("x86_64"),
+					host("arbiter-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-4").customDeploy().architecture("x86_64"),
 				).build(),
 		},
 		{
@@ -441,10 +442,328 @@ routes:
 					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
 				).
 				hosts(
-					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy(),
-					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy(),
-					host("worker-0").annotation("baremetalhost.metal3.io/paused", ""),
-					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy(),
+					host("master-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-0").customDeploy().architecture("x86_64"),
+					host("master-1").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret").consumerRef("machine-1").customDeploy().architecture("x86_64"),
+					host("worker-0").annotation("baremetalhost.metal3.io/paused", "").architecture("x86_64"),
+					host("arbiter-0").label("installer.openshift.io/role", "control-plane").userDataRef("user-data-secret-arbiter").consumerRef("machine-2").customDeploy().architecture("x86_64"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-amd64-control-plane",
+			Machines: machines(machine("machine-0")),
+			Config: config().
+				withControlPlaneArchitecture(types.ArchitectureAMD64).
+				hosts(hostType("master-0").bmc("usr0", "pwd0").role("master")).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("x86_64"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-arm64-control-plane",
+			Machines: machines(machine("machine-0")),
+			Config: config().
+				withControlPlaneArchitecture(types.ArchitectureARM64).
+				hosts(hostType("master-0").bmc("usr0", "pwd0").role("master")).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("aarch64"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-amd64-worker",
+			Machines: machines(machine("machine-0")),
+			Config: config().
+				withControlPlaneArchitecture(types.ArchitectureAMD64).
+				withComputeArchitecture(types.ArchitectureAMD64).
+				hosts(
+					hostType("master-0").bmc("usr0", "pwd0").role("master"),
+					hostType("worker-0").bmc("usr1", "pwd1").role("worker"),
+				).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("worker-0-bmc-secret").creds("usr1", "pwd1"),
+				).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("x86_64"),
+					host("worker-0").
+						annotation("baremetalhost.metal3.io/paused", "").
+						architecture("x86_64"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-arm64-worker",
+			Machines: machines(machine("machine-0")),
+			Config: config().
+				withControlPlaneArchitecture(types.ArchitectureARM64).
+				withComputeArchitecture(types.ArchitectureARM64).
+				hosts(
+					hostType("master-0").bmc("usr0", "pwd0").role("master"),
+					hostType("worker-0").bmc("usr1", "pwd1").role("worker"),
+				).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("worker-0-bmc-secret").creds("usr1", "pwd1"),
+				).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("aarch64"),
+					host("worker-0").
+						annotation("baremetalhost.metal3.io/paused", "").
+						architecture("aarch64"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-s390x-control-plane",
+			Machines: machines(machine("machine-0")),
+			Config: config().
+				withControlPlaneArchitecture(types.ArchitectureS390X).
+				hosts(hostType("master-0").bmc("usr0", "pwd0").role("master")).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("s390x"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-ppc64le-control-plane",
+			Machines: machines(machine("machine-0")),
+			Config: config().
+				withControlPlaneArchitecture(types.ArchitecturePPC64LE).
+				hosts(hostType("master-0").bmc("usr0", "pwd0").role("master")).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(secret("master-0-bmc-secret").creds("usr0", "pwd0")).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("ppc64le"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-amd64-arbiter",
+			Machines: machines(
+				machine("machine-0"),
+				machine("machine-1")),
+			ArbiterMachines: machines(
+				machine("machine-2")),
+			Config: config().
+				withArbiter(1).
+				withArbiterArchitecture(types.ArchitectureAMD64).
+				withControlPlane(2).
+				withControlPlaneArchitecture(types.ArchitectureAMD64).
+				hosts(
+					hostType("master-0").bmc("usr0", "pwd0").role("master"),
+					hostType("master-1").bmc("usr1", "pwd1").role("master"),
+					hostType("arbiter-0").bmc("usr2", "pwd2").role("arbiter"),
+				).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
+				).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("x86_64"),
+					host("master-1").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-1").
+						customDeploy().
+						architecture("x86_64"),
+					host("arbiter-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret-arbiter").
+						consumerRef("machine-2").
+						customDeploy().
+						architecture("x86_64"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-arm64-arbiter",
+			Machines: machines(
+				machine("machine-0"),
+				machine("machine-1")),
+			ArbiterMachines: machines(
+				machine("machine-2")),
+			Config: config().
+				withArbiter(1).
+				withArbiterArchitecture(types.ArchitectureARM64).
+				withControlPlane(2).
+				withControlPlaneArchitecture(types.ArchitectureAMD64).
+				hosts(
+					hostType("master-0").bmc("usr0", "pwd0").role("master"),
+					hostType("master-1").bmc("usr1", "pwd1").role("master"),
+					hostType("arbiter-0").bmc("usr2", "pwd2").role("arbiter"),
+				).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
+				).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("x86_64"),
+					host("master-1").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-1").
+						customDeploy().
+						architecture("x86_64"),
+					host("arbiter-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret-arbiter").
+						consumerRef("machine-2").
+						customDeploy().
+						architecture("aarch64"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-s390x-arbiter",
+			Machines: machines(
+				machine("machine-0"),
+				machine("machine-1")),
+			ArbiterMachines: machines(
+				machine("machine-2")),
+			Config: config().
+				withArbiter(1).
+				withArbiterArchitecture(types.ArchitectureS390X).
+				withControlPlane(2).
+				withControlPlaneArchitecture(types.ArchitectureAMD64).
+				hosts(
+					hostType("master-0").bmc("usr0", "pwd0").role("master"),
+					hostType("master-1").bmc("usr1", "pwd1").role("master"),
+					hostType("arbiter-0").bmc("usr2", "pwd2").role("arbiter"),
+				).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
+				).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("x86_64"),
+					host("master-1").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-1").
+						customDeploy().
+						architecture("x86_64"),
+					host("arbiter-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret-arbiter").
+						consumerRef("machine-2").
+						customDeploy().
+						architecture("s390x"),
+				).build(),
+		},
+		{
+			Scenario: "architecture-ppc64le-arbiter",
+			Machines: machines(
+				machine("machine-0"),
+				machine("machine-1")),
+			ArbiterMachines: machines(
+				machine("machine-2")),
+			Config: config().
+				withArbiter(1).
+				withArbiterArchitecture(types.ArchitecturePPC64LE).
+				withControlPlane(2).
+				withControlPlaneArchitecture(types.ArchitectureAMD64).
+				hosts(
+					hostType("master-0").bmc("usr0", "pwd0").role("master"),
+					hostType("master-1").bmc("usr1", "pwd1").role("master"),
+					hostType("arbiter-0").bmc("usr2", "pwd2").role("arbiter"),
+				).
+				build(),
+
+			ExpectedSetting: settings().
+				secrets(
+					secret("master-0-bmc-secret").creds("usr0", "pwd0"),
+					secret("master-1-bmc-secret").creds("usr1", "pwd1"),
+					secret("arbiter-0-bmc-secret").creds("usr2", "pwd2"),
+				).
+				hosts(
+					host("master-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-0").
+						customDeploy().
+						architecture("x86_64"),
+					host("master-1").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret").
+						consumerRef("machine-1").
+						customDeploy().
+						architecture("x86_64"),
+					host("arbiter-0").
+						label("installer.openshift.io/role", "control-plane").
+						userDataRef("user-data-secret-arbiter").
+						consumerRef("machine-2").
+						customDeploy().
+						architecture("ppc64le"),
 				).build(),
 		},
 	}
@@ -501,6 +820,14 @@ func config() *installConfigBuilder {
 			Platform: types.Platform{
 				BareMetal: &baremetaltypes.Platform{},
 			},
+			ControlPlane: &types.MachinePool{
+				Architecture: types.ArchitectureAMD64,
+			},
+			Compute: []types.MachinePool{
+				{
+					Architecture: types.ArchitectureAMD64,
+				},
+			},
 		},
 	}
 }
@@ -517,16 +844,45 @@ func (ib *installConfigBuilder) hosts(builders ...*hostTypeBuilder) *installConf
 func (ib *installConfigBuilder) withArbiter(count int) *installConfigBuilder {
 	replicas := int64(count)
 	ib.Arbiter = &types.MachinePool{
-		Replicas: &replicas,
+		Replicas:     &replicas,
+		Architecture: types.ArchitectureAMD64,
 	}
 	return ib
 }
 
 func (ib *installConfigBuilder) withControlPlane(count int) *installConfigBuilder {
 	replicas := int64(count)
-	ib.ControlPlane = &types.MachinePool{
-		Replicas: &replicas,
+	if ib.ControlPlane == nil {
+		ib.ControlPlane = &types.MachinePool{}
 	}
+	ib.ControlPlane.Replicas = &replicas
+	if ib.ControlPlane.Architecture == "" {
+		ib.ControlPlane.Architecture = types.ArchitectureAMD64
+	}
+	return ib
+}
+
+func (ib *installConfigBuilder) withControlPlaneArchitecture(arch types.Architecture) *installConfigBuilder {
+	if ib.ControlPlane == nil {
+		ib.ControlPlane = &types.MachinePool{}
+	}
+	ib.ControlPlane.Architecture = arch
+	return ib
+}
+
+func (ib *installConfigBuilder) withComputeArchitecture(arch types.Architecture) *installConfigBuilder {
+	if len(ib.Compute) == 0 {
+		ib.Compute = []types.MachinePool{{}}
+	}
+	ib.Compute[0].Architecture = arch
+	return ib
+}
+
+func (ib *installConfigBuilder) withArbiterArchitecture(arch types.Architecture) *installConfigBuilder {
+	if ib.Arbiter == nil {
+		ib.Arbiter = &types.MachinePool{}
+	}
+	ib.Arbiter.Architecture = arch
 	return ib
 }
 
@@ -683,6 +1039,11 @@ func (hb *hostBuilder) userDataRef(name string) *hostBuilder {
 
 func (hb *hostBuilder) preprovisioningNetworkDataName(secretName string) *hostBuilder {
 	hb.Spec.PreprovisioningNetworkDataName = secretName
+	return hb
+}
+
+func (hb *hostBuilder) architecture(arch string) *hostBuilder {
+	hb.Spec.Architecture = arch
 	return hb
 }
 
