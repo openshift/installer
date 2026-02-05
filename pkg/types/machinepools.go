@@ -218,14 +218,14 @@ const (
 
 // Credential stores the information about a baremetal host's management controller.
 type Credential struct {
-	HostName string `json:"hostName,omitempty" validate:"required,uniqueField"`
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
-	Address  string `json:"address" validate:"required,uniqueField"`
+	HostName string `json:"hostName,omitempty" yaml:"hostname,omitempty" validate:"required,uniqueField"`
+	Username string `json:"username" yaml:"username" validate:"required"`
+	Password string `json:"password" yaml:"password" validate:"required"`
+	Address  string `json:"address" yaml:"address" validate:"required,uniqueField"`
 	// CertificateVerification Defines whether ssl certificate verification is required or not.
 	// If omitted, the platform chooses a default, that default is enabled.
 	// +kubebuilder:default:="Enabled"
 	// +kubebuilder:validation:Enum=Enabled;Disabled
 	// +optional
-	CertificateVerification CertificateVerificationPolicy `json:"certificateVerification,omitempty"`
+	CertificateVerification CertificateVerificationPolicy `json:"certificateVerification,omitempty" yaml:"certificateVerification,omitempty"`
 }

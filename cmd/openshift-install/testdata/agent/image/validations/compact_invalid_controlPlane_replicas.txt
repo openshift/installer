@@ -1,6 +1,6 @@
 ! exec openshift-install agent create image --dir $WORK
 
-stderr 'controlPlane.replicas: Unsupported value: 2: supported values: "3", "1", "4", "5"'
+stderr 'controlPlane.fencing.credentials: Forbidden: there should be exactly two fencing credentials to support the two node cluster, instead 0 credentials were found'
 
 ! exists $WORK/agent.x86_64.iso
 ! exists $WORK/auth/kubeconfig

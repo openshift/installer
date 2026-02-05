@@ -773,7 +773,7 @@ func validateControlPlane(installConfig *types.InstallConfig, fldPath *field.Pat
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("replicas"), pool.Replicas, "number of control plane replicas must be positive"))
 	}
 	allErrs = append(allErrs, ValidateMachinePool(platform, pool, fldPath)...)
-	allErrs = append(allErrs, validateFencingCredentials(installConfig)...)
+	allErrs = append(allErrs, validateFencingCredentialsAndPlatform(installConfig)...)
 	return allErrs
 }
 
@@ -1664,7 +1664,7 @@ func validateCredentialsNumber(installConfig *types.InstallConfig, fencing *type
 	return errs
 }
 
-func validateFencingCredentials(installConfig *types.InstallConfig) (errors field.ErrorList) {
+func validateFencingCredentialsAndPlatform(installConfig *types.InstallConfig) (errors field.ErrorList) {
 	fldPath := field.NewPath("controlPlane", "fencing")
 	fencingCredentials := installConfig.ControlPlane.Fencing
 	allErrs := field.ErrorList{}
@@ -1676,6 +1676,7 @@ func validateFencingCredentials(installConfig *types.InstallConfig) (errors fiel
 			if len(credential.CertificateVerification) > 0 && credential.CertificateVerification != types.CertificateVerificationDisabled && credential.CertificateVerification != types.CertificateVerificationEnabled {
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("credentials").Index(i).Key("CertificateVerification"), installConfig.ControlPlane.Fencing.Credentials[i].CertificateVerification, fmt.Sprintf("invalid certificate verification; %q should set to one of the following: ['Enabled' (default), 'Disabled']", credential.CertificateVerification)))
 			}
+			allErrs = append(allErrs, validateFencingCredentialAddress(credential.Address, fldPath.Child("credentials").Index(i).Child("address"))...)
 		}
 	}
 	allErrs = append(allErrs, validateCredentialsNumber(installConfig, fencingCredentials, fldPath.Child("credentials"))...)
@@ -1691,6 +1692,43 @@ func validateFencingForPlatform(config *types.InstallConfig, fldPath *field.Path
 	default:
 		errs = append(errs, field.Forbidden(fldPath, fmt.Sprintf("fencing is only supported on baremetal, external or none platforms, instead %s platform was found", config.Platform.Name())))
 	}
+	return errs
+}
+
+func validateFencingCredentialAddress(address string, fldPath *field.Path) field.ErrorList {
+	errs := field.ErrorList{}
+	if address == "" {
+		return errs
+	}
+
+	// Parse the URL to ensure it's a valid URL
+	parsedURL, err := url.Parse(address)
+	if err != nil {
+		errs = append(errs, field.Invalid(fldPath, address, fmt.Sprintf("invalid URL format: %v", err)))
+		return errs
+	}
+
+	// Check if the address contains "redfish"
+	if !strings.Contains(address, "redfish") {
+		errs = append(errs, field.Invalid(fldPath, address, "fencing only supports redfish-compatible BMC addresses, IPMI is not supported"))
+	}
+
+	// Validate port - try to infer standard schema ports for https/http, otherwise notify user port is needed
+	// Vendor-specific redfish schemes (idrac-redfish, ilo5-redfish, etc.) default to HTTPS (port 443)
+	redfishPort := parsedURL.Port()
+	if redfishPort == "" {
+		switch {
+		case strings.Contains(parsedURL.Scheme, "https"):
+			// Port 443 is default for https, so it's acceptable
+		case strings.Contains(parsedURL.Scheme, "http"):
+			// Port 80 is default for http, so it's acceptable
+		case strings.Contains(parsedURL.Scheme, "redfish"):
+			// Vendor-specific redfish schemes (idrac-redfish, ilo5-redfish, etc.) use HTTPS by default
+		default:
+			errs = append(errs, field.Invalid(fldPath, address, "failed to parse redfish address, no port number found"))
+		}
+	}
+
 	return errs
 }
 

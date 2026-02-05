@@ -3079,11 +3079,11 @@ func TestValidateTNF(t *testing.T) {
 				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
 					Credential(
-						c1().FencingCredentialAddress("ipmi://192.168.111.1"),
-						c2().FencingCredentialAddress("ipmi://192.168.111.1"))).
+						c1().FencingCredentialAddress("redfish+https://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("redfish+https://192.168.111.1/redfish/v1/Systems/1"))).
 				CpReplicas(2).build(),
 			name:     "fencing_credential_address_not_unique",
-			expected: "controlPlane.fencing.credentials\\[1\\].address: Duplicate value: \"ipmi://192.168.111.1\"",
+			expected: "controlPlane.fencing.credentials\\[1\\].address: Duplicate value: \"redfish\\+https://192.168.111.1/redfish/v1/Systems/1\"",
 		},
 		{
 			config: installConfig().
@@ -3116,10 +3116,87 @@ func TestValidateTNF(t *testing.T) {
 			config: installConfig().
 				PlatformBMWithHosts().
 				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("ipmi://192.168.111.1"),
+						c2().FencingCredentialAddress("ipmi://192.168.111.2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_ipmi_not_supported",
+			expected: "controlPlane.fencing.credentials\\[0\\].address: Invalid value: \"ipmi://192.168.111.1\": fencing only supports redfish-compatible BMC addresses, IPMI is not supported",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
 					Credential(c1().HostName(""), c2())).
 				CpReplicas(2).build(),
 			name:     "fencing_credential_host_name_required",
 			expected: "controlPlane.fencing.credentials\\[0\\].hostName: Required value: missing HostName",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("idrac-redfish://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("ilo5-redfish+https://192.168.111.2/redfish/v1/Systems/1"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_various_redfish_addresses",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("not a valid url at all"),
+						c2())).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_invalid_url",
+			expected: "controlPlane.fencing.credentials\\[0\\].address: Invalid value: \"not a valid url at all\": fencing only supports redfish-compatible BMC addresses, IPMI is not supported",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("https://192.168.111.1:8000/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("https://192.168.111.2:8000/redfish/v1/Systems/2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_https_with_redfish_path",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("http://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("http://192.168.111.2/redfish/v1/Systems/2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_http_no_port",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("https://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("https://192.168.111.2/redfish/v1/Systems/2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_https_no_port",
+			expected: "",
+		},
+		{
+			config: installConfig().
+				PlatformBMWithHosts().
+				MachinePoolCP(machinePool().
+					Credential(
+						c1().FencingCredentialAddress("idrac-redfish://192.168.111.1/redfish/v1/Systems/1"),
+						c2().FencingCredentialAddress("ilo5-redfish://192.168.111.2/redfish/v1/Systems/2"))).
+				CpReplicas(2).build(),
+			name:     "fencing_credential_redfish_scheme_no_port",
+			expected: "",
 		},
 		{
 			config: installConfig().
@@ -3136,7 +3213,7 @@ func TestValidateTNF(t *testing.T) {
 				CpReplicas(2).build(),
 			name:         "fencing_only_valid_for_control_plane",
 			checkCompute: true,
-			expected:     `compute\[\d+\]\.fencing: Invalid value: \{"credentials":\[\{"hostName":"host1","username":"root","password":"password","address":"ipmi://192.168.111.1"\}\]\}: fencing is only valid for control plane`,
+			expected:     `compute\[\d+\]\.fencing: Invalid value: \{"credentials":\[\{"hostName":"host1","username":"root","password":"password","address":"redfish\+https://192.168.111.1/redfish/v1/Systems/1"\}\]\}: fencing is only valid for control plane`,
 		},
 		{
 			config: installConfig().
@@ -3186,7 +3263,7 @@ func TestValidateTNF(t *testing.T) {
 			if tc.checkCompute {
 				err = validateCompute(&tc.config.Platform, tc.config.ControlPlane, tc.config.Compute, field.NewPath("compute")).ToAggregate()
 			} else {
-				err = validateFencingCredentials(tc.config).ToAggregate()
+				err = validateFencingCredentialsAndPlatform(tc.config).ToAggregate()
 			}
 
 			if tc.expected == "" {
@@ -3325,7 +3402,7 @@ func c1() *credentialBuilder {
 			HostName: "host1",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.1",
+			Address:  "redfish+https://192.168.111.1/redfish/v1/Systems/1",
 		},
 	}
 }
@@ -3336,7 +3413,7 @@ func c2() *credentialBuilder {
 			HostName: "host2",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.2",
+			Address:  "redfish+https://192.168.111.2/redfish/v1/Systems/1",
 		},
 	}
 }
@@ -3347,7 +3424,7 @@ func c3() *credentialBuilder {
 			HostName: "host3",
 			Username: "root",
 			Password: "password",
-			Address:  "ipmi://192.168.111.3",
+			Address:  "redfish+https://192.168.111.3/redfish/v1/Systems/1",
 		},
 	}
 }

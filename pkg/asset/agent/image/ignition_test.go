@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/assisted-service/models"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
 	"github.com/openshift/installer/pkg/asset"
+	agentcommon "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
@@ -691,6 +692,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 			},
 		},
 		&agentconfig.AgentHosts{},
+		&agentconfig.FencingCredentials{},
 		&manifests.ExtraManifests{},
 		&mirror.RegistriesConf{},
 		&mirror.CaBundle{},
@@ -702,6 +704,7 @@ func buildIgnitionAssetDefaultDependencies(t *testing.T) []asset.Asset {
 		&tls.AdminKubeConfigClientCertKey{},
 		&gencrypto.AuthConfig{},
 		&common.InfraEnvID{},
+		&agentcommon.OptionalInstallConfig{},
 	}
 }
 
