@@ -162,6 +162,8 @@ func (o *ClusterUninstaller) deleteEC2(ctx context.Context, arn arn.ARN, logger 
 		return deleteEC2VPCEndpointService(ctx, o.EC2Client, id, logger)
 	case "egress-only-internet-gateway":
 		return deleteEgressOnlyInternetGateway(ctx, o.EC2Client, id, logger)
+	case "dedicated-host":
+		return deleteEC2DedicatedHost(ctx, o.EC2Client, id, logger)
 	default:
 		return errors.Errorf("unrecognized EC2 resource type %s", resourceType)
 	}
@@ -960,5 +962,45 @@ func deleteEgressOnlyInternetGateway(ctx context.Context, client *ec2v2.Client, 
 	}
 
 	logger.Info("Deleted")
+	return nil
+}
+
+func deleteEC2DedicatedHost(ctx context.Context, client *ec2v2.Client, id string, logger logrus.FieldLogger) error {
+	// First check if the host exists and get its current state
+	describeOutput, err := client.DescribeHosts(ctx, &ec2v2.DescribeHostsInput{
+		HostIds: []string{id},
+	})
+	if err != nil {
+		errCode := HandleErrorCode(err)
+		if errCode == "InvalidHostID.NotFound" {
+			// Host doesn't exist, nothing to do
+			return nil
+		}
+		return errors.Wrapf(err, "failed to describe dedicated host %s", id)
+	}
+
+	// Check if host is already released
+	if len(describeOutput.Hosts) > 0 {
+		host := describeOutput.Hosts[0]
+		if host.State == ec2v2types.AllocationStateReleased {
+			logger.Info("Already released")
+			return nil
+		}
+	}
+
+	// Release the host
+	_, err = client.ReleaseHosts(ctx, &ec2v2.ReleaseHostsInput{
+		HostIds: []string{id},
+	})
+	if err != nil {
+		errCode := HandleErrorCode(err)
+		if errCode == "InvalidHostID.NotFound" {
+			// Host was deleted between describe and release
+			return nil
+		}
+		return errors.Wrapf(err, "failed to release dedicated host %s", id)
+	}
+
+	logger.Info("Released")
 	return nil
 }
