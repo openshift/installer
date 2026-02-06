@@ -17,6 +17,7 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/common"
+	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -84,6 +85,7 @@ func (a *UnconfiguredIgnition) Dependencies() []asset.Asset {
 		&manifests.ClusterImageSet{},
 		&manifests.NMStateConfig{},
 		&common.InfraEnvID{},
+		&gencrypto.AuthConfig{},
 	}
 }
 
@@ -98,7 +100,8 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 	pullSecretAsset := &manifests.AgentPullSecret{}
 	nmStateConfigs := &manifests.NMStateConfig{}
 	agentConfig := &agentconfig.AgentConfig{}
-	dependencies.Get(agentWorkflow, infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs, infraEnvIDAsset, agentConfig)
+	authConfig := &gencrypto.AuthConfig{}
+	dependencies.Get(agentWorkflow, infraEnvAsset, clusterImageSetAsset, pullSecretAsset, nmStateConfigs, infraEnvIDAsset, agentConfig, authConfig)
 
 	if agentWorkflow.Workflow != workflow.AgentWorkflowTypeInstall {
 		return fmt.Errorf("AgentWorkflowType value not supported: %s", agentWorkflow.Workflow)
@@ -160,7 +163,7 @@ func (a *UnconfiguredIgnition) Generate(_ context.Context, dependencies asset.Pa
 		InfraEnvID:                infraEnvID,
 		OSImage:                   osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
-		AuthType:                  "none",
+		AuthType:                  authConfig.AuthType,
 	}
 
 	enabledServices := getDefaultEnabledServices()
