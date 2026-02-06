@@ -45,6 +45,7 @@ var (
 		"c3d": {PDSSD, PDBalanced, HyperDiskBalanced},
 		"c4":  {HyperDiskBalanced},
 		"c4a": {HyperDiskBalanced},
+		"c4d": {HyperDiskBalanced},
 		"e2":  {PDStandard, PDSSD, PDBalanced},
 		"g2":  {PDStandard, PDSSD, PDBalanced},
 		"m1":  {PDSSD, PDBalanced, HyperDiskBalanced},
