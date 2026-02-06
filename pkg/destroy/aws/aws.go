@@ -277,9 +277,8 @@ func (o *ClusterUninstaller) ValidateOwnedSubnets(ctx context.Context) error {
 	for _, subnet := range subnets {
 		// The subnet is marked for deletion but has a shared tag.
 		// We abort the uninstall process.
-		if subnet.Tags.HasClusterSharedTag() {
-			sharedClusterIDs := subnet.Tags.GetClusterIDs(awssession.TagValueShared)
-
+		sharedClusterIDs := subnet.Tags.GetClusterIDs(awssession.TagValueShared)
+		if len(sharedClusterIDs) > 0 {
 			errMsg := fmt.Sprintf("shared tags found from clusters %v on subnet %s, owned by cluster %s. Destroying cluster %s will delete resources depended on by other clusters, resulting in an outage",
 				sharedClusterIDs, subnet.ID, o.ClusterID, o.ClusterID)
 			resolveMsg := fmt.Sprintf("To destroy cluster %s, first destroy clusters %v", o.ClusterID, sharedClusterIDs)
