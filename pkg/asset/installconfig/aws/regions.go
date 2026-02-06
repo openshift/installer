@@ -22,7 +22,18 @@ const (
 func knownPublicRegions(architecture types.Architecture) ([]string, error) {
 	required := rhcos.AMIRegions(architecture)
 
-	regions, err := GetRegions(context.Background())
+	ctx := context.Background()
+	client, err := NewEC2Client(ctx, EndpointOptions{
+		// Pass the default region (used for survey purposes) as the region here.
+		// Without a region, the DescribeRegions call will fail immediately.
+		// At this point, custom endpoints are unknown as they are not yet configured.
+		Region: "us-east-1",
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to create EC2 client: %w", err)
+	}
+
+	regions, err := GetRegions(ctx, client)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get aws regions: %w", err)
 	}
@@ -47,6 +58,7 @@ func IsKnownPublicRegion(region string, architecture types.Architecture) (bool, 
 }
 
 // IsSecretRegion determines if the region is part of a secret partition.
+// Note: This uses the v1 EndpointResolver, which exposes the partition ID.
 func IsSecretRegion(region string) (bool, error) {
 	endpoint, err := ec2.NewDefaultEndpointResolver().ResolveEndpoint(region, ec2.EndpointResolverOptions{})
 	if err != nil {

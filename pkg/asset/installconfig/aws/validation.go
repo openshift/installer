@@ -9,11 +9,11 @@ import (
 	"net/url"
 	"sort"
 
-	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
-	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
@@ -163,7 +163,7 @@ func validateAMI(ctx context.Context, meta *Metadata, config *types.InstallConfi
 		return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to get list of regions: %w", err))}
 	}
 	if sets.New(regions...).Has(config.Platform.AWS.Region) {
-		defaultEndpoint, err := GetDefaultServiceEndpoint(ctx, ec2v2.ServiceID, EndpointOptions{Region: config.Platform.AWS.Region, UseFIPS: false})
+		defaultEndpoint, err := GetDefaultServiceEndpoint(ctx, ec2.ServiceID, EndpointOptions{Region: config.Platform.AWS.Region, UseFIPS: false})
 		if err != nil {
 			return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to resolve ec2 endpoint"))}
 		}
@@ -199,17 +199,17 @@ func validatePublicIpv4Pool(ctx context.Context, meta *Metadata, fldPath *field.
 	}
 	totalPublicIPRequired := int64(1 + (len(allzones) * 3))
 
-	sess, err := meta.Session(ctx)
+	client, err := meta.EC2Client(ctx)
 	if err != nil {
-		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err)))
+		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve ec2 client: %w", err)))
 	}
 
-	publicIpv4Pool, err := DescribePublicIpv4Pool(ctx, sess, config.Platform.AWS.Region, poolID)
+	publicIpv4Pool, err := DescribePublicIpv4Pool(ctx, client, poolID)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, poolID, err.Error()))
 	}
 
-	got := aws.Int64Value(publicIpv4Pool.TotalAvailableAddressCount)
+	got := int64(aws.ToInt32(publicIpv4Pool.TotalAvailableAddressCount))
 	if got < totalPublicIPRequired {
 		err = fmt.Errorf("required a minimum of %d Public IPv4 IPs available in the pool %s, got %d", totalPublicIPRequired, poolID, got)
 		return append(allErrs, field.InternalError(fldPath, err))
@@ -481,9 +481,9 @@ func translateEC2Arches(arches []string) sets.Set[string] {
 	res := sets.New[string]()
 	for _, arch := range arches {
 		switch arch {
-		case ec2.ArchitectureTypeX8664:
+		case string(ec2types.ArchitectureTypeX8664):
 			res.Insert(types.ArchitectureAMD64)
-		case ec2.ArchitectureTypeArm64:
+		case string(ec2types.ArchitectureTypeArm64):
 			res.Insert(types.ArchitectureARM64)
 		default:
 			continue
@@ -501,12 +501,12 @@ func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *fiel
 		return append(allErrs, field.Invalid(fldPath, vpc, errMsg))
 	}
 
-	session, err := meta.Session(ctx)
+	client, err := meta.EC2Client(ctx)
 	if err != nil {
-		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve aws session: %w", err)))
+		return append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve ec2 client: %w", err)))
 	}
 
-	securityGroups, err := DescribeSecurityGroups(ctx, session, pool.AdditionalSecurityGroupIDs, platform.Region)
+	securityGroups, err := DescribeSecurityGroups(ctx, client, pool.AdditionalSecurityGroupIDs)
 	if err != nil {
 		return append(allErrs, field.Invalid(fldPath, pool.AdditionalSecurityGroupIDs, err.Error()))
 	}
@@ -827,24 +827,24 @@ func validateServiceEndpoints(fldPath *field.Path, region string, services []aws
 }
 
 func validateZoneLocal(ctx context.Context, meta *Metadata, fldPath *field.Path, zoneName string) *field.Error {
-	sess, err := meta.Session(ctx)
+	client, err := meta.EC2Client(ctx)
 	if err != nil {
-		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to retrieve aws session: %s", err.Error()))
+		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to retrieve ec2 client: %s", err.Error()))
 	}
-	zones, err := describeFilteredZones(ctx, sess, meta.Region, []string{zoneName})
+	zones, err := describeFilteredZones(ctx, client, meta.Region, []string{zoneName})
 	if err != nil {
 		return field.Invalid(fldPath, zoneName, fmt.Sprintf("unable to get describe zone: %s", err.Error()))
 	}
 	validZone := false
 	for _, zone := range zones {
-		if aws.StringValue(zone.ZoneName) == zoneName {
-			switch aws.StringValue(zone.ZoneType) {
+		if aws.ToString(zone.ZoneName) == zoneName {
+			switch aws.ToString(zone.ZoneType) {
 			case awstypes.LocalZoneType, awstypes.WavelengthZoneType:
 			default:
-				return field.Invalid(fldPath, zoneName, fmt.Sprintf("only zone type local-zone or wavelength-zone are valid in the edge machine pool: %s", aws.StringValue(zone.ZoneType)))
+				return field.Invalid(fldPath, zoneName, fmt.Sprintf("only zone type local-zone or wavelength-zone are valid in the edge machine pool: %s", aws.ToString(zone.ZoneType)))
 			}
-			if aws.StringValue(zone.OptInStatus) != awstypes.ZoneOptInStatusOptedIn {
-				return field.Invalid(fldPath, zoneName, fmt.Sprintf("zone group is not opted-in: %s", aws.StringValue(zone.GroupName)))
+			if string(zone.OptInStatus) != awstypes.ZoneOptInStatusOptedIn {
+				return field.Invalid(fldPath, zoneName, fmt.Sprintf("zone group is not opted-in: %s", aws.ToString(zone.GroupName)))
 			}
 			validZone = true
 		}
@@ -950,7 +950,7 @@ func isHostedZoneAssociatedWithVPC(hostedZone *route53.GetHostedZoneOutput, vpcI
 		return false
 	}
 	for _, vpc := range hostedZone.VPCs {
-		if aws.StringValue(vpc.VPCId) == vpcID {
+		if aws.ToString(vpc.VPCId) == vpcID {
 			return true
 		}
 	}
