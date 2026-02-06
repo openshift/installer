@@ -538,7 +538,6 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	if !installConfig.Config.PublicAPI() {
 		lbType = lbconfig.PrivateLoadBalancer
 	}
-
 	_, ipAddrs, err := lbConfig.ParseDNSDataFromConfig(lbType)
 	if err != nil {
 		return fmt.Errorf("failed to parse lbconfig: %w", err)
@@ -551,6 +550,21 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	}
 	if ipAddr == "" {
 		return fmt.Errorf("no ip address found in lbconfig")
+	}
+
+	if !installConfig.Config.PublicAPI() {
+		// Check for LB IP reachability from Install host.
+		address := net.JoinHostPort(ipAddr, "6443")
+		conn, err := net.DialTimeout("tcp", address, time.Second*10)
+		if err != nil {
+			// Not reachable because install host is not in the cluster network.
+			// Use kubeconfig without dialer context because some reachability
+			// mechanism like a proxy/bastion host would be put in place to access
+			// the cluster.
+			logrus.Debugf("private install with userProvisionedDNS. Install host is not in the same network as the cluster. Not updating kubeconfig for cluster access.")
+			return nil
+		}
+		conn.Close()
 	}
 
 	dialer := &net.Dialer{
