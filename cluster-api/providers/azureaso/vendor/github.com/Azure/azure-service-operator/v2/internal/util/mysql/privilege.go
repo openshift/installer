@@ -11,7 +11,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	"github.com/Azure/azure-service-operator/v2/internal/set"
@@ -79,7 +79,7 @@ func GetUserDatabasePrivileges(ctx context.Context, db *sql.DB, user string, hos
 		"SELECT TABLE_SCHEMA, PRIVILEGE_TYPE FROM INFORMATION_SCHEMA.SCHEMA_PRIVILEGES WHERE GRANTEE = ?",
 		formatUser(user, hostname))
 	if err != nil {
-		return nil, errors.Wrapf(err, "listing database grants for user %s", user)
+		return nil, eris.Wrapf(err, "listing database grants for user %s", user)
 	}
 	defer rows.Close()
 
@@ -88,7 +88,7 @@ func GetUserDatabasePrivileges(ctx context.Context, db *sql.DB, user string, hos
 		var database, privilege string
 		err := rows.Scan(&database, &privilege)
 		if err != nil {
-			return nil, errors.Wrapf(err, "extracting privilege row")
+			return nil, eris.Wrapf(err, "extracting privilege row")
 		}
 
 		var privileges set.Set[string]
@@ -102,7 +102,7 @@ func GetUserDatabasePrivileges(ctx context.Context, db *sql.DB, user string, hos
 	}
 
 	if rows.Err() != nil {
-		return nil, errors.Wrapf(rows.Err(), "iterating database privileges")
+		return nil, eris.Wrapf(rows.Err(), "iterating database privileges")
 	}
 
 	return results, nil
@@ -121,7 +121,7 @@ func GetUserServerPrivileges(ctx context.Context, db *sql.DB, user string, hostn
 		"SELECT PRIVILEGE_TYPE FROM INFORMATION_SCHEMA.USER_PRIVILEGES WHERE GRANTEE = ? AND PRIVILEGE_TYPE != 'USAGE'",
 		formatUser(user, hostname))
 	if err != nil {
-		return nil, errors.Wrapf(err, "listing grants for user %s", user)
+		return nil, eris.Wrapf(err, "listing grants for user %s", user)
 	}
 	defer rows.Close()
 
@@ -130,13 +130,13 @@ func GetUserServerPrivileges(ctx context.Context, db *sql.DB, user string, hostn
 		var row string
 		err := rows.Scan(&row)
 		if err != nil {
-			return nil, errors.Wrapf(err, "extracting privilege field")
+			return nil, eris.Wrapf(err, "extracting privilege field")
 		}
 
 		result.Add(row)
 	}
 	if rows.Err() != nil {
-		return nil, errors.Wrapf(rows.Err(), "iterating privileges")
+		return nil, eris.Wrapf(rows.Err(), "iterating privileges")
 	}
 
 	return result, nil
@@ -150,7 +150,7 @@ func ReconcileUserServerPrivileges(ctx context.Context, db *sql.DB, user string,
 
 	currentPrivileges, err := GetUserServerPrivileges(ctx, db, user, hostname)
 	if err != nil {
-		return errors.Wrapf(err, "couldn't get existing privileges for user %s", user)
+		return eris.Wrapf(err, "couldn't get existing privileges for user %s", user)
 	}
 
 	privsDiff := DiffCurrentAndExpectedSQLPrivileges(currentPrivileges, desiredPrivileges)
@@ -182,7 +182,7 @@ func ReconcileUserDatabasePrivileges(ctx context.Context, conn *sql.DB, user str
 
 	currentPrivs, err := GetUserDatabasePrivileges(ctx, conn, user, hostname)
 	if err != nil {
-		return errors.Wrapf(err, "couldn't get existing database privileges for user %s", user)
+		return eris.Wrapf(err, "couldn't get existing database privileges for user %s", user)
 	}
 
 	allDatabases := make(set.Set[string])
@@ -202,11 +202,11 @@ func ReconcileUserDatabasePrivileges(ctx context.Context, conn *sql.DB, user str
 
 		err = addPrivileges(ctx, conn, db, user, privsDiff.AddedPrivileges)
 		if err != nil {
-			dbErrors = append(dbErrors, errors.Wrap(err, db))
+			dbErrors = append(dbErrors, eris.Wrap(err, db))
 		}
 		err = deletePrivileges(ctx, conn, db, user, privsDiff.DeletedPrivileges)
 		if err != nil {
-			dbErrors = append(dbErrors, errors.Wrap(err, db))
+			dbErrors = append(dbErrors, eris.Wrap(err, db))
 		}
 	}
 
@@ -224,7 +224,7 @@ func addPrivileges(ctx context.Context, db *sql.DB, database string, user string
 	// We say //nolint:gosec below because gosec is trying to tell us this is a dangerous SQL query with a risk of SQL
 	// injection. The user effectively has admin access to the DB through the operator already the minute that they can
 	// create users with arbitrary permission levels.
-	_, err := db.ExecContext(ctx, fmt.Sprintf("GRANT %s ON %s TO ?", toAdd, asGrantTarget(database)), user) //nolint:gosec
+	_, err := db.ExecContext(ctx, fmt.Sprintf("GRANT %s ON %s TO ?", toAdd, asGrantTarget(database)), user)
 
 	return err
 }

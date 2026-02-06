@@ -81,33 +81,43 @@ func (compute Compute) MarshalJSON() ([]byte, error) {
 	if compute.AKS != nil {
 		return json.Marshal(compute.AKS)
 	}
+
 	if compute.AmlCompute != nil {
 		return json.Marshal(compute.AmlCompute)
 	}
+
 	if compute.ComputeInstance != nil {
 		return json.Marshal(compute.ComputeInstance)
 	}
+
 	if compute.DataFactory != nil {
 		return json.Marshal(compute.DataFactory)
 	}
+
 	if compute.DataLakeAnalytics != nil {
 		return json.Marshal(compute.DataLakeAnalytics)
 	}
+
 	if compute.Databricks != nil {
 		return json.Marshal(compute.Databricks)
 	}
+
 	if compute.HDInsight != nil {
 		return json.Marshal(compute.HDInsight)
 	}
+
 	if compute.Kubernetes != nil {
 		return json.Marshal(compute.Kubernetes)
 	}
+
 	if compute.SynapseSpark != nil {
 		return json.Marshal(compute.SynapseSpark)
 	}
+
 	if compute.VirtualMachine != nil {
 		return json.Marshal(compute.VirtualMachine)
 	}
+
 	return nil, nil
 }
 

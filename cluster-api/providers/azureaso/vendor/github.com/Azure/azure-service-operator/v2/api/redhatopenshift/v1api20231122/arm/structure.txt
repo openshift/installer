@@ -95,6 +95,7 @@ OpenShiftCluster_STATUS: Object (7 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 OpenShiftCluster_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -149,3 +150,4 @@ OpenShiftCluster_Spec: Object (4 properties)
 │       ├── SubnetId: *string
 │       └── VmSize: *string
 └── Tags: map[string]string
+

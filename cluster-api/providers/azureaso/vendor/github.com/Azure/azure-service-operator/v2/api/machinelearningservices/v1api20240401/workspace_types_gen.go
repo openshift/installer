@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20240401/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/machinelearningservices/v1api20240401/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (workspace *Workspace) ConvertTo(hub conversion.Hub) error {
 
 	return workspace.AssignProperties_To_Workspace(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-machinelearningservices-azure-com-v1api20240401-workspace,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=machinelearningservices.azure.com,resources=workspaces,verbs=create;update,versions=v1api20240401,name=default.v1api20240401.workspaces.machinelearningservices.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Workspace{}
-
-// Default applies defaults to the Workspace resource
-func (workspace *Workspace) Default() {
-	workspace.defaultImpl()
-	var temp any = workspace
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (workspace *Workspace) defaultAzureName() {
-	if workspace.Spec.AzureName == "" {
-		workspace.Spec.AzureName = workspace.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Workspace resource
-func (workspace *Workspace) defaultImpl() { workspace.defaultAzureName() }
 
 var _ configmaps.Exporter = &Workspace{}
 
@@ -173,6 +147,10 @@ func (workspace *Workspace) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (workspace *Workspace) Owner() *genruntime.ResourceReference {
+	if workspace.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(workspace.Spec)
 	return workspace.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,138 +167,11 @@ func (workspace *Workspace) SetStatus(status genruntime.ConvertibleStatus) error
 	var st Workspace_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	workspace.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-machinelearningservices-azure-com-v1api20240401-workspace,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=machinelearningservices.azure.com,resources=workspaces,verbs=create;update,versions=v1api20240401,name=validate.v1api20240401.workspaces.machinelearningservices.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Workspace{}
-
-// ValidateCreate validates the creation of the resource
-func (workspace *Workspace) ValidateCreate() (admission.Warnings, error) {
-	validations := workspace.createValidations()
-	var temp any = workspace
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (workspace *Workspace) ValidateDelete() (admission.Warnings, error) {
-	validations := workspace.deleteValidations()
-	var temp any = workspace
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (workspace *Workspace) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := workspace.updateValidations()
-	var temp any = workspace
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (workspace *Workspace) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){workspace.validateResourceReferences, workspace.validateOwnerReference, workspace.validateSecretDestinations, workspace.validateConfigMapDestinations, workspace.validateOptionalConfigMapReferences}
-}
-
-// deleteValidations validates the deletion of the resource
-func (workspace *Workspace) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (workspace *Workspace) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return workspace.validateResourceReferences()
-		},
-		workspace.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return workspace.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return workspace.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return workspace.validateConfigMapDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return workspace.validateOptionalConfigMapReferences()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (workspace *Workspace) validateConfigMapDestinations() (admission.Warnings, error) {
-	if workspace.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(workspace, nil, workspace.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
-func (workspace *Workspace) validateOptionalConfigMapReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindOptionalConfigMapReferences(&workspace.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return configmaps.ValidateOptionalReferences(refs)
-}
-
-// validateOwnerReference validates the owner field
-func (workspace *Workspace) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(workspace)
-}
-
-// validateResourceReferences validates all resource references
-func (workspace *Workspace) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&workspace.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (workspace *Workspace) validateSecretDestinations() (admission.Warnings, error) {
-	if workspace.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	var toValidate []*genruntime.SecretDestination
-	if workspace.Spec.OperatorSpec.Secrets != nil {
-		toValidate = []*genruntime.SecretDestination{
-			workspace.Spec.OperatorSpec.Secrets.AppInsightsInstrumentationKey,
-			workspace.Spec.OperatorSpec.Secrets.ContainerRegistryPassword,
-			workspace.Spec.OperatorSpec.Secrets.ContainerRegistryPassword2,
-			workspace.Spec.OperatorSpec.Secrets.ContainerRegistryUserName,
-			workspace.Spec.OperatorSpec.Secrets.PrimaryNotebookAccessKey,
-			workspace.Spec.OperatorSpec.Secrets.SecondaryNotebookAccessKey,
-			workspace.Spec.OperatorSpec.Secrets.UserStorageKey,
-		}
-	}
-	return secrets.ValidateDestinations(workspace, toValidate, workspace.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (workspace *Workspace) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Workspace)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, workspace)
 }
 
 // AssignProperties_From_Workspace populates our Workspace from the provided source Workspace
@@ -333,7 +184,7 @@ func (workspace *Workspace) AssignProperties_From_Workspace(source *storage.Work
 	var spec Workspace_Spec
 	err := spec.AssignProperties_From_Workspace_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Workspace_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Workspace_Spec() to populate field Spec")
 	}
 	workspace.Spec = spec
 
@@ -341,7 +192,7 @@ func (workspace *Workspace) AssignProperties_From_Workspace(source *storage.Work
 	var status Workspace_STATUS
 	err = status.AssignProperties_From_Workspace_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Workspace_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Workspace_STATUS() to populate field Status")
 	}
 	workspace.Status = status
 
@@ -359,7 +210,7 @@ func (workspace *Workspace) AssignProperties_To_Workspace(destination *storage.W
 	var spec storage.Workspace_Spec
 	err := workspace.Spec.AssignProperties_To_Workspace_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Workspace_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Workspace_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -367,7 +218,7 @@ func (workspace *Workspace) AssignProperties_To_Workspace(destination *storage.W
 	var status storage.Workspace_STATUS
 	err = workspace.Status.AssignProperties_To_Workspace_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Workspace_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Workspace_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -997,13 +848,13 @@ func (workspace *Workspace_Spec) ConvertSpecFrom(source genruntime.ConvertibleSp
 	src = &storage.Workspace_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = workspace.AssignProperties_From_Workspace_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -1021,13 +872,13 @@ func (workspace *Workspace_Spec) ConvertSpecTo(destination genruntime.Convertibl
 	dst = &storage.Workspace_Spec{}
 	err := workspace.AssignProperties_To_Workspace_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -1085,7 +936,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var encryption EncryptionProperty
 		err := encryption.AssignProperties_From_EncryptionProperty(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionProperty() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionProperty() to populate field Encryption")
 		}
 		workspace.Encryption = &encryption
 	} else {
@@ -1097,7 +948,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var featureStoreSetting FeatureStoreSettings
 		err := featureStoreSetting.AssignProperties_From_FeatureStoreSettings(source.FeatureStoreSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FeatureStoreSettings() to populate field FeatureStoreSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_FeatureStoreSettings() to populate field FeatureStoreSettings")
 		}
 		workspace.FeatureStoreSettings = &featureStoreSetting
 	} else {
@@ -1128,7 +979,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var identity ManagedServiceIdentity
 		err := identity.AssignProperties_From_ManagedServiceIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity() to populate field Identity")
 		}
 		workspace.Identity = &identity
 	} else {
@@ -1157,7 +1008,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var managedNetwork ManagedNetworkSettings
 		err := managedNetwork.AssignProperties_From_ManagedNetworkSettings(source.ManagedNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedNetworkSettings() to populate field ManagedNetwork")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedNetworkSettings() to populate field ManagedNetwork")
 		}
 		workspace.ManagedNetwork = &managedNetwork
 	} else {
@@ -1169,7 +1020,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var operatorSpec WorkspaceOperatorSpec
 		err := operatorSpec.AssignProperties_From_WorkspaceOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WorkspaceOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_WorkspaceOperatorSpec() to populate field OperatorSpec")
 		}
 		workspace.OperatorSpec = &operatorSpec
 	} else {
@@ -1206,7 +1057,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var serverlessComputeSetting ServerlessComputeSettings
 		err := serverlessComputeSetting.AssignProperties_From_ServerlessComputeSettings(source.ServerlessComputeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServerlessComputeSettings() to populate field ServerlessComputeSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ServerlessComputeSettings() to populate field ServerlessComputeSettings")
 		}
 		workspace.ServerlessComputeSettings = &serverlessComputeSetting
 	} else {
@@ -1218,7 +1069,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var serviceManagedResourcesSetting ServiceManagedResourcesSettings
 		err := serviceManagedResourcesSetting.AssignProperties_From_ServiceManagedResourcesSettings(source.ServiceManagedResourcesSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceManagedResourcesSettings() to populate field ServiceManagedResourcesSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceManagedResourcesSettings() to populate field ServiceManagedResourcesSettings")
 		}
 		workspace.ServiceManagedResourcesSettings = &serviceManagedResourcesSetting
 	} else {
@@ -1234,7 +1085,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 			var sharedPrivateLinkResource SharedPrivateLinkResource
 			err := sharedPrivateLinkResource.AssignProperties_From_SharedPrivateLinkResource(&sharedPrivateLinkResourceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SharedPrivateLinkResource() to populate field SharedPrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_From_SharedPrivateLinkResource() to populate field SharedPrivateLinkResources")
 			}
 			sharedPrivateLinkResourceList[sharedPrivateLinkResourceIndex] = sharedPrivateLinkResource
 		}
@@ -1248,7 +1099,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		workspace.Sku = &sku
 	} else {
@@ -1279,7 +1130,7 @@ func (workspace *Workspace_Spec) AssignProperties_From_Workspace_Spec(source *st
 		var workspaceHubConfig WorkspaceHubConfig
 		err := workspaceHubConfig.AssignProperties_From_WorkspaceHubConfig(source.WorkspaceHubConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WorkspaceHubConfig() to populate field WorkspaceHubConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_WorkspaceHubConfig() to populate field WorkspaceHubConfig")
 		}
 		workspace.WorkspaceHubConfig = &workspaceHubConfig
 	} else {
@@ -1344,7 +1195,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var encryption storage.EncryptionProperty
 		err := workspace.Encryption.AssignProperties_To_EncryptionProperty(&encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionProperty() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionProperty() to populate field Encryption")
 		}
 		destination.Encryption = &encryption
 	} else {
@@ -1356,7 +1207,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var featureStoreSetting storage.FeatureStoreSettings
 		err := workspace.FeatureStoreSettings.AssignProperties_To_FeatureStoreSettings(&featureStoreSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FeatureStoreSettings() to populate field FeatureStoreSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_FeatureStoreSettings() to populate field FeatureStoreSettings")
 		}
 		destination.FeatureStoreSettings = &featureStoreSetting
 	} else {
@@ -1387,7 +1238,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var identity storage.ManagedServiceIdentity
 		err := workspace.Identity.AssignProperties_To_ManagedServiceIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1416,7 +1267,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var managedNetwork storage.ManagedNetworkSettings
 		err := workspace.ManagedNetwork.AssignProperties_To_ManagedNetworkSettings(&managedNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedNetworkSettings() to populate field ManagedNetwork")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedNetworkSettings() to populate field ManagedNetwork")
 		}
 		destination.ManagedNetwork = &managedNetwork
 	} else {
@@ -1428,7 +1279,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var operatorSpec storage.WorkspaceOperatorSpec
 		err := workspace.OperatorSpec.AssignProperties_To_WorkspaceOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WorkspaceOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_WorkspaceOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1467,7 +1318,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var serverlessComputeSetting storage.ServerlessComputeSettings
 		err := workspace.ServerlessComputeSettings.AssignProperties_To_ServerlessComputeSettings(&serverlessComputeSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServerlessComputeSettings() to populate field ServerlessComputeSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ServerlessComputeSettings() to populate field ServerlessComputeSettings")
 		}
 		destination.ServerlessComputeSettings = &serverlessComputeSetting
 	} else {
@@ -1479,7 +1330,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var serviceManagedResourcesSetting storage.ServiceManagedResourcesSettings
 		err := workspace.ServiceManagedResourcesSettings.AssignProperties_To_ServiceManagedResourcesSettings(&serviceManagedResourcesSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceManagedResourcesSettings() to populate field ServiceManagedResourcesSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceManagedResourcesSettings() to populate field ServiceManagedResourcesSettings")
 		}
 		destination.ServiceManagedResourcesSettings = &serviceManagedResourcesSetting
 	} else {
@@ -1495,7 +1346,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 			var sharedPrivateLinkResource storage.SharedPrivateLinkResource
 			err := sharedPrivateLinkResourceItem.AssignProperties_To_SharedPrivateLinkResource(&sharedPrivateLinkResource)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SharedPrivateLinkResource() to populate field SharedPrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_To_SharedPrivateLinkResource() to populate field SharedPrivateLinkResources")
 			}
 			sharedPrivateLinkResourceList[sharedPrivateLinkResourceIndex] = sharedPrivateLinkResource
 		}
@@ -1509,7 +1360,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var sku storage.Sku
 		err := workspace.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1540,7 +1391,7 @@ func (workspace *Workspace_Spec) AssignProperties_To_Workspace_Spec(destination 
 		var workspaceHubConfig storage.WorkspaceHubConfig
 		err := workspace.WorkspaceHubConfig.AssignProperties_To_WorkspaceHubConfig(&workspaceHubConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WorkspaceHubConfig() to populate field WorkspaceHubConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_WorkspaceHubConfig() to populate field WorkspaceHubConfig")
 		}
 		destination.WorkspaceHubConfig = &workspaceHubConfig
 	} else {
@@ -1591,7 +1442,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 		var encryption EncryptionProperty
 		err := encryption.Initialize_From_EncryptionProperty_STATUS(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EncryptionProperty_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling Initialize_From_EncryptionProperty_STATUS() to populate field Encryption")
 		}
 		workspace.Encryption = &encryption
 	} else {
@@ -1603,7 +1454,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 		var featureStoreSetting FeatureStoreSettings
 		err := featureStoreSetting.Initialize_From_FeatureStoreSettings_STATUS(source.FeatureStoreSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_FeatureStoreSettings_STATUS() to populate field FeatureStoreSettings")
+			return eris.Wrap(err, "calling Initialize_From_FeatureStoreSettings_STATUS() to populate field FeatureStoreSettings")
 		}
 		workspace.FeatureStoreSettings = &featureStoreSetting
 	} else {
@@ -1634,7 +1485,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 		var identity ManagedServiceIdentity
 		err := identity.Initialize_From_ManagedServiceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		workspace.Identity = &identity
 	} else {
@@ -1655,7 +1506,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 		var managedNetwork ManagedNetworkSettings
 		err := managedNetwork.Initialize_From_ManagedNetworkSettings_STATUS(source.ManagedNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedNetworkSettings_STATUS() to populate field ManagedNetwork")
+			return eris.Wrap(err, "calling Initialize_From_ManagedNetworkSettings_STATUS() to populate field ManagedNetwork")
 		}
 		workspace.ManagedNetwork = &managedNetwork
 	} else {
@@ -1675,7 +1526,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 		var serverlessComputeSetting ServerlessComputeSettings
 		err := serverlessComputeSetting.Initialize_From_ServerlessComputeSettings_STATUS(source.ServerlessComputeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ServerlessComputeSettings_STATUS() to populate field ServerlessComputeSettings")
+			return eris.Wrap(err, "calling Initialize_From_ServerlessComputeSettings_STATUS() to populate field ServerlessComputeSettings")
 		}
 		workspace.ServerlessComputeSettings = &serverlessComputeSetting
 	} else {
@@ -1687,7 +1538,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 		var serviceManagedResourcesSetting ServiceManagedResourcesSettings
 		err := serviceManagedResourcesSetting.Initialize_From_ServiceManagedResourcesSettings_STATUS(source.ServiceManagedResourcesSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ServiceManagedResourcesSettings_STATUS() to populate field ServiceManagedResourcesSettings")
+			return eris.Wrap(err, "calling Initialize_From_ServiceManagedResourcesSettings_STATUS() to populate field ServiceManagedResourcesSettings")
 		}
 		workspace.ServiceManagedResourcesSettings = &serviceManagedResourcesSetting
 	} else {
@@ -1703,7 +1554,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 			var sharedPrivateLinkResource SharedPrivateLinkResource
 			err := sharedPrivateLinkResource.Initialize_From_SharedPrivateLinkResource_STATUS(&sharedPrivateLinkResourceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_SharedPrivateLinkResource_STATUS() to populate field SharedPrivateLinkResources")
+				return eris.Wrap(err, "calling Initialize_From_SharedPrivateLinkResource_STATUS() to populate field SharedPrivateLinkResources")
 			}
 			sharedPrivateLinkResourceList[sharedPrivateLinkResourceIndex] = sharedPrivateLinkResource
 		}
@@ -1717,7 +1568,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 		var sku Sku
 		err := sku.Initialize_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
 		}
 		workspace.Sku = &sku
 	} else {
@@ -1740,7 +1591,7 @@ func (workspace *Workspace_Spec) Initialize_From_Workspace_STATUS(source *Worksp
 		var workspaceHubConfig WorkspaceHubConfig
 		err := workspaceHubConfig.Initialize_From_WorkspaceHubConfig_STATUS(source.WorkspaceHubConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WorkspaceHubConfig_STATUS() to populate field WorkspaceHubConfig")
+			return eris.Wrap(err, "calling Initialize_From_WorkspaceHubConfig_STATUS() to populate field WorkspaceHubConfig")
 		}
 		workspace.WorkspaceHubConfig = &workspaceHubConfig
 	} else {
@@ -1899,13 +1750,13 @@ func (workspace *Workspace_STATUS) ConvertStatusFrom(source genruntime.Convertib
 	src = &storage.Workspace_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = workspace.AssignProperties_From_Workspace_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1923,13 +1774,13 @@ func (workspace *Workspace_STATUS) ConvertStatusTo(destination genruntime.Conver
 	dst = &storage.Workspace_STATUS{}
 	err := workspace.AssignProperties_To_Workspace_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -2402,7 +2253,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var encryption EncryptionProperty_STATUS
 		err := encryption.AssignProperties_From_EncryptionProperty_STATUS(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionProperty_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionProperty_STATUS() to populate field Encryption")
 		}
 		workspace.Encryption = &encryption
 	} else {
@@ -2414,7 +2265,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var featureStoreSetting FeatureStoreSettings_STATUS
 		err := featureStoreSetting.AssignProperties_From_FeatureStoreSettings_STATUS(source.FeatureStoreSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FeatureStoreSettings_STATUS() to populate field FeatureStoreSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_FeatureStoreSettings_STATUS() to populate field FeatureStoreSettings")
 		}
 		workspace.FeatureStoreSettings = &featureStoreSetting
 	} else {
@@ -2443,7 +2294,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var identity ManagedServiceIdentity_STATUS
 		err := identity.AssignProperties_From_ManagedServiceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		workspace.Identity = &identity
 	} else {
@@ -2467,7 +2318,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var managedNetwork ManagedNetworkSettings_STATUS
 		err := managedNetwork.AssignProperties_From_ManagedNetworkSettings_STATUS(source.ManagedNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedNetworkSettings_STATUS() to populate field ManagedNetwork")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedNetworkSettings_STATUS() to populate field ManagedNetwork")
 		}
 		workspace.ManagedNetwork = &managedNetwork
 	} else {
@@ -2485,7 +2336,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var notebookInfo NotebookResourceInfo_STATUS
 		err := notebookInfo.AssignProperties_From_NotebookResourceInfo_STATUS(source.NotebookInfo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NotebookResourceInfo_STATUS() to populate field NotebookInfo")
+			return eris.Wrap(err, "calling AssignProperties_From_NotebookResourceInfo_STATUS() to populate field NotebookInfo")
 		}
 		workspace.NotebookInfo = &notebookInfo
 	} else {
@@ -2504,7 +2355,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -2539,7 +2390,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var serverlessComputeSetting ServerlessComputeSettings_STATUS
 		err := serverlessComputeSetting.AssignProperties_From_ServerlessComputeSettings_STATUS(source.ServerlessComputeSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServerlessComputeSettings_STATUS() to populate field ServerlessComputeSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ServerlessComputeSettings_STATUS() to populate field ServerlessComputeSettings")
 		}
 		workspace.ServerlessComputeSettings = &serverlessComputeSetting
 	} else {
@@ -2551,7 +2402,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var serviceManagedResourcesSetting ServiceManagedResourcesSettings_STATUS
 		err := serviceManagedResourcesSetting.AssignProperties_From_ServiceManagedResourcesSettings_STATUS(source.ServiceManagedResourcesSettings)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceManagedResourcesSettings_STATUS() to populate field ServiceManagedResourcesSettings")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceManagedResourcesSettings_STATUS() to populate field ServiceManagedResourcesSettings")
 		}
 		workspace.ServiceManagedResourcesSettings = &serviceManagedResourcesSetting
 	} else {
@@ -2570,7 +2421,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 			var sharedPrivateLinkResource SharedPrivateLinkResource_STATUS
 			err := sharedPrivateLinkResource.AssignProperties_From_SharedPrivateLinkResource_STATUS(&sharedPrivateLinkResourceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SharedPrivateLinkResource_STATUS() to populate field SharedPrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_From_SharedPrivateLinkResource_STATUS() to populate field SharedPrivateLinkResources")
 			}
 			sharedPrivateLinkResourceList[sharedPrivateLinkResourceIndex] = sharedPrivateLinkResource
 		}
@@ -2584,7 +2435,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		workspace.Sku = &sku
 	} else {
@@ -2607,7 +2458,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		workspace.SystemData = &systemDatum
 	} else {
@@ -2636,7 +2487,7 @@ func (workspace *Workspace_STATUS) AssignProperties_From_Workspace_STATUS(source
 		var workspaceHubConfig WorkspaceHubConfig_STATUS
 		err := workspaceHubConfig.AssignProperties_From_WorkspaceHubConfig_STATUS(source.WorkspaceHubConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WorkspaceHubConfig_STATUS() to populate field WorkspaceHubConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_WorkspaceHubConfig_STATUS() to populate field WorkspaceHubConfig")
 		}
 		workspace.WorkspaceHubConfig = &workspaceHubConfig
 	} else {
@@ -2694,7 +2545,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var encryption storage.EncryptionProperty_STATUS
 		err := workspace.Encryption.AssignProperties_To_EncryptionProperty_STATUS(&encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionProperty_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionProperty_STATUS() to populate field Encryption")
 		}
 		destination.Encryption = &encryption
 	} else {
@@ -2706,7 +2557,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var featureStoreSetting storage.FeatureStoreSettings_STATUS
 		err := workspace.FeatureStoreSettings.AssignProperties_To_FeatureStoreSettings_STATUS(&featureStoreSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FeatureStoreSettings_STATUS() to populate field FeatureStoreSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_FeatureStoreSettings_STATUS() to populate field FeatureStoreSettings")
 		}
 		destination.FeatureStoreSettings = &featureStoreSetting
 	} else {
@@ -2735,7 +2586,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var identity storage.ManagedServiceIdentity_STATUS
 		err := workspace.Identity.AssignProperties_To_ManagedServiceIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedServiceIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -2759,7 +2610,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var managedNetwork storage.ManagedNetworkSettings_STATUS
 		err := workspace.ManagedNetwork.AssignProperties_To_ManagedNetworkSettings_STATUS(&managedNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedNetworkSettings_STATUS() to populate field ManagedNetwork")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedNetworkSettings_STATUS() to populate field ManagedNetwork")
 		}
 		destination.ManagedNetwork = &managedNetwork
 	} else {
@@ -2777,7 +2628,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var notebookInfo storage.NotebookResourceInfo_STATUS
 		err := workspace.NotebookInfo.AssignProperties_To_NotebookResourceInfo_STATUS(&notebookInfo)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NotebookResourceInfo_STATUS() to populate field NotebookInfo")
+			return eris.Wrap(err, "calling AssignProperties_To_NotebookResourceInfo_STATUS() to populate field NotebookInfo")
 		}
 		destination.NotebookInfo = &notebookInfo
 	} else {
@@ -2796,7 +2647,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -2829,7 +2680,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var serverlessComputeSetting storage.ServerlessComputeSettings_STATUS
 		err := workspace.ServerlessComputeSettings.AssignProperties_To_ServerlessComputeSettings_STATUS(&serverlessComputeSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServerlessComputeSettings_STATUS() to populate field ServerlessComputeSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ServerlessComputeSettings_STATUS() to populate field ServerlessComputeSettings")
 		}
 		destination.ServerlessComputeSettings = &serverlessComputeSetting
 	} else {
@@ -2841,7 +2692,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var serviceManagedResourcesSetting storage.ServiceManagedResourcesSettings_STATUS
 		err := workspace.ServiceManagedResourcesSettings.AssignProperties_To_ServiceManagedResourcesSettings_STATUS(&serviceManagedResourcesSetting)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceManagedResourcesSettings_STATUS() to populate field ServiceManagedResourcesSettings")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceManagedResourcesSettings_STATUS() to populate field ServiceManagedResourcesSettings")
 		}
 		destination.ServiceManagedResourcesSettings = &serviceManagedResourcesSetting
 	} else {
@@ -2860,7 +2711,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 			var sharedPrivateLinkResource storage.SharedPrivateLinkResource_STATUS
 			err := sharedPrivateLinkResourceItem.AssignProperties_To_SharedPrivateLinkResource_STATUS(&sharedPrivateLinkResource)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SharedPrivateLinkResource_STATUS() to populate field SharedPrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_To_SharedPrivateLinkResource_STATUS() to populate field SharedPrivateLinkResources")
 			}
 			sharedPrivateLinkResourceList[sharedPrivateLinkResourceIndex] = sharedPrivateLinkResource
 		}
@@ -2874,7 +2725,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var sku storage.Sku_STATUS
 		err := workspace.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -2897,7 +2748,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var systemDatum storage.SystemData_STATUS
 		err := workspace.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -2926,7 +2777,7 @@ func (workspace *Workspace_STATUS) AssignProperties_To_Workspace_STATUS(destinat
 		var workspaceHubConfig storage.WorkspaceHubConfig_STATUS
 		err := workspace.WorkspaceHubConfig.AssignProperties_To_WorkspaceHubConfig_STATUS(&workspaceHubConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WorkspaceHubConfig_STATUS() to populate field WorkspaceHubConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_WorkspaceHubConfig_STATUS() to populate field WorkspaceHubConfig")
 		}
 		destination.WorkspaceHubConfig = &workspaceHubConfig
 	} else {
@@ -3033,7 +2884,7 @@ func (property *EncryptionProperty) AssignProperties_From_EncryptionProperty(sou
 		var identity IdentityForCmk
 		err := identity.AssignProperties_From_IdentityForCmk(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IdentityForCmk() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_IdentityForCmk() to populate field Identity")
 		}
 		property.Identity = &identity
 	} else {
@@ -3045,7 +2896,7 @@ func (property *EncryptionProperty) AssignProperties_From_EncryptionProperty(sou
 		var keyVaultProperty EncryptionKeyVaultProperties
 		err := keyVaultProperty.AssignProperties_From_EncryptionKeyVaultProperties(source.KeyVaultProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionKeyVaultProperties() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionKeyVaultProperties() to populate field KeyVaultProperties")
 		}
 		property.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -3066,7 +2917,7 @@ func (property *EncryptionProperty) AssignProperties_To_EncryptionProperty(desti
 		var identity storage.IdentityForCmk
 		err := property.Identity.AssignProperties_To_IdentityForCmk(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IdentityForCmk() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_IdentityForCmk() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -3078,7 +2929,7 @@ func (property *EncryptionProperty) AssignProperties_To_EncryptionProperty(desti
 		var keyVaultProperty storage.EncryptionKeyVaultProperties
 		err := property.KeyVaultProperties.AssignProperties_To_EncryptionKeyVaultProperties(&keyVaultProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionKeyVaultProperties() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionKeyVaultProperties() to populate field KeyVaultProperties")
 		}
 		destination.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -3104,7 +2955,7 @@ func (property *EncryptionProperty) Initialize_From_EncryptionProperty_STATUS(so
 		var identity IdentityForCmk
 		err := identity.Initialize_From_IdentityForCmk_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_IdentityForCmk_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_IdentityForCmk_STATUS() to populate field Identity")
 		}
 		property.Identity = &identity
 	} else {
@@ -3116,7 +2967,7 @@ func (property *EncryptionProperty) Initialize_From_EncryptionProperty_STATUS(so
 		var keyVaultProperty EncryptionKeyVaultProperties
 		err := keyVaultProperty.Initialize_From_EncryptionKeyVaultProperties_STATUS(source.KeyVaultProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EncryptionKeyVaultProperties_STATUS() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling Initialize_From_EncryptionKeyVaultProperties_STATUS() to populate field KeyVaultProperties")
 		}
 		property.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -3194,7 +3045,7 @@ func (property *EncryptionProperty_STATUS) AssignProperties_From_EncryptionPrope
 		var identity IdentityForCmk_STATUS
 		err := identity.AssignProperties_From_IdentityForCmk_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IdentityForCmk_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_IdentityForCmk_STATUS() to populate field Identity")
 		}
 		property.Identity = &identity
 	} else {
@@ -3206,7 +3057,7 @@ func (property *EncryptionProperty_STATUS) AssignProperties_From_EncryptionPrope
 		var keyVaultProperty EncryptionKeyVaultProperties_STATUS
 		err := keyVaultProperty.AssignProperties_From_EncryptionKeyVaultProperties_STATUS(source.KeyVaultProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionKeyVaultProperties_STATUS() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionKeyVaultProperties_STATUS() to populate field KeyVaultProperties")
 		}
 		property.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -3236,7 +3087,7 @@ func (property *EncryptionProperty_STATUS) AssignProperties_To_EncryptionPropert
 		var identity storage.IdentityForCmk_STATUS
 		err := property.Identity.AssignProperties_To_IdentityForCmk_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IdentityForCmk_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_IdentityForCmk_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -3248,7 +3099,7 @@ func (property *EncryptionProperty_STATUS) AssignProperties_To_EncryptionPropert
 		var keyVaultProperty storage.EncryptionKeyVaultProperties_STATUS
 		err := property.KeyVaultProperties.AssignProperties_To_EncryptionKeyVaultProperties_STATUS(&keyVaultProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionKeyVaultProperties_STATUS() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionKeyVaultProperties_STATUS() to populate field KeyVaultProperties")
 		}
 		destination.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -3362,7 +3213,7 @@ func (settings *FeatureStoreSettings) AssignProperties_From_FeatureStoreSettings
 		var computeRuntime ComputeRuntimeDto
 		err := computeRuntime.AssignProperties_From_ComputeRuntimeDto(source.ComputeRuntime)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeRuntimeDto() to populate field ComputeRuntime")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeRuntimeDto() to populate field ComputeRuntime")
 		}
 		settings.ComputeRuntime = &computeRuntime
 	} else {
@@ -3389,7 +3240,7 @@ func (settings *FeatureStoreSettings) AssignProperties_To_FeatureStoreSettings(d
 		var computeRuntime storage.ComputeRuntimeDto
 		err := settings.ComputeRuntime.AssignProperties_To_ComputeRuntimeDto(&computeRuntime)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeRuntimeDto() to populate field ComputeRuntime")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeRuntimeDto() to populate field ComputeRuntime")
 		}
 		destination.ComputeRuntime = &computeRuntime
 	} else {
@@ -3421,7 +3272,7 @@ func (settings *FeatureStoreSettings) Initialize_From_FeatureStoreSettings_STATU
 		var computeRuntime ComputeRuntimeDto
 		err := computeRuntime.Initialize_From_ComputeRuntimeDto_STATUS(source.ComputeRuntime)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ComputeRuntimeDto_STATUS() to populate field ComputeRuntime")
+			return eris.Wrap(err, "calling Initialize_From_ComputeRuntimeDto_STATUS() to populate field ComputeRuntime")
 		}
 		settings.ComputeRuntime = &computeRuntime
 	} else {
@@ -3495,7 +3346,7 @@ func (settings *FeatureStoreSettings_STATUS) AssignProperties_From_FeatureStoreS
 		var computeRuntime ComputeRuntimeDto_STATUS
 		err := computeRuntime.AssignProperties_From_ComputeRuntimeDto_STATUS(source.ComputeRuntime)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ComputeRuntimeDto_STATUS() to populate field ComputeRuntime")
+			return eris.Wrap(err, "calling AssignProperties_From_ComputeRuntimeDto_STATUS() to populate field ComputeRuntime")
 		}
 		settings.ComputeRuntime = &computeRuntime
 	} else {
@@ -3522,7 +3373,7 @@ func (settings *FeatureStoreSettings_STATUS) AssignProperties_To_FeatureStoreSet
 		var computeRuntime storage.ComputeRuntimeDto_STATUS
 		err := settings.ComputeRuntime.AssignProperties_To_ComputeRuntimeDto_STATUS(&computeRuntime)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ComputeRuntimeDto_STATUS() to populate field ComputeRuntime")
+			return eris.Wrap(err, "calling AssignProperties_To_ComputeRuntimeDto_STATUS() to populate field ComputeRuntime")
 		}
 		destination.ComputeRuntime = &computeRuntime
 	} else {
@@ -3666,7 +3517,7 @@ func (settings *ManagedNetworkSettings) AssignProperties_From_ManagedNetworkSett
 			var outboundRule OutboundRule
 			err := outboundRule.AssignProperties_From_OutboundRule(&outboundRuleValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_OutboundRule() to populate field OutboundRules")
+				return eris.Wrap(err, "calling AssignProperties_From_OutboundRule() to populate field OutboundRules")
 			}
 			outboundRuleMap[outboundRuleKey] = outboundRule
 		}
@@ -3680,7 +3531,7 @@ func (settings *ManagedNetworkSettings) AssignProperties_From_ManagedNetworkSett
 		var status ManagedNetworkProvisionStatus
 		err := status.AssignProperties_From_ManagedNetworkProvisionStatus(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedNetworkProvisionStatus() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedNetworkProvisionStatus() to populate field Status")
 		}
 		settings.Status = &status
 	} else {
@@ -3713,7 +3564,7 @@ func (settings *ManagedNetworkSettings) AssignProperties_To_ManagedNetworkSettin
 			var outboundRule storage.OutboundRule
 			err := outboundRuleValue.AssignProperties_To_OutboundRule(&outboundRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_OutboundRule() to populate field OutboundRules")
+				return eris.Wrap(err, "calling AssignProperties_To_OutboundRule() to populate field OutboundRules")
 			}
 			outboundRuleMap[outboundRuleKey] = outboundRule
 		}
@@ -3727,7 +3578,7 @@ func (settings *ManagedNetworkSettings) AssignProperties_To_ManagedNetworkSettin
 		var status storage.ManagedNetworkProvisionStatus
 		err := settings.Status.AssignProperties_To_ManagedNetworkProvisionStatus(&status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedNetworkProvisionStatus() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedNetworkProvisionStatus() to populate field Status")
 		}
 		destination.Status = &status
 	} else {
@@ -3765,7 +3616,7 @@ func (settings *ManagedNetworkSettings) Initialize_From_ManagedNetworkSettings_S
 			var outboundRule OutboundRule
 			err := outboundRule.Initialize_From_OutboundRule_STATUS(&outboundRuleValue)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_OutboundRule_STATUS() to populate field OutboundRules")
+				return eris.Wrap(err, "calling Initialize_From_OutboundRule_STATUS() to populate field OutboundRules")
 			}
 			outboundRuleMap[outboundRuleKey] = outboundRule
 		}
@@ -3779,7 +3630,7 @@ func (settings *ManagedNetworkSettings) Initialize_From_ManagedNetworkSettings_S
 		var status ManagedNetworkProvisionStatus
 		err := status.Initialize_From_ManagedNetworkProvisionStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedNetworkProvisionStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling Initialize_From_ManagedNetworkProvisionStatus_STATUS() to populate field Status")
 		}
 		settings.Status = &status
 	} else {
@@ -3881,7 +3732,7 @@ func (settings *ManagedNetworkSettings_STATUS) AssignProperties_From_ManagedNetw
 			var outboundRule OutboundRule_STATUS
 			err := outboundRule.AssignProperties_From_OutboundRule_STATUS(&outboundRuleValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_OutboundRule_STATUS() to populate field OutboundRules")
+				return eris.Wrap(err, "calling AssignProperties_From_OutboundRule_STATUS() to populate field OutboundRules")
 			}
 			outboundRuleMap[outboundRuleKey] = outboundRule
 		}
@@ -3895,7 +3746,7 @@ func (settings *ManagedNetworkSettings_STATUS) AssignProperties_From_ManagedNetw
 		var status ManagedNetworkProvisionStatus_STATUS
 		err := status.AssignProperties_From_ManagedNetworkProvisionStatus_STATUS(source.Status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedNetworkProvisionStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedNetworkProvisionStatus_STATUS() to populate field Status")
 		}
 		settings.Status = &status
 	} else {
@@ -3931,7 +3782,7 @@ func (settings *ManagedNetworkSettings_STATUS) AssignProperties_To_ManagedNetwor
 			var outboundRule storage.OutboundRule_STATUS
 			err := outboundRuleValue.AssignProperties_To_OutboundRule_STATUS(&outboundRule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_OutboundRule_STATUS() to populate field OutboundRules")
+				return eris.Wrap(err, "calling AssignProperties_To_OutboundRule_STATUS() to populate field OutboundRules")
 			}
 			outboundRuleMap[outboundRuleKey] = outboundRule
 		}
@@ -3945,7 +3796,7 @@ func (settings *ManagedNetworkSettings_STATUS) AssignProperties_To_ManagedNetwor
 		var status storage.ManagedNetworkProvisionStatus_STATUS
 		err := settings.Status.AssignProperties_To_ManagedNetworkProvisionStatus_STATUS(&status)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedNetworkProvisionStatus_STATUS() to populate field Status")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedNetworkProvisionStatus_STATUS() to populate field Status")
 		}
 		destination.Status = &status
 	} else {
@@ -4025,7 +3876,7 @@ func (info *NotebookResourceInfo_STATUS) AssignProperties_From_NotebookResourceI
 		var notebookPreparationError NotebookPreparationError_STATUS
 		err := notebookPreparationError.AssignProperties_From_NotebookPreparationError_STATUS(source.NotebookPreparationError)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NotebookPreparationError_STATUS() to populate field NotebookPreparationError")
+			return eris.Wrap(err, "calling AssignProperties_From_NotebookPreparationError_STATUS() to populate field NotebookPreparationError")
 		}
 		info.NotebookPreparationError = &notebookPreparationError
 	} else {
@@ -4052,7 +3903,7 @@ func (info *NotebookResourceInfo_STATUS) AssignProperties_To_NotebookResourceInf
 		var notebookPreparationError storage.NotebookPreparationError_STATUS
 		err := info.NotebookPreparationError.AssignProperties_To_NotebookPreparationError_STATUS(&notebookPreparationError)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NotebookPreparationError_STATUS() to populate field NotebookPreparationError")
+			return eris.Wrap(err, "calling AssignProperties_To_NotebookPreparationError_STATUS() to populate field NotebookPreparationError")
 		}
 		destination.NotebookPreparationError = &notebookPreparationError
 	} else {
@@ -4410,7 +4261,7 @@ func (settings *ServiceManagedResourcesSettings) AssignProperties_From_ServiceMa
 		var cosmosDb CosmosDbSettings
 		err := cosmosDb.AssignProperties_From_CosmosDbSettings(source.CosmosDb)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CosmosDbSettings() to populate field CosmosDb")
+			return eris.Wrap(err, "calling AssignProperties_From_CosmosDbSettings() to populate field CosmosDb")
 		}
 		settings.CosmosDb = &cosmosDb
 	} else {
@@ -4431,7 +4282,7 @@ func (settings *ServiceManagedResourcesSettings) AssignProperties_To_ServiceMana
 		var cosmosDb storage.CosmosDbSettings
 		err := settings.CosmosDb.AssignProperties_To_CosmosDbSettings(&cosmosDb)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CosmosDbSettings() to populate field CosmosDb")
+			return eris.Wrap(err, "calling AssignProperties_To_CosmosDbSettings() to populate field CosmosDb")
 		}
 		destination.CosmosDb = &cosmosDb
 	} else {
@@ -4457,7 +4308,7 @@ func (settings *ServiceManagedResourcesSettings) Initialize_From_ServiceManagedR
 		var cosmosDb CosmosDbSettings
 		err := cosmosDb.Initialize_From_CosmosDbSettings_STATUS(source.CosmosDb)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CosmosDbSettings_STATUS() to populate field CosmosDb")
+			return eris.Wrap(err, "calling Initialize_From_CosmosDbSettings_STATUS() to populate field CosmosDb")
 		}
 		settings.CosmosDb = &cosmosDb
 	} else {
@@ -4510,7 +4361,7 @@ func (settings *ServiceManagedResourcesSettings_STATUS) AssignProperties_From_Se
 		var cosmosDb CosmosDbSettings_STATUS
 		err := cosmosDb.AssignProperties_From_CosmosDbSettings_STATUS(source.CosmosDb)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CosmosDbSettings_STATUS() to populate field CosmosDb")
+			return eris.Wrap(err, "calling AssignProperties_From_CosmosDbSettings_STATUS() to populate field CosmosDb")
 		}
 		settings.CosmosDb = &cosmosDb
 	} else {
@@ -4531,7 +4382,7 @@ func (settings *ServiceManagedResourcesSettings_STATUS) AssignProperties_To_Serv
 		var cosmosDb storage.CosmosDbSettings_STATUS
 		err := settings.CosmosDb.AssignProperties_To_CosmosDbSettings_STATUS(&cosmosDb)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CosmosDbSettings_STATUS() to populate field CosmosDb")
+			return eris.Wrap(err, "calling AssignProperties_To_CosmosDbSettings_STATUS() to populate field CosmosDb")
 		}
 		destination.CosmosDb = &cosmosDb
 	} else {
@@ -5144,7 +4995,7 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_From_WorkspaceOperatorSp
 		var secret WorkspaceOperatorSecrets
 		err := secret.AssignProperties_From_WorkspaceOperatorSecrets(source.Secrets)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WorkspaceOperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_From_WorkspaceOperatorSecrets() to populate field Secrets")
 		}
 		operator.Secrets = &secret
 	} else {
@@ -5201,7 +5052,7 @@ func (operator *WorkspaceOperatorSpec) AssignProperties_To_WorkspaceOperatorSpec
 		var secret storage.WorkspaceOperatorSecrets
 		err := operator.Secrets.AssignProperties_To_WorkspaceOperatorSecrets(&secret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WorkspaceOperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_To_WorkspaceOperatorSecrets() to populate field Secrets")
 		}
 		destination.Secrets = &secret
 	} else {
@@ -5584,7 +5435,7 @@ func (properties *EncryptionKeyVaultProperties) ConvertToARM(resolved genruntime
 	if properties.IdentityClientIdFromConfig != nil {
 		identityClientIdValue, err := resolved.ResolvedConfigMaps.Lookup(*properties.IdentityClientIdFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property IdentityClientId")
+			return nil, eris.Wrap(err, "looking up configmap for property IdentityClientId")
 		}
 		identityClientId := identityClientIdValue
 		result.IdentityClientId = &identityClientId
@@ -6430,7 +6281,7 @@ func (rule *OutboundRule) AssignProperties_From_OutboundRule(source *storage.Out
 		var fqdn FqdnOutboundRule
 		err := fqdn.AssignProperties_From_FqdnOutboundRule(source.FQDN)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FqdnOutboundRule() to populate field FQDN")
+			return eris.Wrap(err, "calling AssignProperties_From_FqdnOutboundRule() to populate field FQDN")
 		}
 		rule.FQDN = &fqdn
 	} else {
@@ -6442,7 +6293,7 @@ func (rule *OutboundRule) AssignProperties_From_OutboundRule(source *storage.Out
 		var privateEndpoint PrivateEndpointOutboundRule
 		err := privateEndpoint.AssignProperties_From_PrivateEndpointOutboundRule(source.PrivateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointOutboundRule() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointOutboundRule() to populate field PrivateEndpoint")
 		}
 		rule.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -6454,7 +6305,7 @@ func (rule *OutboundRule) AssignProperties_From_OutboundRule(source *storage.Out
 		var serviceTag ServiceTagOutboundRule
 		err := serviceTag.AssignProperties_From_ServiceTagOutboundRule(source.ServiceTag)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceTagOutboundRule() to populate field ServiceTag")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceTagOutboundRule() to populate field ServiceTag")
 		}
 		rule.ServiceTag = &serviceTag
 	} else {
@@ -6475,7 +6326,7 @@ func (rule *OutboundRule) AssignProperties_To_OutboundRule(destination *storage.
 		var fqdn storage.FqdnOutboundRule
 		err := rule.FQDN.AssignProperties_To_FqdnOutboundRule(&fqdn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FqdnOutboundRule() to populate field FQDN")
+			return eris.Wrap(err, "calling AssignProperties_To_FqdnOutboundRule() to populate field FQDN")
 		}
 		destination.FQDN = &fqdn
 	} else {
@@ -6487,7 +6338,7 @@ func (rule *OutboundRule) AssignProperties_To_OutboundRule(destination *storage.
 		var privateEndpoint storage.PrivateEndpointOutboundRule
 		err := rule.PrivateEndpoint.AssignProperties_To_PrivateEndpointOutboundRule(&privateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointOutboundRule() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointOutboundRule() to populate field PrivateEndpoint")
 		}
 		destination.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -6499,7 +6350,7 @@ func (rule *OutboundRule) AssignProperties_To_OutboundRule(destination *storage.
 		var serviceTag storage.ServiceTagOutboundRule
 		err := rule.ServiceTag.AssignProperties_To_ServiceTagOutboundRule(&serviceTag)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceTagOutboundRule() to populate field ServiceTag")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceTagOutboundRule() to populate field ServiceTag")
 		}
 		destination.ServiceTag = &serviceTag
 	} else {
@@ -6525,7 +6376,7 @@ func (rule *OutboundRule) Initialize_From_OutboundRule_STATUS(source *OutboundRu
 		var fqdn FqdnOutboundRule
 		err := fqdn.Initialize_From_FqdnOutboundRule_STATUS(source.FQDN)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_FqdnOutboundRule_STATUS() to populate field FQDN")
+			return eris.Wrap(err, "calling Initialize_From_FqdnOutboundRule_STATUS() to populate field FQDN")
 		}
 		rule.FQDN = &fqdn
 	} else {
@@ -6537,7 +6388,7 @@ func (rule *OutboundRule) Initialize_From_OutboundRule_STATUS(source *OutboundRu
 		var privateEndpoint PrivateEndpointOutboundRule
 		err := privateEndpoint.Initialize_From_PrivateEndpointOutboundRule_STATUS(source.PrivateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PrivateEndpointOutboundRule_STATUS() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling Initialize_From_PrivateEndpointOutboundRule_STATUS() to populate field PrivateEndpoint")
 		}
 		rule.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -6549,7 +6400,7 @@ func (rule *OutboundRule) Initialize_From_OutboundRule_STATUS(source *OutboundRu
 		var serviceTag ServiceTagOutboundRule
 		err := serviceTag.Initialize_From_ServiceTagOutboundRule_STATUS(source.ServiceTag)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ServiceTagOutboundRule_STATUS() to populate field ServiceTag")
+			return eris.Wrap(err, "calling Initialize_From_ServiceTagOutboundRule_STATUS() to populate field ServiceTag")
 		}
 		rule.ServiceTag = &serviceTag
 	} else {
@@ -6630,7 +6481,7 @@ func (rule *OutboundRule_STATUS) AssignProperties_From_OutboundRule_STATUS(sourc
 		var fqdn FqdnOutboundRule_STATUS
 		err := fqdn.AssignProperties_From_FqdnOutboundRule_STATUS(source.FQDN)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FqdnOutboundRule_STATUS() to populate field FQDN")
+			return eris.Wrap(err, "calling AssignProperties_From_FqdnOutboundRule_STATUS() to populate field FQDN")
 		}
 		rule.FQDN = &fqdn
 	} else {
@@ -6642,7 +6493,7 @@ func (rule *OutboundRule_STATUS) AssignProperties_From_OutboundRule_STATUS(sourc
 		var privateEndpoint PrivateEndpointOutboundRule_STATUS
 		err := privateEndpoint.AssignProperties_From_PrivateEndpointOutboundRule_STATUS(source.PrivateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointOutboundRule_STATUS() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointOutboundRule_STATUS() to populate field PrivateEndpoint")
 		}
 		rule.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -6654,7 +6505,7 @@ func (rule *OutboundRule_STATUS) AssignProperties_From_OutboundRule_STATUS(sourc
 		var serviceTag ServiceTagOutboundRule_STATUS
 		err := serviceTag.AssignProperties_From_ServiceTagOutboundRule_STATUS(source.ServiceTag)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceTagOutboundRule_STATUS() to populate field ServiceTag")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceTagOutboundRule_STATUS() to populate field ServiceTag")
 		}
 		rule.ServiceTag = &serviceTag
 	} else {
@@ -6675,7 +6526,7 @@ func (rule *OutboundRule_STATUS) AssignProperties_To_OutboundRule_STATUS(destina
 		var fqdn storage.FqdnOutboundRule_STATUS
 		err := rule.FQDN.AssignProperties_To_FqdnOutboundRule_STATUS(&fqdn)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FqdnOutboundRule_STATUS() to populate field FQDN")
+			return eris.Wrap(err, "calling AssignProperties_To_FqdnOutboundRule_STATUS() to populate field FQDN")
 		}
 		destination.FQDN = &fqdn
 	} else {
@@ -6687,7 +6538,7 @@ func (rule *OutboundRule_STATUS) AssignProperties_To_OutboundRule_STATUS(destina
 		var privateEndpoint storage.PrivateEndpointOutboundRule_STATUS
 		err := rule.PrivateEndpoint.AssignProperties_To_PrivateEndpointOutboundRule_STATUS(&privateEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointOutboundRule_STATUS() to populate field PrivateEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointOutboundRule_STATUS() to populate field PrivateEndpoint")
 		}
 		destination.PrivateEndpoint = &privateEndpoint
 	} else {
@@ -6699,7 +6550,7 @@ func (rule *OutboundRule_STATUS) AssignProperties_To_OutboundRule_STATUS(destina
 		var serviceTag storage.ServiceTagOutboundRule_STATUS
 		err := rule.ServiceTag.AssignProperties_To_ServiceTagOutboundRule_STATUS(&serviceTag)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceTagOutboundRule_STATUS() to populate field ServiceTag")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceTagOutboundRule_STATUS() to populate field ServiceTag")
 		}
 		destination.ServiceTag = &serviceTag
 	} else {
@@ -7430,7 +7281,7 @@ func (rule *PrivateEndpointOutboundRule) AssignProperties_From_PrivateEndpointOu
 		var destination PrivateEndpointDestination
 		err := destination.AssignProperties_From_PrivateEndpointDestination(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointDestination() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointDestination() to populate field Destination")
 		}
 		rule.Destination = &destination
 	} else {
@@ -7477,7 +7328,7 @@ func (rule *PrivateEndpointOutboundRule) AssignProperties_To_PrivateEndpointOutb
 		var destinationLocal storage.PrivateEndpointDestination
 		err := rule.Destination.AssignProperties_To_PrivateEndpointDestination(&destinationLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointDestination() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointDestination() to populate field Destination")
 		}
 		destination.Destination = &destinationLocal
 	} else {
@@ -7527,7 +7378,7 @@ func (rule *PrivateEndpointOutboundRule) Initialize_From_PrivateEndpointOutbound
 		var destination PrivateEndpointDestination
 		err := destination.Initialize_From_PrivateEndpointDestination_STATUS(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_PrivateEndpointDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling Initialize_From_PrivateEndpointDestination_STATUS() to populate field Destination")
 		}
 		rule.Destination = &destination
 	} else {
@@ -7636,7 +7487,7 @@ func (rule *PrivateEndpointOutboundRule_STATUS) AssignProperties_From_PrivateEnd
 		var destination PrivateEndpointDestination_STATUS
 		err := destination.AssignProperties_From_PrivateEndpointDestination_STATUS(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointDestination_STATUS() to populate field Destination")
 		}
 		rule.Destination = &destination
 	} else {
@@ -7683,7 +7534,7 @@ func (rule *PrivateEndpointOutboundRule_STATUS) AssignProperties_To_PrivateEndpo
 		var destinationLocal storage.PrivateEndpointDestination_STATUS
 		err := rule.Destination.AssignProperties_To_PrivateEndpointDestination_STATUS(&destinationLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointDestination_STATUS() to populate field Destination")
 		}
 		destination.Destination = &destinationLocal
 	} else {
@@ -7845,7 +7696,7 @@ func (rule *ServiceTagOutboundRule) AssignProperties_From_ServiceTagOutboundRule
 		var destination ServiceTagDestination
 		err := destination.AssignProperties_From_ServiceTagDestination(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceTagDestination() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceTagDestination() to populate field Destination")
 		}
 		rule.Destination = &destination
 	} else {
@@ -7892,7 +7743,7 @@ func (rule *ServiceTagOutboundRule) AssignProperties_To_ServiceTagOutboundRule(d
 		var destinationLocal storage.ServiceTagDestination
 		err := rule.Destination.AssignProperties_To_ServiceTagDestination(&destinationLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceTagDestination() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceTagDestination() to populate field Destination")
 		}
 		destination.Destination = &destinationLocal
 	} else {
@@ -7942,7 +7793,7 @@ func (rule *ServiceTagOutboundRule) Initialize_From_ServiceTagOutboundRule_STATU
 		var destination ServiceTagDestination
 		err := destination.Initialize_From_ServiceTagDestination_STATUS(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ServiceTagDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling Initialize_From_ServiceTagDestination_STATUS() to populate field Destination")
 		}
 		rule.Destination = &destination
 	} else {
@@ -8051,7 +7902,7 @@ func (rule *ServiceTagOutboundRule_STATUS) AssignProperties_From_ServiceTagOutbo
 		var destination ServiceTagDestination_STATUS
 		err := destination.AssignProperties_From_ServiceTagDestination_STATUS(source.Destination)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServiceTagDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_From_ServiceTagDestination_STATUS() to populate field Destination")
 		}
 		rule.Destination = &destination
 	} else {
@@ -8098,7 +7949,7 @@ func (rule *ServiceTagOutboundRule_STATUS) AssignProperties_To_ServiceTagOutboun
 		var destinationLocal storage.ServiceTagDestination_STATUS
 		err := rule.Destination.AssignProperties_To_ServiceTagDestination_STATUS(&destinationLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServiceTagDestination_STATUS() to populate field Destination")
+			return eris.Wrap(err, "calling AssignProperties_To_ServiceTagDestination_STATUS() to populate field Destination")
 		}
 		destination.Destination = &destinationLocal
 	} else {

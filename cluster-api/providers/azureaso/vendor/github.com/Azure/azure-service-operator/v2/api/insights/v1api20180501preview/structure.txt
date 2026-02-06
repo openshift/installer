@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20180501preview
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-05-01-preview"
+
 Webtest: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (17 properties)
@@ -89,3 +90,4 @@ Webtest: Resource
         ├── IgnoreHttpsStatusCode: *bool
         ├── SSLCertRemainingLifetimeCheck: *int
         └── SSLCheck: *bool
+

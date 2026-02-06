@@ -8,15 +8,16 @@ package customizations
 import (
 	"context"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/servicebus/armservicebus"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
-	servicebus "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
+	servicebus "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20240101/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -44,7 +45,7 @@ func (ext *NamespaceExtension) ExportKubernetesSecrets(
 	// if the hub storage version changes.
 	namespace, ok := obj.(*servicebus.Namespace)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *servicebus.Namespace", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *servicebus.Namespace", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -71,7 +72,7 @@ func (ext *NamespaceExtension) ExportKubernetesSecrets(
 		armClient.Creds(),
 		armClient.ClientOptions())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create ARM servicebus client factory")
+		return nil, eris.Wrapf(err, "failed to create ARM servicebus client factory")
 	}
 
 	// This access rule always exists and provides management access to the namespace
@@ -87,7 +88,7 @@ func (ext *NamespaceExtension) ExportKubernetesSecrets(
 		rootRuleName,
 		&options)
 	if err != nil {
-		return nil, errors.Wrapf(
+		return nil, eris.Wrapf(
 			err,
 			"failed to retrieve namespace management keys from authorization rule %q",
 			rootRuleName)

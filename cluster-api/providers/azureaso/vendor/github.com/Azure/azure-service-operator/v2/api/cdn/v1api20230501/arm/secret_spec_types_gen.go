@@ -57,15 +57,19 @@ func (parameters SecretParameters) MarshalJSON() ([]byte, error) {
 	if parameters.AzureFirstPartyManagedCertificate != nil {
 		return json.Marshal(parameters.AzureFirstPartyManagedCertificate)
 	}
+
 	if parameters.CustomerCertificate != nil {
 		return json.Marshal(parameters.CustomerCertificate)
 	}
+
 	if parameters.ManagedCertificate != nil {
 		return json.Marshal(parameters.ManagedCertificate)
 	}
+
 	if parameters.UrlSigningKey != nil {
 		return json.Marshal(parameters.UrlSigningKey)
 	}
+
 	return nil, nil
 }
 

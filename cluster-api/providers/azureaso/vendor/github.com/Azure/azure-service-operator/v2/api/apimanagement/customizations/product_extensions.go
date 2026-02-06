@@ -6,9 +6,9 @@ package customizations
 import (
 	"context"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/apimanagement/armapimanagement"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/apimanagement/armapimanagement/v2"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
@@ -32,7 +32,7 @@ func (extension *ProductExtension) Delete(
 ) (ctrl.Result, error) {
 	typedObj, ok := obj.(*storage.Product)
 	if !ok {
-		return ctrl.Result{}, errors.Errorf("cannot run on unknown resource type %T, expected *apiManagement.Product", obj)
+		return ctrl.Result{}, eris.Errorf("cannot run on unknown resource type %T, expected *apiManagement.Product", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -42,11 +42,11 @@ func (extension *ProductExtension) Delete(
 	productName := typedObj.GetName()
 	id, err := genruntime.GetAndParseResourceID(typedObj)
 	if err != nil {
-		return ctrl.Result{}, errors.Wrapf(err, "failed to get the ARM ResourceId for %s", productName)
+		return ctrl.Result{}, eris.Wrapf(err, "failed to get the ARM ResourceId for %s", productName)
 	}
 
 	if id.Parent == nil {
-		return ctrl.Result{}, errors.Wrapf(err, ". APIM Product had no parent ID: %s", id.String())
+		return ctrl.Result{}, eris.Wrapf(err, ". APIM Product had no parent ID: %s", id.String())
 	}
 	parentName := id.Parent.Name
 
@@ -54,7 +54,7 @@ func (extension *ProductExtension) Delete(
 	// connection each time through
 	clientFactory, err := armapimanagement.NewClientFactory(id.SubscriptionID, armClient.Creds(), armClient.ClientOptions())
 	if err != nil {
-		return ctrl.Result{}, errors.Wrapf(err, "failed to create new apimClient")
+		return ctrl.Result{}, eris.Wrapf(err, "failed to create new apimClient")
 	}
 
 	// This is a synchronous operation
@@ -68,7 +68,7 @@ func (extension *ProductExtension) Delete(
 			DeleteSubscriptions: to.Ptr(true),
 		})
 	if err != nil {
-		return ctrl.Result{}, errors.Wrapf(err, "failed to delete product %q", productName)
+		return ctrl.Result{}, eris.Wrapf(err, "failed to delete product %q", productName)
 	}
 
 	return next(ctx, log, resolver, armClient, obj)

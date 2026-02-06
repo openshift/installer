@@ -119,6 +119,7 @@ MetricAlert_STATUS: Object (6 properties)
 │   └── WindowSize: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 MetricAlert_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -233,3 +234,4 @@ MetricAlert_Spec: Object (4 properties)
 │   ├── TargetResourceType: *string
 │   └── WindowSize: *string
 └── Tags: map[string]string
+

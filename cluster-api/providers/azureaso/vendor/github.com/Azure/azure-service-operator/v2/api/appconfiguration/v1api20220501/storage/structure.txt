@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501/st
 -------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-05-01"
+
 ConfigurationStore: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (16 properties)
@@ -103,3 +104,4 @@ ConfigurationStore: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Tags: map[string]string
     └── Type: *string
+

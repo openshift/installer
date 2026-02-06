@@ -72,6 +72,7 @@ func (credentials AuthCredentials) MarshalJSON() ([]byte, error) {
 	if credentials.SecretStoreBasedAuthCredentials != nil {
 		return json.Marshal(credentials.SecretStoreBasedAuthCredentials)
 	}
+
 	return nil, nil
 }
 
@@ -182,6 +183,7 @@ func (properties BaseResourceProperties) MarshalJSON() ([]byte, error) {
 	if properties.DefaultResourceProperties != nil {
 		return json.Marshal(properties.DefaultResourceProperties)
 	}
+
 	return nil, nil
 }
 
@@ -232,9 +234,11 @@ func (parameters BackupDatasourceParameters) MarshalJSON() ([]byte, error) {
 	if parameters.Blob != nil {
 		return json.Marshal(parameters.Blob)
 	}
+
 	if parameters.KubernetesCluster != nil {
 		return json.Marshal(parameters.KubernetesCluster)
 	}
+
 	return nil, nil
 }
 
@@ -269,6 +273,7 @@ func (parameters DataStoreParameters) MarshalJSON() ([]byte, error) {
 	if parameters.AzureOperationalStoreParameters != nil {
 		return json.Marshal(parameters.AzureOperationalStoreParameters)
 	}
+
 	return nil, nil
 }
 

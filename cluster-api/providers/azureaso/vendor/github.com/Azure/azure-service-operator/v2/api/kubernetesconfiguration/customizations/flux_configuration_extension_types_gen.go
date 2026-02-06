@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20230501 "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501"
-	storage "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501/storage"
+	v20230501s "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20230501/storage"
+	v20241101 "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20241101"
+	v20241101s "github.com/Azure/azure-service-operator/v2/api/kubernetesconfiguration/v1api20241101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type FluxConfigurationExtension struct {
 func (extension *FluxConfigurationExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20230501.FluxConfiguration{},
-		&storage.FluxConfiguration{}}
+		&v20230501s.FluxConfiguration{},
+		&v20241101.FluxConfiguration{},
+		&v20241101s.FluxConfiguration{}}
 }

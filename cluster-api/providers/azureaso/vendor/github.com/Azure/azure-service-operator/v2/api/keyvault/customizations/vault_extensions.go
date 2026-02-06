@@ -16,12 +16,11 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/keyvault/armkeyvault"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	keyvault "github.com/Azure/azure-service-operator/v2/api/keyvault/v1api20230701/storage"
 	resources "github.com/Azure/azure-service-operator/v2/api/resources/v1api20200601/storage"
-
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
 	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
@@ -34,6 +33,7 @@ import (
 
 var _ extensions.ARMResourceModifier = &VaultExtension{}
 
+//nolint:staticcheck // Underscores for enum values is our convention in ASO
 const (
 	CreateMode_Default         = "default"
 	CreateMode_Recover         = "recover"
@@ -53,7 +53,7 @@ func (ex *VaultExtension) ModifyARMResource(
 ) (genruntime.ARMResource, error) {
 	kv, ok := obj.(*keyvault.Vault)
 	if !ok {
-		return nil, errors.Errorf(
+		return nil, eris.Errorf(
 			"Cannot run VaultExtension.ModifyARMResource() with unexpected resource type %T",
 			obj)
 	}
@@ -72,26 +72,26 @@ func (ex *VaultExtension) ModifyARMResource(
 	// (Can't use the KeyVault as we do this before the KV exists)
 	id, err := ex.getOwner(ctx, kv, resolver)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get and parse resource ID from KeyVault owner")
+		return nil, eris.Wrap(err, "failed to get and parse resource ID from KeyVault owner")
 	}
 
 	vc, err := armkeyvault.NewVaultsClient(id.SubscriptionID, armClient.Creds(), armClient.ClientOptions())
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to create new VaultsClient")
+		return nil, eris.Wrap(err, "failed to create new VaultsClient")
 	}
 
 	createMode := *kv.Spec.Properties.CreateMode
 	if createMode == CreateMode_CreateOrRecover {
 		createMode, err = ex.handleCreateOrRecover(ctx, kv, vc, id, log)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error checking for existence of soft-deleted KeyVault")
+			return nil, eris.Wrapf(err, "error checking for existence of soft-deleted KeyVault")
 		}
 	}
 
 	if createMode == CreateMode_PurgeThenCreate {
 		err = ex.handlePurgeThenCreate(ctx, kv, vc, log)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error purging soft-deleted KeyVault")
+			return nil, eris.Wrapf(err, "error purging soft-deleted KeyVault")
 		}
 
 		createMode = CreateMode_Default
@@ -101,7 +101,7 @@ func (ex *VaultExtension) ModifyARMResource(
 	spec := armObj.Spec()
 	err = reflecthelpers.SetProperty(spec, "Properties.CreateMode", &createMode)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error setting CreateMode to %s", createMode)
+		return nil, eris.Wrapf(err, "error setting CreateMode to %s", createMode)
 	}
 
 	return armObj, nil
@@ -116,7 +116,7 @@ func (ex *VaultExtension) handleCreateOrRecover(
 ) (string, error) {
 	deletedKeyVault, err := ex.checkForExistenceOfDeletedKeyVault(ctx, kv, vc, log)
 	if err != nil {
-		return "", errors.Wrapf(err, "error checking for existence of soft-deleted KeyVault %s", kv.Name)
+		return "", eris.Wrapf(err, "error checking for existence of soft-deleted KeyVault %s", kv.Name)
 	}
 
 	result := CreateMode_Default
@@ -126,7 +126,7 @@ func (ex *VaultExtension) handleCreateOrRecover(
 			var id *arm.ResourceID
 			id, err = arm.ParseResourceID(to.Value(deletedKeyVault.DeletedVault.Properties.VaultID))
 			if err != nil {
-				return "", errors.Wrapf(err, "error parsing KeyVault ID %s", to.Value(deletedKeyVault.DeletedVault.Properties.VaultID))
+				return "", eris.Wrapf(err, "error parsing KeyVault ID %s", to.Value(deletedKeyVault.DeletedVault.Properties.VaultID))
 			}
 
 			err = checkResourceGroupsMatch(ownerID, id)
@@ -170,17 +170,18 @@ func (ex *VaultExtension) handlePurgeThenCreate(
 	if deletedKeyVault.Exists {
 		location := to.Value(kv.Spec.Location)
 		if location == "" {
-			return errors.Errorf("unable to determine location of KeyVault %s", kv.Name)
+			return eris.Errorf("unable to determine location of KeyVault %s", kv.Name)
 		}
 
 		poller, err := vc.BeginPurgeDeleted(ctx, kv.Name, location, &armkeyvault.VaultsClientBeginPurgeDeletedOptions{})
 		if err != nil {
-			return errors.Wrapf(err, "failed to begin purging deleted KeyVault %s", kv.Name)
+			return eris.Wrapf(err, "failed to begin purging deleted KeyVault %s", kv.Name)
 		}
 
+		// TODO: This polling speed is not configurable for our tests
 		_, err = poller.PollUntilDone(ctx, &runtime.PollUntilDoneOptions{Frequency: 10 * time.Second})
 		if err != nil {
-			return errors.Wrapf(err, "failed to purge deleted KeyVault %s", kv.Name)
+			return eris.Wrapf(err, "failed to purge deleted KeyVault %s", kv.Name)
 		}
 	}
 
@@ -216,7 +217,7 @@ func (ex *VaultExtension) checkForExistenceOfDeletedKeyVault(
 	// Get the location of the KeyVault
 	location := to.Value(kv.Spec.Location)
 	if location == "" {
-		return deletedKeyVaultNotFound(), errors.Errorf("unable to determine location of KeyVault %s", kv.Name)
+		return deletedKeyVaultNotFound(), eris.Errorf("unable to determine location of KeyVault %s", kv.Name)
 	}
 
 	// Get the name of the KeyVault
@@ -232,9 +233,9 @@ func (ex *VaultExtension) checkForExistenceOfDeletedKeyVault(
 	deletedDetails, err := vaultsClient.GetDeleted(ctx, vaultName, location, &armkeyvault.VaultsClientGetDeletedOptions{})
 	if err != nil {
 		var responseError *azcore.ResponseError
-		if errors.As(err, &responseError) {
+		if eris.As(err, &responseError) {
 			if responseError.StatusCode != http.StatusNotFound {
-				return deletedKeyVaultNotFound(), errors.Wrapf(err, "failed to get deleted KeyVault %s, error %d", kv.Name, responseError.StatusCode)
+				return deletedKeyVaultNotFound(), eris.Wrapf(err, "failed to get deleted KeyVault %s, error %d", kv.Name, responseError.StatusCode)
 			}
 
 			// KeyVault doesn't exist,
@@ -243,8 +244,8 @@ func (ex *VaultExtension) checkForExistenceOfDeletedKeyVault(
 	}
 
 	originalID := ""
-	if deletedDetails.DeletedVault.Properties != nil {
-		originalID = to.Value(deletedDetails.DeletedVault.Properties.VaultID)
+	if deletedDetails.Properties != nil {
+		originalID = to.Value(deletedDetails.Properties.VaultID)
 	}
 
 	log.Info(
@@ -268,7 +269,7 @@ func (*VaultExtension) getOwner(
 ) (*arm.ResourceID, error) {
 	owner, err := reslv.ResolveOwner(ctx, kv)
 	if err != nil {
-		return nil, errors.Wrapf(err, "unable to resolve owner of KeyVault %s", kv.Name)
+		return nil, eris.Wrapf(err, "unable to resolve owner of KeyVault %s", kv.Name)
 	}
 
 	var id *arm.ResourceID
@@ -278,7 +279,7 @@ func (*VaultExtension) getOwner(
 	case resolver.OwnerFoundKubernetes:
 		rg, ok := owner.Owner.(*resources.ResourceGroup)
 		if !ok {
-			return nil, errors.Errorf("expected owner of KeyVault %s to be a ResourceGroup", kv.Name)
+			return nil, eris.Errorf("expected owner of KeyVault %s to be a ResourceGroup", kv.Name)
 		}
 
 		// Type assert that the ResourceGroup is the hub type. This will fail to compile if
@@ -290,15 +291,15 @@ func (*VaultExtension) getOwner(
 
 		id, err = genruntime.GetAndParseResourceID(rg)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to get and parse resource ID from KeyVault owner")
+			return nil, eris.Wrap(err, "failed to get and parse resource ID from KeyVault owner")
 		}
 	case resolver.OwnerFoundARM:
 		id, err = arm.ParseResourceID(owner.ARMID)
 		if err != nil {
-			return nil, errors.Wrap(err, "failed to parse resource ID from KeyVault owner")
+			return nil, eris.Wrap(err, "failed to parse resource ID from KeyVault owner")
 		}
 	default:
-		return nil, errors.Errorf("unexpected owner type of KeyVault, type: %s", owner.Result)
+		return nil, eris.Errorf("unexpected owner type of KeyVault, type: %s", owner.Result)
 	}
 
 	return id, nil
@@ -308,10 +309,11 @@ func checkResourceGroupsMatch(new *arm.ResourceID, old *arm.ResourceID) error {
 	if !strings.EqualFold(new.ResourceGroupName, old.ResourceGroupName) {
 		// This error is fatal
 		return conditions.NewReadyConditionImpactingError(
-			errors.Errorf(
+			eris.Errorf(
 				"cannot recover KeyVault: new resourceGroup %s does not match old resource group %s",
 				new.ResourceGroupName,
 				old.ResourceGroupName),
+
 			conditions.ConditionSeverityError,
 			conditions.ReasonFailed,
 		)

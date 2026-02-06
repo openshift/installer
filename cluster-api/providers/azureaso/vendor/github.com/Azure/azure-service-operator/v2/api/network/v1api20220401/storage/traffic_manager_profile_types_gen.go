@@ -12,7 +12,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -138,6 +138,10 @@ func (profile *TrafficManagerProfile) NewEmptyStatus() genruntime.ConvertibleSta
 
 // Owner returns the ResourceReference of the owner
 func (profile *TrafficManagerProfile) Owner() *genruntime.ResourceReference {
+	if profile.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(profile.Spec)
 	return profile.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -154,7 +158,7 @@ func (profile *TrafficManagerProfile) SetStatus(status genruntime.ConvertibleSta
 	var st TrafficManagerProfile_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	profile.Status = st
@@ -222,7 +226,7 @@ var _ genruntime.ConvertibleSpec = &TrafficManagerProfile_Spec{}
 // ConvertSpecFrom populates our TrafficManagerProfile_Spec from the provided source
 func (profile *TrafficManagerProfile_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == profile {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(profile)
@@ -231,7 +235,7 @@ func (profile *TrafficManagerProfile_Spec) ConvertSpecFrom(source genruntime.Con
 // ConvertSpecTo populates the provided destination from our TrafficManagerProfile_Spec
 func (profile *TrafficManagerProfile_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == profile {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(profile)
@@ -261,7 +265,7 @@ var _ genruntime.ConvertibleStatus = &TrafficManagerProfile_STATUS{}
 // ConvertStatusFrom populates our TrafficManagerProfile_STATUS from the provided source
 func (profile *TrafficManagerProfile_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == profile {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(profile)
@@ -270,7 +274,7 @@ func (profile *TrafficManagerProfile_STATUS) ConvertStatusFrom(source genruntime
 // ConvertStatusTo populates the provided destination from our TrafficManagerProfile_STATUS
 func (profile *TrafficManagerProfile_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == profile {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(profile)

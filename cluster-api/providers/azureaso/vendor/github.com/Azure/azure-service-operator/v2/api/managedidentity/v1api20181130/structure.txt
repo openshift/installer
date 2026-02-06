@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20181130
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-11-30"
+
 UserAssignedIdentity: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (5 properties)
@@ -27,3 +28,4 @@ UserAssignedIdentity: Resource
     ├── Tags: map[string]string
     ├── TenantId: *string
     └── Type: *string
+

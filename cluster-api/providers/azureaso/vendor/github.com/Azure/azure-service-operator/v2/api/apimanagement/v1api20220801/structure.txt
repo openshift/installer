@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801
 --------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-08-01"
+
 Api: Resource
 ├── Owner: Service
 ├── Spec: Object (28 properties)
@@ -175,6 +176,7 @@ Api: Resource
     ├── SubscriptionRequired: *bool
     ├── TermsOfServiceUrl: *string
     └── Type: *string
+
 ApiVersionSet: Resource
 ├── Owner: Service
 ├── Spec: Object (8 properties)
@@ -213,6 +215,7 @@ ApiVersionSet: Resource
         ├── "Header"
         ├── "Query"
         └── "Segment"
+
 AuthorizationProvider: Resource
 ├── Owner: Service
 ├── Spec: Object (6 properties)
@@ -245,6 +248,7 @@ AuthorizationProvider: Resource
     │   │   └── ClientCredentials: map[string]string
     │   └── RedirectUrl: *string
     └── Type: *string
+
 AuthorizationProvidersAuthorization: Resource
 ├── Owner: AuthorizationProvider
 ├── Spec: Object (6 properties)
@@ -277,6 +281,7 @@ AuthorizationProvidersAuthorization: Resource
     ├── Parameters: map[string]string
     ├── Status: *string
     └── Type: *string
+
 AuthorizationProvidersAuthorizationsAccessPolicy: Resource
 ├── Owner: AuthorizationProvidersAuthorization
 ├── Spec: Object (7 properties)
@@ -299,6 +304,7 @@ AuthorizationProvidersAuthorizationsAccessPolicy: Resource
     ├── ObjectId: *string
     ├── TenantId: *string
     └── Type: *string
+
 Backend: Resource
 ├── Owner: Service
 ├── Spec: Object (12 properties)
@@ -391,6 +397,7 @@ Backend: Resource
     │   └── ValidateCertificateName: *bool
     ├── Type: *string
     └── Url: *string
+
 NamedValue: Resource
 ├── Owner: Service
 ├── Spec: Object (8 properties)
@@ -430,6 +437,7 @@ NamedValue: Resource
     ├── Tags: string[]
     ├── Type: *string
     └── Value: *string
+
 Policy: Resource
 ├── Owner: Service
 ├── Spec: Object (4 properties)
@@ -454,6 +462,7 @@ Policy: Resource
     ├── Name: *string
     ├── Type: *string
     └── Value: *string
+
 PolicyFragment: Resource
 ├── Owner: Service
 ├── Spec: Object (6 properties)
@@ -482,6 +491,7 @@ PolicyFragment: Resource
     ├── Name: *string
     ├── Type: *string
     └── Value: *string
+
 Product: Resource
 ├── Owner: Service
 ├── Spec: Object (10 properties)
@@ -519,6 +529,7 @@ Product: Resource
     ├── SubscriptionsLimit: *int
     ├── Terms: *string
     └── Type: *string
+
 ProductApi: Resource
 ├── Owner: Product
 ├── Spec: Object (3 properties)
@@ -532,6 +543,7 @@ ProductApi: Resource
 │   └── Owner: *genruntime.KnownResourceReference
 └── Status: Object (1 property)
     └── Conditions: conditions.Condition[]
+
 ProductPolicy: Resource
 ├── Owner: Product
 ├── Spec: Object (4 properties)
@@ -556,6 +568,7 @@ ProductPolicy: Resource
     ├── Name: *string
     ├── Type: *string
     └── Value: *string
+
 Service: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (24 properties)
@@ -840,6 +853,7 @@ Service: Resource
     │   ├── "Internal"
     │   └── "None"
     └── Zones: string[]
+
 Subscription: Resource
 ├── Owner: Service
 ├── Spec: Object (10 properties)
@@ -890,3 +904,4 @@ Subscription: Resource
     │   └── "suspended"
     ├── StateComment: *string
     └── Type: *string
+

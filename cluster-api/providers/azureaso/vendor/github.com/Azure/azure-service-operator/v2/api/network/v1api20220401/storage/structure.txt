@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220401/storage
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-04-01"
+
 TrafficManagerProfile: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -84,6 +85,7 @@ TrafficManagerProfile: Resource
     ├── TrafficRoutingMethod: *string
     ├── TrafficViewEnrollmentStatus: *string
     └── Type: *string
+
 TrafficManagerProfilesAzureEndpoint: Resource
 ├── Owner: network/v1api20220401.TrafficManagerProfile
 ├── Spec: Object (20 properties)
@@ -144,6 +146,7 @@ TrafficManagerProfilesAzureEndpoint: Resource
     ├── TargetResourceId: *string
     ├── Type: *string
     └── Weight: *int
+
 TrafficManagerProfilesExternalEndpoint: Resource
 ├── Owner: network/v1api20220401.TrafficManagerProfile
 ├── Spec: Object (20 properties)
@@ -204,6 +207,7 @@ TrafficManagerProfilesExternalEndpoint: Resource
     ├── TargetResourceId: *string
     ├── Type: *string
     └── Weight: *int
+
 TrafficManagerProfilesNestedEndpoint: Resource
 ├── Owner: network/v1api20220401.TrafficManagerProfile
 ├── Spec: Object (20 properties)
@@ -264,3 +268,4 @@ TrafficManagerProfilesNestedEndpoint: Resource
     ├── TargetResourceId: *string
     ├── Type: *string
     └── Weight: *int
+

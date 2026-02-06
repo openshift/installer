@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20230501/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (secret *Secret) ConvertTo(hub conversion.Hub) error {
 
 	return secret.AssignProperties_To_Secret(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-cdn-azure-com-v1api20230501-secret,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=secrets,verbs=create;update,versions=v1api20230501,name=default.v1api20230501.secrets.cdn.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Secret{}
-
-// Default applies defaults to the Secret resource
-func (secret *Secret) Default() {
-	secret.defaultImpl()
-	var temp any = secret
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (secret *Secret) defaultAzureName() {
-	if secret.Spec.AzureName == "" {
-		secret.Spec.AzureName = secret.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Secret resource
-func (secret *Secret) defaultImpl() { secret.defaultAzureName() }
 
 var _ configmaps.Exporter = &Secret{}
 
@@ -173,6 +147,10 @@ func (secret *Secret) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (secret *Secret) Owner() *genruntime.ResourceReference {
+	if secret.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(secret.Spec)
 	return secret.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (secret *Secret) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Secret_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	secret.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-cdn-azure-com-v1api20230501-secret,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=secrets,verbs=create;update,versions=v1api20230501,name=validate.v1api20230501.secrets.cdn.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Secret{}
-
-// ValidateCreate validates the creation of the resource
-func (secret *Secret) ValidateCreate() (admission.Warnings, error) {
-	validations := secret.createValidations()
-	var temp any = secret
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (secret *Secret) ValidateDelete() (admission.Warnings, error) {
-	validations := secret.deleteValidations()
-	var temp any = secret
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (secret *Secret) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := secret.updateValidations()
-	var temp any = secret
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (secret *Secret) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){secret.validateResourceReferences, secret.validateOwnerReference, secret.validateSecretDestinations, secret.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (secret *Secret) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (secret *Secret) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return secret.validateResourceReferences()
-		},
-		secret.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return secret.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return secret.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return secret.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (secret *Secret) validateConfigMapDestinations() (admission.Warnings, error) {
-	if secret.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(secret, nil, secret.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (secret *Secret) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(secret)
-}
-
-// validateResourceReferences validates all resource references
-func (secret *Secret) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&secret.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (secret *Secret) validateSecretDestinations() (admission.Warnings, error) {
-	if secret.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(secret, nil, secret.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (secret *Secret) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Secret)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, secret)
 }
 
 // AssignProperties_From_Secret populates our Secret from the provided source Secret
@@ -309,7 +184,7 @@ func (secret *Secret) AssignProperties_From_Secret(source *storage.Secret) error
 	var spec Secret_Spec
 	err := spec.AssignProperties_From_Secret_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Secret_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Secret_Spec() to populate field Spec")
 	}
 	secret.Spec = spec
 
@@ -317,7 +192,7 @@ func (secret *Secret) AssignProperties_From_Secret(source *storage.Secret) error
 	var status Secret_STATUS
 	err = status.AssignProperties_From_Secret_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Secret_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Secret_STATUS() to populate field Status")
 	}
 	secret.Status = status
 
@@ -335,7 +210,7 @@ func (secret *Secret) AssignProperties_To_Secret(destination *storage.Secret) er
 	var spec storage.Secret_Spec
 	err := secret.Spec.AssignProperties_To_Secret_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Secret_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Secret_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (secret *Secret) AssignProperties_To_Secret(destination *storage.Secret) er
 	var status storage.Secret_STATUS
 	err = secret.Status.AssignProperties_To_Secret_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Secret_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Secret_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -471,13 +346,13 @@ func (secret *Secret_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) er
 	src = &storage.Secret_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = secret.AssignProperties_From_Secret_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -495,13 +370,13 @@ func (secret *Secret_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec)
 	dst = &storage.Secret_Spec{}
 	err := secret.AssignProperties_To_Secret_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -518,7 +393,7 @@ func (secret *Secret_Spec) AssignProperties_From_Secret_Spec(source *storage.Sec
 		var operatorSpec SecretOperatorSpec
 		err := operatorSpec.AssignProperties_From_SecretOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SecretOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_SecretOperatorSpec() to populate field OperatorSpec")
 		}
 		secret.OperatorSpec = &operatorSpec
 	} else {
@@ -538,7 +413,7 @@ func (secret *Secret_Spec) AssignProperties_From_Secret_Spec(source *storage.Sec
 		var parameter SecretParameters
 		err := parameter.AssignProperties_From_SecretParameters(source.Parameters)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SecretParameters() to populate field Parameters")
+			return eris.Wrap(err, "calling AssignProperties_From_SecretParameters() to populate field Parameters")
 		}
 		secret.Parameters = &parameter
 	} else {
@@ -562,7 +437,7 @@ func (secret *Secret_Spec) AssignProperties_To_Secret_Spec(destination *storage.
 		var operatorSpec storage.SecretOperatorSpec
 		err := secret.OperatorSpec.AssignProperties_To_SecretOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SecretOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_SecretOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -585,7 +460,7 @@ func (secret *Secret_Spec) AssignProperties_To_Secret_Spec(destination *storage.
 		var parameter storage.SecretParameters
 		err := secret.Parameters.AssignProperties_To_SecretParameters(&parameter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SecretParameters() to populate field Parameters")
+			return eris.Wrap(err, "calling AssignProperties_To_SecretParameters() to populate field Parameters")
 		}
 		destination.Parameters = &parameter
 	} else {
@@ -611,7 +486,7 @@ func (secret *Secret_Spec) Initialize_From_Secret_STATUS(source *Secret_STATUS) 
 		var parameter SecretParameters
 		err := parameter.Initialize_From_SecretParameters_STATUS(source.Parameters)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SecretParameters_STATUS() to populate field Parameters")
+			return eris.Wrap(err, "calling Initialize_From_SecretParameters_STATUS() to populate field Parameters")
 		}
 		secret.Parameters = &parameter
 	} else {
@@ -671,13 +546,13 @@ func (secret *Secret_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStat
 	src = &storage.Secret_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = secret.AssignProperties_From_Secret_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -695,13 +570,13 @@ func (secret *Secret_STATUS) ConvertStatusTo(destination genruntime.ConvertibleS
 	dst = &storage.Secret_STATUS{}
 	err := secret.AssignProperties_To_Secret_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -827,7 +702,7 @@ func (secret *Secret_STATUS) AssignProperties_From_Secret_STATUS(source *storage
 		var parameter SecretParameters_STATUS
 		err := parameter.AssignProperties_From_SecretParameters_STATUS(source.Parameters)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SecretParameters_STATUS() to populate field Parameters")
+			return eris.Wrap(err, "calling AssignProperties_From_SecretParameters_STATUS() to populate field Parameters")
 		}
 		secret.Parameters = &parameter
 	} else {
@@ -851,7 +726,7 @@ func (secret *Secret_STATUS) AssignProperties_From_Secret_STATUS(source *storage
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		secret.SystemData = &systemDatum
 	} else {
@@ -892,7 +767,7 @@ func (secret *Secret_STATUS) AssignProperties_To_Secret_STATUS(destination *stor
 		var parameter storage.SecretParameters_STATUS
 		err := secret.Parameters.AssignProperties_To_SecretParameters_STATUS(&parameter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SecretParameters_STATUS() to populate field Parameters")
+			return eris.Wrap(err, "calling AssignProperties_To_SecretParameters_STATUS() to populate field Parameters")
 		}
 		destination.Parameters = &parameter
 	} else {
@@ -915,7 +790,7 @@ func (secret *Secret_STATUS) AssignProperties_To_Secret_STATUS(destination *stor
 		var systemDatum storage.SystemData_STATUS
 		err := secret.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1173,7 +1048,7 @@ func (parameters *SecretParameters) AssignProperties_From_SecretParameters(sourc
 		var azureFirstPartyManagedCertificate AzureFirstPartyManagedCertificateParameters
 		err := azureFirstPartyManagedCertificate.AssignProperties_From_AzureFirstPartyManagedCertificateParameters(source.AzureFirstPartyManagedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureFirstPartyManagedCertificateParameters() to populate field AzureFirstPartyManagedCertificate")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureFirstPartyManagedCertificateParameters() to populate field AzureFirstPartyManagedCertificate")
 		}
 		parameters.AzureFirstPartyManagedCertificate = &azureFirstPartyManagedCertificate
 	} else {
@@ -1185,7 +1060,7 @@ func (parameters *SecretParameters) AssignProperties_From_SecretParameters(sourc
 		var customerCertificate CustomerCertificateParameters
 		err := customerCertificate.AssignProperties_From_CustomerCertificateParameters(source.CustomerCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CustomerCertificateParameters() to populate field CustomerCertificate")
+			return eris.Wrap(err, "calling AssignProperties_From_CustomerCertificateParameters() to populate field CustomerCertificate")
 		}
 		parameters.CustomerCertificate = &customerCertificate
 	} else {
@@ -1197,7 +1072,7 @@ func (parameters *SecretParameters) AssignProperties_From_SecretParameters(sourc
 		var managedCertificate ManagedCertificateParameters
 		err := managedCertificate.AssignProperties_From_ManagedCertificateParameters(source.ManagedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedCertificateParameters() to populate field ManagedCertificate")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedCertificateParameters() to populate field ManagedCertificate")
 		}
 		parameters.ManagedCertificate = &managedCertificate
 	} else {
@@ -1209,7 +1084,7 @@ func (parameters *SecretParameters) AssignProperties_From_SecretParameters(sourc
 		var urlSigningKey UrlSigningKeyParameters
 		err := urlSigningKey.AssignProperties_From_UrlSigningKeyParameters(source.UrlSigningKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UrlSigningKeyParameters() to populate field UrlSigningKey")
+			return eris.Wrap(err, "calling AssignProperties_From_UrlSigningKeyParameters() to populate field UrlSigningKey")
 		}
 		parameters.UrlSigningKey = &urlSigningKey
 	} else {
@@ -1230,7 +1105,7 @@ func (parameters *SecretParameters) AssignProperties_To_SecretParameters(destina
 		var azureFirstPartyManagedCertificate storage.AzureFirstPartyManagedCertificateParameters
 		err := parameters.AzureFirstPartyManagedCertificate.AssignProperties_To_AzureFirstPartyManagedCertificateParameters(&azureFirstPartyManagedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureFirstPartyManagedCertificateParameters() to populate field AzureFirstPartyManagedCertificate")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureFirstPartyManagedCertificateParameters() to populate field AzureFirstPartyManagedCertificate")
 		}
 		destination.AzureFirstPartyManagedCertificate = &azureFirstPartyManagedCertificate
 	} else {
@@ -1242,7 +1117,7 @@ func (parameters *SecretParameters) AssignProperties_To_SecretParameters(destina
 		var customerCertificate storage.CustomerCertificateParameters
 		err := parameters.CustomerCertificate.AssignProperties_To_CustomerCertificateParameters(&customerCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CustomerCertificateParameters() to populate field CustomerCertificate")
+			return eris.Wrap(err, "calling AssignProperties_To_CustomerCertificateParameters() to populate field CustomerCertificate")
 		}
 		destination.CustomerCertificate = &customerCertificate
 	} else {
@@ -1254,7 +1129,7 @@ func (parameters *SecretParameters) AssignProperties_To_SecretParameters(destina
 		var managedCertificate storage.ManagedCertificateParameters
 		err := parameters.ManagedCertificate.AssignProperties_To_ManagedCertificateParameters(&managedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedCertificateParameters() to populate field ManagedCertificate")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedCertificateParameters() to populate field ManagedCertificate")
 		}
 		destination.ManagedCertificate = &managedCertificate
 	} else {
@@ -1266,7 +1141,7 @@ func (parameters *SecretParameters) AssignProperties_To_SecretParameters(destina
 		var urlSigningKey storage.UrlSigningKeyParameters
 		err := parameters.UrlSigningKey.AssignProperties_To_UrlSigningKeyParameters(&urlSigningKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UrlSigningKeyParameters() to populate field UrlSigningKey")
+			return eris.Wrap(err, "calling AssignProperties_To_UrlSigningKeyParameters() to populate field UrlSigningKey")
 		}
 		destination.UrlSigningKey = &urlSigningKey
 	} else {
@@ -1292,7 +1167,7 @@ func (parameters *SecretParameters) Initialize_From_SecretParameters_STATUS(sour
 		var azureFirstPartyManagedCertificate AzureFirstPartyManagedCertificateParameters
 		err := azureFirstPartyManagedCertificate.Initialize_From_AzureFirstPartyManagedCertificateParameters_STATUS(source.AzureFirstPartyManagedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_AzureFirstPartyManagedCertificateParameters_STATUS() to populate field AzureFirstPartyManagedCertificate")
+			return eris.Wrap(err, "calling Initialize_From_AzureFirstPartyManagedCertificateParameters_STATUS() to populate field AzureFirstPartyManagedCertificate")
 		}
 		parameters.AzureFirstPartyManagedCertificate = &azureFirstPartyManagedCertificate
 	} else {
@@ -1304,7 +1179,7 @@ func (parameters *SecretParameters) Initialize_From_SecretParameters_STATUS(sour
 		var customerCertificate CustomerCertificateParameters
 		err := customerCertificate.Initialize_From_CustomerCertificateParameters_STATUS(source.CustomerCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_CustomerCertificateParameters_STATUS() to populate field CustomerCertificate")
+			return eris.Wrap(err, "calling Initialize_From_CustomerCertificateParameters_STATUS() to populate field CustomerCertificate")
 		}
 		parameters.CustomerCertificate = &customerCertificate
 	} else {
@@ -1316,7 +1191,7 @@ func (parameters *SecretParameters) Initialize_From_SecretParameters_STATUS(sour
 		var managedCertificate ManagedCertificateParameters
 		err := managedCertificate.Initialize_From_ManagedCertificateParameters_STATUS(source.ManagedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedCertificateParameters_STATUS() to populate field ManagedCertificate")
+			return eris.Wrap(err, "calling Initialize_From_ManagedCertificateParameters_STATUS() to populate field ManagedCertificate")
 		}
 		parameters.ManagedCertificate = &managedCertificate
 	} else {
@@ -1328,7 +1203,7 @@ func (parameters *SecretParameters) Initialize_From_SecretParameters_STATUS(sour
 		var urlSigningKey UrlSigningKeyParameters
 		err := urlSigningKey.Initialize_From_UrlSigningKeyParameters_STATUS(source.UrlSigningKey)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_UrlSigningKeyParameters_STATUS() to populate field UrlSigningKey")
+			return eris.Wrap(err, "calling Initialize_From_UrlSigningKeyParameters_STATUS() to populate field UrlSigningKey")
 		}
 		parameters.UrlSigningKey = &urlSigningKey
 	} else {
@@ -1423,7 +1298,7 @@ func (parameters *SecretParameters_STATUS) AssignProperties_From_SecretParameter
 		var azureFirstPartyManagedCertificate AzureFirstPartyManagedCertificateParameters_STATUS
 		err := azureFirstPartyManagedCertificate.AssignProperties_From_AzureFirstPartyManagedCertificateParameters_STATUS(source.AzureFirstPartyManagedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_AzureFirstPartyManagedCertificateParameters_STATUS() to populate field AzureFirstPartyManagedCertificate")
+			return eris.Wrap(err, "calling AssignProperties_From_AzureFirstPartyManagedCertificateParameters_STATUS() to populate field AzureFirstPartyManagedCertificate")
 		}
 		parameters.AzureFirstPartyManagedCertificate = &azureFirstPartyManagedCertificate
 	} else {
@@ -1435,7 +1310,7 @@ func (parameters *SecretParameters_STATUS) AssignProperties_From_SecretParameter
 		var customerCertificate CustomerCertificateParameters_STATUS
 		err := customerCertificate.AssignProperties_From_CustomerCertificateParameters_STATUS(source.CustomerCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CustomerCertificateParameters_STATUS() to populate field CustomerCertificate")
+			return eris.Wrap(err, "calling AssignProperties_From_CustomerCertificateParameters_STATUS() to populate field CustomerCertificate")
 		}
 		parameters.CustomerCertificate = &customerCertificate
 	} else {
@@ -1447,7 +1322,7 @@ func (parameters *SecretParameters_STATUS) AssignProperties_From_SecretParameter
 		var managedCertificate ManagedCertificateParameters_STATUS
 		err := managedCertificate.AssignProperties_From_ManagedCertificateParameters_STATUS(source.ManagedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedCertificateParameters_STATUS() to populate field ManagedCertificate")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedCertificateParameters_STATUS() to populate field ManagedCertificate")
 		}
 		parameters.ManagedCertificate = &managedCertificate
 	} else {
@@ -1459,7 +1334,7 @@ func (parameters *SecretParameters_STATUS) AssignProperties_From_SecretParameter
 		var urlSigningKey UrlSigningKeyParameters_STATUS
 		err := urlSigningKey.AssignProperties_From_UrlSigningKeyParameters_STATUS(source.UrlSigningKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UrlSigningKeyParameters_STATUS() to populate field UrlSigningKey")
+			return eris.Wrap(err, "calling AssignProperties_From_UrlSigningKeyParameters_STATUS() to populate field UrlSigningKey")
 		}
 		parameters.UrlSigningKey = &urlSigningKey
 	} else {
@@ -1480,7 +1355,7 @@ func (parameters *SecretParameters_STATUS) AssignProperties_To_SecretParameters_
 		var azureFirstPartyManagedCertificate storage.AzureFirstPartyManagedCertificateParameters_STATUS
 		err := parameters.AzureFirstPartyManagedCertificate.AssignProperties_To_AzureFirstPartyManagedCertificateParameters_STATUS(&azureFirstPartyManagedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_AzureFirstPartyManagedCertificateParameters_STATUS() to populate field AzureFirstPartyManagedCertificate")
+			return eris.Wrap(err, "calling AssignProperties_To_AzureFirstPartyManagedCertificateParameters_STATUS() to populate field AzureFirstPartyManagedCertificate")
 		}
 		destination.AzureFirstPartyManagedCertificate = &azureFirstPartyManagedCertificate
 	} else {
@@ -1492,7 +1367,7 @@ func (parameters *SecretParameters_STATUS) AssignProperties_To_SecretParameters_
 		var customerCertificate storage.CustomerCertificateParameters_STATUS
 		err := parameters.CustomerCertificate.AssignProperties_To_CustomerCertificateParameters_STATUS(&customerCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CustomerCertificateParameters_STATUS() to populate field CustomerCertificate")
+			return eris.Wrap(err, "calling AssignProperties_To_CustomerCertificateParameters_STATUS() to populate field CustomerCertificate")
 		}
 		destination.CustomerCertificate = &customerCertificate
 	} else {
@@ -1504,7 +1379,7 @@ func (parameters *SecretParameters_STATUS) AssignProperties_To_SecretParameters_
 		var managedCertificate storage.ManagedCertificateParameters_STATUS
 		err := parameters.ManagedCertificate.AssignProperties_To_ManagedCertificateParameters_STATUS(&managedCertificate)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedCertificateParameters_STATUS() to populate field ManagedCertificate")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedCertificateParameters_STATUS() to populate field ManagedCertificate")
 		}
 		destination.ManagedCertificate = &managedCertificate
 	} else {
@@ -1516,7 +1391,7 @@ func (parameters *SecretParameters_STATUS) AssignProperties_To_SecretParameters_
 		var urlSigningKey storage.UrlSigningKeyParameters_STATUS
 		err := parameters.UrlSigningKey.AssignProperties_To_UrlSigningKeyParameters_STATUS(&urlSigningKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UrlSigningKeyParameters_STATUS() to populate field UrlSigningKey")
+			return eris.Wrap(err, "calling AssignProperties_To_UrlSigningKeyParameters_STATUS() to populate field UrlSigningKey")
 		}
 		destination.UrlSigningKey = &urlSigningKey
 	} else {
@@ -1796,7 +1671,7 @@ func (parameters *AzureFirstPartyManagedCertificateParameters_STATUS) AssignProp
 		var secretSource ResourceReference_STATUS
 		err := secretSource.AssignProperties_From_ResourceReference_STATUS(source.SecretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field SecretSource")
 		}
 		parameters.SecretSource = &secretSource
 	} else {
@@ -1841,7 +1716,7 @@ func (parameters *AzureFirstPartyManagedCertificateParameters_STATUS) AssignProp
 		var secretSource storage.ResourceReference_STATUS
 		err := parameters.SecretSource.AssignProperties_To_ResourceReference_STATUS(&secretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field SecretSource")
 		}
 		destination.SecretSource = &secretSource
 	} else {
@@ -2001,7 +1876,7 @@ func (parameters *CustomerCertificateParameters) AssignProperties_From_CustomerC
 		var secretSource ResourceReference
 		err := secretSource.AssignProperties_From_ResourceReference(source.SecretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field SecretSource")
 		}
 		parameters.SecretSource = &secretSource
 	} else {
@@ -2045,7 +1920,7 @@ func (parameters *CustomerCertificateParameters) AssignProperties_To_CustomerCer
 		var secretSource storage.ResourceReference
 		err := parameters.SecretSource.AssignProperties_To_ResourceReference(&secretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field SecretSource")
 		}
 		destination.SecretSource = &secretSource
 	} else {
@@ -2093,7 +1968,7 @@ func (parameters *CustomerCertificateParameters) Initialize_From_CustomerCertifi
 		var secretSource ResourceReference
 		err := secretSource.Initialize_From_ResourceReference_STATUS(source.SecretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceReference_STATUS() to populate field SecretSource")
+			return eris.Wrap(err, "calling Initialize_From_ResourceReference_STATUS() to populate field SecretSource")
 		}
 		parameters.SecretSource = &secretSource
 	} else {
@@ -2245,7 +2120,7 @@ func (parameters *CustomerCertificateParameters_STATUS) AssignProperties_From_Cu
 		var secretSource ResourceReference_STATUS
 		err := secretSource.AssignProperties_From_ResourceReference_STATUS(source.SecretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field SecretSource")
 		}
 		parameters.SecretSource = &secretSource
 	} else {
@@ -2301,7 +2176,7 @@ func (parameters *CustomerCertificateParameters_STATUS) AssignProperties_To_Cust
 		var secretSource storage.ResourceReference_STATUS
 		err := parameters.SecretSource.AssignProperties_To_ResourceReference_STATUS(&secretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field SecretSource")
 		}
 		destination.SecretSource = &secretSource
 	} else {
@@ -2665,7 +2540,7 @@ func (parameters *UrlSigningKeyParameters) AssignProperties_From_UrlSigningKeyPa
 		var secretSource ResourceReference
 		err := secretSource.AssignProperties_From_ResourceReference(source.SecretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceReference() to populate field SecretSource")
 		}
 		parameters.SecretSource = &secretSource
 	} else {
@@ -2701,7 +2576,7 @@ func (parameters *UrlSigningKeyParameters) AssignProperties_To_UrlSigningKeyPara
 		var secretSource storage.ResourceReference
 		err := parameters.SecretSource.AssignProperties_To_ResourceReference(&secretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceReference() to populate field SecretSource")
 		}
 		destination.SecretSource = &secretSource
 	} else {
@@ -2741,7 +2616,7 @@ func (parameters *UrlSigningKeyParameters) Initialize_From_UrlSigningKeyParamete
 		var secretSource ResourceReference
 		err := secretSource.Initialize_From_ResourceReference_STATUS(source.SecretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceReference_STATUS() to populate field SecretSource")
+			return eris.Wrap(err, "calling Initialize_From_ResourceReference_STATUS() to populate field SecretSource")
 		}
 		parameters.SecretSource = &secretSource
 	} else {
@@ -2836,7 +2711,7 @@ func (parameters *UrlSigningKeyParameters_STATUS) AssignProperties_From_UrlSigni
 		var secretSource ResourceReference_STATUS
 		err := secretSource.AssignProperties_From_ResourceReference_STATUS(source.SecretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceReference_STATUS() to populate field SecretSource")
 		}
 		parameters.SecretSource = &secretSource
 	} else {
@@ -2872,7 +2747,7 @@ func (parameters *UrlSigningKeyParameters_STATUS) AssignProperties_To_UrlSigning
 		var secretSource storage.ResourceReference_STATUS
 		err := parameters.SecretSource.AssignProperties_To_ResourceReference_STATUS(&secretSource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field SecretSource")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceReference_STATUS() to populate field SecretSource")
 		}
 		destination.SecretSource = &secretSource
 	} else {

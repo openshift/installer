@@ -9,7 +9,7 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apimachinery/pkg/runtime"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -45,7 +45,7 @@ func CheckTargetOwnedByObj(obj client.Object, target client.Object) error {
 func safeNewObj(obj client.Object) (result client.Object, err error) {
 	defer func() {
 		if oops := recover(); oops != nil {
-			err = errors.Errorf("failed to create new %T.", obj)
+			err = eris.Errorf("failed to create new %T.", obj)
 		}
 	}()
 	result = reflect.New(reflect.TypeOf(obj).Elem()).Interface().(client.Object)
@@ -66,7 +66,7 @@ func ApplyObjAndEnsureOwner(ctx context.Context, c client.Client, owner client.O
 
 	objProps, err := runtime.DefaultUnstructuredConverter.ToUnstructured(obj)
 	if err != nil {
-		return controllerutil.OperationResultNone, errors.Wrapf(err, "failed to convert obj to unstructured")
+		return controllerutil.OperationResultNone, eris.Wrapf(err, "failed to convert obj to unstructured")
 	}
 
 	result, err := controllerutil.CreateOrUpdate(ctx, c, updatedObj, func() error {
@@ -79,7 +79,7 @@ func ApplyObjAndEnsureOwner(ctx context.Context, c client.Client, owner client.O
 		}
 		err = runtime.DefaultUnstructuredConverter.FromUnstructured(objProps, updatedObj)
 		if err != nil {
-			return errors.Wrap(err, "failed to convert unstructured to obj")
+			return eris.Wrap(err, "failed to convert unstructured to obj")
 		}
 
 		ownerRef := ownerutil.MakeOwnerReference(owner)

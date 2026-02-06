@@ -9,20 +9,17 @@ import (
 	arm "github.com/Azure/azure-service-operator/v2/api/network/v1api20220401/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/network/v1api20220401/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -74,29 +71,6 @@ func (profile *TrafficManagerProfile) ConvertTo(hub conversion.Hub) error {
 
 	return profile.AssignProperties_To_TrafficManagerProfile(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-network-azure-com-v1api20220401-trafficmanagerprofile,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=trafficmanagerprofiles,verbs=create;update,versions=v1api20220401,name=default.v1api20220401.trafficmanagerprofiles.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &TrafficManagerProfile{}
-
-// Default applies defaults to the TrafficManagerProfile resource
-func (profile *TrafficManagerProfile) Default() {
-	profile.defaultImpl()
-	var temp any = profile
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (profile *TrafficManagerProfile) defaultAzureName() {
-	if profile.Spec.AzureName == "" {
-		profile.Spec.AzureName = profile.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the TrafficManagerProfile resource
-func (profile *TrafficManagerProfile) defaultImpl() { profile.defaultAzureName() }
 
 var _ configmaps.Exporter = &TrafficManagerProfile{}
 
@@ -196,6 +170,10 @@ func (profile *TrafficManagerProfile) NewEmptyStatus() genruntime.ConvertibleSta
 
 // Owner returns the ResourceReference of the owner
 func (profile *TrafficManagerProfile) Owner() *genruntime.ResourceReference {
+	if profile.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(profile.Spec)
 	return profile.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -212,120 +190,11 @@ func (profile *TrafficManagerProfile) SetStatus(status genruntime.ConvertibleSta
 	var st TrafficManagerProfile_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	profile.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-network-azure-com-v1api20220401-trafficmanagerprofile,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=network.azure.com,resources=trafficmanagerprofiles,verbs=create;update,versions=v1api20220401,name=validate.v1api20220401.trafficmanagerprofiles.network.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &TrafficManagerProfile{}
-
-// ValidateCreate validates the creation of the resource
-func (profile *TrafficManagerProfile) ValidateCreate() (admission.Warnings, error) {
-	validations := profile.createValidations()
-	var temp any = profile
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (profile *TrafficManagerProfile) ValidateDelete() (admission.Warnings, error) {
-	validations := profile.deleteValidations()
-	var temp any = profile
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (profile *TrafficManagerProfile) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := profile.updateValidations()
-	var temp any = profile
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (profile *TrafficManagerProfile) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){profile.validateResourceReferences, profile.validateOwnerReference, profile.validateSecretDestinations, profile.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (profile *TrafficManagerProfile) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (profile *TrafficManagerProfile) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return profile.validateResourceReferences()
-		},
-		profile.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return profile.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return profile.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return profile.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (profile *TrafficManagerProfile) validateConfigMapDestinations() (admission.Warnings, error) {
-	if profile.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	var toValidate []*genruntime.ConfigMapDestination
-	if profile.Spec.OperatorSpec.ConfigMaps != nil {
-		toValidate = []*genruntime.ConfigMapDestination{
-			profile.Spec.OperatorSpec.ConfigMaps.DnsConfigFqdn,
-		}
-	}
-	return configmaps.ValidateDestinations(profile, toValidate, profile.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (profile *TrafficManagerProfile) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(profile)
-}
-
-// validateResourceReferences validates all resource references
-func (profile *TrafficManagerProfile) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&profile.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (profile *TrafficManagerProfile) validateSecretDestinations() (admission.Warnings, error) {
-	if profile.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(profile, nil, profile.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (profile *TrafficManagerProfile) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*TrafficManagerProfile)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, profile)
 }
 
 // AssignProperties_From_TrafficManagerProfile populates our TrafficManagerProfile from the provided source TrafficManagerProfile
@@ -338,7 +207,7 @@ func (profile *TrafficManagerProfile) AssignProperties_From_TrafficManagerProfil
 	var spec TrafficManagerProfile_Spec
 	err := spec.AssignProperties_From_TrafficManagerProfile_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_TrafficManagerProfile_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_TrafficManagerProfile_Spec() to populate field Spec")
 	}
 	profile.Spec = spec
 
@@ -346,7 +215,7 @@ func (profile *TrafficManagerProfile) AssignProperties_From_TrafficManagerProfil
 	var status TrafficManagerProfile_STATUS
 	err = status.AssignProperties_From_TrafficManagerProfile_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_TrafficManagerProfile_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_TrafficManagerProfile_STATUS() to populate field Status")
 	}
 	profile.Status = status
 
@@ -364,7 +233,7 @@ func (profile *TrafficManagerProfile) AssignProperties_To_TrafficManagerProfile(
 	var spec storage.TrafficManagerProfile_Spec
 	err := profile.Spec.AssignProperties_To_TrafficManagerProfile_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_TrafficManagerProfile_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_TrafficManagerProfile_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -372,7 +241,7 @@ func (profile *TrafficManagerProfile) AssignProperties_To_TrafficManagerProfile(
 	var status storage.TrafficManagerProfile_STATUS
 	err = profile.Status.AssignProperties_To_TrafficManagerProfile_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_TrafficManagerProfile_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_TrafficManagerProfile_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -680,13 +549,13 @@ func (profile *TrafficManagerProfile_Spec) ConvertSpecFrom(source genruntime.Con
 	src = &storage.TrafficManagerProfile_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = profile.AssignProperties_From_TrafficManagerProfile_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -704,13 +573,13 @@ func (profile *TrafficManagerProfile_Spec) ConvertSpecTo(destination genruntime.
 	dst = &storage.TrafficManagerProfile_Spec{}
 	err := profile.AssignProperties_To_TrafficManagerProfile_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -740,7 +609,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_From_TrafficManagerP
 		var dnsConfig DnsConfig
 		err := dnsConfig.AssignProperties_From_DnsConfig(source.DnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DnsConfig() to populate field DnsConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_DnsConfig() to populate field DnsConfig")
 		}
 		profile.DnsConfig = &dnsConfig
 	} else {
@@ -758,7 +627,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_From_TrafficManagerP
 		var monitorConfig MonitorConfig
 		err := monitorConfig.AssignProperties_From_MonitorConfig(source.MonitorConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MonitorConfig() to populate field MonitorConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig() to populate field MonitorConfig")
 		}
 		profile.MonitorConfig = &monitorConfig
 	} else {
@@ -770,7 +639,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_From_TrafficManagerP
 		var operatorSpec TrafficManagerProfileOperatorSpec
 		err := operatorSpec.AssignProperties_From_TrafficManagerProfileOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_TrafficManagerProfileOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_TrafficManagerProfileOperatorSpec() to populate field OperatorSpec")
 		}
 		profile.OperatorSpec = &operatorSpec
 	} else {
@@ -848,7 +717,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_To_TrafficManagerPro
 		var dnsConfig storage.DnsConfig
 		err := profile.DnsConfig.AssignProperties_To_DnsConfig(&dnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DnsConfig() to populate field DnsConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_DnsConfig() to populate field DnsConfig")
 		}
 		destination.DnsConfig = &dnsConfig
 	} else {
@@ -866,7 +735,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_To_TrafficManagerPro
 		var monitorConfig storage.MonitorConfig
 		err := profile.MonitorConfig.AssignProperties_To_MonitorConfig(&monitorConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MonitorConfig() to populate field MonitorConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig() to populate field MonitorConfig")
 		}
 		destination.MonitorConfig = &monitorConfig
 	} else {
@@ -878,7 +747,7 @@ func (profile *TrafficManagerProfile_Spec) AssignProperties_To_TrafficManagerPro
 		var operatorSpec storage.TrafficManagerProfileOperatorSpec
 		err := profile.OperatorSpec.AssignProperties_To_TrafficManagerProfileOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_TrafficManagerProfileOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_TrafficManagerProfileOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -959,7 +828,7 @@ func (profile *TrafficManagerProfile_Spec) Initialize_From_TrafficManagerProfile
 		var dnsConfig DnsConfig
 		err := dnsConfig.Initialize_From_DnsConfig_STATUS(source.DnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DnsConfig_STATUS() to populate field DnsConfig")
+			return eris.Wrap(err, "calling Initialize_From_DnsConfig_STATUS() to populate field DnsConfig")
 		}
 		profile.DnsConfig = &dnsConfig
 	} else {
@@ -977,7 +846,7 @@ func (profile *TrafficManagerProfile_Spec) Initialize_From_TrafficManagerProfile
 		var monitorConfig MonitorConfig
 		err := monitorConfig.Initialize_From_MonitorConfig_STATUS(source.MonitorConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_MonitorConfig_STATUS() to populate field MonitorConfig")
+			return eris.Wrap(err, "calling Initialize_From_MonitorConfig_STATUS() to populate field MonitorConfig")
 		}
 		profile.MonitorConfig = &monitorConfig
 	} else {
@@ -1088,13 +957,13 @@ func (profile *TrafficManagerProfile_STATUS) ConvertStatusFrom(source genruntime
 	src = &storage.TrafficManagerProfile_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = profile.AssignProperties_From_TrafficManagerProfile_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1112,13 +981,13 @@ func (profile *TrafficManagerProfile_STATUS) ConvertStatusTo(destination genrunt
 	dst = &storage.TrafficManagerProfile_STATUS{}
 	err := profile.AssignProperties_To_TrafficManagerProfile_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1293,7 +1162,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_From_TrafficManage
 		var dnsConfig DnsConfig_STATUS
 		err := dnsConfig.AssignProperties_From_DnsConfig_STATUS(source.DnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DnsConfig_STATUS() to populate field DnsConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_DnsConfig_STATUS() to populate field DnsConfig")
 		}
 		profile.DnsConfig = &dnsConfig
 	} else {
@@ -1309,7 +1178,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_From_TrafficManage
 			var endpoint Endpoint_STATUS
 			err := endpoint.AssignProperties_From_Endpoint_STATUS(&endpointItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Endpoint_STATUS() to populate field Endpoints")
+				return eris.Wrap(err, "calling AssignProperties_From_Endpoint_STATUS() to populate field Endpoints")
 			}
 			endpointList[endpointIndex] = endpoint
 		}
@@ -1332,7 +1201,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_From_TrafficManage
 		var monitorConfig MonitorConfig_STATUS
 		err := monitorConfig.AssignProperties_From_MonitorConfig_STATUS(source.MonitorConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MonitorConfig_STATUS() to populate field MonitorConfig")
+			return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_STATUS() to populate field MonitorConfig")
 		}
 		profile.MonitorConfig = &monitorConfig
 	} else {
@@ -1405,7 +1274,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_To_TrafficManagerP
 		var dnsConfig storage.DnsConfig_STATUS
 		err := profile.DnsConfig.AssignProperties_To_DnsConfig_STATUS(&dnsConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DnsConfig_STATUS() to populate field DnsConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_DnsConfig_STATUS() to populate field DnsConfig")
 		}
 		destination.DnsConfig = &dnsConfig
 	} else {
@@ -1421,7 +1290,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_To_TrafficManagerP
 			var endpoint storage.Endpoint_STATUS
 			err := endpointItem.AssignProperties_To_Endpoint_STATUS(&endpoint)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Endpoint_STATUS() to populate field Endpoints")
+				return eris.Wrap(err, "calling AssignProperties_To_Endpoint_STATUS() to populate field Endpoints")
 			}
 			endpointList[endpointIndex] = endpoint
 		}
@@ -1444,7 +1313,7 @@ func (profile *TrafficManagerProfile_STATUS) AssignProperties_To_TrafficManagerP
 		var monitorConfig storage.MonitorConfig_STATUS
 		err := profile.MonitorConfig.AssignProperties_To_MonitorConfig_STATUS(&monitorConfig)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MonitorConfig_STATUS() to populate field MonitorConfig")
+			return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_STATUS() to populate field MonitorConfig")
 		}
 		destination.MonitorConfig = &monitorConfig
 	} else {
@@ -1996,7 +1865,7 @@ func (config *MonitorConfig) AssignProperties_From_MonitorConfig(source *storage
 			var customHeader MonitorConfig_CustomHeaders
 			err := customHeader.AssignProperties_From_MonitorConfig_CustomHeaders(&customHeaderItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MonitorConfig_CustomHeaders() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_CustomHeaders() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -2014,7 +1883,7 @@ func (config *MonitorConfig) AssignProperties_From_MonitorConfig(source *storage
 			var expectedStatusCodeRange MonitorConfig_ExpectedStatusCodeRanges
 			err := expectedStatusCodeRange.AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges(&expectedStatusCodeRangeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2074,7 +1943,7 @@ func (config *MonitorConfig) AssignProperties_To_MonitorConfig(destination *stor
 			var customHeader storage.MonitorConfig_CustomHeaders
 			err := customHeaderItem.AssignProperties_To_MonitorConfig_CustomHeaders(&customHeader)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MonitorConfig_CustomHeaders() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_CustomHeaders() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -2092,7 +1961,7 @@ func (config *MonitorConfig) AssignProperties_To_MonitorConfig(destination *stor
 			var expectedStatusCodeRange storage.MonitorConfig_ExpectedStatusCodeRanges
 			err := expectedStatusCodeRangeItem.AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges(&expectedStatusCodeRange)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2155,7 +2024,7 @@ func (config *MonitorConfig) Initialize_From_MonitorConfig_STATUS(source *Monito
 			var customHeader MonitorConfig_CustomHeaders
 			err := customHeader.Initialize_From_MonitorConfig_CustomHeaders_STATUS(&customHeaderItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling Initialize_From_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -2173,7 +2042,7 @@ func (config *MonitorConfig) Initialize_From_MonitorConfig_STATUS(source *Monito
 			var expectedStatusCodeRange MonitorConfig_ExpectedStatusCodeRanges
 			err := expectedStatusCodeRange.Initialize_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS(&expectedStatusCodeRangeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling Initialize_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2346,7 +2215,7 @@ func (config *MonitorConfig_STATUS) AssignProperties_From_MonitorConfig_STATUS(s
 			var customHeader MonitorConfig_CustomHeaders_STATUS
 			err := customHeader.AssignProperties_From_MonitorConfig_CustomHeaders_STATUS(&customHeaderItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -2364,7 +2233,7 @@ func (config *MonitorConfig_STATUS) AssignProperties_From_MonitorConfig_STATUS(s
 			var expectedStatusCodeRange MonitorConfig_ExpectedStatusCodeRanges_STATUS
 			err := expectedStatusCodeRange.AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS(&expectedStatusCodeRangeItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling AssignProperties_From_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2424,7 +2293,7 @@ func (config *MonitorConfig_STATUS) AssignProperties_To_MonitorConfig_STATUS(des
 			var customHeader storage.MonitorConfig_CustomHeaders_STATUS
 			err := customHeaderItem.AssignProperties_To_MonitorConfig_CustomHeaders_STATUS(&customHeader)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
+				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_CustomHeaders_STATUS() to populate field CustomHeaders")
 			}
 			customHeaderList[customHeaderIndex] = customHeader
 		}
@@ -2442,7 +2311,7 @@ func (config *MonitorConfig_STATUS) AssignProperties_To_MonitorConfig_STATUS(des
 			var expectedStatusCodeRange storage.MonitorConfig_ExpectedStatusCodeRanges_STATUS
 			err := expectedStatusCodeRangeItem.AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges_STATUS(&expectedStatusCodeRange)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
+				return eris.Wrap(err, "calling AssignProperties_To_MonitorConfig_ExpectedStatusCodeRanges_STATUS() to populate field ExpectedStatusCodeRanges")
 			}
 			expectedStatusCodeRangeList[expectedStatusCodeRangeIndex] = expectedStatusCodeRange
 		}
@@ -2628,7 +2497,7 @@ func (operator *TrafficManagerProfileOperatorSpec) AssignProperties_From_Traffic
 		var configMap TrafficManagerProfileOperatorConfigMaps
 		err := configMap.AssignProperties_From_TrafficManagerProfileOperatorConfigMaps(source.ConfigMaps)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_TrafficManagerProfileOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_From_TrafficManagerProfileOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		operator.ConfigMaps = &configMap
 	} else {
@@ -2685,7 +2554,7 @@ func (operator *TrafficManagerProfileOperatorSpec) AssignProperties_To_TrafficMa
 		var configMap storage.TrafficManagerProfileOperatorConfigMaps
 		err := operator.ConfigMaps.AssignProperties_To_TrafficManagerProfileOperatorConfigMaps(&configMap)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_TrafficManagerProfileOperatorConfigMaps() to populate field ConfigMaps")
+			return eris.Wrap(err, "calling AssignProperties_To_TrafficManagerProfileOperatorConfigMaps() to populate field ConfigMaps")
 		}
 		destination.ConfigMaps = &configMap
 	} else {

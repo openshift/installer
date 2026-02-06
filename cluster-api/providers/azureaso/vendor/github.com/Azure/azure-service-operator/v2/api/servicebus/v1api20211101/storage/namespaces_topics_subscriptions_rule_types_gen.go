@@ -4,22 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20240101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=servicebus.azure.com,resources=namespacestopicssubscriptionsrules,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=servicebus.azure.com,resources={namespacestopicssubscriptionsrules/status,namespacestopicssubscriptionsrules/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,28 @@ func (rule *NamespacesTopicsSubscriptionsRule) GetConditions() conditions.Condit
 // SetConditions sets the conditions on the resource status
 func (rule *NamespacesTopicsSubscriptionsRule) SetConditions(conditions conditions.Conditions) {
 	rule.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &NamespacesTopicsSubscriptionsRule{}
+
+// ConvertFrom populates our NamespacesTopicsSubscriptionsRule from the provided hub NamespacesTopicsSubscriptionsRule
+func (rule *NamespacesTopicsSubscriptionsRule) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.NamespacesTopicsSubscriptionsRule)
+	if !ok {
+		return fmt.Errorf("expected servicebus/v1api20240101/storage/NamespacesTopicsSubscriptionsRule but received %T instead", hub)
+	}
+
+	return rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule(source)
+}
+
+// ConvertTo populates the provided hub NamespacesTopicsSubscriptionsRule from our NamespacesTopicsSubscriptionsRule
+func (rule *NamespacesTopicsSubscriptionsRule) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.NamespacesTopicsSubscriptionsRule)
+	if !ok {
+		return fmt.Errorf("expected servicebus/v1api20240101/storage/NamespacesTopicsSubscriptionsRule but received %T instead", hub)
+	}
+
+	return rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule(destination)
 }
 
 var _ configmaps.Exporter = &NamespacesTopicsSubscriptionsRule{}
@@ -115,6 +136,10 @@ func (rule *NamespacesTopicsSubscriptionsRule) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (rule *NamespacesTopicsSubscriptionsRule) Owner() *genruntime.ResourceReference {
+	if rule.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(rule.Spec)
 	return rule.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,15 +156,82 @@ func (rule *NamespacesTopicsSubscriptionsRule) SetStatus(status genruntime.Conve
 	var st NamespacesTopicsSubscriptionsRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	rule.Status = st
 	return nil
 }
 
-// Hub marks that this NamespacesTopicsSubscriptionsRule is the hub type for conversion
-func (rule *NamespacesTopicsSubscriptionsRule) Hub() {}
+// AssignProperties_From_NamespacesTopicsSubscriptionsRule populates our NamespacesTopicsSubscriptionsRule from the provided source NamespacesTopicsSubscriptionsRule
+func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_From_NamespacesTopicsSubscriptionsRule(source *storage.NamespacesTopicsSubscriptionsRule) error {
+
+	// ObjectMeta
+	rule.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec NamespacesTopicsSubscriptionsRule_Spec
+	err := spec.AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
+	}
+	rule.Spec = spec
+
+	// Status
+	var status NamespacesTopicsSubscriptionsRule_STATUS
+	err = status.AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
+	}
+	rule.Status = status
+
+	// Invoke the augmentConversionForNamespacesTopicsSubscriptionsRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesTopicsSubscriptionsRule populates the provided destination NamespacesTopicsSubscriptionsRule from our NamespacesTopicsSubscriptionsRule
+func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_To_NamespacesTopicsSubscriptionsRule(destination *storage.NamespacesTopicsSubscriptionsRule) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *rule.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.NamespacesTopicsSubscriptionsRule_Spec
+	err := rule.Spec.AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.NamespacesTopicsSubscriptionsRule_STATUS
+	err = rule.Status.AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForNamespacesTopicsSubscriptionsRule interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (rule *NamespacesTopicsSubscriptionsRule) OriginalGVK() *schema.GroupVersionKind {
@@ -159,6 +251,11 @@ type NamespacesTopicsSubscriptionsRuleList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NamespacesTopicsSubscriptionsRule `json:"items"`
+}
+
+type augmentConversionForNamespacesTopicsSubscriptionsRule interface {
+	AssignPropertiesFrom(src *storage.NamespacesTopicsSubscriptionsRule) error
+	AssignPropertiesTo(dst *storage.NamespacesTopicsSubscriptionsRule) error
 }
 
 // Storage version of v1api20211101.NamespacesTopicsSubscriptionsRule_Spec
@@ -186,20 +283,230 @@ var _ genruntime.ConvertibleSpec = &NamespacesTopicsSubscriptionsRule_Spec{}
 
 // ConvertSpecFrom populates our NamespacesTopicsSubscriptionsRule_Spec from the provided source
 func (rule *NamespacesTopicsSubscriptionsRule_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == rule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.NamespacesTopicsSubscriptionsRule_Spec)
+	if ok {
+		// Populate our instance from source
+		return rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec(src)
 	}
 
-	return source.ConvertSpecTo(rule)
+	// Convert to an intermediate form
+	src = &storage.NamespacesTopicsSubscriptionsRule_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our NamespacesTopicsSubscriptionsRule_Spec
 func (rule *NamespacesTopicsSubscriptionsRule_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == rule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.NamespacesTopicsSubscriptionsRule_Spec)
+	if ok {
+		// Populate destination from our instance
+		return rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(rule)
+	// Convert to an intermediate form
+	dst = &storage.NamespacesTopicsSubscriptionsRule_Spec{}
+	err := rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec populates our NamespacesTopicsSubscriptionsRule_Spec from the provided source NamespacesTopicsSubscriptionsRule_Spec
+func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec(source *storage.NamespacesTopicsSubscriptionsRule_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Action
+	if source.Action != nil {
+		var action Action
+		err := action.AssignProperties_From_Action(source.Action)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Action() to populate field Action")
+		}
+		rule.Action = &action
+	} else {
+		rule.Action = nil
+	}
+
+	// AzureName
+	rule.AzureName = source.AzureName
+
+	// CorrelationFilter
+	if source.CorrelationFilter != nil {
+		var correlationFilter CorrelationFilter
+		err := correlationFilter.AssignProperties_From_CorrelationFilter(source.CorrelationFilter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CorrelationFilter() to populate field CorrelationFilter")
+		}
+		rule.CorrelationFilter = &correlationFilter
+	} else {
+		rule.CorrelationFilter = nil
+	}
+
+	// FilterType
+	rule.FilterType = genruntime.ClonePointerToString(source.FilterType)
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NamespacesTopicsSubscriptionsRuleOperatorSpec
+		err := operatorSpec.AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
+		}
+		rule.OperatorSpec = &operatorSpec
+	} else {
+		rule.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	rule.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		rule.Owner = &owner
+	} else {
+		rule.Owner = nil
+	}
+
+	// SqlFilter
+	if source.SqlFilter != nil {
+		var sqlFilter SqlFilter
+		err := sqlFilter.AssignProperties_From_SqlFilter(source.SqlFilter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlFilter() to populate field SqlFilter")
+		}
+		rule.SqlFilter = &sqlFilter
+	} else {
+		rule.SqlFilter = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesTopicsSubscriptionsRule_Spec interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule_Spec); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec populates the provided destination NamespacesTopicsSubscriptionsRule_Spec from our NamespacesTopicsSubscriptionsRule_Spec
+func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec(destination *storage.NamespacesTopicsSubscriptionsRule_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// Action
+	if rule.Action != nil {
+		var action storage.Action
+		err := rule.Action.AssignProperties_To_Action(&action)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Action() to populate field Action")
+		}
+		destination.Action = &action
+	} else {
+		destination.Action = nil
+	}
+
+	// AzureName
+	destination.AzureName = rule.AzureName
+
+	// CorrelationFilter
+	if rule.CorrelationFilter != nil {
+		var correlationFilter storage.CorrelationFilter
+		err := rule.CorrelationFilter.AssignProperties_To_CorrelationFilter(&correlationFilter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CorrelationFilter() to populate field CorrelationFilter")
+		}
+		destination.CorrelationFilter = &correlationFilter
+	} else {
+		destination.CorrelationFilter = nil
+	}
+
+	// FilterType
+	destination.FilterType = genruntime.ClonePointerToString(rule.FilterType)
+
+	// OperatorSpec
+	if rule.OperatorSpec != nil {
+		var operatorSpec storage.NamespacesTopicsSubscriptionsRuleOperatorSpec
+		err := rule.OperatorSpec.AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = rule.OriginalVersion
+
+	// Owner
+	if rule.Owner != nil {
+		owner := rule.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// SqlFilter
+	if rule.SqlFilter != nil {
+		var sqlFilter storage.SqlFilter
+		err := rule.SqlFilter.AssignProperties_To_SqlFilter(&sqlFilter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlFilter() to populate field SqlFilter")
+		}
+		destination.SqlFilter = &sqlFilter
+	} else {
+		destination.SqlFilter = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesTopicsSubscriptionsRule_Spec interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule_Spec); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20211101.NamespacesTopicsSubscriptionsRule_STATUS
@@ -221,20 +528,232 @@ var _ genruntime.ConvertibleStatus = &NamespacesTopicsSubscriptionsRule_STATUS{}
 
 // ConvertStatusFrom populates our NamespacesTopicsSubscriptionsRule_STATUS from the provided source
 func (rule *NamespacesTopicsSubscriptionsRule_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == rule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.NamespacesTopicsSubscriptionsRule_STATUS)
+	if ok {
+		// Populate our instance from source
+		return rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(rule)
+	// Convert to an intermediate form
+	src = &storage.NamespacesTopicsSubscriptionsRule_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our NamespacesTopicsSubscriptionsRule_STATUS
 func (rule *NamespacesTopicsSubscriptionsRule_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == rule {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.NamespacesTopicsSubscriptionsRule_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(rule)
+	// Convert to an intermediate form
+	dst = &storage.NamespacesTopicsSubscriptionsRule_STATUS{}
+	err := rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS populates our NamespacesTopicsSubscriptionsRule_STATUS from the provided source NamespacesTopicsSubscriptionsRule_STATUS
+func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS(source *storage.NamespacesTopicsSubscriptionsRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Action
+	if source.Action != nil {
+		var action Action_STATUS
+		err := action.AssignProperties_From_Action_STATUS(source.Action)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_Action_STATUS() to populate field Action")
+		}
+		rule.Action = &action
+	} else {
+		rule.Action = nil
+	}
+
+	// Conditions
+	rule.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// CorrelationFilter
+	if source.CorrelationFilter != nil {
+		var correlationFilter CorrelationFilter_STATUS
+		err := correlationFilter.AssignProperties_From_CorrelationFilter_STATUS(source.CorrelationFilter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_CorrelationFilter_STATUS() to populate field CorrelationFilter")
+		}
+		rule.CorrelationFilter = &correlationFilter
+	} else {
+		rule.CorrelationFilter = nil
+	}
+
+	// FilterType
+	rule.FilterType = genruntime.ClonePointerToString(source.FilterType)
+
+	// Id
+	rule.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	rule.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	rule.Name = genruntime.ClonePointerToString(source.Name)
+
+	// SqlFilter
+	if source.SqlFilter != nil {
+		var sqlFilter SqlFilter_STATUS
+		err := sqlFilter.AssignProperties_From_SqlFilter_STATUS(source.SqlFilter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SqlFilter_STATUS() to populate field SqlFilter")
+		}
+		rule.SqlFilter = &sqlFilter
+	} else {
+		rule.SqlFilter = nil
+	}
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		rule.SystemData = &systemDatum
+	} else {
+		rule.SystemData = nil
+	}
+
+	// Type
+	rule.Type = genruntime.ClonePointerToString(source.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		rule.PropertyBag = propertyBag
+	} else {
+		rule.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesTopicsSubscriptionsRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS populates the provided destination NamespacesTopicsSubscriptionsRule_STATUS from our NamespacesTopicsSubscriptionsRule_STATUS
+func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS(destination *storage.NamespacesTopicsSubscriptionsRule_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(rule.PropertyBag)
+
+	// Action
+	if rule.Action != nil {
+		var action storage.Action_STATUS
+		err := rule.Action.AssignProperties_To_Action_STATUS(&action)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_Action_STATUS() to populate field Action")
+		}
+		destination.Action = &action
+	} else {
+		destination.Action = nil
+	}
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(rule.Conditions)
+
+	// CorrelationFilter
+	if rule.CorrelationFilter != nil {
+		var correlationFilter storage.CorrelationFilter_STATUS
+		err := rule.CorrelationFilter.AssignProperties_To_CorrelationFilter_STATUS(&correlationFilter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_CorrelationFilter_STATUS() to populate field CorrelationFilter")
+		}
+		destination.CorrelationFilter = &correlationFilter
+	} else {
+		destination.CorrelationFilter = nil
+	}
+
+	// FilterType
+	destination.FilterType = genruntime.ClonePointerToString(rule.FilterType)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(rule.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(rule.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(rule.Name)
+
+	// SqlFilter
+	if rule.SqlFilter != nil {
+		var sqlFilter storage.SqlFilter_STATUS
+		err := rule.SqlFilter.AssignProperties_To_SqlFilter_STATUS(&sqlFilter)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SqlFilter_STATUS() to populate field SqlFilter")
+		}
+		destination.SqlFilter = &sqlFilter
+	} else {
+		destination.SqlFilter = nil
+	}
+
+	// SystemData
+	if rule.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := rule.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(rule.Type)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesTopicsSubscriptionsRule_STATUS interface (if implemented) to customize the conversion
+	var ruleAsAny any = rule
+	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule_STATUS); ok {
+		err := augmentedRule.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20211101.Action
@@ -247,6 +766,84 @@ type Action struct {
 	SqlExpression         *string                `json:"sqlExpression,omitempty"`
 }
 
+// AssignProperties_From_Action populates our Action from the provided source Action
+func (action *Action) AssignProperties_From_Action(source *storage.Action) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CompatibilityLevel
+	action.CompatibilityLevel = genruntime.ClonePointerToInt(source.CompatibilityLevel)
+
+	// RequiresPreprocessing
+	if source.RequiresPreprocessing != nil {
+		requiresPreprocessing := *source.RequiresPreprocessing
+		action.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		action.RequiresPreprocessing = nil
+	}
+
+	// SqlExpression
+	action.SqlExpression = genruntime.ClonePointerToString(source.SqlExpression)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		action.PropertyBag = propertyBag
+	} else {
+		action.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAction interface (if implemented) to customize the conversion
+	var actionAsAny any = action
+	if augmentedAction, ok := actionAsAny.(augmentConversionForAction); ok {
+		err := augmentedAction.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Action populates the provided destination Action from our Action
+func (action *Action) AssignProperties_To_Action(destination *storage.Action) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(action.PropertyBag)
+
+	// CompatibilityLevel
+	destination.CompatibilityLevel = genruntime.ClonePointerToInt(action.CompatibilityLevel)
+
+	// RequiresPreprocessing
+	if action.RequiresPreprocessing != nil {
+		requiresPreprocessing := *action.RequiresPreprocessing
+		destination.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		destination.RequiresPreprocessing = nil
+	}
+
+	// SqlExpression
+	destination.SqlExpression = genruntime.ClonePointerToString(action.SqlExpression)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAction interface (if implemented) to customize the conversion
+	var actionAsAny any = action
+	if augmentedAction, ok := actionAsAny.(augmentConversionForAction); ok {
+		err := augmentedAction.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20211101.Action_STATUS
 // Represents the filter actions which are allowed for the transformation of a message that have been matched by a filter
 // expression.
@@ -255,6 +852,94 @@ type Action_STATUS struct {
 	PropertyBag           genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	RequiresPreprocessing *bool                  `json:"requiresPreprocessing,omitempty"`
 	SqlExpression         *string                `json:"sqlExpression,omitempty"`
+}
+
+// AssignProperties_From_Action_STATUS populates our Action_STATUS from the provided source Action_STATUS
+func (action *Action_STATUS) AssignProperties_From_Action_STATUS(source *storage.Action_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CompatibilityLevel
+	action.CompatibilityLevel = genruntime.ClonePointerToInt(source.CompatibilityLevel)
+
+	// RequiresPreprocessing
+	if source.RequiresPreprocessing != nil {
+		requiresPreprocessing := *source.RequiresPreprocessing
+		action.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		action.RequiresPreprocessing = nil
+	}
+
+	// SqlExpression
+	action.SqlExpression = genruntime.ClonePointerToString(source.SqlExpression)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		action.PropertyBag = propertyBag
+	} else {
+		action.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAction_STATUS interface (if implemented) to customize the conversion
+	var actionAsAny any = action
+	if augmentedAction, ok := actionAsAny.(augmentConversionForAction_STATUS); ok {
+		err := augmentedAction.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_Action_STATUS populates the provided destination Action_STATUS from our Action_STATUS
+func (action *Action_STATUS) AssignProperties_To_Action_STATUS(destination *storage.Action_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(action.PropertyBag)
+
+	// CompatibilityLevel
+	destination.CompatibilityLevel = genruntime.ClonePointerToInt(action.CompatibilityLevel)
+
+	// RequiresPreprocessing
+	if action.RequiresPreprocessing != nil {
+		requiresPreprocessing := *action.RequiresPreprocessing
+		destination.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		destination.RequiresPreprocessing = nil
+	}
+
+	// SqlExpression
+	destination.SqlExpression = genruntime.ClonePointerToString(action.SqlExpression)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForAction_STATUS interface (if implemented) to customize the conversion
+	var actionAsAny any = action
+	if augmentedAction, ok := actionAsAny.(augmentConversionForAction_STATUS); ok {
+		err := augmentedAction.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNamespacesTopicsSubscriptionsRule_Spec interface {
+	AssignPropertiesFrom(src *storage.NamespacesTopicsSubscriptionsRule_Spec) error
+	AssignPropertiesTo(dst *storage.NamespacesTopicsSubscriptionsRule_Spec) error
+}
+
+type augmentConversionForNamespacesTopicsSubscriptionsRule_STATUS interface {
+	AssignPropertiesFrom(src *storage.NamespacesTopicsSubscriptionsRule_STATUS) error
+	AssignPropertiesTo(dst *storage.NamespacesTopicsSubscriptionsRule_STATUS) error
 }
 
 // Storage version of v1api20211101.CorrelationFilter
@@ -273,6 +958,126 @@ type CorrelationFilter struct {
 	To                    *string                `json:"to,omitempty"`
 }
 
+// AssignProperties_From_CorrelationFilter populates our CorrelationFilter from the provided source CorrelationFilter
+func (filter *CorrelationFilter) AssignProperties_From_CorrelationFilter(source *storage.CorrelationFilter) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ContentType
+	filter.ContentType = genruntime.ClonePointerToString(source.ContentType)
+
+	// CorrelationId
+	filter.CorrelationId = genruntime.ClonePointerToString(source.CorrelationId)
+
+	// Label
+	filter.Label = genruntime.ClonePointerToString(source.Label)
+
+	// MessageId
+	filter.MessageId = genruntime.ClonePointerToString(source.MessageId)
+
+	// Properties
+	filter.Properties = genruntime.CloneMapOfStringToString(source.Properties)
+
+	// ReplyTo
+	filter.ReplyTo = genruntime.ClonePointerToString(source.ReplyTo)
+
+	// ReplyToSessionId
+	filter.ReplyToSessionId = genruntime.ClonePointerToString(source.ReplyToSessionId)
+
+	// RequiresPreprocessing
+	if source.RequiresPreprocessing != nil {
+		requiresPreprocessing := *source.RequiresPreprocessing
+		filter.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		filter.RequiresPreprocessing = nil
+	}
+
+	// SessionId
+	filter.SessionId = genruntime.ClonePointerToString(source.SessionId)
+
+	// To
+	filter.To = genruntime.ClonePointerToString(source.To)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		filter.PropertyBag = propertyBag
+	} else {
+		filter.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCorrelationFilter interface (if implemented) to customize the conversion
+	var filterAsAny any = filter
+	if augmentedFilter, ok := filterAsAny.(augmentConversionForCorrelationFilter); ok {
+		err := augmentedFilter.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CorrelationFilter populates the provided destination CorrelationFilter from our CorrelationFilter
+func (filter *CorrelationFilter) AssignProperties_To_CorrelationFilter(destination *storage.CorrelationFilter) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(filter.PropertyBag)
+
+	// ContentType
+	destination.ContentType = genruntime.ClonePointerToString(filter.ContentType)
+
+	// CorrelationId
+	destination.CorrelationId = genruntime.ClonePointerToString(filter.CorrelationId)
+
+	// Label
+	destination.Label = genruntime.ClonePointerToString(filter.Label)
+
+	// MessageId
+	destination.MessageId = genruntime.ClonePointerToString(filter.MessageId)
+
+	// Properties
+	destination.Properties = genruntime.CloneMapOfStringToString(filter.Properties)
+
+	// ReplyTo
+	destination.ReplyTo = genruntime.ClonePointerToString(filter.ReplyTo)
+
+	// ReplyToSessionId
+	destination.ReplyToSessionId = genruntime.ClonePointerToString(filter.ReplyToSessionId)
+
+	// RequiresPreprocessing
+	if filter.RequiresPreprocessing != nil {
+		requiresPreprocessing := *filter.RequiresPreprocessing
+		destination.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		destination.RequiresPreprocessing = nil
+	}
+
+	// SessionId
+	destination.SessionId = genruntime.ClonePointerToString(filter.SessionId)
+
+	// To
+	destination.To = genruntime.ClonePointerToString(filter.To)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCorrelationFilter interface (if implemented) to customize the conversion
+	var filterAsAny any = filter
+	if augmentedFilter, ok := filterAsAny.(augmentConversionForCorrelationFilter); ok {
+		err := augmentedFilter.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20211101.CorrelationFilter_STATUS
 // Represents the correlation filter expression.
 type CorrelationFilter_STATUS struct {
@@ -289,12 +1094,254 @@ type CorrelationFilter_STATUS struct {
 	To                    *string                `json:"to,omitempty"`
 }
 
+// AssignProperties_From_CorrelationFilter_STATUS populates our CorrelationFilter_STATUS from the provided source CorrelationFilter_STATUS
+func (filter *CorrelationFilter_STATUS) AssignProperties_From_CorrelationFilter_STATUS(source *storage.CorrelationFilter_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ContentType
+	filter.ContentType = genruntime.ClonePointerToString(source.ContentType)
+
+	// CorrelationId
+	filter.CorrelationId = genruntime.ClonePointerToString(source.CorrelationId)
+
+	// Label
+	filter.Label = genruntime.ClonePointerToString(source.Label)
+
+	// MessageId
+	filter.MessageId = genruntime.ClonePointerToString(source.MessageId)
+
+	// Properties
+	filter.Properties = genruntime.CloneMapOfStringToString(source.Properties)
+
+	// ReplyTo
+	filter.ReplyTo = genruntime.ClonePointerToString(source.ReplyTo)
+
+	// ReplyToSessionId
+	filter.ReplyToSessionId = genruntime.ClonePointerToString(source.ReplyToSessionId)
+
+	// RequiresPreprocessing
+	if source.RequiresPreprocessing != nil {
+		requiresPreprocessing := *source.RequiresPreprocessing
+		filter.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		filter.RequiresPreprocessing = nil
+	}
+
+	// SessionId
+	filter.SessionId = genruntime.ClonePointerToString(source.SessionId)
+
+	// To
+	filter.To = genruntime.ClonePointerToString(source.To)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		filter.PropertyBag = propertyBag
+	} else {
+		filter.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCorrelationFilter_STATUS interface (if implemented) to customize the conversion
+	var filterAsAny any = filter
+	if augmentedFilter, ok := filterAsAny.(augmentConversionForCorrelationFilter_STATUS); ok {
+		err := augmentedFilter.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_CorrelationFilter_STATUS populates the provided destination CorrelationFilter_STATUS from our CorrelationFilter_STATUS
+func (filter *CorrelationFilter_STATUS) AssignProperties_To_CorrelationFilter_STATUS(destination *storage.CorrelationFilter_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(filter.PropertyBag)
+
+	// ContentType
+	destination.ContentType = genruntime.ClonePointerToString(filter.ContentType)
+
+	// CorrelationId
+	destination.CorrelationId = genruntime.ClonePointerToString(filter.CorrelationId)
+
+	// Label
+	destination.Label = genruntime.ClonePointerToString(filter.Label)
+
+	// MessageId
+	destination.MessageId = genruntime.ClonePointerToString(filter.MessageId)
+
+	// Properties
+	destination.Properties = genruntime.CloneMapOfStringToString(filter.Properties)
+
+	// ReplyTo
+	destination.ReplyTo = genruntime.ClonePointerToString(filter.ReplyTo)
+
+	// ReplyToSessionId
+	destination.ReplyToSessionId = genruntime.ClonePointerToString(filter.ReplyToSessionId)
+
+	// RequiresPreprocessing
+	if filter.RequiresPreprocessing != nil {
+		requiresPreprocessing := *filter.RequiresPreprocessing
+		destination.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		destination.RequiresPreprocessing = nil
+	}
+
+	// SessionId
+	destination.SessionId = genruntime.ClonePointerToString(filter.SessionId)
+
+	// To
+	destination.To = genruntime.ClonePointerToString(filter.To)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForCorrelationFilter_STATUS interface (if implemented) to customize the conversion
+	var filterAsAny any = filter
+	if augmentedFilter, ok := filterAsAny.(augmentConversionForCorrelationFilter_STATUS); ok {
+		err := augmentedFilter.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20211101.NamespacesTopicsSubscriptionsRuleOperatorSpec
 // Details for configuring operator behavior. Fields in this struct are interpreted by the operator directly rather than being passed to Azure
 type NamespacesTopicsSubscriptionsRuleOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec populates our NamespacesTopicsSubscriptionsRuleOperatorSpec from the provided source NamespacesTopicsSubscriptionsRuleOperatorSpec
+func (operator *NamespacesTopicsSubscriptionsRuleOperatorSpec) AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec(source *storage.NamespacesTopicsSubscriptionsRuleOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesTopicsSubscriptionsRuleOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRuleOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec populates the provided destination NamespacesTopicsSubscriptionsRuleOperatorSpec from our NamespacesTopicsSubscriptionsRuleOperatorSpec
+func (operator *NamespacesTopicsSubscriptionsRuleOperatorSpec) AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec(destination *storage.NamespacesTopicsSubscriptionsRuleOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesTopicsSubscriptionsRuleOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRuleOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20211101.SqlFilter
@@ -306,6 +1353,84 @@ type SqlFilter struct {
 	SqlExpression         *string                `json:"sqlExpression,omitempty"`
 }
 
+// AssignProperties_From_SqlFilter populates our SqlFilter from the provided source SqlFilter
+func (filter *SqlFilter) AssignProperties_From_SqlFilter(source *storage.SqlFilter) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CompatibilityLevel
+	filter.CompatibilityLevel = genruntime.ClonePointerToInt(source.CompatibilityLevel)
+
+	// RequiresPreprocessing
+	if source.RequiresPreprocessing != nil {
+		requiresPreprocessing := *source.RequiresPreprocessing
+		filter.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		filter.RequiresPreprocessing = nil
+	}
+
+	// SqlExpression
+	filter.SqlExpression = genruntime.ClonePointerToString(source.SqlExpression)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		filter.PropertyBag = propertyBag
+	} else {
+		filter.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlFilter interface (if implemented) to customize the conversion
+	var filterAsAny any = filter
+	if augmentedFilter, ok := filterAsAny.(augmentConversionForSqlFilter); ok {
+		err := augmentedFilter.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlFilter populates the provided destination SqlFilter from our SqlFilter
+func (filter *SqlFilter) AssignProperties_To_SqlFilter(destination *storage.SqlFilter) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(filter.PropertyBag)
+
+	// CompatibilityLevel
+	destination.CompatibilityLevel = genruntime.ClonePointerToInt(filter.CompatibilityLevel)
+
+	// RequiresPreprocessing
+	if filter.RequiresPreprocessing != nil {
+		requiresPreprocessing := *filter.RequiresPreprocessing
+		destination.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		destination.RequiresPreprocessing = nil
+	}
+
+	// SqlExpression
+	destination.SqlExpression = genruntime.ClonePointerToString(filter.SqlExpression)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlFilter interface (if implemented) to customize the conversion
+	var filterAsAny any = filter
+	if augmentedFilter, ok := filterAsAny.(augmentConversionForSqlFilter); ok {
+		err := augmentedFilter.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
 // Storage version of v1api20211101.SqlFilter_STATUS
 // Represents a filter which is a composition of an expression and an action that is executed in the pub/sub pipeline.
 type SqlFilter_STATUS struct {
@@ -313,6 +1438,119 @@ type SqlFilter_STATUS struct {
 	PropertyBag           genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 	RequiresPreprocessing *bool                  `json:"requiresPreprocessing,omitempty"`
 	SqlExpression         *string                `json:"sqlExpression,omitempty"`
+}
+
+// AssignProperties_From_SqlFilter_STATUS populates our SqlFilter_STATUS from the provided source SqlFilter_STATUS
+func (filter *SqlFilter_STATUS) AssignProperties_From_SqlFilter_STATUS(source *storage.SqlFilter_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// CompatibilityLevel
+	filter.CompatibilityLevel = genruntime.ClonePointerToInt(source.CompatibilityLevel)
+
+	// RequiresPreprocessing
+	if source.RequiresPreprocessing != nil {
+		requiresPreprocessing := *source.RequiresPreprocessing
+		filter.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		filter.RequiresPreprocessing = nil
+	}
+
+	// SqlExpression
+	filter.SqlExpression = genruntime.ClonePointerToString(source.SqlExpression)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		filter.PropertyBag = propertyBag
+	} else {
+		filter.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlFilter_STATUS interface (if implemented) to customize the conversion
+	var filterAsAny any = filter
+	if augmentedFilter, ok := filterAsAny.(augmentConversionForSqlFilter_STATUS); ok {
+		err := augmentedFilter.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_SqlFilter_STATUS populates the provided destination SqlFilter_STATUS from our SqlFilter_STATUS
+func (filter *SqlFilter_STATUS) AssignProperties_To_SqlFilter_STATUS(destination *storage.SqlFilter_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(filter.PropertyBag)
+
+	// CompatibilityLevel
+	destination.CompatibilityLevel = genruntime.ClonePointerToInt(filter.CompatibilityLevel)
+
+	// RequiresPreprocessing
+	if filter.RequiresPreprocessing != nil {
+		requiresPreprocessing := *filter.RequiresPreprocessing
+		destination.RequiresPreprocessing = &requiresPreprocessing
+	} else {
+		destination.RequiresPreprocessing = nil
+	}
+
+	// SqlExpression
+	destination.SqlExpression = genruntime.ClonePointerToString(filter.SqlExpression)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForSqlFilter_STATUS interface (if implemented) to customize the conversion
+	var filterAsAny any = filter
+	if augmentedFilter, ok := filterAsAny.(augmentConversionForSqlFilter_STATUS); ok {
+		err := augmentedFilter.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForAction interface {
+	AssignPropertiesFrom(src *storage.Action) error
+	AssignPropertiesTo(dst *storage.Action) error
+}
+
+type augmentConversionForAction_STATUS interface {
+	AssignPropertiesFrom(src *storage.Action_STATUS) error
+	AssignPropertiesTo(dst *storage.Action_STATUS) error
+}
+
+type augmentConversionForCorrelationFilter interface {
+	AssignPropertiesFrom(src *storage.CorrelationFilter) error
+	AssignPropertiesTo(dst *storage.CorrelationFilter) error
+}
+
+type augmentConversionForCorrelationFilter_STATUS interface {
+	AssignPropertiesFrom(src *storage.CorrelationFilter_STATUS) error
+	AssignPropertiesTo(dst *storage.CorrelationFilter_STATUS) error
+}
+
+type augmentConversionForNamespacesTopicsSubscriptionsRuleOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.NamespacesTopicsSubscriptionsRuleOperatorSpec) error
+	AssignPropertiesTo(dst *storage.NamespacesTopicsSubscriptionsRuleOperatorSpec) error
+}
+
+type augmentConversionForSqlFilter interface {
+	AssignPropertiesFrom(src *storage.SqlFilter) error
+	AssignPropertiesTo(dst *storage.SqlFilter) error
+}
+
+type augmentConversionForSqlFilter_STATUS interface {
+	AssignPropertiesFrom(src *storage.SqlFilter_STATUS) error
+	AssignPropertiesTo(dst *storage.SqlFilter_STATUS) error
 }
 
 func init() {

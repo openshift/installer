@@ -48,6 +48,7 @@ func (parameters SecurityPolicyPropertiesParameters) MarshalJSON() ([]byte, erro
 	if parameters.WebApplicationFirewall != nil {
 		return json.Marshal(parameters.WebApplicationFirewall)
 	}
+
 	return nil, nil
 }
 

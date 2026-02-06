@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/storage/v1api20230101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,22 +67,6 @@ func (policy *StorageAccountsManagementPolicy) ConvertTo(hub conversion.Hub) err
 
 	return policy.AssignProperties_To_StorageAccountsManagementPolicy(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-storage-azure-com-v1api20230101-storageaccountsmanagementpolicy,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=storage.azure.com,resources=storageaccountsmanagementpolicies,verbs=create;update,versions=v1api20230101,name=default.v1api20230101.storageaccountsmanagementpolicies.storage.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &StorageAccountsManagementPolicy{}
-
-// Default applies defaults to the StorageAccountsManagementPolicy resource
-func (policy *StorageAccountsManagementPolicy) Default() {
-	policy.defaultImpl()
-	var temp any = policy
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultImpl applies the code generated defaults to the StorageAccountsManagementPolicy resource
-func (policy *StorageAccountsManagementPolicy) defaultImpl() {}
 
 var _ configmaps.Exporter = &StorageAccountsManagementPolicy{}
 
@@ -166,6 +147,10 @@ func (policy *StorageAccountsManagementPolicy) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (policy *StorageAccountsManagementPolicy) Owner() *genruntime.ResourceReference {
+	if policy.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(policy.Spec)
 	return policy.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -182,114 +167,11 @@ func (policy *StorageAccountsManagementPolicy) SetStatus(status genruntime.Conve
 	var st StorageAccountsManagementPolicy_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	policy.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-storage-azure-com-v1api20230101-storageaccountsmanagementpolicy,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=storage.azure.com,resources=storageaccountsmanagementpolicies,verbs=create;update,versions=v1api20230101,name=validate.v1api20230101.storageaccountsmanagementpolicies.storage.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &StorageAccountsManagementPolicy{}
-
-// ValidateCreate validates the creation of the resource
-func (policy *StorageAccountsManagementPolicy) ValidateCreate() (admission.Warnings, error) {
-	validations := policy.createValidations()
-	var temp any = policy
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (policy *StorageAccountsManagementPolicy) ValidateDelete() (admission.Warnings, error) {
-	validations := policy.deleteValidations()
-	var temp any = policy
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (policy *StorageAccountsManagementPolicy) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := policy.updateValidations()
-	var temp any = policy
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (policy *StorageAccountsManagementPolicy) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){policy.validateResourceReferences, policy.validateOwnerReference, policy.validateSecretDestinations, policy.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (policy *StorageAccountsManagementPolicy) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (policy *StorageAccountsManagementPolicy) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return policy.validateResourceReferences()
-		},
-		policy.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return policy.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return policy.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return policy.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (policy *StorageAccountsManagementPolicy) validateConfigMapDestinations() (admission.Warnings, error) {
-	if policy.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (policy *StorageAccountsManagementPolicy) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(policy)
-}
-
-// validateResourceReferences validates all resource references
-func (policy *StorageAccountsManagementPolicy) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&policy.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (policy *StorageAccountsManagementPolicy) validateSecretDestinations() (admission.Warnings, error) {
-	if policy.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(policy, nil, policy.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (policy *StorageAccountsManagementPolicy) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*StorageAccountsManagementPolicy)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, policy)
 }
 
 // AssignProperties_From_StorageAccountsManagementPolicy populates our StorageAccountsManagementPolicy from the provided source StorageAccountsManagementPolicy
@@ -302,7 +184,7 @@ func (policy *StorageAccountsManagementPolicy) AssignProperties_From_StorageAcco
 	var spec StorageAccountsManagementPolicy_Spec
 	err := spec.AssignProperties_From_StorageAccountsManagementPolicy_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicy_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicy_Spec() to populate field Spec")
 	}
 	policy.Spec = spec
 
@@ -310,7 +192,7 @@ func (policy *StorageAccountsManagementPolicy) AssignProperties_From_StorageAcco
 	var status StorageAccountsManagementPolicy_STATUS
 	err = status.AssignProperties_From_StorageAccountsManagementPolicy_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicy_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicy_STATUS() to populate field Status")
 	}
 	policy.Status = status
 
@@ -328,7 +210,7 @@ func (policy *StorageAccountsManagementPolicy) AssignProperties_To_StorageAccoun
 	var spec storage.StorageAccountsManagementPolicy_Spec
 	err := policy.Spec.AssignProperties_To_StorageAccountsManagementPolicy_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicy_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicy_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -336,7 +218,7 @@ func (policy *StorageAccountsManagementPolicy) AssignProperties_To_StorageAccoun
 	var status storage.StorageAccountsManagementPolicy_STATUS
 	err = policy.Status.AssignProperties_To_StorageAccountsManagementPolicy_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicy_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicy_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -459,13 +341,13 @@ func (policy *StorageAccountsManagementPolicy_Spec) ConvertSpecFrom(source genru
 	src = &storage.StorageAccountsManagementPolicy_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = policy.AssignProperties_From_StorageAccountsManagementPolicy_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -483,13 +365,13 @@ func (policy *StorageAccountsManagementPolicy_Spec) ConvertSpecTo(destination ge
 	dst = &storage.StorageAccountsManagementPolicy_Spec{}
 	err := policy.AssignProperties_To_StorageAccountsManagementPolicy_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -503,7 +385,7 @@ func (policy *StorageAccountsManagementPolicy_Spec) AssignProperties_From_Storag
 		var operatorSpec StorageAccountsManagementPolicyOperatorSpec
 		err := operatorSpec.AssignProperties_From_StorageAccountsManagementPolicyOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicyOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_StorageAccountsManagementPolicyOperatorSpec() to populate field OperatorSpec")
 		}
 		policy.OperatorSpec = &operatorSpec
 	} else {
@@ -523,7 +405,7 @@ func (policy *StorageAccountsManagementPolicy_Spec) AssignProperties_From_Storag
 		var policyLocal ManagementPolicySchema
 		err := policyLocal.AssignProperties_From_ManagementPolicySchema(source.Policy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicySchema() to populate field Policy")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicySchema() to populate field Policy")
 		}
 		policy.Policy = &policyLocal
 	} else {
@@ -544,7 +426,7 @@ func (policy *StorageAccountsManagementPolicy_Spec) AssignProperties_To_StorageA
 		var operatorSpec storage.StorageAccountsManagementPolicyOperatorSpec
 		err := policy.OperatorSpec.AssignProperties_To_StorageAccountsManagementPolicyOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicyOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_StorageAccountsManagementPolicyOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -567,7 +449,7 @@ func (policy *StorageAccountsManagementPolicy_Spec) AssignProperties_To_StorageA
 		var policyLocal storage.ManagementPolicySchema
 		err := policy.Policy.AssignProperties_To_ManagementPolicySchema(&policyLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicySchema() to populate field Policy")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicySchema() to populate field Policy")
 		}
 		destination.Policy = &policyLocal
 	} else {
@@ -593,7 +475,7 @@ func (policy *StorageAccountsManagementPolicy_Spec) Initialize_From_StorageAccou
 		var policyLocal ManagementPolicySchema
 		err := policyLocal.Initialize_From_ManagementPolicySchema_STATUS(source.Policy)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagementPolicySchema_STATUS() to populate field Policy")
+			return eris.Wrap(err, "calling Initialize_From_ManagementPolicySchema_STATUS() to populate field Policy")
 		}
 		policy.Policy = &policyLocal
 	} else {
@@ -645,13 +527,13 @@ func (policy *StorageAccountsManagementPolicy_STATUS) ConvertStatusFrom(source g
 	src = &storage.StorageAccountsManagementPolicy_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = policy.AssignProperties_From_StorageAccountsManagementPolicy_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -669,13 +551,13 @@ func (policy *StorageAccountsManagementPolicy_STATUS) ConvertStatusTo(destinatio
 	dst = &storage.StorageAccountsManagementPolicy_STATUS{}
 	err := policy.AssignProperties_To_StorageAccountsManagementPolicy_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -762,7 +644,7 @@ func (policy *StorageAccountsManagementPolicy_STATUS) AssignProperties_From_Stor
 		var policyLocal ManagementPolicySchema_STATUS
 		err := policyLocal.AssignProperties_From_ManagementPolicySchema_STATUS(source.Policy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicySchema_STATUS() to populate field Policy")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicySchema_STATUS() to populate field Policy")
 		}
 		policy.Policy = &policyLocal
 	} else {
@@ -798,7 +680,7 @@ func (policy *StorageAccountsManagementPolicy_STATUS) AssignProperties_To_Storag
 		var policyLocal storage.ManagementPolicySchema_STATUS
 		err := policy.Policy.AssignProperties_To_ManagementPolicySchema_STATUS(&policyLocal)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicySchema_STATUS() to populate field Policy")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicySchema_STATUS() to populate field Policy")
 		}
 		destination.Policy = &policyLocal
 	} else {
@@ -886,7 +768,7 @@ func (schema *ManagementPolicySchema) AssignProperties_From_ManagementPolicySche
 			var rule ManagementPolicyRule
 			err := rule.AssignProperties_From_ManagementPolicyRule(&ruleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyRule() to populate field Rules")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyRule() to populate field Rules")
 			}
 			ruleList[ruleIndex] = rule
 		}
@@ -913,7 +795,7 @@ func (schema *ManagementPolicySchema) AssignProperties_To_ManagementPolicySchema
 			var rule storage.ManagementPolicyRule
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule(&rule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyRule() to populate field Rules")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyRule() to populate field Rules")
 			}
 			ruleList[ruleIndex] = rule
 		}
@@ -945,7 +827,7 @@ func (schema *ManagementPolicySchema) Initialize_From_ManagementPolicySchema_STA
 			var rule ManagementPolicyRule
 			err := rule.Initialize_From_ManagementPolicyRule_STATUS(&ruleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ManagementPolicyRule_STATUS() to populate field Rules")
+				return eris.Wrap(err, "calling Initialize_From_ManagementPolicyRule_STATUS() to populate field Rules")
 			}
 			ruleList[ruleIndex] = rule
 		}
@@ -1006,7 +888,7 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_From_ManagementPol
 			var rule ManagementPolicyRule_STATUS
 			err := rule.AssignProperties_From_ManagementPolicyRule_STATUS(&ruleItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyRule_STATUS() to populate field Rules")
+				return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyRule_STATUS() to populate field Rules")
 			}
 			ruleList[ruleIndex] = rule
 		}
@@ -1033,7 +915,7 @@ func (schema *ManagementPolicySchema_STATUS) AssignProperties_To_ManagementPolic
 			var rule storage.ManagementPolicyRule_STATUS
 			err := ruleItem.AssignProperties_To_ManagementPolicyRule_STATUS(&rule)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyRule_STATUS() to populate field Rules")
+				return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyRule_STATUS() to populate field Rules")
 			}
 			ruleList[ruleIndex] = rule
 		}
@@ -1272,7 +1154,7 @@ func (rule *ManagementPolicyRule) AssignProperties_From_ManagementPolicyRule(sou
 		var definition ManagementPolicyDefinition
 		err := definition.AssignProperties_From_ManagementPolicyDefinition(source.Definition)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyDefinition() to populate field Definition")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyDefinition() to populate field Definition")
 		}
 		rule.Definition = &definition
 	} else {
@@ -1313,7 +1195,7 @@ func (rule *ManagementPolicyRule) AssignProperties_To_ManagementPolicyRule(desti
 		var definition storage.ManagementPolicyDefinition
 		err := rule.Definition.AssignProperties_To_ManagementPolicyDefinition(&definition)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyDefinition() to populate field Definition")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyDefinition() to populate field Definition")
 		}
 		destination.Definition = &definition
 	} else {
@@ -1358,7 +1240,7 @@ func (rule *ManagementPolicyRule) Initialize_From_ManagementPolicyRule_STATUS(so
 		var definition ManagementPolicyDefinition
 		err := definition.Initialize_From_ManagementPolicyDefinition_STATUS(source.Definition)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagementPolicyDefinition_STATUS() to populate field Definition")
+			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyDefinition_STATUS() to populate field Definition")
 		}
 		rule.Definition = &definition
 	} else {
@@ -1461,7 +1343,7 @@ func (rule *ManagementPolicyRule_STATUS) AssignProperties_From_ManagementPolicyR
 		var definition ManagementPolicyDefinition_STATUS
 		err := definition.AssignProperties_From_ManagementPolicyDefinition_STATUS(source.Definition)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyDefinition_STATUS() to populate field Definition")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyDefinition_STATUS() to populate field Definition")
 		}
 		rule.Definition = &definition
 	} else {
@@ -1502,7 +1384,7 @@ func (rule *ManagementPolicyRule_STATUS) AssignProperties_To_ManagementPolicyRul
 		var definition storage.ManagementPolicyDefinition_STATUS
 		err := rule.Definition.AssignProperties_To_ManagementPolicyDefinition_STATUS(&definition)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyDefinition_STATUS() to populate field Definition")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyDefinition_STATUS() to populate field Definition")
 		}
 		destination.Definition = &definition
 	} else {
@@ -1626,7 +1508,7 @@ func (definition *ManagementPolicyDefinition) AssignProperties_From_ManagementPo
 		var action ManagementPolicyAction
 		err := action.AssignProperties_From_ManagementPolicyAction(source.Actions)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyAction() to populate field Actions")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyAction() to populate field Actions")
 		}
 		definition.Actions = &action
 	} else {
@@ -1638,7 +1520,7 @@ func (definition *ManagementPolicyDefinition) AssignProperties_From_ManagementPo
 		var filter ManagementPolicyFilter
 		err := filter.AssignProperties_From_ManagementPolicyFilter(source.Filters)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyFilter() to populate field Filters")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyFilter() to populate field Filters")
 		}
 		definition.Filters = &filter
 	} else {
@@ -1659,7 +1541,7 @@ func (definition *ManagementPolicyDefinition) AssignProperties_To_ManagementPoli
 		var action storage.ManagementPolicyAction
 		err := definition.Actions.AssignProperties_To_ManagementPolicyAction(&action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyAction() to populate field Actions")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyAction() to populate field Actions")
 		}
 		destination.Actions = &action
 	} else {
@@ -1671,7 +1553,7 @@ func (definition *ManagementPolicyDefinition) AssignProperties_To_ManagementPoli
 		var filter storage.ManagementPolicyFilter
 		err := definition.Filters.AssignProperties_To_ManagementPolicyFilter(&filter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyFilter() to populate field Filters")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyFilter() to populate field Filters")
 		}
 		destination.Filters = &filter
 	} else {
@@ -1697,7 +1579,7 @@ func (definition *ManagementPolicyDefinition) Initialize_From_ManagementPolicyDe
 		var action ManagementPolicyAction
 		err := action.Initialize_From_ManagementPolicyAction_STATUS(source.Actions)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagementPolicyAction_STATUS() to populate field Actions")
+			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyAction_STATUS() to populate field Actions")
 		}
 		definition.Actions = &action
 	} else {
@@ -1709,7 +1591,7 @@ func (definition *ManagementPolicyDefinition) Initialize_From_ManagementPolicyDe
 		var filter ManagementPolicyFilter
 		err := filter.Initialize_From_ManagementPolicyFilter_STATUS(source.Filters)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagementPolicyFilter_STATUS() to populate field Filters")
+			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyFilter_STATUS() to populate field Filters")
 		}
 		definition.Filters = &filter
 	} else {
@@ -1777,7 +1659,7 @@ func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_From_Manag
 		var action ManagementPolicyAction_STATUS
 		err := action.AssignProperties_From_ManagementPolicyAction_STATUS(source.Actions)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyAction_STATUS() to populate field Actions")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyAction_STATUS() to populate field Actions")
 		}
 		definition.Actions = &action
 	} else {
@@ -1789,7 +1671,7 @@ func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_From_Manag
 		var filter ManagementPolicyFilter_STATUS
 		err := filter.AssignProperties_From_ManagementPolicyFilter_STATUS(source.Filters)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyFilter_STATUS() to populate field Filters")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyFilter_STATUS() to populate field Filters")
 		}
 		definition.Filters = &filter
 	} else {
@@ -1810,7 +1692,7 @@ func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_To_Managem
 		var action storage.ManagementPolicyAction_STATUS
 		err := definition.Actions.AssignProperties_To_ManagementPolicyAction_STATUS(&action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyAction_STATUS() to populate field Actions")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyAction_STATUS() to populate field Actions")
 		}
 		destination.Actions = &action
 	} else {
@@ -1822,7 +1704,7 @@ func (definition *ManagementPolicyDefinition_STATUS) AssignProperties_To_Managem
 		var filter storage.ManagementPolicyFilter_STATUS
 		err := definition.Filters.AssignProperties_To_ManagementPolicyFilter_STATUS(&filter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyFilter_STATUS() to populate field Filters")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyFilter_STATUS() to populate field Filters")
 		}
 		destination.Filters = &filter
 	} else {
@@ -1969,7 +1851,7 @@ func (action *ManagementPolicyAction) AssignProperties_From_ManagementPolicyActi
 		var baseBlob ManagementPolicyBaseBlob
 		err := baseBlob.AssignProperties_From_ManagementPolicyBaseBlob(source.BaseBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyBaseBlob() to populate field BaseBlob")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyBaseBlob() to populate field BaseBlob")
 		}
 		action.BaseBlob = &baseBlob
 	} else {
@@ -1981,7 +1863,7 @@ func (action *ManagementPolicyAction) AssignProperties_From_ManagementPolicyActi
 		var snapshot ManagementPolicySnapShot
 		err := snapshot.AssignProperties_From_ManagementPolicySnapShot(source.Snapshot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicySnapShot() to populate field Snapshot")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicySnapShot() to populate field Snapshot")
 		}
 		action.Snapshot = &snapshot
 	} else {
@@ -1993,7 +1875,7 @@ func (action *ManagementPolicyAction) AssignProperties_From_ManagementPolicyActi
 		var version ManagementPolicyVersion
 		err := version.AssignProperties_From_ManagementPolicyVersion(source.Version)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyVersion() to populate field Version")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyVersion() to populate field Version")
 		}
 		action.Version = &version
 	} else {
@@ -2014,7 +1896,7 @@ func (action *ManagementPolicyAction) AssignProperties_To_ManagementPolicyAction
 		var baseBlob storage.ManagementPolicyBaseBlob
 		err := action.BaseBlob.AssignProperties_To_ManagementPolicyBaseBlob(&baseBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyBaseBlob() to populate field BaseBlob")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyBaseBlob() to populate field BaseBlob")
 		}
 		destination.BaseBlob = &baseBlob
 	} else {
@@ -2026,7 +1908,7 @@ func (action *ManagementPolicyAction) AssignProperties_To_ManagementPolicyAction
 		var snapshot storage.ManagementPolicySnapShot
 		err := action.Snapshot.AssignProperties_To_ManagementPolicySnapShot(&snapshot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicySnapShot() to populate field Snapshot")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicySnapShot() to populate field Snapshot")
 		}
 		destination.Snapshot = &snapshot
 	} else {
@@ -2038,7 +1920,7 @@ func (action *ManagementPolicyAction) AssignProperties_To_ManagementPolicyAction
 		var version storage.ManagementPolicyVersion
 		err := action.Version.AssignProperties_To_ManagementPolicyVersion(&version)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyVersion() to populate field Version")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyVersion() to populate field Version")
 		}
 		destination.Version = &version
 	} else {
@@ -2064,7 +1946,7 @@ func (action *ManagementPolicyAction) Initialize_From_ManagementPolicyAction_STA
 		var baseBlob ManagementPolicyBaseBlob
 		err := baseBlob.Initialize_From_ManagementPolicyBaseBlob_STATUS(source.BaseBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagementPolicyBaseBlob_STATUS() to populate field BaseBlob")
+			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyBaseBlob_STATUS() to populate field BaseBlob")
 		}
 		action.BaseBlob = &baseBlob
 	} else {
@@ -2076,7 +1958,7 @@ func (action *ManagementPolicyAction) Initialize_From_ManagementPolicyAction_STA
 		var snapshot ManagementPolicySnapShot
 		err := snapshot.Initialize_From_ManagementPolicySnapShot_STATUS(source.Snapshot)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagementPolicySnapShot_STATUS() to populate field Snapshot")
+			return eris.Wrap(err, "calling Initialize_From_ManagementPolicySnapShot_STATUS() to populate field Snapshot")
 		}
 		action.Snapshot = &snapshot
 	} else {
@@ -2088,7 +1970,7 @@ func (action *ManagementPolicyAction) Initialize_From_ManagementPolicyAction_STA
 		var version ManagementPolicyVersion
 		err := version.Initialize_From_ManagementPolicyVersion_STATUS(source.Version)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagementPolicyVersion_STATUS() to populate field Version")
+			return eris.Wrap(err, "calling Initialize_From_ManagementPolicyVersion_STATUS() to populate field Version")
 		}
 		action.Version = &version
 	} else {
@@ -2170,7 +2052,7 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_From_ManagementPol
 		var baseBlob ManagementPolicyBaseBlob_STATUS
 		err := baseBlob.AssignProperties_From_ManagementPolicyBaseBlob_STATUS(source.BaseBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyBaseBlob_STATUS() to populate field BaseBlob")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyBaseBlob_STATUS() to populate field BaseBlob")
 		}
 		action.BaseBlob = &baseBlob
 	} else {
@@ -2182,7 +2064,7 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_From_ManagementPol
 		var snapshot ManagementPolicySnapShot_STATUS
 		err := snapshot.AssignProperties_From_ManagementPolicySnapShot_STATUS(source.Snapshot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicySnapShot_STATUS() to populate field Snapshot")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicySnapShot_STATUS() to populate field Snapshot")
 		}
 		action.Snapshot = &snapshot
 	} else {
@@ -2194,7 +2076,7 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_From_ManagementPol
 		var version ManagementPolicyVersion_STATUS
 		err := version.AssignProperties_From_ManagementPolicyVersion_STATUS(source.Version)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagementPolicyVersion_STATUS() to populate field Version")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagementPolicyVersion_STATUS() to populate field Version")
 		}
 		action.Version = &version
 	} else {
@@ -2215,7 +2097,7 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_To_ManagementPolic
 		var baseBlob storage.ManagementPolicyBaseBlob_STATUS
 		err := action.BaseBlob.AssignProperties_To_ManagementPolicyBaseBlob_STATUS(&baseBlob)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyBaseBlob_STATUS() to populate field BaseBlob")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyBaseBlob_STATUS() to populate field BaseBlob")
 		}
 		destination.BaseBlob = &baseBlob
 	} else {
@@ -2227,7 +2109,7 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_To_ManagementPolic
 		var snapshot storage.ManagementPolicySnapShot_STATUS
 		err := action.Snapshot.AssignProperties_To_ManagementPolicySnapShot_STATUS(&snapshot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicySnapShot_STATUS() to populate field Snapshot")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicySnapShot_STATUS() to populate field Snapshot")
 		}
 		destination.Snapshot = &snapshot
 	} else {
@@ -2239,7 +2121,7 @@ func (action *ManagementPolicyAction_STATUS) AssignProperties_To_ManagementPolic
 		var version storage.ManagementPolicyVersion_STATUS
 		err := action.Version.AssignProperties_To_ManagementPolicyVersion_STATUS(&version)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagementPolicyVersion_STATUS() to populate field Version")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagementPolicyVersion_STATUS() to populate field Version")
 		}
 		destination.Version = &version
 	} else {
@@ -2350,7 +2232,7 @@ func (filter *ManagementPolicyFilter) AssignProperties_From_ManagementPolicyFilt
 			var blobIndexMatch TagFilter
 			err := blobIndexMatch.AssignProperties_From_TagFilter(&blobIndexMatchItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TagFilter() to populate field BlobIndexMatch")
+				return eris.Wrap(err, "calling AssignProperties_From_TagFilter() to populate field BlobIndexMatch")
 			}
 			blobIndexMatchList[blobIndexMatchIndex] = blobIndexMatch
 		}
@@ -2383,7 +2265,7 @@ func (filter *ManagementPolicyFilter) AssignProperties_To_ManagementPolicyFilter
 			var blobIndexMatch storage.TagFilter
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter(&blobIndexMatch)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TagFilter() to populate field BlobIndexMatch")
+				return eris.Wrap(err, "calling AssignProperties_To_TagFilter() to populate field BlobIndexMatch")
 			}
 			blobIndexMatchList[blobIndexMatchIndex] = blobIndexMatch
 		}
@@ -2421,7 +2303,7 @@ func (filter *ManagementPolicyFilter) Initialize_From_ManagementPolicyFilter_STA
 			var blobIndexMatch TagFilter
 			err := blobIndexMatch.Initialize_From_TagFilter_STATUS(&blobIndexMatchItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_TagFilter_STATUS() to populate field BlobIndexMatch")
+				return eris.Wrap(err, "calling Initialize_From_TagFilter_STATUS() to populate field BlobIndexMatch")
 			}
 			blobIndexMatchList[blobIndexMatchIndex] = blobIndexMatch
 		}
@@ -2504,7 +2386,7 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_From_ManagementPol
 			var blobIndexMatch TagFilter_STATUS
 			err := blobIndexMatch.AssignProperties_From_TagFilter_STATUS(&blobIndexMatchItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_TagFilter_STATUS() to populate field BlobIndexMatch")
+				return eris.Wrap(err, "calling AssignProperties_From_TagFilter_STATUS() to populate field BlobIndexMatch")
 			}
 			blobIndexMatchList[blobIndexMatchIndex] = blobIndexMatch
 		}
@@ -2537,7 +2419,7 @@ func (filter *ManagementPolicyFilter_STATUS) AssignProperties_To_ManagementPolic
 			var blobIndexMatch storage.TagFilter_STATUS
 			err := blobIndexMatchItem.AssignProperties_To_TagFilter_STATUS(&blobIndexMatch)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_TagFilter_STATUS() to populate field BlobIndexMatch")
+				return eris.Wrap(err, "calling AssignProperties_To_TagFilter_STATUS() to populate field BlobIndexMatch")
 			}
 			blobIndexMatchList[blobIndexMatchIndex] = blobIndexMatch
 		}
@@ -2738,7 +2620,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBase
 		var delete DateAfterModification
 		err := delete.AssignProperties_From_DateAfterModification(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field Delete")
 		}
 		blob.Delete = &delete
 	} else {
@@ -2758,7 +2640,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBase
 		var tierToArchive DateAfterModification
 		err := tierToArchive.AssignProperties_From_DateAfterModification(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field TierToArchive")
 		}
 		blob.TierToArchive = &tierToArchive
 	} else {
@@ -2770,7 +2652,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBase
 		var tierToCold DateAfterModification
 		err := tierToCold.AssignProperties_From_DateAfterModification(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field TierToCold")
 		}
 		blob.TierToCold = &tierToCold
 	} else {
@@ -2782,7 +2664,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBase
 		var tierToCool DateAfterModification
 		err := tierToCool.AssignProperties_From_DateAfterModification(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field TierToCool")
 		}
 		blob.TierToCool = &tierToCool
 	} else {
@@ -2794,7 +2676,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_From_ManagementPolicyBase
 		var tierToHot DateAfterModification
 		err := tierToHot.AssignProperties_From_DateAfterModification(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification() to populate field TierToHot")
 		}
 		blob.TierToHot = &tierToHot
 	} else {
@@ -2815,7 +2697,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 		var delete storage.DateAfterModification
 		err := blob.Delete.AssignProperties_To_DateAfterModification(&delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field Delete")
 		}
 		destination.Delete = &delete
 	} else {
@@ -2835,7 +2717,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 		var tierToArchive storage.DateAfterModification
 		err := blob.TierToArchive.AssignProperties_To_DateAfterModification(&tierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToArchive")
 		}
 		destination.TierToArchive = &tierToArchive
 	} else {
@@ -2847,7 +2729,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 		var tierToCold storage.DateAfterModification
 		err := blob.TierToCold.AssignProperties_To_DateAfterModification(&tierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToCold")
 		}
 		destination.TierToCold = &tierToCold
 	} else {
@@ -2859,7 +2741,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 		var tierToCool storage.DateAfterModification
 		err := blob.TierToCool.AssignProperties_To_DateAfterModification(&tierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToCool")
 		}
 		destination.TierToCool = &tierToCool
 	} else {
@@ -2871,7 +2753,7 @@ func (blob *ManagementPolicyBaseBlob) AssignProperties_To_ManagementPolicyBaseBl
 		var tierToHot storage.DateAfterModification
 		err := blob.TierToHot.AssignProperties_To_DateAfterModification(&tierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification() to populate field TierToHot")
 		}
 		destination.TierToHot = &tierToHot
 	} else {
@@ -2897,7 +2779,7 @@ func (blob *ManagementPolicyBaseBlob) Initialize_From_ManagementPolicyBaseBlob_S
 		var delete DateAfterModification
 		err := delete.Initialize_From_DateAfterModification_STATUS(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field Delete")
 		}
 		blob.Delete = &delete
 	} else {
@@ -2917,7 +2799,7 @@ func (blob *ManagementPolicyBaseBlob) Initialize_From_ManagementPolicyBaseBlob_S
 		var tierToArchive DateAfterModification
 		err := tierToArchive.Initialize_From_DateAfterModification_STATUS(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToArchive")
 		}
 		blob.TierToArchive = &tierToArchive
 	} else {
@@ -2929,7 +2811,7 @@ func (blob *ManagementPolicyBaseBlob) Initialize_From_ManagementPolicyBaseBlob_S
 		var tierToCold DateAfterModification
 		err := tierToCold.Initialize_From_DateAfterModification_STATUS(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToCold")
 		}
 		blob.TierToCold = &tierToCold
 	} else {
@@ -2941,7 +2823,7 @@ func (blob *ManagementPolicyBaseBlob) Initialize_From_ManagementPolicyBaseBlob_S
 		var tierToCool DateAfterModification
 		err := tierToCool.Initialize_From_DateAfterModification_STATUS(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToCool")
 		}
 		blob.TierToCool = &tierToCool
 	} else {
@@ -2953,7 +2835,7 @@ func (blob *ManagementPolicyBaseBlob) Initialize_From_ManagementPolicyBaseBlob_S
 		var tierToHot DateAfterModification
 		err := tierToHot.Initialize_From_DateAfterModification_STATUS(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterModification_STATUS() to populate field TierToHot")
 		}
 		blob.TierToHot = &tierToHot
 	} else {
@@ -3074,7 +2956,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPol
 		var delete DateAfterModification_STATUS
 		err := delete.AssignProperties_From_DateAfterModification_STATUS(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field Delete")
 		}
 		blob.Delete = &delete
 	} else {
@@ -3094,7 +2976,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPol
 		var tierToArchive DateAfterModification_STATUS
 		err := tierToArchive.AssignProperties_From_DateAfterModification_STATUS(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field TierToArchive")
 		}
 		blob.TierToArchive = &tierToArchive
 	} else {
@@ -3106,7 +2988,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPol
 		var tierToCold DateAfterModification_STATUS
 		err := tierToCold.AssignProperties_From_DateAfterModification_STATUS(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field TierToCold")
 		}
 		blob.TierToCold = &tierToCold
 	} else {
@@ -3118,7 +3000,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPol
 		var tierToCool DateAfterModification_STATUS
 		err := tierToCool.AssignProperties_From_DateAfterModification_STATUS(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field TierToCool")
 		}
 		blob.TierToCool = &tierToCool
 	} else {
@@ -3130,7 +3012,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_From_ManagementPol
 		var tierToHot DateAfterModification_STATUS
 		err := tierToHot.AssignProperties_From_DateAfterModification_STATUS(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterModification_STATUS() to populate field TierToHot")
 		}
 		blob.TierToHot = &tierToHot
 	} else {
@@ -3151,7 +3033,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 		var delete storage.DateAfterModification_STATUS
 		err := blob.Delete.AssignProperties_To_DateAfterModification_STATUS(&delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field Delete")
 		}
 		destination.Delete = &delete
 	} else {
@@ -3171,7 +3053,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 		var tierToArchive storage.DateAfterModification_STATUS
 		err := blob.TierToArchive.AssignProperties_To_DateAfterModification_STATUS(&tierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToArchive")
 		}
 		destination.TierToArchive = &tierToArchive
 	} else {
@@ -3183,7 +3065,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 		var tierToCold storage.DateAfterModification_STATUS
 		err := blob.TierToCold.AssignProperties_To_DateAfterModification_STATUS(&tierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToCold")
 		}
 		destination.TierToCold = &tierToCold
 	} else {
@@ -3195,7 +3077,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 		var tierToCool storage.DateAfterModification_STATUS
 		err := blob.TierToCool.AssignProperties_To_DateAfterModification_STATUS(&tierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToCool")
 		}
 		destination.TierToCool = &tierToCool
 	} else {
@@ -3207,7 +3089,7 @@ func (blob *ManagementPolicyBaseBlob_STATUS) AssignProperties_To_ManagementPolic
 		var tierToHot storage.DateAfterModification_STATUS
 		err := blob.TierToHot.AssignProperties_To_DateAfterModification_STATUS(&tierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterModification_STATUS() to populate field TierToHot")
 		}
 		destination.TierToHot = &tierToHot
 	} else {
@@ -3384,7 +3266,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnap
 		var delete DateAfterCreation
 		err := delete.AssignProperties_From_DateAfterCreation(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field Delete")
 		}
 		shot.Delete = &delete
 	} else {
@@ -3396,7 +3278,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnap
 		var tierToArchive DateAfterCreation
 		err := tierToArchive.AssignProperties_From_DateAfterCreation(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToArchive")
 		}
 		shot.TierToArchive = &tierToArchive
 	} else {
@@ -3408,7 +3290,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnap
 		var tierToCold DateAfterCreation
 		err := tierToCold.AssignProperties_From_DateAfterCreation(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToCold")
 		}
 		shot.TierToCold = &tierToCold
 	} else {
@@ -3420,7 +3302,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnap
 		var tierToCool DateAfterCreation
 		err := tierToCool.AssignProperties_From_DateAfterCreation(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToCool")
 		}
 		shot.TierToCool = &tierToCool
 	} else {
@@ -3432,7 +3314,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_From_ManagementPolicySnap
 		var tierToHot DateAfterCreation
 		err := tierToHot.AssignProperties_From_DateAfterCreation(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToHot")
 		}
 		shot.TierToHot = &tierToHot
 	} else {
@@ -3453,7 +3335,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 		var delete storage.DateAfterCreation
 		err := shot.Delete.AssignProperties_To_DateAfterCreation(&delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field Delete")
 		}
 		destination.Delete = &delete
 	} else {
@@ -3465,7 +3347,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 		var tierToArchive storage.DateAfterCreation
 		err := shot.TierToArchive.AssignProperties_To_DateAfterCreation(&tierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToArchive")
 		}
 		destination.TierToArchive = &tierToArchive
 	} else {
@@ -3477,7 +3359,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 		var tierToCold storage.DateAfterCreation
 		err := shot.TierToCold.AssignProperties_To_DateAfterCreation(&tierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCold")
 		}
 		destination.TierToCold = &tierToCold
 	} else {
@@ -3489,7 +3371,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 		var tierToCool storage.DateAfterCreation
 		err := shot.TierToCool.AssignProperties_To_DateAfterCreation(&tierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCool")
 		}
 		destination.TierToCool = &tierToCool
 	} else {
@@ -3501,7 +3383,7 @@ func (shot *ManagementPolicySnapShot) AssignProperties_To_ManagementPolicySnapSh
 		var tierToHot storage.DateAfterCreation
 		err := shot.TierToHot.AssignProperties_To_DateAfterCreation(&tierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToHot")
 		}
 		destination.TierToHot = &tierToHot
 	} else {
@@ -3527,7 +3409,7 @@ func (shot *ManagementPolicySnapShot) Initialize_From_ManagementPolicySnapShot_S
 		var delete DateAfterCreation
 		err := delete.Initialize_From_DateAfterCreation_STATUS(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field Delete")
 		}
 		shot.Delete = &delete
 	} else {
@@ -3539,7 +3421,7 @@ func (shot *ManagementPolicySnapShot) Initialize_From_ManagementPolicySnapShot_S
 		var tierToArchive DateAfterCreation
 		err := tierToArchive.Initialize_From_DateAfterCreation_STATUS(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToArchive")
 		}
 		shot.TierToArchive = &tierToArchive
 	} else {
@@ -3551,7 +3433,7 @@ func (shot *ManagementPolicySnapShot) Initialize_From_ManagementPolicySnapShot_S
 		var tierToCold DateAfterCreation
 		err := tierToCold.Initialize_From_DateAfterCreation_STATUS(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCold")
 		}
 		shot.TierToCold = &tierToCold
 	} else {
@@ -3563,7 +3445,7 @@ func (shot *ManagementPolicySnapShot) Initialize_From_ManagementPolicySnapShot_S
 		var tierToCool DateAfterCreation
 		err := tierToCool.Initialize_From_DateAfterCreation_STATUS(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCool")
 		}
 		shot.TierToCool = &tierToCool
 	} else {
@@ -3575,7 +3457,7 @@ func (shot *ManagementPolicySnapShot) Initialize_From_ManagementPolicySnapShot_S
 		var tierToHot DateAfterCreation
 		err := tierToHot.Initialize_From_DateAfterCreation_STATUS(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToHot")
 		}
 		shot.TierToHot = &tierToHot
 	} else {
@@ -3686,7 +3568,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPol
 		var delete DateAfterCreation_STATUS
 		err := delete.AssignProperties_From_DateAfterCreation_STATUS(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field Delete")
 		}
 		shot.Delete = &delete
 	} else {
@@ -3698,7 +3580,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPol
 		var tierToArchive DateAfterCreation_STATUS
 		err := tierToArchive.AssignProperties_From_DateAfterCreation_STATUS(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToArchive")
 		}
 		shot.TierToArchive = &tierToArchive
 	} else {
@@ -3710,7 +3592,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPol
 		var tierToCold DateAfterCreation_STATUS
 		err := tierToCold.AssignProperties_From_DateAfterCreation_STATUS(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToCold")
 		}
 		shot.TierToCold = &tierToCold
 	} else {
@@ -3722,7 +3604,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPol
 		var tierToCool DateAfterCreation_STATUS
 		err := tierToCool.AssignProperties_From_DateAfterCreation_STATUS(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToCool")
 		}
 		shot.TierToCool = &tierToCool
 	} else {
@@ -3734,7 +3616,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_From_ManagementPol
 		var tierToHot DateAfterCreation_STATUS
 		err := tierToHot.AssignProperties_From_DateAfterCreation_STATUS(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToHot")
 		}
 		shot.TierToHot = &tierToHot
 	} else {
@@ -3755,7 +3637,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 		var delete storage.DateAfterCreation_STATUS
 		err := shot.Delete.AssignProperties_To_DateAfterCreation_STATUS(&delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field Delete")
 		}
 		destination.Delete = &delete
 	} else {
@@ -3767,7 +3649,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 		var tierToArchive storage.DateAfterCreation_STATUS
 		err := shot.TierToArchive.AssignProperties_To_DateAfterCreation_STATUS(&tierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToArchive")
 		}
 		destination.TierToArchive = &tierToArchive
 	} else {
@@ -3779,7 +3661,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 		var tierToCold storage.DateAfterCreation_STATUS
 		err := shot.TierToCold.AssignProperties_To_DateAfterCreation_STATUS(&tierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCold")
 		}
 		destination.TierToCold = &tierToCold
 	} else {
@@ -3791,7 +3673,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 		var tierToCool storage.DateAfterCreation_STATUS
 		err := shot.TierToCool.AssignProperties_To_DateAfterCreation_STATUS(&tierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCool")
 		}
 		destination.TierToCool = &tierToCool
 	} else {
@@ -3803,7 +3685,7 @@ func (shot *ManagementPolicySnapShot_STATUS) AssignProperties_To_ManagementPolic
 		var tierToHot storage.DateAfterCreation_STATUS
 		err := shot.TierToHot.AssignProperties_To_DateAfterCreation_STATUS(&tierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToHot")
 		}
 		destination.TierToHot = &tierToHot
 	} else {
@@ -3980,7 +3862,7 @@ func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVe
 		var delete DateAfterCreation
 		err := delete.AssignProperties_From_DateAfterCreation(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field Delete")
 		}
 		version.Delete = &delete
 	} else {
@@ -3992,7 +3874,7 @@ func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVe
 		var tierToArchive DateAfterCreation
 		err := tierToArchive.AssignProperties_From_DateAfterCreation(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToArchive")
 		}
 		version.TierToArchive = &tierToArchive
 	} else {
@@ -4004,7 +3886,7 @@ func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVe
 		var tierToCold DateAfterCreation
 		err := tierToCold.AssignProperties_From_DateAfterCreation(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToCold")
 		}
 		version.TierToCold = &tierToCold
 	} else {
@@ -4016,7 +3898,7 @@ func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVe
 		var tierToCool DateAfterCreation
 		err := tierToCool.AssignProperties_From_DateAfterCreation(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToCool")
 		}
 		version.TierToCool = &tierToCool
 	} else {
@@ -4028,7 +3910,7 @@ func (version *ManagementPolicyVersion) AssignProperties_From_ManagementPolicyVe
 		var tierToHot DateAfterCreation
 		err := tierToHot.AssignProperties_From_DateAfterCreation(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation() to populate field TierToHot")
 		}
 		version.TierToHot = &tierToHot
 	} else {
@@ -4049,7 +3931,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 		var delete storage.DateAfterCreation
 		err := version.Delete.AssignProperties_To_DateAfterCreation(&delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field Delete")
 		}
 		destination.Delete = &delete
 	} else {
@@ -4061,7 +3943,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 		var tierToArchive storage.DateAfterCreation
 		err := version.TierToArchive.AssignProperties_To_DateAfterCreation(&tierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToArchive")
 		}
 		destination.TierToArchive = &tierToArchive
 	} else {
@@ -4073,7 +3955,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 		var tierToCold storage.DateAfterCreation
 		err := version.TierToCold.AssignProperties_To_DateAfterCreation(&tierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCold")
 		}
 		destination.TierToCold = &tierToCold
 	} else {
@@ -4085,7 +3967,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 		var tierToCool storage.DateAfterCreation
 		err := version.TierToCool.AssignProperties_To_DateAfterCreation(&tierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToCool")
 		}
 		destination.TierToCool = &tierToCool
 	} else {
@@ -4097,7 +3979,7 @@ func (version *ManagementPolicyVersion) AssignProperties_To_ManagementPolicyVers
 		var tierToHot storage.DateAfterCreation
 		err := version.TierToHot.AssignProperties_To_DateAfterCreation(&tierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation() to populate field TierToHot")
 		}
 		destination.TierToHot = &tierToHot
 	} else {
@@ -4123,7 +4005,7 @@ func (version *ManagementPolicyVersion) Initialize_From_ManagementPolicyVersion_
 		var delete DateAfterCreation
 		err := delete.Initialize_From_DateAfterCreation_STATUS(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field Delete")
 		}
 		version.Delete = &delete
 	} else {
@@ -4135,7 +4017,7 @@ func (version *ManagementPolicyVersion) Initialize_From_ManagementPolicyVersion_
 		var tierToArchive DateAfterCreation
 		err := tierToArchive.Initialize_From_DateAfterCreation_STATUS(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToArchive")
 		}
 		version.TierToArchive = &tierToArchive
 	} else {
@@ -4147,7 +4029,7 @@ func (version *ManagementPolicyVersion) Initialize_From_ManagementPolicyVersion_
 		var tierToCold DateAfterCreation
 		err := tierToCold.Initialize_From_DateAfterCreation_STATUS(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCold")
 		}
 		version.TierToCold = &tierToCold
 	} else {
@@ -4159,7 +4041,7 @@ func (version *ManagementPolicyVersion) Initialize_From_ManagementPolicyVersion_
 		var tierToCool DateAfterCreation
 		err := tierToCool.Initialize_From_DateAfterCreation_STATUS(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToCool")
 		}
 		version.TierToCool = &tierToCool
 	} else {
@@ -4171,7 +4053,7 @@ func (version *ManagementPolicyVersion) Initialize_From_ManagementPolicyVersion_
 		var tierToHot DateAfterCreation
 		err := tierToHot.Initialize_From_DateAfterCreation_STATUS(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling Initialize_From_DateAfterCreation_STATUS() to populate field TierToHot")
 		}
 		version.TierToHot = &tierToHot
 	} else {
@@ -4282,7 +4164,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementP
 		var delete DateAfterCreation_STATUS
 		err := delete.AssignProperties_From_DateAfterCreation_STATUS(source.Delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field Delete")
 		}
 		version.Delete = &delete
 	} else {
@@ -4294,7 +4176,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementP
 		var tierToArchive DateAfterCreation_STATUS
 		err := tierToArchive.AssignProperties_From_DateAfterCreation_STATUS(source.TierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToArchive")
 		}
 		version.TierToArchive = &tierToArchive
 	} else {
@@ -4306,7 +4188,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementP
 		var tierToCold DateAfterCreation_STATUS
 		err := tierToCold.AssignProperties_From_DateAfterCreation_STATUS(source.TierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToCold")
 		}
 		version.TierToCold = &tierToCold
 	} else {
@@ -4318,7 +4200,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementP
 		var tierToCool DateAfterCreation_STATUS
 		err := tierToCool.AssignProperties_From_DateAfterCreation_STATUS(source.TierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToCool")
 		}
 		version.TierToCool = &tierToCool
 	} else {
@@ -4330,7 +4212,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_From_ManagementP
 		var tierToHot DateAfterCreation_STATUS
 		err := tierToHot.AssignProperties_From_DateAfterCreation_STATUS(source.TierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_From_DateAfterCreation_STATUS() to populate field TierToHot")
 		}
 		version.TierToHot = &tierToHot
 	} else {
@@ -4351,7 +4233,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 		var delete storage.DateAfterCreation_STATUS
 		err := version.Delete.AssignProperties_To_DateAfterCreation_STATUS(&delete)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field Delete")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field Delete")
 		}
 		destination.Delete = &delete
 	} else {
@@ -4363,7 +4245,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 		var tierToArchive storage.DateAfterCreation_STATUS
 		err := version.TierToArchive.AssignProperties_To_DateAfterCreation_STATUS(&tierToArchive)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToArchive")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToArchive")
 		}
 		destination.TierToArchive = &tierToArchive
 	} else {
@@ -4375,7 +4257,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 		var tierToCold storage.DateAfterCreation_STATUS
 		err := version.TierToCold.AssignProperties_To_DateAfterCreation_STATUS(&tierToCold)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCold")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCold")
 		}
 		destination.TierToCold = &tierToCold
 	} else {
@@ -4387,7 +4269,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 		var tierToCool storage.DateAfterCreation_STATUS
 		err := version.TierToCool.AssignProperties_To_DateAfterCreation_STATUS(&tierToCool)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCool")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToCool")
 		}
 		destination.TierToCool = &tierToCool
 	} else {
@@ -4399,7 +4281,7 @@ func (version *ManagementPolicyVersion_STATUS) AssignProperties_To_ManagementPol
 		var tierToHot storage.DateAfterCreation_STATUS
 		err := version.TierToHot.AssignProperties_To_DateAfterCreation_STATUS(&tierToHot)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToHot")
+			return eris.Wrap(err, "calling AssignProperties_To_DateAfterCreation_STATUS() to populate field TierToHot")
 		}
 		destination.TierToHot = &tierToHot
 	} else {
@@ -4504,23 +4386,13 @@ func (filter *TagFilter) PopulateFromARM(owner genruntime.ArbitraryOwnerReferenc
 func (filter *TagFilter) AssignProperties_From_TagFilter(source *storage.TagFilter) error {
 
 	// Name
-	if source.Name != nil {
-		name := *source.Name
-		filter.Name = &name
-	} else {
-		filter.Name = nil
-	}
+	filter.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Op
 	filter.Op = genruntime.ClonePointerToString(source.Op)
 
 	// Value
-	if source.Value != nil {
-		value := *source.Value
-		filter.Value = &value
-	} else {
-		filter.Value = nil
-	}
+	filter.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -4532,23 +4404,13 @@ func (filter *TagFilter) AssignProperties_To_TagFilter(destination *storage.TagF
 	propertyBag := genruntime.NewPropertyBag()
 
 	// Name
-	if filter.Name != nil {
-		name := *filter.Name
-		destination.Name = &name
-	} else {
-		destination.Name = nil
-	}
+	destination.Name = genruntime.ClonePointerToString(filter.Name)
 
 	// Op
 	destination.Op = genruntime.ClonePointerToString(filter.Op)
 
 	// Value
-	if filter.Value != nil {
-		value := *filter.Value
-		destination.Value = &value
-	} else {
-		destination.Value = nil
-	}
+	destination.Value = genruntime.ClonePointerToString(filter.Value)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -4565,23 +4427,13 @@ func (filter *TagFilter) AssignProperties_To_TagFilter(destination *storage.TagF
 func (filter *TagFilter) Initialize_From_TagFilter_STATUS(source *TagFilter_STATUS) error {
 
 	// Name
-	if source.Name != nil {
-		name := *source.Name
-		filter.Name = &name
-	} else {
-		filter.Name = nil
-	}
+	filter.Name = genruntime.ClonePointerToString(source.Name)
 
 	// Op
 	filter.Op = genruntime.ClonePointerToString(source.Op)
 
 	// Value
-	if source.Value != nil {
-		value := *source.Value
-		filter.Value = &value
-	} else {
-		filter.Value = nil
-	}
+	filter.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -4748,20 +4600,10 @@ func (creation *DateAfterCreation) PopulateFromARM(owner genruntime.ArbitraryOwn
 func (creation *DateAfterCreation) AssignProperties_From_DateAfterCreation(source *storage.DateAfterCreation) error {
 
 	// DaysAfterCreationGreaterThan
-	if source.DaysAfterCreationGreaterThan != nil {
-		daysAfterCreationGreaterThan := *source.DaysAfterCreationGreaterThan
-		creation.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
-	} else {
-		creation.DaysAfterCreationGreaterThan = nil
-	}
+	creation.DaysAfterCreationGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterCreationGreaterThan)
 
 	// DaysAfterLastTierChangeGreaterThan
-	if source.DaysAfterLastTierChangeGreaterThan != nil {
-		daysAfterLastTierChangeGreaterThan := *source.DaysAfterLastTierChangeGreaterThan
-		creation.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		creation.DaysAfterLastTierChangeGreaterThan = nil
-	}
+	creation.DaysAfterLastTierChangeGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterLastTierChangeGreaterThan)
 
 	// No error
 	return nil
@@ -4773,20 +4615,10 @@ func (creation *DateAfterCreation) AssignProperties_To_DateAfterCreation(destina
 	propertyBag := genruntime.NewPropertyBag()
 
 	// DaysAfterCreationGreaterThan
-	if creation.DaysAfterCreationGreaterThan != nil {
-		daysAfterCreationGreaterThan := *creation.DaysAfterCreationGreaterThan
-		destination.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
-	} else {
-		destination.DaysAfterCreationGreaterThan = nil
-	}
+	destination.DaysAfterCreationGreaterThan = genruntime.ClonePointerToInt(creation.DaysAfterCreationGreaterThan)
 
 	// DaysAfterLastTierChangeGreaterThan
-	if creation.DaysAfterLastTierChangeGreaterThan != nil {
-		daysAfterLastTierChangeGreaterThan := *creation.DaysAfterLastTierChangeGreaterThan
-		destination.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		destination.DaysAfterLastTierChangeGreaterThan = nil
-	}
+	destination.DaysAfterLastTierChangeGreaterThan = genruntime.ClonePointerToInt(creation.DaysAfterLastTierChangeGreaterThan)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -5027,36 +4859,16 @@ func (modification *DateAfterModification) PopulateFromARM(owner genruntime.Arbi
 func (modification *DateAfterModification) AssignProperties_From_DateAfterModification(source *storage.DateAfterModification) error {
 
 	// DaysAfterCreationGreaterThan
-	if source.DaysAfterCreationGreaterThan != nil {
-		daysAfterCreationGreaterThan := *source.DaysAfterCreationGreaterThan
-		modification.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
-	} else {
-		modification.DaysAfterCreationGreaterThan = nil
-	}
+	modification.DaysAfterCreationGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterCreationGreaterThan)
 
 	// DaysAfterLastAccessTimeGreaterThan
-	if source.DaysAfterLastAccessTimeGreaterThan != nil {
-		daysAfterLastAccessTimeGreaterThan := *source.DaysAfterLastAccessTimeGreaterThan
-		modification.DaysAfterLastAccessTimeGreaterThan = &daysAfterLastAccessTimeGreaterThan
-	} else {
-		modification.DaysAfterLastAccessTimeGreaterThan = nil
-	}
+	modification.DaysAfterLastAccessTimeGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterLastAccessTimeGreaterThan)
 
 	// DaysAfterLastTierChangeGreaterThan
-	if source.DaysAfterLastTierChangeGreaterThan != nil {
-		daysAfterLastTierChangeGreaterThan := *source.DaysAfterLastTierChangeGreaterThan
-		modification.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		modification.DaysAfterLastTierChangeGreaterThan = nil
-	}
+	modification.DaysAfterLastTierChangeGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterLastTierChangeGreaterThan)
 
 	// DaysAfterModificationGreaterThan
-	if source.DaysAfterModificationGreaterThan != nil {
-		daysAfterModificationGreaterThan := *source.DaysAfterModificationGreaterThan
-		modification.DaysAfterModificationGreaterThan = &daysAfterModificationGreaterThan
-	} else {
-		modification.DaysAfterModificationGreaterThan = nil
-	}
+	modification.DaysAfterModificationGreaterThan = genruntime.ClonePointerToInt(source.DaysAfterModificationGreaterThan)
 
 	// No error
 	return nil
@@ -5068,36 +4880,16 @@ func (modification *DateAfterModification) AssignProperties_To_DateAfterModifica
 	propertyBag := genruntime.NewPropertyBag()
 
 	// DaysAfterCreationGreaterThan
-	if modification.DaysAfterCreationGreaterThan != nil {
-		daysAfterCreationGreaterThan := *modification.DaysAfterCreationGreaterThan
-		destination.DaysAfterCreationGreaterThan = &daysAfterCreationGreaterThan
-	} else {
-		destination.DaysAfterCreationGreaterThan = nil
-	}
+	destination.DaysAfterCreationGreaterThan = genruntime.ClonePointerToInt(modification.DaysAfterCreationGreaterThan)
 
 	// DaysAfterLastAccessTimeGreaterThan
-	if modification.DaysAfterLastAccessTimeGreaterThan != nil {
-		daysAfterLastAccessTimeGreaterThan := *modification.DaysAfterLastAccessTimeGreaterThan
-		destination.DaysAfterLastAccessTimeGreaterThan = &daysAfterLastAccessTimeGreaterThan
-	} else {
-		destination.DaysAfterLastAccessTimeGreaterThan = nil
-	}
+	destination.DaysAfterLastAccessTimeGreaterThan = genruntime.ClonePointerToInt(modification.DaysAfterLastAccessTimeGreaterThan)
 
 	// DaysAfterLastTierChangeGreaterThan
-	if modification.DaysAfterLastTierChangeGreaterThan != nil {
-		daysAfterLastTierChangeGreaterThan := *modification.DaysAfterLastTierChangeGreaterThan
-		destination.DaysAfterLastTierChangeGreaterThan = &daysAfterLastTierChangeGreaterThan
-	} else {
-		destination.DaysAfterLastTierChangeGreaterThan = nil
-	}
+	destination.DaysAfterLastTierChangeGreaterThan = genruntime.ClonePointerToInt(modification.DaysAfterLastTierChangeGreaterThan)
 
 	// DaysAfterModificationGreaterThan
-	if modification.DaysAfterModificationGreaterThan != nil {
-		daysAfterModificationGreaterThan := *modification.DaysAfterModificationGreaterThan
-		destination.DaysAfterModificationGreaterThan = &daysAfterModificationGreaterThan
-	} else {
-		destination.DaysAfterModificationGreaterThan = nil
-	}
+	destination.DaysAfterModificationGreaterThan = genruntime.ClonePointerToInt(modification.DaysAfterModificationGreaterThan)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {

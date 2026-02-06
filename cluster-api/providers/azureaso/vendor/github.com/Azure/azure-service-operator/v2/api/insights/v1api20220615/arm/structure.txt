@@ -79,6 +79,7 @@ ScheduledQueryRule_STATUS: Object (9 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 ScheduledQueryRule_Spec: Object (5 properties)
 ├── Kind: *Enum (2 values)
 │   ├── "LogAlert"
@@ -136,6 +137,7 @@ ScheduledQueryRule_Spec: Object (5 properties)
 │   ├── TargetResourceTypes: string[]
 │   └── WindowSize: *string
 └── Tags: map[string]string
+
 Webtest_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -177,6 +179,7 @@ Webtest_STATUS: Object (6 properties)
 │       └── SSLCheck: *bool
 ├── Tags: map[string]string
 └── Type: *string
+
 Webtest_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -215,3 +218,4 @@ Webtest_Spec: Object (4 properties)
 │       ├── SSLCertRemainingLifetimeCheck: *int
 │       └── SSLCheck: *bool
 └── Tags: map[string]string
+

@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/web/v1api20220301
 ----------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-03-01"
+
 ServerFarm: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (23 properties)
@@ -115,6 +116,7 @@ ServerFarm: Resource
     ├── Type: *string
     ├── WorkerTierName: *string
     └── ZoneRedundant: *bool
+
 Site: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (35 properties)
@@ -748,3 +750,52 @@ Site: Resource
     ├── VnetContentShareEnabled: *bool
     ├── VnetImagePullEnabled: *bool
     └── VnetRouteAllEnabled: *bool
+
+SitesSourcecontrol: Resource
+├── Owner: Site
+├── Spec: Object (10 properties)
+│   ├── Branch: *string
+│   ├── DeploymentRollbackEnabled: *bool
+│   ├── GitHubActionConfiguration: *Object (4 properties)
+│   │   ├── CodeConfiguration: *Object (2 properties)
+│   │   │   ├── RuntimeStack: *string
+│   │   │   └── RuntimeVersion: *string
+│   │   ├── ContainerConfiguration: *Object (4 properties)
+│   │   │   ├── ImageName: *string
+│   │   │   ├── Password: *genruntime.SecretReference
+│   │   │   ├── ServerUrl: *string
+│   │   │   └── Username: *string
+│   │   ├── GenerateWorkflowFile: *bool
+│   │   └── IsLinux: *bool
+│   ├── IsGitHubAction: *bool
+│   ├── IsManualIntegration: *bool
+│   ├── IsMercurial: *bool
+│   ├── Kind: *string
+│   ├── OperatorSpec: *Object (2 properties)
+│   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
+│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   ├── Owner: *genruntime.KnownResourceReference
+│   └── RepoUrl: *string
+└── Status: Object (12 properties)
+    ├── Branch: *string
+    ├── Conditions: conditions.Condition[]
+    ├── DeploymentRollbackEnabled: *bool
+    ├── GitHubActionConfiguration: *Object (4 properties)
+    │   ├── CodeConfiguration: *Object (2 properties)
+    │   │   ├── RuntimeStack: *string
+    │   │   └── RuntimeVersion: *string
+    │   ├── ContainerConfiguration: *Object (3 properties)
+    │   │   ├── ImageName: *string
+    │   │   ├── ServerUrl: *string
+    │   │   └── Username: *string
+    │   ├── GenerateWorkflowFile: *bool
+    │   └── IsLinux: *bool
+    ├── Id: *string
+    ├── IsGitHubAction: *bool
+    ├── IsManualIntegration: *bool
+    ├── IsMercurial: *bool
+    ├── Kind: *string
+    ├── Name: *string
+    ├── RepoUrl: *string
+    └── Type: *string
+

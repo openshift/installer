@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/authorization/v1api20220401
 --------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-04-01"
+
 RoleAssignment: Resource
 ├── Spec: Object (11 properties)
 │   ├── AzureName: string
@@ -46,6 +47,7 @@ RoleAssignment: Resource
     ├── Type: *string
     ├── UpdatedBy: *string
     └── UpdatedOn: *string
+
 RoleDefinition: Resource
 ├── Spec: Object (8 properties)
 │   ├── AssignableScopesReferences: genruntime.ResourceReference[]
@@ -81,3 +83,4 @@ RoleDefinition: Resource
     ├── Type: *string
     ├── UpdatedBy: *string
     └── UpdatedOn: *string
+

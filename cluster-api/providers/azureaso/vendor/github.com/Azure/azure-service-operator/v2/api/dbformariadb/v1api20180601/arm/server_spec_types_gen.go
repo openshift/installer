@@ -59,15 +59,19 @@ func (create ServerPropertiesForCreate) MarshalJSON() ([]byte, error) {
 	if create.Default != nil {
 		return json.Marshal(create.Default)
 	}
+
 	if create.GeoRestore != nil {
 		return json.Marshal(create.GeoRestore)
 	}
+
 	if create.PointInTimeRestore != nil {
 		return json.Marshal(create.PointInTimeRestore)
 	}
+
 	if create.Replica != nil {
 		return json.Marshal(create.Replica)
 	}
+
 	return nil, nil
 }
 

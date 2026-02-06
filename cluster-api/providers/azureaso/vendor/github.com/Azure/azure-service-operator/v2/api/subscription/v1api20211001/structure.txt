@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/subscription/v1api20211001
 -------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-10-01"
+
 Alias: Resource
 ├── Spec: Object (3 properties)
 │   ├── AzureName: string
@@ -63,3 +64,4 @@ Alias: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+

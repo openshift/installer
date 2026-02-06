@@ -8,6 +8,8 @@ import (
 	v20210501s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/storage"
 	v20230630 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630"
 	v20230630s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
+	v20231230 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230"
+	v20231230s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -20,5 +22,7 @@ func (extension *FlexibleServerExtension) GetExtendedResources() []genruntime.Ku
 		&v20210501.FlexibleServer{},
 		&v20210501s.FlexibleServer{},
 		&v20230630.FlexibleServer{},
-		&v20230630s.FlexibleServer{}}
+		&v20230630s.FlexibleServer{},
+		&v20231230.FlexibleServer{},
+		&v20231230s.FlexibleServer{}}
 }

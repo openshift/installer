@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/storage/v1api20220901
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-09-01"
+
 StorageAccount: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (32 properties)
@@ -469,6 +470,7 @@ StorageAccount: Resource
     ├── SupportsHttpsTrafficOnly: *bool
     ├── Tags: map[string]string
     └── Type: *string
+
 StorageAccountsBlobService: Resource
 ├── Owner: StorageAccount
 ├── Spec: Object (11 properties)
@@ -580,6 +582,7 @@ StorageAccountsBlobService: Resource
     │       ├── "Premium"
     │       └── "Standard"
     └── Type: *string
+
 StorageAccountsBlobServicesContainer: Resource
 ├── Owner: StorageAccountsBlobService
 ├── Spec: Object (10 properties)
@@ -672,6 +675,7 @@ StorageAccountsBlobServicesContainer: Resource
     ├── RemainingRetentionDays: *int
     ├── Type: *string
     └── Version: *string
+
 StorageAccountsFileService: Resource
 ├── Owner: StorageAccount
 ├── Spec: Object (5 properties)
@@ -753,6 +757,7 @@ StorageAccountsFileService: Resource
     │       ├── "Premium"
     │       └── "Standard"
     └── Type: *string
+
 StorageAccountsFileServicesShare: Resource
 ├── Owner: StorageAccountsFileService
 ├── Spec: Object (9 properties)
@@ -832,6 +837,7 @@ StorageAccountsFileServicesShare: Resource
     ├── SnapshotTime: *string
     ├── Type: *string
     └── Version: *string
+
 StorageAccountsManagementPolicy: Resource
 ├── Owner: StorageAccount
 ├── Spec: Object (3 properties)
@@ -1077,6 +1083,7 @@ StorageAccountsManagementPolicy: Resource
     │       └── Type: *Enum (1 value)
     │           └── "Lifecycle"
     └── Type: *string
+
 StorageAccountsQueueService: Resource
 ├── Owner: StorageAccount
 ├── Spec: Object (3 properties)
@@ -1119,6 +1126,7 @@ StorageAccountsQueueService: Resource
     ├── Id: *string
     ├── Name: *string
     └── Type: *string
+
 StorageAccountsQueueServicesQueue: Resource
 ├── Owner: StorageAccountsQueueService
 ├── Spec: Object (4 properties)
@@ -1137,6 +1145,7 @@ StorageAccountsQueueServicesQueue: Resource
     ├── Metadata: map[string]string
     ├── Name: *string
     └── Type: *string
+
 StorageAccountsTableService: Resource
 ├── Owner: StorageAccount
 ├── Spec: Object (3 properties)
@@ -1179,6 +1188,7 @@ StorageAccountsTableService: Resource
     ├── Id: *string
     ├── Name: *string
     └── Type: *string
+
 StorageAccountsTableServicesTable: Resource
 ├── Owner: StorageAccountsTableService
 ├── Spec: Object (4 properties)
@@ -1208,3 +1218,4 @@ StorageAccountsTableServicesTable: Resource
     │   └── Id: *string
     ├── TableName: *string
     └── Type: *string
+

@@ -5,7 +5,9 @@ package customizations
 
 import (
 	v20210901 "github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20210901"
-	storage "github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20210901/storage"
+	v20210901s "github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20210901/storage"
+	v20230701 "github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20230701"
+	v20230701s "github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20230701/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -16,5 +18,7 @@ type RegistryExtension struct {
 func (extension *RegistryExtension) GetExtendedResources() []genruntime.KubernetesResource {
 	return []genruntime.KubernetesResource{
 		&v20210901.Registry{},
-		&storage.Registry{}}
+		&v20210901s.Registry{},
+		&v20230701.Registry{},
+		&v20230701s.Registry{}}
 }

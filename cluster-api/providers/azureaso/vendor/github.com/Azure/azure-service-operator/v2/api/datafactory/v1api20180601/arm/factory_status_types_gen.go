@@ -136,9 +136,11 @@ func (configuration FactoryRepoConfiguration_STATUS) MarshalJSON() ([]byte, erro
 	if configuration.FactoryGitHub != nil {
 		return json.Marshal(configuration.FactoryGitHub)
 	}
+
 	if configuration.FactoryVSTS != nil {
 		return json.Marshal(configuration.FactoryVSTS)
 	}
+
 	return nil, nil
 }
 

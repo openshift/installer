@@ -6,14 +6,15 @@ import (
 	"context"
 	"net/http"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	network "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/kubeclient"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -36,7 +37,7 @@ func (extension *NetworkSecurityGroupExtension) ModifyARMResource(
 ) (genruntime.ARMResource, error) {
 	typedObj, ok := obj.(*network.NetworkSecurityGroup)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *network.NetworkSecurityGroup", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *network.NetworkSecurityGroup", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -51,7 +52,7 @@ func (extension *NetworkSecurityGroupExtension) ModifyARMResource(
 
 	apiVersion, err := genruntime.GetAPIVersion(typedObj, kubeClient.Scheme())
 	if err != nil {
-		return nil, errors.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
+		return nil, eris.Wrapf(err, "error getting api version for resource %s while getting status", obj.GetName())
 	}
 
 	// Get the raw resource
@@ -60,22 +61,22 @@ func (extension *NetworkSecurityGroupExtension) ModifyARMResource(
 	if err != nil {
 		// If the error is NotFound, the resource we're trying to Create doesn't exist and so no modification is needed
 		var responseError *azcore.ResponseError
-		if errors.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
+		if eris.As(err, &responseError) && responseError.StatusCode == http.StatusNotFound {
 			return armObj, nil
 		}
-		return nil, errors.Wrapf(err, "getting resource with ID: %q", resourceID)
+		return nil, eris.Wrapf(err, "getting resource with ID: %q", resourceID)
 	}
 
 	azureSecurityRules, err := getRawChildCollection(raw, "securityRules")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get SecurityRules")
+		return nil, eris.Wrapf(err, "failed to get SecurityRules")
 	}
 
 	log.V(Info).Info("Found security rules to include on NSG", "count", len(azureSecurityRules), "names", genruntime.RawNames(azureSecurityRules))
 
 	err = setChildCollection(armObj.Spec(), azureSecurityRules, "SecurityRules")
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to set SecurityRules")
+		return nil, eris.Wrapf(err, "failed to set SecurityRules")
 	}
 
 	return armObj, nil

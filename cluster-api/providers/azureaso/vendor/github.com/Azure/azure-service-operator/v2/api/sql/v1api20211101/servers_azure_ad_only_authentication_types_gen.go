@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,22 +67,6 @@ func (authentication *ServersAzureADOnlyAuthentication) ConvertTo(hub conversion
 
 	return authentication.AssignProperties_To_ServersAzureADOnlyAuthentication(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-sql-azure-com-v1api20211101-serversazureadonlyauthentication,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serversazureadonlyauthentications,verbs=create;update,versions=v1api20211101,name=default.v1api20211101.serversazureadonlyauthentications.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ServersAzureADOnlyAuthentication{}
-
-// Default applies defaults to the ServersAzureADOnlyAuthentication resource
-func (authentication *ServersAzureADOnlyAuthentication) Default() {
-	authentication.defaultImpl()
-	var temp any = authentication
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ServersAzureADOnlyAuthentication resource
-func (authentication *ServersAzureADOnlyAuthentication) defaultImpl() {}
 
 var _ configmaps.Exporter = &ServersAzureADOnlyAuthentication{}
 
@@ -166,6 +147,10 @@ func (authentication *ServersAzureADOnlyAuthentication) NewEmptyStatus() genrunt
 
 // Owner returns the ResourceReference of the owner
 func (authentication *ServersAzureADOnlyAuthentication) Owner() *genruntime.ResourceReference {
+	if authentication.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(authentication.Spec)
 	return authentication.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -182,114 +167,11 @@ func (authentication *ServersAzureADOnlyAuthentication) SetStatus(status genrunt
 	var st ServersAzureADOnlyAuthentication_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	authentication.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-sql-azure-com-v1api20211101-serversazureadonlyauthentication,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serversazureadonlyauthentications,verbs=create;update,versions=v1api20211101,name=validate.v1api20211101.serversazureadonlyauthentications.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ServersAzureADOnlyAuthentication{}
-
-// ValidateCreate validates the creation of the resource
-func (authentication *ServersAzureADOnlyAuthentication) ValidateCreate() (admission.Warnings, error) {
-	validations := authentication.createValidations()
-	var temp any = authentication
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (authentication *ServersAzureADOnlyAuthentication) ValidateDelete() (admission.Warnings, error) {
-	validations := authentication.deleteValidations()
-	var temp any = authentication
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (authentication *ServersAzureADOnlyAuthentication) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := authentication.updateValidations()
-	var temp any = authentication
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (authentication *ServersAzureADOnlyAuthentication) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){authentication.validateResourceReferences, authentication.validateOwnerReference, authentication.validateSecretDestinations, authentication.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (authentication *ServersAzureADOnlyAuthentication) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (authentication *ServersAzureADOnlyAuthentication) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return authentication.validateResourceReferences()
-		},
-		authentication.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return authentication.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return authentication.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return authentication.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (authentication *ServersAzureADOnlyAuthentication) validateConfigMapDestinations() (admission.Warnings, error) {
-	if authentication.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(authentication, nil, authentication.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (authentication *ServersAzureADOnlyAuthentication) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(authentication)
-}
-
-// validateResourceReferences validates all resource references
-func (authentication *ServersAzureADOnlyAuthentication) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&authentication.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (authentication *ServersAzureADOnlyAuthentication) validateSecretDestinations() (admission.Warnings, error) {
-	if authentication.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(authentication, nil, authentication.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (authentication *ServersAzureADOnlyAuthentication) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ServersAzureADOnlyAuthentication)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, authentication)
 }
 
 // AssignProperties_From_ServersAzureADOnlyAuthentication populates our ServersAzureADOnlyAuthentication from the provided source ServersAzureADOnlyAuthentication
@@ -302,7 +184,7 @@ func (authentication *ServersAzureADOnlyAuthentication) AssignProperties_From_Se
 	var spec ServersAzureADOnlyAuthentication_Spec
 	err := spec.AssignProperties_From_ServersAzureADOnlyAuthentication_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersAzureADOnlyAuthentication_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersAzureADOnlyAuthentication_Spec() to populate field Spec")
 	}
 	authentication.Spec = spec
 
@@ -310,7 +192,7 @@ func (authentication *ServersAzureADOnlyAuthentication) AssignProperties_From_Se
 	var status ServersAzureADOnlyAuthentication_STATUS
 	err = status.AssignProperties_From_ServersAzureADOnlyAuthentication_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersAzureADOnlyAuthentication_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersAzureADOnlyAuthentication_STATUS() to populate field Status")
 	}
 	authentication.Status = status
 
@@ -328,7 +210,7 @@ func (authentication *ServersAzureADOnlyAuthentication) AssignProperties_To_Serv
 	var spec storage.ServersAzureADOnlyAuthentication_Spec
 	err := authentication.Spec.AssignProperties_To_ServersAzureADOnlyAuthentication_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersAzureADOnlyAuthentication_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersAzureADOnlyAuthentication_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -336,7 +218,7 @@ func (authentication *ServersAzureADOnlyAuthentication) AssignProperties_To_Serv
 	var status storage.ServersAzureADOnlyAuthentication_STATUS
 	err = authentication.Status.AssignProperties_To_ServersAzureADOnlyAuthentication_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersAzureADOnlyAuthentication_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersAzureADOnlyAuthentication_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -449,13 +331,13 @@ func (authentication *ServersAzureADOnlyAuthentication_Spec) ConvertSpecFrom(sou
 	src = &storage.ServersAzureADOnlyAuthentication_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = authentication.AssignProperties_From_ServersAzureADOnlyAuthentication_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -473,13 +355,13 @@ func (authentication *ServersAzureADOnlyAuthentication_Spec) ConvertSpecTo(desti
 	dst = &storage.ServersAzureADOnlyAuthentication_Spec{}
 	err := authentication.AssignProperties_To_ServersAzureADOnlyAuthentication_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -501,7 +383,7 @@ func (authentication *ServersAzureADOnlyAuthentication_Spec) AssignProperties_Fr
 		var operatorSpec ServersAzureADOnlyAuthenticationOperatorSpec
 		err := operatorSpec.AssignProperties_From_ServersAzureADOnlyAuthenticationOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServersAzureADOnlyAuthenticationOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ServersAzureADOnlyAuthenticationOperatorSpec() to populate field OperatorSpec")
 		}
 		authentication.OperatorSpec = &operatorSpec
 	} else {
@@ -538,7 +420,7 @@ func (authentication *ServersAzureADOnlyAuthentication_Spec) AssignProperties_To
 		var operatorSpec storage.ServersAzureADOnlyAuthenticationOperatorSpec
 		err := authentication.OperatorSpec.AssignProperties_To_ServersAzureADOnlyAuthenticationOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServersAzureADOnlyAuthenticationOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ServersAzureADOnlyAuthenticationOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -618,13 +500,13 @@ func (authentication *ServersAzureADOnlyAuthentication_STATUS) ConvertStatusFrom
 	src = &storage.ServersAzureADOnlyAuthentication_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = authentication.AssignProperties_From_ServersAzureADOnlyAuthentication_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -642,13 +524,13 @@ func (authentication *ServersAzureADOnlyAuthentication_STATUS) ConvertStatusTo(d
 	dst = &storage.ServersAzureADOnlyAuthentication_STATUS{}
 	err := authentication.AssignProperties_To_ServersAzureADOnlyAuthentication_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil

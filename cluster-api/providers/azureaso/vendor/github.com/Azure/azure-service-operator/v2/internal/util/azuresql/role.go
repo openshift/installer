@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	_ "github.com/microsoft/go-mssqldb"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 
 	"github.com/Azure/azure-service-operator/v2/internal/set"
@@ -63,7 +63,7 @@ where m.name = @user
 		tsql,
 		sql.Named("user", user))
 	if err != nil {
-		return nil, errors.Wrapf(err, "listing roles for user %s", user)
+		return nil, eris.Wrapf(err, "listing roles for user %s", user)
 	}
 	defer rows.Close()
 
@@ -72,13 +72,13 @@ where m.name = @user
 		var row string
 		err := rows.Scan(&row)
 		if err != nil {
-			return nil, errors.Wrapf(err, "extracting role field")
+			return nil, eris.Wrapf(err, "extracting role field")
 		}
 
 		result.Add(row)
 	}
 	if rows.Err() != nil {
-		return nil, errors.Wrapf(rows.Err(), "iterating roles")
+		return nil, eris.Wrapf(rows.Err(), "iterating roles")
 	}
 
 	return result, nil
@@ -92,7 +92,7 @@ func ReconcileUserRoles(ctx context.Context, db *sql.DB, user string, roles []st
 
 	currentRoles, err := GetUserRoles(ctx, db, user)
 	if err != nil {
-		return errors.Wrapf(err, "couldn't get existing roles for user %s", user)
+		return eris.Wrapf(err, "couldn't get existing roles for user %s", user)
 	}
 
 	rolesDiff := DiffCurrentAndExpectedSQLRoles(currentRoles, desiredRoles)
@@ -138,17 +138,17 @@ func alterRoles(ctx context.Context, db *sql.DB, user string, roles set.Set[stri
 	// you have permission to use the AzureSQL User CRD) you can just create a user w/ what permissions you want
 	// and then log in to that user to attack the server.
 	if err := findBadChars(user); err != nil {
-		return errors.Wrap(err, "problem found with username")
+		return eris.Wrap(err, "problem found with username")
 	}
 
 	builder := strings.Builder{}
 	for role := range roles {
 		if err := findBadChars(role); err != nil {
-			return errors.Wrap(err, "problem found with role")
+			return eris.Wrap(err, "problem found with role")
 		}
 		_, err := builder.WriteString(fmt.Sprintf("ALTER ROLE %s %s MEMBER %s;\n", role, string(mode), user))
 		if err != nil {
-			return errors.Wrapf(err, "failed to build T-SQL ALTER ROLE %s statement", mode)
+			return eris.Wrapf(err, "failed to build T-SQL ALTER ROLE %s statement", mode)
 		}
 	}
 
@@ -157,7 +157,7 @@ func alterRoles(ctx context.Context, db *sql.DB, user string, roles set.Set[stri
 		builder.String(),
 	)
 	if err != nil {
-		return errors.Wrapf(err, "failed to execute T-SQL ALTER ROLE %s statement", mode)
+		return eris.Wrapf(err, "failed to execute T-SQL ALTER ROLE %s statement", mode)
 	}
 
 	return nil

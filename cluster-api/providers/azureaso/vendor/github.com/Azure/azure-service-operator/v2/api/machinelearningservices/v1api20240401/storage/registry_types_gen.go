@@ -12,7 +12,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -141,6 +141,10 @@ func (registry *Registry) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (registry *Registry) Owner() *genruntime.ResourceReference {
+	if registry.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(registry.Spec)
 	return registry.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -157,7 +161,7 @@ func (registry *Registry) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st RegistryTrackedResource_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	registry.Status = st
@@ -226,7 +230,7 @@ var _ genruntime.ConvertibleSpec = &Registry_Spec{}
 // ConvertSpecFrom populates our Registry_Spec from the provided source
 func (registry *Registry_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == registry {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(registry)
@@ -235,7 +239,7 @@ func (registry *Registry_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec
 // ConvertSpecTo populates the provided destination from our Registry_Spec
 func (registry *Registry_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == registry {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(registry)
@@ -268,7 +272,7 @@ var _ genruntime.ConvertibleStatus = &RegistryTrackedResource_STATUS{}
 // ConvertStatusFrom populates our RegistryTrackedResource_STATUS from the provided source
 func (resource *RegistryTrackedResource_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == resource {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(resource)
@@ -277,7 +281,7 @@ func (resource *RegistryTrackedResource_STATUS) ConvertStatusFrom(source genrunt
 // ConvertStatusTo populates the provided destination from our RegistryTrackedResource_STATUS
 func (resource *RegistryTrackedResource_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == resource {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(resource)
@@ -414,7 +418,6 @@ type SystemData_STATUS struct {
 type AcrDetails struct {
 	PropertyBag             genruntime.PropertyBag   `json:"$propertyBag,omitempty"`
 	SystemCreatedAcrAccount *SystemCreatedAcrAccount `json:"systemCreatedAcrAccount,omitempty"`
-	UserCreatedAcrAccount   *UserCreatedAcrAccount   `json:"userCreatedAcrAccount,omitempty"`
 }
 
 // Storage version of v1api20240401.AcrDetails_STATUS
@@ -422,7 +425,6 @@ type AcrDetails struct {
 type AcrDetails_STATUS struct {
 	PropertyBag             genruntime.PropertyBag          `json:"$propertyBag,omitempty"`
 	SystemCreatedAcrAccount *SystemCreatedAcrAccount_STATUS `json:"systemCreatedAcrAccount,omitempty"`
-	UserCreatedAcrAccount   *UserCreatedAcrAccount_STATUS   `json:"userCreatedAcrAccount,omitempty"`
 }
 
 // Storage version of v1api20240401.PrivateEndpointResource
@@ -472,7 +474,6 @@ type RegistryPrivateLinkServiceConnectionState_STATUS struct {
 type StorageAccountDetails struct {
 	PropertyBag                 genruntime.PropertyBag       `json:"$propertyBag,omitempty"`
 	SystemCreatedStorageAccount *SystemCreatedStorageAccount `json:"systemCreatedStorageAccount,omitempty"`
-	UserCreatedStorageAccount   *UserCreatedStorageAccount   `json:"userCreatedStorageAccount,omitempty"`
 }
 
 // Storage version of v1api20240401.StorageAccountDetails_STATUS
@@ -480,7 +481,6 @@ type StorageAccountDetails struct {
 type StorageAccountDetails_STATUS struct {
 	PropertyBag                 genruntime.PropertyBag              `json:"$propertyBag,omitempty"`
 	SystemCreatedStorageAccount *SystemCreatedStorageAccount_STATUS `json:"systemCreatedStorageAccount,omitempty"`
-	UserCreatedStorageAccount   *UserCreatedStorageAccount_STATUS   `json:"userCreatedStorageAccount,omitempty"`
 }
 
 // Storage version of v1api20240401.UserAssignedIdentity_STATUS
@@ -530,30 +530,6 @@ type SystemCreatedStorageAccount_STATUS struct {
 	StorageAccountHnsEnabled *bool                  `json:"storageAccountHnsEnabled,omitempty"`
 	StorageAccountName       *string                `json:"storageAccountName,omitempty"`
 	StorageAccountType       *string                `json:"storageAccountType,omitempty"`
-}
-
-// Storage version of v1api20240401.UserCreatedAcrAccount
-type UserCreatedAcrAccount struct {
-	ArmResourceId *ArmResourceId         `json:"armResourceId,omitempty"`
-	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-}
-
-// Storage version of v1api20240401.UserCreatedAcrAccount_STATUS
-type UserCreatedAcrAccount_STATUS struct {
-	ArmResourceId *ArmResourceId_STATUS  `json:"armResourceId,omitempty"`
-	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-}
-
-// Storage version of v1api20240401.UserCreatedStorageAccount
-type UserCreatedStorageAccount struct {
-	ArmResourceId *ArmResourceId         `json:"armResourceId,omitempty"`
-	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
-}
-
-// Storage version of v1api20240401.UserCreatedStorageAccount_STATUS
-type UserCreatedStorageAccount_STATUS struct {
-	ArmResourceId *ArmResourceId_STATUS  `json:"armResourceId,omitempty"`
-	PropertyBag   genruntime.PropertyBag `json:"$propertyBag,omitempty"`
 }
 
 func init() {

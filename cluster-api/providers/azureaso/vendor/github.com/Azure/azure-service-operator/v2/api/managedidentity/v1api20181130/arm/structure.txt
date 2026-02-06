@@ -11,7 +11,9 @@ UserAssignedIdentity_STATUS: Object (6 properties)
 │   └── TenantId: *string
 ├── Tags: map[string]string
 └── Type: *string
+
 UserAssignedIdentity_Spec: Object (3 properties)
 ├── Location: *string
 ├── Name: string
 └── Tags: map[string]string
+

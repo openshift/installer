@@ -9,7 +9,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -115,6 +115,10 @@ func (binding *TrustedAccessRoleBinding) NewEmptyStatus() genruntime.Convertible
 
 // Owner returns the ResourceReference of the owner
 func (binding *TrustedAccessRoleBinding) Owner() *genruntime.ResourceReference {
+	if binding.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(binding.Spec)
 	return binding.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -131,7 +135,7 @@ func (binding *TrustedAccessRoleBinding) SetStatus(status genruntime.Convertible
 	var st TrustedAccessRoleBinding_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	binding.Status = st
@@ -187,7 +191,7 @@ var _ genruntime.ConvertibleSpec = &TrustedAccessRoleBinding_Spec{}
 // ConvertSpecFrom populates our TrustedAccessRoleBinding_Spec from the provided source
 func (binding *TrustedAccessRoleBinding_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
 	if source == binding {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return source.ConvertSpecTo(binding)
@@ -196,7 +200,7 @@ func (binding *TrustedAccessRoleBinding_Spec) ConvertSpecFrom(source genruntime.
 // ConvertSpecTo populates the provided destination from our TrustedAccessRoleBinding_Spec
 func (binding *TrustedAccessRoleBinding_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
 	if destination == binding {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
 	}
 
 	return destination.ConvertSpecFrom(binding)
@@ -220,7 +224,7 @@ var _ genruntime.ConvertibleStatus = &TrustedAccessRoleBinding_STATUS{}
 // ConvertStatusFrom populates our TrustedAccessRoleBinding_STATUS from the provided source
 func (binding *TrustedAccessRoleBinding_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
 	if source == binding {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return source.ConvertStatusTo(binding)
@@ -229,7 +233,7 @@ func (binding *TrustedAccessRoleBinding_STATUS) ConvertStatusFrom(source genrunt
 // ConvertStatusTo populates the provided destination from our TrustedAccessRoleBinding_STATUS
 func (binding *TrustedAccessRoleBinding_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
 	if destination == binding {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+		return eris.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
 	}
 
 	return destination.ConvertStatusFrom(binding)

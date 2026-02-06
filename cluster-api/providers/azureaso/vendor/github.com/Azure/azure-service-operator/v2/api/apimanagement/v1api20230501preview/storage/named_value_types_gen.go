@@ -11,7 +11,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -137,6 +137,10 @@ func (value *NamedValue) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (value *NamedValue) Owner() *genruntime.ResourceReference {
+	if value.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(value.Spec)
 	return value.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -153,7 +157,7 @@ func (value *NamedValue) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st NamedValue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	value.Status = st
@@ -170,7 +174,7 @@ func (value *NamedValue) AssignProperties_From_NamedValue(source *storage.NamedV
 	var spec NamedValue_Spec
 	err := spec.AssignProperties_From_NamedValue_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamedValue_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NamedValue_Spec() to populate field Spec")
 	}
 	value.Spec = spec
 
@@ -178,7 +182,7 @@ func (value *NamedValue) AssignProperties_From_NamedValue(source *storage.NamedV
 	var status NamedValue_STATUS
 	err = status.AssignProperties_From_NamedValue_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamedValue_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NamedValue_STATUS() to populate field Status")
 	}
 	value.Status = status
 
@@ -187,7 +191,7 @@ func (value *NamedValue) AssignProperties_From_NamedValue(source *storage.NamedV
 	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue); ok {
 		err := augmentedValue.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -205,7 +209,7 @@ func (value *NamedValue) AssignProperties_To_NamedValue(destination *storage.Nam
 	var spec storage.NamedValue_Spec
 	err := value.Spec.AssignProperties_To_NamedValue_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamedValue_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NamedValue_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -213,7 +217,7 @@ func (value *NamedValue) AssignProperties_To_NamedValue(destination *storage.Nam
 	var status storage.NamedValue_STATUS
 	err = value.Status.AssignProperties_To_NamedValue_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamedValue_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NamedValue_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -222,7 +226,7 @@ func (value *NamedValue) AssignProperties_To_NamedValue(destination *storage.Nam
 	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue); ok {
 		err := augmentedValue.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -290,13 +294,13 @@ func (value *NamedValue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec)
 	src = &storage.NamedValue_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = value.AssignProperties_From_NamedValue_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -314,13 +318,13 @@ func (value *NamedValue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSp
 	dst = &storage.NamedValue_Spec{}
 	err := value.AssignProperties_To_NamedValue_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -342,7 +346,7 @@ func (value *NamedValue_Spec) AssignProperties_From_NamedValue_Spec(source *stor
 		var keyVault KeyVaultContractCreateProperties
 		err := keyVault.AssignProperties_From_KeyVaultContractCreateProperties(source.KeyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultContractCreateProperties() to populate field KeyVault")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultContractCreateProperties() to populate field KeyVault")
 		}
 		value.KeyVault = &keyVault
 	} else {
@@ -354,7 +358,7 @@ func (value *NamedValue_Spec) AssignProperties_From_NamedValue_Spec(source *stor
 		var operatorSpec NamedValueOperatorSpec
 		err := operatorSpec.AssignProperties_From_NamedValueOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NamedValueOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NamedValueOperatorSpec() to populate field OperatorSpec")
 		}
 		value.OperatorSpec = &operatorSpec
 	} else {
@@ -398,7 +402,7 @@ func (value *NamedValue_Spec) AssignProperties_From_NamedValue_Spec(source *stor
 	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue_Spec); ok {
 		err := augmentedValue.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -422,7 +426,7 @@ func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *s
 		var keyVault storage.KeyVaultContractCreateProperties
 		err := value.KeyVault.AssignProperties_To_KeyVaultContractCreateProperties(&keyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultContractCreateProperties() to populate field KeyVault")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultContractCreateProperties() to populate field KeyVault")
 		}
 		destination.KeyVault = &keyVault
 	} else {
@@ -434,7 +438,7 @@ func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *s
 		var operatorSpec storage.NamedValueOperatorSpec
 		err := value.OperatorSpec.AssignProperties_To_NamedValueOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NamedValueOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NamedValueOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -478,7 +482,7 @@ func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *s
 	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue_Spec); ok {
 		err := augmentedValue.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -515,13 +519,13 @@ func (value *NamedValue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleS
 	src = &storage.NamedValue_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = value.AssignProperties_From_NamedValue_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -539,13 +543,13 @@ func (value *NamedValue_STATUS) ConvertStatusTo(destination genruntime.Convertib
 	dst = &storage.NamedValue_STATUS{}
 	err := value.AssignProperties_To_NamedValue_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -570,7 +574,7 @@ func (value *NamedValue_STATUS) AssignProperties_From_NamedValue_STATUS(source *
 		var keyVault KeyVaultContractProperties_STATUS
 		err := keyVault.AssignProperties_From_KeyVaultContractProperties_STATUS(source.KeyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultContractProperties_STATUS() to populate field KeyVault")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultContractProperties_STATUS() to populate field KeyVault")
 		}
 		value.KeyVault = &keyVault
 	} else {
@@ -585,7 +589,7 @@ func (value *NamedValue_STATUS) AssignProperties_From_NamedValue_STATUS(source *
 		var provisioningState string
 		err := propertyBag.Pull("ProvisioningState", &provisioningState)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ProvisioningState' from propertyBag")
+			return eris.Wrap(err, "pulling 'ProvisioningState' from propertyBag")
 		}
 
 		value.ProvisioningState = &provisioningState
@@ -622,7 +626,7 @@ func (value *NamedValue_STATUS) AssignProperties_From_NamedValue_STATUS(source *
 	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue_STATUS); ok {
 		err := augmentedValue.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -649,7 +653,7 @@ func (value *NamedValue_STATUS) AssignProperties_To_NamedValue_STATUS(destinatio
 		var keyVault storage.KeyVaultContractProperties_STATUS
 		err := value.KeyVault.AssignProperties_To_KeyVaultContractProperties_STATUS(&keyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultContractProperties_STATUS() to populate field KeyVault")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultContractProperties_STATUS() to populate field KeyVault")
 		}
 		destination.KeyVault = &keyVault
 	} else {
@@ -695,7 +699,7 @@ func (value *NamedValue_STATUS) AssignProperties_To_NamedValue_STATUS(destinatio
 	if augmentedValue, ok := valueAsAny.(augmentConversionForNamedValue_STATUS); ok {
 		err := augmentedValue.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -753,7 +757,7 @@ func (properties *KeyVaultContractCreateProperties) AssignProperties_From_KeyVau
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKeyVaultContractCreateProperties); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -792,7 +796,7 @@ func (properties *KeyVaultContractCreateProperties) AssignProperties_To_KeyVault
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKeyVaultContractCreateProperties); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -822,7 +826,7 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_From_KeyVa
 		var lastStatus KeyVaultLastAccessStatusContractProperties_STATUS
 		err := lastStatus.AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS(source.LastStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
 		}
 		properties.LastStatus = &lastStatus
 	} else {
@@ -844,7 +848,7 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_From_KeyVa
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKeyVaultContractProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -865,7 +869,7 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_To_KeyVaul
 		var lastStatus storage.KeyVaultLastAccessStatusContractProperties_STATUS
 		err := properties.LastStatus.AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS(&lastStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
 		}
 		destination.LastStatus = &lastStatus
 	} else {
@@ -887,7 +891,7 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_To_KeyVaul
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKeyVaultContractProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -956,7 +960,7 @@ func (operator *NamedValueOperatorSpec) AssignProperties_From_NamedValueOperator
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamedValueOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1017,7 +1021,7 @@ func (operator *NamedValueOperatorSpec) AssignProperties_To_NamedValueOperatorSp
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamedValueOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1075,7 +1079,7 @@ func (properties *KeyVaultLastAccessStatusContractProperties_STATUS) AssignPrope
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKeyVaultLastAccessStatusContractProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1109,7 +1113,7 @@ func (properties *KeyVaultLastAccessStatusContractProperties_STATUS) AssignPrope
 	if augmentedProperties, ok := propertiesAsAny.(augmentConversionForKeyVaultLastAccessStatusContractProperties_STATUS); ok {
 		err := augmentedProperties.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

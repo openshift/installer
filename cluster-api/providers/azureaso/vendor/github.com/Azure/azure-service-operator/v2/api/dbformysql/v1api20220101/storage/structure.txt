@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20220101/storage
 -------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-01-01"
+
 FlexibleServersAdministrator: Resource
 ├── Owner: dbformysql/v1api20220101.FlexibleServer
 ├── Spec: Object (11 properties)
@@ -39,6 +40,7 @@ FlexibleServersAdministrator: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── TenantId: *string
     └── Type: *string
+
 FlexibleServersConfiguration: Resource
 ├── Owner: dbformysql/v1api20220101.FlexibleServer
 ├── Spec: Object (8 properties)
@@ -78,12 +80,22 @@ FlexibleServersConfiguration: Resource
     │   └── PropertyBag: genruntime.PropertyBag
     ├── Type: *string
     └── Value: *string
+
 augmentConversionForFlexibleServersAdministrator: Interface
+
 augmentConversionForFlexibleServersAdministratorOperatorSpec: Interface
+
 augmentConversionForFlexibleServersAdministrator_STATUS: Interface
+
 augmentConversionForFlexibleServersAdministrator_Spec: Interface
+
 augmentConversionForFlexibleServersConfiguration: Interface
+
 augmentConversionForFlexibleServersConfigurationOperatorSpec: Interface
+
 augmentConversionForFlexibleServersConfiguration_STATUS: Interface
+
 augmentConversionForFlexibleServersConfiguration_Spec: Interface
+
 augmentConversionForSystemData_STATUS: Interface
+

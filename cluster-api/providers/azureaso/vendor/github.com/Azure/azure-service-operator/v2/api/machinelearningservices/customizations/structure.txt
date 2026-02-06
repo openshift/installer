@@ -2,6 +2,10 @@
 github.com/Azure/azure-service-operator/v2/api/machinelearningservices/customizations
 -------------------------------------------------------------------------------------
 RegistryExtension: Object (0 properties)
+
 WorkspaceExtension: Object (0 properties)
+
 WorkspacesComputeExtension: Object (0 properties)
+
 WorkspacesConnectionExtension: Object (0 properties)
+

@@ -5,52 +5,51 @@ Licensed under the MIT license.
 
 package conditions
 
-type RetryClassification string
-
-const (
-	// RetryNone means that this classification is not expected to ever retry (it's only ever set on for fatal errors)
-	RetryNone = RetryClassification("None") // TODO: ??
-	RetryFast = RetryClassification("RetryFast")
-	RetrySlow = RetryClassification("RetrySlow")
+import (
+	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/retry"
 )
 
 type Reason struct {
 	Name                string
-	RetryClassification RetryClassification
+	RetryClassification retry.Classification
 }
 
 // Auth reasons
-var ReasonSubscriptionMismatch = Reason{Name: "SubscriptionMismatch", RetryClassification: RetryFast}
+var ReasonSubscriptionMismatch = Reason{Name: "SubscriptionMismatch", RetryClassification: retry.Fast}
 
 // Precondition reasons
 var (
-	ReasonSecretNotFound    = Reason{Name: "SecretNotFound", RetryClassification: RetryFast}
-	ReasonConfigMapNotFound = Reason{Name: "ConfigMapNotFound", RetryClassification: RetryFast}
-	ReasonReferenceNotFound = Reason{Name: "ReferenceNotFound", RetryClassification: RetryFast}
-	ReasonWaitingForOwner   = Reason{Name: "WaitingForOwner", RetryClassification: RetryFast}
+	ReasonSecretNotFound    = Reason{Name: "SecretNotFound", RetryClassification: retry.Fast}
+	ReasonConfigMapNotFound = Reason{Name: "ConfigMapNotFound", RetryClassification: retry.Fast}
+	ReasonReferenceNotFound = Reason{Name: "ReferenceNotFound", RetryClassification: retry.Fast}
+	ReasonWaitingForOwner   = Reason{Name: "WaitingForOwner", RetryClassification: retry.Fast}
 )
 
 // Post-ARM PUT reasons
 var (
-	ReasonAzureResourceNotFound               = Reason{Name: "AzureResourceNotFound", RetryClassification: RetrySlow}
-	ReasonAdditionalKubernetesObjWriteFailure = Reason{Name: "FailedWritingAdditionalKubernetesObjects", RetryClassification: RetrySlow}
+	ReasonAzureResourceNotFound               = Reason{Name: "AzureResourceNotFound", RetryClassification: retry.Slow}
+	ReasonAdditionalKubernetesObjWriteFailure = Reason{Name: "FailedWritingAdditionalKubernetesObjects", RetryClassification: retry.Slow}
 )
 
 // Other reasons
 var (
-	ReasonReconciling                     = Reason{Name: "Reconciling", RetryClassification: RetryFast}
-	ReasonDeleting                        = Reason{Name: "Deleting", RetryClassification: RetryFast}
-	ReasonReconciliationFailedPermanently = Reason{Name: "ReconciliationFailedPermanently", RetryClassification: RetryNone}
-	ReasonReconcileBlocked                = Reason{Name: "ReconciliationBlocked", RetryClassification: RetrySlow}
-	ReasonReconcilePostponed              = Reason{Name: "ReconciliationPostponed", RetryClassification: RetrySlow}
-	ReasonPostReconcileFailure            = Reason{Name: "PostReconciliationFailure", RetryClassification: RetrySlow}
+	ReasonReconciling                     = Reason{Name: "Reconciling", RetryClassification: retry.Fast}
+	ReasonDeleting                        = Reason{Name: "Deleting", RetryClassification: retry.Fast}
+	ReasonReconciliationFailedPermanently = Reason{Name: "ReconciliationFailedPermanently", RetryClassification: retry.None}
+	ReasonReconcileBlocked                = Reason{Name: "ReconciliationBlocked", RetryClassification: retry.Slow}
+	ReasonReconcilePostponed              = Reason{Name: "ReconciliationPostponed", RetryClassification: retry.Slow}
+	ReasonPostReconcileFailure            = Reason{Name: "PostReconciliationFailure", RetryClassification: retry.Slow}
 )
 
 // ReasonFailed is a catch-all error code for when we don't have a more specific error classification
-var ReasonFailed = Reason{Name: "Failed", RetryClassification: RetrySlow}
+var ReasonFailed = Reason{Name: "Failed", RetryClassification: retry.Slow}
 
-func MakeReason(reason string) Reason {
-	return Reason{Name: reason, RetryClassification: RetrySlow} // Always classify custom reasons as Slow retry
+func MakeReason(reason string, retryClassification retry.Classification) Reason {
+	if retryClassification == "" || retryClassification == retry.None { // Unset and none default to slow
+		retryClassification = retry.Slow
+	}
+
+	return Reason{Name: reason, RetryClassification: retryClassification}
 }
 
 func NewReadyConditionBuilder(builder PositiveConditionBuilderInterface) *ReadyConditionBuilder {

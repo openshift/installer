@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20220401
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-04-01"
+
 TrafficManagerProfile: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (13 properties)
@@ -114,6 +115,7 @@ TrafficManagerProfile: Resource
     │   ├── "Disabled"
     │   └── "Enabled"
     └── Type: *string
+
 TrafficManagerProfilesAzureEndpoint: Resource
 ├── Owner: TrafficManagerProfile
 ├── Spec: Object (18 properties)
@@ -188,6 +190,7 @@ TrafficManagerProfilesAzureEndpoint: Resource
     ├── TargetResourceId: *string
     ├── Type: *string
     └── Weight: *int
+
 TrafficManagerProfilesExternalEndpoint: Resource
 ├── Owner: TrafficManagerProfile
 ├── Spec: Object (18 properties)
@@ -262,6 +265,7 @@ TrafficManagerProfilesExternalEndpoint: Resource
     ├── TargetResourceId: *string
     ├── Type: *string
     └── Weight: *int
+
 TrafficManagerProfilesNestedEndpoint: Resource
 ├── Owner: TrafficManagerProfile
 ├── Spec: Object (18 properties)
@@ -336,3 +340,4 @@ TrafficManagerProfilesNestedEndpoint: Resource
     ├── TargetResourceId: *string
     ├── Type: *string
     └── Weight: *int
+

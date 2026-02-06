@@ -4,14 +4,13 @@
 package storage
 
 import (
-	"fmt"
 	storage "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -50,22 +49,36 @@ var _ conversion.Convertible = &NamespacesTopicsSubscriptionsRule{}
 
 // ConvertFrom populates our NamespacesTopicsSubscriptionsRule from the provided hub NamespacesTopicsSubscriptionsRule
 func (rule *NamespacesTopicsSubscriptionsRule) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.NamespacesTopicsSubscriptionsRule)
-	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopicsSubscriptionsRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.NamespacesTopicsSubscriptionsRule
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule(source)
+	err = rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to rule")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub NamespacesTopicsSubscriptionsRule from our NamespacesTopicsSubscriptionsRule
 func (rule *NamespacesTopicsSubscriptionsRule) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.NamespacesTopicsSubscriptionsRule)
-	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesTopicsSubscriptionsRule but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.NamespacesTopicsSubscriptionsRule
+	err := rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from rule")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &NamespacesTopicsSubscriptionsRule{}
@@ -136,6 +149,10 @@ func (rule *NamespacesTopicsSubscriptionsRule) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (rule *NamespacesTopicsSubscriptionsRule) Owner() *genruntime.ResourceReference {
+	if rule.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(rule.Spec)
 	return rule.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -152,7 +169,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) SetStatus(status genruntime.Conve
 	var st NamespacesTopicsSubscriptionsRule_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	rule.Status = st
@@ -169,7 +186,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_From_NamespacesT
 	var spec NamespacesTopicsSubscriptionsRule_Spec
 	err := spec.AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
 	}
 	rule.Spec = spec
 
@@ -177,7 +194,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_From_NamespacesT
 	var status NamespacesTopicsSubscriptionsRule_STATUS
 	err = status.AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
 	}
 	rule.Status = status
 
@@ -186,7 +203,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_From_NamespacesT
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule); ok {
 		err := augmentedRule.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -204,7 +221,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_To_NamespacesTop
 	var spec storage.NamespacesTopicsSubscriptionsRule_Spec
 	err := rule.Spec.AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -212,7 +229,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_To_NamespacesTop
 	var status storage.NamespacesTopicsSubscriptionsRule_STATUS
 	err = rule.Status.AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -221,7 +238,7 @@ func (rule *NamespacesTopicsSubscriptionsRule) AssignProperties_To_NamespacesTop
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule); ok {
 		err := augmentedRule.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -289,13 +306,13 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) ConvertSpecFrom(source genru
 	src = &storage.NamespacesTopicsSubscriptionsRule_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -313,13 +330,13 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) ConvertSpecTo(destination ge
 	dst = &storage.NamespacesTopicsSubscriptionsRule_Spec{}
 	err := rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -335,7 +352,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 		var action Action
 		err := action.AssignProperties_From_Action(source.Action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Action() to populate field Action")
+			return eris.Wrap(err, "calling AssignProperties_From_Action() to populate field Action")
 		}
 		rule.Action = &action
 	} else {
@@ -350,7 +367,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 		var correlationFilter CorrelationFilter
 		err := correlationFilter.AssignProperties_From_CorrelationFilter(source.CorrelationFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CorrelationFilter() to populate field CorrelationFilter")
+			return eris.Wrap(err, "calling AssignProperties_From_CorrelationFilter() to populate field CorrelationFilter")
 		}
 		rule.CorrelationFilter = &correlationFilter
 	} else {
@@ -365,7 +382,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 		var operatorSpec NamespacesTopicsSubscriptionsRuleOperatorSpec
 		err := operatorSpec.AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		rule.OperatorSpec = &operatorSpec
 	} else {
@@ -388,7 +405,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 		var sqlFilter SqlFilter
 		err := sqlFilter.AssignProperties_From_SqlFilter(source.SqlFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlFilter() to populate field SqlFilter")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlFilter() to populate field SqlFilter")
 		}
 		rule.SqlFilter = &sqlFilter
 	} else {
@@ -407,7 +424,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_From_Namesp
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule_Spec); ok {
 		err := augmentedRule.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -425,7 +442,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		var action storage.Action
 		err := rule.Action.AssignProperties_To_Action(&action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Action() to populate field Action")
+			return eris.Wrap(err, "calling AssignProperties_To_Action() to populate field Action")
 		}
 		destination.Action = &action
 	} else {
@@ -440,7 +457,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		var correlationFilter storage.CorrelationFilter
 		err := rule.CorrelationFilter.AssignProperties_To_CorrelationFilter(&correlationFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CorrelationFilter() to populate field CorrelationFilter")
+			return eris.Wrap(err, "calling AssignProperties_To_CorrelationFilter() to populate field CorrelationFilter")
 		}
 		destination.CorrelationFilter = &correlationFilter
 	} else {
@@ -455,7 +472,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		var operatorSpec storage.NamespacesTopicsSubscriptionsRuleOperatorSpec
 		err := rule.OperatorSpec.AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NamespacesTopicsSubscriptionsRuleOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -478,7 +495,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 		var sqlFilter storage.SqlFilter
 		err := rule.SqlFilter.AssignProperties_To_SqlFilter(&sqlFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlFilter() to populate field SqlFilter")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlFilter() to populate field SqlFilter")
 		}
 		destination.SqlFilter = &sqlFilter
 	} else {
@@ -497,7 +514,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_Spec) AssignProperties_To_Namespac
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule_Spec); ok {
 		err := augmentedRule.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -533,13 +550,13 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) ConvertStatusFrom(source g
 	src = &storage.NamespacesTopicsSubscriptionsRule_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = rule.AssignProperties_From_NamespacesTopicsSubscriptionsRule_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -557,13 +574,13 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) ConvertStatusTo(destinatio
 	dst = &storage.NamespacesTopicsSubscriptionsRule_STATUS{}
 	err := rule.AssignProperties_To_NamespacesTopicsSubscriptionsRule_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -579,7 +596,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 		var action Action_STATUS
 		err := action.AssignProperties_From_Action_STATUS(source.Action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Action_STATUS() to populate field Action")
+			return eris.Wrap(err, "calling AssignProperties_From_Action_STATUS() to populate field Action")
 		}
 		rule.Action = &action
 	} else {
@@ -594,7 +611,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 		var correlationFilter CorrelationFilter_STATUS
 		err := correlationFilter.AssignProperties_From_CorrelationFilter_STATUS(source.CorrelationFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CorrelationFilter_STATUS() to populate field CorrelationFilter")
+			return eris.Wrap(err, "calling AssignProperties_From_CorrelationFilter_STATUS() to populate field CorrelationFilter")
 		}
 		rule.CorrelationFilter = &correlationFilter
 	} else {
@@ -622,7 +639,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 		var sqlFilter SqlFilter_STATUS
 		err := sqlFilter.AssignProperties_From_SqlFilter_STATUS(source.SqlFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlFilter_STATUS() to populate field SqlFilter")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlFilter_STATUS() to populate field SqlFilter")
 		}
 		rule.SqlFilter = &sqlFilter
 	} else {
@@ -634,7 +651,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		rule.SystemData = &systemDatum
 	} else {
@@ -656,7 +673,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_From_Name
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule_STATUS); ok {
 		err := augmentedRule.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -674,7 +691,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var action storage.Action_STATUS
 		err := rule.Action.AssignProperties_To_Action_STATUS(&action)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Action_STATUS() to populate field Action")
+			return eris.Wrap(err, "calling AssignProperties_To_Action_STATUS() to populate field Action")
 		}
 		destination.Action = &action
 	} else {
@@ -689,7 +706,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var correlationFilter storage.CorrelationFilter_STATUS
 		err := rule.CorrelationFilter.AssignProperties_To_CorrelationFilter_STATUS(&correlationFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CorrelationFilter_STATUS() to populate field CorrelationFilter")
+			return eris.Wrap(err, "calling AssignProperties_To_CorrelationFilter_STATUS() to populate field CorrelationFilter")
 		}
 		destination.CorrelationFilter = &correlationFilter
 	} else {
@@ -707,7 +724,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var location string
 		err := propertyBag.Pull("Location", &location)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'Location' from propertyBag")
+			return eris.Wrap(err, "pulling 'Location' from propertyBag")
 		}
 
 		destination.Location = &location
@@ -723,7 +740,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var sqlFilter storage.SqlFilter_STATUS
 		err := rule.SqlFilter.AssignProperties_To_SqlFilter_STATUS(&sqlFilter)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlFilter_STATUS() to populate field SqlFilter")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlFilter_STATUS() to populate field SqlFilter")
 		}
 		destination.SqlFilter = &sqlFilter
 	} else {
@@ -735,7 +752,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 		var systemDatum storage.SystemData_STATUS
 		err := rule.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -757,7 +774,7 @@ func (rule *NamespacesTopicsSubscriptionsRule_STATUS) AssignProperties_To_Namesp
 	if augmentedRule, ok := ruleAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRule_STATUS); ok {
 		err := augmentedRule.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -806,7 +823,7 @@ func (action *Action) AssignProperties_From_Action(source *storage.Action) error
 	if augmentedAction, ok := actionAsAny.(augmentConversionForAction); ok {
 		err := augmentedAction.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -845,7 +862,7 @@ func (action *Action) AssignProperties_To_Action(destination *storage.Action) er
 	if augmentedAction, ok := actionAsAny.(augmentConversionForAction); ok {
 		err := augmentedAction.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -894,7 +911,7 @@ func (action *Action_STATUS) AssignProperties_From_Action_STATUS(source *storage
 	if augmentedAction, ok := actionAsAny.(augmentConversionForAction_STATUS); ok {
 		err := augmentedAction.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -933,7 +950,7 @@ func (action *Action_STATUS) AssignProperties_To_Action_STATUS(destination *stor
 	if augmentedAction, ok := actionAsAny.(augmentConversionForAction_STATUS); ok {
 		err := augmentedAction.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1019,7 +1036,7 @@ func (filter *CorrelationFilter) AssignProperties_From_CorrelationFilter(source 
 	if augmentedFilter, ok := filterAsAny.(augmentConversionForCorrelationFilter); ok {
 		err := augmentedFilter.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1079,7 +1096,7 @@ func (filter *CorrelationFilter) AssignProperties_To_CorrelationFilter(destinati
 	if augmentedFilter, ok := filterAsAny.(augmentConversionForCorrelationFilter); ok {
 		err := augmentedFilter.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1155,7 +1172,7 @@ func (filter *CorrelationFilter_STATUS) AssignProperties_From_CorrelationFilter_
 	if augmentedFilter, ok := filterAsAny.(augmentConversionForCorrelationFilter_STATUS); ok {
 		err := augmentedFilter.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1215,7 +1232,7 @@ func (filter *CorrelationFilter_STATUS) AssignProperties_To_CorrelationFilter_ST
 	if augmentedFilter, ok := filterAsAny.(augmentConversionForCorrelationFilter_STATUS); ok {
 		err := augmentedFilter.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1284,7 +1301,7 @@ func (operator *NamespacesTopicsSubscriptionsRuleOperatorSpec) AssignProperties_
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRuleOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1345,7 +1362,7 @@ func (operator *NamespacesTopicsSubscriptionsRuleOperatorSpec) AssignProperties_
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesTopicsSubscriptionsRuleOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1393,7 +1410,7 @@ func (filter *SqlFilter) AssignProperties_From_SqlFilter(source *storage.SqlFilt
 	if augmentedFilter, ok := filterAsAny.(augmentConversionForSqlFilter); ok {
 		err := augmentedFilter.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1432,7 +1449,7 @@ func (filter *SqlFilter) AssignProperties_To_SqlFilter(destination *storage.SqlF
 	if augmentedFilter, ok := filterAsAny.(augmentConversionForSqlFilter); ok {
 		err := augmentedFilter.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1480,7 +1497,7 @@ func (filter *SqlFilter_STATUS) AssignProperties_From_SqlFilter_STATUS(source *s
 	if augmentedFilter, ok := filterAsAny.(augmentConversionForSqlFilter_STATUS); ok {
 		err := augmentedFilter.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1519,7 +1536,7 @@ func (filter *SqlFilter_STATUS) AssignProperties_To_SqlFilter_STATUS(destination
 	if augmentedFilter, ok := filterAsAny.(augmentConversionForSqlFilter_STATUS); ok {
 		err := augmentedFilter.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

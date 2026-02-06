@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/network/v1api20180901
 --------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-09-01"
+
 PrivateDnsZone: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (6 properties)
@@ -35,3 +36,4 @@ PrivateDnsZone: Resource
     │   └── "Updating"
     ├── Tags: map[string]string
     └── Type: *string
+

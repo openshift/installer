@@ -65,6 +65,7 @@ Namespace_STATUS: Object (9 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Namespace_Spec: Object (6 properties)
 ├── Identity: *Object (2 properties)
 │   ├── Type: *Enum (4 values)
@@ -100,6 +101,7 @@ Namespace_Spec: Object (6 properties)
 │       ├── "Premium"
 │       └── "Standard"
 └── Tags: map[string]string
+
 NamespacesAuthorizationRule_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -125,6 +127,7 @@ NamespacesAuthorizationRule_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesAuthorizationRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (1 property)
@@ -132,6 +135,7 @@ NamespacesAuthorizationRule_Spec: Object (2 properties)
         ├── "Listen"
         ├── "Manage"
         └── "Send"
+
 NamespacesQueue_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -189,6 +193,7 @@ NamespacesQueue_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesQueue_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (15 properties)
@@ -207,6 +212,7 @@ NamespacesQueue_Spec: Object (2 properties)
     ├── MaxSizeInMegabytes: *int
     ├── RequiresDuplicateDetection: *bool
     └── RequiresSession: *bool
+
 NamespacesTopic_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -259,6 +265,7 @@ NamespacesTopic_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesTopic_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (10 properties)
@@ -272,6 +279,7 @@ NamespacesTopic_Spec: Object (2 properties)
     ├── MaxSizeInMegabytes: *int
     ├── RequiresDuplicateDetection: *bool
     └── SupportOrdering: *bool
+
 NamespacesTopicsSubscription_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -329,6 +337,7 @@ NamespacesTopicsSubscription_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesTopicsSubscription_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (13 properties)
@@ -348,6 +357,7 @@ NamespacesTopicsSubscription_Spec: Object (2 properties)
     ├── LockDuration: *string
     ├── MaxDeliveryCount: *int
     └── RequiresSession: *bool
+
 NamespacesTopicsSubscriptionsRule_STATUS: Object (6 properties)
 ├── Id: *string
 ├── Location: *string
@@ -391,6 +401,7 @@ NamespacesTopicsSubscriptionsRule_STATUS: Object (6 properties)
 │       ├── "ManagedIdentity"
 │       └── "User"
 └── Type: *string
+
 NamespacesTopicsSubscriptionsRule_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (4 properties)
@@ -416,3 +427,4 @@ NamespacesTopicsSubscriptionsRule_Spec: Object (2 properties)
         ├── CompatibilityLevel: *int
         ├── RequiresPreprocessing: *bool
         └── SqlExpression: *string
+

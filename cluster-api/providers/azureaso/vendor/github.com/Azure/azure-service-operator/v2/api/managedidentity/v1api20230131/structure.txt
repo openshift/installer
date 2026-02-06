@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/managedidentity/v1api20230131
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-01-31"
+
 FederatedIdentityCredential: Resource
 ├── Owner: UserAssignedIdentity
 ├── Spec: Object (8 properties)
@@ -40,6 +41,7 @@ FederatedIdentityCredential: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 UserAssignedIdentity: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (5 properties)
@@ -83,3 +85,4 @@ UserAssignedIdentity: Resource
     ├── Tags: map[string]string
     ├── TenantId: *string
     └── Type: *string
+

@@ -9,13 +9,14 @@ import (
 	"context"
 	"database/sql"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 
 	asomysql "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1"
 	"github.com/Azure/azure-service-operator/v2/internal/identity"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	mysqlutil "github.com/Azure/azure-service-operator/v2/internal/util/mysql"
 )
@@ -43,18 +44,18 @@ func (u *aadUser) CreateOrUpdate(ctx context.Context) error {
 	username := u.username()
 	err = mysqlutil.CreateOrUpdateAADUser(ctx, db, u.user.Spec.AzureName, username)
 	if err != nil {
-		return errors.Wrap(err, "failed to create user")
+		return eris.Wrap(err, "failed to create user")
 	}
 
 	// Ensure that the privileges are set
 	err = mysqlutil.ReconcileUserServerPrivileges(ctx, db, username, u.user.Spec.Hostname, u.user.Spec.Privileges)
 	if err != nil {
-		return errors.Wrap(err, "ensuring server roles")
+		return eris.Wrap(err, "ensuring server roles")
 	}
 
 	err = mysqlutil.ReconcileUserDatabasePrivileges(ctx, db, username, u.user.Spec.Hostname, u.user.Spec.DatabasePrivileges)
 	if err != nil {
-		return errors.Wrap(err, "ensuring database roles")
+		return eris.Wrap(err, "ensuring database roles")
 	}
 
 	u.log.V(Status).Info("Successfully reconciled MySQLUser")
@@ -104,11 +105,11 @@ func (u *aadUser) connectToDB(ctx context.Context) (*sql.DB, error) {
 	}
 
 	if u.user.Spec.AADUser == nil {
-		return nil, errors.Errorf("AAD User missing $.spec.aadUser field")
+		return nil, eris.Errorf("AAD User missing $.spec.aadUser field")
 	}
 	adminUser := u.user.Spec.AADUser.ServerAdminUsername
 	if len(adminUser) == 0 {
-		return nil, errors.Errorf("AAD User must specify $.spec.aadUser.serverAdminUsernamed")
+		return nil, eris.Errorf("AAD User must specify $.spec.aadUser.serverAdminUsernamed")
 	}
 
 	return connectToDBAAD(ctx, u.credentialProvider, u.log, u.user, serverFQDN, adminUser)
@@ -125,18 +126,18 @@ func (u *aadUser) username() string {
 func connectToDBAAD(ctx context.Context, credentialProvider identity.CredentialProvider, log logr.Logger, user *asomysql.User, fqdn string, adminUser string) (*sql.DB, error) {
 	credential, err := credentialProvider.GetCredential(ctx, user)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get credential")
+		return nil, eris.Wrapf(err, "failed to get credential")
 	}
 	token, err := credential.TokenCredential().GetToken(ctx, policy.TokenRequestOptions{Scopes: []string{Scope}})
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get token from credential")
+		return nil, eris.Wrap(err, "failed to get token from credential")
 	}
 	log.V(Verbose).Info("Retrieved token for MySQL", "scope", Scope, "expires", token.ExpiresOn)
 
 	// Connect to the DB
 	db, err := mysqlutil.ConnectToDBAAD(ctx, fqdn, mysqlutil.SystemDatabase, mysqlutil.ServerPort, adminUser, token.Token)
 	if err != nil {
-		return nil, errors.Wrapf(
+		return nil, eris.Wrapf(
 			err,
 			"failed to connect database. Server: %s, Database: %s, Port: %d, AdminUser: %s",
 			fqdn,

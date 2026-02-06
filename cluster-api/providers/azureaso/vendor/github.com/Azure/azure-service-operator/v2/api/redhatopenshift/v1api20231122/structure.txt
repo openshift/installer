@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/redhatopenshift/v1api20231122
 ----------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-11-22"
+
 OpenShiftCluster: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (12 properties)
@@ -44,9 +45,13 @@ OpenShiftCluster: Resource
 │   │   │   ├── "Disabled"
 │   │   │   └── "Enabled"
 │   │   └── ServiceCidr: *string
-│   ├── OperatorSpec: *Object (2 properties)
+│   ├── OperatorSpec: *Object (3 properties)
 │   │   ├── ConfigMapExpressions: *core.DestinationExpression[]
-│   │   └── SecretExpressions: *core.DestinationExpression[]
+│   │   ├── SecretExpressions: *core.DestinationExpression[]
+│   │   └── Secrets: *Object (3 properties)
+│   │       ├── AdminCredentials: *genruntime.SecretDestination
+│   │       ├── Password: *genruntime.SecretDestination
+│   │       └── Username: *genruntime.SecretDestination
 │   ├── Owner: *genruntime.KnownResourceReference
 │   ├── ServicePrincipalProfile: *Object (3 properties)
 │   │   ├── ClientId: *string
@@ -157,3 +162,4 @@ OpenShiftCluster: Resource
         ├── Name: *string
         ├── SubnetId: *string
         └── VmSize: *string
+

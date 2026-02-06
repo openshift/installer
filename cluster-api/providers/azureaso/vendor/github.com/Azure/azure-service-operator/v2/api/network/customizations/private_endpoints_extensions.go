@@ -7,17 +7,18 @@ import (
 	"context"
 	"fmt"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	network "github.com/Azure/azure-service-operator/v2/api/network/v1api20240301/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/resolver"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -39,7 +40,7 @@ func (extension *PrivateEndpointExtension) PostReconcileCheck(
 	endpoint, ok := obj.(*network.PrivateEndpoint)
 	if !ok {
 		return extensions.PostReconcileCheckResult{},
-			errors.Errorf("cannot run on unknown resource type %T, expected *network.PrivateEndpoint", obj)
+			eris.Errorf("cannot run on unknown resource type %T, expected *network.PrivateEndpoint", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -79,15 +80,15 @@ func (extension *PrivateEndpointExtension) ExportKubernetesConfigMaps(
 	// if the hub storage version changes.
 	endpoint, ok := obj.(*network.PrivateEndpoint)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *network.PrivateEndpoint", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *network.PrivateEndpoint", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
 	// the hub type has been changed but this extension has not
 	var _ conversion.Hub = endpoint
 
-	hasIpConfiguration := hasConfigMaps(endpoint)
-	if !hasIpConfiguration {
+	hasIPConfiguration := hasConfigMaps(endpoint)
+	if !hasIPConfiguration {
 		log.V(Debug).Info("no configmap retrieval to perform as operatorSpec is empty")
 		return nil, nil
 	}
@@ -111,13 +112,13 @@ func (extension *PrivateEndpointExtension) ExportKubernetesConfigMaps(
 	var interfacesClient *armnetwork.InterfacesClient
 	interfacesClient, err = armnetwork.NewInterfacesClient(nicID.SubscriptionID, armClient.Creds(), armClient.ClientOptions())
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed to create new NetworkInterfacesClient")
+		return nil, eris.Wrapf(err, "failed to create new NetworkInterfacesClient")
 	}
 
 	var resp armnetwork.InterfacesClientGetResponse
 	resp, err = interfacesClient.Get(ctx, nicID.ResourceGroupName, nicID.Name, nil)
 	if err != nil {
-		return nil, errors.Wrapf(err, "failed getting NetworkInterfaceController")
+		return nil, eris.Wrapf(err, "failed getting NetworkInterfaceController")
 	}
 
 	configsByName := configByName(log, resp.Interface)
@@ -139,7 +140,7 @@ func configByName(log logr.Logger, nic armnetwork.Interface) map[string]string {
 				continue
 			}
 
-			if to.Value(ipConfiguration.Properties.Primary) == false {
+			if !to.Value(ipConfiguration.Properties.Primary) {
 				// This ipConfiguration is not primary
 				continue
 			}
@@ -155,7 +156,7 @@ func configByName(log logr.Logger, nic armnetwork.Interface) map[string]string {
 func configMapToWrite(obj *network.PrivateEndpoint, configs map[string]string) ([]*v1.ConfigMap, error) {
 	operatorSpecConfigs := obj.Spec.OperatorSpec.ConfigMaps
 	if operatorSpecConfigs == nil {
-		return nil, errors.Errorf("unexpected nil operatorspec")
+		return nil, eris.Errorf("unexpected nil operatorspec")
 	}
 
 	collector := configmaps.NewCollector(obj.Namespace)

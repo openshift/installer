@@ -4,14 +4,13 @@
 package storage
 
 import (
-	"fmt"
 	storage "github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20211101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -50,22 +49,36 @@ var _ conversion.Convertible = &NamespacesQueue{}
 
 // ConvertFrom populates our NamespacesQueue from the provided hub NamespacesQueue
 func (queue *NamespacesQueue) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.NamespacesQueue)
-	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesQueue but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.NamespacesQueue
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return queue.AssignProperties_From_NamespacesQueue(source)
+	err = queue.AssignProperties_From_NamespacesQueue(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to queue")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub NamespacesQueue from our NamespacesQueue
 func (queue *NamespacesQueue) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.NamespacesQueue)
-	if !ok {
-		return fmt.Errorf("expected servicebus/v1api20211101/storage/NamespacesQueue but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.NamespacesQueue
+	err := queue.AssignProperties_To_NamespacesQueue(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from queue")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return queue.AssignProperties_To_NamespacesQueue(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &NamespacesQueue{}
@@ -136,6 +149,10 @@ func (queue *NamespacesQueue) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (queue *NamespacesQueue) Owner() *genruntime.ResourceReference {
+	if queue.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(queue.Spec)
 	return queue.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -152,7 +169,7 @@ func (queue *NamespacesQueue) SetStatus(status genruntime.ConvertibleStatus) err
 	var st NamespacesQueue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	queue.Status = st
@@ -169,7 +186,7 @@ func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *stor
 	var spec NamespacesQueue_Spec
 	err := spec.AssignProperties_From_NamespacesQueue_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueue_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueue_Spec() to populate field Spec")
 	}
 	queue.Spec = spec
 
@@ -177,7 +194,7 @@ func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *stor
 	var status NamespacesQueue_STATUS
 	err = status.AssignProperties_From_NamespacesQueue_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueue_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueue_STATUS() to populate field Status")
 	}
 	queue.Status = status
 
@@ -186,7 +203,7 @@ func (queue *NamespacesQueue) AssignProperties_From_NamespacesQueue(source *stor
 	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue); ok {
 		err := augmentedQueue.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -204,7 +221,7 @@ func (queue *NamespacesQueue) AssignProperties_To_NamespacesQueue(destination *s
 	var spec storage.NamespacesQueue_Spec
 	err := queue.Spec.AssignProperties_To_NamespacesQueue_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueue_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueue_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -212,7 +229,7 @@ func (queue *NamespacesQueue) AssignProperties_To_NamespacesQueue(destination *s
 	var status storage.NamespacesQueue_STATUS
 	err = queue.Status.AssignProperties_To_NamespacesQueue_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueue_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueue_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -221,7 +238,7 @@ func (queue *NamespacesQueue) AssignProperties_To_NamespacesQueue(destination *s
 	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue); ok {
 		err := augmentedQueue.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -300,13 +317,13 @@ func (queue *NamespacesQueue_Spec) ConvertSpecFrom(source genruntime.Convertible
 	src = &storage.NamespacesQueue_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = queue.AssignProperties_From_NamespacesQueue_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -324,13 +341,13 @@ func (queue *NamespacesQueue_Spec) ConvertSpecTo(destination genruntime.Converti
 	dst = &storage.NamespacesQueue_Spec{}
 	err := queue.AssignProperties_To_NamespacesQueue_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -408,7 +425,7 @@ func (queue *NamespacesQueue_Spec) AssignProperties_From_NamespacesQueue_Spec(so
 		var operatorSpec NamespacesQueueOperatorSpec
 		err := operatorSpec.AssignProperties_From_NamespacesQueueOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
 		}
 		queue.OperatorSpec = &operatorSpec
 	} else {
@@ -454,7 +471,7 @@ func (queue *NamespacesQueue_Spec) AssignProperties_From_NamespacesQueue_Spec(so
 	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue_Spec); ok {
 		err := augmentedQueue.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -534,7 +551,7 @@ func (queue *NamespacesQueue_Spec) AssignProperties_To_NamespacesQueue_Spec(dest
 		var operatorSpec storage.NamespacesQueueOperatorSpec
 		err := queue.OperatorSpec.AssignProperties_To_NamespacesQueueOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NamespacesQueueOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -580,7 +597,7 @@ func (queue *NamespacesQueue_Spec) AssignProperties_To_NamespacesQueue_Spec(dest
 	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue_Spec); ok {
 		err := augmentedQueue.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -635,13 +652,13 @@ func (queue *NamespacesQueue_STATUS) ConvertStatusFrom(source genruntime.Convert
 	src = &storage.NamespacesQueue_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = queue.AssignProperties_From_NamespacesQueue_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -659,13 +676,13 @@ func (queue *NamespacesQueue_STATUS) ConvertStatusTo(destination genruntime.Conv
 	dst = &storage.NamespacesQueue_STATUS{}
 	err := queue.AssignProperties_To_NamespacesQueue_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -690,7 +707,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_From_NamespacesQueue_STATU
 		var countDetail MessageCountDetails_STATUS
 		err := countDetail.AssignProperties_From_MessageCountDetails_STATUS(source.CountDetails)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MessageCountDetails_STATUS() to populate field CountDetails")
+			return eris.Wrap(err, "calling AssignProperties_From_MessageCountDetails_STATUS() to populate field CountDetails")
 		}
 		queue.CountDetails = &countDetail
 	} else {
@@ -795,7 +812,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_From_NamespacesQueue_STATU
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		queue.SystemData = &systemDatum
 	} else {
@@ -820,7 +837,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_From_NamespacesQueue_STATU
 	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue_STATUS); ok {
 		err := augmentedQueue.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -847,7 +864,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_To_NamespacesQueue_STATUS(
 		var countDetail storage.MessageCountDetails_STATUS
 		err := queue.CountDetails.AssignProperties_To_MessageCountDetails_STATUS(&countDetail)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MessageCountDetails_STATUS() to populate field CountDetails")
+			return eris.Wrap(err, "calling AssignProperties_To_MessageCountDetails_STATUS() to populate field CountDetails")
 		}
 		destination.CountDetails = &countDetail
 	} else {
@@ -952,7 +969,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_To_NamespacesQueue_STATUS(
 		var systemDatum storage.SystemData_STATUS
 		err := queue.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -977,7 +994,7 @@ func (queue *NamespacesQueue_STATUS) AssignProperties_To_NamespacesQueue_STATUS(
 	if augmentedQueue, ok := queueAsAny.(augmentConversionForNamespacesQueue_STATUS); ok {
 		err := augmentedQueue.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1038,7 +1055,7 @@ func (details *MessageCountDetails_STATUS) AssignProperties_From_MessageCountDet
 	if augmentedDetails, ok := detailsAsAny.(augmentConversionForMessageCountDetails_STATUS); ok {
 		err := augmentedDetails.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1078,7 +1095,7 @@ func (details *MessageCountDetails_STATUS) AssignProperties_To_MessageCountDetai
 	if augmentedDetails, ok := detailsAsAny.(augmentConversionForMessageCountDetails_STATUS); ok {
 		err := augmentedDetails.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1147,7 +1164,7 @@ func (operator *NamespacesQueueOperatorSpec) AssignProperties_From_NamespacesQue
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesQueueOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1208,7 +1225,7 @@ func (operator *NamespacesQueueOperatorSpec) AssignProperties_To_NamespacesQueue
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesQueueOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

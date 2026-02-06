@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20211001/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/signalrservice/v1api20211001/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -53,46 +50,37 @@ var _ conversion.Convertible = &SignalR{}
 
 // ConvertFrom populates our SignalR from the provided hub SignalR
 func (signalR *SignalR) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.SignalR)
-	if !ok {
-		return fmt.Errorf("expected signalrservice/v1api20211001/storage/SignalR but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.SignalR
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return signalR.AssignProperties_From_SignalR(source)
+	err = signalR.AssignProperties_From_SignalR(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to signalR")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub SignalR from our SignalR
 func (signalR *SignalR) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.SignalR)
-	if !ok {
-		return fmt.Errorf("expected signalrservice/v1api20211001/storage/SignalR but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.SignalR
+	err := signalR.AssignProperties_To_SignalR(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from signalR")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return signalR.AssignProperties_To_SignalR(destination)
+	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-signalrservice-azure-com-v1api20211001-signalr,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=signalrservice.azure.com,resources=signalrs,verbs=create;update,versions=v1api20211001,name=default.v1api20211001.signalrs.signalrservice.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &SignalR{}
-
-// Default applies defaults to the SignalR resource
-func (signalR *SignalR) Default() {
-	signalR.defaultImpl()
-	var temp any = signalR
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (signalR *SignalR) defaultAzureName() {
-	if signalR.Spec.AzureName == "" {
-		signalR.Spec.AzureName = signalR.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the SignalR resource
-func (signalR *SignalR) defaultImpl() { signalR.defaultAzureName() }
 
 var _ configmaps.Exporter = &SignalR{}
 
@@ -112,17 +100,6 @@ func (signalR *SignalR) SecretDestinationExpressions() []*core.DestinationExpres
 		return nil
 	}
 	return signalR.Spec.OperatorSpec.SecretExpressions
-}
-
-var _ genruntime.ImportableResource = &SignalR{}
-
-// InitializeSpec initializes the spec for this resource from the given status
-func (signalR *SignalR) InitializeSpec(status genruntime.ConvertibleStatus) error {
-	if s, ok := status.(*SignalR_STATUS); ok {
-		return signalR.Spec.Initialize_From_SignalR_STATUS(s)
-	}
-
-	return fmt.Errorf("expected Status of type SignalR_STATUS but received %T instead", status)
 }
 
 var _ genruntime.KubernetesResource = &SignalR{}
@@ -173,6 +150,10 @@ func (signalR *SignalR) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (signalR *SignalR) Owner() *genruntime.ResourceReference {
+	if signalR.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(signalR.Spec)
 	return signalR.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,123 +170,11 @@ func (signalR *SignalR) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st SignalR_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	signalR.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-signalrservice-azure-com-v1api20211001-signalr,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=signalrservice.azure.com,resources=signalrs,verbs=create;update,versions=v1api20211001,name=validate.v1api20211001.signalrs.signalrservice.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &SignalR{}
-
-// ValidateCreate validates the creation of the resource
-func (signalR *SignalR) ValidateCreate() (admission.Warnings, error) {
-	validations := signalR.createValidations()
-	var temp any = signalR
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (signalR *SignalR) ValidateDelete() (admission.Warnings, error) {
-	validations := signalR.deleteValidations()
-	var temp any = signalR
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (signalR *SignalR) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := signalR.updateValidations()
-	var temp any = signalR
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (signalR *SignalR) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){signalR.validateResourceReferences, signalR.validateOwnerReference, signalR.validateSecretDestinations, signalR.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (signalR *SignalR) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (signalR *SignalR) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return signalR.validateResourceReferences()
-		},
-		signalR.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return signalR.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return signalR.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return signalR.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (signalR *SignalR) validateConfigMapDestinations() (admission.Warnings, error) {
-	if signalR.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(signalR, nil, signalR.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (signalR *SignalR) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(signalR)
-}
-
-// validateResourceReferences validates all resource references
-func (signalR *SignalR) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&signalR.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (signalR *SignalR) validateSecretDestinations() (admission.Warnings, error) {
-	if signalR.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	var toValidate []*genruntime.SecretDestination
-	if signalR.Spec.OperatorSpec.Secrets != nil {
-		toValidate = []*genruntime.SecretDestination{
-			signalR.Spec.OperatorSpec.Secrets.PrimaryConnectionString,
-			signalR.Spec.OperatorSpec.Secrets.PrimaryKey,
-			signalR.Spec.OperatorSpec.Secrets.SecondaryConnectionString,
-			signalR.Spec.OperatorSpec.Secrets.SecondaryKey,
-		}
-	}
-	return secrets.ValidateDestinations(signalR, toValidate, signalR.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (signalR *SignalR) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*SignalR)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, signalR)
 }
 
 // AssignProperties_From_SignalR populates our SignalR from the provided source SignalR
@@ -318,7 +187,7 @@ func (signalR *SignalR) AssignProperties_From_SignalR(source *storage.SignalR) e
 	var spec SignalR_Spec
 	err := spec.AssignProperties_From_SignalR_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SignalR_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_SignalR_Spec() to populate field Spec")
 	}
 	signalR.Spec = spec
 
@@ -326,7 +195,7 @@ func (signalR *SignalR) AssignProperties_From_SignalR(source *storage.SignalR) e
 	var status SignalR_STATUS
 	err = status.AssignProperties_From_SignalR_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SignalR_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_SignalR_STATUS() to populate field Status")
 	}
 	signalR.Status = status
 
@@ -344,7 +213,7 @@ func (signalR *SignalR) AssignProperties_To_SignalR(destination *storage.SignalR
 	var spec storage.SignalR_Spec
 	err := signalR.Spec.AssignProperties_To_SignalR_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SignalR_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_SignalR_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -352,7 +221,7 @@ func (signalR *SignalR) AssignProperties_To_SignalR(destination *storage.SignalR
 	var status storage.SignalR_STATUS
 	err = signalR.Status.AssignProperties_To_SignalR_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SignalR_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_SignalR_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -775,13 +644,13 @@ func (signalR *SignalR_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.SignalR_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = signalR.AssignProperties_From_SignalR_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -799,13 +668,13 @@ func (signalR *SignalR_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.SignalR_Spec{}
 	err := signalR.AssignProperties_To_SignalR_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -822,7 +691,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 		var cor SignalRCorsSettings
 		err := cor.AssignProperties_From_SignalRCorsSettings(source.Cors)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SignalRCorsSettings() to populate field Cors")
+			return eris.Wrap(err, "calling AssignProperties_From_SignalRCorsSettings() to populate field Cors")
 		}
 		signalR.Cors = &cor
 	} else {
@@ -854,7 +723,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 			var feature SignalRFeature
 			err := feature.AssignProperties_From_SignalRFeature(&featureItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SignalRFeature() to populate field Features")
+				return eris.Wrap(err, "calling AssignProperties_From_SignalRFeature() to populate field Features")
 			}
 			featureList[featureIndex] = feature
 		}
@@ -868,7 +737,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 		var identity ManagedIdentity
 		err := identity.AssignProperties_From_ManagedIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedIdentity() to populate field Identity")
 		}
 		signalR.Identity = &identity
 	} else {
@@ -892,7 +761,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 		var networkACL SignalRNetworkACLs
 		err := networkACL.AssignProperties_From_SignalRNetworkACLs(source.NetworkACLs)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SignalRNetworkACLs() to populate field NetworkACLs")
+			return eris.Wrap(err, "calling AssignProperties_From_SignalRNetworkACLs() to populate field NetworkACLs")
 		}
 		signalR.NetworkACLs = &networkACL
 	} else {
@@ -904,7 +773,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 		var operatorSpec SignalROperatorSpec
 		err := operatorSpec.AssignProperties_From_SignalROperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SignalROperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_SignalROperatorSpec() to populate field OperatorSpec")
 		}
 		signalR.OperatorSpec = &operatorSpec
 	} else {
@@ -927,7 +796,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 		var resourceLogConfiguration ResourceLogConfiguration
 		err := resourceLogConfiguration.AssignProperties_From_ResourceLogConfiguration(source.ResourceLogConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceLogConfiguration() to populate field ResourceLogConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceLogConfiguration() to populate field ResourceLogConfiguration")
 		}
 		signalR.ResourceLogConfiguration = &resourceLogConfiguration
 	} else {
@@ -939,7 +808,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 		var sku ResourceSku
 		err := sku.AssignProperties_From_ResourceSku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceSku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceSku() to populate field Sku")
 		}
 		signalR.Sku = &sku
 	} else {
@@ -954,7 +823,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 		var tl SignalRTlsSettings
 		err := tl.AssignProperties_From_SignalRTlsSettings(source.Tls)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SignalRTlsSettings() to populate field Tls")
+			return eris.Wrap(err, "calling AssignProperties_From_SignalRTlsSettings() to populate field Tls")
 		}
 		signalR.Tls = &tl
 	} else {
@@ -966,7 +835,7 @@ func (signalR *SignalR_Spec) AssignProperties_From_SignalR_Spec(source *storage.
 		var upstream ServerlessUpstreamSettings
 		err := upstream.AssignProperties_From_ServerlessUpstreamSettings(source.Upstream)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServerlessUpstreamSettings() to populate field Upstream")
+			return eris.Wrap(err, "calling AssignProperties_From_ServerlessUpstreamSettings() to populate field Upstream")
 		}
 		signalR.Upstream = &upstream
 	} else {
@@ -990,7 +859,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		var cor storage.SignalRCorsSettings
 		err := signalR.Cors.AssignProperties_To_SignalRCorsSettings(&cor)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SignalRCorsSettings() to populate field Cors")
+			return eris.Wrap(err, "calling AssignProperties_To_SignalRCorsSettings() to populate field Cors")
 		}
 		destination.Cors = &cor
 	} else {
@@ -1022,7 +891,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 			var feature storage.SignalRFeature
 			err := featureItem.AssignProperties_To_SignalRFeature(&feature)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SignalRFeature() to populate field Features")
+				return eris.Wrap(err, "calling AssignProperties_To_SignalRFeature() to populate field Features")
 			}
 			featureList[featureIndex] = feature
 		}
@@ -1036,7 +905,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		var identity storage.ManagedIdentity
 		err := signalR.Identity.AssignProperties_To_ManagedIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1059,7 +928,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		var networkACL storage.SignalRNetworkACLs
 		err := signalR.NetworkACLs.AssignProperties_To_SignalRNetworkACLs(&networkACL)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SignalRNetworkACLs() to populate field NetworkACLs")
+			return eris.Wrap(err, "calling AssignProperties_To_SignalRNetworkACLs() to populate field NetworkACLs")
 		}
 		destination.NetworkACLs = &networkACL
 	} else {
@@ -1071,7 +940,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		var operatorSpec storage.SignalROperatorSpec
 		err := signalR.OperatorSpec.AssignProperties_To_SignalROperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SignalROperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_SignalROperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -1097,7 +966,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		var resourceLogConfiguration storage.ResourceLogConfiguration
 		err := signalR.ResourceLogConfiguration.AssignProperties_To_ResourceLogConfiguration(&resourceLogConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceLogConfiguration() to populate field ResourceLogConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceLogConfiguration() to populate field ResourceLogConfiguration")
 		}
 		destination.ResourceLogConfiguration = &resourceLogConfiguration
 	} else {
@@ -1109,7 +978,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		var sku storage.ResourceSku
 		err := signalR.Sku.AssignProperties_To_ResourceSku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceSku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceSku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1124,7 +993,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		var tl storage.SignalRTlsSettings
 		err := signalR.Tls.AssignProperties_To_SignalRTlsSettings(&tl)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SignalRTlsSettings() to populate field Tls")
+			return eris.Wrap(err, "calling AssignProperties_To_SignalRTlsSettings() to populate field Tls")
 		}
 		destination.Tls = &tl
 	} else {
@@ -1136,7 +1005,7 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		var upstream storage.ServerlessUpstreamSettings
 		err := signalR.Upstream.AssignProperties_To_ServerlessUpstreamSettings(&upstream)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServerlessUpstreamSettings() to populate field Upstream")
+			return eris.Wrap(err, "calling AssignProperties_To_ServerlessUpstreamSettings() to populate field Upstream")
 		}
 		destination.Upstream = &upstream
 	} else {
@@ -1148,148 +1017,6 @@ func (signalR *SignalR_Spec) AssignProperties_To_SignalR_Spec(destination *stora
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SignalR_STATUS populates our SignalR_Spec from the provided source SignalR_STATUS
-func (signalR *SignalR_Spec) Initialize_From_SignalR_STATUS(source *SignalR_STATUS) error {
-
-	// Cors
-	if source.Cors != nil {
-		var cor SignalRCorsSettings
-		err := cor.Initialize_From_SignalRCorsSettings_STATUS(source.Cors)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SignalRCorsSettings_STATUS() to populate field Cors")
-		}
-		signalR.Cors = &cor
-	} else {
-		signalR.Cors = nil
-	}
-
-	// DisableAadAuth
-	if source.DisableAadAuth != nil {
-		disableAadAuth := *source.DisableAadAuth
-		signalR.DisableAadAuth = &disableAadAuth
-	} else {
-		signalR.DisableAadAuth = nil
-	}
-
-	// DisableLocalAuth
-	if source.DisableLocalAuth != nil {
-		disableLocalAuth := *source.DisableLocalAuth
-		signalR.DisableLocalAuth = &disableLocalAuth
-	} else {
-		signalR.DisableLocalAuth = nil
-	}
-
-	// Features
-	if source.Features != nil {
-		featureList := make([]SignalRFeature, len(source.Features))
-		for featureIndex, featureItem := range source.Features {
-			// Shadow the loop variable to avoid aliasing
-			featureItem := featureItem
-			var feature SignalRFeature
-			err := feature.Initialize_From_SignalRFeature_STATUS(&featureItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_SignalRFeature_STATUS() to populate field Features")
-			}
-			featureList[featureIndex] = feature
-		}
-		signalR.Features = featureList
-	} else {
-		signalR.Features = nil
-	}
-
-	// Identity
-	if source.Identity != nil {
-		var identity ManagedIdentity
-		err := identity.Initialize_From_ManagedIdentity_STATUS(source.Identity)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedIdentity_STATUS() to populate field Identity")
-		}
-		signalR.Identity = &identity
-	} else {
-		signalR.Identity = nil
-	}
-
-	// Kind
-	if source.Kind != nil {
-		kind := genruntime.ToEnum(string(*source.Kind), serviceKind_Values)
-		signalR.Kind = &kind
-	} else {
-		signalR.Kind = nil
-	}
-
-	// Location
-	signalR.Location = genruntime.ClonePointerToString(source.Location)
-
-	// NetworkACLs
-	if source.NetworkACLs != nil {
-		var networkACL SignalRNetworkACLs
-		err := networkACL.Initialize_From_SignalRNetworkACLs_STATUS(source.NetworkACLs)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SignalRNetworkACLs_STATUS() to populate field NetworkACLs")
-		}
-		signalR.NetworkACLs = &networkACL
-	} else {
-		signalR.NetworkACLs = nil
-	}
-
-	// PublicNetworkAccess
-	signalR.PublicNetworkAccess = genruntime.ClonePointerToString(source.PublicNetworkAccess)
-
-	// ResourceLogConfiguration
-	if source.ResourceLogConfiguration != nil {
-		var resourceLogConfiguration ResourceLogConfiguration
-		err := resourceLogConfiguration.Initialize_From_ResourceLogConfiguration_STATUS(source.ResourceLogConfiguration)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceLogConfiguration_STATUS() to populate field ResourceLogConfiguration")
-		}
-		signalR.ResourceLogConfiguration = &resourceLogConfiguration
-	} else {
-		signalR.ResourceLogConfiguration = nil
-	}
-
-	// Sku
-	if source.Sku != nil {
-		var sku ResourceSku
-		err := sku.Initialize_From_ResourceSku_STATUS(source.Sku)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceSku_STATUS() to populate field Sku")
-		}
-		signalR.Sku = &sku
-	} else {
-		signalR.Sku = nil
-	}
-
-	// Tags
-	signalR.Tags = genruntime.CloneMapOfStringToString(source.Tags)
-
-	// Tls
-	if source.Tls != nil {
-		var tl SignalRTlsSettings
-		err := tl.Initialize_From_SignalRTlsSettings_STATUS(source.Tls)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SignalRTlsSettings_STATUS() to populate field Tls")
-		}
-		signalR.Tls = &tl
-	} else {
-		signalR.Tls = nil
-	}
-
-	// Upstream
-	if source.Upstream != nil {
-		var upstream ServerlessUpstreamSettings
-		err := upstream.Initialize_From_ServerlessUpstreamSettings_STATUS(source.Upstream)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ServerlessUpstreamSettings_STATUS() to populate field Upstream")
-		}
-		signalR.Upstream = &upstream
-	} else {
-		signalR.Upstream = nil
 	}
 
 	// No error
@@ -1414,13 +1141,13 @@ func (signalR *SignalR_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.SignalR_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = signalR.AssignProperties_From_SignalR_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1438,13 +1165,13 @@ func (signalR *SignalR_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.SignalR_STATUS{}
 	err := signalR.AssignProperties_To_SignalR_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1755,7 +1482,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 		var cor SignalRCorsSettings_STATUS
 		err := cor.AssignProperties_From_SignalRCorsSettings_STATUS(source.Cors)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SignalRCorsSettings_STATUS() to populate field Cors")
+			return eris.Wrap(err, "calling AssignProperties_From_SignalRCorsSettings_STATUS() to populate field Cors")
 		}
 		signalR.Cors = &cor
 	} else {
@@ -1790,7 +1517,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 			var feature SignalRFeature_STATUS
 			err := feature.AssignProperties_From_SignalRFeature_STATUS(&featureItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SignalRFeature_STATUS() to populate field Features")
+				return eris.Wrap(err, "calling AssignProperties_From_SignalRFeature_STATUS() to populate field Features")
 			}
 			featureList[featureIndex] = feature
 		}
@@ -1813,7 +1540,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 		var identity ManagedIdentity_STATUS
 		err := identity.AssignProperties_From_ManagedIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedIdentity_STATUS() to populate field Identity")
 		}
 		signalR.Identity = &identity
 	} else {
@@ -1840,7 +1567,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 		var networkACL SignalRNetworkACLs_STATUS
 		err := networkACL.AssignProperties_From_SignalRNetworkACLs_STATUS(source.NetworkACLs)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SignalRNetworkACLs_STATUS() to populate field NetworkACLs")
+			return eris.Wrap(err, "calling AssignProperties_From_SignalRNetworkACLs_STATUS() to populate field NetworkACLs")
 		}
 		signalR.NetworkACLs = &networkACL
 	} else {
@@ -1856,7 +1583,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 			var privateEndpointConnection PrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded(&privateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -1885,7 +1612,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 		var resourceLogConfiguration ResourceLogConfiguration_STATUS
 		err := resourceLogConfiguration.AssignProperties_From_ResourceLogConfiguration_STATUS(source.ResourceLogConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceLogConfiguration_STATUS() to populate field ResourceLogConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceLogConfiguration_STATUS() to populate field ResourceLogConfiguration")
 		}
 		signalR.ResourceLogConfiguration = &resourceLogConfiguration
 	} else {
@@ -1904,7 +1631,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 			var sharedPrivateLinkResource SharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded
 			err := sharedPrivateLinkResource.AssignProperties_From_SharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded(&sharedPrivateLinkResourceItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded() to populate field SharedPrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_From_SharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded() to populate field SharedPrivateLinkResources")
 			}
 			sharedPrivateLinkResourceList[sharedPrivateLinkResourceIndex] = sharedPrivateLinkResource
 		}
@@ -1918,7 +1645,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 		var sku ResourceSku_STATUS
 		err := sku.AssignProperties_From_ResourceSku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceSku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceSku_STATUS() to populate field Sku")
 		}
 		signalR.Sku = &sku
 	} else {
@@ -1930,7 +1657,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		signalR.SystemData = &systemDatum
 	} else {
@@ -1945,7 +1672,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 		var tl SignalRTlsSettings_STATUS
 		err := tl.AssignProperties_From_SignalRTlsSettings_STATUS(source.Tls)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SignalRTlsSettings_STATUS() to populate field Tls")
+			return eris.Wrap(err, "calling AssignProperties_From_SignalRTlsSettings_STATUS() to populate field Tls")
 		}
 		signalR.Tls = &tl
 	} else {
@@ -1960,7 +1687,7 @@ func (signalR *SignalR_STATUS) AssignProperties_From_SignalR_STATUS(source *stor
 		var upstream ServerlessUpstreamSettings_STATUS
 		err := upstream.AssignProperties_From_ServerlessUpstreamSettings_STATUS(source.Upstream)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServerlessUpstreamSettings_STATUS() to populate field Upstream")
+			return eris.Wrap(err, "calling AssignProperties_From_ServerlessUpstreamSettings_STATUS() to populate field Upstream")
 		}
 		signalR.Upstream = &upstream
 	} else {
@@ -1987,7 +1714,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 		var cor storage.SignalRCorsSettings_STATUS
 		err := signalR.Cors.AssignProperties_To_SignalRCorsSettings_STATUS(&cor)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SignalRCorsSettings_STATUS() to populate field Cors")
+			return eris.Wrap(err, "calling AssignProperties_To_SignalRCorsSettings_STATUS() to populate field Cors")
 		}
 		destination.Cors = &cor
 	} else {
@@ -2022,7 +1749,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 			var feature storage.SignalRFeature_STATUS
 			err := featureItem.AssignProperties_To_SignalRFeature_STATUS(&feature)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SignalRFeature_STATUS() to populate field Features")
+				return eris.Wrap(err, "calling AssignProperties_To_SignalRFeature_STATUS() to populate field Features")
 			}
 			featureList[featureIndex] = feature
 		}
@@ -2045,7 +1772,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 		var identity storage.ManagedIdentity_STATUS
 		err := signalR.Identity.AssignProperties_To_ManagedIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -2071,7 +1798,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 		var networkACL storage.SignalRNetworkACLs_STATUS
 		err := signalR.NetworkACLs.AssignProperties_To_SignalRNetworkACLs_STATUS(&networkACL)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SignalRNetworkACLs_STATUS() to populate field NetworkACLs")
+			return eris.Wrap(err, "calling AssignProperties_To_SignalRNetworkACLs_STATUS() to populate field NetworkACLs")
 		}
 		destination.NetworkACLs = &networkACL
 	} else {
@@ -2087,7 +1814,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded(&privateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS_SignalR_SubResourceEmbedded() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -2115,7 +1842,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 		var resourceLogConfiguration storage.ResourceLogConfiguration_STATUS
 		err := signalR.ResourceLogConfiguration.AssignProperties_To_ResourceLogConfiguration_STATUS(&resourceLogConfiguration)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceLogConfiguration_STATUS() to populate field ResourceLogConfiguration")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceLogConfiguration_STATUS() to populate field ResourceLogConfiguration")
 		}
 		destination.ResourceLogConfiguration = &resourceLogConfiguration
 	} else {
@@ -2134,7 +1861,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 			var sharedPrivateLinkResource storage.SharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded
 			err := sharedPrivateLinkResourceItem.AssignProperties_To_SharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded(&sharedPrivateLinkResource)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded() to populate field SharedPrivateLinkResources")
+				return eris.Wrap(err, "calling AssignProperties_To_SharedPrivateLinkResource_STATUS_SignalR_SubResourceEmbedded() to populate field SharedPrivateLinkResources")
 			}
 			sharedPrivateLinkResourceList[sharedPrivateLinkResourceIndex] = sharedPrivateLinkResource
 		}
@@ -2148,7 +1875,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 		var sku storage.ResourceSku_STATUS
 		err := signalR.Sku.AssignProperties_To_ResourceSku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceSku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceSku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -2160,7 +1887,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 		var systemDatum storage.SystemData_STATUS
 		err := signalR.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -2175,7 +1902,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 		var tl storage.SignalRTlsSettings_STATUS
 		err := signalR.Tls.AssignProperties_To_SignalRTlsSettings_STATUS(&tl)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SignalRTlsSettings_STATUS() to populate field Tls")
+			return eris.Wrap(err, "calling AssignProperties_To_SignalRTlsSettings_STATUS() to populate field Tls")
 		}
 		destination.Tls = &tl
 	} else {
@@ -2190,7 +1917,7 @@ func (signalR *SignalR_STATUS) AssignProperties_To_SignalR_STATUS(destination *s
 		var upstream storage.ServerlessUpstreamSettings_STATUS
 		err := signalR.Upstream.AssignProperties_To_ServerlessUpstreamSettings_STATUS(&upstream)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServerlessUpstreamSettings_STATUS() to populate field Upstream")
+			return eris.Wrap(err, "calling AssignProperties_To_ServerlessUpstreamSettings_STATUS() to populate field Upstream")
 		}
 		destination.Upstream = &upstream
 	} else {
@@ -2297,7 +2024,7 @@ func (identity *ManagedIdentity) AssignProperties_From_ManagedIdentity(source *s
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -2332,7 +2059,7 @@ func (identity *ManagedIdentity) AssignProperties_To_ManagedIdentity(destination
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -2346,33 +2073,6 @@ func (identity *ManagedIdentity) AssignProperties_To_ManagedIdentity(destination
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedIdentity_STATUS populates our ManagedIdentity from the provided source ManagedIdentity_STATUS
-func (identity *ManagedIdentity) Initialize_From_ManagedIdentity_STATUS(source *ManagedIdentity_STATUS) error {
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), managedIdentityType_Values)
-		identity.Type = &typeVar
-	} else {
-		identity.Type = nil
-	}
-
-	// UserAssignedIdentities
-	if source.UserAssignedIdentities != nil {
-		userAssignedIdentityList := make([]UserAssignedIdentityDetails, 0, len(source.UserAssignedIdentities))
-		for userAssignedIdentitiesKey := range source.UserAssignedIdentities {
-			userAssignedIdentitiesRef := genruntime.CreateResourceReferenceFromARMID(userAssignedIdentitiesKey)
-			userAssignedIdentityList = append(userAssignedIdentityList, UserAssignedIdentityDetails{Reference: userAssignedIdentitiesRef})
-		}
-		identity.UserAssignedIdentities = userAssignedIdentityList
-	} else {
-		identity.UserAssignedIdentities = nil
 	}
 
 	// No error
@@ -2474,7 +2174,7 @@ func (identity *ManagedIdentity_STATUS) AssignProperties_From_ManagedIdentity_ST
 			var userAssignedIdentity UserAssignedIdentityProperty_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityProperty_STATUS(&userAssignedIdentityValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityProperty_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityProperty_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -2515,7 +2215,7 @@ func (identity *ManagedIdentity_STATUS) AssignProperties_To_ManagedIdentity_STAT
 			var userAssignedIdentity storage.UserAssignedIdentityProperty_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserAssignedIdentityProperty_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityProperty_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityProperty_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -2686,7 +2386,7 @@ func (configuration *ResourceLogConfiguration) AssignProperties_From_ResourceLog
 			var category ResourceLogCategory
 			err := category.AssignProperties_From_ResourceLogCategory(&categoryItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceLogCategory() to populate field Categories")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceLogCategory() to populate field Categories")
 			}
 			categoryList[categoryIndex] = category
 		}
@@ -2713,7 +2413,7 @@ func (configuration *ResourceLogConfiguration) AssignProperties_To_ResourceLogCo
 			var category storage.ResourceLogCategory
 			err := categoryItem.AssignProperties_To_ResourceLogCategory(&category)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceLogCategory() to populate field Categories")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceLogCategory() to populate field Categories")
 			}
 			categoryList[categoryIndex] = category
 		}
@@ -2727,31 +2427,6 @@ func (configuration *ResourceLogConfiguration) AssignProperties_To_ResourceLogCo
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ResourceLogConfiguration_STATUS populates our ResourceLogConfiguration from the provided source ResourceLogConfiguration_STATUS
-func (configuration *ResourceLogConfiguration) Initialize_From_ResourceLogConfiguration_STATUS(source *ResourceLogConfiguration_STATUS) error {
-
-	// Categories
-	if source.Categories != nil {
-		categoryList := make([]ResourceLogCategory, len(source.Categories))
-		for categoryIndex, categoryItem := range source.Categories {
-			// Shadow the loop variable to avoid aliasing
-			categoryItem := categoryItem
-			var category ResourceLogCategory
-			err := category.Initialize_From_ResourceLogCategory_STATUS(&categoryItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_ResourceLogCategory_STATUS() to populate field Categories")
-			}
-			categoryList[categoryIndex] = category
-		}
-		configuration.Categories = categoryList
-	} else {
-		configuration.Categories = nil
 	}
 
 	// No error
@@ -2804,7 +2479,7 @@ func (configuration *ResourceLogConfiguration_STATUS) AssignProperties_From_Reso
 			var category ResourceLogCategory_STATUS
 			err := category.AssignProperties_From_ResourceLogCategory_STATUS(&categoryItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ResourceLogCategory_STATUS() to populate field Categories")
+				return eris.Wrap(err, "calling AssignProperties_From_ResourceLogCategory_STATUS() to populate field Categories")
 			}
 			categoryList[categoryIndex] = category
 		}
@@ -2831,7 +2506,7 @@ func (configuration *ResourceLogConfiguration_STATUS) AssignProperties_To_Resour
 			var category storage.ResourceLogCategory_STATUS
 			err := categoryItem.AssignProperties_To_ResourceLogCategory_STATUS(&category)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ResourceLogCategory_STATUS() to populate field Categories")
+				return eris.Wrap(err, "calling AssignProperties_To_ResourceLogCategory_STATUS() to populate field Categories")
 			}
 			categoryList[categoryIndex] = category
 		}
@@ -2982,27 +2657,6 @@ func (resourceSku *ResourceSku) AssignProperties_To_ResourceSku(destination *sto
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ResourceSku_STATUS populates our ResourceSku from the provided source ResourceSku_STATUS
-func (resourceSku *ResourceSku) Initialize_From_ResourceSku_STATUS(source *ResourceSku_STATUS) error {
-
-	// Capacity
-	resourceSku.Capacity = genruntime.ClonePointerToInt(source.Capacity)
-
-	// Name
-	resourceSku.Name = genruntime.ClonePointerToString(source.Name)
-
-	// Tier
-	if source.Tier != nil {
-		tier := genruntime.ToEnum(string(*source.Tier), signalRSkuTier_Values)
-		resourceSku.Tier = &tier
-	} else {
-		resourceSku.Tier = nil
 	}
 
 	// No error
@@ -3210,7 +2864,7 @@ func (settings *ServerlessUpstreamSettings) AssignProperties_From_ServerlessUpst
 			var template UpstreamTemplate
 			err := template.AssignProperties_From_UpstreamTemplate(&templateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UpstreamTemplate() to populate field Templates")
+				return eris.Wrap(err, "calling AssignProperties_From_UpstreamTemplate() to populate field Templates")
 			}
 			templateList[templateIndex] = template
 		}
@@ -3237,7 +2891,7 @@ func (settings *ServerlessUpstreamSettings) AssignProperties_To_ServerlessUpstre
 			var template storage.UpstreamTemplate
 			err := templateItem.AssignProperties_To_UpstreamTemplate(&template)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UpstreamTemplate() to populate field Templates")
+				return eris.Wrap(err, "calling AssignProperties_To_UpstreamTemplate() to populate field Templates")
 			}
 			templateList[templateIndex] = template
 		}
@@ -3251,31 +2905,6 @@ func (settings *ServerlessUpstreamSettings) AssignProperties_To_ServerlessUpstre
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ServerlessUpstreamSettings_STATUS populates our ServerlessUpstreamSettings from the provided source ServerlessUpstreamSettings_STATUS
-func (settings *ServerlessUpstreamSettings) Initialize_From_ServerlessUpstreamSettings_STATUS(source *ServerlessUpstreamSettings_STATUS) error {
-
-	// Templates
-	if source.Templates != nil {
-		templateList := make([]UpstreamTemplate, len(source.Templates))
-		for templateIndex, templateItem := range source.Templates {
-			// Shadow the loop variable to avoid aliasing
-			templateItem := templateItem
-			var template UpstreamTemplate
-			err := template.Initialize_From_UpstreamTemplate_STATUS(&templateItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_UpstreamTemplate_STATUS() to populate field Templates")
-			}
-			templateList[templateIndex] = template
-		}
-		settings.Templates = templateList
-	} else {
-		settings.Templates = nil
 	}
 
 	// No error
@@ -3328,7 +2957,7 @@ func (settings *ServerlessUpstreamSettings_STATUS) AssignProperties_From_Serverl
 			var template UpstreamTemplate_STATUS
 			err := template.AssignProperties_From_UpstreamTemplate_STATUS(&templateItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UpstreamTemplate_STATUS() to populate field Templates")
+				return eris.Wrap(err, "calling AssignProperties_From_UpstreamTemplate_STATUS() to populate field Templates")
 			}
 			templateList[templateIndex] = template
 		}
@@ -3355,7 +2984,7 @@ func (settings *ServerlessUpstreamSettings_STATUS) AssignProperties_To_Serverles
 			var template storage.UpstreamTemplate_STATUS
 			err := templateItem.AssignProperties_To_UpstreamTemplate_STATUS(&template)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UpstreamTemplate_STATUS() to populate field Templates")
+				return eris.Wrap(err, "calling AssignProperties_To_UpstreamTemplate_STATUS() to populate field Templates")
 			}
 			templateList[templateIndex] = template
 		}
@@ -3536,16 +3165,6 @@ func (settings *SignalRCorsSettings) AssignProperties_To_SignalRCorsSettings(des
 	return nil
 }
 
-// Initialize_From_SignalRCorsSettings_STATUS populates our SignalRCorsSettings from the provided source SignalRCorsSettings_STATUS
-func (settings *SignalRCorsSettings) Initialize_From_SignalRCorsSettings_STATUS(source *SignalRCorsSettings_STATUS) error {
-
-	// AllowedOrigins
-	settings.AllowedOrigins = genruntime.CloneSliceOfString(source.AllowedOrigins)
-
-	// No error
-	return nil
-}
-
 // Cross-Origin Resource Sharing (CORS) settings.
 type SignalRCorsSettings_STATUS struct {
 	// AllowedOrigins: Gets or sets the list of origins that should be allowed to make cross-origin calls (for example:
@@ -3718,12 +3337,7 @@ func (feature *SignalRFeature) AssignProperties_From_SignalRFeature(source *stor
 	feature.Properties = genruntime.CloneMapOfStringToString(source.Properties)
 
 	// Value
-	if source.Value != nil {
-		value := *source.Value
-		feature.Value = &value
-	} else {
-		feature.Value = nil
-	}
+	feature.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -3746,44 +3360,13 @@ func (feature *SignalRFeature) AssignProperties_To_SignalRFeature(destination *s
 	destination.Properties = genruntime.CloneMapOfStringToString(feature.Properties)
 
 	// Value
-	if feature.Value != nil {
-		value := *feature.Value
-		destination.Value = &value
-	} else {
-		destination.Value = nil
-	}
+	destination.Value = genruntime.ClonePointerToString(feature.Value)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SignalRFeature_STATUS populates our SignalRFeature from the provided source SignalRFeature_STATUS
-func (feature *SignalRFeature) Initialize_From_SignalRFeature_STATUS(source *SignalRFeature_STATUS) error {
-
-	// Flag
-	if source.Flag != nil {
-		flag := genruntime.ToEnum(string(*source.Flag), featureFlags_Values)
-		feature.Flag = &flag
-	} else {
-		feature.Flag = nil
-	}
-
-	// Properties
-	feature.Properties = genruntime.CloneMapOfStringToString(source.Properties)
-
-	// Value
-	if source.Value != nil {
-		value := *source.Value
-		feature.Value = &value
-	} else {
-		feature.Value = nil
 	}
 
 	// No error
@@ -4020,7 +3603,7 @@ func (acLs *SignalRNetworkACLs) AssignProperties_From_SignalRNetworkACLs(source 
 			var privateEndpoint PrivateEndpointACL
 			err := privateEndpoint.AssignProperties_From_PrivateEndpointACL(&privateEndpointItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointACL() to populate field PrivateEndpoints")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointACL() to populate field PrivateEndpoints")
 			}
 			privateEndpointList[privateEndpointIndex] = privateEndpoint
 		}
@@ -4034,7 +3617,7 @@ func (acLs *SignalRNetworkACLs) AssignProperties_From_SignalRNetworkACLs(source 
 		var publicNetwork NetworkACL
 		err := publicNetwork.AssignProperties_From_NetworkACL(source.PublicNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NetworkACL() to populate field PublicNetwork")
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkACL() to populate field PublicNetwork")
 		}
 		acLs.PublicNetwork = &publicNetwork
 	} else {
@@ -4067,7 +3650,7 @@ func (acLs *SignalRNetworkACLs) AssignProperties_To_SignalRNetworkACLs(destinati
 			var privateEndpoint storage.PrivateEndpointACL
 			err := privateEndpointItem.AssignProperties_To_PrivateEndpointACL(&privateEndpoint)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointACL() to populate field PrivateEndpoints")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointACL() to populate field PrivateEndpoints")
 			}
 			privateEndpointList[privateEndpointIndex] = privateEndpoint
 		}
@@ -4081,7 +3664,7 @@ func (acLs *SignalRNetworkACLs) AssignProperties_To_SignalRNetworkACLs(destinati
 		var publicNetwork storage.NetworkACL
 		err := acLs.PublicNetwork.AssignProperties_To_NetworkACL(&publicNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NetworkACL() to populate field PublicNetwork")
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkACL() to populate field PublicNetwork")
 		}
 		destination.PublicNetwork = &publicNetwork
 	} else {
@@ -4093,51 +3676,6 @@ func (acLs *SignalRNetworkACLs) AssignProperties_To_SignalRNetworkACLs(destinati
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SignalRNetworkACLs_STATUS populates our SignalRNetworkACLs from the provided source SignalRNetworkACLs_STATUS
-func (acLs *SignalRNetworkACLs) Initialize_From_SignalRNetworkACLs_STATUS(source *SignalRNetworkACLs_STATUS) error {
-
-	// DefaultAction
-	if source.DefaultAction != nil {
-		defaultAction := genruntime.ToEnum(string(*source.DefaultAction), aCLAction_Values)
-		acLs.DefaultAction = &defaultAction
-	} else {
-		acLs.DefaultAction = nil
-	}
-
-	// PrivateEndpoints
-	if source.PrivateEndpoints != nil {
-		privateEndpointList := make([]PrivateEndpointACL, len(source.PrivateEndpoints))
-		for privateEndpointIndex, privateEndpointItem := range source.PrivateEndpoints {
-			// Shadow the loop variable to avoid aliasing
-			privateEndpointItem := privateEndpointItem
-			var privateEndpoint PrivateEndpointACL
-			err := privateEndpoint.Initialize_From_PrivateEndpointACL_STATUS(&privateEndpointItem)
-			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_PrivateEndpointACL_STATUS() to populate field PrivateEndpoints")
-			}
-			privateEndpointList[privateEndpointIndex] = privateEndpoint
-		}
-		acLs.PrivateEndpoints = privateEndpointList
-	} else {
-		acLs.PrivateEndpoints = nil
-	}
-
-	// PublicNetwork
-	if source.PublicNetwork != nil {
-		var publicNetwork NetworkACL
-		err := publicNetwork.Initialize_From_NetworkACL_STATUS(source.PublicNetwork)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_NetworkACL_STATUS() to populate field PublicNetwork")
-		}
-		acLs.PublicNetwork = &publicNetwork
-	} else {
-		acLs.PublicNetwork = nil
 	}
 
 	// No error
@@ -4224,7 +3762,7 @@ func (acLs *SignalRNetworkACLs_STATUS) AssignProperties_From_SignalRNetworkACLs_
 			var privateEndpoint PrivateEndpointACL_STATUS
 			err := privateEndpoint.AssignProperties_From_PrivateEndpointACL_STATUS(&privateEndpointItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointACL_STATUS() to populate field PrivateEndpoints")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointACL_STATUS() to populate field PrivateEndpoints")
 			}
 			privateEndpointList[privateEndpointIndex] = privateEndpoint
 		}
@@ -4238,7 +3776,7 @@ func (acLs *SignalRNetworkACLs_STATUS) AssignProperties_From_SignalRNetworkACLs_
 		var publicNetwork NetworkACL_STATUS
 		err := publicNetwork.AssignProperties_From_NetworkACL_STATUS(source.PublicNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NetworkACL_STATUS() to populate field PublicNetwork")
+			return eris.Wrap(err, "calling AssignProperties_From_NetworkACL_STATUS() to populate field PublicNetwork")
 		}
 		acLs.PublicNetwork = &publicNetwork
 	} else {
@@ -4271,7 +3809,7 @@ func (acLs *SignalRNetworkACLs_STATUS) AssignProperties_To_SignalRNetworkACLs_ST
 			var privateEndpoint storage.PrivateEndpointACL_STATUS
 			err := privateEndpointItem.AssignProperties_To_PrivateEndpointACL_STATUS(&privateEndpoint)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointACL_STATUS() to populate field PrivateEndpoints")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointACL_STATUS() to populate field PrivateEndpoints")
 			}
 			privateEndpointList[privateEndpointIndex] = privateEndpoint
 		}
@@ -4285,7 +3823,7 @@ func (acLs *SignalRNetworkACLs_STATUS) AssignProperties_To_SignalRNetworkACLs_ST
 		var publicNetwork storage.NetworkACL_STATUS
 		err := acLs.PublicNetwork.AssignProperties_To_NetworkACL_STATUS(&publicNetwork)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NetworkACL_STATUS() to populate field PublicNetwork")
+			return eris.Wrap(err, "calling AssignProperties_To_NetworkACL_STATUS() to populate field PublicNetwork")
 		}
 		destination.PublicNetwork = &publicNetwork
 	} else {
@@ -4359,7 +3897,7 @@ func (operator *SignalROperatorSpec) AssignProperties_From_SignalROperatorSpec(s
 		var secret SignalROperatorSecrets
 		err := secret.AssignProperties_From_SignalROperatorSecrets(source.Secrets)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SignalROperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_From_SignalROperatorSecrets() to populate field Secrets")
 		}
 		operator.Secrets = &secret
 	} else {
@@ -4416,7 +3954,7 @@ func (operator *SignalROperatorSpec) AssignProperties_To_SignalROperatorSpec(des
 		var secret storage.SignalROperatorSecrets
 		err := operator.Secrets.AssignProperties_To_SignalROperatorSecrets(&secret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SignalROperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_To_SignalROperatorSecrets() to populate field Secrets")
 		}
 		destination.Secrets = &secret
 	} else {
@@ -4512,21 +4050,6 @@ func (settings *SignalRTlsSettings) AssignProperties_To_SignalRTlsSettings(desti
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_SignalRTlsSettings_STATUS populates our SignalRTlsSettings from the provided source SignalRTlsSettings_STATUS
-func (settings *SignalRTlsSettings) Initialize_From_SignalRTlsSettings_STATUS(source *SignalRTlsSettings_STATUS) error {
-
-	// ClientCertEnabled
-	if source.ClientCertEnabled != nil {
-		clientCertEnabled := *source.ClientCertEnabled
-		settings.ClientCertEnabled = &clientCertEnabled
-	} else {
-		settings.ClientCertEnabled = nil
 	}
 
 	// No error
@@ -5024,41 +4547,6 @@ func (networkACL *NetworkACL) AssignProperties_To_NetworkACL(destination *storag
 	return nil
 }
 
-// Initialize_From_NetworkACL_STATUS populates our NetworkACL from the provided source NetworkACL_STATUS
-func (networkACL *NetworkACL) Initialize_From_NetworkACL_STATUS(source *NetworkACL_STATUS) error {
-
-	// Allow
-	if source.Allow != nil {
-		allowList := make([]SignalRRequestType, len(source.Allow))
-		for allowIndex, allowItem := range source.Allow {
-			// Shadow the loop variable to avoid aliasing
-			allowItem := allowItem
-			allow := genruntime.ToEnum(string(allowItem), signalRRequestType_Values)
-			allowList[allowIndex] = allow
-		}
-		networkACL.Allow = allowList
-	} else {
-		networkACL.Allow = nil
-	}
-
-	// Deny
-	if source.Deny != nil {
-		denyList := make([]SignalRRequestType, len(source.Deny))
-		for denyIndex, denyItem := range source.Deny {
-			// Shadow the loop variable to avoid aliasing
-			denyItem := denyItem
-			deny := genruntime.ToEnum(string(denyItem), signalRRequestType_Values)
-			denyList[denyIndex] = deny
-		}
-		networkACL.Deny = denyList
-	} else {
-		networkACL.Deny = nil
-	}
-
-	// No error
-	return nil
-}
-
 // Network ACL
 type NetworkACL_STATUS struct {
 	// Allow: Allowed request types. The value can be one or more of: ClientConnection, ServerConnection, RESTAPI.
@@ -5336,44 +4824,6 @@ func (endpointACL *PrivateEndpointACL) AssignProperties_To_PrivateEndpointACL(de
 	return nil
 }
 
-// Initialize_From_PrivateEndpointACL_STATUS populates our PrivateEndpointACL from the provided source PrivateEndpointACL_STATUS
-func (endpointACL *PrivateEndpointACL) Initialize_From_PrivateEndpointACL_STATUS(source *PrivateEndpointACL_STATUS) error {
-
-	// Allow
-	if source.Allow != nil {
-		allowList := make([]SignalRRequestType, len(source.Allow))
-		for allowIndex, allowItem := range source.Allow {
-			// Shadow the loop variable to avoid aliasing
-			allowItem := allowItem
-			allow := genruntime.ToEnum(string(allowItem), signalRRequestType_Values)
-			allowList[allowIndex] = allow
-		}
-		endpointACL.Allow = allowList
-	} else {
-		endpointACL.Allow = nil
-	}
-
-	// Deny
-	if source.Deny != nil {
-		denyList := make([]SignalRRequestType, len(source.Deny))
-		for denyIndex, denyItem := range source.Deny {
-			// Shadow the loop variable to avoid aliasing
-			denyItem := denyItem
-			deny := genruntime.ToEnum(string(denyItem), signalRRequestType_Values)
-			denyList[denyIndex] = deny
-		}
-		endpointACL.Deny = denyList
-	} else {
-		endpointACL.Deny = nil
-	}
-
-	// Name
-	endpointACL.Name = genruntime.ClonePointerToString(source.Name)
-
-	// No error
-	return nil
-}
-
 // ACL for a private endpoint
 type PrivateEndpointACL_STATUS struct {
 	// Allow: Allowed request types. The value can be one or more of: ClientConnection, ServerConnection, RESTAPI.
@@ -5599,19 +5049,6 @@ func (category *ResourceLogCategory) AssignProperties_To_ResourceLogCategory(des
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ResourceLogCategory_STATUS populates our ResourceLogCategory from the provided source ResourceLogCategory_STATUS
-func (category *ResourceLogCategory) Initialize_From_ResourceLogCategory_STATUS(source *ResourceLogCategory_STATUS) error {
-
-	// Enabled
-	category.Enabled = genruntime.ClonePointerToString(source.Enabled)
-
-	// Name
-	category.Name = genruntime.ClonePointerToString(source.Name)
 
 	// No error
 	return nil
@@ -6014,7 +5451,7 @@ func (template *UpstreamTemplate) AssignProperties_From_UpstreamTemplate(source 
 		var auth UpstreamAuthSettings
 		err := auth.AssignProperties_From_UpstreamAuthSettings(source.Auth)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpstreamAuthSettings() to populate field Auth")
+			return eris.Wrap(err, "calling AssignProperties_From_UpstreamAuthSettings() to populate field Auth")
 		}
 		template.Auth = &auth
 	} else {
@@ -6047,7 +5484,7 @@ func (template *UpstreamTemplate) AssignProperties_To_UpstreamTemplate(destinati
 		var auth storage.UpstreamAuthSettings
 		err := template.Auth.AssignProperties_To_UpstreamAuthSettings(&auth)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpstreamAuthSettings() to populate field Auth")
+			return eris.Wrap(err, "calling AssignProperties_To_UpstreamAuthSettings() to populate field Auth")
 		}
 		destination.Auth = &auth
 	} else {
@@ -6072,37 +5509,6 @@ func (template *UpstreamTemplate) AssignProperties_To_UpstreamTemplate(destinati
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UpstreamTemplate_STATUS populates our UpstreamTemplate from the provided source UpstreamTemplate_STATUS
-func (template *UpstreamTemplate) Initialize_From_UpstreamTemplate_STATUS(source *UpstreamTemplate_STATUS) error {
-
-	// Auth
-	if source.Auth != nil {
-		var auth UpstreamAuthSettings
-		err := auth.Initialize_From_UpstreamAuthSettings_STATUS(source.Auth)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_UpstreamAuthSettings_STATUS() to populate field Auth")
-		}
-		template.Auth = &auth
-	} else {
-		template.Auth = nil
-	}
-
-	// CategoryPattern
-	template.CategoryPattern = genruntime.ClonePointerToString(source.CategoryPattern)
-
-	// EventPattern
-	template.EventPattern = genruntime.ClonePointerToString(source.EventPattern)
-
-	// HubPattern
-	template.HubPattern = genruntime.ClonePointerToString(source.HubPattern)
-
-	// UrlTemplate
-	template.UrlTemplate = genruntime.ClonePointerToString(source.UrlTemplate)
 
 	// No error
 	return nil
@@ -6205,7 +5611,7 @@ func (template *UpstreamTemplate_STATUS) AssignProperties_From_UpstreamTemplate_
 		var auth UpstreamAuthSettings_STATUS
 		err := auth.AssignProperties_From_UpstreamAuthSettings_STATUS(source.Auth)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UpstreamAuthSettings_STATUS() to populate field Auth")
+			return eris.Wrap(err, "calling AssignProperties_From_UpstreamAuthSettings_STATUS() to populate field Auth")
 		}
 		template.Auth = &auth
 	} else {
@@ -6238,7 +5644,7 @@ func (template *UpstreamTemplate_STATUS) AssignProperties_To_UpstreamTemplate_ST
 		var auth storage.UpstreamAuthSettings_STATUS
 		err := template.Auth.AssignProperties_To_UpstreamAuthSettings_STATUS(&auth)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UpstreamAuthSettings_STATUS() to populate field Auth")
+			return eris.Wrap(err, "calling AssignProperties_To_UpstreamAuthSettings_STATUS() to populate field Auth")
 		}
 		destination.Auth = &auth
 	} else {
@@ -6494,7 +5900,7 @@ func (settings *UpstreamAuthSettings) AssignProperties_From_UpstreamAuthSettings
 		var managedIdentity ManagedIdentitySettings
 		err := managedIdentity.AssignProperties_From_ManagedIdentitySettings(source.ManagedIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedIdentitySettings() to populate field ManagedIdentity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedIdentitySettings() to populate field ManagedIdentity")
 		}
 		settings.ManagedIdentity = &managedIdentity
 	} else {
@@ -6524,7 +5930,7 @@ func (settings *UpstreamAuthSettings) AssignProperties_To_UpstreamAuthSettings(d
 		var managedIdentity storage.ManagedIdentitySettings
 		err := settings.ManagedIdentity.AssignProperties_To_ManagedIdentitySettings(&managedIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedIdentitySettings() to populate field ManagedIdentity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedIdentitySettings() to populate field ManagedIdentity")
 		}
 		destination.ManagedIdentity = &managedIdentity
 	} else {
@@ -6544,33 +5950,6 @@ func (settings *UpstreamAuthSettings) AssignProperties_To_UpstreamAuthSettings(d
 		destination.PropertyBag = propertyBag
 	} else {
 		destination.PropertyBag = nil
-	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_UpstreamAuthSettings_STATUS populates our UpstreamAuthSettings from the provided source UpstreamAuthSettings_STATUS
-func (settings *UpstreamAuthSettings) Initialize_From_UpstreamAuthSettings_STATUS(source *UpstreamAuthSettings_STATUS) error {
-
-	// ManagedIdentity
-	if source.ManagedIdentity != nil {
-		var managedIdentity ManagedIdentitySettings
-		err := managedIdentity.Initialize_From_ManagedIdentitySettings_STATUS(source.ManagedIdentity)
-		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ManagedIdentitySettings_STATUS() to populate field ManagedIdentity")
-		}
-		settings.ManagedIdentity = &managedIdentity
-	} else {
-		settings.ManagedIdentity = nil
-	}
-
-	// Type
-	if source.Type != nil {
-		typeVar := genruntime.ToEnum(string(*source.Type), upstreamAuthType_Values)
-		settings.Type = &typeVar
-	} else {
-		settings.Type = nil
 	}
 
 	// No error
@@ -6631,7 +6010,7 @@ func (settings *UpstreamAuthSettings_STATUS) AssignProperties_From_UpstreamAuthS
 		var managedIdentity ManagedIdentitySettings_STATUS
 		err := managedIdentity.AssignProperties_From_ManagedIdentitySettings_STATUS(source.ManagedIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ManagedIdentitySettings_STATUS() to populate field ManagedIdentity")
+			return eris.Wrap(err, "calling AssignProperties_From_ManagedIdentitySettings_STATUS() to populate field ManagedIdentity")
 		}
 		settings.ManagedIdentity = &managedIdentity
 	} else {
@@ -6661,7 +6040,7 @@ func (settings *UpstreamAuthSettings_STATUS) AssignProperties_To_UpstreamAuthSet
 		var managedIdentity storage.ManagedIdentitySettings_STATUS
 		err := settings.ManagedIdentity.AssignProperties_To_ManagedIdentitySettings_STATUS(&managedIdentity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ManagedIdentitySettings_STATUS() to populate field ManagedIdentity")
+			return eris.Wrap(err, "calling AssignProperties_To_ManagedIdentitySettings_STATUS() to populate field ManagedIdentity")
 		}
 		destination.ManagedIdentity = &managedIdentity
 	} else {
@@ -6757,16 +6136,6 @@ func (settings *ManagedIdentitySettings) AssignProperties_To_ManagedIdentitySett
 	} else {
 		destination.PropertyBag = nil
 	}
-
-	// No error
-	return nil
-}
-
-// Initialize_From_ManagedIdentitySettings_STATUS populates our ManagedIdentitySettings from the provided source ManagedIdentitySettings_STATUS
-func (settings *ManagedIdentitySettings) Initialize_From_ManagedIdentitySettings_STATUS(source *ManagedIdentitySettings_STATUS) error {
-
-	// Resource
-	settings.Resource = genruntime.ClonePointerToString(source.Resource)
 
 	// No error
 	return nil

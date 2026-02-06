@@ -67,6 +67,7 @@ Image_STATUS: Object (7 properties)
 │       └── ZoneResilient: *bool
 ├── Tags: map[string]string
 └── Type: *string
+
 Image_Spec: Object (5 properties)
 ├── ExtendedLocation: *Object (2 properties)
 │   ├── Name: *string
@@ -130,3 +131,4 @@ Image_Spec: Object (5 properties)
 │       │       └── "UltraSSD_LRS"
 │       └── ZoneResilient: *bool
 └── Tags: map[string]string
+

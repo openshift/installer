@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/authorization/v1api20200801previe
 -----------------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2020-08-01-preview"
+
 RoleAssignment: Resource
 ├── Spec: Object (13 properties)
 │   ├── AzureName: string
@@ -40,7 +41,12 @@ RoleAssignment: Resource
     ├── Type: *string
     ├── UpdatedBy: *string
     └── UpdatedOn: *string
+
 augmentConversionForRoleAssignment: Interface
+
 augmentConversionForRoleAssignmentOperatorSpec: Interface
+
 augmentConversionForRoleAssignment_STATUS: Interface
+
 augmentConversionForRoleAssignment_Spec: Interface
+

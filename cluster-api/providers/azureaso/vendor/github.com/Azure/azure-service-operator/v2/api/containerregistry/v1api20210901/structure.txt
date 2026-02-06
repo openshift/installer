@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerregistry/v1api20210901
 ------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-09-01"
+
 Registry: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (15 properties)
@@ -188,3 +189,4 @@ Registry: Resource
     └── ZoneRedundancy: *Enum (2 values)
         ├── "Disabled"
         └── "Enabled"
+

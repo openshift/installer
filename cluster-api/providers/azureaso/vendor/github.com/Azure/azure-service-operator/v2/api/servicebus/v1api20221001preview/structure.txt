@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/servicebus/v1api20221001preview
 ------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2022-10-01-preview"
+
 Namespace: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (14 properties)
@@ -132,6 +133,7 @@ Namespace: Resource
     ├── Type: *string
     ├── UpdatedAt: *string
     └── ZoneRedundant: *bool
+
 NamespacesAuthorizationRule: Resource
 ├── Owner: Namespace
 ├── Spec: Object (4 properties)
@@ -176,6 +178,7 @@ NamespacesAuthorizationRule: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
 NamespacesQueue: Resource
 ├── Owner: Namespace
 ├── Spec: Object (18 properties)
@@ -257,6 +260,7 @@ NamespacesQueue: Resource
     │       └── "User"
     ├── Type: *string
     └── UpdatedAt: *string
+
 NamespacesTopic: Resource
 ├── Owner: Namespace
 ├── Spec: Object (13 properties)
@@ -328,6 +332,7 @@ NamespacesTopic: Resource
     │       └── "User"
     ├── Type: *string
     └── UpdatedAt: *string
+
 NamespacesTopicsSubscription: Resource
 ├── Owner: NamespacesTopic
 ├── Spec: Object (16 properties)
@@ -411,6 +416,7 @@ NamespacesTopicsSubscription: Resource
     │       └── "User"
     ├── Type: *string
     └── UpdatedAt: *string
+
 NamespacesTopicsSubscriptionsRule: Resource
 ├── Owner: NamespacesTopicsSubscription
 ├── Spec: Object (7 properties)
@@ -486,3 +492,4 @@ NamespacesTopicsSubscriptionsRule: Resource
     │       ├── "ManagedIdentity"
     │       └── "User"
     └── Type: *string
+
