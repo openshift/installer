@@ -74,7 +74,7 @@ func TestValidateMachinePool(t *testing.T) {
 					IOPS: 10000,
 				},
 			},
-			expected: fmt.Sprintf("test-path.iops: Invalid value: 10000: iops not supported for type gp2"),
+			expected: "test-path.iops: Invalid value: 10000: iops not supported for type gp2",
 		},
 		{
 			name: "invalid zone",
@@ -96,7 +96,7 @@ func TestValidateMachinePool(t *testing.T) {
 					Size: 128,
 				},
 			},
-			expected: fmt.Sprintf("test-path.type: Invalid value: \"bad-volume-type\": failed to find volume type bad-volume-type"),
+			expected: "test-path.type: Invalid value: \"bad-volume-type\": failed to find volume type bad-volume-type",
 		},
 		{
 			name: "invalid volume size using negative",
@@ -107,7 +107,7 @@ func TestValidateMachinePool(t *testing.T) {
 					IOPS: 10000,
 				},
 			},
-			expected: fmt.Sprintf("test-path.size: Invalid value: -1: volume size value must be a positive number"),
+			expected: "test-path.size: Invalid value: -1: volume size value must be a positive number",
 		},
 		{
 			name: "invalid metadata auth option",
@@ -119,14 +119,48 @@ func TestValidateMachinePool(t *testing.T) {
 			expected: `^test-path\.authentication: Invalid value: \"foobarbaz\": must be either Required or Optional$`,
 		},
 		{
-			name: "valid root volume throughput, within allowed range",
+			name: "valid root volume throughput with sufficient iops",
 			pool: &aws.MachinePool{
 				EC2RootVolume: aws.EC2RootVolume{
 					Type:       "gp3",
 					Size:       100,
 					Throughput: ptr.To(int32(1200)),
+					IOPS:       4800, // 1200 / 4800 = 0.25, which is the maximum allowed ratio
 				},
 			},
+		},
+		{
+			name: "valid root volume throughput with default iops (within ratio)",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(750)), // 750 / 3000 = 0.25, which is the maximum allowed ratio
+				},
+			},
+		},
+		{
+			name: "invalid root volume throughput, exceeds ratio with default iops",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(1200)), // 1200 / 3000 = 0.4 > 0.25
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 1200: throughput \(MiBps\) to iops ratio of 0\.400000 is too high; maximum is 0\.250000 MiBps per iops\. When iops is not set, AWS defaults to 3000 iops\. Please set iops to at least 4800 to satisfy the constraint$`,
+		},
+		{
+			name: "invalid root volume throughput, exceeds ratio with explicit iops",
+			pool: &aws.MachinePool{
+				EC2RootVolume: aws.EC2RootVolume{
+					Type:       "gp3",
+					Size:       100,
+					Throughput: ptr.To(int32(1000)),
+					IOPS:       3000, // 1000 / 3000 = 0.333 > 0.25
+				},
+			},
+			expected: `^test-path\.throughput: Invalid value: 1000: throughput \(MiBps\) to iops ratio of 0\.333333 is too high; maximum is 0\.250000 MiBps per iops\. When iops is not set, AWS defaults to 3000 iops\. Please set iops to at least 4000 to satisfy the constraint$`,
 		},
 		{
 			name: "valid root volume throughput, nil or unspecified",
