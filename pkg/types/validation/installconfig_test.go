@@ -312,9 +312,10 @@ func InvalidPrimaryV6DualStackNetworkingConfig() *types.Networking {
 }
 func TestValidateInstallConfig(t *testing.T) {
 	cases := []struct {
-		name          string
-		installConfig *types.InstallConfig
-		expectedError string
+		name             string
+		installConfig    *types.InstallConfig
+		expectedError    string
+		restoreFnFactory func(*types.InstallConfig) func()
 	}{
 		{
 			name:          "minimal",
@@ -2798,9 +2799,44 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: "the Ingress capability is required",
 		},
+		{
+			name: "invalid OSImageStream set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				types.SCOS = true
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.OSImageStream = "rhel-10"
+
+				return c
+			}(),
+			expectedError: "OS Image Streams are only supported on OCP clusters using RHCOS",
+			restoreFnFactory: func(config *types.InstallConfig) func() {
+				old := types.SCOS
+				return func() {
+					types.SCOS = old
+				}
+			},
+		},
+		{
+			name: "invalid OSImageStream set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.OSImageStream = "invalid"
+				return c
+			}(),
+			expectedError: "Unsupported OS Image Stream. Supported values are: rhel-9, rhel-10",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			if tc.restoreFnFactory != nil {
+				// Call the FN getter to allow restore function to grab
+				// pre-test values if needed
+				fn := tc.restoreFnFactory(tc.installConfig)
+				defer fn()
+			}
+
 			err := ValidateInstallConfig(tc.installConfig, false).ToAggregate()
 			if tc.expectedError == "" {
 				assert.NoError(t, err)

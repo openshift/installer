@@ -4885,6 +4885,13 @@ spec:
                 - Internal
                 type: string
             type: object
+          osImageStream:
+            description: OSImageStream is the global OS Image Stream to be used for
+              all machines in the cluster.
+            enum:
+            - rhel-9
+            - rhel-10
+            type: string
           platform:
             description: |-
               Platform is the configuration for the specific platform upon which to

@@ -228,6 +228,10 @@ type InstallConfig struct {
 	// E.g. "featureGates": ["FeatureGate1=true", "FeatureGate2=false"].
 	// +optional
 	FeatureGates []string `json:"featureGates,omitempty"`
+
+	// OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
+	// +optional
+	OSImageStream OSImageStream `json:"osImageStream,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
@@ -657,3 +661,14 @@ func (c *InstallConfig) PublicIngress() bool {
 	}
 	return false
 }
+
+// OSImageStream represents the name of an OS Image Stream to use in a pool.
+// +kubebuilder:validation:Enum=rhel-9;rhel-10
+type OSImageStream string
+
+const (
+	// OSImageStreamRHCOS9 represents the RHEL 9 OS Image Stream.
+	OSImageStreamRHCOS9 OSImageStream = "rhel-9"
+	// OSImageStreamRHCOS10 represents the RHEL 10 OS Image Stream.
+	OSImageStreamRHCOS10 OSImageStream = "rhel-10"
+)

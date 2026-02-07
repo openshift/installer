@@ -135,6 +135,10 @@ the cluster.
     operatorPublishingStrategy <object>
       OperatorPublishingStrategy controls the visibility of ingress and apiserver. Defaults to public.
 
+    osImageStream <string>
+      Valid Values: "rhel-9","rhel-10"
+      OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
+
     platform <object> -required-
       Platform is the configuration for the specific platform upon which to
 perform the installation.
