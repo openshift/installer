@@ -248,6 +248,7 @@ networking with IPv6 as the primary address family. When using dual-stack, the V
 and subnets must be configured with both IPv4 and IPv6 CIDR blocks.
 
     lbType <string>
+      Valid Values: "Classic","NLB"
       LBType is an optional field to specify a load balancer type.
 When this field is specified, all ingresscontrollers (including the
 default ingresscontroller) will be created using the specified load-balancer
@@ -264,8 +265,10 @@ https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.
 transport layer (TCP/SSL). See the following for additional details:
 https://docs.aws.amazon.com/AmazonECS/latest/developerguide/load-balancer-types.html#nlb
 
-If this field is not set explicitly, it defaults to "Classic".  This
-default is subject to change over time.
+If this field is not set explicitly, the default value depends on the ipFamily field:
+* "Classic" when ipFamily is not set or set to "IPv4"
+* "NLB" when ipFamily is set to "DualStackIPv4Primary" or "DualStackIPv6Primary"
+This default is subject to change over time.
 
     preserveBootstrapIgnition <boolean>
       PreserveBootstrapIgnition is deprecated. Use bestEffortDeleteIgnition instead.
