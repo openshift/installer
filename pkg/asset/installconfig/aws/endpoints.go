@@ -75,6 +75,12 @@ type ServiceEndpointResolver struct {
 	endpointOptions EndpointOptions
 }
 
+// GetCustomEndpoint returns the user-provider endpoints for a specified AWS service.
+func (s *ServiceEndpointResolver) GetCustomEndpoint(serviceID string) (typesaws.ServiceEndpoint, bool) {
+	ep, ok := s.endpoints[serviceID]
+	return ep, ok
+}
+
 // NewServiceEndpointResolver returns a new ServiceEndpointResolver.
 func NewServiceEndpointResolver(opts EndpointOptions) *ServiceEndpointResolver {
 	endpointMap := make(map[string]typesaws.ServiceEndpoint, len(opts.Endpoints))

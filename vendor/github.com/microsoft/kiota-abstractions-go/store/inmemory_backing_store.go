@@ -2,9 +2,10 @@ package store
 
 import (
 	"errors"
-	"github.com/google/uuid"
 	"reflect"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 // BackingStoreSubscriber is a function signature for a listener to any changes to a backing store
@@ -97,7 +98,8 @@ func (i *InMemoryBackingStore) Enumerate() map[string]interface{} {
 func (i *InMemoryBackingStore) EnumerateKeysForValuesChangedToNil() []string {
 	keys := make([]string, 0)
 	for k, v := range i.store {
-		if i.changedValues[k] && v == nil {
+		valueOfV := reflect.ValueOf(v)
+		if i.changedValues[k] && (v == nil || valueOfV.Kind() == reflect.Ptr && valueOfV.IsNil()) {
 			keys = append(keys, k)
 		}
 	}

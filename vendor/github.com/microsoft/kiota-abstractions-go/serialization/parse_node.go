@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// ParseNode Interface for a deserialization node in a parse tree. This interace provides an abstraction layer over serialization formats, libraries and implementations.
+// ParseNode Interface for a deserialization node in a parse tree. This interface provides an abstraction layer over serialization formats, libraries and implementations.
 type ParseNode interface {
 	// GetChildNode returns a new parse node for the given identifier.
 	GetChildNode(index string) (ParseNode, error)

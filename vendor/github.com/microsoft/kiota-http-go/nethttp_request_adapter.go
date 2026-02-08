@@ -4,19 +4,17 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"github.com/microsoft/kiota-abstractions-go/store"
 	"io"
-	"io/ioutil"
 	nethttp "net/http"
 	"reflect"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	abs "github.com/microsoft/kiota-abstractions-go"
 	absauth "github.com/microsoft/kiota-abstractions-go/authentication"
 	absser "github.com/microsoft/kiota-abstractions-go/serialization"
+	"github.com/microsoft/kiota-abstractions-go/store"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
@@ -150,15 +148,15 @@ func (a *NetHttpRequestAdapter) getHttpResponseMessage(ctx context.Context, requ
 		contentLenHeader := response.Header.Get("Content-Length")
 		if contentLenHeader != "" {
 			contentLen, _ := strconv.Atoi(contentLenHeader)
-			spanForAttributes.SetAttributes(attribute.Int("http.response_content_length", contentLen))
+			spanForAttributes.SetAttributes(httpResponseBodySizeAttribute.Int(contentLen))
 		}
 		contentTypeHeader := response.Header.Get("Content-Type")
 		if contentTypeHeader != "" {
-			spanForAttributes.SetAttributes(attribute.String("http.response_content_type", contentTypeHeader))
+			spanForAttributes.SetAttributes(httpResponseHeaderContentTypeAttribute.String(contentTypeHeader))
 		}
 		spanForAttributes.SetAttributes(
-			attribute.Int("http.status_code", response.StatusCode),
-			attribute.String("http.flavor", response.Proto),
+			httpResponseStatusCodeAttribute.Int(response.StatusCode),
+			networkProtocolNameAttribute.String(response.Proto),
 		)
 	}
 	return a.retryCAEResponseIfRequired(ctx, response, requestInfo, claims, spanForAttributes)
@@ -179,7 +177,7 @@ func (a *NetHttpRequestAdapter) retryCAEResponseIfRequired(ctx context.Context, 
 		authenticateHeaderVal := response.Header.Get("WWW-Authenticate")
 		if authenticateHeaderVal != "" && reBearer.Match([]byte(authenticateHeaderVal)) {
 			span.AddEvent(AuthenticateChallengedEventKey)
-			spanForAttributes.SetAttributes(attribute.Int("http.retry_count", 1))
+			spanForAttributes.SetAttributes(httpRequestResendCountAttribute.Int(1))
 			responseClaims := ""
 			parametersRaw := string(reBearer.ReplaceAll([]byte(authenticateHeaderVal), []byte("")))
 			parameters := strings.Split(parametersRaw, ",")
@@ -211,15 +209,14 @@ func (a *NetHttpRequestAdapter) setBaseUrlForRequestInformation(requestInfo *abs
 	requestInfo.PathParameters["baseurl"] = a.GetBaseUrl()
 }
 
-const requestTimeOutInSeconds = 100
-
 func (a *NetHttpRequestAdapter) prepareContext(ctx context.Context, requestInfo *abs.RequestInformation) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
 	}
 	// set deadline if not set in receiving context
-	if _, deadlineSet := ctx.Deadline(); !deadlineSet {
-		ctx, _ = context.WithTimeout(ctx, time.Second*requestTimeOutInSeconds)
+	// ignore if timeout is 0 as it means no timeout
+	if _, deadlineSet := ctx.Deadline(); !deadlineSet && a.httpClient.Timeout != 0 {
+		ctx, _ = context.WithTimeout(ctx, a.httpClient.Timeout)
 	}
 
 	for _, value := range requestInfo.GetRequestOptions() {
@@ -256,19 +253,19 @@ func (a *NetHttpRequestAdapter) getRequestFromRequestInformation(ctx context.Con
 	if spanForAttributes == nil {
 		spanForAttributes = span
 	}
-	spanForAttributes.SetAttributes(attribute.String("http.method", requestInfo.Method.String()))
+	spanForAttributes.SetAttributes(httpRequestMethodAttribute.String(requestInfo.Method.String()))
 	uri, err := requestInfo.GetUri()
 	if err != nil {
 		spanForAttributes.RecordError(err)
 		return nil, err
 	}
 	spanForAttributes.SetAttributes(
-		attribute.String("http.scheme", uri.Scheme),
-		attribute.String("http.host", uri.Host),
+		serverAddressAttribute.String(uri.Scheme),
+		urlSchemeAttribute.String(uri.Host),
 	)
 
 	if a.observabilityOptions.IncludeEUIIAttributes {
-		spanForAttributes.SetAttributes(attribute.String("http.uri", uri.String()))
+		spanForAttributes.SetAttributes(urlFullAttribute.String(uri.String()))
 	}
 
 	request, err := nethttp.NewRequestWithContext(ctx, requestInfo.Method.String(), uri.String(), nil)
@@ -293,13 +290,14 @@ func (a *NetHttpRequestAdapter) getRequestFromRequestInformation(ctx context.Con
 		}
 		if request.Header.Get("Content-Type") != "" {
 			spanForAttributes.SetAttributes(
-				attribute.String("http.request_content_type", request.Header.Get("Content-Type")),
+				httpRequestHeaderContentTypeAttribute.String(request.Header.Get("Content-Type")),
 			)
 		}
 		if request.Header.Get("Content-Length") != "" {
 			contentLenVal, _ := strconv.Atoi(request.Header.Get("Content-Length"))
+			request.ContentLength = int64(contentLenVal)
 			spanForAttributes.SetAttributes(
-				attribute.Int("http.request_content_length", contentLenVal),
+				httpRequestBodySizeAttribute.Int(contentLenVal),
 			)
 		}
 	}
@@ -315,7 +313,7 @@ func (a *NetHttpRequestAdapter) startTracingSpan(ctx context.Context, requestInf
 	decodedUriTemplate := decodeUriEncodedString(requestInfo.UrlTemplate, []byte{'-', '.', '~', '$'})
 	telemetryPathValue := queryParametersCleanupRegex.ReplaceAll([]byte(decodedUriTemplate), []byte(""))
 	ctx, span := otel.GetTracerProvider().Tracer(a.observabilityOptions.GetTracerInstrumentationName()).Start(ctx, methodName+" - "+string(telemetryPathValue))
-	span.SetAttributes(attribute.String("http.uri_template", decodedUriTemplate))
+	span.SetAttributes(urlUriTemplateAttribute.String(decodedUriTemplate))
 	return ctx, span
 }
 
@@ -339,6 +337,9 @@ func (a *NetHttpRequestAdapter) Send(ctx context.Context, requestInfo *abs.Reque
 		if err != nil {
 			span.RecordError(err)
 			return nil, err
+		}
+		if result == nil {
+			return nil, nil
 		}
 		return result.(absser.Parsable), nil
 	} else if response != nil {
@@ -397,6 +398,9 @@ func (a *NetHttpRequestAdapter) SendEnum(ctx context.Context, requestInfo *abs.R
 			span.RecordError(err)
 			return nil, err
 		}
+		if result == nil {
+			return nil, nil
+		}
 		return result.(absser.Parsable), nil
 	} else if response != nil {
 		defer a.purge(response)
@@ -448,6 +452,9 @@ func (a *NetHttpRequestAdapter) SendCollection(ctx context.Context, requestInfo 
 			span.RecordError(err)
 			return nil, err
 		}
+		if result == nil {
+			return nil, nil
+		}
 		return result.([]absser.Parsable), nil
 	} else if response != nil {
 		defer a.purge(response)
@@ -498,6 +505,9 @@ func (a *NetHttpRequestAdapter) SendEnumCollection(ctx context.Context, requestI
 		if err != nil {
 			span.RecordError(err)
 			return nil, err
+		}
+		if result == nil {
+			return nil, nil
 		}
 		return result.([]any), nil
 	} else if response != nil {
@@ -558,6 +568,9 @@ func (a *NetHttpRequestAdapter) SendPrimitive(ctx context.Context, requestInfo *
 			span.RecordError(err)
 			return nil, err
 		}
+		if result == nil {
+			return nil, nil
+		}
 		return result.(absser.Parsable), nil
 	} else if response != nil {
 		defer a.purge(response)
@@ -569,7 +582,7 @@ func (a *NetHttpRequestAdapter) SendPrimitive(ctx context.Context, requestInfo *
 			return nil, nil
 		}
 		if typeName == "[]byte" {
-			res, err := ioutil.ReadAll(response.Body)
+			res, err := io.ReadAll(response.Body)
 			if err != nil {
 				span.RecordError(err)
 				return nil, err
@@ -639,6 +652,9 @@ func (a *NetHttpRequestAdapter) SendPrimitiveCollection(ctx context.Context, req
 			span.RecordError(err)
 			return nil, err
 		}
+		if result == nil {
+			return nil, nil
+		}
 		return result.([]any), nil
 	} else if response != nil {
 		defer a.purge(response)
@@ -705,7 +721,12 @@ func (a *NetHttpRequestAdapter) SendNoContent(ctx context.Context, requestInfo *
 func (a *NetHttpRequestAdapter) getRootParseNode(ctx context.Context, response *nethttp.Response, spanForAttributes trace.Span) (absser.ParseNode, context.Context, error) {
 	ctx, span := otel.GetTracerProvider().Tracer(a.observabilityOptions.GetTracerInstrumentationName()).Start(ctx, "getRootParseNode")
 	defer span.End()
-	body, err := ioutil.ReadAll(response.Body)
+
+	if response.ContentLength == 0 {
+		return nil, ctx, nil
+	}
+
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		spanForAttributes.RecordError(err)
 		return nil, ctx, err
@@ -721,7 +742,7 @@ func (a *NetHttpRequestAdapter) getRootParseNode(ctx context.Context, response *
 	return rootNode, ctx, err
 }
 func (a *NetHttpRequestAdapter) purge(response *nethttp.Response) error {
-	_, _ = ioutil.ReadAll(response.Body) //we don't care about errors comming from reading the body, just trying to purge anything that maybe left
+	_, _ = io.ReadAll(response.Body) //we don't care about errors comming from reading the body, just trying to purge anything that maybe left
 	err := response.Body.Close()
 	if err != nil {
 		return err
@@ -747,6 +768,12 @@ func (a *NetHttpRequestAdapter) throwIfFailedResponse(ctx context.Context, respo
 	spanForAttributes.SetStatus(codes.Error, "received_error_response")
 
 	statusAsString := strconv.Itoa(response.StatusCode)
+	responseHeaders := abs.NewResponseHeaders()
+	for key, values := range response.Header {
+		for i := range values {
+			responseHeaders.Add(key, values[i])
+		}
+	}
 	var errorCtor absser.ParsableFactory = nil
 	if len(errorMappings) != 0 {
 		if errorMappings[statusAsString] != nil {
@@ -755,6 +782,8 @@ func (a *NetHttpRequestAdapter) throwIfFailedResponse(ctx context.Context, respo
 			errorCtor = errorMappings["4XX"]
 		} else if response.StatusCode >= 500 && response.StatusCode < 600 && errorMappings["5XX"] != nil {
 			errorCtor = errorMappings["5XX"]
+		} else if errorMappings["XXX"] != nil && response.StatusCode >= 400 && response.StatusCode < 600 {
+			errorCtor = errorMappings["XXX"]
 		}
 	}
 
@@ -763,6 +792,7 @@ func (a *NetHttpRequestAdapter) throwIfFailedResponse(ctx context.Context, respo
 		err := &abs.ApiError{
 			Message:            "The server returned an unexpected status code and no error factory is registered for this code: " + statusAsString,
 			ResponseStatusCode: response.StatusCode,
+			ResponseHeaders:    responseHeaders,
 		}
 		spanForAttributes.RecordError(err)
 		return err
@@ -779,6 +809,7 @@ func (a *NetHttpRequestAdapter) throwIfFailedResponse(ctx context.Context, respo
 		err := &abs.ApiError{
 			Message:            "The server returned an unexpected status code with no response body: " + statusAsString,
 			ResponseStatusCode: response.StatusCode,
+			ResponseHeaders:    responseHeaders,
 		}
 		spanForAttributes.RecordError(err)
 		return err
@@ -790,18 +821,26 @@ func (a *NetHttpRequestAdapter) throwIfFailedResponse(ctx context.Context, respo
 	errValue, err := rootNode.GetObjectValue(errorCtor)
 	if err != nil {
 		spanForAttributes.RecordError(err)
-		if apiError, ok := err.(*abs.ApiError); ok {
-			apiError.ResponseStatusCode = response.StatusCode
+		if apiErrorable, ok := err.(abs.ApiErrorable); ok {
+			apiErrorable.SetResponseHeaders(responseHeaders)
+			apiErrorable.SetStatusCode(response.StatusCode)
 		}
 		return err
 	} else if errValue == nil {
 		return &abs.ApiError{
 			Message:            "The server returned an unexpected status code but the error could not be deserialized: " + statusAsString,
 			ResponseStatusCode: response.StatusCode,
+			ResponseHeaders:    responseHeaders,
 		}
 	}
 
+	if apiErrorable, ok := errValue.(abs.ApiErrorable); ok {
+		apiErrorable.SetResponseHeaders(responseHeaders)
+		apiErrorable.SetStatusCode(response.StatusCode)
+	}
+
 	err = errValue.(error)
+
 	spanForAttributes.RecordError(err)
 	return err
 }

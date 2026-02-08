@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
@@ -55,13 +57,25 @@ func (a *PlatformPermsCheck) Generate(ctx context.Context, dependencies asset.Pa
 	switch platform {
 	case aws.Name:
 		permissionGroups := awsconfig.RequiredPermissionGroups(ic.Config)
+		region := ic.Config.Platform.AWS.Region
+		endpoints := ic.Config.AWS.ServiceEndpoints
 
-		ssn, err := ic.AWS.Session(ctx)
+		awsConfig, err := awsconfig.GetConfigWithOptions(ctx, config.WithRegion(region))
 		if err != nil {
 			return err
 		}
 
-		err = awsconfig.ValidateCreds(ssn, permissionGroups, ic.Config.Platform.AWS.Region)
+		endpointResolver := awsconfig.NewServiceEndpointResolver(awsconfig.EndpointOptions{
+			Region:    region,
+			Endpoints: endpoints,
+		})
+
+		var iamEndpoint string
+		if ep, found := endpointResolver.GetCustomEndpoint(iam.ServiceID); found {
+			iamEndpoint = ep.URL
+		}
+
+		err = awsconfig.ValidateCreds(ctx, awsConfig, permissionGroups, region, iamEndpoint)
 		if err != nil {
 			return errors.Wrap(err, "validate AWS credentials")
 		}
