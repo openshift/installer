@@ -172,6 +172,11 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 		if err != nil {
 			return err
 		}
+
+		err = powervsconfig.ValidateSSHKey(ic.Config)
+		if err != nil {
+			return err
+		}
 	case external.Name, none.Name:
 		// no special provisioning requirements to check
 	case nutanix.Name:
