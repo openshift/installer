@@ -24,9 +24,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/util/wait"
@@ -44,7 +41,6 @@ import (
 	"k8s.io/klog/v2"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient"
-	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/armauth"
 	"sigs.k8s.io/cloud-provider-azure/pkg/azclient/configloader"
 	azcache "sigs.k8s.io/cloud-provider-azure/pkg/cache"
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
@@ -146,6 +142,7 @@ type Cloud struct {
 	pipCache azcache.Resource
 	// Add service lister to always get latest service
 	serviceLister corelisters.ServiceLister
+	nodeLister    corelisters.NodeLister
 	// node-sync-loop routine and service-reconcile routine should not update LoadBalancer at the same time
 	serviceReconcileLock sync.Mutex
 
@@ -248,6 +245,13 @@ func NewCloudFromSecret(ctx context.Context, clientBuilder cloudprovider.Control
 
 	return az, nil
 }
+
+var (
+	// newARMClientFactory is a function that returns a new ARM client factory.
+	// It is used to mock the ARM client factory for testing.
+	// TODO: use fake options for testing
+	newARMClientFactory = azclient.NewClientFactory
+)
 
 // InitializeCloudFromConfig initializes the Cloud from config.
 func (az *Cloud) InitializeCloudFromConfig(ctx context.Context, config *config.Config, _, callFromCCM bool) error {
@@ -402,59 +406,40 @@ func (az *Cloud) InitializeCloudFromConfig(ctx context.Context, config *config.C
 		az.ARMClientConfig.UserAgent = fmt.Sprintf("kubernetes-cloudprovider/%s", k8sVersion)
 	}
 
-	if az.ComputeClientFactory == nil {
-		var cred azcore.TokenCredential
-		if az.AuthProvider.IsMultiTenantModeEnabled() {
-			// It uses Service Principal as the multi-tenant credential.
-			// TODO: refactor `IsMultiTenantModeEnabled` to make it more clear.
-			multiTenantCred := az.AuthProvider.GetMultiTenantIdentity()
-			networkTenantCred := az.AuthProvider.GetNetworkAzIdentity()
-			az.NetworkClientFactory, err = azclient.NewClientFactory(&azclient.ClientFactoryConfig{
-				SubscriptionID: az.NetworkResourceSubscriptionID,
-			}, &az.ARMClientConfig, clientOps.Cloud, networkTenantCred)
-			if err != nil {
-				return err
-			}
-			cred = multiTenantCred
-		} else {
-			cred = az.AuthProvider.GetAzIdentity()
-		}
+	if az.ComputeClientFactory == nil && az.AuthProvider != nil {
+		var (
+			computeCred = az.AuthProvider.GetAzIdentity()
+			networkCred = az.AuthProvider.GetNetworkAzIdentity() // It would fallback to compute credential if network credential is not set
+		)
 
-		var opts []func(option *arm.ClientOptions)
-		if az.AzureAuthConfig.AuxiliaryTokenProvider != nil && az.AzureAuthConfig.UseManagedIdentityExtension {
-			klog.InfoS("Using auxiliary token provider for ARM network credential")
-			// Multi-tenant mode with auxiliary token provider.
-			// It uses Managed Identity as the primary credential and auxiliary token provider as the auxiliary credential.
-			opts = append(opts, func(option *arm.ClientOptions) {
-				option.PerRetryPolicies = append(option.PerRetryPolicies, armauth.NewAuxiliaryAuthPolicy(
-					[]azcore.TokenCredential{az.AuthProvider.GetNetworkAzIdentity()},
-					az.AuthProvider.DefaultTokenScope(),
-				))
-			})
-
-			az.NetworkClientFactory, err = azclient.NewClientFactory(&azclient.ClientFactoryConfig{
-				SubscriptionID: az.NetworkResourceSubscriptionID,
-			}, &az.ARMClientConfig, clientOps.Cloud, az.AuthProvider.GetNetworkAzIdentity())
-			if err != nil {
-				return err
-			}
-		}
-
-		az.ComputeClientFactory, err = azclient.NewClientFactory(&azclient.ClientFactoryConfig{
-			SubscriptionID: az.SubscriptionID,
-		}, &az.ARMClientConfig, clientOps.Cloud, cred, opts...)
+		networkSubscriptionID := az.getNetworkResourceSubscriptionID() // It would also fallback to compute subscription ID if network subscription ID is not set
+		az.NetworkClientFactory, err = newARMClientFactory(&azclient.ClientFactoryConfig{
+			SubscriptionID: networkSubscriptionID,
+		}, &az.ARMClientConfig, clientOps.Cloud, networkCred)
 		if err != nil {
 			return err
 		}
-		if az.NetworkClientFactory == nil {
-			az.NetworkClientFactory = az.ComputeClientFactory
+		klog.InfoS("Setting up ARM client factory for network resources", "subscriptionID", networkSubscriptionID)
+
+		az.ComputeClientFactory, err = newARMClientFactory(&azclient.ClientFactoryConfig{
+			SubscriptionID: az.SubscriptionID,
+		}, &az.ARMClientConfig, clientOps.Cloud, computeCred, az.AuthProvider.AdditionalComputeClientOptions...)
+		if err != nil {
+			return err
 		}
+		klog.InfoS("Setting up ARM client factory for compute resources", "subscriptionID", az.SubscriptionID)
 	}
 
 	networkClientFactory := az.NetworkClientFactory
 
 	if az.nsgRepo == nil {
-		az.nsgRepo, err = securitygroup.NewSecurityGroupRepo(az.SecurityGroupResourceGroup, az.SecurityGroupName, az.NsgCacheTTLInSeconds, az.DisableAPICallCache, networkClientFactory.GetSecurityGroupClient())
+		az.nsgRepo, err = securitygroup.NewSecurityGroupRepo(
+			az.SecurityGroupResourceGroup,
+			az.SecurityGroupName,
+			az.NsgCacheTTLInSeconds,
+			az.DisableAPICallCache,
+			networkClientFactory.GetSecurityGroupClient(),
+		)
 		if err != nil {
 			return err
 		}
@@ -738,6 +723,7 @@ func (az *Cloud) SetInformers(informerFactory informers.SharedInformerFactory) {
 	az.nodeInformerSynced = nodeInformer.HasSynced
 
 	az.serviceLister = informerFactory.Core().V1().Services().Lister()
+	az.nodeLister = informerFactory.Core().V1().Nodes().Lister()
 
 	az.setUpEndpointSlicesInformer(informerFactory)
 }

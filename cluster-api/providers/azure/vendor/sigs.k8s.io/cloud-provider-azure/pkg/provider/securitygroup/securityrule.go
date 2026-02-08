@@ -27,9 +27,19 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v6"
 	v1 "k8s.io/api/core/v1"
 
+	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
 	fnutil "sigs.k8s.io/cloud-provider-azure/pkg/util/collectionutil"
 	"sigs.k8s.io/cloud-provider-azure/pkg/util/iputil"
 )
+
+// IsManagedSecurityRule returns true if the security rule is managed by the cloud provider.
+func IsManagedSecurityRule(r *armnetwork.SecurityRule) bool {
+	if r == nil || r.Name == nil || r.Properties == nil || r.Properties.Priority == nil {
+		return false
+	}
+	priority := *r.Properties.Priority
+	return strings.HasPrefix(*r.Name, SecurityRuleNamePrefix) && consts.LoadBalancerMinimumPriority <= priority && priority <= consts.LoadBalancerMaximumPriority
+}
 
 // GenerateAllowSecurityRuleName returns the AllowInbound rule name based on the given rule properties.
 func GenerateAllowSecurityRuleName(
@@ -87,6 +97,7 @@ func NormalizeDestinationPortRanges(dstPorts []int32) []string {
 	return rv
 }
 
+// ListSourcePrefixes lists the source prefixes for the security rule.
 func ListSourcePrefixes(r *armnetwork.SecurityRule) []string {
 	var rv []string
 	if r.Properties.SourceAddressPrefix != nil {
@@ -98,6 +109,7 @@ func ListSourcePrefixes(r *armnetwork.SecurityRule) []string {
 	return rv
 }
 
+// ListDestinationPrefixes lists the destination prefixes for the security rule.
 func ListDestinationPrefixes(r *armnetwork.SecurityRule) []string {
 	var rv []string
 	if r.Properties.DestinationAddressPrefix != nil && *r.Properties.DestinationAddressPrefix != "" {
@@ -109,6 +121,7 @@ func ListDestinationPrefixes(r *armnetwork.SecurityRule) []string {
 	return rv
 }
 
+// SetDestinationPrefixes sets the destination prefixes for the security rule.
 func SetDestinationPrefixes(r *armnetwork.SecurityRule, prefixes []string) {
 	ps := NormalizeSecurityRuleAddressPrefixes(prefixes)
 	if len(ps) == 1 {
@@ -120,6 +133,7 @@ func SetDestinationPrefixes(r *armnetwork.SecurityRule, prefixes []string) {
 	}
 }
 
+// ListDestinationPortRanges lists the destination port ranges for the security rule.
 func ListDestinationPortRanges(r *armnetwork.SecurityRule) ([]int32, error) {
 	var values []*string
 	if r.Properties.DestinationPortRange != nil {
@@ -141,6 +155,20 @@ func ListDestinationPortRanges(r *armnetwork.SecurityRule) ([]int32, error) {
 	return rv, nil
 }
 
+// SetDestinationPortRanges sets the destination port ranges for the security rule.
+func SetDestinationPortRanges(r *armnetwork.SecurityRule, ports []int32) {
+	ps := NormalizeDestinationPortRanges(ports)
+	r.Properties.DestinationPortRange = nil
+	r.Properties.DestinationPortRanges = to.SliceOfPtrs(ps...)
+}
+
+// SetAsteriskDestinationPortRange sets the destination port range to * for the security rule.
+func SetAsteriskDestinationPortRange(r *armnetwork.SecurityRule) {
+	r.Properties.DestinationPortRange = to.Ptr("*")
+	r.Properties.DestinationPortRanges = nil
+}
+
+// ProtocolFromKubernetes converts the Kubernetes protocol to the Azure security rule protocol.
 func ProtocolFromKubernetes(p v1.Protocol) (armnetwork.SecurityRuleProtocol, error) {
 	switch p {
 	case v1.ProtocolTCP:

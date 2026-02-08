@@ -25,7 +25,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/go-logr/logr"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -102,9 +102,9 @@ type AsyncStatusUpdater interface {
 	SetLongRunningOperationState(*infrav1.Future)
 	GetLongRunningOperationState(string, string, string) *infrav1.Future
 	DeleteLongRunningOperationState(string, string, string)
-	UpdatePutStatus(clusterv1.ConditionType, string, error)
-	UpdateDeleteStatus(clusterv1.ConditionType, string, error)
-	UpdatePatchStatus(clusterv1.ConditionType, string, error)
+	UpdatePutStatus(clusterv1beta1.ConditionType, string, error)
+	UpdateDeleteStatus(clusterv1beta1.ConditionType, string, error)
+	UpdatePatchStatus(clusterv1beta1.ConditionType, string, error)
 	AsyncReconciler
 }
 

@@ -35,6 +35,7 @@ import (
 	"k8s.io/utils/ptr"
 
 	"sigs.k8s.io/cloud-provider-azure/pkg/consts"
+	"sigs.k8s.io/cloud-provider-azure/pkg/metrics"
 	"sigs.k8s.io/cloud-provider-azure/pkg/util/errutils"
 	utilsets "sigs.k8s.io/cloud-provider-azure/pkg/util/sets"
 )
@@ -197,10 +198,23 @@ func (updater *loadBalancerBackendPoolUpdater) process(ctx context.Context) {
 		parts := strings.Split(key, ":")
 		lbName, poolName := parts[0], parts[1]
 		operationName := fmt.Sprintf("%s/%s", lbName, poolName)
+
+		mc := metrics.NewMetricContext(
+			"services_local",      // prefix name, differ from "services" in main reconciliation loop
+			"update_backend_pool", // request name
+			updater.az.ResourceGroup,
+			updater.az.getNetworkResourceSubscriptionID(),
+			"local_service_backend_pool_updater", // source name, use a constant source name for aggregation
+		)
+		isOperationSucceeded := false
+		defer func() {
+			mc.ObserveOperationWithResult(isOperationSucceeded)
+		}()
+
 		bp, err := updater.az.NetworkClientFactory.GetBackendAddressPoolClient().Get(ctx, updater.az.ResourceGroup, lbName, poolName)
 		if err != nil {
 			updater.processError(err, operationName, ops...)
-			continue
+			continue // Metric will be recorded as failure via defer
 		}
 
 		var changed bool
@@ -224,9 +238,10 @@ func (updater *loadBalancerBackendPoolUpdater) process(ctx context.Context) {
 			_, err = updater.az.NetworkClientFactory.GetBackendAddressPoolClient().CreateOrUpdate(ctx, updater.az.ResourceGroup, lbName, poolName, *bp)
 			if err != nil {
 				updater.processError(err, operationName, ops...)
-				continue
+				continue // Metric will be recorded as failure via defer
 			}
 		}
+		isOperationSucceeded = true // Mark operation as successful before notifying
 		updater.notify(newBatchOperationResult(operationName, true, nil), ops...)
 	}
 }

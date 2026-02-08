@@ -31,6 +31,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	apitrace "go.opentelemetry.io/otel/trace"
 	tracenoop "go.opentelemetry.io/otel/trace/noop"
+	"k8s.io/component-base/metrics/legacyregistry"
 )
 
 const (
@@ -122,7 +123,10 @@ func (p *Provider) DefaultMeter() apimetric.Meter {
 func (p *Provider) MetricsHTTPHandler() http.Handler {
 	return promhttp.InstrumentMetricHandler(
 		p.prometheusRegistry,
-		promhttp.HandlerFor(p.prometheusRegistry, promhttp.HandlerOpts{}),
+		promhttp.HandlerFor(prometheus.Gatherers{
+			p.prometheusRegistry,
+			legacyregistry.DefaultGatherer, // Merge with the metrics from legacy registerer
+		}, promhttp.HandlerOpts{}),
 	)
 }
 

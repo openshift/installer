@@ -70,6 +70,25 @@ func (client *Client) Get(ctx context.Context, resourceGroupName string, private
 	return &resp.VirtualNetworkLink, nil
 }
 
+const ListOperationName = "VirtualNetworkLinksClient.List"
+
+// List gets a list of VirtualNetworkLink in the resource group.
+func (client *Client) List(ctx context.Context, resourceGroupName string, privatezoneName string) (result []*armprivatedns.VirtualNetworkLink, err error) {
+	metricsCtx := metrics.BeginARMRequest(client.subscriptionID, resourceGroupName, "VirtualNetworkLink", "list")
+	defer func() { metricsCtx.Observe(ctx, err) }()
+	ctx, endSpan := runtime.StartSpan(ctx, ListOperationName, client.tracer, nil)
+	defer endSpan(err)
+	pager := client.VirtualNetworkLinksClient.NewListPager(resourceGroupName, privatezoneName, nil)
+	for pager.More() {
+		nextResult, err := pager.NextPage(ctx)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, nextResult.Value...)
+	}
+	return result, nil
+}
+
 const CreateOrUpdateOperationName = "VirtualNetworkLinksClient.Create"
 
 // CreateOrUpdate creates or updates a VirtualNetworkLink.

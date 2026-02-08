@@ -33,23 +33,20 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
-	"k8s.io/klog/v2"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	clusterctlv1 "sigs.k8s.io/cluster-api/cmd/clusterctl/api/v1alpha3"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
+	utilexp "sigs.k8s.io/cluster-api/exp/util"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/util"
-	"sigs.k8s.io/cluster-api/util/conditions"
-	"sigs.k8s.io/cluster-api/util/patch"
-	"sigs.k8s.io/cluster-api/util/predicates"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
-	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	infrav1 "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -537,24 +534,10 @@ func reconcileAzureSecret(ctx context.Context, kubeclient client.Client, owner m
 }
 
 // GetOwnerMachinePool returns the MachinePool object owning the current resource.
-func GetOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*expv1.MachinePool, error) {
+func GetOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*clusterv1.MachinePool, error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "controllers.GetOwnerMachinePool")
 	defer done()
-
-	for _, ref := range obj.OwnerReferences {
-		if ref.Kind != "MachinePool" {
-			continue
-		}
-		gv, err := schema.ParseGroupVersion(ref.APIVersion)
-		if err != nil {
-			return nil, errors.WithStack(err)
-		}
-
-		if gv.Group == expv1.GroupVersion.Group {
-			return GetMachinePoolByName(ctx, c, obj.Namespace, ref.Name)
-		}
-	}
-	return nil, nil
+	return utilexp.GetOwnerMachinePool(ctx, c, obj)
 }
 
 // GetOwnerAzureMachinePool returns the AzureMachinePool object owning the current resource.
@@ -580,16 +563,11 @@ func GetOwnerAzureMachinePool(ctx context.Context, c client.Client, obj metav1.O
 }
 
 // GetMachinePoolByName finds and return a MachinePool object using the specified params.
-func GetMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*expv1.MachinePool, error) {
+func GetMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*clusterv1.MachinePool, error) {
 	ctx, _, done := tele.StartSpanWithLogger(ctx, "controllers.GetMachinePoolByName")
 	defer done()
 
-	m := &expv1.MachinePool{}
-	key := client.ObjectKey{Name: name, Namespace: namespace}
-	if err := c.Get(ctx, key, m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return utilexp.GetMachinePoolByName(ctx, c, namespace, name)
 }
 
 // GetAzureMachinePoolByName finds and return an AzureMachinePool object using the specified params.
@@ -654,7 +632,7 @@ func clusterIdentityFinalizer(prefix, clusterNamespace, clusterName string) stri
 }
 
 // EnsureClusterIdentity ensures that the identity ref is allowed in the namespace and sets a finalizer.
-func EnsureClusterIdentity(ctx context.Context, c client.Client, object conditions.Setter, identityRef *corev1.ObjectReference, finalizerPrefix string) error {
+func EnsureClusterIdentity(ctx context.Context, c client.Client, object v1beta1conditions.Setter, identityRef *corev1.ObjectReference, finalizerPrefix string) error {
 	name := object.GetName()
 	namespace := object.GetNamespace()
 	identity, err := GetClusterIdentityFromRef(ctx, c, namespace, identityRef)
@@ -663,7 +641,7 @@ func EnsureClusterIdentity(ctx context.Context, c client.Client, object conditio
 	}
 
 	if !scope.IsClusterNamespaceAllowed(ctx, c, identity.Spec.AllowedNamespaces, namespace) {
-		conditions.MarkFalse(object, infrav1.NetworkInfrastructureReadyCondition, infrav1.NamespaceNotAllowedByIdentity, clusterv1.ConditionSeverityError, "")
+		v1beta1conditions.MarkFalse(object, infrav1.NetworkInfrastructureReadyCondition, infrav1.NamespaceNotAllowedByIdentity, clusterv1beta1.ConditionSeverityError, "")
 		return errors.New("AzureClusterIdentity list of allowed namespaces doesn't include current cluster namespace")
 	}
 
@@ -672,7 +650,7 @@ func EnsureClusterIdentity(ctx context.Context, c client.Client, object conditio
 	needsPatch = controllerutil.AddFinalizer(identity, clusterIdentityFinalizer(finalizerPrefix, namespace, name)) || needsPatch
 	if needsPatch {
 		// finalizers are added/removed then patch the object
-		identityHelper, err := patch.NewHelper(identity, c)
+		identityHelper, err := v1beta1patch.NewHelper(identity, c)
 		if err != nil {
 			return errors.Wrap(err, "failed to init patch helper")
 		}
@@ -690,7 +668,7 @@ func RemoveClusterIdentityFinalizer(ctx context.Context, c client.Client, object
 	if err != nil {
 		return err
 	}
-	identityHelper, err := patch.NewHelper(identity, c)
+	identityHelper, err := v1beta1patch.NewHelper(identity, c)
 	if err != nil {
 		return errors.Wrap(err, "failed to init patch helper")
 	}
@@ -706,7 +684,7 @@ func RemoveClusterIdentityFinalizer(ctx context.Context, c client.Client, object
 // MachinePool events and returns reconciliation requests for an infrastructure provider object.
 func MachinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind, log logr.Logger) handler.MapFunc {
 	return func(_ context.Context, o client.Object) []reconcile.Request {
-		m, ok := o.(*expv1.MachinePool)
+		m, ok := o.(*clusterv1.MachinePool)
 		if !ok {
 			log.V(4).Info("attempt to map incorrect type", "type", fmt.Sprintf("%T", o))
 			return nil
@@ -715,7 +693,7 @@ func MachinePoolToInfrastructureMapFunc(gvk schema.GroupVersionKind, log logr.Lo
 		gk := gvk.GroupKind()
 		ref := m.Spec.Template.Spec.InfrastructureRef
 		// Return early if the GroupKind doesn't match what we expect.
-		infraGK := ref.GroupVersionKind().GroupKind()
+		infraGK := ref.GroupKind()
 		if gk != infraGK {
 			log.V(4).Info("gk does not match", "gk", gk, "infraGK", infraGK)
 			return nil
@@ -766,7 +744,7 @@ func AzureManagedClusterToAzureManagedMachinePoolsMapper(_ context.Context, c cl
 			return nil
 		}
 
-		machineList := &expv1.MachinePoolList{}
+		machineList := &clusterv1.MachinePoolList{}
 		machineList.SetGroupVersionKind(gvk)
 		// list all of the requested objects within the cluster namespace with the cluster name label
 		if err := c.List(ctx, machineList, client.InNamespace(azCluster.Namespace), client.MatchingLabels{clusterv1.ClusterNameLabel: clusterName}); err != nil {
@@ -819,7 +797,7 @@ func AzureManagedControlPlaneToAzureManagedMachinePoolsMapper(_ context.Context,
 			return nil
 		}
 
-		machineList := &expv1.MachinePoolList{}
+		machineList := &clusterv1.MachinePoolList{}
 		machineList.SetGroupVersionKind(gvk)
 		// list all of the requested objects within the cluster namespace with the cluster name label
 		if err := c.List(ctx, machineList, client.InNamespace(azControlPlane.Namespace), client.MatchingLabels{clusterv1.ClusterNameLabel: clusterName}); err != nil {
@@ -872,14 +850,14 @@ func AzureManagedClusterToAzureManagedControlPlaneMapper(_ context.Context, c cl
 		}
 
 		ref := cluster.Spec.ControlPlaneRef
-		if ref == nil || ref.Name == "" {
+		if !ref.IsDefined() {
 			return nil
 		}
 
 		return []ctrl.Request{
 			{
 				NamespacedName: types.NamespacedName{
-					Namespace: ref.Namespace,
+					Namespace: cluster.Namespace,
 					Name:      ref.Name,
 				},
 			},
@@ -921,14 +899,14 @@ func AzureManagedControlPlaneToAzureManagedClusterMapper(_ context.Context, c cl
 		}
 
 		ref := cluster.Spec.InfrastructureRef
-		if ref == nil || ref.Name == "" {
+		if !ref.IsDefined() {
 			return nil
 		}
 
 		return []ctrl.Request{
 			{
 				NamespacedName: types.NamespacedName{
-					Namespace: ref.Namespace,
+					Namespace: cluster.Namespace,
 					Name:      ref.Name,
 				},
 			},
@@ -943,7 +921,7 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Cl
 		ctx, cancel := context.WithTimeout(ctx, reconciler.DefaultMappingTimeout)
 		defer cancel()
 
-		machinePool, ok := o.(*expv1.MachinePool)
+		machinePool, ok := o.(*clusterv1.MachinePool)
 		if !ok {
 			log.Info("expected a MachinePool, got wrong type", "type", fmt.Sprintf("%T", o))
 			return nil
@@ -957,12 +935,12 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Cl
 
 		gk := gvk.GroupKind()
 		ref := cluster.Spec.ControlPlaneRef
-		if ref == nil || ref.Name == "" {
+		if !ref.IsDefined() {
 			log.Info("control plane ref is nil or empty: control plane ref not found")
 			return nil
 		}
 		// Return early if the GroupKind doesn't match what we expect.
-		controlPlaneGK := ref.GroupVersionKind().GroupKind()
+		controlPlaneGK := ref.GroupKind()
 		if gk != controlPlaneGK {
 			// MachinePool does not correlate to a AzureManagedControlPlane, nothing to do
 			return nil
@@ -970,7 +948,7 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Cl
 
 		controlPlaneKey := client.ObjectKey{
 			Name:      ref.Name,
-			Namespace: ref.Namespace,
+			Namespace: cluster.Namespace,
 		}
 		controlPlane := &infrav1.AzureManagedControlPlane{}
 		if err := c.Get(ctx, controlPlaneKey, controlPlane); err != nil {
@@ -980,7 +958,7 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Cl
 			return []reconcile.Request{
 				{
 					NamespacedName: client.ObjectKey{
-						Namespace: ref.Namespace,
+						Namespace: cluster.Namespace,
 						Name:      ref.Name,
 					},
 				},
@@ -989,26 +967,11 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Cl
 
 		infraMachinePoolRef := machinePool.Spec.Template.Spec.InfrastructureRef
 
-		gv, err := schema.ParseGroupVersion(infraMachinePoolRef.APIVersion)
-		if err != nil {
-			log.Error(err, "failed to parse group version")
-			// If we get here, we might want to reconcile but aren't sure.
-			// Do it anyway to be safe. Worst case we reconcile a few extra times with no-ops.
-			return []reconcile.Request{
-				{
-					NamespacedName: client.ObjectKey{
-						Namespace: ref.Namespace,
-						Name:      ref.Name,
-					},
-				},
-			}
-		}
-
 		kindMatches := infraMachinePoolRef.Kind == "AzureManagedMachinePool"
-		groupMatches := controlPlaneGK.Group == gv.Group
+		groupMatches := controlPlaneGK.Group == infraMachinePoolRef.GroupKind().Group
 
 		ammp := &infrav1.AzureManagedMachinePool{}
-		key := types.NamespacedName{Namespace: infraMachinePoolRef.Namespace, Name: infraMachinePoolRef.Name}
+		key := types.NamespacedName{Namespace: machinePool.Namespace, Name: infraMachinePoolRef.Name}
 		if err := c.Get(ctx, key, ammp); err != nil {
 			log.Error(err, fmt.Sprintf("failed to fetch azure managed machine pool for Machinepool: %s", infraMachinePoolRef.Name))
 			// If we get here, we might want to reconcile but aren't sure.
@@ -1016,7 +979,7 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Cl
 			return []reconcile.Request{
 				{
 					NamespacedName: client.ObjectKey{
-						Namespace: ref.Namespace,
+						Namespace: cluster.Namespace,
 						Name:      ref.Name,
 					},
 				},
@@ -1029,7 +992,7 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Cl
 			return []reconcile.Request{
 				{
 					NamespacedName: client.ObjectKey{
-						Namespace: ref.Namespace,
+						Namespace: cluster.Namespace,
 						Name:      ref.Name,
 					},
 				},
@@ -1041,42 +1004,6 @@ func MachinePoolToAzureManagedControlPlaneMapFunc(_ context.Context, c client.Cl
 	}
 }
 
-// ClusterUpdatePauseChange returns a predicate that returns true for an update event when a cluster's
-// Spec.Paused changes between any two distinct values.
-func ClusterUpdatePauseChange(logger logr.Logger) predicate.Funcs {
-	return predicate.Funcs{
-		UpdateFunc: func(e event.UpdateEvent) bool {
-			log := logger.WithValues("predicate", "ClusterUpdatePauseChange", "eventType", "update")
-
-			oldCluster, ok := e.ObjectOld.(*clusterv1.Cluster)
-			if !ok {
-				log.V(4).Info("Expected Cluster", "type", fmt.Sprintf("%T", e.ObjectOld))
-				return false
-			}
-			log = log.WithValues("Cluster", klog.KObj(oldCluster))
-
-			newCluster := e.ObjectNew.(*clusterv1.Cluster)
-
-			if oldCluster.Spec.Paused != newCluster.Spec.Paused {
-				log.V(4).Info("Cluster paused status changed, allowing further processing")
-				return true
-			}
-
-			log.V(6).Info("Cluster paused status remained the same, blocking further processing")
-			return false
-		},
-		CreateFunc:  func(_ event.CreateEvent) bool { return false },
-		DeleteFunc:  func(_ event.DeleteEvent) bool { return false },
-		GenericFunc: func(_ event.GenericEvent) bool { return false },
-	}
-}
-
-// ClusterPauseChangeAndInfrastructureReady is based on ClusterUnpausedAndInfrastructureReady, but
-// additionally accepts Cluster pause events.
-func ClusterPauseChangeAndInfrastructureReady(scheme *runtime.Scheme, log logr.Logger) predicate.Funcs {
-	return predicates.Any(scheme, log, predicates.ClusterCreateInfraReady(scheme, log), predicates.ClusterUpdateInfraReady(scheme, log), ClusterUpdatePauseChange(log)) //nolint:staticcheck
-}
-
 // GetClusterScoper returns a ClusterScoper for the given cluster using the infra ref pointing to either an AzureCluster or an AzureManagedCluster.
 func GetClusterScoper(ctx context.Context, logger logr.Logger, c client.Client, cluster *clusterv1.Cluster, timeouts reconciler.Timeouts, credCache azure.CredentialCache) (ClusterScoper, error) {
 	infraRef := cluster.Spec.InfrastructureRef
@@ -1084,7 +1011,7 @@ func GetClusterScoper(ctx context.Context, logger logr.Logger, c client.Client, 
 	case "AzureCluster":
 		logger = logger.WithValues("AzureCluster", infraRef.Name)
 		azureClusterName := client.ObjectKey{
-			Namespace: infraRef.Namespace,
+			Namespace: cluster.Namespace,
 			Name:      infraRef.Name,
 		}
 		azureCluster := &infrav1.AzureCluster{}
@@ -1105,7 +1032,7 @@ func GetClusterScoper(ctx context.Context, logger logr.Logger, c client.Client, 
 	case "AzureManagedCluster":
 		logger = logger.WithValues("AzureManagedCluster", infraRef.Name)
 		azureManagedControlPlaneName := client.ObjectKey{
-			Namespace: infraRef.Namespace,
+			Namespace: cluster.Namespace,
 			Name:      cluster.Spec.ControlPlaneRef.Name,
 		}
 		azureManagedControlPlane := &infrav1.AzureManagedControlPlane{}
@@ -1151,4 +1078,44 @@ func RemoveBlockMoveAnnotation(obj metav1.Object) {
 	azClusterAnnotations := obj.GetAnnotations()
 	delete(azClusterAnnotations, clusterctlv1.BlockMoveAnnotation)
 	obj.SetAnnotations(azClusterAnnotations)
+}
+
+// getAzureClusterFromCluster returns the AzureCluster for a Cluster if the infraRef is an AzureCluster.
+// Returns nil if the infraRef is not an AzureCluster or if the AzureCluster cannot be fetched.
+func getAzureClusterFromCluster(ctx context.Context, c client.Client, cluster *clusterv1.Cluster) *infrav1.AzureCluster {
+	if !cluster.Spec.InfrastructureRef.IsDefined() || cluster.Spec.InfrastructureRef.Kind != infrav1.AzureClusterKind {
+		return nil
+	}
+	azureCluster := &infrav1.AzureCluster{}
+	key := client.ObjectKey{
+		Namespace: cluster.Namespace,
+		Name:      cluster.Spec.InfrastructureRef.Name,
+	}
+	if err := c.Get(ctx, key, azureCluster); err != nil {
+		return nil
+	}
+	return azureCluster
+}
+
+// isUsingSPCredentials checks if the cluster is using Service Principal credentials.
+func isUsingSPCredentials(ctx context.Context, c client.Client, azureCluster *infrav1.AzureCluster) bool {
+	if azureCluster.Spec.IdentityRef == nil {
+		return false
+	}
+	identity := &infrav1.AzureClusterIdentity{}
+	key := client.ObjectKey{
+		Name:      azureCluster.Spec.IdentityRef.Name,
+		Namespace: azureCluster.Spec.IdentityRef.Namespace,
+	}
+	if key.Namespace == "" {
+		key.Namespace = azureCluster.Namespace
+	}
+	if err := c.Get(ctx, key, identity); err != nil {
+		return false
+	}
+	switch identity.Spec.Type {
+	case infrav1.ServicePrincipal, infrav1.ManualServicePrincipal, infrav1.ServicePrincipalCertificate:
+		return true
+	}
+	return false
 }

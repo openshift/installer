@@ -101,11 +101,21 @@ linters:
         - pkg: sigs.k8s.io/controller-runtime
           alias: ctrl
         # CAPI
-        - pkg: sigs.k8s.io/cluster-api/api/v1beta1
+        - pkg: sigs.k8s.io/cluster-api/api/core/v1beta2
           alias: clusterv1
-        # CAPI exp
-        - pkg: sigs.k8s.io/cluster-api/exp/api/v1beta1
-          alias: expv1
+        - pkg: sigs.k8s.io/cluster-api/api/core/v1beta1
+          alias: clusterv1beta1
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions
+          alias: v1beta1conditions
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions/v1beta2
+          alias: v1beta2conditions
+        - pkg: sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch
+          alias: v1beta1patch
+        # CAPBK
+        - pkg: sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2
+          alias: bootstrapv1
+        - pkg: sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta1
+          alias: bootstrapv1beta1
         # CAPZ
         - pkg: sigs.k8s.io/cluster-api-provider-azure/api/v1beta1
           alias: infrav1
@@ -294,6 +304,15 @@ linters:
       - linters:
           - goconst
         path: (.+)_test\.go
+      # Ignore Cluster API v1beta1 deprecations.
+      - linters:
+        - staticcheck
+        path: .*\.go$
+        text: 'SA1019: "sigs.k8s.io\/cluster-api/api/core/v1beta1" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
+      - linters:
+        - staticcheck
+        path: .*\.go$
+        text: 'SA1019: "sigs.k8s.io/cluster-api/util/deprecated/.*" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
     paths:
       - zz_generated\.(\w*)\.go$
       - third_party$

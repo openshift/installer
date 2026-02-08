@@ -17,9 +17,11 @@ limitations under the License.
 package mutators
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	asocontainerservicev1 "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20231001"
@@ -31,8 +33,8 @@ import (
 	// but verify that check is actually working.
 	asocontainerservicev1hub "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	exputil "sigs.k8s.io/cluster-api/exp/util"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	utilexp "sigs.k8s.io/cluster-api/exp/util"
 	"sigs.k8s.io/cluster-api/util/secret"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -129,9 +131,7 @@ func setManagedClusterServiceCIDR(ctx context.Context, cluster *clusterv1.Cluste
 	_, log, done := tele.StartSpanWithLogger(ctx, "mutators.setManagedClusterServiceCIDR")
 	defer done()
 
-	if cluster.Spec.ClusterNetwork == nil ||
-		cluster.Spec.ClusterNetwork.Services == nil ||
-		len(cluster.Spec.ClusterNetwork.Services.CIDRBlocks) == 0 {
+	if len(cluster.Spec.ClusterNetwork.Services.CIDRBlocks) == 0 {
 		return nil
 	}
 
@@ -162,9 +162,7 @@ func setManagedClusterPodCIDR(ctx context.Context, cluster *clusterv1.Cluster, m
 	_, log, done := tele.StartSpanWithLogger(ctx, "mutators.setManagedClusterPodCIDR")
 	defer done()
 
-	if cluster.Spec.ClusterNetwork == nil ||
-		cluster.Spec.ClusterNetwork.Pods == nil ||
-		len(cluster.Spec.ClusterNetwork.Pods.CIDRBlocks) == 0 {
+	if len(cluster.Spec.ClusterNetwork.Pods.CIDRBlocks) == 0 {
 		return nil
 	}
 
@@ -264,9 +262,14 @@ func agentPoolsFromManagedMachinePools(ctx context.Context, ctrlClient client.Cl
 		return nil, fmt.Errorf("failed to list AzureASOManagedMachinePools: %w", err)
 	}
 
+	// Make sure we don't update the ManagedCluster with different orders of the same set of agent pools.
+	slices.SortFunc(asoManagedMachinePools.Items, func(a, b infrav1.AzureASOManagedMachinePool) int {
+		return cmp.Compare(a.Name, b.Name)
+	})
+
 	var agentPools []conversion.Convertible
 	for _, asoManagedMachinePool := range asoManagedMachinePools.Items {
-		machinePool, err := exputil.GetOwnerMachinePool(ctx, ctrlClient, asoManagedMachinePool.ObjectMeta)
+		machinePool, err := utilexp.GetOwnerMachinePool(ctx, ctrlClient, asoManagedMachinePool.ObjectMeta)
 		if err != nil {
 			return nil, err
 		}

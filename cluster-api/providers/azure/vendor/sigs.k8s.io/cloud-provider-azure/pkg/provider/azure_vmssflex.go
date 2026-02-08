@@ -310,7 +310,7 @@ func (fs *FlexScaleSet) GetPrimaryInterface(ctx context.Context, nodeName string
 		return nil, err
 	}
 
-	nic, rerr := fs.NetworkClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
+	nic, rerr := fs.ComputeClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
 	if rerr != nil {
 		return nil, rerr
 	}
@@ -953,7 +953,7 @@ func (fs *FlexScaleSet) ensureBackendPoolDeletedFromNode(ctx context.Context, vm
 			continue
 		}
 
-		nic, rerr := fs.NetworkClientFactory.GetInterfaceClient().Get(ctx, fs.ResourceGroup, nicName, nil)
+		nic, rerr := fs.ComputeClientFactory.GetInterfaceClient().Get(ctx, fs.ResourceGroup, nicName, nil)
 		if rerr != nil {
 			return false, fmt.Errorf("ensureBackendPoolDeletedFromNode: failed to get interface of name %s: %w", nicName, rerr)
 		}
@@ -994,7 +994,7 @@ func (fs *FlexScaleSet) ensureBackendPoolDeletedFromNode(ctx context.Context, vm
 
 		nicUpdaters = append(nicUpdaters, func() error {
 			klog.V(2).Infof("EnsureBackendPoolDeleted begins to CreateOrUpdate for NIC(%s, %s) with backendPoolIDs %q", fs.ResourceGroup, ptr.Deref(nic.Name, ""), backendPoolIDs)
-			_, rerr := fs.NetworkClientFactory.GetInterfaceClient().CreateOrUpdate(ctx, fs.ResourceGroup, ptr.Deref(nic.Name, ""), *nic)
+			_, rerr := fs.ComputeClientFactory.GetInterfaceClient().CreateOrUpdate(ctx, fs.ResourceGroup, ptr.Deref(nic.Name, ""), *nic)
 			if rerr != nil {
 				klog.Errorf("EnsureBackendPoolDeleted CreateOrUpdate for NIC(%s, %s) failed with error %v", fs.ResourceGroup, ptr.Deref(nic.Name, ""), rerr.Error())
 				return rerr
