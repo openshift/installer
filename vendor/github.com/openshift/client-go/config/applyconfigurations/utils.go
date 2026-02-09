@@ -186,8 +186,6 @@ func ForKind(kind schema.GroupVersionKind) interface{} {
 		return &configv1.GCPResourceLabelApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("GCPResourceTag"):
 		return &configv1.GCPResourceTagApplyConfiguration{}
-	case v1.SchemeGroupVersion.WithKind("GCPServiceEndpoint"):
-		return &configv1.GCPServiceEndpointApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("GitHubIdentityProvider"):
 		return &configv1.GitHubIdentityProviderApplyConfiguration{}
 	case v1.SchemeGroupVersion.WithKind("GitLabIdentityProvider"):

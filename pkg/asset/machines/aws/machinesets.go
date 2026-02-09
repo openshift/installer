@@ -25,6 +25,7 @@ type MachineSetInput struct {
 	Pool                     *types.MachinePool
 	Role                     string
 	UserDataSecret           string
+	Hosts                    map[string]icaws.Host
 }
 
 // MachineSets returns a list of machinesets for a machinepool.
@@ -87,6 +88,8 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 			instanceProfile = fmt.Sprintf("%s-worker-profile", in.ClusterID)
 		}
 
+		dedicatedHost := DedicatedHost(in.Hosts, mpool.HostPlacement, az)
+
 		provider, err := provider(&machineProviderInput{
 			clusterID:        in.ClusterID,
 			region:           in.InstallConfigPlatformAWS.Region,
@@ -103,10 +106,12 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 			publicSubnet:     publicSubnet,
 			securityGroupIDs: in.Pool.Platform.AWS.AdditionalSecurityGroupIDs,
 			cpuOptions:       mpool.CPUOptions,
+			dedicatedHost:    dedicatedHost,
 		})
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to create provider")
 		}
+
 		name := fmt.Sprintf("%s-%s-%s", in.ClusterID, in.Pool.Name, az)
 		spec := machineapi.MachineSpec{
 			ProviderSpec: machineapi.ProviderSpec{
@@ -152,6 +157,7 @@ func MachineSets(in *MachineSetInput) ([]*machineapi.MachineSet, error) {
 				},
 			},
 		}
+
 		machinesets = append(machinesets, mset)
 	}
 
