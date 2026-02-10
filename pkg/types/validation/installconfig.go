@@ -1499,6 +1499,11 @@ func ValidateFeatureSet(c *types.InstallConfig) field.ErrorList {
 		allErrs = append(allErrs, field.NotSupported(field.NewPath("featureSet"), c.FeatureSet, sortedFeatureSets))
 	}
 
+	// Validate that OKD featureset is only used with SCOS-compiled installer
+	if c.FeatureSet == configv1.OKD && !c.IsSCOS() {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("featureSet"), "OKD featureset is not supported on OpenShift clusters"))
+	}
+
 	if len(c.FeatureGates) > 0 {
 		if c.FeatureSet != configv1.CustomNoUpgrade {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("featureGates"), "featureGates can only be used with the CustomNoUpgrade feature set"))
