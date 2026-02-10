@@ -1,8 +1,6 @@
 module github.com/openshift/installer
 
-go 1.24.0
-
-toolchain go1.24.5
+go 1.24.6
 
 require (
 	cloud.google.com/go/kms v1.22.0
@@ -10,9 +8,10 @@ require (
 	cloud.google.com/go/storage v1.57.0
 	github.com/AlecAivazis/survey/v2 v2.3.5
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.19.1
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.0
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.20.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3 v3.0.0-beta.2
+	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v4 v4.2.1
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute/v5 v5.7.0
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns v1.2.0
@@ -42,10 +41,13 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.31.12
 	github.com/aws/aws-sdk-go-v2/credentials v1.18.16
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.233.0
+	github.com/aws/aws-sdk-go-v2/service/efs v1.40.5
 	github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2 v1.49.0
 	github.com/aws/aws-sdk-go-v2/service/iam v1.32.0
+	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.29.0
 	github.com/aws/aws-sdk-go-v2/service/route53 v1.48.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.88.4
+	github.com/aws/aws-sdk-go-v2/service/servicequotas v1.31.0
 	github.com/aws/aws-sdk-go-v2/service/sts v1.38.6
 	github.com/aws/smithy-go v1.23.0
 	github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e
@@ -76,6 +78,7 @@ require (
 	github.com/hashicorp/go-version v1.7.0
 	github.com/jarcoal/httpmock v1.3.1
 	github.com/jongio/azidext/go/azidext v0.5.0
+	github.com/k-orc/openstack-resource-controller/v2 v2.3.0
 	github.com/kdomanski/iso9660 v0.2.1
 	github.com/metal3-io/baremetal-operator/apis v0.4.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
@@ -116,12 +119,12 @@ require (
 	github.com/vincent-petithory/dataurl v1.0.0
 	github.com/vmware/govmomi v0.52.0
 	go.uber.org/mock v0.6.0
-	golang.org/x/crypto v0.43.0
+	golang.org/x/crypto v0.45.0
 	golang.org/x/oauth2 v0.33.0
-	golang.org/x/sync v0.17.0
-	golang.org/x/sys v0.37.0
-	golang.org/x/term v0.36.0
-	golang.org/x/text v0.30.0
+	golang.org/x/sync v0.18.0
+	golang.org/x/sys v0.38.0
+	golang.org/x/term v0.37.0
+	golang.org/x/text v0.31.0
 	google.golang.org/api v0.255.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250825161204-c5933d9347a5
 	google.golang.org/grpc v1.76.0
@@ -137,9 +140,9 @@ require (
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
 	libvirt.org/go/libvirtxml v1.10002.0
-	sigs.k8s.io/cluster-api v1.11.2
+	sigs.k8s.io/cluster-api v1.11.3
 	sigs.k8s.io/cluster-api-provider-aws/v2 v2.9.1-0.20251121222432-04a4f62bf90a
-	sigs.k8s.io/cluster-api-provider-azure v1.21.1-0.20250929163617-2c4eaa611a39
+	sigs.k8s.io/cluster-api-provider-azure v0.0.0
 	sigs.k8s.io/cluster-api-provider-gcp v1.10.1-0.20251030112604-5c2bfd5aadb3
 	sigs.k8s.io/cluster-api-provider-ibmcloud v0.12.0
 	sigs.k8s.io/cluster-api-provider-openstack v0.13.0
@@ -149,18 +152,6 @@ require (
 	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8
 	sigs.k8s.io/yaml v1.6.0
 )
-
-require (
-	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0
-	github.com/aws/aws-sdk-go-v2/service/resourcegroupstaggingapi v1.29.0
-)
-
-require (
-	github.com/aws/aws-sdk-go-v2/service/servicequotas v1.31.0
-	github.com/k-orc/openstack-resource-controller/v2 v2.3.0
-)
-
-require github.com/aws/aws-sdk-go-v2/service/efs v1.40.5
 
 require (
 	cel.dev/expr v0.24.0 // indirect
@@ -199,7 +190,7 @@ require (
 	github.com/Azure/go-autorest/autorest/validation v0.3.1 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.5.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
 	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
 	github.com/MakeNowJust/heredoc v1.0.0 // indirect
 	github.com/PaesslerAG/gval v1.0.0 // indirect
@@ -332,10 +323,10 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
-	golang.org/x/mod v0.29.0
-	golang.org/x/net v0.46.0 // indirect
+	golang.org/x/mod v0.30.0
+	golang.org/x/net v0.47.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
-	golang.org/x/tools v0.37.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	gomodules.xyz/jsonpatch/v2 v2.5.0 // indirect
 	google.golang.org/genproto v0.0.0-20250603155806-513f23925822 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
@@ -365,6 +356,7 @@ replace (
 	github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20231128154154-6736c9b9c6c8
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20231128154154-6736c9b9c6c8
 	k8s.io/cloud-provider-vsphere => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928
+	sigs.k8s.io/cluster-api-provider-azure => github.com/openshift/cluster-api-provider-azure v0.1.0-alpha.3.0.20260116091835-a69c86aa4e9a
 )
 
 replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea
@@ -386,7 +378,4 @@ replace sigs.k8s.io/controller-runtime => sigs.k8s.io/controller-runtime v0.19.3
 
 // Temporary vendoring of upstream providers while they work to update to capi v1.11, which contains breaking changes
 // See: https://issues.redhat.com/browse/CORS-4262
-replace (
-	github.com/nutanix-cloud-native/cluster-api-provider-nutanix => github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.2-0.20251007022949-442bc2ebe286
-	sigs.k8s.io/cluster-api-provider-azure => github.com/mboersma/cluster-api-provider-azure v0.3.1-0.20251030205607-3161b9cc8d3e
-)
+replace github.com/nutanix-cloud-native/cluster-api-provider-nutanix => github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.2-0.20251007022949-442bc2ebe286

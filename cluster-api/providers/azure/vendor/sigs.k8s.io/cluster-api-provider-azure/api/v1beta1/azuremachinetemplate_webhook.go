@@ -111,7 +111,7 @@ func (r *azureMachineTemplateWebhook) ValidateUpdate(ctx context.Context, oldRaw
 		return nil, apierrors.NewBadRequest(fmt.Sprintf("expected a admission.Request inside context: %v", err))
 	}
 
-	if !topology.ShouldSkipImmutabilityChecks(req, t) &&
+	if !topology.IsDryRunRequest(req, t) &&
 		!reflect.DeepEqual(t.Spec.Template.Spec, old.Spec.Template.Spec) {
 		// The equality failure could be because of default mismatch between v1alpha3 and v1beta1. This happens because
 		// the new object `r` will have run through the default webhooks but the old object `old` would not have so.

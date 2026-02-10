@@ -46,7 +46,7 @@ func (az *Cloud) reconcilePrivateLinkService(
 	service *v1.Service,
 	fipConfig *armnetwork.FrontendIPConfiguration,
 	wantPLS bool,
-) error {
+) (bool /*deleted PLS*/, error) {
 	isinternal := requiresInternalLoadBalancer(service)
 	_, _, fipIPVersion := az.serviceOwnsFrontendIP(ctx, fipConfig, service)
 	serviceName := getServiceName(service)
@@ -57,7 +57,7 @@ func (az *Cloud) reconcilePrivateLinkService(
 	} else {
 		if isIPv6, err = az.isFIPIPv6(service, fipConfig); err != nil {
 			klog.Errorf("reconcilePrivateLinkService for service(%s): failed to get FIP IP family: %v", serviceName, err)
-			return err
+			return false, err
 		}
 	}
 	createPLS := wantPLS && serviceRequiresPLS(service)
@@ -65,9 +65,9 @@ func (az *Cloud) reconcilePrivateLinkService(
 	if isIPv6 {
 		if isDualStack || !createPLS {
 			klog.V(2).Infof("IPv6 is not supported for private link service, skip reconcilePrivateLinkService for service(%s)", serviceName)
-			return nil
+			return false, nil
 		}
-		return fmt.Errorf("IPv6 is not supported for private link service")
+		return false, fmt.Errorf("IPv6 is not supported for private link service")
 	}
 
 	fipConfigID := fipConfig.ID
@@ -87,21 +87,21 @@ func (az *Cloud) reconcilePrivateLinkService(
 	if createPLS {
 		// Firstly, make sure it's internal service
 		if !isinternal && !consts.IsK8sServiceDisableLoadBalancerFloatingIP(service) {
-			return fmt.Errorf("reconcilePrivateLinkService for service(%s): service requiring private link service must be internal or disable floating ip", serviceName)
+			return false, fmt.Errorf("reconcilePrivateLinkService for service(%s): service requiring private link service must be internal or disable floating ip", serviceName)
 		}
 
 		// Secondly, check if there is a private link service already created
 		existingPLS, err := az.plsRepo.Get(ctx, az.getPLSResourceGroup(service), *fipConfigID, azcache.CacheReadTypeDefault)
 		if err != nil {
 			klog.Errorf("reconcilePrivateLinkService for service(%s): getPrivateLinkService(%s) failed: %v", serviceName, ptr.Deref(fipConfigID, ""), err)
-			return err
+			return false, err
 		}
 
 		exists := !strings.EqualFold(ptr.Deref(existingPLS.ID, ""), consts.PrivateLinkServiceNotExistID)
 		if exists {
 			klog.V(4).Infof("reconcilePrivateLinkService for service(%s): found existing private link service attached(%s)", serviceName, ptr.Deref(existingPLS.Name, ""))
 			if !isManagedPrivateLinkSerivce(existingPLS, clusterName) {
-				return fmt.Errorf(
+				return false, fmt.Errorf(
 					"reconcilePrivateLinkService for service(%s) failed: LB frontend(%s) already has unmanaged private link service(%s)",
 					serviceName,
 					ptr.Deref(fipConfigID, ""),
@@ -112,7 +112,7 @@ func (az *Cloud) reconcilePrivateLinkService(
 			ownerService := getPrivateLinkServiceOwner(existingPLS)
 			if !strings.EqualFold(ownerService, serviceName) {
 				if serviceHasAdditionalConfigs(service) {
-					return fmt.Errorf(
+					return false, fmt.Errorf(
 						"reconcilePrivateLinkService for service(%s) failed: LB frontend(%s) already has existing private link service(%s) owned by service(%s)",
 						serviceName,
 						ptr.Deref(fipConfigID, ""),
@@ -126,7 +126,7 @@ func (az *Cloud) reconcilePrivateLinkService(
 					ptr.Deref(existingPLS.Name, ""),
 					ownerService,
 				)
-				return nil
+				return false, nil
 			}
 		} else {
 			existingPLS.ID = nil
@@ -142,12 +142,12 @@ func (az *Cloud) reconcilePrivateLinkService(
 
 		plsName, err := az.getPrivateLinkServiceName(existingPLS, service, fipConfig)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		dirtyPLS, err := az.getExpectedPrivateLinkService(ctx, existingPLS, &plsName, &clusterName, service, fipConfig)
 		if err != nil {
-			return err
+			return false, err
 		}
 
 		if dirtyPLS {
@@ -155,20 +155,20 @@ func (az *Cloud) reconcilePrivateLinkService(
 			err := az.disablePLSNetworkPolicy(ctx, service)
 			if err != nil {
 				klog.Errorf("reconcilePrivateLinkService for service(%s) disable PLS network policy failed for pls(%s): %v", serviceName, plsName, err.Error())
-				return err
+				return false, err
 			}
 			existingPLS.Etag = ptr.To("")
 			_, err = az.plsRepo.CreateOrUpdate(ctx, az.getPLSResourceGroup(service), *existingPLS)
 			if err != nil {
 				klog.Errorf("reconcilePrivateLinkService for service(%s) abort backoff: pls(%s) - updating: %s", serviceName, plsName, err.Error())
-				return err
+				return false, err
 			}
 		}
 	} else if !wantPLS {
 		existingPLS, err := az.plsRepo.Get(ctx, az.getPLSResourceGroup(service), *fipConfigID, azcache.CacheReadTypeDefault)
 		if err != nil {
 			klog.Errorf("reconcilePrivateLinkService for service(%s): getPrivateLinkService(%s) failed: %v", serviceName, ptr.Deref(fipConfigID, ""), err)
-			return err
+			return false, err
 		}
 
 		exists := !strings.EqualFold(ptr.Deref(existingPLS.ID, ""), consts.PrivateLinkServiceNotExistID)
@@ -176,14 +176,17 @@ func (az *Cloud) reconcilePrivateLinkService(
 			deleteErr := az.safeDeletePLS(ctx, existingPLS, service)
 			if deleteErr != nil {
 				klog.Errorf("reconcilePrivateLinkService for service(%s): deletePLS for frontEnd(%s) failed: %v", serviceName, ptr.Deref(fipConfigID, ""), err)
-				return deleteErr
+				return false, deleteErr
 			}
+			isOperationSucceeded = true
+			klog.V(2).Infof("reconcilePrivateLinkService for service(%s) finished", serviceName)
+			return true, nil // return true for successfully deleted PLS
 		}
 	}
 
 	isOperationSucceeded = true
 	klog.V(2).Infof("reconcilePrivateLinkService for service(%s) finished", serviceName)
-	return nil
+	return false, nil
 }
 
 func (az *Cloud) getPLSResourceGroup(service *v1.Service) string {

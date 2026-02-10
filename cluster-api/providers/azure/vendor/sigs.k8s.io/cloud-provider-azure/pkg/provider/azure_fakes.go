@@ -172,6 +172,7 @@ func GetTestCloud(ctrl *gomock.Controller) (az *Cloud) {
 		kubeClient := fake.NewSimpleClientset() // FIXME: inject kubeClient
 		informerFactory := informers.NewSharedInformerFactory(kubeClient, 0)
 		az.serviceLister = informerFactory.Core().V1().Services().Lister()
+		az.nodeLister = informerFactory.Core().V1().Nodes().Lister()
 		informerFactory.Start(wait.NeverStop)
 		informerFactory.WaitForCacheSync(wait.NeverStop)
 	}

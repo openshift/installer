@@ -531,7 +531,7 @@ func (ss *ScaleSet) getVMManagementTypeByIPConfigurationID(ctx context.Context, 
 }
 
 func (az *Cloud) GetVMNameByIPConfigurationName(ctx context.Context, nicResourceGroup, nicName string) (string, error) {
-	nic, rerr := az.NetworkClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
+	nic, rerr := az.ComputeClientFactory.GetInterfaceClient().Get(ctx, nicResourceGroup, nicName, nil)
 	if rerr != nil {
 		return "", fmt.Errorf("failed to get interface of name %s: %w", nicName, rerr)
 	}

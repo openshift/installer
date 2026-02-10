@@ -118,3 +118,8 @@ func (client *Client) ListVMInstanceView(ctx context.Context, resourceGroupName 
 	}
 	return result, nil
 }
+
+// AttachDetachDataDisks attaches or detaches a list of managed data disks to/from a VM.
+func (client *Client) AttachDetachDataDisks(ctx context.Context, resourceGroupName, VMScaleSetName, instanceID string, parameters armcompute.AttachDetachDataDisksRequest) (*armcompute.VirtualMachineScaleSetVMsClientAttachDetachDataDisksResponse, error) {
+	return utils.NewPollerWrapper(client.VirtualMachineScaleSetVMsClient.BeginAttachDetachDataDisks(ctx, resourceGroupName, VMScaleSetName, instanceID, parameters, nil)).WaitforPollerResp(ctx)
+}

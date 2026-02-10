@@ -410,3 +410,41 @@ func isNICPool(bp *armnetwork.BackendAddressPool) bool {
 	}
 	return false
 }
+
+// cleanupBasicLoadBalancer removes outdated basic load balancers
+// when the loadBalancerSkus is `Standard`. It ensures the backend pool of the basic
+// load balancer is empty before deleting the load balancer.
+func (az *Cloud) cleanupBasicLoadBalancer(
+	ctx context.Context, clusterName string, service *v1.Service, existingLBs []*armnetwork.LoadBalancer,
+) ([]*armnetwork.LoadBalancer, error) {
+	if !az.UseStandardLoadBalancer() {
+		return existingLBs, nil
+	}
+
+	var elbRemoved bool
+	for i := len(existingLBs) - 1; i >= 0; i-- {
+		lb := existingLBs[i]
+		if lb != nil && lb.SKU != nil && lb.SKU.Name != nil && *lb.SKU.Name == armnetwork.LoadBalancerSKUNameBasic {
+			klog.V(2).Infof("cleanupBasicLoadBalancer: found basic load balancer %q, removing it", *lb.Name)
+			if err := az.safeDeleteLoadBalancer(ctx, *lb, clusterName, service); err != nil {
+				klog.ErrorS(err, "cleanupBasicLoadBalancer: failed to delete outdated basic load balancer", "loadBalancerName", *lb.Name)
+				return nil, err
+			}
+			existingLBs = append(existingLBs[:i], existingLBs[i+1:]...)
+			if !strings.Contains(strings.ToLower(ptr.Deref(lb.Name, "")), strings.ToLower(consts.InternalLoadBalancerNameSuffix)) {
+				elbRemoved = true
+			}
+		}
+	}
+	// The lb refs in pip will be changed after the removal, so we need to
+	// reinitialize the cache to prevent etag mismatches.
+	if elbRemoved {
+		var err error
+		az.pipCache, err = az.newPIPCache()
+		if err != nil {
+			klog.ErrorS(err, "cleanupBasicLoadBalancer: failed to refresh pip cache")
+			return nil, err
+		}
+	}
+	return existingLBs, nil
+}
