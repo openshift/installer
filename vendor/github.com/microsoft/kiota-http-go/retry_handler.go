@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
+	"math/rand"
 	nethttp "net/http"
 	"strconv"
 	"time"
@@ -142,13 +142,23 @@ func (middleware RetryHandler) retryRequest(ctx context.Context, pipeline Pipeli
 		}
 		if observabilityName != "" {
 			ctx, span := otel.GetTracerProvider().Tracer(observabilityName).Start(ctx, "RetryHandler_Intercept - attempt "+fmt.Sprint(executionCount))
-			span.SetAttributes(attribute.Int("http.retry_count", executionCount),
-				attribute.Int("http.status_code", resp.StatusCode),
+			span.SetAttributes(attribute.Int("http.request.resend_count", executionCount),
+
+				httpResponseStatusCodeAttribute.Int(resp.StatusCode),
+				attribute.Float64("http.request.resend_delay", delay.Seconds()),
 			)
 			defer span.End()
 			req = req.WithContext(ctx)
 		}
-		time.Sleep(delay)
+		t := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			// Return without retrying if the context was cancelled.
+			return nil, ctx.Err()
+
+			// Leaving this case empty causes it to exit the switch-block.
+		case <-t.C:
+		}
 		response, err := pipeline.Next(req, middlewareIndex)
 		if err != nil {
 			return response, err
@@ -176,6 +186,19 @@ func (middleware RetryHandler) getRetryDelay(req *nethttp.Request, resp *nethttp
 		if err == nil {
 			return time.Duration(retryAfterDelay) * time.Second
 		}
-	} //TODO parse the header if it's a date
-	return time.Duration(math.Pow(float64(options.GetDelaySeconds()), float64(executionCount))) * time.Second
+
+		// parse the header if it's a date
+		t, err := time.Parse(time.RFC1123, retryAfter)
+		if err == nil {
+			return t.Sub(time.Now())
+		}
+	}
+	return exponentialBackOffDelay(options.GetDelaySeconds(), executionCount)
+}
+
+func exponentialBackOffDelay(delaySeconds, executionCount int) time.Duration {
+	exp := executionCount - 1 // executionCount is 1 for first retry
+	delay := time.Duration(delaySeconds*(1<<exp)) * time.Second
+	jitter := time.Duration(rand.Float64()*1000) * time.Millisecond
+	return delay + jitter
 }

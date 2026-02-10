@@ -1,3 +1,75 @@
+# v1.35.3 (2024-09-17)
+
+* **Bug Fix**: **BREAKFIX**: Only generate AccountIDEndpointMode config for services that use it. This is a compiler break, but removes no actual functionality, as no services currently use the account ID in endpoint resolution.
+
+# v1.35.2 (2024-09-04)
+
+* No change notes available for this release.
+
+# v1.35.1 (2024-09-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.35.0 (2024-08-15)
+
+* **Feature**: Make the LastUsedDate field in the GetAccessKeyLastUsed response optional. This may break customers who only call the API for access keys with a valid LastUsedDate. This fixes a deserialization issue for access keys without a LastUsedDate, because the field was marked as required but could be null.
+* **Dependency Update**: Bump minimum Go version to 1.21.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.34.3 (2024-07-10.2)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.34.2 (2024-07-10)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.34.1 (2024-06-28)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.34.0 (2024-06-26)
+
+* **Feature**: Support list-of-string endpoint parameter.
+
+# v1.33.1 (2024-06-19)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.33.0 (2024-06-18)
+
+* **Feature**: Track usage of various AWS SDK features in user-agent string.
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.32.7 (2024-06-17)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.32.6 (2024-06-07)
+
+* **Bug Fix**: Add clock skew correction on all service clients
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.32.5 (2024-06-03)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.32.4 (2024-05-23)
+
+* No change notes available for this release.
+
+# v1.32.3 (2024-05-16)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.32.2 (2024-05-15)
+
+* **Dependency Update**: Updated to the latest SDK module versions
+
+# v1.32.1 (2024-05-08)
+
+* **Bug Fix**: GoDoc improvement
+
 # v1.32.0 (2024-04-11)
 
 * **Feature**: For CreateOpenIDConnectProvider API, the ThumbprintList parameter is no longer required.

@@ -40,9 +40,12 @@ type UserAgentHandlerOptions struct {
 // NewUserAgentHandlerOptions creates a new user agent handler options with the default values.
 func NewUserAgentHandlerOptions() *UserAgentHandlerOptions {
 	return &UserAgentHandlerOptions{
-		Enabled:        true,
-		ProductName:    "kiota-go",
-		ProductVersion: "0.13.0",
+		Enabled:     true,
+		ProductName: "kiota-go",
+		/** The package version */
+		// x-release-please-start-version
+		ProductVersion: "1.5.4",
+		// x-release-please-end
 	}
 }
 

@@ -41,12 +41,16 @@ func NewApiKeyAuthenticationProviderWithValidHosts(apiKey string, parameterName 
 	if len(parameterName) == 0 {
 		return nil, errors.New("parameterName cannot be empty")
 	}
-	validator := NewAllowedHostsValidator(validHosts)
+
+	validator, err := NewAllowedHostsValidatorErrorCheck(validHosts)
+	if err != nil {
+		return nil, err
+	}
 	return &ApiKeyAuthenticationProvider{
 		apiKey:        apiKey,
 		parameterName: parameterName,
 		keyLocation:   keyLocation,
-		validator:     &validator,
+		validator:     validator,
 	}, nil
 }
 
