@@ -6,30 +6,39 @@ import (
 	"path/filepath"
 	"regexp"
 
+	"github.com/openshift/assisted-image-service/internal/common"
 	log "github.com/sirupsen/logrus"
 )
 
 const (
-	RamDiskPaddingLength = uint64(1024 * 1024) // 1MB
-	ramDiskImagePath     = "/images/assisted_installer_custom.img"
+	RamDiskPaddingLength        = uint64(1024 * 1024) // 1MB
+	NmstatectlPathInRamdisk     = "/usr/bin/nmstatectl"
+	ramDiskImagePath            = "/images/assisted_installer_custom.img"
+	nmstateDiskImagePath        = "/images/nmstate.img"
+	MinimalVersionForNmstatectl = "4.18.0-ec.0"
+	RootfsImagePath             = "images/pxeboot/rootfs.img"
 )
 
 //go:generate mockgen -package=isoeditor -destination=mock_editor.go . Editor
 type Editor interface {
-	CreateMinimalISOTemplate(fullISOPath, rootFSURL, arch, minimalISOPath string) error
+	CreateMinimalISOTemplate(fullISOPath, rootFSURL, arch, minimalISOPath, openshiftVersion, nmstatectlPath string) error
 }
 
 type rhcosEditor struct {
-	workDir string
+	workDir        string
+	nmstateHandler NmstateHandler
 }
 
-func NewEditor(dataDir string) Editor {
-	return &rhcosEditor{workDir: dataDir}
+func NewEditor(dataDir string, nmstateHandler NmstateHandler) Editor {
+	return &rhcosEditor{
+		workDir:        dataDir,
+		nmstateHandler: nmstateHandler,
+	}
 }
 
 // CreateMinimalISO Creates the minimal iso by removing the rootfs and adding the url
 func CreateMinimalISO(extractDir, volumeID, rootFSURL, arch, minimalISOPath string) error {
-	if err := os.Remove(filepath.Join(extractDir, "images/pxeboot/rootfs.img")); err != nil {
+	if err := os.Remove(filepath.Join(extractDir, RootfsImagePath)); err != nil {
 		return err
 	}
 
@@ -38,14 +47,19 @@ func CreateMinimalISO(extractDir, volumeID, rootFSURL, arch, minimalISOPath stri
 		return err
 	}
 
-	if err := fixGrubConfig(rootFSURL, extractDir); err != nil {
+	var includeNmstateRamDisk bool
+	if _, err := os.Stat(filepath.Join(extractDir, nmstateDiskImagePath)); err == nil {
+		includeNmstateRamDisk = true
+	}
+
+	if err := fixGrubConfig(rootFSURL, extractDir, includeNmstateRamDisk); err != nil {
 		log.WithError(err).Warnf("Failed to edit grub config")
 		return err
 	}
 
 	// ignore isolinux.cfg for ppc64le because it doesn't exist
 	if arch != "ppc64le" {
-		if err := fixIsolinuxConfig(rootFSURL, extractDir); err != nil {
+		if err := fixIsolinuxConfig(rootFSURL, extractDir, includeNmstateRamDisk); err != nil {
 			log.WithError(err).Warnf("Failed to edit isolinux config")
 			return err
 		}
@@ -58,7 +72,7 @@ func CreateMinimalISO(extractDir, volumeID, rootFSURL, arch, minimalISOPath stri
 }
 
 // CreateMinimalISOTemplate Creates the template minimal iso by removing the rootfs and adding the url
-func (e *rhcosEditor) CreateMinimalISOTemplate(fullISOPath, rootFSURL, arch, minimalISOPath string) error {
+func (e *rhcosEditor) CreateMinimalISOTemplate(fullISOPath, rootFSURL, arch, minimalISOPath, openshiftVersion, nmstatectlPath string) error {
 	extractDir, err := os.MkdirTemp(e.workDir, "isoutil")
 	if err != nil {
 		return err
@@ -71,6 +85,37 @@ func (e *rhcosEditor) CreateMinimalISOTemplate(fullISOPath, rootFSURL, arch, min
 	volumeID, err := VolumeIdentifier(fullISOPath)
 	if err != nil {
 		return err
+	}
+
+	ramDiskPath := filepath.Join(extractDir, nmstateDiskImagePath)
+
+	versionOK, err := common.VersionGreaterOrEqual(openshiftVersion, MinimalVersionForNmstatectl)
+	if err != nil {
+		return err
+	}
+
+	if versionOK {
+		var compressedCpio []byte
+		var readErr error
+
+		if _, err = os.Stat(nmstatectlPath); err == nil {
+			// Read and return the cached content
+			compressedCpio, readErr = os.ReadFile(nmstatectlPath)
+			if readErr != nil {
+				return fmt.Errorf("failed to read cached nmstatectl: %v", readErr)
+			}
+		} else if os.IsNotExist(err) {
+			// File doesn't exist - this should be an error condition
+			return fmt.Errorf("nmstatectl cache file not found: %s", nmstatectlPath)
+		} else {
+			// Some other error occurred
+			return fmt.Errorf("failed to stat nmstatectl cache file: %v", err)
+		}
+
+		err = os.WriteFile(ramDiskPath, compressedCpio, 0755) //nolint:gosec
+		if err != nil {
+			return err
+		}
 	}
 
 	err = CreateMinimalISO(extractDir, volumeID, rootFSURL, arch, minimalISOPath)
@@ -103,7 +148,7 @@ func embedInitrdPlaceholders(extractDir string) error {
 	return nil
 }
 
-func fixGrubConfig(rootFSURL, extractDir string) error {
+func fixGrubConfig(rootFSURL, extractDir string, includeNmstateRamDisk bool) error {
 	availableGrubPaths := []string{"EFI/redhat/grub.cfg", "EFI/fedora/grub.cfg", "boot/grub/grub.cfg", "EFI/centos/grub.cfg"}
 	var foundGrubPath string
 	for _, pathSection := range availableGrubPaths {
@@ -129,14 +174,20 @@ func fixGrubConfig(rootFSURL, extractDir string) error {
 	}
 
 	// Edit config to add custom ramdisk image to initrd
-	if err := editFile(foundGrubPath, `(?m)^(\s+initrd) (.+| )+$`, fmt.Sprintf("$1 $2 %s", ramDiskImagePath)); err != nil {
-		return err
+	if includeNmstateRamDisk {
+		if err := editFile(foundGrubPath, `(?m)^(\s+initrd) (.+| )+$`, fmt.Sprintf("$1 $2 %s %s", ramDiskImagePath, nmstateDiskImagePath)); err != nil {
+			return err
+		}
+	} else {
+		if err := editFile(foundGrubPath, `(?m)^(\s+initrd) (.+| )+$`, fmt.Sprintf("$1 $2 %s", ramDiskImagePath)); err != nil {
+			return err
+		}
 	}
 
 	return nil
 }
 
-func fixIsolinuxConfig(rootFSURL, extractDir string) error {
+func fixIsolinuxConfig(rootFSURL, extractDir string, includeNmstateRamDisk bool) error {
 	replacement := fmt.Sprintf("$1 $2 coreos.live.rootfs_url=%s", rootFSURL)
 	if err := editFile(filepath.Join(extractDir, "isolinux/isolinux.cfg"), `(?m)^(\s+append) (.+| )+$`, replacement); err != nil {
 		return err
@@ -146,8 +197,14 @@ func fixIsolinuxConfig(rootFSURL, extractDir string) error {
 		return err
 	}
 
-	if err := editFile(filepath.Join(extractDir, "isolinux/isolinux.cfg"), `(?m)^(\s+append.*initrd=\S+) (.*)$`, fmt.Sprintf("${1},%s ${2}", ramDiskImagePath)); err != nil {
-		return err
+	if includeNmstateRamDisk {
+		if err := editFile(filepath.Join(extractDir, "isolinux/isolinux.cfg"), `(?m)^(\s+append.*initrd=\S+) (.*)$`, fmt.Sprintf("${1},%s,%s ${2}", ramDiskImagePath, nmstateDiskImagePath)); err != nil {
+			return err
+		}
+	} else {
+		if err := editFile(filepath.Join(extractDir, "isolinux/isolinux.cfg"), `(?m)^(\s+append.*initrd=\S+) (.*)$`, fmt.Sprintf("${1},%s ${2}", ramDiskImagePath)); err != nil {
+			return err
+		}
 	}
 
 	return nil

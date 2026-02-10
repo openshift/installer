@@ -209,16 +209,19 @@ type Platform struct {
 	// BootstrapOSImage is a URL to override the default OS image
 	// for the bootstrap node. The URL must contain a sha256 hash of the image
 	// e.g https://mirror.example.com/images/qemu.qcow2.gz?sha256=a07bd...
+	// Deprecated: This is no longer used.
 	//
 	// +optional
-	BootstrapOSImage string `json:"bootstrapOSImage,omitempty"`
+	DeprecatedBootstrapOSImage string `json:"bootstrapOSImage,omitempty"`
 
 	// ClusterOSImage is a URL to override the default OS image
 	// for cluster nodes. The URL must contain a sha256 hash of the image
 	// e.g https://mirror.example.com/images/metal.qcow2.gz?sha256=3b5a8...
+	// Deprecated: This is no longer required, the OS image is now part of the
+	// OpenShift release.
 	//
 	// +optional
-	ClusterOSImage string `json:"clusterOSImage,omitempty"`
+	DeprecatedClusterOSImage string `json:"clusterOSImage,omitempty"`
 
 	// BootstrapExternalStaticIP is the static IP address of the bootstrap node.
 	// This can be useful in environments without a DHCP server.

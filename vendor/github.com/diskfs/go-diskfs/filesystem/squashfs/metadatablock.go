@@ -26,6 +26,7 @@ func getMetadataSize(b []byte) (size uint16, compressed bool, err error) {
 	return size, compressed, nil
 }
 
+// FIXME this isn't used anywhere except in the test code
 func parseMetadata(b []byte, c Compressor) (block *metadatablock, err error) {
 	if len(b) < minMetadataBlockSize {
 		return nil, fmt.Errorf("metadata block was of len %d, less than minimum %d", len(b), minMetadataBlockSize)
@@ -71,33 +72,35 @@ func (m *metadatablock) toBytes(c Compressor) ([]byte, error) {
 	return b, nil
 }
 
-func readMetaBlock(r io.ReaderAt, c Compressor, location int64) (data []byte, size uint16, err error) {
-	// read bytes off the reader to determine how big it is and if compressed
-	b := make([]byte, 2)
-	_, _ = r.ReadAt(b, location)
-	size, compressed, err := getMetadataSize(b)
-	if err != nil {
-		return nil, 0, fmt.Errorf("error getting size and compression for metadata block at %d: %v", location, err)
-	}
-	b = make([]byte, size)
-	read, err := r.ReadAt(b, location+2)
-	if err != nil && err != io.EOF {
-		return nil, 0, fmt.Errorf("unable to read metadata block of size %d at location %d: %v", size, location, err)
-	}
-	if read != len(b) {
-		return nil, 0, fmt.Errorf("read %d instead of expected %d bytes for metadata block at location %d", read, size, location)
-	}
-	data = b
-	if compressed {
-		if c == nil {
-			return nil, 0, fmt.Errorf("metadata block at %d compressed, but no compressor provided", location)
-		}
-		data, err = c.decompress(b)
+func (fs *FileSystem) readMetaBlock(r io.ReaderAt, c Compressor, location int64) (data []byte, size uint16, err error) {
+	return fs.cache.get(location, func() (data []byte, size uint16, err error) {
+		// read bytes off the reader to determine how big it is and if compressed
+		b := make([]byte, 2)
+		_, _ = r.ReadAt(b, location)
+		size, compressed, err := getMetadataSize(b)
 		if err != nil {
-			return nil, 0, fmt.Errorf("decompress error: %v", err)
+			return nil, 0, fmt.Errorf("error getting size and compression for metadata block at %d: %v", location, err)
 		}
-	}
-	return data, size + 2, nil
+		b = make([]byte, size)
+		read, err := r.ReadAt(b, location+2)
+		if err != nil && err != io.EOF {
+			return nil, 0, fmt.Errorf("unable to read metadata block of size %d at location %d: %v", size, location, err)
+		}
+		if read != len(b) {
+			return nil, 0, fmt.Errorf("read %d instead of expected %d bytes for metadata block at location %d", read, size, location)
+		}
+		data = b
+		if compressed {
+			if c == nil {
+				return nil, 0, fmt.Errorf("metadata block at %d compressed, but no compressor provided", location)
+			}
+			data, err = c.decompress(b)
+			if err != nil {
+				return nil, 0, fmt.Errorf("decompress error: %v", err)
+			}
+		}
+		return data, size + 2, nil
+	})
 }
 
 // readMetadata read as many bytes of metadata as required for the given size, with the byteOffset provided as a starting
@@ -105,13 +108,13 @@ func readMetaBlock(r io.ReaderAt, c Compressor, location int64) (data []byte, si
 // requests to read 500 bytes beginning at offset 8000 into the first block.
 // it always returns to the end of the block, even if that is greater than the given size. This makes it easy to use more
 // data than expected on first read. The consumer is expected to cut it down, if needed
-func readMetadata(r io.ReaderAt, c Compressor, firstBlock int64, initialBlockOffset uint32, byteOffset uint16, size int) ([]byte, error) {
+func (fs *FileSystem) readMetadata(r io.ReaderAt, c Compressor, firstBlock int64, initialBlockOffset uint32, byteOffset uint16, size int) ([]byte, error) {
 	var (
 		b           []byte
 		blockOffset = int(initialBlockOffset)
 	)
 	// we know how many blocks, so read them all in
-	m, read, err := readMetaBlock(r, c, firstBlock+int64(blockOffset))
+	m, read, err := fs.readMetaBlock(r, c, firstBlock+int64(blockOffset))
 	if err != nil {
 		return nil, err
 	}
@@ -119,7 +122,7 @@ func readMetadata(r io.ReaderAt, c Compressor, firstBlock int64, initialBlockOff
 	// do we have any more to read?
 	for len(b) < size {
 		blockOffset += int(read)
-		m, read, err = readMetaBlock(r, c, firstBlock+int64(blockOffset))
+		m, read, err = fs.readMetaBlock(r, c, firstBlock+int64(blockOffset))
 		if err != nil {
 			return nil, err
 		}

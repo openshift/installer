@@ -55,7 +55,7 @@ require (
 	github.com/coreos/stream-metadata-go v0.4.10-0.20250806142651-4a7d280a6c7b
 	github.com/daixiang0/gci v0.13.5
 	github.com/digitalocean/go-libvirt v0.0.0-20240220204746-fcabe97a6eed
-	github.com/diskfs/go-diskfs v1.4.0
+	github.com/diskfs/go-diskfs v1.4.1
 	github.com/form3tech-oss/jwt-go v3.2.3+incompatible
 	github.com/go-logr/logr v1.4.3
 	github.com/go-openapi/errors v0.22.1
@@ -85,7 +85,7 @@ require (
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.38.2
 	github.com/openshift/api v0.0.0-20251120220512-cb382c9eaf42
-	github.com/openshift/assisted-image-service v0.0.0-20240607085136-02df2e56dde6
+	github.com/openshift/assisted-image-service v0.0.0-20250917153356-4ca9ff81f712
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
@@ -107,7 +107,7 @@ require (
 	github.com/prometheus/common v0.66.1
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/shurcooL/vfsgen v0.0.0-20181202132449-6a9ea43bcacd
-	github.com/sirupsen/logrus v1.9.3
+	github.com/sirupsen/logrus v1.9.4-0.20230606125235-dd1b4c2e81af
 	github.com/spf13/cobra v1.10.1
 	github.com/stretchr/testify v1.11.1
 	github.com/thedevsaddam/retry v0.0.0-20200324223450-9769a859cc6d
@@ -231,6 +231,7 @@ require (
 	github.com/coreos/go-systemd/v22 v22.6.0 // indirect
 	github.com/coreos/vcontext v0.0.0-20230201181013-d72178a18687 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/djherbis/times v1.6.0 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/elliotwutingfeng/asciiset v0.0.0-20230602022725-51bbb787efab // indirect
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
@@ -275,6 +276,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/kballard/go-shellquote v0.0.0-20180428030007-95032a82bc51 // indirect
+	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
@@ -339,7 +341,6 @@ require (
 	google.golang.org/genproto v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
-	gopkg.in/djherbis/times.v1 v1.3.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect

@@ -112,13 +112,7 @@ unqualified-search-registries = []
 type RegistriesConf struct {
 	File         *asset.File
 	Config       *sysregistriesv2.V2RegistriesConf
-	MirrorConfig []RegistriesConfig
-}
-
-// RegistriesConfig holds the data extracted from registries.conf
-type RegistriesConfig struct {
-	Location string
-	Mirrors  []string
+	MirrorConfig types.MirrorConfig
 }
 
 var _ asset.WritableAsset = (*RegistriesConf)(nil)
@@ -301,9 +295,9 @@ func (i *RegistriesConf) generateDefaultRegistriesConf() error {
 }
 
 func (i *RegistriesConf) setMirrorConfig(registriesConf *sysregistriesv2.V2RegistriesConf) {
-	mirrorConfig := make([]RegistriesConfig, len(registriesConf.Registries))
+	mirrorConfig := make(types.MirrorConfig, len(registriesConf.Registries))
 	for i, reg := range registriesConf.Registries {
-		mirrorConfig[i] = RegistriesConfig{
+		mirrorConfig[i] = types.Mirror{
 			Location: reg.Location,
 		}
 		for _, mirror := range reg.Mirrors {

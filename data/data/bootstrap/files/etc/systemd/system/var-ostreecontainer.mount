@@ -2,6 +2,7 @@
 Requires=run-ephemeral.mount
 After=run-ephemeral.mount
 ConditionPathExists=/run/ostree-live
+ConditionPathExists=!/etc/no-var-tmpfs
 
 [Mount]
 What=tmpfs

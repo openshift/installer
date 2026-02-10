@@ -17,6 +17,7 @@ const (
 	metadataBlockSize = 8 * KB
 	minBlocksize      = 4 * KB
 	maxBlocksize      = 1 * MB
+	defaultCacheSize  = 128 * MB
 )
 
 // FileSystem implements the FileSystem interface
@@ -32,6 +33,7 @@ type FileSystem struct {
 	uidsGids   []uint32
 	xattrs     *xAttrTable
 	rootDir    inode
+	cache      *lru
 }
 
 // Equal compare if two filesystems are equal
@@ -111,7 +113,38 @@ func Create(f util.File, size, start, blocksize int64) (*FileSystem, error) {
 // which allow you to work directly with partitions, rather than having to calculate (and hopefully not make any errors)
 // where a partition starts and ends.
 //
-// If the provided blocksize is 0, it will use the default of 2K bytes
+// If the provided blocksize is 0, it will use the default of 2K bytes.
+//
+// This will use a cache for the decompressed blocks of 128 MB by
+// default. (You can set this with the SetCacheSize method and read
+// its size with the GetCacheSize method). A block cache is essential
+// for performance when reading. This implements a cache for the
+// fragments (tail ends of files) and the metadata (directory
+// listings) which otherwise would be read, decompressed and discarded
+// many times.
+//
+// Unpacking a 3 GB squashfs made from the tensorflow docker image like this:
+//
+//	docker export $(docker create tensorflow/tensorflow:latest-gpu-jupyter) -o tensorflow.tar.gz
+//	mkdir -p tensorflow && tar xf tensorflow.tar.gz -C tensorflow
+//	[ -f tensorflow.sqfs ] && rm tensorflow.sqfs
+//	mksquashfs tensorflow tensorflow.sqfs  -comp zstd -Xcompression-level 3 -b 1M -no-xattrs -all-root
+//
+// Gives these timings with and without cache:
+//
+// - no caching:   206s
+// - 256 MB cache:  16.7s
+// - 128 MB cache:  17.5s (the default)
+// - 64 MB cache:   23.4s
+// - 32 MB cache:   54.s
+//
+// The cached versions compare favourably to the C program unsquashfs
+// which takes 12.0s to unpack the same archive.
+//
+// These tests were done using rclone and the archive backend which
+// uses this library like this:
+//
+//	rclone -P --transfers 16 --checkers 16 copy :archive:/path/to/tensorflow.sqfs /tmp/tensorflow
 func Read(file util.File, size, start, blocksize int64) (*FileSystem, error) {
 	var (
 		read int
@@ -147,7 +180,7 @@ func Read(file util.File, size, start, blocksize int64) (*FileSystem, error) {
 	// create the compressor function we will use
 	compress, err := newCompressor(s.compression)
 	if err != nil {
-		return nil, fmt.Errorf("unable to create compressor")
+		return nil, fmt.Errorf("unable to create compressor: %v", err)
 	}
 
 	// load fragments
@@ -160,7 +193,7 @@ func Read(file util.File, size, start, blocksize int64) (*FileSystem, error) {
 	var (
 		xattrs *xAttrTable
 	)
-	if !s.noXattrs {
+	if !s.noXattrs && s.xattrTableStart != 0xffff_ffff_ffff_ffff {
 		// xattr is right to the end of the disk
 		xattrs, err = readXattrsTable(s, file, compress)
 		if err != nil {
@@ -180,11 +213,12 @@ func Read(file util.File, size, start, blocksize int64) (*FileSystem, error) {
 		size:       size,
 		file:       file,
 		superblock: s,
-		blocksize:  blocksize,
+		blocksize:  int64(s.blocksize), // use the blocksize in the superblock
 		xattrs:     xattrs,
 		compressor: compress,
 		fragments:  fragments,
 		uidsGids:   uidsgids,
+		cache:      newLRU(int(defaultCacheSize) / int(s.blocksize)),
 	}
 	// for efficiency, read in the root inode right now
 	rootInode, err := fs.getInode(s.rootInode.block, s.rootInode.offset, inodeBasicDirectory)
@@ -198,6 +232,30 @@ func Read(file util.File, size, start, blocksize int64) (*FileSystem, error) {
 // Type returns the type code for the filesystem. Always returns filesystem.TypeFat32
 func (fs *FileSystem) Type() filesystem.Type {
 	return filesystem.TypeSquashfs
+}
+
+// SetCacheSize set the maximum memory used by the block cache to cacheSize bytes.
+//
+// The default is 128 MB.
+//
+// If this is <= 0 then the cache will be disabled.
+func (fs *FileSystem) SetCacheSize(cacheSize int) {
+	if fs.cache == nil {
+		return
+	}
+	blocks := cacheSize / int(fs.blocksize)
+	if blocks <= 0 {
+		blocks = 0
+	}
+	fs.cache.setMaxBlocks(blocks)
+}
+
+// GetCacheSize get the maximum memory used by the block cache in bytes.
+func (fs *FileSystem) GetCacheSize() int {
+	if fs.cache == nil {
+		return 0
+	}
+	return fs.cache.maxBlocks * int(fs.blocksize)
 }
 
 // Mkdir make a directory at the given path. It is equivalent to `mkdir -p`, i.e. idempotent, in that:
@@ -307,30 +365,9 @@ func (fs *FileSystem) OpenFile(p string, flag int) (filesystem.File, error) {
 		if targetEntry == nil {
 			return nil, fmt.Errorf("target file %s does not exist", p)
 		}
-		// get the inode data for this file
-		// now open the file
-		// get the inode for the file
-		var eFile *extendedFile
-		in := targetEntry.inode
-		iType := in.inodeType()
-		body := in.getBody()
-		//nolint:exhaustive // all other cases fall under default
-		switch iType {
-		case inodeBasicFile:
-			extFile := body.(*basicFile).toExtended()
-			eFile = &extFile
-		case inodeExtendedFile:
-			eFile, _ = body.(*extendedFile)
-		default:
-			return nil, fmt.Errorf("inode is of type %d, neither basic nor extended directory", iType)
-		}
-
-		f = &File{
-			extendedFile: eFile,
-			isReadWrite:  false,
-			isAppend:     false,
-			offset:       0,
-			filesystem:   fs,
+		f, err = targetEntry.Open()
+		if err != nil {
+			return nil, err
 		}
 	} else {
 		f, err = os.OpenFile(path.Join(fs.workspace, p), flag, 0o644)
@@ -440,17 +477,16 @@ func (fs *FileSystem) hydrateDirectoryEntries(entries []*directoryEntryRaw) ([]*
 			}
 		}
 		fullEntries = append(fullEntries, &directoryEntry{
+			fs:             fs,
 			isSubdirectory: e.isSubdirectory,
 			name:           e.name,
 			size:           body.size(),
 			modTime:        header.modTime,
 			mode:           header.mode,
 			inode:          in,
-			sys: FileStat{
-				uid:    fs.uidsGids[header.uidIdx],
-				gid:    fs.uidsGids[header.gidIdx],
-				xattrs: xattrs,
-			},
+			uid:            fs.uidsGids[header.uidIdx],
+			gid:            fs.uidsGids[header.gidIdx],
+			xattrs:         xattrs,
 		})
 	}
 	return fullEntries, nil
@@ -464,7 +500,7 @@ func (fs *FileSystem) getInode(blockOffset uint32, byteOffset uint16, iType inod
 	// get the block
 	// start by getting the minimum for the proposed type. It very well might be wrong.
 	size := inodeTypeToSize(iType)
-	uncompressed, err := readMetadata(fs.file, fs.compressor, int64(fs.superblock.inodeTableStart), blockOffset, byteOffset, size)
+	uncompressed, err := fs.readMetadata(fs.file, fs.compressor, int64(fs.superblock.inodeTableStart), blockOffset, byteOffset, size)
 	if err != nil {
 		return nil, fmt.Errorf("error reading block at position %d: %v", blockOffset, err)
 	}
@@ -475,6 +511,14 @@ func (fs *FileSystem) getInode(blockOffset uint32, byteOffset uint16, iType inod
 	}
 	if header.inodeType != iType {
 		iType = header.inodeType
+		size = inodeTypeToSize(iType)
+		// Read more data if necessary (quite rare)
+		if size > len(uncompressed) {
+			uncompressed, err = fs.readMetadata(fs.file, fs.compressor, int64(fs.superblock.inodeTableStart), blockOffset, byteOffset, size)
+			if err != nil {
+				return nil, fmt.Errorf("error reading block at position %d: %v", blockOffset, err)
+			}
+		}
 	}
 	// now read the body, which may have a variable size
 	body, extra, err := parseInodeBody(uncompressed[inodeHeaderSize:], int(fs.blocksize), iType)
@@ -484,7 +528,7 @@ func (fs *FileSystem) getInode(blockOffset uint32, byteOffset uint16, iType inod
 	// if it returns extra > 0, then it needs that many more bytes to be read, and to be reparsed
 	if extra > 0 {
 		size += extra
-		uncompressed, err = readMetadata(fs.file, fs.compressor, int64(fs.superblock.inodeTableStart), blockOffset, byteOffset, size)
+		uncompressed, err = fs.readMetadata(fs.file, fs.compressor, int64(fs.superblock.inodeTableStart), blockOffset, byteOffset, size)
 		if err != nil {
 			return nil, fmt.Errorf("error reading block at position %d: %v", blockOffset, err)
 		}
@@ -504,7 +548,7 @@ func (fs *FileSystem) getInode(blockOffset uint32, byteOffset uint16, iType inod
 // block when uncompressed.
 func (fs *FileSystem) getDirectory(blockOffset uint32, byteOffset uint16, size int) (*directory, error) {
 	// get the block
-	uncompressed, err := readMetadata(fs.file, fs.compressor, int64(fs.superblock.directoryTableStart), blockOffset, byteOffset, size)
+	uncompressed, err := fs.readMetadata(fs.file, fs.compressor, int64(fs.superblock.directoryTableStart), blockOffset, byteOffset, size)
 	if err != nil {
 		return nil, fmt.Errorf("error reading block at position %d: %v", blockOffset, err)
 	}
@@ -517,6 +561,10 @@ func (fs *FileSystem) getDirectory(blockOffset uint32, byteOffset uint16, size i
 }
 
 func (fs *FileSystem) readBlock(location int64, compressed bool, size uint32) ([]byte, error) {
+	// Zero size is a sparse block of blocksize
+	if size == 0 {
+		return make([]byte, fs.superblock.blocksize), nil
+	}
 	b := make([]byte, size)
 	read, err := fs.file.ReadAt(b, location)
 	if err != nil && err != io.EOF {
@@ -543,25 +591,32 @@ func (fs *FileSystem) readFragment(index, offset uint32, fragmentSize int64) ([]
 		return nil, fmt.Errorf("cannot find fragment block with index %d", index)
 	}
 	fragmentInfo := fs.fragments[index]
-	// figure out the size of the compressed block and if it is compressed
-	b := make([]byte, fragmentInfo.size)
-	read, err := fs.file.ReadAt(b, int64(fragmentInfo.start))
-	if err != nil && err != io.EOF {
-		return nil, fmt.Errorf("unable to read fragment block %d: %v", index, err)
-	}
-	if read != len(b) {
-		return nil, fmt.Errorf("read %d instead of expected %d bytes for fragment block %d", read, len(b), index)
-	}
+	pos := int64(fragmentInfo.start)
+	data, _, err := fs.cache.get(pos, func() (data []byte, size uint16, err error) {
+		// figure out the size of the compressed block and if it is compressed
+		b := make([]byte, fragmentInfo.size)
+		read, err := fs.file.ReadAt(b, pos)
+		if err != nil && err != io.EOF {
+			return nil, 0, fmt.Errorf("unable to read fragment block %d: %v", index, err)
+		}
+		if read != len(b) {
+			return nil, 0, fmt.Errorf("read %d instead of expected %d bytes for fragment block %d", read, len(b), index)
+		}
 
-	data := b
-	if fragmentInfo.compressed {
-		if fs.compressor == nil {
-			return nil, fmt.Errorf("fragment compressed but do not have valid compressor")
+		data = b
+		if fragmentInfo.compressed {
+			if fs.compressor == nil {
+				return nil, 0, fmt.Errorf("fragment compressed but do not have valid compressor")
+			}
+			data, err = fs.compressor.decompress(b)
+			if err != nil {
+				return nil, 0, fmt.Errorf("decompress error: %v", err)
+			}
 		}
-		data, err = fs.compressor.decompress(b)
-		if err != nil {
-			return nil, fmt.Errorf("decompress error: %v", err)
-		}
+		return data, 0, nil
+	})
+	if err != nil {
+		return nil, err
 	}
 	// now get the data from the offset
 	return data[offset : int64(offset)+fragmentSize], nil
@@ -604,8 +659,9 @@ func readFragmentTable(s *superblock, file util.File, c Compressor) ([]*fragment
 	// load in the actual fragment entries
 	// read each block and uncompress it
 	var fragmentTable []*fragmentEntry
+	var fs = &FileSystem{}
 	for i, offset := range offsets {
-		uncompressed, _, err := readMetaBlock(file, c, offset)
+		uncompressed, _, err := fs.readMetaBlock(file, c, offset)
 		if err != nil {
 			return nil, fmt.Errorf("error reading meta block %d at position %d: %v", i, offset, err)
 		}
@@ -674,13 +730,14 @@ func readXattrsTable(s *superblock, file util.File, c Compressor) (*xAttrTable, 
 	var (
 		uncompressed []byte
 		size         uint16
+		fs           = &FileSystem{}
 	)
 
 	bIndex := make([]byte, 0)
 	// convert those into indexes
 	for i := 0; i+8-1 < len(b); i += 8 {
 		locn := binary.LittleEndian.Uint64(b[i : i+8])
-		uncompressed, _, err = readMetaBlock(file, c, int64(locn))
+		uncompressed, _, err = fs.readMetaBlock(file, c, int64(locn))
 		if err != nil {
 			return nil, fmt.Errorf("error reading xattr index meta block %d at position %d: %v", i, locn, err)
 		}
@@ -691,7 +748,7 @@ func readXattrsTable(s *superblock, file util.File, c Compressor) (*xAttrTable, 
 	xAttrEnd := binary.LittleEndian.Uint64(b[:8])
 	xAttrData := make([]byte, 0)
 	for i := xAttrStart; i < xAttrEnd; {
-		uncompressed, size, err = readMetaBlock(file, c, int64(i))
+		uncompressed, size, err = fs.readMetaBlock(file, c, int64(i))
 		if err != nil {
 			return nil, fmt.Errorf("error reading xattr data meta block at position %d: %v", i, err)
 		}
@@ -704,7 +761,7 @@ func readXattrsTable(s *superblock, file util.File, c Compressor) (*xAttrTable, 
 	return parseXattrsTable(xAttrData, bIndex, s.idTableStart, c)
 }
 
-//nolint:unparam // this does not use offset or compressor yet, but only because we have not yet added support
+//nolint:unparam,unused,revive // this does not use offset or compressor yet, but only because we have not yet added support
 func parseXattrsTable(bUIDXattr, bIndex []byte, offset uint64, c Compressor) (*xAttrTable, error) {
 	// create the ID list
 	var (
@@ -765,13 +822,14 @@ func readUidsGids(s *superblock, file util.File, c Compressor) ([]uint32, error)
 
 	var (
 		uncompressed []byte
+		fs           = &FileSystem{}
 	)
 
 	data := make([]byte, 0)
 	// convert those into indexes
 	for i := 0; i+8-1 < len(b); i += 8 {
 		locn := binary.LittleEndian.Uint64(b[i : i+8])
-		uncompressed, _, err = readMetaBlock(file, c, int64(locn))
+		uncompressed, _, err = fs.readMetaBlock(file, c, int64(locn))
 		if err != nil {
 			return nil, fmt.Errorf("error reading uidgid index meta block %d at position %d: %v", i, locn, err)
 		}

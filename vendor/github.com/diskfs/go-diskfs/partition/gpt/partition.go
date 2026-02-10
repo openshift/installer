@@ -291,3 +291,14 @@ func (p *Partition) sectorSizes() (physical, logical int) {
 func (p *Partition) Equal(o *Partition) bool {
 	return p != nil && o != nil && *p == *o
 }
+
+// UUID returns the partitions UUID
+func (p *Partition) UUID() string {
+	return p.GUID
+}
+
+// Expand increases the size of the partition by a number of sectors
+func (p *Partition) Expand(sectors uint64) {
+	p.End += sectors
+	p.Size += sectors * uint64(p.logicalSectorSize)
+}
