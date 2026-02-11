@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	azdns "github.com/Azure/azure-sdk-for-go/profiles/2018-03-01/dns/mgmt/dns"
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
@@ -658,6 +659,65 @@ func ValidatePublicDNS(ic *types.InstallConfig, azureDNS *DNSConfig) error {
 	return nil
 }
 
+// ValidateUserAssignedIdentities ensures the user-assigned identities exist and are valid.
+func ValidateUserAssignedIdentities(client API, ic *types.InstallConfig) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Validate default machine platform identities
+	if ic.Platform.Azure.DefaultMachinePlatform != nil &&
+		ic.Platform.Azure.DefaultMachinePlatform.Identity != nil &&
+		ic.Platform.Azure.DefaultMachinePlatform.Identity.Type == capz.VMIdentityUserAssigned {
+		for idx, identity := range ic.Platform.Azure.DefaultMachinePlatform.Identity.UserAssignedIdentities {
+			fieldPath := field.NewPath("platform").Child("azure", "defaultMachinePlatform", "identity", "userAssignedIdentities").Index(idx)
+			if err := validateUserAssignedIdentity(client, &identity, fieldPath); err != nil {
+				allErrs = append(allErrs, err)
+			}
+		}
+	}
+
+	// Validate control plane identities
+	if ic.ControlPlane != nil &&
+		ic.ControlPlane.Platform.Azure != nil &&
+		ic.ControlPlane.Platform.Azure.Identity != nil &&
+		ic.ControlPlane.Platform.Azure.Identity.Type == capz.VMIdentityUserAssigned {
+		for idx, identity := range ic.ControlPlane.Platform.Azure.Identity.UserAssignedIdentities {
+			fieldPath := field.NewPath("controlPlane").Child("platform", "azure", "identity", "userAssignedIdentities").Index(idx)
+			if err := validateUserAssignedIdentity(client, &identity, fieldPath); err != nil {
+				allErrs = append(allErrs, err)
+			}
+		}
+	}
+
+	// Validate compute pool identities
+	for compIdx, compute := range ic.Compute {
+		if compute.Platform.Azure != nil &&
+			compute.Platform.Azure.Identity != nil &&
+			compute.Platform.Azure.Identity.Type == capz.VMIdentityUserAssigned {
+			for idIdx, identity := range compute.Platform.Azure.Identity.UserAssignedIdentities {
+				fieldPath := field.NewPath("compute").Index(compIdx).Child("platform", "azure", "identity", "userAssignedIdentities").Index(idIdx)
+				if err := validateUserAssignedIdentity(client, &identity, fieldPath); err != nil {
+					allErrs = append(allErrs, err)
+				}
+			}
+		}
+	}
+
+	return allErrs
+}
+
+func validateUserAssignedIdentity(client API, identity *aztypes.UserAssignedIdentity, fieldPath *field.Path) *field.Error {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	err := client.GetUserAssignedIdentity(ctx, identity.Subscription, identity.ResourceGroup, identity.Name)
+	if err != nil {
+		errMsg := fmt.Sprintf("failed to validate user-assigned identity '%s' in resource group '%s': %v",
+			identity.Name, identity.ResourceGroup, err)
+		return field.Invalid(fieldPath, identity.Name, errMsg)
+	}
+	return nil
+}
+
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
 func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
@@ -667,6 +727,9 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig) error {
 	if ic.Azure.CloudName == aztypes.StackCloud {
 		allErrs = append(allErrs, checkAzureStackClusterOSImageSet(ic.Azure.ClusterOSImage, field.NewPath("platform").Child("azure"))...)
 	}
+
+	allErrs = append(allErrs, ValidateUserAssignedIdentities(client, ic)...)
+
 	return allErrs.ToAggregate()
 }
 
