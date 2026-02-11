@@ -122,6 +122,11 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 		})
 	}
 
+	ec2SvcPrincipal, err := getEC2ServicePrincipal(ic.AWS.Region)
+	if err != nil {
+		return fmt.Errorf("failed to get EC2 service principal for IAM roles: %w", err)
+	}
+
 	assumePolicy := &iamv1.PolicyDocument{
 		Version: "2012-10-17",
 		Statement: iamv1.Statements{
@@ -129,7 +134,7 @@ func createIAMRoles(ctx context.Context, infraID string, ic *installconfig.Insta
 				Effect: "Allow",
 				Principal: iamv1.Principals{
 					iamv1.PrincipalService: []string{
-						getPartitionDNSSuffix(ic.AWS.Region),
+						ec2SvcPrincipal,
 					},
 				},
 				Action: iamv1.Actions{
@@ -271,28 +276,31 @@ func getOrCreateIAMRole(ctx context.Context, nodeRole, infraID, assumePolicy str
 	return *roleName, nil
 }
 
-func getPartitionDNSSuffix(region string) string {
+func getEC2ServicePrincipal(region string) (string, error) {
 	endpoint, err := ec2.NewDefaultEndpointResolver().ResolveEndpoint(region, ec2.EndpointResolverOptions{})
 	if err != nil {
-		logrus.Errorf("failed to resolve AWS ec2 endpoint: %v", err)
-		return ""
+		return "", fmt.Errorf("failed to resolve AWS ec2 endpoint: %w", err)
 	}
 
 	u, err := url.Parse(endpoint.URL)
 	if err != nil {
-		logrus.Errorf("failed to parse partition ID URL: %v", err)
-		return ""
+		return "", fmt.Errorf("failed to parse partition ID URL: %w", err)
 	}
 
 	domain := "amazonaws.com"
-	// Extract the hostname
-	host := u.Hostname()
-	// Split the hostname by "." to get the domain parts
-	parts := strings.Split(host, ".")
-	if len(parts) > 2 {
-		domain = strings.Join(parts[2:], ".")
+	switch endpoint.PartitionID {
+	case awsconfig.AwsEuscPartitionID:
+		// AWS Europe Sovereign Cloud uses ec2.amazonaws.com as service principal
+	default:
+		// Extract the hostname
+		host := u.Hostname()
+		// Split the hostname by "." to get the domain parts
+		parts := strings.Split(host, ".")
+		if len(parts) > 2 {
+			domain = strings.Join(parts[2:], ".")
+		}
 	}
 
-	logrus.Debugf("Using domain name: %s", domain)
-	return fmt.Sprintf("ec2.%s", domain)
+	logrus.Debugf("Using domain name: %s for EC2 service principal ID", domain)
+	return fmt.Sprintf("ec2.%s", domain), nil
 }
