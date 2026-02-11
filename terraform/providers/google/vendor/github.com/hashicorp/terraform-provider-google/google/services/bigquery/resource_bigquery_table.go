@@ -517,7 +517,7 @@ func ResourceBigQueryTable() *schema.Resource {
 							Optional:    true,
 							Description: `Please see sourceFormat under ExternalDataConfiguration in Bigquery's public API documentation (https://cloud.google.com/bigquery/docs/reference/rest/v2/tables#externaldataconfiguration) for supported formats. To use "GOOGLE_SHEETS" the scopes must include "googleapis.com/auth/drive.readonly".`,
 							ValidateFunc: validation.StringInSlice([]string{
-								"CSV", "GOOGLE_SHEETS", "NEWLINE_DELIMITED_JSON", "AVRO", "ICEBERG", "DATASTORE_BACKUP", "PARQUET", "ORC", "BIGTABLE",
+								"CSV", "GOOGLE_SHEETS", "NEWLINE_DELIMITED_JSON", "AVRO", "ICEBERG", "DATASTORE_BACKUP", "PARQUET", "ORC", "BIGTABLE", "DELTA_LAKE",
 							}, false),
 						},
 						// SourceURIs [Required] The fully-qualified URIs that point to your data in Google Cloud.
@@ -887,6 +887,53 @@ func ResourceBigQueryTable() *schema.Resource {
 							Optional:      true,
 							Description:   `Object Metadata is used to create Object Tables. Object Tables contain a listing of objects (with their metadata) found at the sourceUris. If ObjectMetadata is set, sourceFormat should be omitted.`,
 							ConflictsWith: []string{"external_data_configuration.0.source_format"},
+						},
+					},
+				},
+			},
+
+			// BiglakeConfiguration [Optional] Specifies the configuration of a BigLake managed table.
+			"biglake_configuration": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				MaxItems:    1,
+				ForceNew:    true,
+				Description: "Specifies the configuration of a BigLake managed table.",
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						// ConnectionId: [Required] The connection specifying the credentials to be used to read
+						// and write to external storage, such as Cloud Storage. The connection_id can have the
+						// form "&lt;project\_id&gt;.&lt;location\_id&gt;.&lt;connection\_id&gt;" or
+						// "projects/&lt;project\_id&gt;/locations/&lt;location\_id&gt;/connections/&lt;connection\_id&gt;".
+						"connection_id": {
+							Type:             schema.TypeString,
+							Required:         true,
+							DiffSuppressFunc: bigQueryTableConnectionIdSuppress,
+							ForceNew:         true,
+							Description:      `The connection specifying the credentials to be used to read and write to external storage, such as Cloud Storage. The connection_id can have the form "&lt;project\_id&gt;.&lt;location\_id&gt;.&lt;connection\_id&gt;" or "projects/&lt;project\_id&gt;/locations/&lt;location\_id&gt;/connections/&lt;connection\_id&gt;".`,
+						},
+						// StorageUri: [Required] The fully qualified location prefix of the external folder where
+						// table data is stored. The '*' wildcard character is not allowed.
+						// The URI should be in the format "gs://bucket/path_to_table/"
+						"storage_uri": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: `The fully qualified location prefix of the external folder where table data is stored. The '*' wildcard character is not allowed. The URI should be in the format "gs://bucket/path_to_table/"`,
+						},
+						// FileFormat: [Required] The file format the data is stored in.
+						"file_format": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: "The file format the data is stored in.",
+						},
+						// TableFormat: [Required]
+						"table_format": {
+							Type:        schema.TypeString,
+							Required:    true,
+							ForceNew:    true,
+							Description: "The table format the metadata only snapshots are stored in.",
 						},
 					},
 				},
@@ -1401,6 +1448,12 @@ func ResourceBigQueryTable() *schema.Resource {
 					},
 				},
 			},
+			"resource_tags": {
+				Type:        schema.TypeMap,
+				Optional:    true,
+				Elem:        &schema.Schema{Type: schema.TypeString},
+				Description: `The tags attached to this table. Tag keys are globally unique. Tag key is expected to be in the namespaced format, for example "123456789012/environment" where 123456789012 is the ID of the parent organization or project resource for this tag key. Tag value is expected to be the short name, for example "Production".`,
+			},
 		},
 		UseJSONNumber: true,
 	}
@@ -1445,6 +1498,14 @@ func resourceTable(d *schema.ResourceData, meta interface{}) (*bigquery.Table, e
 		}
 
 		table.ExternalDataConfiguration = externalDataConfiguration
+	}
+
+	if v, ok := d.GetOk("biglake_configuration"); ok {
+		biglakeConfiguration, err := expandBigLakeConfiguration(v)
+		if err != nil {
+			return nil, err
+		}
+		table.BiglakeConfiguration = biglakeConfiguration
 	}
 
 	if v, ok := d.GetOk("friendly_name"); ok {
@@ -1515,6 +1576,8 @@ func resourceTable(d *schema.ResourceData, meta interface{}) (*bigquery.Table, e
 		table.TableConstraints = tableConstraints
 	}
 
+	table.ResourceTags = tpgresource.ExpandStringMap(d, "resource_tags")
+
 	return table, nil
 }
 
@@ -1578,6 +1641,9 @@ func resourceBigQueryTableCreate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	if table.View != nil && table.Schema != nil {
+		if schemaHasRequiredFields(table.Schema) {
+			return errors.New("Schema cannot contain required fields when creating a view")
+		}
 
 		log.Printf("[INFO] Removing schema from table definition because BigQuery does not support setting schema on view creation")
 		schemaBack := table.Schema
@@ -1732,6 +1798,17 @@ func resourceBigQueryTableRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	if res.BiglakeConfiguration != nil {
+		bigLakeConfiguration, err := flattenBigLakeConfiguration(res.BiglakeConfiguration)
+		if err != nil {
+			return err
+		}
+
+		if err := d.Set("biglake_configuration", bigLakeConfiguration); err != nil {
+			return fmt.Errorf("Error setting biglake_configuration: %s", err)
+		}
+	}
+
 	if res.TimePartitioning != nil {
 		if err := d.Set("time_partitioning", flattenTimePartitioning(res.TimePartitioning, use_old_rpf)); err != nil {
 			return err
@@ -1788,6 +1865,10 @@ func resourceBigQueryTableRead(d *schema.ResourceData, meta interface{}) error {
 		}
 	}
 
+	if err := d.Set("resource_tags", res.ResourceTags); err != nil {
+		return fmt.Errorf("Error setting resource tags: %s", err)
+	}
+
 	// TODO: Update when the Get API fields for TableReplicationInfo are available in the client library.
 	url, err := tpgresource.ReplaceVars(d, config, "{{BigQueryBasePath}}projects/{{project}}/datasets/{{dataset_id}}/tables/{{table_id}}")
 	if err != nil {
@@ -1833,6 +1914,11 @@ func resourceBigQueryTableUpdate(d *schema.ResourceData, meta interface{}) error
 	table, err := resourceTable(d, meta)
 	if err != nil {
 		return err
+	}
+
+	if table.ExternalDataConfiguration != nil && table.ExternalDataConfiguration.Schema != nil {
+		log.Printf("[INFO] Removing ExternalDataConfiguration.Schema when updating BigQuery table %s", d.Id())
+		table.ExternalDataConfiguration.Schema = nil
 	}
 
 	log.Printf("[INFO] Updating BigQuery table: %s", d.Id())
@@ -1909,6 +1995,7 @@ func resourceBigQueryTableDelete(d *schema.ResourceData, meta interface{}) error
 	if d.Get("deletion_protection").(bool) {
 		return fmt.Errorf("cannot destroy table %v without setting deletion_protection=false and running `terraform apply`", d.Id())
 	}
+
 	config := meta.(*transport_tpg.Config)
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
 	if err != nil {
@@ -2520,6 +2607,15 @@ func setEmptyPolicyTagsInSchema(field *bigquery.TableFieldSchema) {
 	}
 }
 
+func schemaHasRequiredFields(schema *bigquery.TableSchema) bool {
+	for _, field := range schema.Fields {
+		if "REQUIRED" == field.Mode {
+			return true
+		}
+	}
+	return false
+}
+
 func expandTimePartitioning(configured interface{}) *bigquery.TimePartitioning {
 	raw := configured.([]interface{})[0].(map[string]interface{})
 	tp := &bigquery.TimePartitioning{Type: raw["type"].(string)}
@@ -2674,6 +2770,41 @@ func flattenMaterializedView(mvd *bigquery.MaterializedViewDefinition) []map[str
 	result["allow_non_incremental_definition"] = mvd.AllowNonIncrementalDefinition
 
 	return []map[string]interface{}{result}
+}
+
+func flattenBigLakeConfiguration(blc *bigquery.BigLakeConfiguration) ([]map[string]interface{}, error) {
+	result := map[string]interface{}{}
+
+	result["connection_id"] = blc.ConnectionId
+	result["storage_uri"] = blc.StorageUri
+	result["file_format"] = blc.FileFormat
+	result["table_format"] = blc.TableFormat
+
+	return []map[string]interface{}{result}, nil
+}
+
+func expandBigLakeConfiguration(cfg interface{}) (*bigquery.BigLakeConfiguration, error) {
+	raw := cfg.([]interface{})[0].(map[string]interface{})
+
+	blc := &bigquery.BigLakeConfiguration{}
+
+	if v, ok := raw["connection_id"]; ok {
+		blc.ConnectionId = v.(string)
+	}
+
+	if v, ok := raw["storage_uri"]; ok {
+		blc.StorageUri = v.(string)
+	}
+
+	if v, ok := raw["file_format"]; ok {
+		blc.FileFormat = v.(string)
+	}
+
+	if v, ok := raw["table_format"]; ok {
+		blc.TableFormat = v.(string)
+	}
+
+	return blc, nil
 }
 
 func expandPrimaryKey(configured interface{}) *bigquery.TableConstraintsPrimaryKey {

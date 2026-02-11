@@ -99,7 +99,9 @@ components:
             workload. Possible values: COMPLIANCE_REGIME_UNSPECIFIED, IL4, CJIS, FEDRAMP_HIGH,
             FEDRAMP_MODERATE, US_REGIONAL_ACCESS, HIPAA, HITRUST, EU_REGIONS_AND_SUPPORT,
             CA_REGIONS_AND_SUPPORT, ITAR, AU_REGIONS_AND_US_SUPPORT, ASSURED_WORKLOADS_FOR_PARTNERS,
-            ISR_REGIONS, ISR_REGIONS_AND_SUPPORT, CA_PROTECTED_B, IL5, IL2, JP_REGIONS_AND_SUPPORT'
+            ISR_REGIONS, ISR_REGIONS_AND_SUPPORT, CA_PROTECTED_B, IL5, IL2, JP_REGIONS_AND_SUPPORT,
+            KSA_REGIONS_AND_SUPPORT_WITH_SOVEREIGNTY_CONTROLS, REGIONAL_CONTROLS,
+            HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS, HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS_WITH_US_SUPPORT'
           x-kubernetes-immutable: true
           enum:
           - COMPLIANCE_REGIME_UNSPECIFIED
@@ -121,6 +123,10 @@ components:
           - IL5
           - IL2
           - JP_REGIONS_AND_SUPPORT
+          - KSA_REGIONS_AND_SUPPORT_WITH_SOVEREIGNTY_CONTROLS
+          - REGIONAL_CONTROLS
+          - HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS
+          - HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS_WITH_US_SUPPORT
         complianceStatus:
           type: object
           x-dcl-go-name: ComplianceStatus
@@ -312,7 +318,8 @@ components:
           x-dcl-go-type: WorkloadPartnerEnum
           description: 'Optional. Partner regime associated with this workload. Possible
             values: PARTNER_UNSPECIFIED, LOCAL_CONTROLS_BY_S3NS, SOVEREIGN_CONTROLS_BY_T_SYSTEMS,
-            SOVEREIGN_CONTROLS_BY_SIA_MINSAIT, SOVEREIGN_CONTROLS_BY_PSN'
+            SOVEREIGN_CONTROLS_BY_SIA_MINSAIT, SOVEREIGN_CONTROLS_BY_PSN, SOVEREIGN_CONTROLS_BY_CNTXT,
+            SOVEREIGN_CONTROLS_BY_CNTXT_NO_EKM'
           x-kubernetes-immutable: true
           enum:
           - PARTNER_UNSPECIFIED
@@ -320,6 +327,8 @@ components:
           - SOVEREIGN_CONTROLS_BY_T_SYSTEMS
           - SOVEREIGN_CONTROLS_BY_SIA_MINSAIT
           - SOVEREIGN_CONTROLS_BY_PSN
+          - SOVEREIGN_CONTROLS_BY_CNTXT
+          - SOVEREIGN_CONTROLS_BY_CNTXT_NO_EKM
         partnerPermissions:
           type: object
           x-dcl-go-name: PartnerPermissions
@@ -344,6 +353,15 @@ components:
               x-dcl-go-name: ServiceAccessApprover
               description: Optional. Allow partner to view access approval logs.
               x-kubernetes-immutable: true
+        partnerServicesBillingAccount:
+          type: string
+          x-dcl-go-name: PartnerServicesBillingAccount
+          description: Optional. Input only. Billing account necessary for purchasing
+            services from Sovereign Partners. This field is required for creating
+            SIA/PSN/CNTXT partner workloads. The caller should have 'billing.resourceAssociations.create'
+            IAM permission on this billing-account. The format of this string is billingAccounts/AAAAAA-BBBBBB-CCCCCC.
+          x-kubernetes-immutable: true
+          x-dcl-mutable-unreadable: true
         provisionedResourcesParent:
           type: string
           x-dcl-go-name: ProvisionedResourcesParent
@@ -476,3 +494,28 @@ components:
             call will not be honored. This will always be true while creating the
             workload.
           x-kubernetes-immutable: true
+        workloadOptions:
+          type: object
+          x-dcl-go-name: WorkloadOptions
+          x-dcl-go-type: WorkloadWorkloadOptions
+          description: Optional. Used to specify certain options for a workload during
+            workload creation - currently only supporting KAT Optionality for Regional
+            Controls workloads.
+          x-kubernetes-immutable: true
+          x-dcl-mutable-unreadable: true
+          properties:
+            kajEnrollmentType:
+              type: string
+              x-dcl-go-name: KajEnrollmentType
+              x-dcl-go-type: WorkloadWorkloadOptionsKajEnrollmentTypeEnum
+              description: 'Indicates type of KAJ enrollment for the workload. Currently,
+                only specifiying KEY_ACCESS_TRANSPARENCY_OFF is implemented to not
+                enroll in KAT-level KAJ enrollment for Regional Controls workloads.
+                Possible values: KAJ_ENROLLMENT_TYPE_UNSPECIFIED, FULL_KAJ, EKM_ONLY,
+                KEY_ACCESS_TRANSPARENCY_OFF'
+              x-kubernetes-immutable: true
+              enum:
+              - KAJ_ENROLLMENT_TYPE_UNSPECIFIED
+              - FULL_KAJ
+              - EKM_ONLY
+              - KEY_ACCESS_TRANSPARENCY_OFF

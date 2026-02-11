@@ -32,6 +32,7 @@ import (
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
+	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
 func comparePubsubSubscriptionExpirationPolicy(_, old, new string, _ *schema.ResourceData) bool {
@@ -202,6 +203,11 @@ If all three are empty, then the subscriber will pull and ack messages using API
 							MaxItems:    1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"use_topic_schema": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `When true, the output Cloud Storage file will be serialized using the topic schema, if it exists.`,
+									},
 									"write_metadata": {
 										Type:        schema.TypeBool,
 										Optional:    true,
@@ -238,6 +244,11 @@ The maxBytes limit may be exceeded in cases where messages are larger than the l
 May not exceed the subscription's acknowledgement deadline.
 A duration in seconds with up to nine fractional digits, ending with 's'. Example: "3.5s".`,
 							Default: "300s",
+						},
+						"max_messages": {
+							Type:        schema.TypeInt,
+							Optional:    true,
+							Description: `The maximum messages that can be written to a Cloud Storage file before a new file is created. Min 1000 messages.`,
 						},
 						"service_account_email": {
 							Type:     schema.TypeString,
@@ -352,9 +363,10 @@ Example - "3.5s".`,
 				},
 			},
 			"filter": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: verify.ValidateRegexp(`^[\s\S]{0,256}$`),
 				Description: `The subscription only delivers the messages that match the filter.
 Pub/Sub automatically acknowledges the messages that don't match the filter. You can filter messages
 by their attributes. The maximum length of a filter is 256 bytes. After creating the subscription,
@@ -378,7 +390,7 @@ backlog, from the moment a message is published. If
 retain_acked_messages is true, then this also configures the retention
 of acknowledged messages, and thus configures how far back in time a
 subscriptions.seek can be done. Defaults to 7 days. Cannot be more
-than 7 days ('"604800s"') or less than 10 minutes ('"600s"').
+than 31 days ('"2678400s"') or less than 10 minutes ('"600s"').
 
 A duration in seconds with up to nine fractional digits, terminated
 by 's'. Example: '"600.5s"'.`,
@@ -618,7 +630,7 @@ func resourcePubsubSubscriptionCreate(d *schema.ResourceData, meta interface{}) 
 	retryPolicyProp, err := expandPubsubSubscriptionRetryPolicy(d.Get("retry_policy"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("retry_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(retryPolicyProp)) && (ok || !reflect.DeepEqual(v, retryPolicyProp)) {
+	} else if v, ok := d.GetOkExists("retry_policy"); ok || !reflect.DeepEqual(v, retryPolicyProp) {
 		obj["retryPolicy"] = retryPolicyProp
 	}
 	enableMessageOrderingProp, err := expandPubsubSubscriptionEnableMessageOrdering(d.Get("enable_message_ordering"), d, config)
@@ -902,7 +914,7 @@ func resourcePubsubSubscriptionUpdate(d *schema.ResourceData, meta interface{}) 
 	retryPolicyProp, err := expandPubsubSubscriptionRetryPolicy(d.Get("retry_policy"), d, config)
 	if err != nil {
 		return err
-	} else if v, ok := d.GetOkExists("retry_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, retryPolicyProp)) {
+	} else if v, ok := d.GetOkExists("retry_policy"); ok || !reflect.DeepEqual(v, retryPolicyProp) {
 		obj["retryPolicy"] = retryPolicyProp
 	}
 	enableExactlyOnceDeliveryProp, err := expandPubsubSubscriptionEnableExactlyOnceDelivery(d.Get("enable_exactly_once_delivery"), d, config)
@@ -1176,6 +1188,8 @@ func flattenPubsubSubscriptionCloudStorageConfig(v interface{}, d *schema.Resour
 		flattenPubsubSubscriptionCloudStorageConfigMaxDuration(original["maxDuration"], d, config)
 	transformed["max_bytes"] =
 		flattenPubsubSubscriptionCloudStorageConfigMaxBytes(original["maxBytes"], d, config)
+	transformed["max_messages"] =
+		flattenPubsubSubscriptionCloudStorageConfigMaxMessages(original["maxMessages"], d, config)
 	transformed["state"] =
 		flattenPubsubSubscriptionCloudStorageConfigState(original["state"], d, config)
 	transformed["avro_config"] =
@@ -1221,6 +1235,23 @@ func flattenPubsubSubscriptionCloudStorageConfigMaxBytes(v interface{}, d *schem
 	return v // let terraform core handle it otherwise
 }
 
+func flattenPubsubSubscriptionCloudStorageConfigMaxMessages(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
 func flattenPubsubSubscriptionCloudStorageConfigState(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -1236,9 +1267,15 @@ func flattenPubsubSubscriptionCloudStorageConfigAvroConfig(v interface{}, d *sch
 	transformed := make(map[string]interface{})
 	transformed["write_metadata"] =
 		flattenPubsubSubscriptionCloudStorageConfigAvroConfigWriteMetadata(original["writeMetadata"], d, config)
+	transformed["use_topic_schema"] =
+		flattenPubsubSubscriptionCloudStorageConfigAvroConfigUseTopicSchema(original["useTopicSchema"], d, config)
 	return []interface{}{transformed}
 }
 func flattenPubsubSubscriptionCloudStorageConfigAvroConfigWriteMetadata(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenPubsubSubscriptionCloudStorageConfigAvroConfigUseTopicSchema(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1397,9 +1434,6 @@ func flattenPubsubSubscriptionRetryPolicy(v interface{}, d *schema.ResourceData,
 		return nil
 	}
 	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
 	transformed := make(map[string]interface{})
 	transformed["minimum_backoff"] =
 		flattenPubsubSubscriptionRetryPolicyMinimumBackoff(original["minimumBackoff"], d, config)
@@ -1597,6 +1631,13 @@ func expandPubsubSubscriptionCloudStorageConfig(v interface{}, d tpgresource.Ter
 		transformed["maxBytes"] = transformedMaxBytes
 	}
 
+	transformedMaxMessages, err := expandPubsubSubscriptionCloudStorageConfigMaxMessages(original["max_messages"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMaxMessages); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["maxMessages"] = transformedMaxMessages
+	}
+
 	transformedState, err := expandPubsubSubscriptionCloudStorageConfigState(original["state"], d, config)
 	if err != nil {
 		return nil, err
@@ -1645,6 +1686,10 @@ func expandPubsubSubscriptionCloudStorageConfigMaxBytes(v interface{}, d tpgreso
 	return v, nil
 }
 
+func expandPubsubSubscriptionCloudStorageConfigMaxMessages(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandPubsubSubscriptionCloudStorageConfigState(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -1665,10 +1710,21 @@ func expandPubsubSubscriptionCloudStorageConfigAvroConfig(v interface{}, d tpgre
 		transformed["writeMetadata"] = transformedWriteMetadata
 	}
 
+	transformedUseTopicSchema, err := expandPubsubSubscriptionCloudStorageConfigAvroConfigUseTopicSchema(original["use_topic_schema"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedUseTopicSchema); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["useTopicSchema"] = transformedUseTopicSchema
+	}
+
 	return transformed, nil
 }
 
 func expandPubsubSubscriptionCloudStorageConfigAvroConfigWriteMetadata(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandPubsubSubscriptionCloudStorageConfigAvroConfigUseTopicSchema(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -1868,8 +1924,13 @@ func expandPubsubSubscriptionDeadLetterPolicyMaxDeliveryAttempts(v interface{}, 
 
 func expandPubsubSubscriptionRetryPolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
+	if len(l) == 0 {
 		return nil, nil
+	}
+
+	if l[0] == nil {
+		transformed := make(map[string]interface{})
+		return transformed, nil
 	}
 	raw := l[0]
 	original := raw.(map[string]interface{})

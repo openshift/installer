@@ -324,10 +324,22 @@ type ProjectsLocationsDatasetsDicomStoresDicomWebStudiesService struct {
 
 func NewProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesService(s *Service) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesService {
 	rs := &ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesService{s: s}
+	rs.Instances = NewProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesService(s)
 	return rs
 }
 
 type ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesService struct {
+	s *Service
+
+	Instances *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesService
+}
+
+func NewProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesService(s *Service) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesService {
+	rs := &ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesService{s: s}
+	return rs
+}
+
+type ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesService struct {
 	s *Service
 }
 
@@ -477,9 +489,9 @@ type ActivateConsentRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ActivateConsentRequest) MarshalJSON() ([]byte, error) {
+func (s ActivateConsentRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod ActivateConsentRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // AnalyzeEntitiesRequest: The request to analyze healthcare entities in a
@@ -516,9 +528,9 @@ type AnalyzeEntitiesRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *AnalyzeEntitiesRequest) MarshalJSON() ([]byte, error) {
+func (s AnalyzeEntitiesRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod AnalyzeEntitiesRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // AnalyzeEntitiesResponse: Includes recognized entity mentions and
@@ -554,9 +566,9 @@ type AnalyzeEntitiesResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *AnalyzeEntitiesResponse) MarshalJSON() ([]byte, error) {
+func (s AnalyzeEntitiesResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod AnalyzeEntitiesResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ArchiveUserDataMappingRequest: Archives the specified User data mapping.
@@ -595,9 +607,9 @@ type Attribute struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Attribute) MarshalJSON() ([]byte, error) {
+func (s Attribute) MarshalJSON() ([]byte, error) {
 	type NoMethod Attribute
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // AttributeDefinition: A client-defined consent attribute.
@@ -648,9 +660,9 @@ type AttributeDefinition struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *AttributeDefinition) MarshalJSON() ([]byte, error) {
+func (s AttributeDefinition) MarshalJSON() ([]byte, error) {
 	type NoMethod AttributeDefinition
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // AuditConfig: Specifies the audit configuration for a service. The
@@ -689,9 +701,9 @@ type AuditConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *AuditConfig) MarshalJSON() ([]byte, error) {
+func (s AuditConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod AuditConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // AuditLogConfig: Provides the configuration for logging a type of
@@ -724,9 +736,9 @@ type AuditLogConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *AuditLogConfig) MarshalJSON() ([]byte, error) {
+func (s AuditLogConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod AuditLogConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Binding: Associates `members`, or principals, with a `role`.
@@ -823,9 +835,86 @@ type Binding struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Binding) MarshalJSON() ([]byte, error) {
+func (s Binding) MarshalJSON() ([]byte, error) {
 	type NoMethod Binding
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// BlobStorageInfo: BlobStorageInfo contains details about the data stored in
+// Blob Storage for the referenced resource. Note: Storage class is only valid
+// for DICOM and hence will only be populated for DICOM resources.
+type BlobStorageInfo struct {
+	// SizeBytes: Size in bytes of data stored in Blob Storage.
+	SizeBytes int64 `json:"sizeBytes,omitempty,string"`
+	// StorageClass: The storage class in which the Blob data is stored.
+	//
+	// Possible values:
+	//   "BLOB_STORAGE_CLASS_UNSPECIFIED" - If unspecified in CreateDataset, the
+	// StorageClass defaults to STANDARD. If unspecified in UpdateDataset and the
+	// StorageClass is set in the field mask, an InvalidRequest error is thrown.
+	//   "STANDARD" - This stores the Object in Blob Standard Storage:
+	// https://cloud.google.com/storage/docs/storage-classes#standard
+	//   "NEARLINE" - This stores the Object in Blob Nearline Storage:
+	// https://cloud.google.com/storage/docs/storage-classes#nearline
+	//   "COLDLINE" - This stores the Object in Blob Coldline Storage:
+	// https://cloud.google.com/storage/docs/storage-classes#coldline
+	//   "ARCHIVE" - This stores the Object in Blob Archive Storage:
+	// https://cloud.google.com/storage/docs/storage-classes#archive
+	StorageClass string `json:"storageClass,omitempty"`
+	// StorageClassUpdateTime: The time at which the storage class was updated.
+	// This is used to compute early deletion fees of the resource.
+	StorageClassUpdateTime string `json:"storageClassUpdateTime,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "SizeBytes") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "SizeBytes") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s BlobStorageInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod BlobStorageInfo
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// BlobStorageSettings: Settings for data stored in Blob storage.
+type BlobStorageSettings struct {
+	// BlobStorageClass: The Storage class in which the Blob data is stored.
+	//
+	// Possible values:
+	//   "BLOB_STORAGE_CLASS_UNSPECIFIED" - If unspecified in CreateDataset, the
+	// StorageClass defaults to STANDARD. If unspecified in UpdateDataset and the
+	// StorageClass is set in the field mask, an InvalidRequest error is thrown.
+	//   "STANDARD" - This stores the Object in Blob Standard Storage:
+	// https://cloud.google.com/storage/docs/storage-classes#standard
+	//   "NEARLINE" - This stores the Object in Blob Nearline Storage:
+	// https://cloud.google.com/storage/docs/storage-classes#nearline
+	//   "COLDLINE" - This stores the Object in Blob Coldline Storage:
+	// https://cloud.google.com/storage/docs/storage-classes#coldline
+	//   "ARCHIVE" - This stores the Object in Blob Archive Storage:
+	// https://cloud.google.com/storage/docs/storage-classes#archive
+	BlobStorageClass string `json:"blobStorageClass,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "BlobStorageClass") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "BlobStorageClass") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s BlobStorageSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod BlobStorageSettings
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // CancelOperationRequest: The request message for Operations.CancelOperation.
@@ -851,9 +940,9 @@ type CharacterMaskConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CharacterMaskConfig) MarshalJSON() ([]byte, error) {
+func (s CharacterMaskConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod CharacterMaskConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // CheckDataAccessRequest: Checks if a particular data_id of a User data
@@ -900,9 +989,9 @@ type CheckDataAccessRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CheckDataAccessRequest) MarshalJSON() ([]byte, error) {
+func (s CheckDataAccessRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod CheckDataAccessRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // CheckDataAccessResponse: Checks if a particular data_id of a User data
@@ -929,9 +1018,9 @@ type CheckDataAccessResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CheckDataAccessResponse) MarshalJSON() ([]byte, error) {
+func (s CheckDataAccessResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod CheckDataAccessResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Consent: Represents a user's consent.
@@ -1004,9 +1093,9 @@ type Consent struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Consent) MarshalJSON() ([]byte, error) {
+func (s Consent) MarshalJSON() ([]byte, error) {
 	type NoMethod Consent
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ConsentArtifact: Documentation of a user's consent.
@@ -1049,9 +1138,9 @@ type ConsentArtifact struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ConsentArtifact) MarshalJSON() ([]byte, error) {
+func (s ConsentArtifact) MarshalJSON() ([]byte, error) {
 	type NoMethod ConsentArtifact
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ConsentEvaluation: The detailed evaluation of a particular Consent.
@@ -1087,9 +1176,9 @@ type ConsentEvaluation struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ConsentEvaluation) MarshalJSON() ([]byte, error) {
+func (s ConsentEvaluation) MarshalJSON() ([]byte, error) {
 	type NoMethod ConsentEvaluation
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ConsentList: List of resource names of Consent resources.
@@ -1112,9 +1201,9 @@ type ConsentList struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ConsentList) MarshalJSON() ([]byte, error) {
+func (s ConsentList) MarshalJSON() ([]byte, error) {
 	type NoMethod ConsentList
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ConsentStore: Represents a consent store.
@@ -1156,9 +1245,9 @@ type ConsentStore struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ConsentStore) MarshalJSON() ([]byte, error) {
+func (s ConsentStore) MarshalJSON() ([]byte, error) {
 	type NoMethod ConsentStore
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // CreateMessageRequest: Creates a new message.
@@ -1178,9 +1267,9 @@ type CreateMessageRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CreateMessageRequest) MarshalJSON() ([]byte, error) {
+func (s CreateMessageRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod CreateMessageRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // CryptoHashConfig: Pseudonymization method that generates surrogates via
@@ -1208,9 +1297,9 @@ type CryptoHashConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *CryptoHashConfig) MarshalJSON() ([]byte, error) {
+func (s CryptoHashConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod CryptoHashConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Dataset: A message representing a health dataset. A health dataset
@@ -1218,33 +1307,38 @@ func (s *CryptoHashConfig) MarshalJSON() ([]byte, error) {
 // patients. This may include multiple modalities of healthcare data, such as
 // electronic medical records or medical imaging data.
 type Dataset struct {
+	// EncryptionSpec: Optional. Customer-managed encryption key spec for a
+	// Dataset. If set, this Dataset and all of its sub-resources will be secured
+	// by this key. If empty, the Dataset is secured by the default Google
+	// encryption key.
+	EncryptionSpec *EncryptionSpec `json:"encryptionSpec,omitempty"`
 	// Name: Identifier. Resource name of the dataset, of the form
 	// `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}`.
 	Name string `json:"name,omitempty"`
-	// TimeZone: The default timezone used by this dataset. Must be a either a
-	// valid IANA time zone name such as "America/New_York" or empty, which
-	// defaults to UTC. This is used for parsing times in resources, such as HL7
-	// messages, where no explicit timezone is specified.
+	// TimeZone: Optional. The default timezone used by this dataset. Must be a
+	// either a valid IANA time zone name such as "America/New_York" or empty,
+	// which defaults to UTC. This is used for parsing times in resources, such as
+	// HL7 messages, where no explicit timezone is specified.
 	TimeZone string `json:"timeZone,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
-	// ForceSendFields is a list of field names (e.g. "Name") to unconditionally
-	// include in API requests. By default, fields with empty or default values are
-	// omitted from API requests. See
+	// ForceSendFields is a list of field names (e.g. "EncryptionSpec") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "Name") to include in API requests
-	// with the JSON null value. By default, fields with empty values are omitted
-	// from API requests. See
+	// NullFields is a list of field names (e.g. "EncryptionSpec") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
 	NullFields []string `json:"-"`
 }
 
-func (s *Dataset) MarshalJSON() ([]byte, error) {
+func (s Dataset) MarshalJSON() ([]byte, error) {
 	type NoMethod Dataset
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DateShiftConfig: Shift a date forward or backward in time by a random amount
@@ -1275,9 +1369,9 @@ type DateShiftConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DateShiftConfig) MarshalJSON() ([]byte, error) {
+func (s DateShiftConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod DateShiftConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DeidentifiedStoreDestination: Contains configuration for streaming
@@ -1303,9 +1397,9 @@ type DeidentifiedStoreDestination struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DeidentifiedStoreDestination) MarshalJSON() ([]byte, error) {
+func (s DeidentifiedStoreDestination) MarshalJSON() ([]byte, error) {
 	type NoMethod DeidentifiedStoreDestination
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DeidentifyConfig: Configures de-id options specific to different types of
@@ -1324,11 +1418,11 @@ type DeidentifyConfig struct {
 	// source_dataset.
 	Text *TextConfig `json:"text,omitempty"`
 	// UseRegionalDataProcessing: Ensures in-flight data remains in the region of
-	// origin during de-identification. Using this option results in a significant
-	// reduction of throughput, and is not compatible with `LOCATION` or
-	// `ORGANIZATION_NAME` infoTypes. `LOCATION` must be excluded within
-	// TextConfig, and must also be excluded within ImageConfig if image redaction
-	// is required.
+	// origin during de-identification. The default value is false. Using this
+	// option results in a significant reduction of throughput, and is not
+	// compatible with `LOCATION` or `ORGANIZATION_NAME` infoTypes. `LOCATION` must
+	// be excluded within TextConfig, and must also be excluded within ImageConfig
+	// if image redaction is required.
 	UseRegionalDataProcessing bool `json:"useRegionalDataProcessing,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "Dicom") to unconditionally
 	// include in API requests. By default, fields with empty or default values are
@@ -1343,9 +1437,9 @@ type DeidentifyConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DeidentifyConfig) MarshalJSON() ([]byte, error) {
+func (s DeidentifyConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod DeidentifyConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DeidentifyDatasetRequest: Redacts identifying information from the specified
@@ -1379,9 +1473,9 @@ type DeidentifyDatasetRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DeidentifyDatasetRequest) MarshalJSON() ([]byte, error) {
+func (s DeidentifyDatasetRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod DeidentifyDatasetRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DeidentifyDicomStoreRequest: Creates a new DICOM store with sensitive
@@ -1421,9 +1515,9 @@ type DeidentifyDicomStoreRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DeidentifyDicomStoreRequest) MarshalJSON() ([]byte, error) {
+func (s DeidentifyDicomStoreRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod DeidentifyDicomStoreRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DeidentifyFhirStoreRequest: Creates a new FHIR store with sensitive
@@ -1468,9 +1562,9 @@ type DeidentifyFhirStoreRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DeidentifyFhirStoreRequest) MarshalJSON() ([]byte, error) {
+func (s DeidentifyFhirStoreRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod DeidentifyFhirStoreRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DeidentifySummary: Contains a summary of the Deidentify operation.
@@ -1524,9 +1618,9 @@ type DicomConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DicomConfig) MarshalJSON() ([]byte, error) {
+func (s DicomConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod DicomConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DicomFilterConfig: Specifies the filter configuration for DICOM resources.
@@ -1552,9 +1646,9 @@ type DicomFilterConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DicomFilterConfig) MarshalJSON() ([]byte, error) {
+func (s DicomFilterConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod DicomFilterConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DicomStore: Represents a DICOM store.
@@ -1572,8 +1666,8 @@ type DicomStore struct {
 	// `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/dicomSto
 	// res/{dicom_store_id}`.
 	Name string `json:"name,omitempty"`
-	// NotificationConfig: Notification destination for new DICOM instances.
-	// Supplied by the client.
+	// NotificationConfig: Optional. Notification destination for new DICOM
+	// instances. Supplied by the client.
 	NotificationConfig *NotificationConfig `json:"notificationConfig,omitempty"`
 	// StreamConfigs: Optional. A list of streaming configs used to configure the
 	// destination of streaming exports for every DICOM instance insertion in this
@@ -1598,9 +1692,9 @@ type DicomStore struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DicomStore) MarshalJSON() ([]byte, error) {
+func (s DicomStore) MarshalJSON() ([]byte, error) {
 	type NoMethod DicomStore
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // DicomStoreMetrics: DicomStoreMetrics contains metrics describing a DICOM
@@ -1638,9 +1732,9 @@ type DicomStoreMetrics struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *DicomStoreMetrics) MarshalJSON() ([]byte, error) {
+func (s DicomStoreMetrics) MarshalJSON() ([]byte, error) {
 	type NoMethod DicomStoreMetrics
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Empty: A generic empty message that you can re-use to avoid defining
@@ -1650,6 +1744,33 @@ func (s *DicomStoreMetrics) MarshalJSON() ([]byte, error) {
 type Empty struct {
 	// ServerResponse contains the HTTP response code and headers from the server.
 	googleapi.ServerResponse `json:"-"`
+}
+
+// EncryptionSpec: Represents a customer-managed encryption key spec that can
+// be applied to a resource.
+type EncryptionSpec struct {
+	// KmsKeyName: Required. The resource name of customer-managed encryption key
+	// that is used to secure a resource and its sub-resources. Only the key in the
+	// same location as this Dataset is allowed to be used for encryption. Format
+	// is:
+	// `projects/{project}/locations/{location}/keyRings/{keyRing}/cryptoKeys/{key}`
+	KmsKeyName string `json:"kmsKeyName,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "KmsKeyName") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "KmsKeyName") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s EncryptionSpec) MarshalJSON() ([]byte, error) {
+	type NoMethod EncryptionSpec
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Entity: The candidate entities that an entity mention could link to.
@@ -1681,9 +1802,9 @@ type Entity struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Entity) MarshalJSON() ([]byte, error) {
+func (s Entity) MarshalJSON() ([]byte, error) {
 	type NoMethod Entity
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // EntityMention: An entity mention in the document.
@@ -1732,9 +1853,9 @@ type EntityMention struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *EntityMention) MarshalJSON() ([]byte, error) {
+func (s EntityMention) MarshalJSON() ([]byte, error) {
 	type NoMethod EntityMention
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 func (s *EntityMention) UnmarshalJSON(data []byte) error {
@@ -1774,9 +1895,9 @@ type EntityMentionRelationship struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *EntityMentionRelationship) MarshalJSON() ([]byte, error) {
+func (s EntityMentionRelationship) MarshalJSON() ([]byte, error) {
 	type NoMethod EntityMentionRelationship
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 func (s *EntityMentionRelationship) UnmarshalJSON(data []byte) error {
@@ -1846,9 +1967,9 @@ type EvaluateUserConsentsRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *EvaluateUserConsentsRequest) MarshalJSON() ([]byte, error) {
+func (s EvaluateUserConsentsRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod EvaluateUserConsentsRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type EvaluateUserConsentsResponse struct {
@@ -1874,9 +1995,9 @@ type EvaluateUserConsentsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *EvaluateUserConsentsResponse) MarshalJSON() ([]byte, error) {
+func (s EvaluateUserConsentsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod EvaluateUserConsentsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ExportDicomDataRequest: Exports data from the specified DICOM store. If a
@@ -1908,9 +2029,9 @@ type ExportDicomDataRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ExportDicomDataRequest) MarshalJSON() ([]byte, error) {
+func (s ExportDicomDataRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod ExportDicomDataRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ExportDicomDataResponse: Returns additional information in regards to a
@@ -1991,9 +2112,9 @@ type ExportMessagesRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ExportMessagesRequest) MarshalJSON() ([]byte, error) {
+func (s ExportMessagesRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod ExportMessagesRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ExportMessagesResponse: Final response for the export operation. This
@@ -2036,9 +2157,9 @@ type ExportResourcesRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ExportResourcesRequest) MarshalJSON() ([]byte, error) {
+func (s ExportResourcesRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod ExportResourcesRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ExportResourcesResponse: Response when all resources export successfully.
@@ -2090,9 +2211,9 @@ type Expr struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Expr) MarshalJSON() ([]byte, error) {
+func (s Expr) MarshalJSON() ([]byte, error) {
 	type NoMethod Expr
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Feature: A feature of an entity mention.
@@ -2116,9 +2237,9 @@ type Feature struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Feature) MarshalJSON() ([]byte, error) {
+func (s Feature) MarshalJSON() ([]byte, error) {
 	type NoMethod Feature
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 func (s *Feature) UnmarshalJSON(data []byte) error {
@@ -2160,9 +2281,9 @@ type FhirConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FhirConfig) MarshalJSON() ([]byte, error) {
+func (s FhirConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod FhirConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // FhirFilter: Filter configuration.
@@ -2183,16 +2304,16 @@ type FhirFilter struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FhirFilter) MarshalJSON() ([]byte, error) {
+func (s FhirFilter) MarshalJSON() ([]byte, error) {
 	type NoMethod FhirFilter
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // FhirNotificationConfig: Contains the configuration for FHIR notifications.
 type FhirNotificationConfig struct {
-	// PubsubTopic: The Pub/Sub (https://cloud.google.com/pubsub/docs/) topic that
-	// notifications of changes are published on. Supplied by the client. The
-	// notification is a `PubsubMessage` with the following fields: *
+	// PubsubTopic: Optional. The Pub/Sub (https://cloud.google.com/pubsub/docs/)
+	// topic that notifications of changes are published on. Supplied by the
+	// client. The notification is a `PubsubMessage` with the following fields: *
 	// `PubsubMessage.Data` contains the resource name. * `PubsubMessage.MessageId`
 	// is the ID of this notification. It is guaranteed to be unique within the
 	// topic. * `PubsubMessage.PublishTime` is the time when the message was
@@ -2207,15 +2328,17 @@ type FhirNotificationConfig struct {
 	// Logging. For more information, see Viewing error logs in Cloud Logging
 	// (https://cloud.google.com/healthcare-api/docs/how-tos/logging).
 	PubsubTopic string `json:"pubsubTopic,omitempty"`
-	// SendFullResource: Whether to send full FHIR resource to this Pub/Sub topic.
+	// SendFullResource: Optional. Whether to send full FHIR resource to this
+	// Pub/Sub topic. The default value is false.
 	SendFullResource bool `json:"sendFullResource,omitempty"`
-	// SendPreviousResourceOnDelete: Whether to send full FHIR resource to this
-	// Pub/Sub topic for deleting FHIR resource. Note that setting this to true
-	// does not guarantee that all previous resources will be sent in the format of
-	// full FHIR resource. When a resource change is too large or during heavy
-	// traffic, only the resource name will be sent. Clients should always check
-	// the "payloadType" label from a Pub/Sub message to determine whether it needs
-	// to fetch the full previous resource as a separate operation.
+	// SendPreviousResourceOnDelete: Optional. Whether to send full FHIR resource
+	// to this Pub/Sub topic for deleting FHIR resource. The default value is
+	// false. Note that setting this to true does not guarantee that all previous
+	// resources will be sent in the format of full FHIR resource. When a resource
+	// change is too large or during heavy traffic, only the resource name will be
+	// sent. Clients should always check the "payloadType" label from a Pub/Sub
+	// message to determine whether it needs to fetch the full previous resource as
+	// a separate operation.
 	SendPreviousResourceOnDelete bool `json:"sendPreviousResourceOnDelete,omitempty"`
 	// ForceSendFields is a list of field names (e.g. "PubsubTopic") to
 	// unconditionally include in API requests. By default, fields with empty or
@@ -2230,9 +2353,9 @@ type FhirNotificationConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FhirNotificationConfig) MarshalJSON() ([]byte, error) {
+func (s FhirNotificationConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod FhirNotificationConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // FhirStore: Represents a FHIR store.
@@ -2252,13 +2375,13 @@ type FhirStore struct {
 	//   "DISABLED" - References in complex data types are ignored.
 	//   "ENABLED" - References in complex data types are parsed.
 	ComplexDataTypeReferenceParsing string `json:"complexDataTypeReferenceParsing,omitempty"`
-	// DefaultSearchHandlingStrict: If true, overrides the default search behavior
-	// for this FHIR store to `handling=strict` which returns an error for
+	// DefaultSearchHandlingStrict: Optional. If true, overrides the default search
+	// behavior for this FHIR store to `handling=strict` which returns an error for
 	// unrecognized search parameters. If false, uses the FHIR specification
 	// default `handling=lenient` which ignores unrecognized search parameters. The
 	// handling can always be changed from the default on an individual API call by
 	// setting the HTTP header `Prefer: handling=strict` or `Prefer:
-	// handling=lenient`.
+	// handling=lenient`. Defaults to false.
 	DefaultSearchHandlingStrict bool `json:"defaultSearchHandlingStrict,omitempty"`
 	// DisableReferentialIntegrity: Immutable. Whether to disable referential
 	// integrity in this FHIR store. This field is immutable after FHIR store
@@ -2271,13 +2394,14 @@ type FhirStore struct {
 	DisableReferentialIntegrity bool `json:"disableReferentialIntegrity,omitempty"`
 	// DisableResourceVersioning: Immutable. Whether to disable resource versioning
 	// for this FHIR store. This field can not be changed after the creation of
-	// FHIR store. If set to false, which is the default behavior, all write
-	// operations cause historical versions to be recorded automatically. The
-	// historical versions can be fetched through the history APIs, but cannot be
-	// updated. If set to true, no historical versions are kept. The server sends
-	// errors for attempts to read the historical versions.
+	// FHIR store. If set to false, all write operations cause historical versions
+	// to be recorded automatically. The historical versions can be fetched through
+	// the history APIs, but cannot be updated. If set to true, no historical
+	// versions are kept. The server sends errors for attempts to read the
+	// historical versions. Defaults to false.
 	DisableResourceVersioning bool `json:"disableResourceVersioning,omitempty"`
-	// EnableUpdateCreate: Whether this FHIR store has the updateCreate capability
+	// EnableUpdateCreate: Optional. Whether this FHIR store has the updateCreate
+	// capability
 	// (https://www.hl7.org/fhir/capabilitystatement-definitions.html#CapabilityStatement.rest.resource.updateCreate).
 	// This determines if the client can use an Update operation to create a new
 	// resource with a client-specified ID. If false, all IDs are server-assigned
@@ -2286,7 +2410,7 @@ type FhirStore struct {
 	// data such as patient identifiers in client-specified resource IDs. Those IDs
 	// are part of the FHIR resource path recorded in Cloud audit logs and Pub/Sub
 	// notifications. Those IDs can also be contained in reference fields within
-	// other resources.
+	// other resources. Defaults to false.
 	EnableUpdateCreate bool `json:"enableUpdateCreate,omitempty"`
 	// Labels: User-supplied key-value pairs used to organize FHIR stores. Label
 	// keys must be between 1 and 63 characters long, have a UTF-8 encoding of
@@ -2307,15 +2431,15 @@ type FhirStore struct {
 	// describing the action that has triggered the notification. For example,
 	// "action":"CreateResource".
 	NotificationConfig *NotificationConfig `json:"notificationConfig,omitempty"`
-	// NotificationConfigs: Specifies where and whether to send notifications upon
-	// changes to a FHIR store.
+	// NotificationConfigs: Optional. Specifies where and whether to send
+	// notifications upon changes to a FHIR store.
 	NotificationConfigs []*FhirNotificationConfig `json:"notificationConfigs,omitempty"`
-	// StreamConfigs: A list of streaming configs that configure the destinations
-	// of streaming export for every resource mutation in this FHIR store. Each
-	// store is allowed to have up to 10 streaming configs. After a new config is
-	// added, the next resource mutation is streamed to the new location in
-	// addition to the existing ones. When a location is removed from the list, the
-	// server stops streaming to that location. Before adding a new config, you
+	// StreamConfigs: Optional. A list of streaming configs that configure the
+	// destinations of streaming export for every resource mutation in this FHIR
+	// store. Each store is allowed to have up to 10 streaming configs. After a new
+	// config is added, the next resource mutation is streamed to the new location
+	// in addition to the existing ones. When a location is removed from the list,
+	// the server stops streaming to that location. Before adding a new config, you
 	// must add the required `bigquery.dataEditor`
 	// (https://cloud.google.com/bigquery/docs/access-control#bigquery.dataEditor)
 	// role to your project's **Cloud Healthcare Service Agent** service account
@@ -2357,9 +2481,9 @@ type FhirStore struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FhirStore) MarshalJSON() ([]byte, error) {
+func (s FhirStore) MarshalJSON() ([]byte, error) {
 	type NoMethod FhirStore
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // FhirStoreMetric: Count of resources and total storage size by type for a
@@ -2385,9 +2509,9 @@ type FhirStoreMetric struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FhirStoreMetric) MarshalJSON() ([]byte, error) {
+func (s FhirStoreMetric) MarshalJSON() ([]byte, error) {
 	type NoMethod FhirStoreMetric
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // FhirStoreMetrics: List of metrics for a given FHIR store.
@@ -2413,9 +2537,9 @@ type FhirStoreMetrics struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FhirStoreMetrics) MarshalJSON() ([]byte, error) {
+func (s FhirStoreMetrics) MarshalJSON() ([]byte, error) {
 	type NoMethod FhirStoreMetrics
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Field: A (sub) field of a type.
@@ -2446,9 +2570,9 @@ type Field struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Field) MarshalJSON() ([]byte, error) {
+func (s Field) MarshalJSON() ([]byte, error) {
 	type NoMethod Field
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // FieldMetadata: Specifies FHIR paths to match, and how to handle
@@ -2485,9 +2609,9 @@ type FieldMetadata struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *FieldMetadata) MarshalJSON() ([]byte, error) {
+func (s FieldMetadata) MarshalJSON() ([]byte, error) {
 	type NoMethod FieldMetadata
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GcsDestination: The Cloud Storage output destination. The Cloud Healthcare
@@ -2534,9 +2658,9 @@ type GcsDestination struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GcsDestination) MarshalJSON() ([]byte, error) {
+func (s GcsDestination) MarshalJSON() ([]byte, error) {
 	type NoMethod GcsDestination
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GcsSource: Specifies the configuration for importing data from Cloud
@@ -2568,9 +2692,9 @@ type GcsSource struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GcsSource) MarshalJSON() ([]byte, error) {
+func (s GcsSource) MarshalJSON() ([]byte, error) {
 	type NoMethod GcsSource
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1ConsentGcsDestination: The Cloud Storage location for
@@ -2595,9 +2719,9 @@ type GoogleCloudHealthcareV1ConsentGcsDestination struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1ConsentGcsDestination) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1ConsentGcsDestination) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1ConsentGcsDestination
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1ConsentPolicy: Represents a user's consent in terms
@@ -2625,9 +2749,9 @@ type GoogleCloudHealthcareV1ConsentPolicy struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1ConsentPolicy) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1ConsentPolicy) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1ConsentPolicy
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1DeidentifyDeidentifyDicomStoreSummary: Contains a
@@ -2676,9 +2800,9 @@ type GoogleCloudHealthcareV1DicomBigQueryDestination struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1DicomBigQueryDestination) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1DicomBigQueryDestination) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1DicomBigQueryDestination
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1DicomGcsDestination: The Cloud Storage location where
@@ -2727,9 +2851,9 @@ type GoogleCloudHealthcareV1DicomGcsDestination struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1DicomGcsDestination) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1DicomGcsDestination) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1DicomGcsDestination
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1DicomGcsSource: Specifies the configuration for
@@ -2761,9 +2885,9 @@ type GoogleCloudHealthcareV1DicomGcsSource struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1DicomGcsSource) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1DicomGcsSource) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1DicomGcsSource
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1DicomStreamConfig: StreamConfig specifies
@@ -2804,29 +2928,30 @@ type GoogleCloudHealthcareV1DicomStreamConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1DicomStreamConfig) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1DicomStreamConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1DicomStreamConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1FhirBigQueryDestination: The configuration for
 // exporting to BigQuery.
 type GoogleCloudHealthcareV1FhirBigQueryDestination struct {
-	// DatasetUri: BigQuery URI to an existing dataset, up to 2000 characters long,
-	// in the format `bq://projectId.bqDatasetId`.
+	// DatasetUri: Optional. BigQuery URI to an existing dataset, up to 2000
+	// characters long, in the format `bq://projectId.bqDatasetId`.
 	DatasetUri string `json:"datasetUri,omitempty"`
-	// Force: If this flag is `TRUE`, all tables are deleted from the dataset
-	// before the new exported tables are written. If the flag is not set and the
-	// destination dataset contains tables, the export call returns an error. If
-	// `write_disposition` is specified, this parameter is ignored. force=false is
-	// equivalent to write_disposition=WRITE_EMPTY and force=true is equivalent to
+	// Force: Optional. The default value is false. If this flag is `TRUE`, all
+	// tables are deleted from the dataset before the new exported tables are
+	// written. If the flag is not set and the destination dataset contains tables,
+	// the export call returns an error. If `write_disposition` is specified, this
+	// parameter is ignored. force=false is equivalent to
+	// write_disposition=WRITE_EMPTY and force=true is equivalent to
 	// write_disposition=WRITE_TRUNCATE.
 	Force bool `json:"force,omitempty"`
-	// SchemaConfig: The configuration for the exported BigQuery schema.
+	// SchemaConfig: Optional. The configuration for the exported BigQuery schema.
 	SchemaConfig *SchemaConfig `json:"schemaConfig,omitempty"`
-	// WriteDisposition: Determines if existing data in the destination dataset is
-	// overwritten, appended to, or not written if the tables contain data. If a
-	// write_disposition is specified, the `force` parameter is ignored.
+	// WriteDisposition: Optional. Determines if existing data in the destination
+	// dataset is overwritten, appended to, or not written if the tables contain
+	// data. If a write_disposition is specified, the `force` parameter is ignored.
 	//
 	// Possible values:
 	//   "WRITE_DISPOSITION_UNSPECIFIED" - Default behavior is the same as
@@ -2849,9 +2974,9 @@ type GoogleCloudHealthcareV1FhirBigQueryDestination struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1FhirBigQueryDestination) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1FhirBigQueryDestination) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1FhirBigQueryDestination
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1FhirGcsDestination: The configuration for exporting
@@ -2876,9 +3001,9 @@ type GoogleCloudHealthcareV1FhirGcsDestination struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1FhirGcsDestination) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1FhirGcsDestination) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1FhirGcsDestination
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudHealthcareV1FhirGcsSource: Specifies the configuration for
@@ -2910,9 +3035,9 @@ type GoogleCloudHealthcareV1FhirGcsSource struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudHealthcareV1FhirGcsSource) MarshalJSON() ([]byte, error) {
+func (s GoogleCloudHealthcareV1FhirGcsSource) MarshalJSON() ([]byte, error) {
 	type NoMethod GoogleCloudHealthcareV1FhirGcsSource
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // GroupOrSegment: Construct representing a logical group or a segment.
@@ -2932,9 +3057,9 @@ type GroupOrSegment struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GroupOrSegment) MarshalJSON() ([]byte, error) {
+func (s GroupOrSegment) MarshalJSON() ([]byte, error) {
 	type NoMethod GroupOrSegment
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Hl7SchemaConfig: Root config message for HL7v2 schema. This contains a
@@ -2960,9 +3085,9 @@ type Hl7SchemaConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Hl7SchemaConfig) MarshalJSON() ([]byte, error) {
+func (s Hl7SchemaConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod Hl7SchemaConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Hl7TypesConfig: Root config for HL7v2 datatype definitions for a specific
@@ -2986,22 +3111,22 @@ type Hl7TypesConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Hl7TypesConfig) MarshalJSON() ([]byte, error) {
+func (s Hl7TypesConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod Hl7TypesConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Hl7V2NotificationConfig: Specifies where and whether to send notifications
 // upon changes to a data store.
 type Hl7V2NotificationConfig struct {
-	// Filter: Restricts notifications sent for messages matching a filter. If this
-	// is empty, all messages are matched. The following syntax is available: * A
-	// string field value can be written as text inside quotation marks, for
-	// example "query text". The only valid relational operation for text fields
-	// is equality (`=`), where text is searched within the field, rather than
-	// having the field be equal to the text. For example, "Comment = great"
-	// returns messages with `great` in the comment field. * A number field value
-	// can be written as an integer, a decimal, or an exponential. The valid
+	// Filter: Optional. Restricts notifications sent for messages matching a
+	// filter. If this is empty, all messages are matched. The following syntax is
+	// available: * A string field value can be written as text inside quotation
+	// marks, for example "query text". The only valid relational operation for
+	// text fields is equality (`=`), where text is searched within the field,
+	// rather than having the field be equal to the text. For example, "Comment =
+	// great" returns messages with `great` in the comment field. * A number field
+	// value can be written as an integer, a decimal, or an exponential. The valid
 	// relational operators for number fields are the equality operator (`=`),
 	// along with the less than/greater than operators (`<`, `<=`, `>`, `>=`). Note
 	// that there is no inequality (`!=`) operator. You can prepend the `NOT`
@@ -3064,9 +3189,9 @@ type Hl7V2NotificationConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Hl7V2NotificationConfig) MarshalJSON() ([]byte, error) {
+func (s Hl7V2NotificationConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod Hl7V2NotificationConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Hl7V2Store: Represents an HL7v2 store.
@@ -3084,23 +3209,24 @@ type Hl7V2Store struct {
 	// `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Sto
 	// res/{hl7v2_store_id}`.
 	Name string `json:"name,omitempty"`
-	// NotificationConfigs: A list of notification configs. Each configuration uses
-	// a filter to determine whether to publish a message (both Ingest & Create) on
-	// the corresponding notification destination. Only the message name is sent as
-	// part of the notification. Supplied by the client.
+	// NotificationConfigs: Optional. A list of notification configs. Each
+	// configuration uses a filter to determine whether to publish a message (both
+	// Ingest & Create) on the corresponding notification destination. Only the
+	// message name is sent as part of the notification. Supplied by the client.
 	NotificationConfigs []*Hl7V2NotificationConfig `json:"notificationConfigs,omitempty"`
-	// ParserConfig: The configuration for the parser. It determines how the server
-	// parses the messages.
+	// ParserConfig: Optional. The configuration for the parser. It determines how
+	// the server parses the messages.
 	ParserConfig *ParserConfig `json:"parserConfig,omitempty"`
-	// RejectDuplicateMessage: Determines whether to reject duplicate messages. A
-	// duplicate message is a message with the same raw bytes as a message that has
-	// already been ingested/created in this HL7v2 store. The default value is
-	// false, meaning that the store accepts the duplicate messages and it also
-	// returns the same ACK message in the IngestMessageResponse as has been
-	// returned previously. Note that only one resource is created in the store.
-	// When this field is set to true, CreateMessage/IngestMessage requests with a
-	// duplicate message will be rejected by the store, and
-	// IngestMessageErrorDetail returns a NACK message upon rejection.
+	// RejectDuplicateMessage: Optional. Determines whether to reject duplicate
+	// messages. A duplicate message is a message with the same raw bytes as a
+	// message that has already been ingested/created in this HL7v2 store. The
+	// default value is false, meaning that the store accepts the duplicate
+	// messages and it also returns the same ACK message in the
+	// IngestMessageResponse as has been returned previously. Note that only one
+	// resource is created in the store. When this field is set to true,
+	// CreateMessage/IngestMessage requests with a duplicate message will be
+	// rejected by the store, and IngestMessageErrorDetail returns a NACK message
+	// upon rejection.
 	RejectDuplicateMessage bool `json:"rejectDuplicateMessage,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
@@ -3118,9 +3244,9 @@ type Hl7V2Store struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Hl7V2Store) MarshalJSON() ([]byte, error) {
+func (s Hl7V2Store) MarshalJSON() ([]byte, error) {
 	type NoMethod Hl7V2Store
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Hl7V2StoreMetric: Count of messages and total storage size by type for a
@@ -3148,9 +3274,9 @@ type Hl7V2StoreMetric struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Hl7V2StoreMetric) MarshalJSON() ([]byte, error) {
+func (s Hl7V2StoreMetric) MarshalJSON() ([]byte, error) {
 	type NoMethod Hl7V2StoreMetric
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Hl7V2StoreMetrics: List of metrics for a given HL7v2 store.
@@ -3176,9 +3302,9 @@ type Hl7V2StoreMetrics struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Hl7V2StoreMetrics) MarshalJSON() ([]byte, error) {
+func (s Hl7V2StoreMetrics) MarshalJSON() ([]byte, error) {
 	type NoMethod Hl7V2StoreMetrics
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // HttpBody: Message that represents an arbitrary HTTP body. It should only be
@@ -3223,9 +3349,9 @@ type HttpBody struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *HttpBody) MarshalJSON() ([]byte, error) {
+func (s HttpBody) MarshalJSON() ([]byte, error) {
 	type NoMethod HttpBody
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Image: Raw bytes representing consent artifact content.
@@ -3255,9 +3381,9 @@ type Image struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Image) MarshalJSON() ([]byte, error) {
+func (s Image) MarshalJSON() ([]byte, error) {
 	type NoMethod Image
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ImageConfig: Specifies how to handle de-identification of image pixels.
@@ -3287,9 +3413,9 @@ type ImageConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ImageConfig) MarshalJSON() ([]byte, error) {
+func (s ImageConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod ImageConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ImportDicomDataRequest: Imports data into the specified DICOM store. Returns
@@ -3297,26 +3423,29 @@ func (s *ImageConfig) MarshalJSON() ([]byte, error) {
 // duplicate DICOM instances by ignoring the newly-pushed instance. It does not
 // overwrite.
 type ImportDicomDataRequest struct {
+	// BlobStorageSettings: Optional. The blob storage settings for the data
+	// imported by this operation.
+	BlobStorageSettings *BlobStorageSettings `json:"blobStorageSettings,omitempty"`
 	// GcsSource: Cloud Storage source data location and import configuration. The
 	// Cloud Healthcare Service Agent requires the `roles/storage.objectViewer`
 	// Cloud IAM roles on the Cloud Storage location.
 	GcsSource *GoogleCloudHealthcareV1DicomGcsSource `json:"gcsSource,omitempty"`
-	// ForceSendFields is a list of field names (e.g. "GcsSource") to
+	// ForceSendFields is a list of field names (e.g. "BlobStorageSettings") to
 	// unconditionally include in API requests. By default, fields with empty or
 	// default values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
 	// details.
 	ForceSendFields []string `json:"-"`
-	// NullFields is a list of field names (e.g. "GcsSource") to include in API
-	// requests with the JSON null value. By default, fields with empty values are
-	// omitted from API requests. See
+	// NullFields is a list of field names (e.g. "BlobStorageSettings") to include
+	// in API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. See
 	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
 	NullFields []string `json:"-"`
 }
 
-func (s *ImportDicomDataRequest) MarshalJSON() ([]byte, error) {
+func (s ImportDicomDataRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod ImportDicomDataRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ImportDicomDataResponse: Returns additional information in regards to a
@@ -3343,9 +3472,9 @@ type ImportMessagesRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ImportMessagesRequest) MarshalJSON() ([]byte, error) {
+func (s ImportMessagesRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod ImportMessagesRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ImportMessagesResponse: Final response of importing messages. This structure
@@ -3389,9 +3518,9 @@ type ImportResourcesRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ImportResourcesRequest) MarshalJSON() ([]byte, error) {
+func (s ImportResourcesRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod ImportResourcesRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ImportResourcesResponse: Final response of importing resources. This
@@ -3429,9 +3558,9 @@ type InfoTypeTransformation struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *InfoTypeTransformation) MarshalJSON() ([]byte, error) {
+func (s InfoTypeTransformation) MarshalJSON() ([]byte, error) {
 	type NoMethod InfoTypeTransformation
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // IngestMessageRequest: Ingests a message into the specified HL7v2 store.
@@ -3451,9 +3580,9 @@ type IngestMessageRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *IngestMessageRequest) MarshalJSON() ([]byte, error) {
+func (s IngestMessageRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod IngestMessageRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // IngestMessageResponse: Acknowledges that a message has been ingested into
@@ -3479,9 +3608,9 @@ type IngestMessageResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *IngestMessageResponse) MarshalJSON() ([]byte, error) {
+func (s IngestMessageResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod IngestMessageResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // KmsWrappedCryptoKey: Include to use an existing data crypto key wrapped by
@@ -3511,9 +3640,9 @@ type KmsWrappedCryptoKey struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *KmsWrappedCryptoKey) MarshalJSON() ([]byte, error) {
+func (s KmsWrappedCryptoKey) MarshalJSON() ([]byte, error) {
 	type NoMethod KmsWrappedCryptoKey
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // LinkedEntity: EntityMentions can be linked to multiple entities using a
@@ -3538,9 +3667,9 @@ type LinkedEntity struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *LinkedEntity) MarshalJSON() ([]byte, error) {
+func (s LinkedEntity) MarshalJSON() ([]byte, error) {
 	type NoMethod LinkedEntity
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type ListAttributeDefinitionsResponse struct {
@@ -3567,9 +3696,9 @@ type ListAttributeDefinitionsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListAttributeDefinitionsResponse) MarshalJSON() ([]byte, error) {
+func (s ListAttributeDefinitionsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListAttributeDefinitionsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type ListConsentArtifactsResponse struct {
@@ -3596,9 +3725,9 @@ type ListConsentArtifactsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListConsentArtifactsResponse) MarshalJSON() ([]byte, error) {
+func (s ListConsentArtifactsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListConsentArtifactsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type ListConsentRevisionsResponse struct {
@@ -3625,9 +3754,9 @@ type ListConsentRevisionsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListConsentRevisionsResponse) MarshalJSON() ([]byte, error) {
+func (s ListConsentRevisionsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListConsentRevisionsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type ListConsentStoresResponse struct {
@@ -3654,9 +3783,9 @@ type ListConsentStoresResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListConsentStoresResponse) MarshalJSON() ([]byte, error) {
+func (s ListConsentStoresResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListConsentStoresResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type ListConsentsResponse struct {
@@ -3682,9 +3811,9 @@ type ListConsentsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListConsentsResponse) MarshalJSON() ([]byte, error) {
+func (s ListConsentsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListConsentsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ListDatasetsResponse: Lists the available datasets.
@@ -3710,9 +3839,9 @@ type ListDatasetsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListDatasetsResponse) MarshalJSON() ([]byte, error) {
+func (s ListDatasetsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListDatasetsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ListDicomStoresResponse: Lists the DICOM stores in the given dataset.
@@ -3739,9 +3868,9 @@ type ListDicomStoresResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListDicomStoresResponse) MarshalJSON() ([]byte, error) {
+func (s ListDicomStoresResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListDicomStoresResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ListFhirStoresResponse: Lists the FHIR stores in the given dataset.
@@ -3768,9 +3897,9 @@ type ListFhirStoresResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListFhirStoresResponse) MarshalJSON() ([]byte, error) {
+func (s ListFhirStoresResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListFhirStoresResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ListHl7V2StoresResponse: Lists the HL7v2 stores in the given dataset.
@@ -3797,9 +3926,9 @@ type ListHl7V2StoresResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListHl7V2StoresResponse) MarshalJSON() ([]byte, error) {
+func (s ListHl7V2StoresResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListHl7V2StoresResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ListLocationsResponse: The response message for Locations.ListLocations.
@@ -3825,9 +3954,9 @@ type ListLocationsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListLocationsResponse) MarshalJSON() ([]byte, error) {
+func (s ListLocationsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListLocationsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ListMessagesResponse: Lists the messages in the specified HL7v2 store.
@@ -3854,9 +3983,9 @@ type ListMessagesResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListMessagesResponse) MarshalJSON() ([]byte, error) {
+func (s ListMessagesResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListMessagesResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ListOperationsResponse: The response message for Operations.ListOperations.
@@ -3882,9 +4011,9 @@ type ListOperationsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
+func (s ListOperationsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListOperationsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type ListUserDataMappingsResponse struct {
@@ -3911,9 +4040,9 @@ type ListUserDataMappingsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ListUserDataMappingsResponse) MarshalJSON() ([]byte, error) {
+func (s ListUserDataMappingsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod ListUserDataMappingsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Location: A resource that represents a Google Cloud location.
@@ -3949,9 +4078,9 @@ type Location struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Location) MarshalJSON() ([]byte, error) {
+func (s Location) MarshalJSON() ([]byte, error) {
 	type NoMethod Location
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Message: A complete HL7v2 message. See [Introduction to HL7 Standards]
@@ -3972,23 +4101,24 @@ type Message struct {
 	// [\p{Ll}\p{Lo}\p{N}_-]{0,63} No more than 64 labels can be associated with a
 	// given store.
 	Labels map[string]string `json:"labels,omitempty"`
-	// MessageType: The message type for this message. MSH-9.1.
+	// MessageType: Output only. The message type for this message. MSH-9.1.
 	MessageType string `json:"messageType,omitempty"`
 	// Name: Output only. Resource name of the Message, of the form
 	// `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2Sto
-	// res/{hl7_v2_store_id}/messages/{message_id}`. Assigned by the server.
+	// res/{hl7_v2_store_id}/messages/{message_id}`.
 	Name string `json:"name,omitempty"`
 	// ParsedData: Output only. The parsed version of the raw message data.
 	ParsedData *ParsedData `json:"parsedData,omitempty"`
-	// PatientIds: All patient IDs listed in the PID-2, PID-3, and PID-4 segments
-	// of this message.
+	// PatientIds: Output only. All patient IDs listed in the PID-2, PID-3, and
+	// PID-4 segments of this message.
 	PatientIds []*PatientId `json:"patientIds,omitempty"`
-	// SchematizedData: The parsed version of the raw message data schematized
-	// according to this store's schemas and type definitions.
+	// SchematizedData: Output only. The parsed version of the raw message data
+	// schematized according to this store's schemas and type definitions.
 	SchematizedData *SchematizedData `json:"schematizedData,omitempty"`
-	// SendFacility: The hospital that this message came from. MSH-4.
+	// SendFacility: Output only. The hospital that this message came from. MSH-4.
 	SendFacility string `json:"sendFacility,omitempty"`
-	// SendTime: The datetime the sending application sent this message. MSH-7.
+	// SendTime: Output only. The datetime the sending application sent this
+	// message. MSH-7.
 	SendTime string `json:"sendTime,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the server.
@@ -4006,9 +4136,9 @@ type Message struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Message) MarshalJSON() ([]byte, error) {
+func (s Message) MarshalJSON() ([]byte, error) {
 	type NoMethod Message
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // NotificationConfig: Specifies where to send notifications upon changes to a
@@ -4048,9 +4178,9 @@ type NotificationConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *NotificationConfig) MarshalJSON() ([]byte, error) {
+func (s NotificationConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod NotificationConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Operation: This resource represents a long-running operation that is the
@@ -4095,9 +4225,9 @@ type Operation struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Operation) MarshalJSON() ([]byte, error) {
+func (s Operation) MarshalJSON() ([]byte, error) {
 	type NoMethod Operation
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // OperationMetadata: OperationMetadata provides information about the
@@ -4130,9 +4260,9 @@ type OperationMetadata struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *OperationMetadata) MarshalJSON() ([]byte, error) {
+func (s OperationMetadata) MarshalJSON() ([]byte, error) {
 	type NoMethod OperationMetadata
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ParsedData: The content of a HL7v2 message in a structured format.
@@ -4151,18 +4281,19 @@ type ParsedData struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ParsedData) MarshalJSON() ([]byte, error) {
+func (s ParsedData) MarshalJSON() ([]byte, error) {
 	type NoMethod ParsedData
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ParserConfig: The configuration for the parser. It determines how the server
 // parses the messages.
 type ParserConfig struct {
-	// AllowNullHeader: Determines whether messages with no header are allowed.
+	// AllowNullHeader: Optional. Determines whether messages with no header are
+	// allowed.
 	AllowNullHeader bool `json:"allowNullHeader,omitempty"`
-	// Schema: Schemas used to parse messages in this store, if schematized parsing
-	// is desired.
+	// Schema: Optional. Schemas used to parse messages in this store, if
+	// schematized parsing is desired.
 	Schema *SchemaPackage `json:"schema,omitempty"`
 	// SegmentTerminator: Byte(s) to use as the segment terminator. If this is
 	// unset, '\r' is used as segment terminator, matching the HL7 version 2
@@ -4200,9 +4331,9 @@ type ParserConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ParserConfig) MarshalJSON() ([]byte, error) {
+func (s ParserConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod ParserConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // PatientId: A patient identifier and associated type.
@@ -4224,9 +4355,9 @@ type PatientId struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *PatientId) MarshalJSON() ([]byte, error) {
+func (s PatientId) MarshalJSON() ([]byte, error) {
 	type NoMethod PatientId
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Policy: An Identity and Access Management (IAM) policy, which specifies
@@ -4316,9 +4447,9 @@ type Policy struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Policy) MarshalJSON() ([]byte, error) {
+func (s Policy) MarshalJSON() ([]byte, error) {
 	type NoMethod Policy
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ProgressCounter: ProgressCounter provides counters to describe an
@@ -4343,9 +4474,9 @@ type ProgressCounter struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ProgressCounter) MarshalJSON() ([]byte, error) {
+func (s ProgressCounter) MarshalJSON() ([]byte, error) {
 	type NoMethod ProgressCounter
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // PubsubDestination: The Pub/Sub output destination. The Cloud Healthcare
@@ -4377,9 +4508,9 @@ type PubsubDestination struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *PubsubDestination) MarshalJSON() ([]byte, error) {
+func (s PubsubDestination) MarshalJSON() ([]byte, error) {
 	type NoMethod PubsubDestination
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // QueryAccessibleDataRequest: Queries all data_ids that are consented for a
@@ -4414,9 +4545,9 @@ type QueryAccessibleDataRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *QueryAccessibleDataRequest) MarshalJSON() ([]byte, error) {
+func (s QueryAccessibleDataRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod QueryAccessibleDataRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // QueryAccessibleDataResponse: Response for successful QueryAccessibleData
@@ -4439,9 +4570,9 @@ type QueryAccessibleDataResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *QueryAccessibleDataResponse) MarshalJSON() ([]byte, error) {
+func (s QueryAccessibleDataResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod QueryAccessibleDataResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // RedactConfig: Define how to redact sensitive values. Default behaviour is
@@ -4474,9 +4605,9 @@ type RejectConsentRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *RejectConsentRequest) MarshalJSON() ([]byte, error) {
+func (s RejectConsentRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod RejectConsentRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ReplaceWithInfoTypeConfig: When using the INSPECT_AND_TRANSFORM action, each
@@ -4503,9 +4634,9 @@ type Resources struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Resources) MarshalJSON() ([]byte, error) {
+func (s Resources) MarshalJSON() ([]byte, error) {
 	type NoMethod Resources
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Result: The consent evaluation result for a single `data_id`.
@@ -4530,9 +4661,9 @@ type Result struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Result) MarshalJSON() ([]byte, error) {
+func (s Result) MarshalJSON() ([]byte, error) {
 	type NoMethod Result
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // RevokeConsentRequest: Revokes the latest revision of the specified Consent
@@ -4558,9 +4689,9 @@ type RevokeConsentRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *RevokeConsentRequest) MarshalJSON() ([]byte, error) {
+func (s RevokeConsentRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod RevokeConsentRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type RollbackFhirResourceFilteringFields struct {
@@ -4587,9 +4718,9 @@ type RollbackFhirResourceFilteringFields struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *RollbackFhirResourceFilteringFields) MarshalJSON() ([]byte, error) {
+func (s RollbackFhirResourceFilteringFields) MarshalJSON() ([]byte, error) {
 	type NoMethod RollbackFhirResourceFilteringFields
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type RollbackFhirResourcesRequest struct {
@@ -4632,9 +4763,9 @@ type RollbackFhirResourcesRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *RollbackFhirResourcesRequest) MarshalJSON() ([]byte, error) {
+func (s RollbackFhirResourcesRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod RollbackFhirResourcesRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // RollbackFhirResourcesResponse: Final response of rollback FIHR resources
@@ -4657,9 +4788,101 @@ type RollbackFhirResourcesResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *RollbackFhirResourcesResponse) MarshalJSON() ([]byte, error) {
+func (s RollbackFhirResourcesResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod RollbackFhirResourcesResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// RollbackHL7MessagesFilteringFields: Filtering fields for an HL7v2 rollback.
+// Currently only supports a list of operation ids to roll back.
+type RollbackHL7MessagesFilteringFields struct {
+	// OperationIds: Optional. A list of operation IDs to roll back.
+	OperationIds googleapi.Uint64s `json:"operationIds,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "OperationIds") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "OperationIds") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s RollbackHL7MessagesFilteringFields) MarshalJSON() ([]byte, error) {
+	type NoMethod RollbackHL7MessagesFilteringFields
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// RollbackHl7V2MessagesRequest: Point in time recovery rollback request.
+type RollbackHl7V2MessagesRequest struct {
+	// ChangeType: Optional. CREATE/UPDATE/DELETE/ALL for reverting all txns of a
+	// certain type.
+	//
+	// Possible values:
+	//   "CHANGE_TYPE_UNSPECIFIED" - When unspecified, revert all transactions
+	//   "ALL" - All transactions
+	//   "CREATE" - Revert only CREATE transactions
+	//   "UPDATE" - Revert only Update transactions
+	//   "DELETE" - Revert only Delete transactions
+	ChangeType string `json:"changeType,omitempty"`
+	// ExcludeRollbacks: Optional. Specifies whether to exclude earlier rollbacks.
+	ExcludeRollbacks bool `json:"excludeRollbacks,omitempty"`
+	// FilteringFields: Optional. Parameters for filtering.
+	FilteringFields *RollbackHL7MessagesFilteringFields `json:"filteringFields,omitempty"`
+	// Force: Optional. When enabled, changes will be reverted without explicit
+	// confirmation.
+	Force bool `json:"force,omitempty"`
+	// InputGcsObject: Optional. Cloud storage object containing list of
+	// {resourceId} lines, identifying resources to be reverted
+	InputGcsObject string `json:"inputGcsObject,omitempty"`
+	// ResultGcsBucket: Required. Bucket to deposit result
+	ResultGcsBucket string `json:"resultGcsBucket,omitempty"`
+	// RollbackTime: Required. Times point to rollback to.
+	RollbackTime string `json:"rollbackTime,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "ChangeType") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "ChangeType") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s RollbackHl7V2MessagesRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod RollbackHl7V2MessagesRequest
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// RollbackHl7V2MessagesResponse: Final response of rollback HL7v2 messages
+// request.
+type RollbackHl7V2MessagesResponse struct {
+	// Hl7v2Store: The name of the HL7v2 store to rollback, in the format of
+	// "projects/{project_id}/locations/{location_id}/datasets/{dataset_id}
+	// /hl7v2Stores/{hl7v2_store_id}".
+	Hl7v2Store string `json:"hl7v2Store,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "Hl7v2Store") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "Hl7v2Store") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s RollbackHl7V2MessagesResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod RollbackHl7V2MessagesResponse
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // SchemaConfig: Configuration for the FHIR BigQuery schema. Determines how the
@@ -4711,9 +4934,9 @@ type SchemaConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *SchemaConfig) MarshalJSON() ([]byte, error) {
+func (s SchemaConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod SchemaConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // SchemaGroup: An HL7v2 logical group construct.
@@ -4743,25 +4966,25 @@ type SchemaGroup struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *SchemaGroup) MarshalJSON() ([]byte, error) {
+func (s SchemaGroup) MarshalJSON() ([]byte, error) {
 	type NoMethod SchemaGroup
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // SchemaPackage: A schema package contains a set of schemas and type
 // definitions.
 type SchemaPackage struct {
-	// IgnoreMinOccurs: Flag to ignore all min_occurs restrictions in the schema.
-	// This means that incoming messages can omit any group, segment, field,
-	// component, or subcomponent.
+	// IgnoreMinOccurs: Optional. Flag to ignore all min_occurs restrictions in the
+	// schema. This means that incoming messages can omit any group, segment,
+	// field, component, or subcomponent.
 	IgnoreMinOccurs bool `json:"ignoreMinOccurs,omitempty"`
-	// Schemas: Schema configs that are layered based on their VersionSources that
-	// match the incoming message. Schema configs present in higher indices
-	// override those in lower indices with the same message type and trigger event
-	// if their VersionSources all match an incoming message.
+	// Schemas: Optional. Schema configs that are layered based on their
+	// VersionSources that match the incoming message. Schema configs present in
+	// higher indices override those in lower indices with the same message type
+	// and trigger event if their VersionSources all match an incoming message.
 	Schemas []*Hl7SchemaConfig `json:"schemas,omitempty"`
-	// SchematizedParsingType: Determines how messages that fail to parse are
-	// handled.
+	// SchematizedParsingType: Optional. Determines how messages that fail to parse
+	// are handled.
 	//
 	// Possible values:
 	//   "SCHEMATIZED_PARSING_TYPE_UNSPECIFIED" - Unspecified schematized parsing
@@ -4771,13 +4994,13 @@ type SchemaPackage struct {
 	//   "HARD_FAIL" - Messages that fail to parse are rejected from
 	// ingestion/insertion and return an error code.
 	SchematizedParsingType string `json:"schematizedParsingType,omitempty"`
-	// Types: Schema type definitions that are layered based on their
+	// Types: Optional. Schema type definitions that are layered based on their
 	// VersionSources that match the incoming message. Type definitions present in
 	// higher indices override those in lower indices with the same type name if
 	// their VersionSources all match an incoming message.
 	Types []*Hl7TypesConfig `json:"types,omitempty"`
-	// UnexpectedSegmentHandling: Determines how unexpected segments (segments not
-	// matched to the schema) are handled.
+	// UnexpectedSegmentHandling: Optional. Determines how unexpected segments
+	// (segments not matched to the schema) are handled.
 	//
 	// Possible values:
 	//   "UNEXPECTED_SEGMENT_HANDLING_MODE_UNSPECIFIED" - Unspecified handling
@@ -4801,9 +5024,9 @@ type SchemaPackage struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *SchemaPackage) MarshalJSON() ([]byte, error) {
+func (s SchemaPackage) MarshalJSON() ([]byte, error) {
 	type NoMethod SchemaPackage
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // SchemaSegment: An HL7v2 Segment.
@@ -4829,9 +5052,9 @@ type SchemaSegment struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *SchemaSegment) MarshalJSON() ([]byte, error) {
+func (s SchemaSegment) MarshalJSON() ([]byte, error) {
 	type NoMethod SchemaSegment
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // SchematizedData: The content of an HL7v2 message in a structured format as
@@ -4854,9 +5077,9 @@ type SchematizedData struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *SchematizedData) MarshalJSON() ([]byte, error) {
+func (s SchematizedData) MarshalJSON() ([]byte, error) {
 	type NoMethod SchematizedData
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // SearchResourcesRequest: Request to search the resources in the specified
@@ -4881,9 +5104,9 @@ type SearchResourcesRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *SearchResourcesRequest) MarshalJSON() ([]byte, error) {
+func (s SearchResourcesRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod SearchResourcesRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Segment: A segment in a structured format.
@@ -4917,9 +5140,9 @@ type Segment struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Segment) MarshalJSON() ([]byte, error) {
+func (s Segment) MarshalJSON() ([]byte, error) {
 	type NoMethod Segment
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // SeriesMetrics: SeriesMetrics contains metrics describing a DICOM series.
@@ -4952,9 +5175,44 @@ type SeriesMetrics struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *SeriesMetrics) MarshalJSON() ([]byte, error) {
+func (s SeriesMetrics) MarshalJSON() ([]byte, error) {
 	type NoMethod SeriesMetrics
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// SetBlobStorageSettingsRequest: Request message for `SetBlobStorageSettings`
+// method.
+type SetBlobStorageSettingsRequest struct {
+	// BlobStorageSettings: The blob storage settings to update for the specified
+	// resources. Only fields listed in `update_mask` are applied.
+	BlobStorageSettings *BlobStorageSettings `json:"blobStorageSettings,omitempty"`
+	// FilterConfig: Optional. A filter configuration. If `filter_config` is
+	// specified, set the value of `resource` to the resource name of a DICOM store
+	// in the format
+	// `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStores
+	// /{dicomStoreID}`.
+	FilterConfig *DicomFilterConfig `json:"filterConfig,omitempty"`
+	// ForceSendFields is a list of field names (e.g. "BlobStorageSettings") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "BlobStorageSettings") to include
+	// in API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s SetBlobStorageSettingsRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod SetBlobStorageSettingsRequest
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// SetBlobStorageSettingsResponse: Returns additional info in regards to a
+// completed set blob storage settings API.
+type SetBlobStorageSettingsResponse struct {
 }
 
 // SetIamPolicyRequest: Request message for `SetIamPolicy` method.
@@ -4981,9 +5239,9 @@ type SetIamPolicyRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
+func (s SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod SetIamPolicyRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Signature: User signature.
@@ -5010,9 +5268,9 @@ type Signature struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Signature) MarshalJSON() ([]byte, error) {
+func (s Signature) MarshalJSON() ([]byte, error) {
 	type NoMethod Signature
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Status: The `Status` type defines a logical error model that is suitable for
@@ -5044,19 +5302,54 @@ type Status struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Status) MarshalJSON() ([]byte, error) {
+func (s Status) MarshalJSON() ([]byte, error) {
 	type NoMethod Status
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// StorageInfo: StorageInfo encapsulates all the storage info of a resource.
+type StorageInfo struct {
+	// BlobStorageInfo: Info about the data stored in blob storage for the
+	// resource.
+	BlobStorageInfo *BlobStorageInfo `json:"blobStorageInfo,omitempty"`
+	// ReferencedResource: The resource whose storage info is returned. For
+	// example:
+	// `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStores
+	// /{dicomStoreID}/dicomWeb/studies/{studyUID}/series/{seriesUID}/instances/{ins
+	// tanceUID}`
+	ReferencedResource string `json:"referencedResource,omitempty"`
+	// StructuredStorageInfo: Info about the data stored in structured storage for
+	// the resource.
+	StructuredStorageInfo *StructuredStorageInfo `json:"structuredStorageInfo,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the server.
+	googleapi.ServerResponse `json:"-"`
+	// ForceSendFields is a list of field names (e.g. "BlobStorageInfo") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "BlobStorageInfo") to include in
+	// API requests with the JSON null value. By default, fields with empty values
+	// are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s StorageInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod StorageInfo
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // StreamConfig: Contains configuration for streaming FHIR export.
 type StreamConfig struct {
-	// BigqueryDestination: The destination BigQuery structure that contains both
-	// the dataset location and corresponding schema config. The output is
-	// organized in one table per resource type. The server reuses the existing
-	// tables (if any) that are named after the resource types. For example,
-	// "Patient", "Observation". When there is no existing table for a given
-	// resource type, the server attempts to create one. When a table schema
+	// BigqueryDestination: Optional. The destination BigQuery structure that
+	// contains both the dataset location and corresponding schema config. The
+	// output is organized in one table per resource type. The server reuses the
+	// existing tables (if any) that are named after the resource types. For
+	// example, "Patient", "Observation". When there is no existing table for a
+	// given resource type, the server attempts to create one. When a table schema
 	// doesn't align with the schema config, either because of existing
 	// incompatible schema or out of band incompatible modification, the server
 	// does not stream in new data. BigQuery imposes a 1 MB limit on streaming
@@ -5100,7 +5393,7 @@ type StreamConfig struct {
 	// error logs in Cloud Logging
 	// (https://cloud.google.com/healthcare/docs/how-tos/logging)).
 	DeidentifiedStoreDestination *DeidentifiedStoreDestination `json:"deidentifiedStoreDestination,omitempty"`
-	// ResourceTypes: Supply a FHIR resource type (such as "Patient" or
+	// ResourceTypes: Optional. Supply a FHIR resource type (such as "Patient" or
 	// "Observation"). See https://www.hl7.org/fhir/valueset-resource-types.html
 	// for a list of all FHIR resource types. The server treats an empty list as an
 	// intent to stream all the supported resource types in this FHIR store.
@@ -5118,9 +5411,32 @@ type StreamConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *StreamConfig) MarshalJSON() ([]byte, error) {
+func (s StreamConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod StreamConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
+}
+
+// StructuredStorageInfo: StructuredStorageInfo contains details about the data
+// stored in Structured Storage for the referenced resource.
+type StructuredStorageInfo struct {
+	// SizeBytes: Size in bytes of data stored in structured storage.
+	SizeBytes int64 `json:"sizeBytes,omitempty,string"`
+	// ForceSendFields is a list of field names (e.g. "SizeBytes") to
+	// unconditionally include in API requests. By default, fields with empty or
+	// default values are omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-ForceSendFields for more
+	// details.
+	ForceSendFields []string `json:"-"`
+	// NullFields is a list of field names (e.g. "SizeBytes") to include in API
+	// requests with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. See
+	// https://pkg.go.dev/google.golang.org/api#hdr-NullFields for more details.
+	NullFields []string `json:"-"`
+}
+
+func (s StructuredStorageInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod StructuredStorageInfo
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // StudyMetrics: StudyMetrics contains metrics describing a DICOM study.
@@ -5155,9 +5471,9 @@ type StudyMetrics struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *StudyMetrics) MarshalJSON() ([]byte, error) {
+func (s StudyMetrics) MarshalJSON() ([]byte, error) {
 	type NoMethod StudyMetrics
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // TagFilterList: List of tags to be filtered.
@@ -5181,9 +5497,9 @@ type TagFilterList struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *TagFilterList) MarshalJSON() ([]byte, error) {
+func (s TagFilterList) MarshalJSON() ([]byte, error) {
 	type NoMethod TagFilterList
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // TestIamPermissionsRequest: Request message for `TestIamPermissions` method.
@@ -5206,9 +5522,9 @@ type TestIamPermissionsRequest struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *TestIamPermissionsRequest) MarshalJSON() ([]byte, error) {
+func (s TestIamPermissionsRequest) MarshalJSON() ([]byte, error) {
 	type NoMethod TestIamPermissionsRequest
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // TestIamPermissionsResponse: Response message for `TestIamPermissions`
@@ -5233,9 +5549,9 @@ type TestIamPermissionsResponse struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
+func (s TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
 	type NoMethod TestIamPermissionsResponse
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type TextConfig struct {
@@ -5261,9 +5577,9 @@ type TextConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *TextConfig) MarshalJSON() ([]byte, error) {
+func (s TextConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod TextConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // TextSpan: A span of text in the provided document.
@@ -5285,9 +5601,9 @@ type TextSpan struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *TextSpan) MarshalJSON() ([]byte, error) {
+func (s TextSpan) MarshalJSON() ([]byte, error) {
 	type NoMethod TextSpan
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // TimePartitioning: Configuration for FHIR BigQuery time-partitioned tables.
@@ -5317,9 +5633,9 @@ type TimePartitioning struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *TimePartitioning) MarshalJSON() ([]byte, error) {
+func (s TimePartitioning) MarshalJSON() ([]byte, error) {
 	type NoMethod TimePartitioning
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // Type: A type definition for some HL7v2 type (incl. Segments and Datatypes).
@@ -5352,9 +5668,9 @@ type Type struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *Type) MarshalJSON() ([]byte, error) {
+func (s Type) MarshalJSON() ([]byte, error) {
 	type NoMethod Type
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // UserDataMapping: Maps a resource to the associated user and Attributes.
@@ -5393,38 +5709,39 @@ type UserDataMapping struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *UserDataMapping) MarshalJSON() ([]byte, error) {
+func (s UserDataMapping) MarshalJSON() ([]byte, error) {
 	type NoMethod UserDataMapping
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // ValidationConfig: Contains the configuration for FHIR profiles and
 // validation.
 type ValidationConfig struct {
 	// DisableFhirpathValidation: Whether to disable FHIRPath validation for
-	// incoming resources. Set this to true to disable checking incoming resources
-	// for conformance against FHIRPath requirement defined in the FHIR
-	// specification. This property only affects resource types that do not have
-	// profiles configured for them, any rules in enabled implementation guides
-	// will still be enforced.
-	DisableFhirpathValidation bool `json:"disableFhirpathValidation,omitempty"`
-	// DisableProfileValidation: Whether to disable profile validation for this
-	// FHIR store. Set this to true to disable checking incoming resources for
-	// conformance against structure definitions in this FHIR store.
-	DisableProfileValidation bool `json:"disableProfileValidation,omitempty"`
-	// DisableReferenceTypeValidation: Whether to disable reference type validation
-	// for incoming resources. Set this to true to disable checking incoming
-	// resources for conformance against reference type requirement defined in the
-	// FHIR specification. This property only affects resource types that do not
-	// have profiles configured for them, any rules in enabled implementation
-	// guides will still be enforced.
-	DisableReferenceTypeValidation bool `json:"disableReferenceTypeValidation,omitempty"`
-	// DisableRequiredFieldValidation: Whether to disable required fields
-	// validation for incoming resources. Set this to true to disable checking
-	// incoming resources for conformance against required fields requirement
+	// incoming resources. The default value is false. Set this to true to disable
+	// checking incoming resources for conformance against FHIRPath requirement
 	// defined in the FHIR specification. This property only affects resource types
 	// that do not have profiles configured for them, any rules in enabled
 	// implementation guides will still be enforced.
+	DisableFhirpathValidation bool `json:"disableFhirpathValidation,omitempty"`
+	// DisableProfileValidation: Whether to disable profile validation for this
+	// FHIR store. The default value is false. Set this to true to disable checking
+	// incoming resources for conformance against structure definitions in this
+	// FHIR store.
+	DisableProfileValidation bool `json:"disableProfileValidation,omitempty"`
+	// DisableReferenceTypeValidation: Whether to disable reference type validation
+	// for incoming resources. The default value is false. Set this to true to
+	// disable checking incoming resources for conformance against reference type
+	// requirement defined in the FHIR specification. This property only affects
+	// resource types that do not have profiles configured for them, any rules in
+	// enabled implementation guides will still be enforced.
+	DisableReferenceTypeValidation bool `json:"disableReferenceTypeValidation,omitempty"`
+	// DisableRequiredFieldValidation: Whether to disable required fields
+	// validation for incoming resources. The default value is false. Set this to
+	// true to disable checking incoming resources for conformance against required
+	// fields requirement defined in the FHIR specification. This property only
+	// affects resource types that do not have profiles configured for them, any
+	// rules in enabled implementation guides will still be enforced.
 	DisableRequiredFieldValidation bool `json:"disableRequiredFieldValidation,omitempty"`
 	// EnabledImplementationGuides: A list of implementation guide URLs in this
 	// FHIR store that are used to configure the profiles to use for validation.
@@ -5454,9 +5771,9 @@ type ValidationConfig struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *ValidationConfig) MarshalJSON() ([]byte, error) {
+func (s ValidationConfig) MarshalJSON() ([]byte, error) {
 	type NoMethod ValidationConfig
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 // VersionSource: Describes a selector for extracting and matching an MSH field
@@ -5481,9 +5798,9 @@ type VersionSource struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *VersionSource) MarshalJSON() ([]byte, error) {
+func (s VersionSource) MarshalJSON() ([]byte, error) {
 	type NoMethod VersionSource
-	return gensupport.MarshalJSON(NoMethod(*s), s.ForceSendFields, s.NullFields)
+	return gensupport.MarshalJSON(NoMethod(s), s.ForceSendFields, s.NullFields)
 }
 
 type ProjectsLocationsGetCall struct {
@@ -12797,6 +13114,119 @@ func (c *ProjectsLocationsDatasetsDicomStoresSearchForStudiesCall) Do(opts ...go
 	return c.doRequest("")
 }
 
+type ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall struct {
+	s                             *Service
+	resource                      string
+	setblobstoragesettingsrequest *SetBlobStorageSettingsRequest
+	urlParams_                    gensupport.URLParams
+	ctx_                          context.Context
+	header_                       http.Header
+}
+
+// SetBlobStorageSettings: SetBlobStorageSettings sets the blob storage
+// settings of the specified resources.
+//
+//   - resource: The path of the resource to update the blob storage settings in
+//     the format of
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}/dicomWeb/studies/{studyUID}`,
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}/dicomWeb/studies/{studyUID}/series/{seriesUID}/`, or
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}/dicomWeb/studies/{studyUID}/series/{seriesUID}/instances/
+//     {instanceUID}`. If `filter_config` is specified, set the value of
+//     `resource` to the resource name of a DICOM store in the format
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}`.
+func (r *ProjectsLocationsDatasetsDicomStoresService) SetBlobStorageSettings(resource string, setblobstoragesettingsrequest *SetBlobStorageSettingsRequest) *ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall {
+	c := &ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	c.setblobstoragesettingsrequest = setblobstoragesettingsrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall) Fields(s ...googleapi.Field) *ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall) Context(ctx context.Context) *ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.setblobstoragesettingsrequest)
+	if err != nil {
+		return nil, err
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:setBlobStorageSettings")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "healthcare.projects.locations.datasets.dicomStores.setBlobStorageSettings" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsDatasetsDicomStoresSetBlobStorageSettingsCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 type ProjectsLocationsDatasetsDicomStoresSetIamPolicyCall struct {
 	s                   *Service
 	resource            string
@@ -13199,6 +13629,119 @@ func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesGetStudyMetricsCall)
 	return ret, nil
 }
 
+type ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall struct {
+	s                             *Service
+	resource                      string
+	setblobstoragesettingsrequest *SetBlobStorageSettingsRequest
+	urlParams_                    gensupport.URLParams
+	ctx_                          context.Context
+	header_                       http.Header
+}
+
+// SetBlobStorageSettings: SetBlobStorageSettings sets the blob storage
+// settings of the specified resources.
+//
+//   - resource: The path of the resource to update the blob storage settings in
+//     the format of
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}/dicomWeb/studies/{studyUID}`,
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}/dicomWeb/studies/{studyUID}/series/{seriesUID}/`, or
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}/dicomWeb/studies/{studyUID}/series/{seriesUID}/instances/
+//     {instanceUID}`. If `filter_config` is specified, set the value of
+//     `resource` to the resource name of a DICOM store in the format
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}`.
+func (r *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesService) SetBlobStorageSettings(resource string, setblobstoragesettingsrequest *SetBlobStorageSettingsRequest) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall {
+	c := &ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	c.setblobstoragesettingsrequest = setblobstoragesettingsrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall) Fields(s ...googleapi.Field) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall) Context(ctx context.Context) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.setblobstoragesettingsrequest)
+	if err != nil {
+		return nil, err
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:setBlobStorageSettings")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "healthcare.projects.locations.datasets.dicomStores.dicomWeb.studies.setBlobStorageSettings" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSetBlobStorageSettingsCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 type ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesGetSeriesMetricsCall struct {
 	s            *Service
 	series       string
@@ -13296,6 +13839,118 @@ func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesGetSeriesMetri
 		return nil, gensupport.WrapError(err)
 	}
 	ret := &SeriesMetrics{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+type ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall struct {
+	s            *Service
+	resource     string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetStorageInfo: GetStorageInfo returns the storage info of the specified
+// resource.
+//
+//   - resource: The path of the instance to return storage info for, in the
+//     form:
+//     `projects/{projectID}/locations/{locationID}/datasets/{datasetID}/dicomStor
+//     es/{dicomStoreID}/dicomWeb/studies/{studyUID}/series/{seriesUID}/instances/
+//     {instanceUID}`.
+func (r *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesService) GetStorageInfo(resource string) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall {
+	c := &ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall) Fields(s ...googleapi.Field) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets an optional parameter which makes the operation fail if the
+// object's ETag matches the given value. This is useful for getting updates
+// only after the object has changed since the last request.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall) IfNoneMatch(entityTag string) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall) Context(ctx context.Context) *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:getStorageInfo")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "healthcare.projects.locations.datasets.dicomStores.dicomWeb.studies.series.instances.getStorageInfo" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *StorageInfo.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsDatasetsDicomStoresDicomWebStudiesSeriesInstancesGetStorageInfoCall) Do(opts ...googleapi.CallOption) (*StorageInfo, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &StorageInfo{
 		ServerResponse: googleapi.ServerResponse{
 			Header:         res.Header,
 			HTTPStatusCode: res.StatusCode,
@@ -16350,6 +17005,368 @@ func (c *ProjectsLocationsDatasetsFhirStoresTestIamPermissionsCall) Do(opts ...g
 	return ret, nil
 }
 
+type ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall struct {
+	s          *Service
+	parent     string
+	body_      io.Reader
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// BinaryCreate: Creates a FHIR Binary resource. This method can be used to
+// create a Binary resource either by using one of the accepted FHIR JSON
+// content types, or as a raw data stream. If a resource is created with this
+// method using the FHIR content type this method's behavior is the same as
+// `fhir.create`
+// (https://cloud.google.com/healthcare-api/docs/reference/rest/v1/projects.locations.datasets.fhirStores.fhir/create).
+// If a resource type other than Binary is used in the request it's treated in
+// the same way as non-FHIR data (e.g., images, zip archives, pdf files,
+// documents). When a non-FHIR content type is used in the request, a Binary
+// resource will be generated, and the uploaded data will be stored in the
+// `content` field (`DSTU2` and `STU3`), or the `data` field (`R4`). The Binary
+// resource's `contentType` will be filled in using the value of the
+// `Content-Type` header, and the `securityContext` field (not present in
+// `DSTU2`) will be populated from the `X-Security-Context` header if it
+// exists. At this time `securityContext` has no special behavior in the Cloud
+// Healthcare API. Note: the limit on data ingested through this method is 2
+// GB. For best performance, use a non-FHIR data type instead of wrapping the
+// data in a Binary resource. Some of the Healthcare API features, such as
+// exporting to BigQuery
+// (https://cloud.google.com/healthcare-api/docs/how-tos/fhir-export-bigquery)
+// or Pub/Sub notifications
+// (https://cloud.google.com/healthcare-api/docs/fhir-pubsub#behavior_when_a_fhir_resource_is_too_large_or_traffic_is_high)
+// with full resource content, do not support Binary resources that are larger
+// than 10 MB. In these cases the resource's `data` field will be omitted.
+// Instead, the "http://hl7.org/fhir/StructureDefinition/data-absent-reason"
+// extension will be present to indicate that including the data is
+// `unsupported`. On success, an empty `201 Created` response is returned. The
+// newly created resource's ID and version are returned in the Location header.
+// Using `Prefer: representation=resource` is not allowed for this method. The
+// definition of the Binary REST API can be found at
+// https://hl7.org/fhir/binary.html#rest.
+//
+// - parent: The name of the FHIR store this resource belongs to.
+func (r *ProjectsLocationsDatasetsFhirStoresFhirService) BinaryCreate(parent string, body_ io.Reader) *ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall {
+	c := &ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.body_ = body_
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall) Fields(s ...googleapi.Field) *ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall) Context(ctx context.Context) *ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
+	var body io.Reader = nil
+	body = c.body_
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+parent}/fhir/Binary")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "healthcare.projects.locations.datasets.fhirStores.fhir.Binary-create" call.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryCreateCall) Do(opts ...googleapi.CallOption) (*http.Response, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	return c.doRequest("")
+}
+
+type ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// BinaryRead: Gets the contents of a FHIR Binary resource. This method can be
+// used to retrieve a Binary resource either by using the FHIR JSON mimetype as
+// the value for the Accept header, or as a raw data stream. If the FHIR Accept
+// type is used this method will return a Binary resource with the data
+// base64-encoded, regardless of how the resource was created. The resource
+// data can be retrieved in base64-decoded form if the Accept type of the
+// request matches the value of the resource's `contentType` field. The
+// definition of the Binary REST API can be found at
+// https://hl7.org/fhir/binary.html#rest.
+//
+// - name: The name of the Binary resource to retrieve.
+func (r *ProjectsLocationsDatasetsFhirStoresFhirService) BinaryRead(name string) *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall {
+	c := &ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall) Fields(s ...googleapi.Field) *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets an optional parameter which makes the operation fail if the
+// object's ETag matches the given value. This is useful for getting updates
+// only after the object has changed since the last request.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall) IfNoneMatch(entityTag string) *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall) Context(ctx context.Context) *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "healthcare.projects.locations.datasets.fhirStores.fhir.Binary-read" call.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryReadCall) Do(opts ...googleapi.CallOption) (*http.Response, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	return c.doRequest("")
+}
+
+type ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall struct {
+	s          *Service
+	name       string
+	body_      io.Reader
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// BinaryUpdate: Updates the entire contents of a Binary resource. If the
+// specified resource does not exist and the FHIR store has
+// enable_update_create set, creates the resource with the client-specified ID.
+// It is strongly advised not to include or encode any sensitive data such as
+// patient identifiers in client-specified resource IDs. Those IDs are part of
+// the FHIR resource path recorded in Cloud Audit Logs and Pub/Sub
+// notifications. Those IDs can also be contained in reference fields within
+// other resources. This method can be used to update a Binary resource either
+// by using one of the accepted FHIR JSON content types, or as a raw data
+// stream. If a resource is updated with this method using the FHIR content
+// type this method's behavior is the same as `update`. If a resource type
+// other than Binary is used in the request it will be treated in the same way
+// as non-FHIR data. When a non-FHIR content type is used in the request, a
+// Binary resource will be generated using the ID from the resource path, and
+// the uploaded data will be stored in the `content` field (`DSTU2` and
+// `STU3`), or the `data` field (`R4`). The Binary resource's `contentType`
+// will be filled in using the value of the `Content-Type` header, and the
+// `securityContext` field (not present in `DSTU2`) will be populated from the
+// `X-Security-Context` header if it exists. At this time `securityContext` has
+// no special behavior in the Cloud Healthcare API. Note: the limit on data
+// ingested through this method is 2 GB. For best performance, use a non-FHIR
+// data type instead of wrapping the data in a Binary resource. Some of the
+// Healthcare API features, such as exporting to BigQuery
+// (https://cloud.google.com/healthcare-api/docs/how-tos/fhir-export-bigquery)
+// or Pub/Sub notifications
+// (https://cloud.google.com/healthcare-api/docs/fhir-pubsub#behavior_when_a_fhir_resource_is_too_large_or_traffic_is_high)
+// with full resource content, do not support Binary resources that are larger
+// than 10 MB. In these cases the resource's `data` field will be omitted.
+// Instead, the "http://hl7.org/fhir/StructureDefinition/data-absent-reason"
+// extension will be present to indicate that including the data is
+// `unsupported`. On success, an empty 200 OK response will be returned, or a
+// 201 Created if the resource did not exit. The resource's ID and version are
+// returned in the Location header. Using `Prefer: representation=resource` is
+// not allowed for this method. The definition of the Binary REST API can be
+// found at https://hl7.org/fhir/binary.html#rest.
+//
+// - name: The name of the resource to update.
+func (r *ProjectsLocationsDatasetsFhirStoresFhirService) BinaryUpdate(name string, body_ io.Reader) *ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall {
+	c := &ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.body_ = body_
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall) Fields(s ...googleapi.Field) *ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall) Context(ctx context.Context) *ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
+	var body io.Reader = nil
+	body = c.body_
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("PUT", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "healthcare.projects.locations.datasets.fhirStores.fhir.Binary-update" call.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryUpdateCall) Do(opts ...googleapi.CallOption) (*http.Response, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	return c.doRequest("")
+}
+
+type ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// BinaryVread: Gets the contents of a version (current or historical) of a
+// FHIR Binary resource by version ID. This method can be used to retrieve a
+// Binary resource version either by using the FHIR JSON mimetype as the value
+// for the Accept header, or as a raw data stream. If the FHIR Accept type is
+// used this method will return a Binary resource with the data base64-encoded,
+// regardless of how the resource version was created. The resource data can be
+// retrieved in base64-decoded form if the Accept type of the request matches
+// the value of the resource version's `contentType` field. The definition of
+// the Binary REST API can be found at https://hl7.org/fhir/binary.html#rest.
+//
+// - name: The name of the Binary resource version to retrieve.
+func (r *ProjectsLocationsDatasetsFhirStoresFhirService) BinaryVread(name string) *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall {
+	c := &ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall) Fields(s ...googleapi.Field) *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets an optional parameter which makes the operation fail if the
+// object's ETag matches the given value. This is useful for getting updates
+// only after the object has changed since the last request.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall) IfNoneMatch(entityTag string) *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall) Context(ctx context.Context) *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "", c.header_)
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("GET", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "healthcare.projects.locations.datasets.fhirStores.fhir.Binary-vread" call.
+func (c *ProjectsLocationsDatasetsFhirStoresFhirBinaryVreadCall) Do(opts ...googleapi.CallOption) (*http.Response, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	return c.doRequest("")
+}
+
 type ProjectsLocationsDatasetsFhirStoresFhirPatientEverythingCall struct {
 	s            *Service
 	name         string
@@ -19199,6 +20216,116 @@ func (c *ProjectsLocationsDatasetsHl7V2StoresPatchCall) Do(opts ...googleapi.Cal
 	return ret, nil
 }
 
+type ProjectsLocationsDatasetsHl7V2StoresRollbackCall struct {
+	s                            *Service
+	name                         string
+	rollbackhl7v2messagesrequest *RollbackHl7V2MessagesRequest
+	urlParams_                   gensupport.URLParams
+	ctx_                         context.Context
+	header_                      http.Header
+}
+
+// Rollback: Rolls back messages from the HL7v2 store to the specified time.
+// This method returns an Operation that can be used to track the status of the
+// rollback by calling GetOperation. Immediate fatal errors appear in the error
+// field, errors are also logged to Cloud Logging (see Viewing error logs in
+// Cloud Logging (https://cloud.google.com/healthcare/docs/how-tos/logging)).
+// Otherwise, when the operation finishes, a detailed response of type
+// RollbackHl7V2MessagesResponse is returned in the response field. The
+// metadata field type for this operation is OperationMetadata.
+//
+//   - name: The name of the HL7v2 store to rollback, in the format of
+//     "projects/{project_id}/locations/{location_id}/datasets/{dataset_id}
+//     /hl7V2Stores/{hl7v2_store_id}".
+func (r *ProjectsLocationsDatasetsHl7V2StoresService) Rollback(name string, rollbackhl7v2messagesrequest *RollbackHl7V2MessagesRequest) *ProjectsLocationsDatasetsHl7V2StoresRollbackCall {
+	c := &ProjectsLocationsDatasetsHl7V2StoresRollbackCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.rollbackhl7v2messagesrequest = rollbackhl7v2messagesrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse for more
+// details.
+func (c *ProjectsLocationsDatasetsHl7V2StoresRollbackCall) Fields(s ...googleapi.Field) *ProjectsLocationsDatasetsHl7V2StoresRollbackCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method.
+func (c *ProjectsLocationsDatasetsHl7V2StoresRollbackCall) Context(ctx context.Context) *ProjectsLocationsDatasetsHl7V2StoresRollbackCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns a http.Header that can be modified by the caller to add
+// headers to the request.
+func (c *ProjectsLocationsDatasetsHl7V2StoresRollbackCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsLocationsDatasetsHl7V2StoresRollbackCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := gensupport.SetHeaders(c.s.userAgent(), "application/json", c.header_)
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.rollbackhl7v2messagesrequest)
+	if err != nil {
+		return nil, err
+	}
+	c.urlParams_.Set("alt", alt)
+	c.urlParams_.Set("prettyPrint", "false")
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:rollback")
+	urls += "?" + c.urlParams_.Encode()
+	req, err := http.NewRequest("POST", urls, body)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "healthcare.projects.locations.datasets.hl7V2Stores.rollback" call.
+// Any non-2xx status code is an error. Response headers are in either
+// *Operation.ServerResponse.Header or (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was returned.
+func (c *ProjectsLocationsDatasetsHl7V2StoresRollbackCall) Do(opts ...googleapi.CallOption) (*Operation, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, gensupport.WrapError(&googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		})
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, gensupport.WrapError(err)
+	}
+	ret := &Operation{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
 type ProjectsLocationsDatasetsHl7V2StoresSetIamPolicyCall struct {
 	s                   *Service
 	resource            string
@@ -20100,7 +21227,7 @@ type ProjectsLocationsDatasetsHl7V2StoresMessagesPatchCall struct {
 //
 //   - name: Output only. Resource name of the Message, of the form
 //     `projects/{project_id}/locations/{location_id}/datasets/{dataset_id}/hl7V2S
-//     tores/{hl7_v2_store_id}/messages/{message_id}`. Assigned by the server.
+//     tores/{hl7_v2_store_id}/messages/{message_id}`.
 func (r *ProjectsLocationsDatasetsHl7V2StoresMessagesService) Patch(name string, message *Message) *ProjectsLocationsDatasetsHl7V2StoresMessagesPatchCall {
 	c := &ProjectsLocationsDatasetsHl7V2StoresMessagesPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name

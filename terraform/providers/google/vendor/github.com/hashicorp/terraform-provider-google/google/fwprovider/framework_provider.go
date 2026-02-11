@@ -20,20 +20,22 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/fwmodels"
 	"github.com/hashicorp/terraform-provider-google/google/fwtransport"
 	"github.com/hashicorp/terraform-provider-google/google/services/resourcemanager"
+	"github.com/hashicorp/terraform-provider-google/version"
 
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 )
 
 // Ensure the implementation satisfies the expected interfaces
 var (
+	_ provider.Provider               = &FrameworkProvider{}
 	_ provider.ProviderWithMetaSchema = &FrameworkProvider{}
 	_ provider.ProviderWithFunctions  = &FrameworkProvider{}
 )
 
 // New is a helper function to simplify provider server and testing implementation.
-func New(version string) provider.ProviderWithMetaSchema {
+func New() provider.ProviderWithMetaSchema {
 	return &FrameworkProvider{
-		Version: version,
+		Version: version.ProviderVersion,
 	}
 }
 
@@ -43,7 +45,9 @@ type FrameworkProvider struct {
 	Version string
 }
 
-// Metadata returns the provider type name.
+// Metadata returns
+// - the provider type name : this controls how "google" is present at the start of all resource type names
+// - the provider version   : this is currently unused by Terraform core
 func (p *FrameworkProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
 	resp.TypeName = "google"
 	resp.Version = p.Version
@@ -432,12 +436,6 @@ func (p *FrameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 					transport_tpg.CustomEndpointValidator(),
 				},
 			},
-			"datastore_custom_endpoint": &schema.StringAttribute{
-				Optional: true,
-				Validators: []validator.String{
-					transport_tpg.CustomEndpointValidator(),
-				},
-			},
 			"datastream_custom_endpoint": &schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
@@ -672,6 +670,12 @@ func (p *FrameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 					transport_tpg.CustomEndpointValidator(),
 				},
 			},
+			"oracle_database_custom_endpoint": &schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					transport_tpg.CustomEndpointValidator(),
+				},
+			},
 			"org_policy_custom_endpoint": &schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
@@ -691,6 +695,12 @@ func (p *FrameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 				},
 			},
 			"privateca_custom_endpoint": &schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					transport_tpg.CustomEndpointValidator(),
+				},
+			},
+			"privileged_access_manager_custom_endpoint": &schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
 					transport_tpg.CustomEndpointValidator(),
@@ -727,6 +737,12 @@ func (p *FrameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 				},
 			},
 			"secret_manager_custom_endpoint": &schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					transport_tpg.CustomEndpointValidator(),
+				},
+			},
+			"secret_manager_regional_custom_endpoint": &schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
 					transport_tpg.CustomEndpointValidator(),
@@ -780,6 +796,12 @@ func (p *FrameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 					transport_tpg.CustomEndpointValidator(),
 				},
 			},
+			"site_verification_custom_endpoint": &schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					transport_tpg.CustomEndpointValidator(),
+				},
+			},
 			"source_repo_custom_endpoint": &schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
@@ -823,6 +845,12 @@ func (p *FrameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 				},
 			},
 			"tpu_custom_endpoint": &schema.StringAttribute{
+				Optional: true,
+				Validators: []validator.String{
+					transport_tpg.CustomEndpointValidator(),
+				},
+			},
+			"transcoder_custom_endpoint": &schema.StringAttribute{
 				Optional: true,
 				Validators: []validator.String{
 					transport_tpg.CustomEndpointValidator(),
@@ -939,7 +967,10 @@ func (p *FrameworkProvider) Schema(_ context.Context, _ provider.SchemaRequest, 
 	transport_tpg.ConfigureDCLCustomEndpointAttributesFramework(&resp.Schema)
 }
 
-// Configure prepares an API client for data sources and resources.
+// Configure prepares the metadata/'meta' required for data sources and resources to function.
+// Configuration logic implemented here should take user inputs and use them to populate a struct
+// with that necessary metadata, e.g. default project value, configured client, etc.
+// That prepared 'meta' struct is then returned in the response, and that value will later be supplied to all resources/data sources when they need to configure themselves.
 func (p *FrameworkProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	var data fwmodels.ProviderModel
 
@@ -955,7 +986,8 @@ func (p *FrameworkProvider) Configure(ctx context.Context, req provider.Configur
 		return
 	}
 
-	// Example client configuration for data sources and resources
+	// This is how we make provider configuration info (configured clients, default project, etc) available to resources and data sources
+	// implemented using the plugin-framework. The resources' Configure functions receive this data in the ConfigureRequest argument.
 	resp.DataSourceData = &p.FrameworkProviderConfig
 	resp.ResourceData = &p.FrameworkProviderConfig
 }

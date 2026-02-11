@@ -422,6 +422,48 @@ func DCLNodePoolSchema() *dcl.Schema {
 								Description: "Allows clients to perform consistent read-modify-writes through optimistic concurrency control. May be sent on update and delete requests to ensure the client has an up-to-date value before proceeding.",
 								Immutable:   true,
 							},
+							"kubeletConfig": &dcl.Property{
+								Type:          "object",
+								GoName:        "KubeletConfig",
+								GoType:        "NodePoolKubeletConfig",
+								Description:   "The kubelet configuration for the node pool.",
+								Immutable:     true,
+								ServerDefault: true,
+								Properties: map[string]*dcl.Property{
+									"cpuCfsQuota": &dcl.Property{
+										Type:          "boolean",
+										GoName:        "CpuCfsQuota",
+										Description:   "Whether or not to enable CPU CFS quota. Defaults to true.",
+										Immutable:     true,
+										ServerDefault: true,
+									},
+									"cpuCfsQuotaPeriod": &dcl.Property{
+										Type:        "string",
+										GoName:      "CpuCfsQuotaPeriod",
+										Description: "Optional. The CPU CFS quota period to use for the node. Defaults to \"100ms\".",
+										Immutable:   true,
+									},
+									"cpuManagerPolicy": &dcl.Property{
+										Type:          "string",
+										GoName:        "CpuManagerPolicy",
+										GoType:        "NodePoolKubeletConfigCpuManagerPolicyEnum",
+										Description:   "The CpuManagerPolicy to use for the node. Defaults to \"none\".",
+										Immutable:     true,
+										ServerDefault: true,
+										Enum: []string{
+											"none",
+											"static",
+										},
+									},
+									"podPidsLimit": &dcl.Property{
+										Type:        "integer",
+										Format:      "int64",
+										GoName:      "PodPidsLimit",
+										Description: "Optional. The maximum number of PIDs in each pod running on the node. The limit scales automatically based on underlying machine size if left unset.",
+										Immutable:   true,
+									},
+								},
+							},
 							"location": &dcl.Property{
 								Type:        "string",
 								GoName:      "Location",

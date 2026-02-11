@@ -74,6 +74,11 @@ func (r *NodePool) validate() error {
 			return err
 		}
 	}
+	if !dcl.IsEmptyValueIndirect(r.KubeletConfig) {
+		if err := r.KubeletConfig.validate(); err != nil {
+			return err
+		}
+	}
 	if !dcl.IsEmptyValueIndirect(r.UpdateSettings) {
 		if err := r.UpdateSettings.validate(); err != nil {
 			return err
@@ -173,6 +178,9 @@ func (r *NodePoolMaxPodsConstraint) validate() error {
 	return nil
 }
 func (r *NodePoolManagement) validate() error {
+	return nil
+}
+func (r *NodePoolKubeletConfig) validate() error {
 	return nil
 }
 func (r *NodePoolUpdateSettings) validate() error {
@@ -628,6 +636,7 @@ func canonicalizeNodePoolDesiredState(rawDesired, rawInitial *NodePool, opts ...
 		rawDesired.Autoscaling = canonicalizeNodePoolAutoscaling(rawDesired.Autoscaling, nil, opts...)
 		rawDesired.MaxPodsConstraint = canonicalizeNodePoolMaxPodsConstraint(rawDesired.MaxPodsConstraint, nil, opts...)
 		rawDesired.Management = canonicalizeNodePoolManagement(rawDesired.Management, nil, opts...)
+		rawDesired.KubeletConfig = canonicalizeNodePoolKubeletConfig(rawDesired.KubeletConfig, nil, opts...)
 		rawDesired.UpdateSettings = canonicalizeNodePoolUpdateSettings(rawDesired.UpdateSettings, nil, opts...)
 
 		return rawDesired, nil
@@ -658,6 +667,7 @@ func canonicalizeNodePoolDesiredState(rawDesired, rawInitial *NodePool, opts ...
 	}
 	canonicalDesired.MaxPodsConstraint = canonicalizeNodePoolMaxPodsConstraint(rawDesired.MaxPodsConstraint, rawInitial.MaxPodsConstraint, opts...)
 	canonicalDesired.Management = canonicalizeNodePoolManagement(rawDesired.Management, rawInitial.Management, opts...)
+	canonicalDesired.KubeletConfig = canonicalizeNodePoolKubeletConfig(rawDesired.KubeletConfig, rawInitial.KubeletConfig, opts...)
 	canonicalDesired.UpdateSettings = canonicalizeNodePoolUpdateSettings(rawDesired.UpdateSettings, rawInitial.UpdateSettings, opts...)
 	if dcl.NameToSelfLink(rawDesired.Project, rawInitial.Project) {
 		canonicalDesired.Project = rawInitial.Project
@@ -769,6 +779,12 @@ func canonicalizeNodePoolNewState(c *Client, rawNew, rawDesired *NodePool) (*Nod
 		rawNew.Management = rawDesired.Management
 	} else {
 		rawNew.Management = canonicalizeNewNodePoolManagement(c, rawDesired.Management, rawNew.Management)
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.KubeletConfig) && dcl.IsEmptyValueIndirect(rawDesired.KubeletConfig) {
+		rawNew.KubeletConfig = rawDesired.KubeletConfig
+	} else {
+		rawNew.KubeletConfig = canonicalizeNewNodePoolKubeletConfig(c, rawDesired.KubeletConfig, rawNew.KubeletConfig)
 	}
 
 	if dcl.IsEmptyValueIndirect(rawNew.UpdateSettings) && dcl.IsEmptyValueIndirect(rawDesired.UpdateSettings) {
@@ -2060,6 +2076,144 @@ func canonicalizeNewNodePoolManagementSlice(c *Client, des, nw []NodePoolManagem
 	return items
 }
 
+func canonicalizeNodePoolKubeletConfig(des, initial *NodePoolKubeletConfig, opts ...dcl.ApplyOption) *NodePoolKubeletConfig {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &NodePoolKubeletConfig{}
+
+	if dcl.IsZeroValue(des.CpuManagerPolicy) || (dcl.IsEmptyValueIndirect(des.CpuManagerPolicy) && dcl.IsEmptyValueIndirect(initial.CpuManagerPolicy)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.CpuManagerPolicy = initial.CpuManagerPolicy
+	} else {
+		cDes.CpuManagerPolicy = des.CpuManagerPolicy
+	}
+	if dcl.BoolCanonicalize(des.CpuCfsQuota, initial.CpuCfsQuota) || dcl.IsZeroValue(des.CpuCfsQuota) {
+		cDes.CpuCfsQuota = initial.CpuCfsQuota
+	} else {
+		cDes.CpuCfsQuota = des.CpuCfsQuota
+	}
+	if dcl.StringCanonicalize(des.CpuCfsQuotaPeriod, initial.CpuCfsQuotaPeriod) || dcl.IsZeroValue(des.CpuCfsQuotaPeriod) {
+		cDes.CpuCfsQuotaPeriod = initial.CpuCfsQuotaPeriod
+	} else {
+		cDes.CpuCfsQuotaPeriod = des.CpuCfsQuotaPeriod
+	}
+	if dcl.IsZeroValue(des.PodPidsLimit) || (dcl.IsEmptyValueIndirect(des.PodPidsLimit) && dcl.IsEmptyValueIndirect(initial.PodPidsLimit)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.PodPidsLimit = initial.PodPidsLimit
+	} else {
+		cDes.PodPidsLimit = des.PodPidsLimit
+	}
+
+	return cDes
+}
+
+func canonicalizeNodePoolKubeletConfigSlice(des, initial []NodePoolKubeletConfig, opts ...dcl.ApplyOption) []NodePoolKubeletConfig {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]NodePoolKubeletConfig, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeNodePoolKubeletConfig(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]NodePoolKubeletConfig, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeNodePoolKubeletConfig(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewNodePoolKubeletConfig(c *Client, des, nw *NodePoolKubeletConfig) *NodePoolKubeletConfig {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for NodePoolKubeletConfig while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	if dcl.BoolCanonicalize(des.CpuCfsQuota, nw.CpuCfsQuota) {
+		nw.CpuCfsQuota = des.CpuCfsQuota
+	}
+	if dcl.StringCanonicalize(des.CpuCfsQuotaPeriod, nw.CpuCfsQuotaPeriod) {
+		nw.CpuCfsQuotaPeriod = des.CpuCfsQuotaPeriod
+	}
+
+	return nw
+}
+
+func canonicalizeNewNodePoolKubeletConfigSet(c *Client, des, nw []NodePoolKubeletConfig) []NodePoolKubeletConfig {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []NodePoolKubeletConfig
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareNodePoolKubeletConfigNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewNodePoolKubeletConfig(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewNodePoolKubeletConfigSlice(c *Client, des, nw []NodePoolKubeletConfig) []NodePoolKubeletConfig {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []NodePoolKubeletConfig
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewNodePoolKubeletConfig(c, &d, &n))
+	}
+
+	return items
+}
+
 func canonicalizeNodePoolUpdateSettings(des, initial *NodePoolUpdateSettings, opts ...dcl.ApplyOption) *NodePoolUpdateSettings {
 	if des == nil {
 		return initial
@@ -2403,6 +2557,13 @@ func diffNodePool(c *Client, desired, actual *NodePool, opts ...dcl.ApplyOption)
 	}
 
 	if ds, err := dcl.Diff(desired.Management, actual.Management, dcl.DiffInfo{ObjectFunction: compareNodePoolManagementNewStyle, EmptyObject: EmptyNodePoolManagement, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Management")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.KubeletConfig, actual.KubeletConfig, dcl.DiffInfo{ServerDefault: true, ObjectFunction: compareNodePoolKubeletConfigNewStyle, EmptyObject: EmptyNodePoolKubeletConfig, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KubeletConfig")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -2865,6 +3026,56 @@ func compareNodePoolManagementNewStyle(d, a interface{}, fn dcl.FieldName) ([]*d
 	return diffs, nil
 }
 
+func compareNodePoolKubeletConfigNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*NodePoolKubeletConfig)
+	if !ok {
+		desiredNotPointer, ok := d.(NodePoolKubeletConfig)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a NodePoolKubeletConfig or *NodePoolKubeletConfig", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*NodePoolKubeletConfig)
+	if !ok {
+		actualNotPointer, ok := a.(NodePoolKubeletConfig)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a NodePoolKubeletConfig", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.CpuManagerPolicy, actual.CpuManagerPolicy, dcl.DiffInfo{ServerDefault: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CpuManagerPolicy")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.CpuCfsQuota, actual.CpuCfsQuota, dcl.DiffInfo{ServerDefault: true, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CpuCfsQuota")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.CpuCfsQuotaPeriod, actual.CpuCfsQuotaPeriod, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("CpuCfsQuotaPeriod")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.PodPidsLimit, actual.PodPidsLimit, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PodPidsLimit")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
 func compareNodePoolUpdateSettingsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
 	var diffs []*dcl.FieldDiff
 
@@ -3031,6 +3242,11 @@ func expandNodePool(c *Client, f *NodePool) (map[string]interface{}, error) {
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["management"] = v
 	}
+	if v, err := expandNodePoolKubeletConfig(c, f.KubeletConfig, res); err != nil {
+		return nil, fmt.Errorf("error expanding KubeletConfig into kubeletConfig: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["kubeletConfig"] = v
+	}
 	if v, err := expandNodePoolUpdateSettings(c, f.UpdateSettings, res); err != nil {
 		return nil, fmt.Errorf("error expanding UpdateSettings into updateSettings: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
@@ -3081,6 +3297,7 @@ func flattenNodePool(c *Client, i interface{}, res *NodePool) *NodePool {
 	resultRes.Annotations = dcl.FlattenKeyValuePairs(m["annotations"])
 	resultRes.MaxPodsConstraint = flattenNodePoolMaxPodsConstraint(c, m["maxPodsConstraint"], res)
 	resultRes.Management = flattenNodePoolManagement(c, m["management"], res)
+	resultRes.KubeletConfig = flattenNodePoolKubeletConfig(c, m["kubeletConfig"], res)
 	resultRes.UpdateSettings = flattenNodePoolUpdateSettings(c, m["updateSettings"], res)
 	resultRes.Project = dcl.FlattenString(m["project"])
 	resultRes.Location = dcl.FlattenString(m["location"])
@@ -4317,6 +4534,132 @@ func flattenNodePoolManagement(c *Client, i interface{}, res *NodePool) *NodePoo
 	return r
 }
 
+// expandNodePoolKubeletConfigMap expands the contents of NodePoolKubeletConfig into a JSON
+// request object.
+func expandNodePoolKubeletConfigMap(c *Client, f map[string]NodePoolKubeletConfig, res *NodePool) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandNodePoolKubeletConfig(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandNodePoolKubeletConfigSlice expands the contents of NodePoolKubeletConfig into a JSON
+// request object.
+func expandNodePoolKubeletConfigSlice(c *Client, f []NodePoolKubeletConfig, res *NodePool) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandNodePoolKubeletConfig(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenNodePoolKubeletConfigMap flattens the contents of NodePoolKubeletConfig from a JSON
+// response object.
+func flattenNodePoolKubeletConfigMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolKubeletConfig {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]NodePoolKubeletConfig{}
+	}
+
+	if len(a) == 0 {
+		return map[string]NodePoolKubeletConfig{}
+	}
+
+	items := make(map[string]NodePoolKubeletConfig)
+	for k, item := range a {
+		items[k] = *flattenNodePoolKubeletConfig(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenNodePoolKubeletConfigSlice flattens the contents of NodePoolKubeletConfig from a JSON
+// response object.
+func flattenNodePoolKubeletConfigSlice(c *Client, i interface{}, res *NodePool) []NodePoolKubeletConfig {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []NodePoolKubeletConfig{}
+	}
+
+	if len(a) == 0 {
+		return []NodePoolKubeletConfig{}
+	}
+
+	items := make([]NodePoolKubeletConfig, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenNodePoolKubeletConfig(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandNodePoolKubeletConfig expands an instance of NodePoolKubeletConfig into a JSON
+// request object.
+func expandNodePoolKubeletConfig(c *Client, f *NodePoolKubeletConfig, res *NodePool) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.CpuManagerPolicy; !dcl.IsEmptyValueIndirect(v) {
+		m["cpuManagerPolicy"] = v
+	}
+	if v := f.CpuCfsQuota; !dcl.IsEmptyValueIndirect(v) {
+		m["cpuCfsQuota"] = v
+	}
+	if v := f.CpuCfsQuotaPeriod; !dcl.IsEmptyValueIndirect(v) {
+		m["cpuCfsQuotaPeriod"] = v
+	}
+	if v := f.PodPidsLimit; !dcl.IsEmptyValueIndirect(v) {
+		m["podPidsLimit"] = v
+	}
+
+	return m, nil
+}
+
+// flattenNodePoolKubeletConfig flattens an instance of NodePoolKubeletConfig from a JSON
+// response object.
+func flattenNodePoolKubeletConfig(c *Client, i interface{}, res *NodePool) *NodePoolKubeletConfig {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &NodePoolKubeletConfig{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyNodePoolKubeletConfig
+	}
+	r.CpuManagerPolicy = flattenNodePoolKubeletConfigCpuManagerPolicyEnum(m["cpuManagerPolicy"])
+	r.CpuCfsQuota = dcl.FlattenBool(m["cpuCfsQuota"])
+	r.CpuCfsQuotaPeriod = dcl.FlattenString(m["cpuCfsQuotaPeriod"])
+	r.PodPidsLimit = dcl.FlattenInteger(m["podPidsLimit"])
+
+	return r
+}
+
 // expandNodePoolUpdateSettingsMap expands the contents of NodePoolUpdateSettings into a JSON
 // request object.
 func expandNodePoolUpdateSettingsMap(c *Client, f map[string]NodePoolUpdateSettings, res *NodePool) (map[string]interface{}, error) {
@@ -4704,6 +5047,57 @@ func flattenNodePoolStateEnum(i interface{}) *NodePoolStateEnum {
 	return NodePoolStateEnumRef(s)
 }
 
+// flattenNodePoolKubeletConfigCpuManagerPolicyEnumMap flattens the contents of NodePoolKubeletConfigCpuManagerPolicyEnum from a JSON
+// response object.
+func flattenNodePoolKubeletConfigCpuManagerPolicyEnumMap(c *Client, i interface{}, res *NodePool) map[string]NodePoolKubeletConfigCpuManagerPolicyEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]NodePoolKubeletConfigCpuManagerPolicyEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]NodePoolKubeletConfigCpuManagerPolicyEnum{}
+	}
+
+	items := make(map[string]NodePoolKubeletConfigCpuManagerPolicyEnum)
+	for k, item := range a {
+		items[k] = *flattenNodePoolKubeletConfigCpuManagerPolicyEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenNodePoolKubeletConfigCpuManagerPolicyEnumSlice flattens the contents of NodePoolKubeletConfigCpuManagerPolicyEnum from a JSON
+// response object.
+func flattenNodePoolKubeletConfigCpuManagerPolicyEnumSlice(c *Client, i interface{}, res *NodePool) []NodePoolKubeletConfigCpuManagerPolicyEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []NodePoolKubeletConfigCpuManagerPolicyEnum{}
+	}
+
+	if len(a) == 0 {
+		return []NodePoolKubeletConfigCpuManagerPolicyEnum{}
+	}
+
+	items := make([]NodePoolKubeletConfigCpuManagerPolicyEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenNodePoolKubeletConfigCpuManagerPolicyEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenNodePoolKubeletConfigCpuManagerPolicyEnum asserts that an interface is a string, and returns a
+// pointer to a *NodePoolKubeletConfigCpuManagerPolicyEnum with the same value as that string.
+func flattenNodePoolKubeletConfigCpuManagerPolicyEnum(i interface{}) *NodePoolKubeletConfigCpuManagerPolicyEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return NodePoolKubeletConfigCpuManagerPolicyEnumRef(s)
+}
+
 // This function returns a matcher that checks whether a serialized resource matches this resource
 // in its parameters (as defined by the fields in a Get, which definitionally define resource
 // identity).  This is useful in extracting the element from a List call.
@@ -4850,6 +5244,17 @@ func extractNodePoolFields(r *NodePool) error {
 	if !dcl.IsEmptyValueIndirect(vManagement) {
 		r.Management = vManagement
 	}
+	vKubeletConfig := r.KubeletConfig
+	if vKubeletConfig == nil {
+		// note: explicitly not the empty object.
+		vKubeletConfig = &NodePoolKubeletConfig{}
+	}
+	if err := extractNodePoolKubeletConfigFields(r, vKubeletConfig); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vKubeletConfig) {
+		r.KubeletConfig = vKubeletConfig
+	}
 	vUpdateSettings := r.UpdateSettings
 	if vUpdateSettings == nil {
 		// note: explicitly not the empty object.
@@ -4948,6 +5353,9 @@ func extractNodePoolMaxPodsConstraintFields(r *NodePool, o *NodePoolMaxPodsConst
 func extractNodePoolManagementFields(r *NodePool, o *NodePoolManagement) error {
 	return nil
 }
+func extractNodePoolKubeletConfigFields(r *NodePool, o *NodePoolKubeletConfig) error {
+	return nil
+}
 func extractNodePoolUpdateSettingsFields(r *NodePool, o *NodePoolUpdateSettings) error {
 	vSurgeSettings := o.SurgeSettings
 	if vSurgeSettings == nil {
@@ -5010,6 +5418,17 @@ func postReadExtractNodePoolFields(r *NodePool) error {
 	}
 	if !dcl.IsEmptyValueIndirect(vManagement) {
 		r.Management = vManagement
+	}
+	vKubeletConfig := r.KubeletConfig
+	if vKubeletConfig == nil {
+		// note: explicitly not the empty object.
+		vKubeletConfig = &NodePoolKubeletConfig{}
+	}
+	if err := postReadExtractNodePoolKubeletConfigFields(r, vKubeletConfig); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vKubeletConfig) {
+		r.KubeletConfig = vKubeletConfig
 	}
 	vUpdateSettings := r.UpdateSettings
 	if vUpdateSettings == nil {
@@ -5107,6 +5526,9 @@ func postReadExtractNodePoolMaxPodsConstraintFields(r *NodePool, o *NodePoolMaxP
 	return nil
 }
 func postReadExtractNodePoolManagementFields(r *NodePool, o *NodePoolManagement) error {
+	return nil
+}
+func postReadExtractNodePoolKubeletConfigFields(r *NodePool, o *NodePoolKubeletConfig) error {
 	return nil
 }
 func postReadExtractNodePoolUpdateSettingsFields(r *NodePool, o *NodePoolUpdateSettings) error {

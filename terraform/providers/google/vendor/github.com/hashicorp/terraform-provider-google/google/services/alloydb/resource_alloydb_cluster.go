@@ -383,17 +383,6 @@ Please refer to the field 'effective_labels' for all of the labels present on th
 					},
 				},
 			},
-			"network": {
-				Type:             schema.TypeString,
-				Computed:         true,
-				Optional:         true,
-				Deprecated:       "`network` is deprecated and will be removed in a future major release. Instead, use `network_config` to define the network configuration.",
-				DiffSuppressFunc: tpgresource.ProjectNumberDiffSuppress,
-				Description: `The relative resource name of the VPC network on which the instance can be accessed. It is specified in the following form:
-
-"projects/{projectNumber}/global/networks/{network_id}".`,
-				ExactlyOneOf: []string{"network", "network_config.0.network", "psc_config.0.psc_enabled"},
-			},
 			"network_config": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -414,7 +403,7 @@ If set, the instance IPs for this cluster will be created in the allocated range
 							DiffSuppressFunc: tpgresource.ProjectNumberDiffSuppress,
 							Description: `The resource link for the VPC network in which cluster resources are created and from which they are accessible via Private IP. The network must belong to the same project as the cluster.
 It is specified in the form: "projects/{projectNumber}/global/networks/{network_id}".`,
-							ExactlyOneOf: []string{"network", "network_config.0.network", "psc_config.0.psc_enabled"},
+							ExactlyOneOf: []string{"network_config.0.network", "psc_config.0.psc_enabled"},
 						},
 					},
 				},
@@ -491,6 +480,13 @@ It is specified in the form: "projects/{projectNumber}/global/networks/{network_
 						},
 					},
 				},
+			},
+			"subscription_type": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"TRIAL", "STANDARD", ""}),
+				Description:  `The subscrition type of cluster. Possible values: ["TRIAL", "STANDARD"]`,
 			},
 			"backup_source": {
 				Type:        schema.TypeList,
@@ -637,6 +633,35 @@ This can happen due to user-triggered updates or system actions like failover or
  and default labels configured on the provider.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
+			"trial_metadata": {
+				Type:        schema.TypeList,
+				Computed:    true,
+				Description: `Contains information and all metadata related to TRIAL clusters.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"end_time": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `End time of the trial cluster.`,
+						},
+						"grace_end_time": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `Grace end time of the trial cluster.`,
+						},
+						"start_time": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `Start time of the trial cluster.`,
+						},
+						"upgrade_time": {
+							Type:        schema.TypeString,
+							Optional:    true,
+							Description: `Upgrade time of the trial cluster to standard cluster.`,
+						},
+					},
+				},
+			},
 			"uid": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -645,10 +670,11 @@ This can happen due to user-triggered updates or system actions like failover or
 			"deletion_policy": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "DEFAULT",
 				Description: `Policy to determine if the cluster should be deleted forcefully.
 Deleting a cluster forcefully, deletes the cluster and all its associated instances within the cluster.
-Deleting a Secondary cluster with a secondary instance REQUIRES setting deletion_policy = "FORCE" otherwise an error is returned. This is needed as there is no support to delete just the secondary instance, and the only way to delete secondary instance is to delete the associated secondary cluster forcefully which also deletes the secondary instance.`,
+Deleting a Secondary cluster with a secondary instance REQUIRES setting deletion_policy = "FORCE" otherwise an error is returned. This is needed as there is no support to delete just the secondary instance, and the only way to delete secondary instance is to delete the associated secondary cluster forcefully which also deletes the secondary instance.
+Possible values: DEFAULT, FORCE`,
+				Default: "DEFAULT",
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -674,12 +700,6 @@ func resourceAlloydbClusterCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	} else if v, ok := d.GetOkExists("encryption_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(encryptionConfigProp)) && (ok || !reflect.DeepEqual(v, encryptionConfigProp)) {
 		obj["encryptionConfig"] = encryptionConfigProp
-	}
-	networkProp, err := expandAlloydbClusterNetwork(d.Get("network"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("network"); !tpgresource.IsEmptyValue(reflect.ValueOf(networkProp)) && (ok || !reflect.DeepEqual(v, networkProp)) {
-		obj["network"] = networkProp
 	}
 	networkConfigProp, err := expandAlloydbClusterNetworkConfig(d.Get("network_config"), d, config)
 	if err != nil {
@@ -758,6 +778,12 @@ func resourceAlloydbClusterCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	} else if v, ok := d.GetOkExists("maintenance_update_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(maintenanceUpdatePolicyProp)) && (ok || !reflect.DeepEqual(v, maintenanceUpdatePolicyProp)) {
 		obj["maintenanceUpdatePolicy"] = maintenanceUpdatePolicyProp
+	}
+	subscriptionTypeProp, err := expandAlloydbClusterSubscriptionType(d.Get("subscription_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("subscription_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(subscriptionTypeProp)) && (ok || !reflect.DeepEqual(v, subscriptionTypeProp)) {
+		obj["subscriptionType"] = subscriptionTypeProp
 	}
 	labelsProp, err := expandAlloydbClusterEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
@@ -958,9 +984,6 @@ func resourceAlloydbClusterRead(d *schema.ResourceData, meta interface{}) error 
 	if err := d.Set("continuous_backup_info", flattenAlloydbClusterContinuousBackupInfo(res["continuousBackupInfo"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
-	if err := d.Set("network", flattenAlloydbClusterNetwork(res["network"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Cluster: %s", err)
-	}
 	if err := d.Set("network_config", flattenAlloydbClusterNetworkConfig(res["networkConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
@@ -1006,6 +1029,12 @@ func resourceAlloydbClusterRead(d *schema.ResourceData, meta interface{}) error 
 	if err := d.Set("maintenance_update_policy", flattenAlloydbClusterMaintenanceUpdatePolicy(res["maintenanceUpdatePolicy"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
+	if err := d.Set("subscription_type", flattenAlloydbClusterSubscriptionType(res["subscriptionType"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
+	if err := d.Set("trial_metadata", flattenAlloydbClusterTrialMetadata(res["trialMetadata"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Cluster: %s", err)
+	}
 	if err := d.Set("terraform_labels", flattenAlloydbClusterTerraformLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Cluster: %s", err)
 	}
@@ -1040,12 +1069,6 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	} else if v, ok := d.GetOkExists("encryption_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, encryptionConfigProp)) {
 		obj["encryptionConfig"] = encryptionConfigProp
-	}
-	networkProp, err := expandAlloydbClusterNetwork(d.Get("network"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("network"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, networkProp)) {
-		obj["network"] = networkProp
 	}
 	networkConfigProp, err := expandAlloydbClusterNetworkConfig(d.Get("network_config"), d, config)
 	if err != nil {
@@ -1113,6 +1136,12 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("maintenance_update_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, maintenanceUpdatePolicyProp)) {
 		obj["maintenanceUpdatePolicy"] = maintenanceUpdatePolicyProp
 	}
+	subscriptionTypeProp, err := expandAlloydbClusterSubscriptionType(d.Get("subscription_type"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("subscription_type"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, subscriptionTypeProp)) {
+		obj["subscriptionType"] = subscriptionTypeProp
+	}
 	labelsProp, err := expandAlloydbClusterEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -1137,10 +1166,6 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	if d.HasChange("encryption_config") {
 		updateMask = append(updateMask, "encryptionConfig")
-	}
-
-	if d.HasChange("network") {
-		updateMask = append(updateMask, "network")
 	}
 
 	if d.HasChange("network_config") {
@@ -1185,6 +1210,10 @@ func resourceAlloydbClusterUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	if d.HasChange("maintenance_update_policy") {
 		updateMask = append(updateMask, "maintenanceUpdatePolicy")
+	}
+
+	if d.HasChange("subscription_type") {
+		updateMask = append(updateMask, "subscriptionType")
 	}
 
 	if d.HasChange("effective_labels") {
@@ -1504,10 +1533,6 @@ func flattenAlloydbClusterContinuousBackupInfoEncryptionInfoEncryptionType(v int
 }
 
 func flattenAlloydbClusterContinuousBackupInfoEncryptionInfoKmsKeyVersions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAlloydbClusterNetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2047,6 +2072,45 @@ func flattenAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeNano
 	return v // let terraform core handle it otherwise
 }
 
+func flattenAlloydbClusterSubscriptionType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterTrialMetadata(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["start_time"] =
+		flattenAlloydbClusterTrialMetadataStartTime(original["startTime"], d, config)
+	transformed["end_time"] =
+		flattenAlloydbClusterTrialMetadataEndTime(original["endTime"], d, config)
+	transformed["upgrade_time"] =
+		flattenAlloydbClusterTrialMetadataUpgradeTime(original["upgradeTime"], d, config)
+	transformed["grace_end_time"] =
+		flattenAlloydbClusterTrialMetadataGraceEndTime(original["graceEndTime"], d, config)
+	return []interface{}{transformed}
+}
+func flattenAlloydbClusterTrialMetadataStartTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterTrialMetadataEndTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterTrialMetadataUpgradeTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAlloydbClusterTrialMetadataGraceEndTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenAlloydbClusterTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -2090,10 +2154,6 @@ func expandAlloydbClusterEncryptionConfig(v interface{}, d tpgresource.Terraform
 }
 
 func expandAlloydbClusterEncryptionConfigKmsKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandAlloydbClusterNetwork(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -2702,6 +2762,10 @@ func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeSecon
 }
 
 func expandAlloydbClusterMaintenanceUpdatePolicyMaintenanceWindowsStartTimeNanos(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandAlloydbClusterSubscriptionType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

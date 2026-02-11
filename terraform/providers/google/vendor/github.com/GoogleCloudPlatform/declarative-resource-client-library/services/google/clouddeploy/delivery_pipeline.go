@@ -496,6 +496,7 @@ type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGa
 	Deployment            *string `json:"deployment"`
 	RouteUpdateWaitTime   *string `json:"routeUpdateWaitTime"`
 	StableCutbackDuration *string `json:"stableCutbackDuration"`
+	PodSelectorLabel      *string `json:"podSelectorLabel"`
 }
 
 type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesGatewayServiceMesh
@@ -522,6 +523,8 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernet
 		r.RouteUpdateWaitTime = res.RouteUpdateWaitTime
 
 		r.StableCutbackDuration = res.StableCutbackDuration
+
+		r.PodSelectorLabel = res.PodSelectorLabel
 
 	}
 	return nil
@@ -552,6 +555,7 @@ type DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesSe
 	Service                    *string `json:"service"`
 	Deployment                 *string `json:"deployment"`
 	DisablePodOverprovisioning *bool   `json:"disablePodOverprovisioning"`
+	PodSelectorLabel           *string `json:"podSelectorLabel"`
 }
 
 type jsonDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernetesServiceNetworking
@@ -574,6 +578,8 @@ func (r *DeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubernet
 		r.Deployment = res.Deployment
 
 		r.DisablePodOverprovisioning = res.DisablePodOverprovisioning
+
+		r.PodSelectorLabel = res.PodSelectorLabel
 
 	}
 	return nil

@@ -604,6 +604,12 @@ func canonicalizeFeatureMembershipConfigmanagement(des, initial *FeatureMembersh
 	} else {
 		cDes.Version = des.Version
 	}
+	if dcl.IsZeroValue(des.Management) || (dcl.IsEmptyValueIndirect(des.Management) && dcl.IsEmptyValueIndirect(initial.Management)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.Management = initial.Management
+	} else {
+		cDes.Management = des.Management
+	}
 
 	return cDes
 }
@@ -727,6 +733,11 @@ func canonicalizeFeatureMembershipConfigmanagementConfigSync(des, initial *Featu
 	} else {
 		cDes.SourceFormat = des.SourceFormat
 	}
+	if dcl.BoolCanonicalize(des.Enabled, initial.Enabled) || dcl.IsZeroValue(des.Enabled) {
+		cDes.Enabled = initial.Enabled
+	} else {
+		cDes.Enabled = des.Enabled
+	}
 	if dcl.BoolCanonicalize(des.PreventDrift, initial.PreventDrift) || dcl.IsZeroValue(des.PreventDrift) {
 		cDes.PreventDrift = initial.PreventDrift
 	} else {
@@ -788,6 +799,9 @@ func canonicalizeNewFeatureMembershipConfigmanagementConfigSync(c *Client, des, 
 	nw.Git = canonicalizeNewFeatureMembershipConfigmanagementConfigSyncGit(c, des.Git, nw.Git)
 	if dcl.StringCanonicalize(des.SourceFormat, nw.SourceFormat) {
 		nw.SourceFormat = des.SourceFormat
+	}
+	if dcl.BoolCanonicalize(des.Enabled, nw.Enabled) {
+		nw.Enabled = des.Enabled
 	}
 	if dcl.BoolCanonicalize(des.PreventDrift, nw.PreventDrift) {
 		nw.PreventDrift = des.PreventDrift
@@ -3297,6 +3311,13 @@ func compareFeatureMembershipConfigmanagementNewStyle(d, a interface{}, fn dcl.F
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.Management, actual.Management, dcl.DiffInfo{ServerDefault: true, Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Management")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -3328,6 +3349,13 @@ func compareFeatureMembershipConfigmanagementConfigSyncNewStyle(d, a interface{}
 	}
 
 	if ds, err := dcl.Diff(desired.SourceFormat, actual.SourceFormat, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("SourceFormat")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.Enabled, actual.Enabled, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("Enabled")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -4491,6 +4519,9 @@ func expandFeatureMembershipConfigmanagement(c *Client, f *FeatureMembershipConf
 	if v := f.Version; !dcl.IsEmptyValueIndirect(v) {
 		m["version"] = v
 	}
+	if v := f.Management; !dcl.IsEmptyValueIndirect(v) {
+		m["management"] = v
+	}
 
 	return m, nil
 }
@@ -4513,6 +4544,7 @@ func flattenFeatureMembershipConfigmanagement(c *Client, i interface{}, res *Fea
 	r.Binauthz = flattenFeatureMembershipConfigmanagementBinauthz(c, m["binauthz"], res)
 	r.HierarchyController = flattenHierarchyControllerConfig(c, m["hierarchyController"], res)
 	r.Version = dcl.FlattenString(m["version"])
+	r.Management = flattenFeatureMembershipConfigmanagementManagementEnum(m["management"])
 
 	return r
 }
@@ -4614,6 +4646,9 @@ func expandFeatureMembershipConfigmanagementConfigSync(c *Client, f *FeatureMemb
 	if v := f.SourceFormat; !dcl.IsEmptyValueIndirect(v) {
 		m["sourceFormat"] = v
 	}
+	if v := f.Enabled; !dcl.IsEmptyValueIndirect(v) {
+		m["enabled"] = v
+	}
 	if v := f.PreventDrift; !dcl.IsEmptyValueIndirect(v) {
 		m["preventDrift"] = v
 	}
@@ -4644,6 +4679,7 @@ func flattenFeatureMembershipConfigmanagementConfigSync(c *Client, i interface{}
 	}
 	r.Git = flattenFeatureMembershipConfigmanagementConfigSyncGit(c, m["git"], res)
 	r.SourceFormat = dcl.FlattenString(m["sourceFormat"])
+	r.Enabled = dcl.FlattenBool(m["enabled"])
 	r.PreventDrift = dcl.FlattenBool(m["preventDrift"])
 	r.MetricsGcpServiceAccountEmail = dcl.FlattenString(m["metricsGcpServiceAccountEmail"])
 	r.Oci = flattenFeatureMembershipConfigmanagementConfigSyncOci(c, m["oci"], res)
@@ -6922,6 +6958,57 @@ func flattenFeatureMembershipConfigmanagementPolicyControllerMonitoringBackendsE
 	}
 
 	return FeatureMembershipConfigmanagementPolicyControllerMonitoringBackendsEnumRef(s)
+}
+
+// flattenFeatureMembershipConfigmanagementManagementEnumMap flattens the contents of FeatureMembershipConfigmanagementManagementEnum from a JSON
+// response object.
+func flattenFeatureMembershipConfigmanagementManagementEnumMap(c *Client, i interface{}, res *FeatureMembership) map[string]FeatureMembershipConfigmanagementManagementEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]FeatureMembershipConfigmanagementManagementEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]FeatureMembershipConfigmanagementManagementEnum{}
+	}
+
+	items := make(map[string]FeatureMembershipConfigmanagementManagementEnum)
+	for k, item := range a {
+		items[k] = *flattenFeatureMembershipConfigmanagementManagementEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenFeatureMembershipConfigmanagementManagementEnumSlice flattens the contents of FeatureMembershipConfigmanagementManagementEnum from a JSON
+// response object.
+func flattenFeatureMembershipConfigmanagementManagementEnumSlice(c *Client, i interface{}, res *FeatureMembership) []FeatureMembershipConfigmanagementManagementEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []FeatureMembershipConfigmanagementManagementEnum{}
+	}
+
+	if len(a) == 0 {
+		return []FeatureMembershipConfigmanagementManagementEnum{}
+	}
+
+	items := make([]FeatureMembershipConfigmanagementManagementEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenFeatureMembershipConfigmanagementManagementEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenFeatureMembershipConfigmanagementManagementEnum asserts that an interface is a string, and returns a
+// pointer to a *FeatureMembershipConfigmanagementManagementEnum with the same value as that string.
+func flattenFeatureMembershipConfigmanagementManagementEnum(i interface{}) *FeatureMembershipConfigmanagementManagementEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return FeatureMembershipConfigmanagementManagementEnumRef(s)
 }
 
 // flattenFeatureMembershipPolicycontrollerPolicyControllerHubConfigInstallSpecEnumMap flattens the contents of FeatureMembershipPolicycontrollerPolicyControllerHubConfigInstallSpecEnum from a JSON

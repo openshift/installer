@@ -153,6 +153,11 @@ func DCLFeatureMembershipSchema() *dcl.Schema {
 										Description: "Config Sync configuration for the cluster.",
 										SendEmpty:   true,
 										Properties: map[string]*dcl.Property{
+											"enabled": &dcl.Property{
+												Type:        "boolean",
+												GoName:      "Enabled",
+												Description: "Enables the installation of ConfigSync. If set to true, ConfigSync resources will be created and the other ConfigSync fields will be applied if exist. If set to false, all other ConfigSync fields will be ignored, ConfigSync resources will be deleted. If omitted, ConfigSync resources will be managed depends on the presence of the git or oci field.",
+											},
 											"git": &dcl.Property{
 												Type:   "object",
 												GoName: "Git",
@@ -290,16 +295,28 @@ func DCLFeatureMembershipSchema() *dcl.Schema {
 											"enabled": &dcl.Property{
 												Type:        "boolean",
 												GoName:      "Enabled",
-												Description: "Whether Hierarchy Controller is enabled in this cluster.",
+												Description: "**DEPRECATED** Configuring Hierarchy Controller through the configmanagement feature is no longer recommended. Use https://github.com/kubernetes-sigs/hierarchical-namespaces instead.",
 												SendEmpty:   true,
 											},
+										},
+									},
+									"management": &dcl.Property{
+										Type:          "string",
+										GoName:        "Management",
+										GoType:        "FeatureMembershipConfigmanagementManagementEnum",
+										Description:   "Set this field to MANAGEMENT_AUTOMATIC to enable Config Sync auto-upgrades, and set this field to MANAGEMENT_MANUAL or MANAGEMENT_UNSPECIFIED to disable Config Sync auto-upgrades.",
+										ServerDefault: true,
+										Enum: []string{
+											"MANAGEMENT_UNSPECIFIED",
+											"MANAGEMENT_AUTOMATIC",
+											"MANAGEMENT_MANUAL",
 										},
 									},
 									"policyController": &dcl.Property{
 										Type:        "object",
 										GoName:      "PolicyController",
 										GoType:      "FeatureMembershipConfigmanagementPolicyController",
-										Description: "Policy Controller configuration for the cluster.",
+										Description: "**DEPRECATED** Configuring Policy Controller through the configmanagement feature is no longer recommended. Use the policycontroller feature instead.",
 										Properties: map[string]*dcl.Property{
 											"auditIntervalSeconds": &dcl.Property{
 												Type:        "string",

@@ -162,10 +162,22 @@ whereas setting “enableDropProtection” to true protects the database from de
 					Schema: map[string]*schema.Schema{
 						"kms_key_name": {
 							Type:     schema.TypeString,
-							Required: true,
+							Optional: true,
 							ForceNew: true,
 							Description: `Fully qualified name of the KMS key to use to encrypt this database. This key must exist
 in the same location as the Spanner Database.`,
+							ExactlyOneOf: []string{"encryption_config.0.kms_key_name", "encryption_config.0.kms_key_names"},
+						},
+						"kms_key_names": {
+							Type:     schema.TypeList,
+							Optional: true,
+							ForceNew: true,
+							Description: `Fully qualified name of the KMS keys to use to encrypt this database. The keys must exist
+in the same locations as the Spanner Database.`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+							ExactlyOneOf: []string{"encryption_config.0.kms_key_name", "encryption_config.0.kms_key_names"},
 						},
 					},
 				},
@@ -188,13 +200,13 @@ update the database's version_retention_period.`,
 			"deletion_protection": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  true,
 				Description: `Whether Terraform will be prevented from destroying the database. Defaults to true.
 When a'terraform destroy' or 'terraform apply' would delete the database,
 the command will fail if this field is not set to false in Terraform state.
 When the field is set to true or unset in Terraform state, a 'terraform apply'
 or 'terraform destroy' that would delete the database will fail.
 When the field is set to false, deleting the database is allowed.`,
+				Default: true,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -579,7 +591,6 @@ func resourceSpannerDatabaseUpdate(d *schema.ResourceData, meta interface{}) err
 	if err != nil {
 		return err
 	}
-
 	if obj["statements"] != nil {
 		if len(obj["statements"].([]string)) == 0 {
 			// Return early to avoid making an API call that errors,
@@ -659,7 +670,6 @@ func resourceSpannerDatabaseUpdate(d *schema.ResourceData, meta interface{}) err
 		}
 
 		headers := make(http.Header)
-
 		if obj["statements"] != nil {
 			if len(obj["statements"].([]string)) == 0 {
 				// Return early to avoid making an API call that errors,
@@ -823,10 +833,44 @@ func flattenSpannerDatabaseEncryptionConfig(v interface{}, d *schema.ResourceDat
 	transformed := make(map[string]interface{})
 	transformed["kms_key_name"] =
 		flattenSpannerDatabaseEncryptionConfigKmsKeyName(original["kmsKeyName"], d, config)
+	transformed["kms_key_names"] =
+		flattenSpannerDatabaseEncryptionConfigKmsKeyNames(original["kmsKeyNames"], d, config)
 	return []interface{}{transformed}
 }
 func flattenSpannerDatabaseEncryptionConfigKmsKeyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
+}
+
+func flattenSpannerDatabaseEncryptionConfigKmsKeyNames(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Ignore `kms_key_names` if `kms_key_name` is set, because that field takes precedence.
+	_, kmsNameSet := d.GetOk("encryption_config.0.kms_key_name")
+	if kmsNameSet {
+		return nil
+	}
+
+	rawConfigValue := d.Get("encryption_config.0.kms_key_names")
+
+	// Convert config value to []string
+	configValue, err := tpgresource.InterfaceSliceToStringSlice(rawConfigValue)
+	if err != nil {
+		log.Printf("[ERROR] Failed to convert config value: %s", err)
+		return v
+	}
+
+	// Convert v to []string
+	apiStringValue, err := tpgresource.InterfaceSliceToStringSlice(v)
+	if err != nil {
+		log.Printf("[ERROR] Failed to convert API value: %s", err)
+		return v
+	}
+
+	sortedStrings, err := tpgresource.SortStringsByConfigOrder(configValue, apiStringValue)
+	if err != nil {
+		log.Printf("[ERROR] Could not sort API response value: %s", err)
+		return v
+	}
+
+	return sortedStrings
 }
 
 func flattenSpannerDatabaseDatabaseDialect(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -872,10 +916,21 @@ func expandSpannerDatabaseEncryptionConfig(v interface{}, d tpgresource.Terrafor
 		transformed["kmsKeyName"] = transformedKmsKeyName
 	}
 
+	transformedKmsKeyNames, err := expandSpannerDatabaseEncryptionConfigKmsKeyNames(original["kms_key_names"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedKmsKeyNames); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["kmsKeyNames"] = transformedKmsKeyNames
+	}
+
 	return transformed, nil
 }
 
 func expandSpannerDatabaseEncryptionConfigKmsKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandSpannerDatabaseEncryptionConfigKmsKeyNames(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
@@ -916,7 +971,6 @@ func resourceSpannerDatabaseEncoder(d *schema.ResourceData, meta interface{}, ob
 }
 
 func resourceSpannerDatabaseUpdateEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
-
 	if obj["versionRetentionPeriod"] != nil || obj["extraStatements"] != nil {
 		old, new := d.GetChange("ddl")
 		oldDdls := old.([]interface{})

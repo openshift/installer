@@ -59,6 +59,11 @@ func (r *Workload) validate() error {
 			return err
 		}
 	}
+	if !dcl.IsEmptyValueIndirect(r.WorkloadOptions) {
+		if err := r.WorkloadOptions.validate(); err != nil {
+			return err
+		}
+	}
 	if !dcl.IsEmptyValueIndirect(r.EkmProvisioningResponse) {
 		if err := r.EkmProvisioningResponse.validate(); err != nil {
 			return err
@@ -88,6 +93,9 @@ func (r *WorkloadComplianceStatus) validate() error {
 	return nil
 }
 func (r *WorkloadPartnerPermissions) validate() error {
+	return nil
+}
+func (r *WorkloadWorkloadOptions) validate() error {
 	return nil
 }
 func (r *WorkloadEkmProvisioningResponse) validate() error {
@@ -508,6 +516,7 @@ func canonicalizeWorkloadDesiredState(rawDesired, rawInitial *Workload, opts ...
 		rawDesired.SaaEnrollmentResponse = canonicalizeWorkloadSaaEnrollmentResponse(rawDesired.SaaEnrollmentResponse, nil, opts...)
 		rawDesired.ComplianceStatus = canonicalizeWorkloadComplianceStatus(rawDesired.ComplianceStatus, nil, opts...)
 		rawDesired.PartnerPermissions = canonicalizeWorkloadPartnerPermissions(rawDesired.PartnerPermissions, nil, opts...)
+		rawDesired.WorkloadOptions = canonicalizeWorkloadWorkloadOptions(rawDesired.WorkloadOptions, nil, opts...)
 		rawDesired.EkmProvisioningResponse = canonicalizeWorkloadEkmProvisioningResponse(rawDesired.EkmProvisioningResponse, nil, opts...)
 
 		return rawDesired, nil
@@ -535,6 +544,11 @@ func canonicalizeWorkloadDesiredState(rawDesired, rawInitial *Workload, opts ...
 	} else {
 		canonicalDesired.BillingAccount = rawDesired.BillingAccount
 	}
+	if dcl.StringCanonicalize(rawDesired.PartnerServicesBillingAccount, rawInitial.PartnerServicesBillingAccount) {
+		canonicalDesired.PartnerServicesBillingAccount = rawInitial.PartnerServicesBillingAccount
+	} else {
+		canonicalDesired.PartnerServicesBillingAccount = rawDesired.PartnerServicesBillingAccount
+	}
 	if dcl.IsZeroValue(rawDesired.Labels) || (dcl.IsEmptyValueIndirect(rawDesired.Labels) && dcl.IsEmptyValueIndirect(rawInitial.Labels)) {
 		// Desired and initial values are equivalent, so set canonical desired value to initial value.
 		canonicalDesired.Labels = rawInitial.Labels
@@ -560,6 +574,7 @@ func canonicalizeWorkloadDesiredState(rawDesired, rawInitial *Workload, opts ...
 		canonicalDesired.Partner = rawDesired.Partner
 	}
 	canonicalDesired.PartnerPermissions = canonicalizeWorkloadPartnerPermissions(rawDesired.PartnerPermissions, rawInitial.PartnerPermissions, opts...)
+	canonicalDesired.WorkloadOptions = canonicalizeWorkloadWorkloadOptions(rawDesired.WorkloadOptions, rawInitial.WorkloadOptions, opts...)
 	if dcl.BoolCanonicalize(rawDesired.ViolationNotificationsEnabled, rawInitial.ViolationNotificationsEnabled) {
 		canonicalDesired.ViolationNotificationsEnabled = rawInitial.ViolationNotificationsEnabled
 	} else {
@@ -613,6 +628,12 @@ func canonicalizeWorkloadNewState(c *Client, rawNew, rawDesired *Workload) (*Wor
 		rawNew.BillingAccount = rawDesired.BillingAccount
 	} else {
 		rawNew.BillingAccount = rawDesired.BillingAccount
+	}
+
+	if dcl.IsEmptyValueIndirect(rawNew.PartnerServicesBillingAccount) && dcl.IsEmptyValueIndirect(rawDesired.PartnerServicesBillingAccount) {
+		rawNew.PartnerServicesBillingAccount = rawDesired.PartnerServicesBillingAccount
+	} else {
+		rawNew.PartnerServicesBillingAccount = rawDesired.PartnerServicesBillingAccount
 	}
 
 	if dcl.IsEmptyValueIndirect(rawNew.Labels) && dcl.IsEmptyValueIndirect(rawDesired.Labels) {
@@ -669,6 +690,8 @@ func canonicalizeWorkloadNewState(c *Client, rawNew, rawDesired *Workload) (*Wor
 	} else {
 		rawNew.PartnerPermissions = canonicalizeNewWorkloadPartnerPermissions(c, rawDesired.PartnerPermissions, rawNew.PartnerPermissions)
 	}
+
+	rawNew.WorkloadOptions = rawDesired.WorkloadOptions
 
 	if dcl.IsEmptyValueIndirect(rawNew.EkmProvisioningResponse) && dcl.IsEmptyValueIndirect(rawDesired.EkmProvisioningResponse) {
 		rawNew.EkmProvisioningResponse = rawDesired.EkmProvisioningResponse
@@ -1444,6 +1467,121 @@ func canonicalizeNewWorkloadPartnerPermissionsSlice(c *Client, des, nw []Workloa
 	return items
 }
 
+func canonicalizeWorkloadWorkloadOptions(des, initial *WorkloadWorkloadOptions, opts ...dcl.ApplyOption) *WorkloadWorkloadOptions {
+	if des == nil {
+		return initial
+	}
+	if des.empty {
+		return des
+	}
+
+	if initial == nil {
+		return des
+	}
+
+	cDes := &WorkloadWorkloadOptions{}
+
+	if dcl.IsZeroValue(des.KajEnrollmentType) || (dcl.IsEmptyValueIndirect(des.KajEnrollmentType) && dcl.IsEmptyValueIndirect(initial.KajEnrollmentType)) {
+		// Desired and initial values are equivalent, so set canonical desired value to initial value.
+		cDes.KajEnrollmentType = initial.KajEnrollmentType
+	} else {
+		cDes.KajEnrollmentType = des.KajEnrollmentType
+	}
+
+	return cDes
+}
+
+func canonicalizeWorkloadWorkloadOptionsSlice(des, initial []WorkloadWorkloadOptions, opts ...dcl.ApplyOption) []WorkloadWorkloadOptions {
+	if dcl.IsEmptyValueIndirect(des) {
+		return initial
+	}
+
+	if len(des) != len(initial) {
+
+		items := make([]WorkloadWorkloadOptions, 0, len(des))
+		for _, d := range des {
+			cd := canonicalizeWorkloadWorkloadOptions(&d, nil, opts...)
+			if cd != nil {
+				items = append(items, *cd)
+			}
+		}
+		return items
+	}
+
+	items := make([]WorkloadWorkloadOptions, 0, len(des))
+	for i, d := range des {
+		cd := canonicalizeWorkloadWorkloadOptions(&d, &initial[i], opts...)
+		if cd != nil {
+			items = append(items, *cd)
+		}
+	}
+	return items
+
+}
+
+func canonicalizeNewWorkloadWorkloadOptions(c *Client, des, nw *WorkloadWorkloadOptions) *WorkloadWorkloadOptions {
+
+	if des == nil {
+		return nw
+	}
+
+	if nw == nil {
+		if dcl.IsEmptyValueIndirect(des) {
+			c.Config.Logger.Info("Found explicitly empty value for WorkloadWorkloadOptions while comparing non-nil desired to nil actual.  Returning desired object.")
+			return des
+		}
+		return nil
+	}
+
+	return nw
+}
+
+func canonicalizeNewWorkloadWorkloadOptionsSet(c *Client, des, nw []WorkloadWorkloadOptions) []WorkloadWorkloadOptions {
+	if des == nil {
+		return nw
+	}
+
+	// Find the elements in des that are also in nw and canonicalize them. Remove matched elements from nw.
+	var items []WorkloadWorkloadOptions
+	for _, d := range des {
+		matchedIndex := -1
+		for i, n := range nw {
+			if diffs, _ := compareWorkloadWorkloadOptionsNewStyle(&d, &n, dcl.FieldName{}); len(diffs) == 0 {
+				matchedIndex = i
+				break
+			}
+		}
+		if matchedIndex != -1 {
+			items = append(items, *canonicalizeNewWorkloadWorkloadOptions(c, &d, &nw[matchedIndex]))
+			nw = append(nw[:matchedIndex], nw[matchedIndex+1:]...)
+		}
+	}
+	// Also include elements in nw that are not matched in des.
+	items = append(items, nw...)
+
+	return items
+}
+
+func canonicalizeNewWorkloadWorkloadOptionsSlice(c *Client, des, nw []WorkloadWorkloadOptions) []WorkloadWorkloadOptions {
+	if des == nil {
+		return nw
+	}
+
+	// Lengths are unequal. A diff will occur later, so we shouldn't canonicalize.
+	// Return the original array.
+	if len(des) != len(nw) {
+		return nw
+	}
+
+	var items []WorkloadWorkloadOptions
+	for i, d := range des {
+		n := nw[i]
+		items = append(items, *canonicalizeNewWorkloadWorkloadOptions(c, &d, &n))
+	}
+
+	return items
+}
+
 func canonicalizeWorkloadEkmProvisioningResponse(des, initial *WorkloadEkmProvisioningResponse, opts ...dcl.ApplyOption) *WorkloadEkmProvisioningResponse {
 	if des == nil {
 		return initial
@@ -1631,6 +1769,13 @@ func diffWorkload(c *Client, desired, actual *Workload, opts ...dcl.ApplyOption)
 		newDiffs = append(newDiffs, ds...)
 	}
 
+	if ds, err := dcl.Diff(desired.PartnerServicesBillingAccount, actual.PartnerServicesBillingAccount, dcl.DiffInfo{OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PartnerServicesBillingAccount")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
 	if ds, err := dcl.Diff(desired.Labels, actual.Labels, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateWorkloadUpdateWorkloadOperation")}, fn.AddNest("Labels")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
@@ -1702,6 +1847,13 @@ func diffWorkload(c *Client, desired, actual *Workload, opts ...dcl.ApplyOption)
 	}
 
 	if ds, err := dcl.Diff(desired.PartnerPermissions, actual.PartnerPermissions, dcl.DiffInfo{ObjectFunction: compareWorkloadPartnerPermissionsNewStyle, EmptyObject: EmptyWorkloadPartnerPermissions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("PartnerPermissions")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		newDiffs = append(newDiffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.WorkloadOptions, actual.WorkloadOptions, dcl.DiffInfo{Ignore: true, ObjectFunction: compareWorkloadWorkloadOptionsNewStyle, EmptyObject: EmptyWorkloadWorkloadOptions, OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("WorkloadOptions")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -1971,6 +2123,35 @@ func compareWorkloadPartnerPermissionsNewStyle(d, a interface{}, fn dcl.FieldNam
 	return diffs, nil
 }
 
+func compareWorkloadWorkloadOptionsNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
+	var diffs []*dcl.FieldDiff
+
+	desired, ok := d.(*WorkloadWorkloadOptions)
+	if !ok {
+		desiredNotPointer, ok := d.(WorkloadWorkloadOptions)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadWorkloadOptions or *WorkloadWorkloadOptions", d)
+		}
+		desired = &desiredNotPointer
+	}
+	actual, ok := a.(*WorkloadWorkloadOptions)
+	if !ok {
+		actualNotPointer, ok := a.(WorkloadWorkloadOptions)
+		if !ok {
+			return nil, fmt.Errorf("obj %v is not a WorkloadWorkloadOptions", a)
+		}
+		actual = &actualNotPointer
+	}
+
+	if ds, err := dcl.Diff(desired.KajEnrollmentType, actual.KajEnrollmentType, dcl.DiffInfo{Type: "EnumType", OperationSelector: dcl.RequiresRecreate()}, fn.AddNest("KajEnrollmentType")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+	return diffs, nil
+}
+
 func compareWorkloadEkmProvisioningResponseNewStyle(d, a interface{}, fn dcl.FieldName) ([]*dcl.FieldDiff, error) {
 	var diffs []*dcl.FieldDiff
 
@@ -2022,6 +2203,7 @@ func (r *Workload) urlNormalized() *Workload {
 	normalized.Name = dcl.SelfLinkToName(r.Name)
 	normalized.DisplayName = dcl.SelfLinkToName(r.DisplayName)
 	normalized.BillingAccount = dcl.SelfLinkToName(r.BillingAccount)
+	normalized.PartnerServicesBillingAccount = dcl.SelfLinkToName(r.PartnerServicesBillingAccount)
 	normalized.ProvisionedResourcesParent = dcl.SelfLinkToName(r.ProvisionedResourcesParent)
 	normalized.Organization = dcl.SelfLinkToName(r.Organization)
 	normalized.Location = dcl.SelfLinkToName(r.Location)
@@ -2092,6 +2274,9 @@ func expandWorkload(c *Client, f *Workload) (map[string]interface{}, error) {
 	if v := f.BillingAccount; dcl.ValueShouldBeSent(v) {
 		m["billingAccount"] = v
 	}
+	if v := f.PartnerServicesBillingAccount; dcl.ValueShouldBeSent(v) {
+		m["partnerServicesBillingAccount"] = v
+	}
 	if v := f.Labels; dcl.ValueShouldBeSent(v) {
 		m["labels"] = v
 	}
@@ -2118,6 +2303,11 @@ func expandWorkload(c *Client, f *Workload) (map[string]interface{}, error) {
 		return nil, fmt.Errorf("error expanding PartnerPermissions into partnerPermissions: %w", err)
 	} else if !dcl.IsEmptyValueIndirect(v) {
 		m["partnerPermissions"] = v
+	}
+	if v, err := expandWorkloadWorkloadOptions(c, f.WorkloadOptions, res); err != nil {
+		return nil, fmt.Errorf("error expanding WorkloadOptions into workloadOptions: %w", err)
+	} else if !dcl.IsEmptyValueIndirect(v) {
+		m["workloadOptions"] = v
 	}
 	if v := f.ViolationNotificationsEnabled; dcl.ValueShouldBeSent(v) {
 		m["violationNotificationsEnabled"] = v
@@ -2154,6 +2344,7 @@ func flattenWorkload(c *Client, i interface{}, res *Workload) *Workload {
 	resultRes.ComplianceRegime = flattenWorkloadComplianceRegimeEnum(m["complianceRegime"])
 	resultRes.CreateTime = dcl.FlattenString(m["createTime"])
 	resultRes.BillingAccount = dcl.FlattenString(m["billingAccount"])
+	resultRes.PartnerServicesBillingAccount = dcl.FlattenString(m["partnerServicesBillingAccount"])
 	resultRes.Labels = dcl.FlattenKeyValuePairs(m["labels"])
 	resultRes.ProvisionedResourcesParent = dcl.FlattenSecretValue(m["provisionedResourcesParent"])
 	resultRes.KmsSettings = flattenWorkloadKmsSettings(c, m["kmsSettings"], res)
@@ -2165,6 +2356,7 @@ func flattenWorkload(c *Client, i interface{}, res *Workload) *Workload {
 	resultRes.CompliantButDisallowedServices = dcl.FlattenStringSlice(m["compliantButDisallowedServices"])
 	resultRes.Partner = flattenWorkloadPartnerEnum(m["partner"])
 	resultRes.PartnerPermissions = flattenWorkloadPartnerPermissions(c, m["partnerPermissions"], res)
+	resultRes.WorkloadOptions = flattenWorkloadWorkloadOptions(c, m["workloadOptions"], res)
 	resultRes.EkmProvisioningResponse = flattenWorkloadEkmProvisioningResponse(c, m["ekmProvisioningResponse"], res)
 	resultRes.ViolationNotificationsEnabled = dcl.FlattenBool(m["violationNotificationsEnabled"])
 	resultRes.Organization = dcl.FlattenString(m["organization"])
@@ -2889,6 +3081,120 @@ func flattenWorkloadPartnerPermissions(c *Client, i interface{}, res *Workload) 
 	return r
 }
 
+// expandWorkloadWorkloadOptionsMap expands the contents of WorkloadWorkloadOptions into a JSON
+// request object.
+func expandWorkloadWorkloadOptionsMap(c *Client, f map[string]WorkloadWorkloadOptions, res *Workload) (map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := make(map[string]interface{})
+	for k, item := range f {
+		i, err := expandWorkloadWorkloadOptions(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+		if i != nil {
+			items[k] = i
+		}
+	}
+
+	return items, nil
+}
+
+// expandWorkloadWorkloadOptionsSlice expands the contents of WorkloadWorkloadOptions into a JSON
+// request object.
+func expandWorkloadWorkloadOptionsSlice(c *Client, f []WorkloadWorkloadOptions, res *Workload) ([]map[string]interface{}, error) {
+	if f == nil {
+		return nil, nil
+	}
+
+	items := []map[string]interface{}{}
+	for _, item := range f {
+		i, err := expandWorkloadWorkloadOptions(c, &item, res)
+		if err != nil {
+			return nil, err
+		}
+
+		items = append(items, i)
+	}
+
+	return items, nil
+}
+
+// flattenWorkloadWorkloadOptionsMap flattens the contents of WorkloadWorkloadOptions from a JSON
+// response object.
+func flattenWorkloadWorkloadOptionsMap(c *Client, i interface{}, res *Workload) map[string]WorkloadWorkloadOptions {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadWorkloadOptions{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadWorkloadOptions{}
+	}
+
+	items := make(map[string]WorkloadWorkloadOptions)
+	for k, item := range a {
+		items[k] = *flattenWorkloadWorkloadOptions(c, item.(map[string]interface{}), res)
+	}
+
+	return items
+}
+
+// flattenWorkloadWorkloadOptionsSlice flattens the contents of WorkloadWorkloadOptions from a JSON
+// response object.
+func flattenWorkloadWorkloadOptionsSlice(c *Client, i interface{}, res *Workload) []WorkloadWorkloadOptions {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadWorkloadOptions{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadWorkloadOptions{}
+	}
+
+	items := make([]WorkloadWorkloadOptions, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadWorkloadOptions(c, item.(map[string]interface{}), res))
+	}
+
+	return items
+}
+
+// expandWorkloadWorkloadOptions expands an instance of WorkloadWorkloadOptions into a JSON
+// request object.
+func expandWorkloadWorkloadOptions(c *Client, f *WorkloadWorkloadOptions, res *Workload) (map[string]interface{}, error) {
+	if dcl.IsEmptyValueIndirect(f) {
+		return nil, nil
+	}
+
+	m := make(map[string]interface{})
+	if v := f.KajEnrollmentType; !dcl.IsEmptyValueIndirect(v) {
+		m["kajEnrollmentType"] = v
+	}
+
+	return m, nil
+}
+
+// flattenWorkloadWorkloadOptions flattens an instance of WorkloadWorkloadOptions from a JSON
+// response object.
+func flattenWorkloadWorkloadOptions(c *Client, i interface{}, res *Workload) *WorkloadWorkloadOptions {
+	m, ok := i.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	r := &WorkloadWorkloadOptions{}
+
+	if dcl.IsEmptyValueIndirect(i) {
+		return EmptyWorkloadWorkloadOptions
+	}
+	r.KajEnrollmentType = flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnum(m["kajEnrollmentType"])
+
+	return r
+}
+
 // expandWorkloadEkmProvisioningResponseMap expands the contents of WorkloadEkmProvisioningResponse into a JSON
 // request object.
 func expandWorkloadEkmProvisioningResponseMap(c *Client, f map[string]WorkloadEkmProvisioningResponse, res *Workload) (map[string]interface{}, error) {
@@ -3368,6 +3674,57 @@ func flattenWorkloadPartnerEnum(i interface{}) *WorkloadPartnerEnum {
 	return WorkloadPartnerEnumRef(s)
 }
 
+// flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnumMap flattens the contents of WorkloadWorkloadOptionsKajEnrollmentTypeEnum from a JSON
+// response object.
+func flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadWorkloadOptionsKajEnrollmentTypeEnum {
+	a, ok := i.(map[string]interface{})
+	if !ok {
+		return map[string]WorkloadWorkloadOptionsKajEnrollmentTypeEnum{}
+	}
+
+	if len(a) == 0 {
+		return map[string]WorkloadWorkloadOptionsKajEnrollmentTypeEnum{}
+	}
+
+	items := make(map[string]WorkloadWorkloadOptionsKajEnrollmentTypeEnum)
+	for k, item := range a {
+		items[k] = *flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnum(item.(interface{}))
+	}
+
+	return items
+}
+
+// flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnumSlice flattens the contents of WorkloadWorkloadOptionsKajEnrollmentTypeEnum from a JSON
+// response object.
+func flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnumSlice(c *Client, i interface{}, res *Workload) []WorkloadWorkloadOptionsKajEnrollmentTypeEnum {
+	a, ok := i.([]interface{})
+	if !ok {
+		return []WorkloadWorkloadOptionsKajEnrollmentTypeEnum{}
+	}
+
+	if len(a) == 0 {
+		return []WorkloadWorkloadOptionsKajEnrollmentTypeEnum{}
+	}
+
+	items := make([]WorkloadWorkloadOptionsKajEnrollmentTypeEnum, 0, len(a))
+	for _, item := range a {
+		items = append(items, *flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnum(item.(interface{})))
+	}
+
+	return items
+}
+
+// flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnum asserts that an interface is a string, and returns a
+// pointer to a *WorkloadWorkloadOptionsKajEnrollmentTypeEnum with the same value as that string.
+func flattenWorkloadWorkloadOptionsKajEnrollmentTypeEnum(i interface{}) *WorkloadWorkloadOptionsKajEnrollmentTypeEnum {
+	s, ok := i.(string)
+	if !ok {
+		return nil
+	}
+
+	return WorkloadWorkloadOptionsKajEnrollmentTypeEnumRef(s)
+}
+
 // flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnumMap flattens the contents of WorkloadEkmProvisioningResponseEkmProvisioningStateEnum from a JSON
 // response object.
 func flattenWorkloadEkmProvisioningResponseEkmProvisioningStateEnumMap(c *Client, i interface{}, res *Workload) map[string]WorkloadEkmProvisioningResponseEkmProvisioningStateEnum {
@@ -3659,6 +4016,17 @@ func extractWorkloadFields(r *Workload) error {
 	if !dcl.IsEmptyValueIndirect(vPartnerPermissions) {
 		r.PartnerPermissions = vPartnerPermissions
 	}
+	vWorkloadOptions := r.WorkloadOptions
+	if vWorkloadOptions == nil {
+		// note: explicitly not the empty object.
+		vWorkloadOptions = &WorkloadWorkloadOptions{}
+	}
+	if err := extractWorkloadWorkloadOptionsFields(r, vWorkloadOptions); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vWorkloadOptions) {
+		r.WorkloadOptions = vWorkloadOptions
+	}
 	vEkmProvisioningResponse := r.EkmProvisioningResponse
 	if vEkmProvisioningResponse == nil {
 		// note: explicitly not the empty object.
@@ -3688,6 +4056,9 @@ func extractWorkloadComplianceStatusFields(r *Workload, o *WorkloadComplianceSta
 	return nil
 }
 func extractWorkloadPartnerPermissionsFields(r *Workload, o *WorkloadPartnerPermissions) error {
+	return nil
+}
+func extractWorkloadWorkloadOptionsFields(r *Workload, o *WorkloadWorkloadOptions) error {
 	return nil
 }
 func extractWorkloadEkmProvisioningResponseFields(r *Workload, o *WorkloadEkmProvisioningResponse) error {
@@ -3739,6 +4110,17 @@ func postReadExtractWorkloadFields(r *Workload) error {
 	if !dcl.IsEmptyValueIndirect(vPartnerPermissions) {
 		r.PartnerPermissions = vPartnerPermissions
 	}
+	vWorkloadOptions := r.WorkloadOptions
+	if vWorkloadOptions == nil {
+		// note: explicitly not the empty object.
+		vWorkloadOptions = &WorkloadWorkloadOptions{}
+	}
+	if err := postReadExtractWorkloadWorkloadOptionsFields(r, vWorkloadOptions); err != nil {
+		return err
+	}
+	if !dcl.IsEmptyValueIndirect(vWorkloadOptions) {
+		r.WorkloadOptions = vWorkloadOptions
+	}
 	vEkmProvisioningResponse := r.EkmProvisioningResponse
 	if vEkmProvisioningResponse == nil {
 		// note: explicitly not the empty object.
@@ -3768,6 +4150,9 @@ func postReadExtractWorkloadComplianceStatusFields(r *Workload, o *WorkloadCompl
 	return nil
 }
 func postReadExtractWorkloadPartnerPermissionsFields(r *Workload, o *WorkloadPartnerPermissions) error {
+	return nil
+}
+func postReadExtractWorkloadWorkloadOptionsFields(r *Workload, o *WorkloadWorkloadOptions) error {
 	return nil
 }
 func postReadExtractWorkloadEkmProvisioningResponseFields(r *Workload, o *WorkloadEkmProvisioningResponse) error {

@@ -608,6 +608,73 @@
     },
     "instances": {
       "methods": {
+        "ListServerCertificates": {
+          "description": "Lists all versions of server certificates and certificate authorities (CAs) for the specified instance. There can be up to three sets of certs listed: the certificate that is currently in use, a future that has been added but not yet used to sign a certificate, and a certificate that has been rotated out.",
+          "flatPath": "sql/v1beta4/projects/{project}/instances/{instance}/listServerCertificates",
+          "httpMethod": "GET",
+          "id": "sql.instances.ListServerCertificates",
+          "parameterOrder": [
+            "project",
+            "instance"
+          ],
+          "parameters": {
+            "instance": {
+              "description": "Required. Cloud SQL instance ID. This does not include the project ID.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Required. Project ID of the project that contains the instance.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "sql/v1beta4/projects/{project}/instances/{instance}/listServerCertificates",
+          "response": {
+            "$ref": "InstancesListServerCertificatesResponse"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/sqlservice.admin"
+          ]
+        },
+        "RotateServerCertificate": {
+          "description": "Rotates the server certificate version to one previously added with the addServerCertificate method. For instances not using Certificate Authority Service (CAS) server CA, use RotateServerCa instead.",
+          "flatPath": "sql/v1beta4/projects/{project}/instances/{instance}/rotateServerCertificate",
+          "httpMethod": "POST",
+          "id": "sql.instances.RotateServerCertificate",
+          "parameterOrder": [
+            "project",
+            "instance"
+          ],
+          "parameters": {
+            "instance": {
+              "description": "Required. Cloud SQL instance ID. This does not include the project ID.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Required. Project ID of the project that contains the instance.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "sql/v1beta4/projects/{project}/instances/{instance}/rotateServerCertificate",
+          "request": {
+            "$ref": "InstancesRotateServerCertificateRequest"
+          },
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/sqlservice.admin"
+          ]
+        },
         "acquireSsrsLease": {
           "description": "Acquire a lease for the setup of SQL Server Reporting Services (SSRS).",
           "flatPath": "sql/v1beta4/projects/{project}/instances/{instance}/acquireSsrsLease",
@@ -644,7 +711,7 @@
           ]
         },
         "addServerCa": {
-          "description": "Add a new trusted Certificate Authority (CA) version for the specified instance. Required to prepare for a certificate rotation. If a CA version was previously added but never used in a certificate rotation, this operation replaces that version. There cannot be more than one CA version waiting to be rotated in.",
+          "description": "Add a new trusted Certificate Authority (CA) version for the specified instance. Required to prepare for a certificate rotation. If a CA version was previously added but never used in a certificate rotation, this operation replaces that version. There cannot be more than one CA version waiting to be rotated in. For instances that have enabled Certificate Authority Service (CAS) based server CA, use AddServerCertificate to add a new server certificate.",
           "flatPath": "sql/v1beta4/projects/{project}/instances/{instance}/addServerCa",
           "httpMethod": "POST",
           "id": "sql.instances.addServerCa",
@@ -667,6 +734,38 @@
             }
           },
           "path": "sql/v1beta4/projects/{project}/instances/{instance}/addServerCa",
+          "response": {
+            "$ref": "Operation"
+          },
+          "scopes": [
+            "https://www.googleapis.com/auth/cloud-platform",
+            "https://www.googleapis.com/auth/sqlservice.admin"
+          ]
+        },
+        "addServerCertificate": {
+          "description": "Add a new trusted server certificate version for the specified instance using Certificate Authority Service (CAS) server CA. Required to prepare for a certificate rotation. If a server certificate version was previously added but never used in a certificate rotation, this operation replaces that version. There cannot be more than one certificate version waiting to be rotated in. For instances not using CAS server CA, use AddServerCa instead.",
+          "flatPath": "sql/v1beta4/projects/{project}/instances/{instance}/addServerCertificate",
+          "httpMethod": "POST",
+          "id": "sql.instances.addServerCertificate",
+          "parameterOrder": [
+            "project",
+            "instance"
+          ],
+          "parameters": {
+            "instance": {
+              "description": "Required. Cloud SQL instance ID. This does not include the project ID.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            },
+            "project": {
+              "description": "Required. Project ID of the project that contains the instance.",
+              "location": "path",
+              "required": true,
+              "type": "string"
+            }
+          },
+          "path": "sql/v1beta4/projects/{project}/instances/{instance}/addServerCertificate",
           "response": {
             "$ref": "Operation"
           },
@@ -720,6 +819,18 @@
             "instance"
           ],
           "parameters": {
+            "finalBackupExpiryTime": {
+              "description": "Optional. Final Backup expiration time. Timestamp in UTC of when this resource is considered expired.",
+              "format": "google-datetime",
+              "location": "query",
+              "type": "string"
+            },
+            "finalBackupTtlDays": {
+              "description": "Optional. Retention period of the final backup.",
+              "format": "int64",
+              "location": "query",
+              "type": "string"
+            },
             "instance": {
               "description": "Cloud SQL instance ID. This does not include the project ID.",
               "location": "path",
@@ -1287,7 +1398,7 @@
           ]
         },
         "rotateServerCa": {
-          "description": "Rotates the server certificate to one signed by the Certificate Authority (CA) version previously added with the addServerCA method.",
+          "description": "Rotates the server certificate to one signed by the Certificate Authority (CA) version previously added with the addServerCA method. For instances that have enabled Certificate Authority Service (CAS) based server CA, use RotateServerCertificate to rotate the server certificate.",
           "flatPath": "sql/v1beta4/projects/{project}/instances/{instance}/rotateServerCa",
           "httpMethod": "POST",
           "id": "sql.instances.rotateServerCa",
@@ -2267,7 +2378,7 @@
       }
     }
   },
-  "revision": "20240529",
+  "revision": "20241004",
   "rootUrl": "https://sqladmin.googleapis.com/",
   "schemas": {
     "AclEntry": {
@@ -2524,8 +2635,8 @@
           ],
           "enumDescriptions": [
             "This is an unknown BackupKind.",
-            "The snapshot based backups",
-            "Physical backups"
+            "Snapshot-based backups.",
+            "Physical backups."
           ],
           "type": "string"
         },
@@ -2570,6 +2681,12 @@
         },
         "location": {
           "description": "Location of the backups.",
+          "type": "string"
+        },
+        "maxChargeableBytes": {
+          "description": "Output only. The maximum chargeable bytes for the backup.",
+          "format": "int64",
+          "readOnly": true,
           "type": "string"
         },
         "selfLink": {
@@ -2771,6 +2888,7 @@
             "POSTGRES_14",
             "POSTGRES_15",
             "POSTGRES_16",
+            "POSTGRES_17",
             "MYSQL_8_0",
             "MYSQL_8_0_18",
             "MYSQL_8_0_26",
@@ -2789,7 +2907,6 @@
             "MYSQL_8_0_39",
             "MYSQL_8_0_40",
             "MYSQL_8_4",
-            "MYSQL_8_4_0",
             "SQLSERVER_2019_STANDARD",
             "SQLSERVER_2019_ENTERPRISE",
             "SQLSERVER_2019_EXPRESS",
@@ -2822,8 +2939,8 @@
             false,
             false,
             false,
-            true,
             false,
+            true,
             false,
             false,
             false,
@@ -2863,6 +2980,7 @@
             "The database version is PostgreSQL 14.",
             "The database version is PostgreSQL 15.",
             "The database version is PostgreSQL 16.",
+            "The database version is PostgreSQL 17.",
             "The database version is MySQL 8.",
             "The database major version is MySQL 8.0 and the minor version is 18.",
             "The database major version is MySQL 8.0 and the minor version is 26.",
@@ -2881,7 +2999,6 @@
             "The database major version is MySQL 8.0 and the minor version is 39.",
             "The database major version is MySQL 8.0 and the minor version is 40.",
             "The database version is MySQL 8.4.",
-            "The database version is MySQL 8.4 and the patch version is 0.",
             "The database version is SQL Server 2019 Standard.",
             "The database version is SQL Server 2019 Enterprise.",
             "The database version is SQL Server 2019 Express.",
@@ -2919,6 +3036,20 @@
         "serverCaCert": {
           "$ref": "SslCert",
           "description": "SSL configuration."
+        },
+        "serverCaMode": {
+          "description": "Specify what type of CA is used for the server certificate.",
+          "enum": [
+            "CA_MODE_UNSPECIFIED",
+            "GOOGLE_MANAGED_INTERNAL_CA",
+            "GOOGLE_MANAGED_CAS_CA"
+          ],
+          "enumDescriptions": [
+            "CA mode is unspecified. It is effectively the same as `GOOGLE_MANAGED_INTERNAL_CA`.",
+            "Google-managed self-signed internal CA.",
+            "Google-managed regional CA part of root CA hierarchy hosted on Google Cloud's Certificate Authority Service (CAS)."
+          ],
+          "type": "string"
         }
       },
       "type": "object"
@@ -3066,6 +3197,7 @@
             "POSTGRES_14",
             "POSTGRES_15",
             "POSTGRES_16",
+            "POSTGRES_17",
             "MYSQL_8_0",
             "MYSQL_8_0_18",
             "MYSQL_8_0_26",
@@ -3084,7 +3216,6 @@
             "MYSQL_8_0_39",
             "MYSQL_8_0_40",
             "MYSQL_8_4",
-            "MYSQL_8_4_0",
             "SQLSERVER_2019_STANDARD",
             "SQLSERVER_2019_ENTERPRISE",
             "SQLSERVER_2019_EXPRESS",
@@ -3117,8 +3248,8 @@
             false,
             false,
             false,
-            true,
             false,
+            true,
             false,
             false,
             false,
@@ -3158,6 +3289,7 @@
             "The database version is PostgreSQL 14.",
             "The database version is PostgreSQL 15.",
             "The database version is PostgreSQL 16.",
+            "The database version is PostgreSQL 17.",
             "The database version is MySQL 8.",
             "The database major version is MySQL 8.0 and the minor version is 18.",
             "The database major version is MySQL 8.0 and the minor version is 26.",
@@ -3176,7 +3308,6 @@
             "The database major version is MySQL 8.0 and the minor version is 39.",
             "The database major version is MySQL 8.0 and the minor version is 40.",
             "The database version is MySQL 8.4.",
-            "The database version is MySQL 8.4 and the patch version is 0.",
             "The database version is SQL Server 2019 Standard.",
             "The database version is SQL Server 2019 Enterprise.",
             "The database version is SQL Server 2019 Express.",
@@ -3323,6 +3454,11 @@
           "description": "Initial root password. Use only on creation. You must set root passwords before you can connect to PostgreSQL instances.",
           "type": "string"
         },
+        "satisfiesPzi": {
+          "description": "Output only. This status indicates whether the instance satisfies PZI. The status is reserved for future use.",
+          "readOnly": true,
+          "type": "boolean"
+        },
         "satisfiesPzs": {
           "description": "This status indicates whether the instance satisfies PZS. The status is reserved for future use.",
           "type": "boolean"
@@ -3419,6 +3555,10 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "switchTransactionLogsToCloudStorageEnabled": {
+          "description": "Input only. Whether Cloud SQL is enabled to switch storing point-in-time recovery log files from a data disk to Cloud Storage.",
+          "type": "boolean"
         },
         "upgradableDatabaseVersions": {
           "description": "Output only. All database versions that are available for upgrade.",
@@ -3629,6 +3769,16 @@
               "description": "Whether or not the backup can be used as a differential base copy_only backup can not be served as differential base",
               "type": "boolean"
             },
+            "exportLogEndTime": {
+              "description": "Optional. The end timestamp when transaction log will be included in the export operation. [RFC 3339](https://tools.ietf.org/html/rfc3339) format (for example, `2023-10-01T16:19:00.094`) in UTC. When omitted, all available logs until current time will be included. Only applied to Cloud SQL for SQL Server.",
+              "format": "google-datetime",
+              "type": "string"
+            },
+            "exportLogStartTime": {
+              "description": "Optional. The begin timestamp when transaction log will be included in the export operation. [RFC 3339](https://tools.ietf.org/html/rfc3339) format (for example, `2023-10-01T16:19:00.094`) in UTC. When omitted, all available logs from the beginning of retention period will be included. Only applied to Cloud SQL for SQL Server.",
+              "format": "google-datetime",
+              "type": "string"
+            },
             "stripeCount": {
               "description": "Option for specifying how many stripes to use for the export. If blank, and the value of the striped field is true, the number of stripes is automatically chosen.",
               "format": "int32",
@@ -3716,6 +3866,20 @@
               "description": "Optional. Whether or not the export should be parallel.",
               "type": "boolean"
             },
+            "postgresExportOptions": {
+              "description": "Options for exporting from a Cloud SQL for PostgreSQL instance.",
+              "properties": {
+                "clean": {
+                  "description": "Optional. Use this option to include DROP SQL statements. These statements are used to delete database objects before running the import operation.",
+                  "type": "boolean"
+                },
+                "ifExists": {
+                  "description": "Optional. Option to include an IF EXISTS SQL statement with each DROP statement produced by clean.",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
             "schemaOnly": {
               "description": "Export only schemas.",
               "type": "boolean"
@@ -3798,6 +3962,7 @@
               "POSTGRES_14",
               "POSTGRES_15",
               "POSTGRES_16",
+              "POSTGRES_17",
               "MYSQL_8_0",
               "MYSQL_8_0_18",
               "MYSQL_8_0_26",
@@ -3816,7 +3981,6 @@
               "MYSQL_8_0_39",
               "MYSQL_8_0_40",
               "MYSQL_8_4",
-              "MYSQL_8_4_0",
               "SQLSERVER_2019_STANDARD",
               "SQLSERVER_2019_ENTERPRISE",
               "SQLSERVER_2019_EXPRESS",
@@ -3849,8 +4013,8 @@
               false,
               false,
               false,
-              true,
               false,
+              true,
               false,
               false,
               false,
@@ -3890,6 +4054,7 @@
               "The database version is PostgreSQL 14.",
               "The database version is PostgreSQL 15.",
               "The database version is PostgreSQL 16.",
+              "The database version is PostgreSQL 17.",
               "The database version is MySQL 8.",
               "The database major version is MySQL 8.0 and the minor version is 18.",
               "The database major version is MySQL 8.0 and the minor version is 26.",
@@ -3908,7 +4073,6 @@
               "The database major version is MySQL 8.0 and the minor version is 39.",
               "The database major version is MySQL 8.0 and the minor version is 40.",
               "The database version is MySQL 8.4.",
-              "The database version is MySQL 8.4 and the patch version is 0.",
               "The database version is SQL Server 2019 Standard.",
               "The database version is SQL Server 2019 Enterprise.",
               "The database version is SQL Server 2019 Express.",
@@ -4198,6 +4362,20 @@
               "description": "Optional. Whether or not the import should be parallel.",
               "type": "boolean"
             },
+            "postgresImportOptions": {
+              "description": "Optional. Options for importing from a Cloud SQL for PostgreSQL instance.",
+              "properties": {
+                "clean": {
+                  "description": "Optional. The --clean flag for the pg_restore utility. This flag applies only if you enabled Cloud SQL to import files in parallel.",
+                  "type": "boolean"
+                },
+                "ifExists": {
+                  "description": "Optional. The --if-exists flag for the pg_restore utility. This flag applies only if you enabled Cloud SQL to import files in parallel.",
+                  "type": "boolean"
+                }
+              },
+              "type": "object"
+            },
             "threads": {
               "description": "Optional. The number of threads to use for parallel import.",
               "format": "int32",
@@ -4388,6 +4566,35 @@
       },
       "type": "object"
     },
+    "InstancesListServerCertificatesResponse": {
+      "description": "Instances ListServerCertificatess response.",
+      "id": "InstancesListServerCertificatesResponse",
+      "properties": {
+        "activeVersion": {
+          "description": "The `sha1_fingerprint` of the active certificate from `server_certs`.",
+          "type": "string"
+        },
+        "caCerts": {
+          "description": "List of server CA certificates for the instance.",
+          "items": {
+            "$ref": "SslCert"
+          },
+          "type": "array"
+        },
+        "kind": {
+          "description": "This is always `sql#instancesListServerCertificates`.",
+          "type": "string"
+        },
+        "serverCerts": {
+          "description": "List of server certificates for the instance, signed by the corresponding CA from the `ca_certs` list.",
+          "items": {
+            "$ref": "SslCert"
+          },
+          "type": "array"
+        }
+      },
+      "type": "object"
+    },
     "InstancesReencryptRequest": {
       "description": "Database Instance reencrypt request.",
       "id": "InstancesReencryptRequest",
@@ -4417,6 +4624,17 @@
         "rotateServerCaContext": {
           "$ref": "RotateServerCaContext",
           "description": "Contains details about the rotate server CA operation."
+        }
+      },
+      "type": "object"
+    },
+    "InstancesRotateServerCertificateRequest": {
+      "description": "Rotate Server Certificate request.",
+      "id": "InstancesRotateServerCertificateRequest",
+      "properties": {
+        "rotateServerCertificateContext": {
+          "$ref": "RotateServerCertificateContext",
+          "description": "Optional. Contains details about the rotate server CA operation."
         }
       },
       "type": "object"
@@ -4466,6 +4684,20 @@
         "requireSsl": {
           "description": "Use `ssl_mode` instead. Whether SSL/TLS connections over IP are enforced. If set to false, then allow both non-SSL/non-TLS and SSL/TLS connections. For SSL/TLS connections, the client certificate won't be verified. If set to true, then only allow connections encrypted with SSL/TLS and with valid client certificates. If you want to enforce SSL/TLS without enforcing the requirement for valid client certificates, then use the `ssl_mode` flag instead of the legacy `require_ssl` flag.",
           "type": "boolean"
+        },
+        "serverCaMode": {
+          "description": "Specify what type of CA is used for the server certificate.",
+          "enum": [
+            "CA_MODE_UNSPECIFIED",
+            "GOOGLE_MANAGED_INTERNAL_CA",
+            "GOOGLE_MANAGED_CAS_CA"
+          ],
+          "enumDescriptions": [
+            "CA mode is unspecified. It is effectively the same as `GOOGLE_MANAGED_INTERNAL_CA`.",
+            "Google-managed self-signed internal CA.",
+            "Google-managed regional CA part of root CA hierarchy hosted on Google Cloud's Certificate Authority Service (CAS)."
+          ],
+          "type": "string"
         },
         "sslMode": {
           "description": "Specify how SSL/TLS is enforced in database connections. If you must use the `require_ssl` flag for backward compatibility, then only the following value pairs are valid: For PostgreSQL and MySQL: * `ssl_mode=ALLOW_UNENCRYPTED_AND_ENCRYPTED` and `require_ssl=false` * `ssl_mode=ENCRYPTED_ONLY` and `require_ssl=false` * `ssl_mode=TRUSTED_CLIENT_CERTIFICATE_REQUIRED` and `require_ssl=true` For SQL Server: * `ssl_mode=ALLOW_UNENCRYPTED_AND_ENCRYPTED` and `require_ssl=false` * `ssl_mode=ENCRYPTED_ONLY` and `require_ssl=true` The value of `ssl_mode` has priority over the value of `require_ssl`. For example, for the pair `ssl_mode=ENCRYPTED_ONLY` and `require_ssl=false`, `ssl_mode=ENCRYPTED_ONLY` means accept only SSL connections, while `require_ssl=false` means accept both non-SSL and SSL connections. In this case, MySQL and PostgreSQL databases respect `ssl_mode` and accepts only SSL connections.",
@@ -4549,12 +4781,12 @@
       "id": "MaintenanceWindow",
       "properties": {
         "day": {
-          "description": "day of week (1-7), starting on Monday.",
+          "description": "Day of week - `MONDAY`, `TUESDAY`, `WEDNESDAY`, `THURSDAY`, `FRIDAY`, `SATURDAY`, or `SUNDAY`. Specify in the UTC time zone. Returned in output as an integer, 1 to 7, where `1` equals Monday.",
           "format": "int32",
           "type": "integer"
         },
         "hour": {
-          "description": "hour of day - 0 to 23.",
+          "description": "Hour of day - 0 to 23. Specify in the UTC time zone.",
           "format": "int32",
           "type": "integer"
         },
@@ -4563,7 +4795,7 @@
           "type": "string"
         },
         "updateTrack": {
-          "description": "Maintenance timing setting: `canary` (Earlier) or `stable` (Later). [Learn more](https://cloud.google.com/sql/docs/mysql/instance-settings#maintenance-timing-2ndgen).",
+          "description": "Maintenance timing settings: `canary`, `stable`, or `week5`. For more information, see [About maintenance on Cloud SQL instances](https://cloud.google.com/sql/docs/mysql/maintenance).",
           "enum": [
             "SQL_UPDATE_TRACK_UNSPECIFIED",
             "canary",
@@ -4572,9 +4804,9 @@
           ],
           "enumDescriptions": [
             "This is an unknown maintenance timing preference.",
-            "For instance update that requires a restart, this update track indicates your instance prefer to restart for new version early in maintenance window.",
-            "For instance update that requires a restart, this update track indicates your instance prefer to let Cloud SQL choose the timing of restart (within its Maintenance window, if applicable).",
-            "For instance update that requires a restart, this update track indicates your instance prefer to let Cloud SQL choose the timing of restart (within its Maintenance window, if applicable) to be at least 5 weeks after the notification."
+            "For an instance with a scheduled maintenance window, this maintenance timing indicates that the maintenance update is scheduled 7 to 14 days after the notification is sent out. Also referred to as `Week 1` (Console) and `preview` (gcloud CLI).",
+            "For an instance with a scheduled maintenance window, this maintenance timing indicates that the maintenance update is scheduled 15 to 21 days after the notification is sent out. Also referred to as `Week 2` (Console) and `production` (gcloud CLI).",
+            "For instance with a scheduled maintenance window, this maintenance timing indicates that the maintenance update is scheduled 35 to 42 days after the notification is sent out."
           ],
           "type": "string"
         }
@@ -4784,7 +5016,8 @@
             "RECONFIGURE_OLD_PRIMARY",
             "CLUSTER_MAINTENANCE",
             "SELF_SERVICE_MAINTENANCE",
-            "SWITCHOVER_TO_REPLICA"
+            "SWITCHOVER_TO_REPLICA",
+            "MAJOR_VERSION_UPGRADE"
           ],
           "enumDeprecated": [
             false,
@@ -4829,7 +5062,8 @@
             false,
             false,
             false,
-            false,
+            true,
+            true,
             false,
             false
           ],
@@ -4878,7 +5112,8 @@
             "Reconfigures old primary after a promote replica operation. Effect of a promote operation to the old primary is executed in this operation, asynchronously from the promote replica operation executed to the replica.",
             "Indicates that the instance, its read replicas, and its cascading replicas are in maintenance. Maintenance typically gets initiated on groups of replicas first, followed by the primary instance. For each instance, maintenance typically causes the instance to be unavailable for 1-3 minutes.",
             "Indicates that the instance (and any of its replicas) are currently in maintenance. This is initiated as a self-service request by using SSM. Maintenance typically causes the instance to be unavailable for 1-3 minutes.",
-            "Switches a primary instance to a replica. This operation runs as part of a switchover operation to the original primary instance."
+            "Switches a primary instance to a replica. This operation runs as part of a switchover operation to the original primary instance.",
+            "Updates the major version of a Cloud SQL instance."
           ],
           "type": "string"
         },
@@ -5103,6 +5338,33 @@
       },
       "type": "object"
     },
+    "PscAutoConnectionConfig": {
+      "description": "Settings for an automatically-setup Private Service Connect consumer endpoint that is used to connect to a Cloud SQL instance.",
+      "id": "PscAutoConnectionConfig",
+      "properties": {
+        "consumerNetwork": {
+          "description": "The consumer network of this consumer endpoint. This must be a resource path that includes both the host project and the network name. For example, `projects/project1/global/networks/network1`. The consumer host project of this network might be different from the consumer service project.",
+          "type": "string"
+        },
+        "consumerNetworkStatus": {
+          "description": "The connection policy status of the consumer network.",
+          "type": "string"
+        },
+        "consumerProject": {
+          "description": "This is the project ID of consumer service project of this consumer endpoint. Optional. This is only applicable if consumer_network is a shared vpc network.",
+          "type": "string"
+        },
+        "ipAddress": {
+          "description": "The IP address of the consumer endpoint.",
+          "type": "string"
+        },
+        "status": {
+          "description": "The connection status of the consumer endpoint.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
     "PscConfig": {
       "description": "PSC settings for a Cloud SQL instance.",
       "id": "PscConfig",
@@ -5111,6 +5373,13 @@
           "description": "Optional. The list of consumer projects that are allow-listed for PSC connections to this instance. This instance can be connected to with PSC from any network in these projects. Each consumer project in this list may be represented by a project number (numeric) or by a project id (alphanumeric).",
           "items": {
             "type": "string"
+          },
+          "type": "array"
+        },
+        "pscAutoConnections": {
+          "description": "Optional. The list of settings for requested Private Service Connect consumer endpoints that can be used to connect to this Cloud SQL instance.",
+          "items": {
+            "$ref": "PscAutoConnectionConfig"
           },
           "type": "array"
         },
@@ -5226,6 +5495,21 @@
         },
         "nextVersion": {
           "description": "The fingerprint of the next version to be rotated to. If left unspecified, will be rotated to the most recently added server CA version.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "RotateServerCertificateContext": {
+      "description": "Instance rotate server certificate context.",
+      "id": "RotateServerCertificateContext",
+      "properties": {
+        "kind": {
+          "description": "Optional. This is always `sql#rotateServerCertificateContext`.",
+          "type": "string"
+        },
+        "nextVersion": {
+          "description": "Optional. The fingerprint of the next version to be rotated to. If left unspecified, will be rotated to the most recently added server certificate version.",
           "type": "string"
         }
       },
@@ -5380,6 +5664,10 @@
             "The instance is an Enterprise Plus edition."
           ],
           "type": "string"
+        },
+        "enableDataplexIntegration": {
+          "description": "Optional. By default, Cloud SQL instances have schema extraction disabled for Dataplex. When this parameter is set to true, schema extraction for Dataplex on Cloud SQL instances is activated.",
+          "type": "boolean"
         },
         "enableGoogleMlIntegration": {
           "description": "Optional. When this parameter is set to true, Cloud SQL instances can connect to Vertex AI to pass requests for real-time predictions and insights to the AI. The default value is false. This applies only to Cloud SQL for PostgreSQL instances.",
@@ -5551,7 +5839,12 @@
             "INSUFFICIENT_MACHINE_TIER",
             "UNSUPPORTED_EXTENSIONS_NOT_MIGRATED",
             "EXTENSIONS_NOT_MIGRATED",
-            "PG_CRON_FLAG_ENABLED_IN_REPLICA"
+            "PG_CRON_FLAG_ENABLED_IN_REPLICA",
+            "EXTENSIONS_NOT_ENABLED_IN_REPLICA",
+            "UNSUPPORTED_COLUMNS",
+            "USERS_NOT_CREATED_IN_REPLICA",
+            "UNSUPPORTED_SYSTEM_OBJECTS",
+            "UNSUPPORTED_TABLES_WITH_REPLICA_IDENTITY"
           ],
           "enumDescriptions": [
             "",
@@ -5574,7 +5867,7 @@
             "The primary instance database parameter setup doesn't allow EM sync.",
             "The gtid_mode is not supported, applicable for MySQL.",
             "SQL Server Agent is not running.",
-            "The table definition is not support due to missing primary key or replica identity, applicable for postgres.",
+            "The table definition is not support due to missing primary key or replica identity, applicable for postgres. Note that this is a warning and won't block the migration.",
             "The customer has a definer that will break EM setup.",
             "SQL Server @@SERVERNAME does not match actual host name.",
             "The primary instance has been setup and will fail the setup.",
@@ -5601,7 +5894,12 @@
             "The data size of the source instance is greater than 1 TB, the number of cores of the replica instance is less than 8, and the memory of the replica is less than 32 GB.",
             "The warning message indicates the unsupported extensions will not be migrated to the destination.",
             "The warning message indicates the pg_cron extension and settings will not be migrated to the destination.",
-            "The error message indicates that pg_cron flags are enabled on the destination which is not supported during the migration."
+            "The error message indicates that pg_cron flags are enabled on the destination which is not supported during the migration.",
+            "This error message indicates that the specified extensions are not enabled on destination instance. For example, before you can migrate data to the destination instance, you must enable the PGAudit extension on the instance.",
+            "The source database has generated columns that can't be migrated. Please change them to regular columns before migration.",
+            "The source database has users that aren't created in the replica. First, create all users, which are in the pg_user_mappings table of the source database, in the destination instance. Then, perform the migration.",
+            "The selected objects include system objects that aren't supported for migration.",
+            "The source database has tables with the FULL or NOTHING replica identity. Before starting your migration, either remove the identity or change it to DEFAULT. Note that this is an error and will block the migration."
           ],
           "type": "string"
         }
@@ -6214,9 +6512,9 @@
             "The database's built-in user type.",
             "Cloud IAM user.",
             "Cloud IAM service account.",
-            "Cloud IAM group non-login user.",
-            "Cloud IAM group login user.",
-            "Cloud IAM group service account."
+            "Cloud IAM group. Not used for login.",
+            "Read-only. Login for a user that belongs to the Cloud IAM group.",
+            "Read-only. Login for a service account that belongs to the Cloud IAM group."
           ],
           "type": "string"
         }

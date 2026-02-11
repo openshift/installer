@@ -22,6 +22,8 @@ import (
 	"log"
 	"net/http"
 	"reflect"
+	"slices"
+	"sort"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
@@ -31,15 +33,53 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
+func AccessContextManagerServicePerimeterIngressPolicyEgressToResourcesDiffSupressFunc(_, _, _ string, d *schema.ResourceData) bool {
+	old, new := d.GetChange("egress_to.0.resources")
+
+	oldResources, err := tpgresource.InterfaceSliceToStringSlice(old)
+	if err != nil {
+		log.Printf("[ERROR] Failed to convert config value: %s", err)
+		return false
+	}
+
+	newResources, err := tpgresource.InterfaceSliceToStringSlice(new)
+	if err != nil {
+		log.Printf("[ERROR] Failed to convert config value: %s", err)
+		return false
+	}
+
+	sort.Strings(oldResources)
+	sort.Strings(newResources)
+
+	return slices.Equal(oldResources, newResources)
+}
+
+func AccessContextManagerServicePerimeterIngressPolicyIngressToResourcesDiffSupressFunc(_, _, _ string, d *schema.ResourceData) bool {
+	old, new := d.GetChange("ingress_to.0.resources")
+
+	oldResources, err := tpgresource.InterfaceSliceToStringSlice(old)
+	if err != nil {
+		log.Printf("[ERROR] Failed to convert config value: %s", err)
+		return false
+	}
+
+	newResources, err := tpgresource.InterfaceSliceToStringSlice(new)
+	if err != nil {
+		log.Printf("[ERROR] Failed to convert config value: %s", err)
+		return false
+	}
+
+	sort.Strings(oldResources)
+	sort.Strings(newResources)
+
+	return slices.Equal(oldResources, newResources)
+}
+
 func ResourceAccessContextManagerServicePerimeterIngressPolicy() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceAccessContextManagerServicePerimeterIngressPolicyCreate,
 		Read:   resourceAccessContextManagerServicePerimeterIngressPolicyRead,
 		Delete: resourceAccessContextManagerServicePerimeterIngressPolicyDelete,
-
-		Importer: &schema.ResourceImporter{
-			State: resourceAccessContextManagerServicePerimeterIngressPolicyImport,
-		},
 
 		Timeouts: &schema.ResourceTimeout{
 			Create: schema.DefaultTimeout(20 * time.Minute),
@@ -109,7 +149,10 @@ If * is specified, then all IngressSources will be allowed.`,
 										ForceNew: true,
 										Description: `A Google Cloud resource that is allowed to ingress the perimeter.
 Requests from these resources will be allowed to access perimeter data.
-Currently only projects are allowed. Format 'projects/{project_number}'
+Currently only projects and VPCs are allowed.
+Project format: 'projects/{projectNumber}'
+VPC network format:
+'//compute.googleapis.com/projects/{PROJECT_ID}/global/networks/{NAME}'.
 The project may be in any Google Cloud organization, not just the
 organization that the perimeter is defined in. '*' is not allowed, the case
 of allowing all Google Cloud resources only is not supported.`,
@@ -177,9 +220,10 @@ field set to '*' will allow all methods AND permissions for all services.`,
 							},
 						},
 						"resources": {
-							Type:     schema.TypeList,
-							Optional: true,
-							ForceNew: true,
+							Type:             schema.TypeList,
+							Optional:         true,
+							ForceNew:         true,
+							DiffSuppressFunc: AccessContextManagerServicePerimeterIngressPolicyIngressToResourcesDiffSupressFunc,
 							Description: `A list of resources, currently only projects in the form
 'projects/<projectnumber>', protected by this 'ServicePerimeter'
 that are allowed to be accessed by sources defined in the
@@ -434,21 +478,6 @@ func resourceAccessContextManagerServicePerimeterIngressPolicyDelete(d *schema.R
 	return nil
 }
 
-func resourceAccessContextManagerServicePerimeterIngressPolicyImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
-	config := meta.(*transport_tpg.Config)
-
-	// current import_formats can't import fields with forward slashes in their value
-	parts, err := tpgresource.GetImportIdQualifiers([]string{"accessPolicies/(?P<accessPolicy>[^/]+)/servicePerimeters/(?P<perimeter>[^/]+)"}, d, config, d.Id())
-	if err != nil {
-		return nil, err
-	}
-
-	if err := d.Set("perimeter", fmt.Sprintf("accessPolicies/%s/servicePerimeters/%s", parts["accessPolicy"], parts["perimeter"])); err != nil {
-		return nil, fmt.Errorf("Error setting perimeter: %s", err)
-	}
-	return []*schema.ResourceData{d}, nil
-}
-
 func flattenNestedAccessContextManagerServicePerimeterIngressPolicyIngressFrom(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return nil
@@ -517,7 +546,29 @@ func flattenNestedAccessContextManagerServicePerimeterIngressPolicyIngressTo(v i
 	return []interface{}{transformed}
 }
 func flattenNestedAccessContextManagerServicePerimeterIngressPolicyIngressToResources(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	rawConfigValue := d.Get("ingress_to.0.resources")
+
+	// Convert config value to []string
+	configValue, err := tpgresource.InterfaceSliceToStringSlice(rawConfigValue)
+	if err != nil {
+		log.Printf("[ERROR] Failed to convert config value: %s", err)
+		return v
+	}
+
+	// Convert v to []string
+	apiStringValue, err := tpgresource.InterfaceSliceToStringSlice(v)
+	if err != nil {
+		log.Printf("[ERROR] Failed to convert API value: %s", err)
+		return v
+	}
+
+	sortedStrings, err := tpgresource.SortStringsByConfigOrder(configValue, apiStringValue)
+	if err != nil {
+		log.Printf("[ERROR] Could not sort API response value: %s", err)
+		return v
+	}
+
+	return sortedStrings
 }
 
 func flattenNestedAccessContextManagerServicePerimeterIngressPolicyIngressToOperations(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {

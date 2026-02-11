@@ -24,6 +24,7 @@ import (
 	"github.com/hashicorp/go-cty/cty"
 	fwDiags "github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"golang.org/x/exp/maps"
@@ -237,6 +238,25 @@ func ExpandStringMap(d TerraformResourceData, key string) map[string]string {
 	}
 
 	return ConvertStringMap(v.(map[string]interface{}))
+}
+
+// InterfaceSliceToStringSlice converts a []interface{} containing strings to []string
+func InterfaceSliceToStringSlice(v interface{}) ([]string, error) {
+	interfaceSlice, ok := v.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("expected []interface{}, got %T", v)
+	}
+
+	stringSlice := make([]string, len(interfaceSlice))
+	for i, item := range interfaceSlice {
+		strItem, ok := item.(string)
+		if !ok {
+			return nil, fmt.Errorf("expected string, got %T at index %d", item, i)
+		}
+		stringSlice[i] = strItem
+	}
+
+	return stringSlice, nil
 }
 
 // SortStringsByConfigOrder takes a slice of map[string]interface{} from a TF config
@@ -879,4 +899,17 @@ func DefaultProviderZone(_ context.Context, diff *schema.ResourceDiff, meta inte
 	}
 
 	return nil
+}
+
+// id.UniqueId() returns a timestamp + incremental hash
+// This function truncates the timestamp to provide a prefix + 9 using
+// YYmmdd + last 3 digits of the incremental hash
+func ReducedPrefixedUniqueId(prefix string) string {
+	// uniqueID is timestamp + 8 digit counter (YYYYmmddHHMMSSssss + 12345678)
+	uniqueId := id.PrefixedUniqueId("")
+	// last three digits of the counter (678)
+	counter := uniqueId[len(uniqueId)-3:]
+	// YYmmdd of date
+	date := uniqueId[2:8]
+	return prefix + date + counter
 }

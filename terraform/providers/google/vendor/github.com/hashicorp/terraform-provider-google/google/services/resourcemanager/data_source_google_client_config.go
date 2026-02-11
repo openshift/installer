@@ -8,7 +8,6 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-provider-google/google/fwmodels"
 	"github.com/hashicorp/terraform-provider-google/google/fwresource"
@@ -33,11 +32,12 @@ type GoogleClientConfigDataSource struct {
 type GoogleClientConfigModel struct {
 	// Id could/should be removed in future as it's not necessary in the plugin framework
 	// https://github.com/hashicorp/terraform-plugin-testing/issues/84
-	Id          types.String `tfsdk:"id"`
-	Project     types.String `tfsdk:"project"`
-	Region      types.String `tfsdk:"region"`
-	Zone        types.String `tfsdk:"zone"`
-	AccessToken types.String `tfsdk:"access_token"`
+	Id            types.String `tfsdk:"id"`
+	Project       types.String `tfsdk:"project"`
+	Region        types.String `tfsdk:"region"`
+	Zone          types.String `tfsdk:"zone"`
+	AccessToken   types.String `tfsdk:"access_token"`
+	DefaultLabels types.Map    `tfsdk:"default_labels"`
 }
 
 func (m *GoogleClientConfigModel) GetLocationDescription(providerConfig *fwtransport.FrameworkProviderConfig) fwresource.LocationDescription {
@@ -88,6 +88,12 @@ func (d *GoogleClientConfigDataSource) Schema(ctx context.Context, req datasourc
 				Computed:            true,
 				Sensitive:           true,
 			},
+			"default_labels": schema.MapAttribute{
+				Description:         "The default labels configured on the provider.",
+				MarkdownDescription: "The default labels configured on the provider.",
+				Computed:            true,
+				ElementType:         types.StringType,
+			},
 		},
 	}
 }
@@ -114,7 +120,6 @@ func (d *GoogleClientConfigDataSource) Configure(ctx context.Context, req dataso
 func (d *GoogleClientConfigDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var data GoogleClientConfigModel
 	var metaData *fwmodels.ProviderMetaModel
-	var diags diag.Diagnostics
 
 	// Read Provider meta into the meta model
 	resp.Diagnostics.Append(req.ProviderMeta.Get(ctx, &metaData)...)
@@ -136,10 +141,11 @@ func (d *GoogleClientConfigDataSource) Read(ctx context.Context, req datasource.
 	data.Project = d.providerConfig.Project
 	data.Region = region
 	data.Zone = zone
+	data.DefaultLabels = d.providerConfig.DefaultLabels
 
 	token, err := d.providerConfig.TokenSource.Token()
 	if err != nil {
-		diags.AddError("Error setting access_token", err.Error())
+		resp.Diagnostics.AddError("Error setting access_token", err.Error())
 		return
 	}
 	data.AccessToken = types.StringValue(token.AccessToken)

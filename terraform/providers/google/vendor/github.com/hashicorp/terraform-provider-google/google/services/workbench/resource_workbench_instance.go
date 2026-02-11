@@ -63,6 +63,7 @@ var WorkbenchInstanceProvidedMetadata = []string{
 	"agent-health-check-interval-seconds",
 	"agent-health-check-path",
 	"container",
+	"cos-update-strategy",
 	"custom-container-image",
 	"custom-container-payload",
 	"data-disk-uri",
@@ -81,6 +82,7 @@ var WorkbenchInstanceProvidedMetadata = []string{
 	"generate-diagnostics-bucket",
 	"generate-diagnostics-file",
 	"generate-diagnostics-options",
+	"google-logging-enabled",
 	"image-url",
 	"install-monitoring-agent",
 	"install-nvidia-driver",
@@ -103,6 +105,7 @@ var WorkbenchInstanceProvidedMetadata = []string{
 	"report-system-status",
 	"restriction",
 	"serial-port-logging-enable",
+	"service-account-mode",
 	"shutdown-script",
 	"title",
 	"use-collaborative",
@@ -215,7 +218,6 @@ func WorkbenchInstanceKmsDiffSuppress(_, old, new string, _ *schema.ResourceData
 	}
 	return false
 }
-
 func waitForWorkbenchOperation(config *transport_tpg.Config, d *schema.ResourceData, project string, billingProject string, userAgent string, response map[string]interface{}) error {
 	var opRes map[string]interface{}
 	err := WorkbenchOperationWaitTimeWithResponse(
@@ -271,6 +273,26 @@ func resizeWorkbenchInstanceDisk(config *transport_tpg.Config, d *schema.Resourc
 	return nil
 }
 
+// mergeLabels takes two maps of labels and returns a new map with the labels merged.
+// If a key exists in old_labels but not in new_labels, it is added to the new map with an empty value.
+func mergeLabels(oldLabels, newLabels map[string]interface{}) map[string]string {
+	modifiedLabels := make(map[string]string)
+
+	// Add all labels from newLabels to modifiedLabels
+	for k, v := range newLabels {
+		modifiedLabels[k] = v.(string)
+	}
+
+	// Add any keys from oldLabels that are not in newLabels with an empty value
+	for k := range oldLabels {
+		if _, ok := newLabels[k]; !ok {
+			modifiedLabels[k] = ""
+		}
+	}
+
+	return modifiedLabels
+}
+
 func ResourceWorkbenchInstance() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceWorkbenchInstanceCreate,
@@ -283,7 +305,7 @@ func ResourceWorkbenchInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(10 * time.Minute),
+			Create: schema.DefaultTimeout(20 * time.Minute),
 			Update: schema.DefaultTimeout(20 * time.Minute),
 			Delete: schema.DefaultTimeout(20 * time.Minute),
 		},
@@ -491,6 +513,30 @@ https://cloud.google.com/vpc/docs/using-routes#canipforward`,
 							Description: `The network interfaces for the VM. Supports only one interface.`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
+									"access_configs": {
+										Type:     schema.TypeList,
+										Computed: true,
+										Optional: true,
+										ForceNew: true,
+										Description: `Optional. An array of configurations for this interface. Currently, only one access
+config, ONE_TO_ONE_NAT, is supported. If no accessConfigs specified, the
+instance will have an external internet access through an ephemeral
+external IP address.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"external_ip": {
+													Type:     schema.TypeString,
+													Required: true,
+													ForceNew: true,
+													Description: `An external IP address associated with this instance. Specify an unused
+static external IP address available to the project or leave this field
+undefined to use an IP from a shared ephemeral IP address pool. If you
+specify a static external IP address, it must live in the same region as
+the zone of the instance.`,
+												},
+											},
+										},
+									},
 									"network": {
 										Type:             schema.TypeString,
 										Computed:         true,
@@ -609,14 +655,12 @@ a workbench instance with the environment installed directly on the VM.`,
 										ForceNew: true,
 										Description: `Optional. Use this VM image family to find the image; the newest
 image in this family will be used.`,
-										ExactlyOneOf: []string{},
 									},
 									"name": {
-										Type:         schema.TypeString,
-										Optional:     true,
-										ForceNew:     true,
-										Description:  `Optional. Use VM image name to find the image.`,
-										ExactlyOneOf: []string{},
+										Type:        schema.TypeString,
+										Optional:    true,
+										ForceNew:    true,
+										Description: `Optional. Use VM image name to find the image.`,
 									},
 									"project": {
 										Type:     schema.TypeString,
@@ -774,8 +818,8 @@ The milliseconds portion (".SSS") is optional.`,
 			"desired_state": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "ACTIVE",
 				Description: `Desired state of the Workbench Instance. Set this field to 'ACTIVE' to start the Instance, and 'STOPPED' to stop the Instance.`,
+				Default:     "ACTIVE",
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -1077,6 +1121,13 @@ func resourceWorkbenchInstanceUpdate(d *schema.ResourceData, meta interface{}) e
 	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(newUpdateMask, ",")})
 	if err != nil {
 		return err
+	}
+
+	if d.HasChange("effective_labels") {
+		old_labels_interface, new_labels_interface := d.GetChange("effective_labels")
+		old_labels := old_labels_interface.(map[string]interface{})
+		new_labels := new_labels_interface.(map[string]interface{})
+		obj["labels"] = mergeLabels(old_labels, new_labels)
 	}
 
 	name := d.Get("name").(string)
@@ -1488,9 +1539,10 @@ func flattenWorkbenchInstanceGceSetupNetworkInterfaces(v interface{}, d *schema.
 			continue
 		}
 		transformed = append(transformed, map[string]interface{}{
-			"network":  flattenWorkbenchInstanceGceSetupNetworkInterfacesNetwork(original["network"], d, config),
-			"subnet":   flattenWorkbenchInstanceGceSetupNetworkInterfacesSubnet(original["subnet"], d, config),
-			"nic_type": flattenWorkbenchInstanceGceSetupNetworkInterfacesNicType(original["nicType"], d, config),
+			"network":        flattenWorkbenchInstanceGceSetupNetworkInterfacesNetwork(original["network"], d, config),
+			"subnet":         flattenWorkbenchInstanceGceSetupNetworkInterfacesSubnet(original["subnet"], d, config),
+			"nic_type":       flattenWorkbenchInstanceGceSetupNetworkInterfacesNicType(original["nicType"], d, config),
+			"access_configs": flattenWorkbenchInstanceGceSetupNetworkInterfacesAccessConfigs(original["accessConfigs"], d, config),
 		})
 	}
 	return transformed
@@ -1504,6 +1556,28 @@ func flattenWorkbenchInstanceGceSetupNetworkInterfacesSubnet(v interface{}, d *s
 }
 
 func flattenWorkbenchInstanceGceSetupNetworkInterfacesNicType(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenWorkbenchInstanceGceSetupNetworkInterfacesAccessConfigs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"external_ip": flattenWorkbenchInstanceGceSetupNetworkInterfacesAccessConfigsExternalIp(original["externalIp"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenWorkbenchInstanceGceSetupNetworkInterfacesAccessConfigsExternalIp(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2115,6 +2189,13 @@ func expandWorkbenchInstanceGceSetupNetworkInterfaces(v interface{}, d tpgresour
 			transformed["nicType"] = transformedNicType
 		}
 
+		transformedAccessConfigs, err := expandWorkbenchInstanceGceSetupNetworkInterfacesAccessConfigs(original["access_configs"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedAccessConfigs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["accessConfigs"] = transformedAccessConfigs
+		}
+
 		req = append(req, transformed)
 	}
 	return req, nil
@@ -2129,6 +2210,32 @@ func expandWorkbenchInstanceGceSetupNetworkInterfacesSubnet(v interface{}, d tpg
 }
 
 func expandWorkbenchInstanceGceSetupNetworkInterfacesNicType(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandWorkbenchInstanceGceSetupNetworkInterfacesAccessConfigs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedExternalIp, err := expandWorkbenchInstanceGceSetupNetworkInterfacesAccessConfigsExternalIp(original["external_ip"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedExternalIp); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["externalIp"] = transformedExternalIp
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandWorkbenchInstanceGceSetupNetworkInterfacesAccessConfigsExternalIp(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
