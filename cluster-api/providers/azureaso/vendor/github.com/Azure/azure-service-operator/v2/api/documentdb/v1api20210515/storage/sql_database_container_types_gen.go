@@ -4,14 +4,13 @@
 package storage
 
 import (
-	"fmt"
 	storage "github.com/Azure/azure-service-operator/v2/api/documentdb/v1api20231115/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -50,22 +49,36 @@ var _ conversion.Convertible = &SqlDatabaseContainer{}
 
 // ConvertFrom populates our SqlDatabaseContainer from the provided hub SqlDatabaseContainer
 func (container *SqlDatabaseContainer) ConvertFrom(hub conversion.Hub) error {
-	source, ok := hub.(*storage.SqlDatabaseContainer)
-	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20231115/storage/SqlDatabaseContainer but received %T instead", hub)
+	// intermediate variable for conversion
+	var source storage.SqlDatabaseContainer
+
+	err := source.ConvertFrom(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
-	return container.AssignProperties_From_SqlDatabaseContainer(source)
+	err = container.AssignProperties_From_SqlDatabaseContainer(&source)
+	if err != nil {
+		return eris.Wrap(err, "converting from source to container")
+	}
+
+	return nil
 }
 
 // ConvertTo populates the provided hub SqlDatabaseContainer from our SqlDatabaseContainer
 func (container *SqlDatabaseContainer) ConvertTo(hub conversion.Hub) error {
-	destination, ok := hub.(*storage.SqlDatabaseContainer)
-	if !ok {
-		return fmt.Errorf("expected documentdb/v1api20231115/storage/SqlDatabaseContainer but received %T instead", hub)
+	// intermediate variable for conversion
+	var destination storage.SqlDatabaseContainer
+	err := container.AssignProperties_To_SqlDatabaseContainer(&destination)
+	if err != nil {
+		return eris.Wrap(err, "converting to destination from container")
+	}
+	err = destination.ConvertTo(hub)
+	if err != nil {
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
-	return container.AssignProperties_To_SqlDatabaseContainer(destination)
+	return nil
 }
 
 var _ configmaps.Exporter = &SqlDatabaseContainer{}
@@ -136,6 +149,10 @@ func (container *SqlDatabaseContainer) NewEmptyStatus() genruntime.ConvertibleSt
 
 // Owner returns the ResourceReference of the owner
 func (container *SqlDatabaseContainer) Owner() *genruntime.ResourceReference {
+	if container.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(container.Spec)
 	return container.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -152,7 +169,7 @@ func (container *SqlDatabaseContainer) SetStatus(status genruntime.ConvertibleSt
 	var st SqlDatabaseContainer_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	container.Status = st
@@ -169,7 +186,7 @@ func (container *SqlDatabaseContainer) AssignProperties_From_SqlDatabaseContaine
 	var spec SqlDatabaseContainer_Spec
 	err := spec.AssignProperties_From_SqlDatabaseContainer_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainer_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainer_Spec() to populate field Spec")
 	}
 	container.Spec = spec
 
@@ -177,7 +194,7 @@ func (container *SqlDatabaseContainer) AssignProperties_From_SqlDatabaseContaine
 	var status SqlDatabaseContainer_STATUS
 	err = status.AssignProperties_From_SqlDatabaseContainer_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainer_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainer_STATUS() to populate field Status")
 	}
 	container.Status = status
 
@@ -186,7 +203,7 @@ func (container *SqlDatabaseContainer) AssignProperties_From_SqlDatabaseContaine
 	if augmentedContainer, ok := containerAsAny.(augmentConversionForSqlDatabaseContainer); ok {
 		err := augmentedContainer.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -204,7 +221,7 @@ func (container *SqlDatabaseContainer) AssignProperties_To_SqlDatabaseContainer(
 	var spec storage.SqlDatabaseContainer_Spec
 	err := container.Spec.AssignProperties_To_SqlDatabaseContainer_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainer_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainer_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -212,7 +229,7 @@ func (container *SqlDatabaseContainer) AssignProperties_To_SqlDatabaseContainer(
 	var status storage.SqlDatabaseContainer_STATUS
 	err = container.Status.AssignProperties_To_SqlDatabaseContainer_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainer_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainer_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -221,7 +238,7 @@ func (container *SqlDatabaseContainer) AssignProperties_To_SqlDatabaseContainer(
 	if augmentedContainer, ok := containerAsAny.(augmentConversionForSqlDatabaseContainer); ok {
 		err := augmentedContainer.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -288,13 +305,13 @@ func (container *SqlDatabaseContainer_Spec) ConvertSpecFrom(source genruntime.Co
 	src = &storage.SqlDatabaseContainer_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = container.AssignProperties_From_SqlDatabaseContainer_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -312,13 +329,13 @@ func (container *SqlDatabaseContainer_Spec) ConvertSpecTo(destination genruntime
 	dst = &storage.SqlDatabaseContainer_Spec{}
 	err := container.AssignProperties_To_SqlDatabaseContainer_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -340,7 +357,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_From_SqlDatabaseCon
 		var operatorSpec SqlDatabaseContainerOperatorSpec
 		err := operatorSpec.AssignProperties_From_SqlDatabaseContainerOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlDatabaseContainerOperatorSpec() to populate field OperatorSpec")
 		}
 		container.OperatorSpec = &operatorSpec
 	} else {
@@ -352,7 +369,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_From_SqlDatabaseCon
 		var option CreateUpdateOptions
 		err := option.AssignProperties_From_CreateUpdateOptions(source.Options)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_From_CreateUpdateOptions() to populate field Options")
 		}
 		container.Options = &option
 	} else {
@@ -375,7 +392,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_From_SqlDatabaseCon
 		var resource SqlContainerResource
 		err := resource.AssignProperties_From_SqlContainerResource(source.Resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlContainerResource() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlContainerResource() to populate field Resource")
 		}
 		container.Resource = &resource
 	} else {
@@ -397,7 +414,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_From_SqlDatabaseCon
 	if augmentedContainer, ok := containerAsAny.(augmentConversionForSqlDatabaseContainer_Spec); ok {
 		err := augmentedContainer.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -421,7 +438,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_To_SqlDatabaseConta
 		var operatorSpec storage.SqlDatabaseContainerOperatorSpec
 		err := container.OperatorSpec.AssignProperties_To_SqlDatabaseContainerOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlDatabaseContainerOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -433,7 +450,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_To_SqlDatabaseConta
 		var option storage.CreateUpdateOptions
 		err := container.Options.AssignProperties_To_CreateUpdateOptions(&option)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_To_CreateUpdateOptions() to populate field Options")
 		}
 		destination.Options = &option
 	} else {
@@ -456,7 +473,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_To_SqlDatabaseConta
 		var resource storage.SqlContainerResource
 		err := container.Resource.AssignProperties_To_SqlContainerResource(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlContainerResource() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlContainerResource() to populate field Resource")
 		}
 		destination.Resource = &resource
 	} else {
@@ -478,7 +495,7 @@ func (container *SqlDatabaseContainer_Spec) AssignProperties_To_SqlDatabaseConta
 	if augmentedContainer, ok := containerAsAny.(augmentConversionForSqlDatabaseContainer_Spec); ok {
 		err := augmentedContainer.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -513,13 +530,13 @@ func (container *SqlDatabaseContainer_STATUS) ConvertStatusFrom(source genruntim
 	src = &storage.SqlDatabaseContainer_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = container.AssignProperties_From_SqlDatabaseContainer_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -537,13 +554,13 @@ func (container *SqlDatabaseContainer_STATUS) ConvertStatusTo(destination genrun
 	dst = &storage.SqlDatabaseContainer_STATUS{}
 	err := container.AssignProperties_To_SqlDatabaseContainer_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -571,7 +588,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_From_SqlDatabaseC
 		var option OptionsResource_STATUS
 		err := option.AssignProperties_From_OptionsResource_STATUS(source.Options)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_OptionsResource_STATUS() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_From_OptionsResource_STATUS() to populate field Options")
 		}
 		container.Options = &option
 	} else {
@@ -583,7 +600,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_From_SqlDatabaseC
 		var resource SqlContainerGetProperties_Resource_STATUS
 		err := resource.AssignProperties_From_SqlContainerGetProperties_Resource_STATUS(source.Resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_From_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
 		}
 		container.Resource = &resource
 	} else {
@@ -608,7 +625,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_From_SqlDatabaseC
 	if augmentedContainer, ok := containerAsAny.(augmentConversionForSqlDatabaseContainer_STATUS); ok {
 		err := augmentedContainer.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -638,7 +655,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_To_SqlDatabaseCon
 		var option storage.OptionsResource_STATUS
 		err := container.Options.AssignProperties_To_OptionsResource_STATUS(&option)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_OptionsResource_STATUS() to populate field Options")
+			return eris.Wrap(err, "calling AssignProperties_To_OptionsResource_STATUS() to populate field Options")
 		}
 		destination.Options = &option
 	} else {
@@ -650,7 +667,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_To_SqlDatabaseCon
 		var resource storage.SqlContainerGetProperties_Resource_STATUS
 		err := container.Resource.AssignProperties_To_SqlContainerGetProperties_Resource_STATUS(&resource)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
+			return eris.Wrap(err, "calling AssignProperties_To_SqlContainerGetProperties_Resource_STATUS() to populate field Resource")
 		}
 		destination.Resource = &resource
 	} else {
@@ -675,7 +692,7 @@ func (container *SqlDatabaseContainer_STATUS) AssignProperties_To_SqlDatabaseCon
 	if augmentedContainer, ok := containerAsAny.(augmentConversionForSqlDatabaseContainer_STATUS); ok {
 		err := augmentedContainer.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -735,7 +752,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var conflictResolutionPolicy ConflictResolutionPolicy_STATUS
 		err := conflictResolutionPolicy.AssignProperties_From_ConflictResolutionPolicy_STATUS(source.ConflictResolutionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
 		}
 		resource.ConflictResolutionPolicy = &conflictResolutionPolicy
 	} else {
@@ -763,7 +780,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var indexingPolicy IndexingPolicy_STATUS
 		err := indexingPolicy.AssignProperties_From_IndexingPolicy_STATUS(source.IndexingPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IndexingPolicy_STATUS() to populate field IndexingPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_IndexingPolicy_STATUS() to populate field IndexingPolicy")
 		}
 		resource.IndexingPolicy = &indexingPolicy
 	} else {
@@ -775,7 +792,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var partitionKey ContainerPartitionKey_STATUS
 		err := partitionKey.AssignProperties_From_ContainerPartitionKey_STATUS(source.PartitionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerPartitionKey_STATUS() to populate field PartitionKey")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerPartitionKey_STATUS() to populate field PartitionKey")
 		}
 		resource.PartitionKey = &partitionKey
 	} else {
@@ -805,7 +822,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 		var uniqueKeyPolicy UniqueKeyPolicy_STATUS
 		err := uniqueKeyPolicy.AssignProperties_From_UniqueKeyPolicy_STATUS(source.UniqueKeyPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
 		}
 		resource.UniqueKeyPolicy = &uniqueKeyPolicy
 	} else {
@@ -824,7 +841,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_From
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlContainerGetProperties_Resource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -845,7 +862,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var clientEncryptionPolicy storage.ClientEncryptionPolicy_STATUS
 		err := propertyBag.Pull("ClientEncryptionPolicy", &clientEncryptionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ClientEncryptionPolicy' from propertyBag")
+			return eris.Wrap(err, "pulling 'ClientEncryptionPolicy' from propertyBag")
 		}
 
 		destination.ClientEncryptionPolicy = &clientEncryptionPolicy
@@ -858,7 +875,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var computedProperty []storage.ComputedProperty_STATUS
 		err := propertyBag.Pull("ComputedProperties", &computedProperty)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ComputedProperties' from propertyBag")
+			return eris.Wrap(err, "pulling 'ComputedProperties' from propertyBag")
 		}
 
 		destination.ComputedProperties = computedProperty
@@ -871,7 +888,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var conflictResolutionPolicy storage.ConflictResolutionPolicy_STATUS
 		err := resource.ConflictResolutionPolicy.AssignProperties_To_ConflictResolutionPolicy_STATUS(&conflictResolutionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ConflictResolutionPolicy_STATUS() to populate field ConflictResolutionPolicy")
 		}
 		destination.ConflictResolutionPolicy = &conflictResolutionPolicy
 	} else {
@@ -883,7 +900,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var createMode string
 		err := propertyBag.Pull("CreateMode", &createMode)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'CreateMode' from propertyBag")
+			return eris.Wrap(err, "pulling 'CreateMode' from propertyBag")
 		}
 
 		destination.CreateMode = &createMode
@@ -905,7 +922,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var indexingPolicy storage.IndexingPolicy_STATUS
 		err := resource.IndexingPolicy.AssignProperties_To_IndexingPolicy_STATUS(&indexingPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IndexingPolicy_STATUS() to populate field IndexingPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_IndexingPolicy_STATUS() to populate field IndexingPolicy")
 		}
 		destination.IndexingPolicy = &indexingPolicy
 	} else {
@@ -917,7 +934,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var partitionKey storage.ContainerPartitionKey_STATUS
 		err := resource.PartitionKey.AssignProperties_To_ContainerPartitionKey_STATUS(&partitionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerPartitionKey_STATUS() to populate field PartitionKey")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerPartitionKey_STATUS() to populate field PartitionKey")
 		}
 		destination.PartitionKey = &partitionKey
 	} else {
@@ -929,7 +946,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var restoreParameter storage.RestoreParametersBase_STATUS
 		err := propertyBag.Pull("RestoreParameters", &restoreParameter)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'RestoreParameters' from propertyBag")
+			return eris.Wrap(err, "pulling 'RestoreParameters' from propertyBag")
 		}
 
 		destination.RestoreParameters = &restoreParameter
@@ -953,7 +970,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 		var uniqueKeyPolicy storage.UniqueKeyPolicy_STATUS
 		err := resource.UniqueKeyPolicy.AssignProperties_To_UniqueKeyPolicy_STATUS(&uniqueKeyPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_UniqueKeyPolicy_STATUS() to populate field UniqueKeyPolicy")
 		}
 		destination.UniqueKeyPolicy = &uniqueKeyPolicy
 	} else {
@@ -972,7 +989,7 @@ func (resource *SqlContainerGetProperties_Resource_STATUS) AssignProperties_To_S
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlContainerGetProperties_Resource_STATUS); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1020,7 +1037,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var conflictResolutionPolicy ConflictResolutionPolicy
 		err := conflictResolutionPolicy.AssignProperties_From_ConflictResolutionPolicy(source.ConflictResolutionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ConflictResolutionPolicy() to populate field ConflictResolutionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_ConflictResolutionPolicy() to populate field ConflictResolutionPolicy")
 		}
 		resource.ConflictResolutionPolicy = &conflictResolutionPolicy
 	} else {
@@ -1045,7 +1062,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var indexingPolicy IndexingPolicy
 		err := indexingPolicy.AssignProperties_From_IndexingPolicy(source.IndexingPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_IndexingPolicy() to populate field IndexingPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_IndexingPolicy() to populate field IndexingPolicy")
 		}
 		resource.IndexingPolicy = &indexingPolicy
 	} else {
@@ -1057,7 +1074,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var partitionKey ContainerPartitionKey
 		err := partitionKey.AssignProperties_From_ContainerPartitionKey(source.PartitionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ContainerPartitionKey() to populate field PartitionKey")
+			return eris.Wrap(err, "calling AssignProperties_From_ContainerPartitionKey() to populate field PartitionKey")
 		}
 		resource.PartitionKey = &partitionKey
 	} else {
@@ -1076,7 +1093,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 		var uniqueKeyPolicy UniqueKeyPolicy
 		err := uniqueKeyPolicy.AssignProperties_From_UniqueKeyPolicy(source.UniqueKeyPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_UniqueKeyPolicy() to populate field UniqueKeyPolicy")
+			return eris.Wrap(err, "calling AssignProperties_From_UniqueKeyPolicy() to populate field UniqueKeyPolicy")
 		}
 		resource.UniqueKeyPolicy = &uniqueKeyPolicy
 	} else {
@@ -1095,7 +1112,7 @@ func (resource *SqlContainerResource) AssignProperties_From_SqlContainerResource
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlContainerResource); ok {
 		err := augmentedResource.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1116,7 +1133,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var clientEncryptionPolicy storage.ClientEncryptionPolicy
 		err := propertyBag.Pull("ClientEncryptionPolicy", &clientEncryptionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ClientEncryptionPolicy' from propertyBag")
+			return eris.Wrap(err, "pulling 'ClientEncryptionPolicy' from propertyBag")
 		}
 
 		destination.ClientEncryptionPolicy = &clientEncryptionPolicy
@@ -1129,7 +1146,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var computedProperty []storage.ComputedProperty
 		err := propertyBag.Pull("ComputedProperties", &computedProperty)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'ComputedProperties' from propertyBag")
+			return eris.Wrap(err, "pulling 'ComputedProperties' from propertyBag")
 		}
 
 		destination.ComputedProperties = computedProperty
@@ -1142,7 +1159,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var conflictResolutionPolicy storage.ConflictResolutionPolicy
 		err := resource.ConflictResolutionPolicy.AssignProperties_To_ConflictResolutionPolicy(&conflictResolutionPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ConflictResolutionPolicy() to populate field ConflictResolutionPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_ConflictResolutionPolicy() to populate field ConflictResolutionPolicy")
 		}
 		destination.ConflictResolutionPolicy = &conflictResolutionPolicy
 	} else {
@@ -1154,7 +1171,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var createMode string
 		err := propertyBag.Pull("CreateMode", &createMode)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'CreateMode' from propertyBag")
+			return eris.Wrap(err, "pulling 'CreateMode' from propertyBag")
 		}
 
 		destination.CreateMode = &createMode
@@ -1173,7 +1190,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var indexingPolicy storage.IndexingPolicy
 		err := resource.IndexingPolicy.AssignProperties_To_IndexingPolicy(&indexingPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_IndexingPolicy() to populate field IndexingPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_IndexingPolicy() to populate field IndexingPolicy")
 		}
 		destination.IndexingPolicy = &indexingPolicy
 	} else {
@@ -1185,7 +1202,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var partitionKey storage.ContainerPartitionKey
 		err := resource.PartitionKey.AssignProperties_To_ContainerPartitionKey(&partitionKey)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ContainerPartitionKey() to populate field PartitionKey")
+			return eris.Wrap(err, "calling AssignProperties_To_ContainerPartitionKey() to populate field PartitionKey")
 		}
 		destination.PartitionKey = &partitionKey
 	} else {
@@ -1197,7 +1214,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var restoreParameter storage.RestoreParametersBase
 		err := propertyBag.Pull("RestoreParameters", &restoreParameter)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'RestoreParameters' from propertyBag")
+			return eris.Wrap(err, "pulling 'RestoreParameters' from propertyBag")
 		}
 
 		destination.RestoreParameters = &restoreParameter
@@ -1210,7 +1227,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 		var uniqueKeyPolicy storage.UniqueKeyPolicy
 		err := resource.UniqueKeyPolicy.AssignProperties_To_UniqueKeyPolicy(&uniqueKeyPolicy)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_UniqueKeyPolicy() to populate field UniqueKeyPolicy")
+			return eris.Wrap(err, "calling AssignProperties_To_UniqueKeyPolicy() to populate field UniqueKeyPolicy")
 		}
 		destination.UniqueKeyPolicy = &uniqueKeyPolicy
 	} else {
@@ -1229,7 +1246,7 @@ func (resource *SqlContainerResource) AssignProperties_To_SqlContainerResource(d
 	if augmentedResource, ok := resourceAsAny.(augmentConversionForSqlContainerResource); ok {
 		err := augmentedResource.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1298,7 +1315,7 @@ func (operator *SqlDatabaseContainerOperatorSpec) AssignProperties_From_SqlDatab
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1359,7 +1376,7 @@ func (operator *SqlDatabaseContainerOperatorSpec) AssignProperties_To_SqlDatabas
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForSqlDatabaseContainerOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1417,7 +1434,7 @@ func (policy *ConflictResolutionPolicy) AssignProperties_From_ConflictResolution
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForConflictResolutionPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1451,7 +1468,7 @@ func (policy *ConflictResolutionPolicy) AssignProperties_To_ConflictResolutionPo
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForConflictResolutionPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1494,7 +1511,7 @@ func (policy *ConflictResolutionPolicy_STATUS) AssignProperties_From_ConflictRes
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForConflictResolutionPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1528,7 +1545,7 @@ func (policy *ConflictResolutionPolicy_STATUS) AssignProperties_To_ConflictResol
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForConflictResolutionPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1571,7 +1588,7 @@ func (partitionKey *ContainerPartitionKey) AssignProperties_From_ContainerPartit
 	if augmentedPartitionKey, ok := partitionKeyAsAny.(augmentConversionForContainerPartitionKey); ok {
 		err := augmentedPartitionKey.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1605,7 +1622,7 @@ func (partitionKey *ContainerPartitionKey) AssignProperties_To_ContainerPartitio
 	if augmentedPartitionKey, ok := partitionKeyAsAny.(augmentConversionForContainerPartitionKey); ok {
 		err := augmentedPartitionKey.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1657,7 +1674,7 @@ func (partitionKey *ContainerPartitionKey_STATUS) AssignProperties_From_Containe
 	if augmentedPartitionKey, ok := partitionKeyAsAny.(augmentConversionForContainerPartitionKey_STATUS); ok {
 		err := augmentedPartitionKey.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1699,7 +1716,7 @@ func (partitionKey *ContainerPartitionKey_STATUS) AssignProperties_To_ContainerP
 	if augmentedPartitionKey, ok := partitionKeyAsAny.(augmentConversionForContainerPartitionKey_STATUS); ok {
 		err := augmentedPartitionKey.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1746,7 +1763,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 					var compositeIndexLocal CompositePath
 					err := compositeIndexLocal.AssignProperties_From_CompositePath(&compositeIndexItem1)
 					if err != nil {
-						return errors.Wrap(err, "calling AssignProperties_From_CompositePath() to populate field CompositeIndexes")
+						return eris.Wrap(err, "calling AssignProperties_From_CompositePath() to populate field CompositeIndexes")
 					}
 					compositeIndexList1[compositeIndex1] = compositeIndexLocal
 				}
@@ -1769,7 +1786,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 			var excludedPath ExcludedPath
 			err := excludedPath.AssignProperties_From_ExcludedPath(&excludedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ExcludedPath() to populate field ExcludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_ExcludedPath() to populate field ExcludedPaths")
 			}
 			excludedPathList[excludedPathIndex] = excludedPath
 		}
@@ -1787,7 +1804,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 			var includedPath IncludedPath
 			err := includedPath.AssignProperties_From_IncludedPath(&includedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IncludedPath() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_IncludedPath() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -1808,7 +1825,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 			var spatialIndexLocal SpatialSpec
 			err := spatialIndexLocal.AssignProperties_From_SpatialSpec(&spatialIndexItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SpatialSpec() to populate field SpatialIndexes")
+				return eris.Wrap(err, "calling AssignProperties_From_SpatialSpec() to populate field SpatialIndexes")
 			}
 			spatialIndexList[spatialIndex] = spatialIndexLocal
 		}
@@ -1829,7 +1846,7 @@ func (policy *IndexingPolicy) AssignProperties_From_IndexingPolicy(source *stora
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForIndexingPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -1864,7 +1881,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 					var compositeIndexLocal storage.CompositePath
 					err := compositeIndexItem1.AssignProperties_To_CompositePath(&compositeIndexLocal)
 					if err != nil {
-						return errors.Wrap(err, "calling AssignProperties_To_CompositePath() to populate field CompositeIndexes")
+						return eris.Wrap(err, "calling AssignProperties_To_CompositePath() to populate field CompositeIndexes")
 					}
 					compositeIndexList1[compositeIndex1] = compositeIndexLocal
 				}
@@ -1887,7 +1904,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 			var excludedPath storage.ExcludedPath
 			err := excludedPathItem.AssignProperties_To_ExcludedPath(&excludedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ExcludedPath() to populate field ExcludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_ExcludedPath() to populate field ExcludedPaths")
 			}
 			excludedPathList[excludedPathIndex] = excludedPath
 		}
@@ -1905,7 +1922,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 			var includedPath storage.IncludedPath
 			err := includedPathItem.AssignProperties_To_IncludedPath(&includedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IncludedPath() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_IncludedPath() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -1926,7 +1943,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 			var spatialIndexLocal storage.SpatialSpec
 			err := spatialIndexItem.AssignProperties_To_SpatialSpec(&spatialIndexLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SpatialSpec() to populate field SpatialIndexes")
+				return eris.Wrap(err, "calling AssignProperties_To_SpatialSpec() to populate field SpatialIndexes")
 			}
 			spatialIndexList[spatialIndex] = spatialIndexLocal
 		}
@@ -1947,7 +1964,7 @@ func (policy *IndexingPolicy) AssignProperties_To_IndexingPolicy(destination *st
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForIndexingPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -1994,7 +2011,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 					var compositeIndexLocal CompositePath_STATUS
 					err := compositeIndexLocal.AssignProperties_From_CompositePath_STATUS(&compositeIndexItem1)
 					if err != nil {
-						return errors.Wrap(err, "calling AssignProperties_From_CompositePath_STATUS() to populate field CompositeIndexes")
+						return eris.Wrap(err, "calling AssignProperties_From_CompositePath_STATUS() to populate field CompositeIndexes")
 					}
 					compositeIndexList1[compositeIndex1] = compositeIndexLocal
 				}
@@ -2017,7 +2034,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 			var excludedPath ExcludedPath_STATUS
 			err := excludedPath.AssignProperties_From_ExcludedPath_STATUS(&excludedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_ExcludedPath_STATUS() to populate field ExcludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_ExcludedPath_STATUS() to populate field ExcludedPaths")
 			}
 			excludedPathList[excludedPathIndex] = excludedPath
 		}
@@ -2035,7 +2052,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 			var includedPath IncludedPath_STATUS
 			err := includedPath.AssignProperties_From_IncludedPath_STATUS(&includedPathItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_IncludedPath_STATUS() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_From_IncludedPath_STATUS() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -2056,7 +2073,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 			var spatialIndexLocal SpatialSpec_STATUS
 			err := spatialIndexLocal.AssignProperties_From_SpatialSpec_STATUS(&spatialIndexItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_SpatialSpec_STATUS() to populate field SpatialIndexes")
+				return eris.Wrap(err, "calling AssignProperties_From_SpatialSpec_STATUS() to populate field SpatialIndexes")
 			}
 			spatialIndexList[spatialIndex] = spatialIndexLocal
 		}
@@ -2077,7 +2094,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_From_IndexingPolicy_STATUS
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForIndexingPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2112,7 +2129,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 					var compositeIndexLocal storage.CompositePath_STATUS
 					err := compositeIndexItem1.AssignProperties_To_CompositePath_STATUS(&compositeIndexLocal)
 					if err != nil {
-						return errors.Wrap(err, "calling AssignProperties_To_CompositePath_STATUS() to populate field CompositeIndexes")
+						return eris.Wrap(err, "calling AssignProperties_To_CompositePath_STATUS() to populate field CompositeIndexes")
 					}
 					compositeIndexList1[compositeIndex1] = compositeIndexLocal
 				}
@@ -2135,7 +2152,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 			var excludedPath storage.ExcludedPath_STATUS
 			err := excludedPathItem.AssignProperties_To_ExcludedPath_STATUS(&excludedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_ExcludedPath_STATUS() to populate field ExcludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_ExcludedPath_STATUS() to populate field ExcludedPaths")
 			}
 			excludedPathList[excludedPathIndex] = excludedPath
 		}
@@ -2153,7 +2170,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 			var includedPath storage.IncludedPath_STATUS
 			err := includedPathItem.AssignProperties_To_IncludedPath_STATUS(&includedPath)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_IncludedPath_STATUS() to populate field IncludedPaths")
+				return eris.Wrap(err, "calling AssignProperties_To_IncludedPath_STATUS() to populate field IncludedPaths")
 			}
 			includedPathList[includedPathIndex] = includedPath
 		}
@@ -2174,7 +2191,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 			var spatialIndexLocal storage.SpatialSpec_STATUS
 			err := spatialIndexItem.AssignProperties_To_SpatialSpec_STATUS(&spatialIndexLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_SpatialSpec_STATUS() to populate field SpatialIndexes")
+				return eris.Wrap(err, "calling AssignProperties_To_SpatialSpec_STATUS() to populate field SpatialIndexes")
 			}
 			spatialIndexList[spatialIndex] = spatialIndexLocal
 		}
@@ -2195,7 +2212,7 @@ func (policy *IndexingPolicy_STATUS) AssignProperties_To_IndexingPolicy_STATUS(d
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForIndexingPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2225,7 +2242,7 @@ func (policy *UniqueKeyPolicy) AssignProperties_From_UniqueKeyPolicy(source *sto
 			var uniqueKey UniqueKey
 			err := uniqueKey.AssignProperties_From_UniqueKey(&uniqueKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UniqueKey() to populate field UniqueKeys")
+				return eris.Wrap(err, "calling AssignProperties_From_UniqueKey() to populate field UniqueKeys")
 			}
 			uniqueKeyList[uniqueKeyIndex] = uniqueKey
 		}
@@ -2246,7 +2263,7 @@ func (policy *UniqueKeyPolicy) AssignProperties_From_UniqueKeyPolicy(source *sto
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForUniqueKeyPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2268,7 +2285,7 @@ func (policy *UniqueKeyPolicy) AssignProperties_To_UniqueKeyPolicy(destination *
 			var uniqueKey storage.UniqueKey
 			err := uniqueKeyItem.AssignProperties_To_UniqueKey(&uniqueKey)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UniqueKey() to populate field UniqueKeys")
+				return eris.Wrap(err, "calling AssignProperties_To_UniqueKey() to populate field UniqueKeys")
 			}
 			uniqueKeyList[uniqueKeyIndex] = uniqueKey
 		}
@@ -2289,7 +2306,7 @@ func (policy *UniqueKeyPolicy) AssignProperties_To_UniqueKeyPolicy(destination *
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForUniqueKeyPolicy); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2319,7 +2336,7 @@ func (policy *UniqueKeyPolicy_STATUS) AssignProperties_From_UniqueKeyPolicy_STAT
 			var uniqueKey UniqueKey_STATUS
 			err := uniqueKey.AssignProperties_From_UniqueKey_STATUS(&uniqueKeyItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UniqueKey_STATUS() to populate field UniqueKeys")
+				return eris.Wrap(err, "calling AssignProperties_From_UniqueKey_STATUS() to populate field UniqueKeys")
 			}
 			uniqueKeyList[uniqueKeyIndex] = uniqueKey
 		}
@@ -2340,7 +2357,7 @@ func (policy *UniqueKeyPolicy_STATUS) AssignProperties_From_UniqueKeyPolicy_STAT
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForUniqueKeyPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2362,7 +2379,7 @@ func (policy *UniqueKeyPolicy_STATUS) AssignProperties_To_UniqueKeyPolicy_STATUS
 			var uniqueKey storage.UniqueKey_STATUS
 			err := uniqueKeyItem.AssignProperties_To_UniqueKey_STATUS(&uniqueKey)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UniqueKey_STATUS() to populate field UniqueKeys")
+				return eris.Wrap(err, "calling AssignProperties_To_UniqueKey_STATUS() to populate field UniqueKeys")
 			}
 			uniqueKeyList[uniqueKeyIndex] = uniqueKey
 		}
@@ -2383,7 +2400,7 @@ func (policy *UniqueKeyPolicy_STATUS) AssignProperties_To_UniqueKeyPolicy_STATUS
 	if augmentedPolicy, ok := policyAsAny.(augmentConversionForUniqueKeyPolicy_STATUS); ok {
 		err := augmentedPolicy.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2461,7 +2478,7 @@ func (path *CompositePath) AssignProperties_From_CompositePath(source *storage.C
 	if augmentedPath, ok := pathAsAny.(augmentConversionForCompositePath); ok {
 		err := augmentedPath.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2492,7 +2509,7 @@ func (path *CompositePath) AssignProperties_To_CompositePath(destination *storag
 	if augmentedPath, ok := pathAsAny.(augmentConversionForCompositePath); ok {
 		err := augmentedPath.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2530,7 +2547,7 @@ func (path *CompositePath_STATUS) AssignProperties_From_CompositePath_STATUS(sou
 	if augmentedPath, ok := pathAsAny.(augmentConversionForCompositePath_STATUS); ok {
 		err := augmentedPath.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2561,7 +2578,7 @@ func (path *CompositePath_STATUS) AssignProperties_To_CompositePath_STATUS(desti
 	if augmentedPath, ok := pathAsAny.(augmentConversionForCompositePath_STATUS); ok {
 		err := augmentedPath.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2595,7 +2612,7 @@ func (path *ExcludedPath) AssignProperties_From_ExcludedPath(source *storage.Exc
 	if augmentedPath, ok := pathAsAny.(augmentConversionForExcludedPath); ok {
 		err := augmentedPath.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2623,7 +2640,7 @@ func (path *ExcludedPath) AssignProperties_To_ExcludedPath(destination *storage.
 	if augmentedPath, ok := pathAsAny.(augmentConversionForExcludedPath); ok {
 		err := augmentedPath.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2657,7 +2674,7 @@ func (path *ExcludedPath_STATUS) AssignProperties_From_ExcludedPath_STATUS(sourc
 	if augmentedPath, ok := pathAsAny.(augmentConversionForExcludedPath_STATUS); ok {
 		err := augmentedPath.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2685,7 +2702,7 @@ func (path *ExcludedPath_STATUS) AssignProperties_To_ExcludedPath_STATUS(destina
 	if augmentedPath, ok := pathAsAny.(augmentConversionForExcludedPath_STATUS); ok {
 		err := augmentedPath.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2715,7 +2732,7 @@ func (path *IncludedPath) AssignProperties_From_IncludedPath(source *storage.Inc
 			var indexLocal Indexes
 			err := indexLocal.AssignProperties_From_Indexes(&indexItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Indexes() to populate field Indexes")
+				return eris.Wrap(err, "calling AssignProperties_From_Indexes() to populate field Indexes")
 			}
 			indexList[index] = indexLocal
 		}
@@ -2739,7 +2756,7 @@ func (path *IncludedPath) AssignProperties_From_IncludedPath(source *storage.Inc
 	if augmentedPath, ok := pathAsAny.(augmentConversionForIncludedPath); ok {
 		err := augmentedPath.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2761,7 +2778,7 @@ func (path *IncludedPath) AssignProperties_To_IncludedPath(destination *storage.
 			var indexLocal storage.Indexes
 			err := indexItem.AssignProperties_To_Indexes(&indexLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Indexes() to populate field Indexes")
+				return eris.Wrap(err, "calling AssignProperties_To_Indexes() to populate field Indexes")
 			}
 			indexList[index] = indexLocal
 		}
@@ -2785,7 +2802,7 @@ func (path *IncludedPath) AssignProperties_To_IncludedPath(destination *storage.
 	if augmentedPath, ok := pathAsAny.(augmentConversionForIncludedPath); ok {
 		err := augmentedPath.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2815,7 +2832,7 @@ func (path *IncludedPath_STATUS) AssignProperties_From_IncludedPath_STATUS(sourc
 			var indexLocal Indexes_STATUS
 			err := indexLocal.AssignProperties_From_Indexes_STATUS(&indexItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_Indexes_STATUS() to populate field Indexes")
+				return eris.Wrap(err, "calling AssignProperties_From_Indexes_STATUS() to populate field Indexes")
 			}
 			indexList[index] = indexLocal
 		}
@@ -2839,7 +2856,7 @@ func (path *IncludedPath_STATUS) AssignProperties_From_IncludedPath_STATUS(sourc
 	if augmentedPath, ok := pathAsAny.(augmentConversionForIncludedPath_STATUS); ok {
 		err := augmentedPath.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2861,7 +2878,7 @@ func (path *IncludedPath_STATUS) AssignProperties_To_IncludedPath_STATUS(destina
 			var indexLocal storage.Indexes_STATUS
 			err := indexItem.AssignProperties_To_Indexes_STATUS(&indexLocal)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_Indexes_STATUS() to populate field Indexes")
+				return eris.Wrap(err, "calling AssignProperties_To_Indexes_STATUS() to populate field Indexes")
 			}
 			indexList[index] = indexLocal
 		}
@@ -2885,7 +2902,7 @@ func (path *IncludedPath_STATUS) AssignProperties_To_IncludedPath_STATUS(destina
 	if augmentedPath, ok := pathAsAny.(augmentConversionForIncludedPath_STATUS); ok {
 		err := augmentedPath.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2923,7 +2940,7 @@ func (spatial *SpatialSpec) AssignProperties_From_SpatialSpec(source *storage.Sp
 	if augmentedSpatial, ok := spatialAsAny.(augmentConversionForSpatialSpec); ok {
 		err := augmentedSpatial.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -2954,7 +2971,7 @@ func (spatial *SpatialSpec) AssignProperties_To_SpatialSpec(destination *storage
 	if augmentedSpatial, ok := spatialAsAny.(augmentConversionForSpatialSpec); ok {
 		err := augmentedSpatial.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -2992,7 +3009,7 @@ func (spatial *SpatialSpec_STATUS) AssignProperties_From_SpatialSpec_STATUS(sour
 	if augmentedSpatial, ok := spatialAsAny.(augmentConversionForSpatialSpec_STATUS); ok {
 		err := augmentedSpatial.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3023,7 +3040,7 @@ func (spatial *SpatialSpec_STATUS) AssignProperties_To_SpatialSpec_STATUS(destin
 	if augmentedSpatial, ok := spatialAsAny.(augmentConversionForSpatialSpec_STATUS); ok {
 		err := augmentedSpatial.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3058,7 +3075,7 @@ func (uniqueKey *UniqueKey) AssignProperties_From_UniqueKey(source *storage.Uniq
 	if augmentedUniqueKey, ok := uniqueKeyAsAny.(augmentConversionForUniqueKey); ok {
 		err := augmentedUniqueKey.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3086,7 +3103,7 @@ func (uniqueKey *UniqueKey) AssignProperties_To_UniqueKey(destination *storage.U
 	if augmentedUniqueKey, ok := uniqueKeyAsAny.(augmentConversionForUniqueKey); ok {
 		err := augmentedUniqueKey.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3121,7 +3138,7 @@ func (uniqueKey *UniqueKey_STATUS) AssignProperties_From_UniqueKey_STATUS(source
 	if augmentedUniqueKey, ok := uniqueKeyAsAny.(augmentConversionForUniqueKey_STATUS); ok {
 		err := augmentedUniqueKey.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3149,7 +3166,7 @@ func (uniqueKey *UniqueKey_STATUS) AssignProperties_To_UniqueKey_STATUS(destinat
 	if augmentedUniqueKey, ok := uniqueKeyAsAny.(augmentConversionForUniqueKey_STATUS); ok {
 		err := augmentedUniqueKey.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3242,7 +3259,7 @@ func (indexes *Indexes) AssignProperties_From_Indexes(source *storage.Indexes) e
 	if augmentedIndexes, ok := indexesAsAny.(augmentConversionForIndexes); ok {
 		err := augmentedIndexes.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3276,7 +3293,7 @@ func (indexes *Indexes) AssignProperties_To_Indexes(destination *storage.Indexes
 	if augmentedIndexes, ok := indexesAsAny.(augmentConversionForIndexes); ok {
 		err := augmentedIndexes.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -3319,7 +3336,7 @@ func (indexes *Indexes_STATUS) AssignProperties_From_Indexes_STATUS(source *stor
 	if augmentedIndexes, ok := indexesAsAny.(augmentConversionForIndexes_STATUS); ok {
 		err := augmentedIndexes.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -3353,7 +3370,7 @@ func (indexes *Indexes_STATUS) AssignProperties_To_Indexes_STATUS(destination *s
 	if augmentedIndexes, ok := indexesAsAny.(augmentConversionForIndexes_STATUS); ok {
 		err := augmentedIndexes.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

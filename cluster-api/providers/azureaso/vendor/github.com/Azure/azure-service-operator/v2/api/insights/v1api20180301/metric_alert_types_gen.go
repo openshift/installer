@@ -7,19 +7,16 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -71,29 +68,6 @@ func (alert *MetricAlert) ConvertTo(hub conversion.Hub) error {
 
 	return alert.AssignProperties_To_MetricAlert(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-insights-azure-com-v1api20180301-metricalert,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=insights.azure.com,resources=metricalerts,verbs=create;update,versions=v1api20180301,name=default.v1api20180301.metricalerts.insights.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &MetricAlert{}
-
-// Default applies defaults to the MetricAlert resource
-func (alert *MetricAlert) Default() {
-	alert.defaultImpl()
-	var temp any = alert
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (alert *MetricAlert) defaultAzureName() {
-	if alert.Spec.AzureName == "" {
-		alert.Spec.AzureName = alert.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the MetricAlert resource
-func (alert *MetricAlert) defaultImpl() { alert.defaultAzureName() }
 
 var _ configmaps.Exporter = &MetricAlert{}
 
@@ -174,6 +148,10 @@ func (alert *MetricAlert) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (alert *MetricAlert) Owner() *genruntime.ResourceReference {
+	if alert.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(alert.Spec)
 	return alert.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,114 +168,11 @@ func (alert *MetricAlert) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st MetricAlert_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	alert.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-insights-azure-com-v1api20180301-metricalert,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=insights.azure.com,resources=metricalerts,verbs=create;update,versions=v1api20180301,name=validate.v1api20180301.metricalerts.insights.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &MetricAlert{}
-
-// ValidateCreate validates the creation of the resource
-func (alert *MetricAlert) ValidateCreate() (admission.Warnings, error) {
-	validations := alert.createValidations()
-	var temp any = alert
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (alert *MetricAlert) ValidateDelete() (admission.Warnings, error) {
-	validations := alert.deleteValidations()
-	var temp any = alert
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (alert *MetricAlert) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := alert.updateValidations()
-	var temp any = alert
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (alert *MetricAlert) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){alert.validateResourceReferences, alert.validateOwnerReference, alert.validateSecretDestinations, alert.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (alert *MetricAlert) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (alert *MetricAlert) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return alert.validateResourceReferences()
-		},
-		alert.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return alert.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return alert.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return alert.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (alert *MetricAlert) validateConfigMapDestinations() (admission.Warnings, error) {
-	if alert.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(alert, nil, alert.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (alert *MetricAlert) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(alert)
-}
-
-// validateResourceReferences validates all resource references
-func (alert *MetricAlert) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&alert.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (alert *MetricAlert) validateSecretDestinations() (admission.Warnings, error) {
-	if alert.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(alert, nil, alert.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (alert *MetricAlert) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*MetricAlert)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, alert)
 }
 
 // AssignProperties_From_MetricAlert populates our MetricAlert from the provided source MetricAlert
@@ -310,7 +185,7 @@ func (alert *MetricAlert) AssignProperties_From_MetricAlert(source *storage.Metr
 	var spec MetricAlert_Spec
 	err := spec.AssignProperties_From_MetricAlert_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_MetricAlert_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_MetricAlert_Spec() to populate field Spec")
 	}
 	alert.Spec = spec
 
@@ -318,7 +193,7 @@ func (alert *MetricAlert) AssignProperties_From_MetricAlert(source *storage.Metr
 	var status MetricAlert_STATUS
 	err = status.AssignProperties_From_MetricAlert_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_MetricAlert_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_MetricAlert_STATUS() to populate field Status")
 	}
 	alert.Status = status
 
@@ -336,7 +211,7 @@ func (alert *MetricAlert) AssignProperties_To_MetricAlert(destination *storage.M
 	var spec storage.MetricAlert_Spec
 	err := alert.Spec.AssignProperties_To_MetricAlert_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_MetricAlert_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_MetricAlert_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -344,7 +219,7 @@ func (alert *MetricAlert) AssignProperties_To_MetricAlert(destination *storage.M
 	var status storage.MetricAlert_STATUS
 	err = alert.Status.AssignProperties_To_MetricAlert_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_MetricAlert_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_MetricAlert_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -418,7 +293,8 @@ type MetricAlert_Spec struct {
 	Owner *genruntime.KnownResourceReference `group:"resources.azure.com" json:"owner,omitempty" kind:"ResourceGroup"`
 
 	// +kubebuilder:validation:Required
-	// ScopesReferences: the list of resource id's that this metric alert is scoped to.
+	// ScopesReferences: the list of resource id's that this metric alert is scoped to. You cannot change the scope of a metric
+	// rule based on logs.
 	ScopesReferences []genruntime.ResourceReference `armReference:"Scopes" json:"scopesReferences,omitempty"`
 
 	// +kubebuilder:validation:Required
@@ -695,13 +571,13 @@ func (alert *MetricAlert_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec
 	src = &storage.MetricAlert_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = alert.AssignProperties_From_MetricAlert_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -719,13 +595,13 @@ func (alert *MetricAlert_Spec) ConvertSpecTo(destination genruntime.ConvertibleS
 	dst = &storage.MetricAlert_Spec{}
 	err := alert.AssignProperties_To_MetricAlert_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -743,7 +619,7 @@ func (alert *MetricAlert_Spec) AssignProperties_From_MetricAlert_Spec(source *st
 			var action MetricAlertAction
 			err := action.AssignProperties_From_MetricAlertAction(&actionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricAlertAction() to populate field Actions")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricAlertAction() to populate field Actions")
 			}
 			actionList[actionIndex] = action
 		}
@@ -768,7 +644,7 @@ func (alert *MetricAlert_Spec) AssignProperties_From_MetricAlert_Spec(source *st
 		var criterion MetricAlertCriteria
 		err := criterion.AssignProperties_From_MetricAlertCriteria(source.Criteria)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricAlertCriteria() to populate field Criteria")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricAlertCriteria() to populate field Criteria")
 		}
 		alert.Criteria = &criterion
 	} else {
@@ -797,7 +673,7 @@ func (alert *MetricAlert_Spec) AssignProperties_From_MetricAlert_Spec(source *st
 		var operatorSpec MetricAlertOperatorSpec
 		err := operatorSpec.AssignProperties_From_MetricAlertOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricAlertOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricAlertOperatorSpec() to populate field OperatorSpec")
 		}
 		alert.OperatorSpec = &operatorSpec
 	} else {
@@ -858,7 +734,7 @@ func (alert *MetricAlert_Spec) AssignProperties_To_MetricAlert_Spec(destination 
 			var action storage.MetricAlertAction
 			err := actionItem.AssignProperties_To_MetricAlertAction(&action)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricAlertAction() to populate field Actions")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricAlertAction() to populate field Actions")
 			}
 			actionList[actionIndex] = action
 		}
@@ -883,7 +759,7 @@ func (alert *MetricAlert_Spec) AssignProperties_To_MetricAlert_Spec(destination 
 		var criterion storage.MetricAlertCriteria
 		err := alert.Criteria.AssignProperties_To_MetricAlertCriteria(&criterion)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricAlertCriteria() to populate field Criteria")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricAlertCriteria() to populate field Criteria")
 		}
 		destination.Criteria = &criterion
 	} else {
@@ -912,7 +788,7 @@ func (alert *MetricAlert_Spec) AssignProperties_To_MetricAlert_Spec(destination 
 		var operatorSpec storage.MetricAlertOperatorSpec
 		err := alert.OperatorSpec.AssignProperties_To_MetricAlertOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricAlertOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricAlertOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -981,7 +857,7 @@ func (alert *MetricAlert_Spec) Initialize_From_MetricAlert_STATUS(source *Metric
 			var action MetricAlertAction
 			err := action.Initialize_From_MetricAlertAction_STATUS(&actionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MetricAlertAction_STATUS() to populate field Actions")
+				return eris.Wrap(err, "calling Initialize_From_MetricAlertAction_STATUS() to populate field Actions")
 			}
 			actionList[actionIndex] = action
 		}
@@ -1003,7 +879,7 @@ func (alert *MetricAlert_Spec) Initialize_From_MetricAlert_STATUS(source *Metric
 		var criterion MetricAlertCriteria
 		err := criterion.Initialize_From_MetricAlertCriteria_STATUS(source.Criteria)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_MetricAlertCriteria_STATUS() to populate field Criteria")
+			return eris.Wrap(err, "calling Initialize_From_MetricAlertCriteria_STATUS() to populate field Criteria")
 		}
 		alert.Criteria = &criterion
 	} else {
@@ -1092,7 +968,8 @@ type MetricAlert_STATUS struct {
 	// Name: Azure resource name
 	Name *string `json:"name,omitempty"`
 
-	// Scopes: the list of resource id's that this metric alert is scoped to.
+	// Scopes: the list of resource id's that this metric alert is scoped to. You cannot change the scope of a metric rule
+	// based on logs.
 	Scopes []string `json:"scopes,omitempty"`
 
 	// Severity: Alert severity {0, 1, 2, 3, 4}
@@ -1131,13 +1008,13 @@ func (alert *MetricAlert_STATUS) ConvertStatusFrom(source genruntime.Convertible
 	src = &storage.MetricAlert_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = alert.AssignProperties_From_MetricAlert_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1155,13 +1032,13 @@ func (alert *MetricAlert_STATUS) ConvertStatusTo(destination genruntime.Converti
 	dst = &storage.MetricAlert_STATUS{}
 	err := alert.AssignProperties_To_MetricAlert_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1356,7 +1233,7 @@ func (alert *MetricAlert_STATUS) AssignProperties_From_MetricAlert_STATUS(source
 			var action MetricAlertAction_STATUS
 			err := action.AssignProperties_From_MetricAlertAction_STATUS(&actionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricAlertAction_STATUS() to populate field Actions")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricAlertAction_STATUS() to populate field Actions")
 			}
 			actionList[actionIndex] = action
 		}
@@ -1381,7 +1258,7 @@ func (alert *MetricAlert_STATUS) AssignProperties_From_MetricAlert_STATUS(source
 		var criterion MetricAlertCriteria_STATUS
 		err := criterion.AssignProperties_From_MetricAlertCriteria_STATUS(source.Criteria)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricAlertCriteria_STATUS() to populate field Criteria")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricAlertCriteria_STATUS() to populate field Criteria")
 		}
 		alert.Criteria = &criterion
 	} else {
@@ -1461,7 +1338,7 @@ func (alert *MetricAlert_STATUS) AssignProperties_To_MetricAlert_STATUS(destinat
 			var action storage.MetricAlertAction_STATUS
 			err := actionItem.AssignProperties_To_MetricAlertAction_STATUS(&action)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricAlertAction_STATUS() to populate field Actions")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricAlertAction_STATUS() to populate field Actions")
 			}
 			actionList[actionIndex] = action
 		}
@@ -1486,7 +1363,7 @@ func (alert *MetricAlert_STATUS) AssignProperties_To_MetricAlert_STATUS(destinat
 		var criterion storage.MetricAlertCriteria_STATUS
 		err := alert.Criteria.AssignProperties_To_MetricAlertCriteria_STATUS(&criterion)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricAlertCriteria_STATUS() to populate field Criteria")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricAlertCriteria_STATUS() to populate field Criteria")
 		}
 		destination.Criteria = &criterion
 	} else {
@@ -1858,7 +1735,7 @@ func (criteria *MetricAlertCriteria) AssignProperties_From_MetricAlertCriteria(s
 		var microsoftAzureMonitorMultipleResourceMultipleMetric MetricAlertMultipleResourceMultipleMetricCriteria
 		err := microsoftAzureMonitorMultipleResourceMultipleMetric.AssignProperties_From_MetricAlertMultipleResourceMultipleMetricCriteria(source.MicrosoftAzureMonitorMultipleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricAlertMultipleResourceMultipleMetricCriteria() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricAlertMultipleResourceMultipleMetricCriteria() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
 		}
 		criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric = &microsoftAzureMonitorMultipleResourceMultipleMetric
 	} else {
@@ -1870,7 +1747,7 @@ func (criteria *MetricAlertCriteria) AssignProperties_From_MetricAlertCriteria(s
 		var microsoftAzureMonitorSingleResourceMultipleMetric MetricAlertSingleResourceMultipleMetricCriteria
 		err := microsoftAzureMonitorSingleResourceMultipleMetric.AssignProperties_From_MetricAlertSingleResourceMultipleMetricCriteria(source.MicrosoftAzureMonitorSingleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricAlertSingleResourceMultipleMetricCriteria() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricAlertSingleResourceMultipleMetricCriteria() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
 		}
 		criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric = &microsoftAzureMonitorSingleResourceMultipleMetric
 	} else {
@@ -1882,7 +1759,7 @@ func (criteria *MetricAlertCriteria) AssignProperties_From_MetricAlertCriteria(s
 		var microsoftAzureMonitorWebtestLocationAvailability WebtestLocationAvailabilityCriteria
 		err := microsoftAzureMonitorWebtestLocationAvailability.AssignProperties_From_WebtestLocationAvailabilityCriteria(source.MicrosoftAzureMonitorWebtestLocationAvailability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebtestLocationAvailabilityCriteria() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
+			return eris.Wrap(err, "calling AssignProperties_From_WebtestLocationAvailabilityCriteria() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
 		}
 		criteria.MicrosoftAzureMonitorWebtestLocationAvailability = &microsoftAzureMonitorWebtestLocationAvailability
 	} else {
@@ -1903,7 +1780,7 @@ func (criteria *MetricAlertCriteria) AssignProperties_To_MetricAlertCriteria(des
 		var microsoftAzureMonitorMultipleResourceMultipleMetric storage.MetricAlertMultipleResourceMultipleMetricCriteria
 		err := criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric.AssignProperties_To_MetricAlertMultipleResourceMultipleMetricCriteria(&microsoftAzureMonitorMultipleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricAlertMultipleResourceMultipleMetricCriteria() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricAlertMultipleResourceMultipleMetricCriteria() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
 		}
 		destination.MicrosoftAzureMonitorMultipleResourceMultipleMetric = &microsoftAzureMonitorMultipleResourceMultipleMetric
 	} else {
@@ -1915,7 +1792,7 @@ func (criteria *MetricAlertCriteria) AssignProperties_To_MetricAlertCriteria(des
 		var microsoftAzureMonitorSingleResourceMultipleMetric storage.MetricAlertSingleResourceMultipleMetricCriteria
 		err := criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric.AssignProperties_To_MetricAlertSingleResourceMultipleMetricCriteria(&microsoftAzureMonitorSingleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricAlertSingleResourceMultipleMetricCriteria() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricAlertSingleResourceMultipleMetricCriteria() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
 		}
 		destination.MicrosoftAzureMonitorSingleResourceMultipleMetric = &microsoftAzureMonitorSingleResourceMultipleMetric
 	} else {
@@ -1927,7 +1804,7 @@ func (criteria *MetricAlertCriteria) AssignProperties_To_MetricAlertCriteria(des
 		var microsoftAzureMonitorWebtestLocationAvailability storage.WebtestLocationAvailabilityCriteria
 		err := criteria.MicrosoftAzureMonitorWebtestLocationAvailability.AssignProperties_To_WebtestLocationAvailabilityCriteria(&microsoftAzureMonitorWebtestLocationAvailability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebtestLocationAvailabilityCriteria() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
+			return eris.Wrap(err, "calling AssignProperties_To_WebtestLocationAvailabilityCriteria() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
 		}
 		destination.MicrosoftAzureMonitorWebtestLocationAvailability = &microsoftAzureMonitorWebtestLocationAvailability
 	} else {
@@ -1953,7 +1830,7 @@ func (criteria *MetricAlertCriteria) Initialize_From_MetricAlertCriteria_STATUS(
 		var microsoftAzureMonitorMultipleResourceMultipleMetric MetricAlertMultipleResourceMultipleMetricCriteria
 		err := microsoftAzureMonitorMultipleResourceMultipleMetric.Initialize_From_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS(source.MicrosoftAzureMonitorMultipleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
+			return eris.Wrap(err, "calling Initialize_From_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
 		}
 		criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric = &microsoftAzureMonitorMultipleResourceMultipleMetric
 	} else {
@@ -1965,7 +1842,7 @@ func (criteria *MetricAlertCriteria) Initialize_From_MetricAlertCriteria_STATUS(
 		var microsoftAzureMonitorSingleResourceMultipleMetric MetricAlertSingleResourceMultipleMetricCriteria
 		err := microsoftAzureMonitorSingleResourceMultipleMetric.Initialize_From_MetricAlertSingleResourceMultipleMetricCriteria_STATUS(source.MicrosoftAzureMonitorSingleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_MetricAlertSingleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
+			return eris.Wrap(err, "calling Initialize_From_MetricAlertSingleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
 		}
 		criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric = &microsoftAzureMonitorSingleResourceMultipleMetric
 	} else {
@@ -1977,7 +1854,7 @@ func (criteria *MetricAlertCriteria) Initialize_From_MetricAlertCriteria_STATUS(
 		var microsoftAzureMonitorWebtestLocationAvailability WebtestLocationAvailabilityCriteria
 		err := microsoftAzureMonitorWebtestLocationAvailability.Initialize_From_WebtestLocationAvailabilityCriteria_STATUS(source.MicrosoftAzureMonitorWebtestLocationAvailability)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_WebtestLocationAvailabilityCriteria_STATUS() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
+			return eris.Wrap(err, "calling Initialize_From_WebtestLocationAvailabilityCriteria_STATUS() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
 		}
 		criteria.MicrosoftAzureMonitorWebtestLocationAvailability = &microsoftAzureMonitorWebtestLocationAvailability
 	} else {
@@ -2058,7 +1935,7 @@ func (criteria *MetricAlertCriteria_STATUS) AssignProperties_From_MetricAlertCri
 		var microsoftAzureMonitorMultipleResourceMultipleMetric MetricAlertMultipleResourceMultipleMetricCriteria_STATUS
 		err := microsoftAzureMonitorMultipleResourceMultipleMetric.AssignProperties_From_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS(source.MicrosoftAzureMonitorMultipleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
 		}
 		criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric = &microsoftAzureMonitorMultipleResourceMultipleMetric
 	} else {
@@ -2070,7 +1947,7 @@ func (criteria *MetricAlertCriteria_STATUS) AssignProperties_From_MetricAlertCri
 		var microsoftAzureMonitorSingleResourceMultipleMetric MetricAlertSingleResourceMultipleMetricCriteria_STATUS
 		err := microsoftAzureMonitorSingleResourceMultipleMetric.AssignProperties_From_MetricAlertSingleResourceMultipleMetricCriteria_STATUS(source.MicrosoftAzureMonitorSingleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricAlertSingleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricAlertSingleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
 		}
 		criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric = &microsoftAzureMonitorSingleResourceMultipleMetric
 	} else {
@@ -2082,7 +1959,7 @@ func (criteria *MetricAlertCriteria_STATUS) AssignProperties_From_MetricAlertCri
 		var microsoftAzureMonitorWebtestLocationAvailability WebtestLocationAvailabilityCriteria_STATUS
 		err := microsoftAzureMonitorWebtestLocationAvailability.AssignProperties_From_WebtestLocationAvailabilityCriteria_STATUS(source.MicrosoftAzureMonitorWebtestLocationAvailability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_WebtestLocationAvailabilityCriteria_STATUS() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
+			return eris.Wrap(err, "calling AssignProperties_From_WebtestLocationAvailabilityCriteria_STATUS() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
 		}
 		criteria.MicrosoftAzureMonitorWebtestLocationAvailability = &microsoftAzureMonitorWebtestLocationAvailability
 	} else {
@@ -2103,7 +1980,7 @@ func (criteria *MetricAlertCriteria_STATUS) AssignProperties_To_MetricAlertCrite
 		var microsoftAzureMonitorMultipleResourceMultipleMetric storage.MetricAlertMultipleResourceMultipleMetricCriteria_STATUS
 		err := criteria.MicrosoftAzureMonitorMultipleResourceMultipleMetric.AssignProperties_To_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS(&microsoftAzureMonitorMultipleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricAlertMultipleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorMultipleResourceMultipleMetric")
 		}
 		destination.MicrosoftAzureMonitorMultipleResourceMultipleMetric = &microsoftAzureMonitorMultipleResourceMultipleMetric
 	} else {
@@ -2115,7 +1992,7 @@ func (criteria *MetricAlertCriteria_STATUS) AssignProperties_To_MetricAlertCrite
 		var microsoftAzureMonitorSingleResourceMultipleMetric storage.MetricAlertSingleResourceMultipleMetricCriteria_STATUS
 		err := criteria.MicrosoftAzureMonitorSingleResourceMultipleMetric.AssignProperties_To_MetricAlertSingleResourceMultipleMetricCriteria_STATUS(&microsoftAzureMonitorSingleResourceMultipleMetric)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricAlertSingleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricAlertSingleResourceMultipleMetricCriteria_STATUS() to populate field MicrosoftAzureMonitorSingleResourceMultipleMetric")
 		}
 		destination.MicrosoftAzureMonitorSingleResourceMultipleMetric = &microsoftAzureMonitorSingleResourceMultipleMetric
 	} else {
@@ -2127,7 +2004,7 @@ func (criteria *MetricAlertCriteria_STATUS) AssignProperties_To_MetricAlertCrite
 		var microsoftAzureMonitorWebtestLocationAvailability storage.WebtestLocationAvailabilityCriteria_STATUS
 		err := criteria.MicrosoftAzureMonitorWebtestLocationAvailability.AssignProperties_To_WebtestLocationAvailabilityCriteria_STATUS(&microsoftAzureMonitorWebtestLocationAvailability)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_WebtestLocationAvailabilityCriteria_STATUS() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
+			return eris.Wrap(err, "calling AssignProperties_To_WebtestLocationAvailabilityCriteria_STATUS() to populate field MicrosoftAzureMonitorWebtestLocationAvailability")
 		}
 		destination.MicrosoftAzureMonitorWebtestLocationAvailability = &microsoftAzureMonitorWebtestLocationAvailability
 	} else {
@@ -2363,7 +2240,7 @@ func (criteria *MetricAlertMultipleResourceMultipleMetricCriteria) AssignPropert
 			var allOf MultiMetricCriteria
 			err := allOf.AssignProperties_From_MultiMetricCriteria(&allOfItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MultiMetricCriteria() to populate field AllOf")
+				return eris.Wrap(err, "calling AssignProperties_From_MultiMetricCriteria() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -2412,7 +2289,7 @@ func (criteria *MetricAlertMultipleResourceMultipleMetricCriteria) AssignPropert
 			var allOf storage.MultiMetricCriteria
 			err := allOfItem.AssignProperties_To_MultiMetricCriteria(&allOf)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MultiMetricCriteria() to populate field AllOf")
+				return eris.Wrap(err, "calling AssignProperties_To_MultiMetricCriteria() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -2465,7 +2342,7 @@ func (criteria *MetricAlertMultipleResourceMultipleMetricCriteria) Initialize_Fr
 			var allOf MultiMetricCriteria
 			err := allOf.Initialize_From_MultiMetricCriteria_STATUS(&allOfItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MultiMetricCriteria_STATUS() to populate field AllOf")
+				return eris.Wrap(err, "calling Initialize_From_MultiMetricCriteria_STATUS() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -2564,7 +2441,7 @@ func (criteria *MetricAlertMultipleResourceMultipleMetricCriteria_STATUS) Assign
 			var allOf MultiMetricCriteria_STATUS
 			err := allOf.AssignProperties_From_MultiMetricCriteria_STATUS(&allOfItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MultiMetricCriteria_STATUS() to populate field AllOf")
+				return eris.Wrap(err, "calling AssignProperties_From_MultiMetricCriteria_STATUS() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -2613,7 +2490,7 @@ func (criteria *MetricAlertMultipleResourceMultipleMetricCriteria_STATUS) Assign
 			var allOf storage.MultiMetricCriteria_STATUS
 			err := allOfItem.AssignProperties_To_MultiMetricCriteria_STATUS(&allOf)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MultiMetricCriteria_STATUS() to populate field AllOf")
+				return eris.Wrap(err, "calling AssignProperties_To_MultiMetricCriteria_STATUS() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -2755,7 +2632,7 @@ func (criteria *MetricAlertSingleResourceMultipleMetricCriteria) AssignPropertie
 			var allOf MetricCriteria
 			err := allOf.AssignProperties_From_MetricCriteria(&allOfItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricCriteria() to populate field AllOf")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricCriteria() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -2804,7 +2681,7 @@ func (criteria *MetricAlertSingleResourceMultipleMetricCriteria) AssignPropertie
 			var allOf storage.MetricCriteria
 			err := allOfItem.AssignProperties_To_MetricCriteria(&allOf)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricCriteria() to populate field AllOf")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricCriteria() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -2857,7 +2734,7 @@ func (criteria *MetricAlertSingleResourceMultipleMetricCriteria) Initialize_From
 			var allOf MetricCriteria
 			err := allOf.Initialize_From_MetricCriteria_STATUS(&allOfItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MetricCriteria_STATUS() to populate field AllOf")
+				return eris.Wrap(err, "calling Initialize_From_MetricCriteria_STATUS() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -2956,7 +2833,7 @@ func (criteria *MetricAlertSingleResourceMultipleMetricCriteria_STATUS) AssignPr
 			var allOf MetricCriteria_STATUS
 			err := allOf.AssignProperties_From_MetricCriteria_STATUS(&allOfItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricCriteria_STATUS() to populate field AllOf")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricCriteria_STATUS() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -3005,7 +2882,7 @@ func (criteria *MetricAlertSingleResourceMultipleMetricCriteria_STATUS) AssignPr
 			var allOf storage.MetricCriteria_STATUS
 			err := allOfItem.AssignProperties_To_MetricCriteria_STATUS(&allOf)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricCriteria_STATUS() to populate field AllOf")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricCriteria_STATUS() to populate field AllOf")
 			}
 			allOfList[allOfIndex] = allOf
 		}
@@ -3740,7 +3617,7 @@ func (criteria *MetricCriteria) AssignProperties_From_MetricCriteria(source *sto
 			var dimension MetricDimension
 			err := dimension.AssignProperties_From_MetricDimension(&dimensionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricDimension() to populate field Dimensions")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricDimension() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -3831,7 +3708,7 @@ func (criteria *MetricCriteria) AssignProperties_To_MetricCriteria(destination *
 			var dimension storage.MetricDimension
 			err := dimensionItem.AssignProperties_To_MetricDimension(&dimension)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricDimension() to populate field Dimensions")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricDimension() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -3925,7 +3802,7 @@ func (criteria *MetricCriteria) Initialize_From_MetricCriteria_STATUS(source *Me
 			var dimension MetricDimension
 			err := dimension.Initialize_From_MetricDimension_STATUS(&dimensionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MetricDimension_STATUS() to populate field Dimensions")
+				return eris.Wrap(err, "calling Initialize_From_MetricDimension_STATUS() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -4134,7 +4011,7 @@ func (criteria *MetricCriteria_STATUS) AssignProperties_From_MetricCriteria_STAT
 			var dimension MetricDimension_STATUS
 			err := dimension.AssignProperties_From_MetricDimension_STATUS(&dimensionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricDimension_STATUS() to populate field Dimensions")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricDimension_STATUS() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -4225,7 +4102,7 @@ func (criteria *MetricCriteria_STATUS) AssignProperties_To_MetricCriteria_STATUS
 			var dimension storage.MetricDimension_STATUS
 			err := dimensionItem.AssignProperties_To_MetricDimension_STATUS(&dimension)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricDimension_STATUS() to populate field Dimensions")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricDimension_STATUS() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -4371,7 +4248,7 @@ func (criteria *MultiMetricCriteria) AssignProperties_From_MultiMetricCriteria(s
 		var dynamic DynamicMetricCriteria
 		err := dynamic.AssignProperties_From_DynamicMetricCriteria(source.Dynamic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DynamicMetricCriteria() to populate field Dynamic")
+			return eris.Wrap(err, "calling AssignProperties_From_DynamicMetricCriteria() to populate field Dynamic")
 		}
 		criteria.Dynamic = &dynamic
 	} else {
@@ -4383,7 +4260,7 @@ func (criteria *MultiMetricCriteria) AssignProperties_From_MultiMetricCriteria(s
 		var static MetricCriteria
 		err := static.AssignProperties_From_MetricCriteria(source.Static)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricCriteria() to populate field Static")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricCriteria() to populate field Static")
 		}
 		criteria.Static = &static
 	} else {
@@ -4404,7 +4281,7 @@ func (criteria *MultiMetricCriteria) AssignProperties_To_MultiMetricCriteria(des
 		var dynamic storage.DynamicMetricCriteria
 		err := criteria.Dynamic.AssignProperties_To_DynamicMetricCriteria(&dynamic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DynamicMetricCriteria() to populate field Dynamic")
+			return eris.Wrap(err, "calling AssignProperties_To_DynamicMetricCriteria() to populate field Dynamic")
 		}
 		destination.Dynamic = &dynamic
 	} else {
@@ -4416,7 +4293,7 @@ func (criteria *MultiMetricCriteria) AssignProperties_To_MultiMetricCriteria(des
 		var static storage.MetricCriteria
 		err := criteria.Static.AssignProperties_To_MetricCriteria(&static)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricCriteria() to populate field Static")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricCriteria() to populate field Static")
 		}
 		destination.Static = &static
 	} else {
@@ -4442,7 +4319,7 @@ func (criteria *MultiMetricCriteria) Initialize_From_MultiMetricCriteria_STATUS(
 		var dynamic DynamicMetricCriteria
 		err := dynamic.Initialize_From_DynamicMetricCriteria_STATUS(source.Dynamic)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DynamicMetricCriteria_STATUS() to populate field Dynamic")
+			return eris.Wrap(err, "calling Initialize_From_DynamicMetricCriteria_STATUS() to populate field Dynamic")
 		}
 		criteria.Dynamic = &dynamic
 	} else {
@@ -4454,7 +4331,7 @@ func (criteria *MultiMetricCriteria) Initialize_From_MultiMetricCriteria_STATUS(
 		var static MetricCriteria
 		err := static.Initialize_From_MetricCriteria_STATUS(source.Static)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_MetricCriteria_STATUS() to populate field Static")
+			return eris.Wrap(err, "calling Initialize_From_MetricCriteria_STATUS() to populate field Static")
 		}
 		criteria.Static = &static
 	} else {
@@ -4521,7 +4398,7 @@ func (criteria *MultiMetricCriteria_STATUS) AssignProperties_From_MultiMetricCri
 		var dynamic DynamicMetricCriteria_STATUS
 		err := dynamic.AssignProperties_From_DynamicMetricCriteria_STATUS(source.Dynamic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DynamicMetricCriteria_STATUS() to populate field Dynamic")
+			return eris.Wrap(err, "calling AssignProperties_From_DynamicMetricCriteria_STATUS() to populate field Dynamic")
 		}
 		criteria.Dynamic = &dynamic
 	} else {
@@ -4533,7 +4410,7 @@ func (criteria *MultiMetricCriteria_STATUS) AssignProperties_From_MultiMetricCri
 		var static MetricCriteria_STATUS
 		err := static.AssignProperties_From_MetricCriteria_STATUS(source.Static)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_MetricCriteria_STATUS() to populate field Static")
+			return eris.Wrap(err, "calling AssignProperties_From_MetricCriteria_STATUS() to populate field Static")
 		}
 		criteria.Static = &static
 	} else {
@@ -4554,7 +4431,7 @@ func (criteria *MultiMetricCriteria_STATUS) AssignProperties_To_MultiMetricCrite
 		var dynamic storage.DynamicMetricCriteria_STATUS
 		err := criteria.Dynamic.AssignProperties_To_DynamicMetricCriteria_STATUS(&dynamic)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DynamicMetricCriteria_STATUS() to populate field Dynamic")
+			return eris.Wrap(err, "calling AssignProperties_To_DynamicMetricCriteria_STATUS() to populate field Dynamic")
 		}
 		destination.Dynamic = &dynamic
 	} else {
@@ -4566,7 +4443,7 @@ func (criteria *MultiMetricCriteria_STATUS) AssignProperties_To_MultiMetricCrite
 		var static storage.MetricCriteria_STATUS
 		err := criteria.Static.AssignProperties_To_MetricCriteria_STATUS(&static)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_MetricCriteria_STATUS() to populate field Static")
+			return eris.Wrap(err, "calling AssignProperties_To_MetricCriteria_STATUS() to populate field Static")
 		}
 		destination.Static = &static
 	} else {
@@ -4901,7 +4778,7 @@ func (criteria *DynamicMetricCriteria) AssignProperties_From_DynamicMetricCriter
 			var dimension MetricDimension
 			err := dimension.AssignProperties_From_MetricDimension(&dimensionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricDimension() to populate field Dimensions")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricDimension() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -4915,7 +4792,7 @@ func (criteria *DynamicMetricCriteria) AssignProperties_From_DynamicMetricCriter
 		var failingPeriod DynamicThresholdFailingPeriods
 		err := failingPeriod.AssignProperties_From_DynamicThresholdFailingPeriods(source.FailingPeriods)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DynamicThresholdFailingPeriods() to populate field FailingPeriods")
+			return eris.Wrap(err, "calling AssignProperties_From_DynamicThresholdFailingPeriods() to populate field FailingPeriods")
 		}
 		criteria.FailingPeriods = &failingPeriod
 	} else {
@@ -5007,7 +4884,7 @@ func (criteria *DynamicMetricCriteria) AssignProperties_To_DynamicMetricCriteria
 			var dimension storage.MetricDimension
 			err := dimensionItem.AssignProperties_To_MetricDimension(&dimension)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricDimension() to populate field Dimensions")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricDimension() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -5021,7 +4898,7 @@ func (criteria *DynamicMetricCriteria) AssignProperties_To_DynamicMetricCriteria
 		var failingPeriod storage.DynamicThresholdFailingPeriods
 		err := criteria.FailingPeriods.AssignProperties_To_DynamicThresholdFailingPeriods(&failingPeriod)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DynamicThresholdFailingPeriods() to populate field FailingPeriods")
+			return eris.Wrap(err, "calling AssignProperties_To_DynamicThresholdFailingPeriods() to populate field FailingPeriods")
 		}
 		destination.FailingPeriods = &failingPeriod
 	} else {
@@ -5116,7 +4993,7 @@ func (criteria *DynamicMetricCriteria) Initialize_From_DynamicMetricCriteria_STA
 			var dimension MetricDimension
 			err := dimension.Initialize_From_MetricDimension_STATUS(&dimensionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_MetricDimension_STATUS() to populate field Dimensions")
+				return eris.Wrap(err, "calling Initialize_From_MetricDimension_STATUS() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -5130,7 +5007,7 @@ func (criteria *DynamicMetricCriteria) Initialize_From_DynamicMetricCriteria_STA
 		var failingPeriod DynamicThresholdFailingPeriods
 		err := failingPeriod.Initialize_From_DynamicThresholdFailingPeriods_STATUS(source.FailingPeriods)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_DynamicThresholdFailingPeriods_STATUS() to populate field FailingPeriods")
+			return eris.Wrap(err, "calling Initialize_From_DynamicThresholdFailingPeriods_STATUS() to populate field FailingPeriods")
 		}
 		criteria.FailingPeriods = &failingPeriod
 	} else {
@@ -5369,7 +5246,7 @@ func (criteria *DynamicMetricCriteria_STATUS) AssignProperties_From_DynamicMetri
 			var dimension MetricDimension_STATUS
 			err := dimension.AssignProperties_From_MetricDimension_STATUS(&dimensionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_MetricDimension_STATUS() to populate field Dimensions")
+				return eris.Wrap(err, "calling AssignProperties_From_MetricDimension_STATUS() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -5383,7 +5260,7 @@ func (criteria *DynamicMetricCriteria_STATUS) AssignProperties_From_DynamicMetri
 		var failingPeriod DynamicThresholdFailingPeriods_STATUS
 		err := failingPeriod.AssignProperties_From_DynamicThresholdFailingPeriods_STATUS(source.FailingPeriods)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DynamicThresholdFailingPeriods_STATUS() to populate field FailingPeriods")
+			return eris.Wrap(err, "calling AssignProperties_From_DynamicThresholdFailingPeriods_STATUS() to populate field FailingPeriods")
 		}
 		criteria.FailingPeriods = &failingPeriod
 	} else {
@@ -5475,7 +5352,7 @@ func (criteria *DynamicMetricCriteria_STATUS) AssignProperties_To_DynamicMetricC
 			var dimension storage.MetricDimension_STATUS
 			err := dimensionItem.AssignProperties_To_MetricDimension_STATUS(&dimension)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_MetricDimension_STATUS() to populate field Dimensions")
+				return eris.Wrap(err, "calling AssignProperties_To_MetricDimension_STATUS() to populate field Dimensions")
 			}
 			dimensionList[dimensionIndex] = dimension
 		}
@@ -5489,7 +5366,7 @@ func (criteria *DynamicMetricCriteria_STATUS) AssignProperties_To_DynamicMetricC
 		var failingPeriod storage.DynamicThresholdFailingPeriods_STATUS
 		err := criteria.FailingPeriods.AssignProperties_To_DynamicThresholdFailingPeriods_STATUS(&failingPeriod)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DynamicThresholdFailingPeriods_STATUS() to populate field FailingPeriods")
+			return eris.Wrap(err, "calling AssignProperties_To_DynamicThresholdFailingPeriods_STATUS() to populate field FailingPeriods")
 		}
 		destination.FailingPeriods = &failingPeriod
 	} else {

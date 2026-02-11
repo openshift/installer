@@ -6,10 +6,11 @@ Licensed under the MIT license.
 package extensions
 
 import (
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/go-logr/logr"
 
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 )
@@ -61,6 +62,7 @@ func CreateErrorClassifier(
 		log.V(Status).Info(
 			"CloudError classified",
 			"Classification", result.Classification,
+			"Retry", result.Retry,
 			"Code", result.Code,
 			"Message", result.Message)
 

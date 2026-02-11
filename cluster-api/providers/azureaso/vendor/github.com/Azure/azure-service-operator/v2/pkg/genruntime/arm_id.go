@@ -9,14 +9,14 @@ import (
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // GetAndParseResourceID gets the ARM ID from the given MetaObject and parses it into its constituent parts
 func GetAndParseResourceID(obj ARMMetaObject) (*arm.ResourceID, error) {
 	resourceID, hasResourceID := GetResourceID(obj)
 	if !hasResourceID {
-		return nil, errors.Errorf("cannot find resource id for obj %s/%s", obj.GetNamespace(), obj.GetName())
+		return nil, eris.Errorf("cannot find resource id for obj %s/%s", obj.GetNamespace(), obj.GetName())
 	}
 
 	return arm.ParseResourceID(resourceID)

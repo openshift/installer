@@ -11,7 +11,7 @@ import (
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
@@ -137,6 +137,10 @@ func (product *Product) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (product *Product) Owner() *genruntime.ResourceReference {
+	if product.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(product.Spec)
 	return product.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -153,7 +157,7 @@ func (product *Product) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Product_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	product.Status = st
@@ -170,7 +174,7 @@ func (product *Product) AssignProperties_From_Product(source *storage.Product) e
 	var spec Product_Spec
 	err := spec.AssignProperties_From_Product_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Product_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Product_Spec() to populate field Spec")
 	}
 	product.Spec = spec
 
@@ -178,7 +182,7 @@ func (product *Product) AssignProperties_From_Product(source *storage.Product) e
 	var status Product_STATUS
 	err = status.AssignProperties_From_Product_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Product_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Product_STATUS() to populate field Status")
 	}
 	product.Status = status
 
@@ -187,7 +191,7 @@ func (product *Product) AssignProperties_From_Product(source *storage.Product) e
 	if augmentedProduct, ok := productAsAny.(augmentConversionForProduct); ok {
 		err := augmentedProduct.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -205,7 +209,7 @@ func (product *Product) AssignProperties_To_Product(destination *storage.Product
 	var spec storage.Product_Spec
 	err := product.Spec.AssignProperties_To_Product_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Product_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Product_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -213,7 +217,7 @@ func (product *Product) AssignProperties_To_Product(destination *storage.Product
 	var status storage.Product_STATUS
 	err = product.Status.AssignProperties_To_Product_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Product_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Product_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -222,7 +226,7 @@ func (product *Product) AssignProperties_To_Product(destination *storage.Product
 	if augmentedProduct, ok := productAsAny.(augmentConversionForProduct); ok {
 		err := augmentedProduct.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -293,13 +297,13 @@ func (product *Product_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.Product_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = product.AssignProperties_From_Product_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -317,13 +321,13 @@ func (product *Product_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.Product_Spec{}
 	err := product.AssignProperties_To_Product_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -356,7 +360,7 @@ func (product *Product_Spec) AssignProperties_From_Product_Spec(source *storage.
 		var operatorSpec ProductOperatorSpec
 		err := operatorSpec.AssignProperties_From_ProductOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ProductOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ProductOperatorSpec() to populate field OperatorSpec")
 		}
 		product.OperatorSpec = &operatorSpec
 	} else {
@@ -403,7 +407,7 @@ func (product *Product_Spec) AssignProperties_From_Product_Spec(source *storage.
 	if augmentedProduct, ok := productAsAny.(augmentConversionForProduct_Spec); ok {
 		err := augmentedProduct.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -438,7 +442,7 @@ func (product *Product_Spec) AssignProperties_To_Product_Spec(destination *stora
 		var operatorSpec storage.ProductOperatorSpec
 		err := product.OperatorSpec.AssignProperties_To_ProductOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ProductOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ProductOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -485,7 +489,7 @@ func (product *Product_Spec) AssignProperties_To_Product_Spec(destination *stora
 	if augmentedProduct, ok := productAsAny.(augmentConversionForProduct_Spec); ok {
 		err := augmentedProduct.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -523,13 +527,13 @@ func (product *Product_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.Product_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = product.AssignProperties_From_Product_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -547,13 +551,13 @@ func (product *Product_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.Product_STATUS{}
 	err := product.AssignProperties_To_Product_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -619,7 +623,7 @@ func (product *Product_STATUS) AssignProperties_From_Product_STATUS(source *stor
 	if augmentedProduct, ok := productAsAny.(augmentConversionForProduct_STATUS); ok {
 		err := augmentedProduct.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -687,7 +691,7 @@ func (product *Product_STATUS) AssignProperties_To_Product_STATUS(destination *s
 	if augmentedProduct, ok := productAsAny.(augmentConversionForProduct_STATUS); ok {
 		err := augmentedProduct.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 
@@ -766,7 +770,7 @@ func (operator *ProductOperatorSpec) AssignProperties_From_ProductOperatorSpec(s
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForProductOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -827,7 +831,7 @@ func (operator *ProductOperatorSpec) AssignProperties_To_ProductOperatorSpec(des
 	if augmentedOperator, ok := operatorAsAny.(augmentConversionForProductOperatorSpec); ok {
 		err := augmentedOperator.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

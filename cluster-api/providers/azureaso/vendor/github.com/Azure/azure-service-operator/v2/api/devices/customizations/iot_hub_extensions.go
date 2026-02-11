@@ -8,16 +8,17 @@ package customizations
 import (
 	"context"
 
+	. "github.com/Azure/azure-service-operator/v2/internal/logging"
+
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/runtime"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/iothub/armiothub"
 	"github.com/go-logr/logr"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	v1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
 	devices "github.com/Azure/azure-service-operator/v2/api/devices/v1api20210702/storage"
 	"github.com/Azure/azure-service-operator/v2/internal/genericarmclient"
-	. "github.com/Azure/azure-service-operator/v2/internal/logging"
 	"github.com/Azure/azure-service-operator/v2/internal/set"
 	"github.com/Azure/azure-service-operator/v2/internal/util/to"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
@@ -50,7 +51,7 @@ func (ext *IotHubExtension) ExportKubernetesSecrets(
 	// if the hub devices version changes.
 	typedObj, ok := obj.(*devices.IotHub)
 	if !ok {
-		return nil, errors.Errorf("cannot run on unknown resource type %T, expected *devices.IotHub", obj)
+		return nil, eris.Errorf("cannot run on unknown resource type %T, expected *devices.IotHub", obj)
 	}
 
 	// Type assert that we are the hub type. This will fail to compile if
@@ -78,7 +79,7 @@ func (ext *IotHubExtension) ExportKubernetesSecrets(
 		var resClient *armiothub.ResourceClient
 		resClient, err = armiothub.NewResourceClient(subscription, armClient.Creds(), armClient.ClientOptions())
 		if err != nil {
-			return nil, errors.Wrapf(err, "failed to create new DevicesClient")
+			return nil, eris.Wrapf(err, "failed to create new DevicesClient")
 		}
 
 		var pager *runtime.Pager[armiothub.ResourceClientListKeysResponse]
@@ -87,7 +88,7 @@ func (ext *IotHubExtension) ExportKubernetesSecrets(
 		for pager.More() {
 			resp, err = pager.NextPage(ctx)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed listing keys")
+				return nil, eris.Wrapf(err, "failed listing keys")
 			}
 			addSecretsToMap(resp.Value, keys)
 		}

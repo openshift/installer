@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (subscription *Subscription) ConvertTo(hub conversion.Hub) error {
 
 	return subscription.AssignProperties_To_Subscription(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-apimanagement-azure-com-v1api20220801-subscription,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=subscriptions,verbs=create;update,versions=v1api20220801,name=default.v1api20220801.subscriptions.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Subscription{}
-
-// Default applies defaults to the Subscription resource
-func (subscription *Subscription) Default() {
-	subscription.defaultImpl()
-	var temp any = subscription
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (subscription *Subscription) defaultAzureName() {
-	if subscription.Spec.AzureName == "" {
-		subscription.Spec.AzureName = subscription.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Subscription resource
-func (subscription *Subscription) defaultImpl() { subscription.defaultAzureName() }
 
 var _ configmaps.Exporter = &Subscription{}
 
@@ -174,6 +148,10 @@ func (subscription *Subscription) NewEmptyStatus() genruntime.ConvertibleStatus 
 
 // Owner returns the ResourceReference of the owner
 func (subscription *Subscription) Owner() *genruntime.ResourceReference {
+	if subscription.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(subscription.Spec)
 	return subscription.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,121 +168,11 @@ func (subscription *Subscription) SetStatus(status genruntime.ConvertibleStatus)
 	var st Subscription_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	subscription.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-apimanagement-azure-com-v1api20220801-subscription,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=subscriptions,verbs=create;update,versions=v1api20220801,name=validate.v1api20220801.subscriptions.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Subscription{}
-
-// ValidateCreate validates the creation of the resource
-func (subscription *Subscription) ValidateCreate() (admission.Warnings, error) {
-	validations := subscription.createValidations()
-	var temp any = subscription
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (subscription *Subscription) ValidateDelete() (admission.Warnings, error) {
-	validations := subscription.deleteValidations()
-	var temp any = subscription
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (subscription *Subscription) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := subscription.updateValidations()
-	var temp any = subscription
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (subscription *Subscription) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){subscription.validateResourceReferences, subscription.validateOwnerReference, subscription.validateSecretDestinations, subscription.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (subscription *Subscription) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (subscription *Subscription) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return subscription.validateResourceReferences()
-		},
-		subscription.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return subscription.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return subscription.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return subscription.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (subscription *Subscription) validateConfigMapDestinations() (admission.Warnings, error) {
-	if subscription.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(subscription, nil, subscription.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (subscription *Subscription) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(subscription)
-}
-
-// validateResourceReferences validates all resource references
-func (subscription *Subscription) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&subscription.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (subscription *Subscription) validateSecretDestinations() (admission.Warnings, error) {
-	if subscription.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	var toValidate []*genruntime.SecretDestination
-	if subscription.Spec.OperatorSpec.Secrets != nil {
-		toValidate = []*genruntime.SecretDestination{
-			subscription.Spec.OperatorSpec.Secrets.PrimaryKey,
-			subscription.Spec.OperatorSpec.Secrets.SecondaryKey,
-		}
-	}
-	return secrets.ValidateDestinations(subscription, toValidate, subscription.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (subscription *Subscription) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Subscription)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, subscription)
 }
 
 // AssignProperties_From_Subscription populates our Subscription from the provided source Subscription
@@ -317,7 +185,7 @@ func (subscription *Subscription) AssignProperties_From_Subscription(source *sto
 	var spec Subscription_Spec
 	err := spec.AssignProperties_From_Subscription_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Subscription_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Subscription_Spec() to populate field Spec")
 	}
 	subscription.Spec = spec
 
@@ -325,7 +193,7 @@ func (subscription *Subscription) AssignProperties_From_Subscription(source *sto
 	var status Subscription_STATUS
 	err = status.AssignProperties_From_Subscription_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Subscription_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Subscription_STATUS() to populate field Status")
 	}
 	subscription.Status = status
 
@@ -343,7 +211,7 @@ func (subscription *Subscription) AssignProperties_To_Subscription(destination *
 	var spec storage.Subscription_Spec
 	err := subscription.Spec.AssignProperties_To_Subscription_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Subscription_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Subscription_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -351,7 +219,7 @@ func (subscription *Subscription) AssignProperties_To_Subscription(destination *
 	var status storage.Subscription_STATUS
 	err = subscription.Status.AssignProperties_To_Subscription_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Subscription_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Subscription_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -467,7 +335,7 @@ func (subscription *Subscription_Spec) ConvertToARM(resolved genruntime.ConvertT
 	if subscription.PrimaryKey != nil {
 		primaryKeySecret, err := resolved.ResolvedSecrets.Lookup(*subscription.PrimaryKey)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property PrimaryKey")
+			return nil, eris.Wrap(err, "looking up secret for property PrimaryKey")
 		}
 		primaryKey := primaryKeySecret
 		result.Properties.PrimaryKey = &primaryKey
@@ -479,7 +347,7 @@ func (subscription *Subscription_Spec) ConvertToARM(resolved genruntime.ConvertT
 	if subscription.SecondaryKey != nil {
 		secondaryKeySecret, err := resolved.ResolvedSecrets.Lookup(*subscription.SecondaryKey)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up secret for property SecondaryKey")
+			return nil, eris.Wrap(err, "looking up secret for property SecondaryKey")
 		}
 		secondaryKey := secondaryKeySecret
 		result.Properties.SecondaryKey = &secondaryKey
@@ -578,13 +446,13 @@ func (subscription *Subscription_Spec) ConvertSpecFrom(source genruntime.Convert
 	src = &storage.Subscription_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = subscription.AssignProperties_From_Subscription_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -602,13 +470,13 @@ func (subscription *Subscription_Spec) ConvertSpecTo(destination genruntime.Conv
 	dst = &storage.Subscription_Spec{}
 	err := subscription.AssignProperties_To_Subscription_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -629,19 +497,14 @@ func (subscription *Subscription_Spec) AssignProperties_From_Subscription_Spec(s
 	subscription.AzureName = source.AzureName
 
 	// DisplayName
-	if source.DisplayName != nil {
-		displayName := *source.DisplayName
-		subscription.DisplayName = &displayName
-	} else {
-		subscription.DisplayName = nil
-	}
+	subscription.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// OperatorSpec
 	if source.OperatorSpec != nil {
 		var operatorSpec SubscriptionOperatorSpec
 		err := operatorSpec.AssignProperties_From_SubscriptionOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubscriptionOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_SubscriptionOperatorSpec() to populate field OperatorSpec")
 		}
 		subscription.OperatorSpec = &operatorSpec
 	} else {
@@ -713,19 +576,14 @@ func (subscription *Subscription_Spec) AssignProperties_To_Subscription_Spec(des
 	destination.AzureName = subscription.AzureName
 
 	// DisplayName
-	if subscription.DisplayName != nil {
-		displayName := *subscription.DisplayName
-		destination.DisplayName = &displayName
-	} else {
-		destination.DisplayName = nil
-	}
+	destination.DisplayName = genruntime.ClonePointerToString(subscription.DisplayName)
 
 	// OperatorSpec
 	if subscription.OperatorSpec != nil {
 		var operatorSpec storage.SubscriptionOperatorSpec
 		err := subscription.OperatorSpec.AssignProperties_To_SubscriptionOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubscriptionOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_SubscriptionOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -801,12 +659,7 @@ func (subscription *Subscription_Spec) Initialize_From_Subscription_STATUS(sourc
 	}
 
 	// DisplayName
-	if source.DisplayName != nil {
-		displayName := *source.DisplayName
-		subscription.DisplayName = &displayName
-	} else {
-		subscription.DisplayName = nil
-	}
+	subscription.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// OwnerReference
 	if source.OwnerId != nil {
@@ -916,13 +769,13 @@ func (subscription *Subscription_STATUS) ConvertStatusFrom(source genruntime.Con
 	src = &storage.Subscription_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = subscription.AssignProperties_From_Subscription_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -940,13 +793,13 @@ func (subscription *Subscription_STATUS) ConvertStatusTo(destination genruntime.
 	dst = &storage.Subscription_STATUS{}
 	err := subscription.AssignProperties_To_Subscription_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1324,7 +1177,7 @@ func (operator *SubscriptionOperatorSpec) AssignProperties_From_SubscriptionOper
 		var secret SubscriptionOperatorSecrets
 		err := secret.AssignProperties_From_SubscriptionOperatorSecrets(source.Secrets)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SubscriptionOperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_From_SubscriptionOperatorSecrets() to populate field Secrets")
 		}
 		operator.Secrets = &secret
 	} else {
@@ -1381,7 +1234,7 @@ func (operator *SubscriptionOperatorSpec) AssignProperties_To_SubscriptionOperat
 		var secret storage.SubscriptionOperatorSecrets
 		err := operator.Secrets.AssignProperties_To_SubscriptionOperatorSecrets(&secret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SubscriptionOperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_To_SubscriptionOperatorSecrets() to populate field Secrets")
 		}
 		destination.Secrets = &secret
 	} else {

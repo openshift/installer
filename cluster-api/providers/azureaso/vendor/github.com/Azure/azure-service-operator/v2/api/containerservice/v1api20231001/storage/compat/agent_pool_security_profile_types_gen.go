@@ -6,7 +6,7 @@ package compat
 import (
 	storage "github.com/Azure/azure-service-operator/v2/api/containerservice/v1api20240901/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // Storage version of v1api20231102preview.AgentPoolSecurityProfile
@@ -43,7 +43,7 @@ func (profile *AgentPoolSecurityProfile) AssignProperties_From_AgentPoolSecurity
 		var sshAccess string
 		err := propertyBag.Pull("SshAccess", &sshAccess)
 		if err != nil {
-			return errors.Wrap(err, "pulling 'SshAccess' from propertyBag")
+			return eris.Wrap(err, "pulling 'SshAccess' from propertyBag")
 		}
 
 		profile.SshAccess = &sshAccess
@@ -63,7 +63,7 @@ func (profile *AgentPoolSecurityProfile) AssignProperties_From_AgentPoolSecurity
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForAgentPoolSecurityProfile); ok {
 		err := augmentedProfile.AssignPropertiesFrom(source)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
 		}
 	}
 
@@ -111,7 +111,7 @@ func (profile *AgentPoolSecurityProfile) AssignProperties_To_AgentPoolSecurityPr
 	if augmentedProfile, ok := profileAsAny.(augmentConversionForAgentPoolSecurityProfile); ok {
 		err := augmentedProfile.AssignPropertiesTo(destination)
 		if err != nil {
-			return errors.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
 		}
 	}
 

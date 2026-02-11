@@ -2,9 +2,16 @@
 github.com/Azure/azure-service-operator/v2/api/containerservice/customizations
 ------------------------------------------------------------------------------
 FleetExtension: Object (0 properties)
+
 FleetsMemberExtension: Object (0 properties)
+
 FleetsUpdateRunExtension: Object (0 properties)
+
 MaintenanceConfigurationExtension: Object (0 properties)
+
 ManagedClusterExtension: Object (0 properties)
+
 ManagedClustersAgentPoolExtension: Object (0 properties)
+
 TrustedAccessRoleBindingExtension: Object (0 properties)
+

@@ -11,7 +11,7 @@ environment:
   SQLUSER: sa
   SQLPASSWORD: Password12!
   DATABASE: test
-  GOVERSION: 117
+  GOVERSION: 118
   COLUMNENCRYPTION:
   APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2019
   RACE: -race -cpu 4

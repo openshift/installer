@@ -153,6 +153,7 @@ Vault_STATUS: Object (7 properties)
 │       └── "User"
 ├── Tags: map[string]string
 └── Type: *string
+
 Vault_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -265,3 +266,4 @@ Vault_Spec: Object (4 properties)
 │   ├── TenantId: *string
 │   └── VaultUri: *string
 └── Tags: map[string]string
+

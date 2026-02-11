@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/cdn/v1api20210601/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -58,12 +55,12 @@ func (profile *Profile) ConvertFrom(hub conversion.Hub) error {
 
 	err := source.ConvertFrom(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from hub to source")
+		return eris.Wrap(err, "converting from hub to source")
 	}
 
 	err = profile.AssignProperties_From_Profile(&source)
 	if err != nil {
-		return errors.Wrap(err, "converting from source to profile")
+		return eris.Wrap(err, "converting from source to profile")
 	}
 
 	return nil
@@ -75,38 +72,15 @@ func (profile *Profile) ConvertTo(hub conversion.Hub) error {
 	var destination storage.Profile
 	err := profile.AssignProperties_To_Profile(&destination)
 	if err != nil {
-		return errors.Wrap(err, "converting to destination from profile")
+		return eris.Wrap(err, "converting to destination from profile")
 	}
 	err = destination.ConvertTo(hub)
 	if err != nil {
-		return errors.Wrap(err, "converting from destination to hub")
+		return eris.Wrap(err, "converting from destination to hub")
 	}
 
 	return nil
 }
-
-// +kubebuilder:webhook:path=/mutate-cdn-azure-com-v1api20210601-profile,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=profiles,verbs=create;update,versions=v1api20210601,name=default.v1api20210601.profiles.cdn.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &Profile{}
-
-// Default applies defaults to the Profile resource
-func (profile *Profile) Default() {
-	profile.defaultImpl()
-	var temp any = profile
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (profile *Profile) defaultAzureName() {
-	if profile.Spec.AzureName == "" {
-		profile.Spec.AzureName = profile.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the Profile resource
-func (profile *Profile) defaultImpl() { profile.defaultAzureName() }
 
 var _ configmaps.Exporter = &Profile{}
 
@@ -176,6 +150,10 @@ func (profile *Profile) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (profile *Profile) Owner() *genruntime.ResourceReference {
+	if profile.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(profile.Spec)
 	return profile.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -192,114 +170,11 @@ func (profile *Profile) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st Profile_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	profile.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-cdn-azure-com-v1api20210601-profile,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=cdn.azure.com,resources=profiles,verbs=create;update,versions=v1api20210601,name=validate.v1api20210601.profiles.cdn.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &Profile{}
-
-// ValidateCreate validates the creation of the resource
-func (profile *Profile) ValidateCreate() (admission.Warnings, error) {
-	validations := profile.createValidations()
-	var temp any = profile
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (profile *Profile) ValidateDelete() (admission.Warnings, error) {
-	validations := profile.deleteValidations()
-	var temp any = profile
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (profile *Profile) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := profile.updateValidations()
-	var temp any = profile
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (profile *Profile) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){profile.validateResourceReferences, profile.validateOwnerReference, profile.validateSecretDestinations, profile.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (profile *Profile) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (profile *Profile) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return profile.validateResourceReferences()
-		},
-		profile.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return profile.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return profile.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return profile.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (profile *Profile) validateConfigMapDestinations() (admission.Warnings, error) {
-	if profile.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(profile, nil, profile.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (profile *Profile) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(profile)
-}
-
-// validateResourceReferences validates all resource references
-func (profile *Profile) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&profile.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (profile *Profile) validateSecretDestinations() (admission.Warnings, error) {
-	if profile.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(profile, nil, profile.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (profile *Profile) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*Profile)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, profile)
 }
 
 // AssignProperties_From_Profile populates our Profile from the provided source Profile
@@ -312,7 +187,7 @@ func (profile *Profile) AssignProperties_From_Profile(source *storage.Profile) e
 	var spec Profile_Spec
 	err := spec.AssignProperties_From_Profile_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Profile_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_Profile_Spec() to populate field Spec")
 	}
 	profile.Spec = spec
 
@@ -320,7 +195,7 @@ func (profile *Profile) AssignProperties_From_Profile(source *storage.Profile) e
 	var status Profile_STATUS
 	err = status.AssignProperties_From_Profile_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_Profile_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_Profile_STATUS() to populate field Status")
 	}
 	profile.Status = status
 
@@ -338,7 +213,7 @@ func (profile *Profile) AssignProperties_To_Profile(destination *storage.Profile
 	var spec storage.Profile_Spec
 	err := profile.Spec.AssignProperties_To_Profile_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Profile_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_Profile_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -346,7 +221,7 @@ func (profile *Profile) AssignProperties_To_Profile(destination *storage.Profile
 	var status storage.Profile_STATUS
 	err = profile.Status.AssignProperties_To_Profile_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_Profile_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_Profile_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -533,13 +408,13 @@ func (profile *Profile_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) 
 	src = &storage.Profile_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = profile.AssignProperties_From_Profile_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -557,13 +432,13 @@ func (profile *Profile_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpe
 	dst = &storage.Profile_Spec{}
 	err := profile.AssignProperties_To_Profile_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -583,7 +458,7 @@ func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *storage.
 		var operatorSpec ProfileOperatorSpec
 		err := operatorSpec.AssignProperties_From_ProfileOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ProfileOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ProfileOperatorSpec() to populate field OperatorSpec")
 		}
 		profile.OperatorSpec = &operatorSpec
 	} else {
@@ -591,12 +466,7 @@ func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *storage.
 	}
 
 	// OriginResponseTimeoutSeconds
-	if source.OriginResponseTimeoutSeconds != nil {
-		originResponseTimeoutSecond := *source.OriginResponseTimeoutSeconds
-		profile.OriginResponseTimeoutSeconds = &originResponseTimeoutSecond
-	} else {
-		profile.OriginResponseTimeoutSeconds = nil
-	}
+	profile.OriginResponseTimeoutSeconds = genruntime.ClonePointerToInt(source.OriginResponseTimeoutSeconds)
 
 	// Owner
 	if source.Owner != nil {
@@ -611,7 +481,7 @@ func (profile *Profile_Spec) AssignProperties_From_Profile_Spec(source *storage.
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		profile.Sku = &sku
 	} else {
@@ -641,7 +511,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *stora
 		var operatorSpec storage.ProfileOperatorSpec
 		err := profile.OperatorSpec.AssignProperties_To_ProfileOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ProfileOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ProfileOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -649,12 +519,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *stora
 	}
 
 	// OriginResponseTimeoutSeconds
-	if profile.OriginResponseTimeoutSeconds != nil {
-		originResponseTimeoutSecond := *profile.OriginResponseTimeoutSeconds
-		destination.OriginResponseTimeoutSeconds = &originResponseTimeoutSecond
-	} else {
-		destination.OriginResponseTimeoutSeconds = nil
-	}
+	destination.OriginResponseTimeoutSeconds = genruntime.ClonePointerToInt(profile.OriginResponseTimeoutSeconds)
 
 	// OriginalVersion
 	destination.OriginalVersion = profile.OriginalVersion()
@@ -672,7 +537,7 @@ func (profile *Profile_Spec) AssignProperties_To_Profile_Spec(destination *stora
 		var sku storage.Sku
 		err := profile.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -759,13 +624,13 @@ func (profile *Profile_STATUS) ConvertStatusFrom(source genruntime.ConvertibleSt
 	src = &storage.Profile_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = profile.AssignProperties_From_Profile_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -783,13 +648,13 @@ func (profile *Profile_STATUS) ConvertStatusTo(destination genruntime.Convertibl
 	dst = &storage.Profile_STATUS{}
 	err := profile.AssignProperties_To_Profile_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -962,7 +827,7 @@ func (profile *Profile_STATUS) AssignProperties_From_Profile_STATUS(source *stor
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		profile.Sku = &sku
 	} else {
@@ -974,7 +839,7 @@ func (profile *Profile_STATUS) AssignProperties_From_Profile_STATUS(source *stor
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		profile.SystemData = &systemDatum
 	} else {
@@ -1038,7 +903,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *s
 		var sku storage.Sku_STATUS
 		err := profile.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1050,7 +915,7 @@ func (profile *Profile_STATUS) AssignProperties_To_Profile_STATUS(destination *s
 		var systemDatum storage.SystemData_STATUS
 		err := profile.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {

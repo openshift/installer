@@ -2,52 +2,102 @@
 github.com/Azure/azure-service-operator/v2/api/network/customizations
 ---------------------------------------------------------------------
 ApplicationGatewayExtension: Object (0 properties)
+
 ApplicationSecurityGroupExtension: Object (0 properties)
+
 BastionHostExtension: Object (0 properties)
+
 DnsForwardingRuleSetsForwardingRuleExtension: Object (0 properties)
+
 DnsForwardingRuleSetsVirtualNetworkLinkExtension: Object (0 properties)
+
 DnsForwardingRulesetExtension: Object (0 properties)
+
 DnsResolverExtension: Object (0 properties)
+
 DnsResolversInboundEndpointExtension: Object (0 properties)
+
 DnsResolversOutboundEndpointExtension: Object (0 properties)
+
 DnsZoneExtension: Object (0 properties)
+
 DnsZonesAAAARecordExtension: Object (0 properties)
+
 DnsZonesARecordExtension: Object (0 properties)
+
 DnsZonesCAARecordExtension: Object (0 properties)
+
 DnsZonesCNAMERecordExtension: Object (0 properties)
+
 DnsZonesMXRecordExtension: Object (0 properties)
+
 DnsZonesNSRecordExtension: Object (0 properties)
+
 DnsZonesPTRRecordExtension: Object (0 properties)
+
 DnsZonesSRVRecordExtension: Object (0 properties)
+
 DnsZonesTXTRecordExtension: Object (0 properties)
+
 LoadBalancerExtension: Object (0 properties)
+
 LoadBalancersInboundNatRuleExtension: Object (0 properties)
+
 NatGatewayExtension: Object (0 properties)
+
 NetworkInterfaceExtension: Object (0 properties)
+
 NetworkSecurityGroupExtension: Object (0 properties)
+
 NetworkSecurityGroupsSecurityRuleExtension: Object (0 properties)
+
 PrivateDnsZoneExtension: Object (0 properties)
+
 PrivateDnsZonesAAAARecordExtension: Object (0 properties)
+
 PrivateDnsZonesARecordExtension: Object (0 properties)
+
 PrivateDnsZonesCNAMERecordExtension: Object (0 properties)
+
 PrivateDnsZonesMXRecordExtension: Object (0 properties)
+
 PrivateDnsZonesPTRRecordExtension: Object (0 properties)
+
 PrivateDnsZonesSRVRecordExtension: Object (0 properties)
+
 PrivateDnsZonesTXTRecordExtension: Object (0 properties)
+
 PrivateDnsZonesVirtualNetworkLinkExtension: Object (0 properties)
+
 PrivateEndpointExtension: Object (0 properties)
+
 PrivateEndpointsPrivateDnsZoneGroupExtension: Object (0 properties)
+
 PrivateLinkServiceExtension: Object (0 properties)
+
 PublicIPAddressExtension: Object (0 properties)
+
 PublicIPPrefixExtension: Object (0 properties)
+
 RouteTableExtension: Object (0 properties)
+
 RouteTablesRouteExtension: Object (0 properties)
+
 TrafficManagerProfileExtension: Object (0 properties)
+
 TrafficManagerProfilesAzureEndpointExtension: Object (0 properties)
+
 TrafficManagerProfilesExternalEndpointExtension: Object (0 properties)
+
 TrafficManagerProfilesNestedEndpointExtension: Object (0 properties)
+
 VirtualNetworkExtension: Object (0 properties)
+
 VirtualNetworkGatewayExtension: Object (0 properties)
+
 VirtualNetworksSubnetExtension: Object (0 properties)
+
 VirtualNetworksVirtualNetworkPeeringExtension: Object (0 properties)
+
 WebApplicationFirewallPolicyExtension: Object (0 properties)
+

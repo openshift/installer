@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/appconfiguration/v1api20220501/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (store *ConfigurationStore) ConvertTo(hub conversion.Hub) error {
 
 	return store.AssignProperties_To_ConfigurationStore(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-appconfiguration-azure-com-v1api20220501-configurationstore,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=appconfiguration.azure.com,resources=configurationstores,verbs=create;update,versions=v1api20220501,name=default.v1api20220501.configurationstores.appconfiguration.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ConfigurationStore{}
-
-// Default applies defaults to the ConfigurationStore resource
-func (store *ConfigurationStore) Default() {
-	store.defaultImpl()
-	var temp any = store
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (store *ConfigurationStore) defaultAzureName() {
-	if store.Spec.AzureName == "" {
-		store.Spec.AzureName = store.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ConfigurationStore resource
-func (store *ConfigurationStore) defaultImpl() { store.defaultAzureName() }
 
 var _ configmaps.Exporter = &ConfigurationStore{}
 
@@ -173,6 +147,10 @@ func (store *ConfigurationStore) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (store *ConfigurationStore) Owner() *genruntime.ResourceReference {
+	if store.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(store.Spec)
 	return store.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,131 +167,11 @@ func (store *ConfigurationStore) SetStatus(status genruntime.ConvertibleStatus) 
 	var st ConfigurationStore_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	store.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-appconfiguration-azure-com-v1api20220501-configurationstore,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=appconfiguration.azure.com,resources=configurationstores,verbs=create;update,versions=v1api20220501,name=validate.v1api20220501.configurationstores.appconfiguration.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ConfigurationStore{}
-
-// ValidateCreate validates the creation of the resource
-func (store *ConfigurationStore) ValidateCreate() (admission.Warnings, error) {
-	validations := store.createValidations()
-	var temp any = store
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (store *ConfigurationStore) ValidateDelete() (admission.Warnings, error) {
-	validations := store.deleteValidations()
-	var temp any = store
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (store *ConfigurationStore) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := store.updateValidations()
-	var temp any = store
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (store *ConfigurationStore) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){store.validateResourceReferences, store.validateOwnerReference, store.validateSecretDestinations, store.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (store *ConfigurationStore) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (store *ConfigurationStore) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return store.validateResourceReferences()
-		},
-		store.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return store.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return store.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return store.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (store *ConfigurationStore) validateConfigMapDestinations() (admission.Warnings, error) {
-	if store.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(store, nil, store.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (store *ConfigurationStore) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(store)
-}
-
-// validateResourceReferences validates all resource references
-func (store *ConfigurationStore) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&store.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (store *ConfigurationStore) validateSecretDestinations() (admission.Warnings, error) {
-	if store.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	var toValidate []*genruntime.SecretDestination
-	if store.Spec.OperatorSpec.Secrets != nil {
-		toValidate = []*genruntime.SecretDestination{
-			store.Spec.OperatorSpec.Secrets.PrimaryConnectionString,
-			store.Spec.OperatorSpec.Secrets.PrimaryKey,
-			store.Spec.OperatorSpec.Secrets.PrimaryKeyID,
-			store.Spec.OperatorSpec.Secrets.PrimaryReadOnlyConnectionString,
-			store.Spec.OperatorSpec.Secrets.PrimaryReadOnlyKey,
-			store.Spec.OperatorSpec.Secrets.PrimaryReadOnlyKeyID,
-			store.Spec.OperatorSpec.Secrets.SecondaryConnectionString,
-			store.Spec.OperatorSpec.Secrets.SecondaryKey,
-			store.Spec.OperatorSpec.Secrets.SecondaryKeyID,
-			store.Spec.OperatorSpec.Secrets.SecondaryReadOnlyConnectionString,
-			store.Spec.OperatorSpec.Secrets.SecondaryReadOnlyKey,
-			store.Spec.OperatorSpec.Secrets.SecondaryReadOnlyKeyID,
-		}
-	}
-	return secrets.ValidateDestinations(store, toValidate, store.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (store *ConfigurationStore) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ConfigurationStore)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, store)
 }
 
 // AssignProperties_From_ConfigurationStore populates our ConfigurationStore from the provided source ConfigurationStore
@@ -326,7 +184,7 @@ func (store *ConfigurationStore) AssignProperties_From_ConfigurationStore(source
 	var spec ConfigurationStore_Spec
 	err := spec.AssignProperties_From_ConfigurationStore_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ConfigurationStore_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ConfigurationStore_Spec() to populate field Spec")
 	}
 	store.Spec = spec
 
@@ -334,7 +192,7 @@ func (store *ConfigurationStore) AssignProperties_From_ConfigurationStore(source
 	var status ConfigurationStore_STATUS
 	err = status.AssignProperties_From_ConfigurationStore_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ConfigurationStore_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ConfigurationStore_STATUS() to populate field Status")
 	}
 	store.Status = status
 
@@ -352,7 +210,7 @@ func (store *ConfigurationStore) AssignProperties_To_ConfigurationStore(destinat
 	var spec storage.ConfigurationStore_Spec
 	err := store.Spec.AssignProperties_To_ConfigurationStore_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ConfigurationStore_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ConfigurationStore_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -360,7 +218,7 @@ func (store *ConfigurationStore) AssignProperties_To_ConfigurationStore(destinat
 	var status storage.ConfigurationStore_STATUS
 	err = store.Status.AssignProperties_To_ConfigurationStore_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ConfigurationStore_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ConfigurationStore_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -699,13 +557,13 @@ func (store *ConfigurationStore_Spec) ConvertSpecFrom(source genruntime.Converti
 	src = &storage.ConfigurationStore_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = store.AssignProperties_From_ConfigurationStore_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -723,13 +581,13 @@ func (store *ConfigurationStore_Spec) ConvertSpecTo(destination genruntime.Conve
 	dst = &storage.ConfigurationStore_Spec{}
 	err := store.AssignProperties_To_ConfigurationStore_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -771,7 +629,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_From_ConfigurationStore_S
 		var encryption EncryptionProperties
 		err := encryption.AssignProperties_From_EncryptionProperties(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionProperties() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionProperties() to populate field Encryption")
 		}
 		store.Encryption = &encryption
 	} else {
@@ -783,7 +641,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_From_ConfigurationStore_S
 		var identity ResourceIdentity
 		err := identity.AssignProperties_From_ResourceIdentity(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceIdentity() to populate field Identity")
 		}
 		store.Identity = &identity
 	} else {
@@ -798,7 +656,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_From_ConfigurationStore_S
 		var operatorSpec ConfigurationStoreOperatorSpec
 		err := operatorSpec.AssignProperties_From_ConfigurationStoreOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ConfigurationStoreOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ConfigurationStoreOperatorSpec() to populate field OperatorSpec")
 		}
 		store.OperatorSpec = &operatorSpec
 	} else {
@@ -827,7 +685,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_From_ConfigurationStore_S
 		var sku Sku
 		err := sku.AssignProperties_From_Sku(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku() to populate field Sku")
 		}
 		store.Sku = &sku
 	} else {
@@ -842,7 +700,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_From_ConfigurationStore_S
 		var systemDatum SystemData
 		err := systemDatum.AssignProperties_From_SystemData(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData() to populate field SystemData")
 		}
 		store.SystemData = &systemDatum
 	} else {
@@ -893,7 +751,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_To_ConfigurationStore_Spe
 		var encryption storage.EncryptionProperties
 		err := store.Encryption.AssignProperties_To_EncryptionProperties(&encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionProperties() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionProperties() to populate field Encryption")
 		}
 		destination.Encryption = &encryption
 	} else {
@@ -905,7 +763,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_To_ConfigurationStore_Spe
 		var identity storage.ResourceIdentity
 		err := store.Identity.AssignProperties_To_ResourceIdentity(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceIdentity() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceIdentity() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -920,7 +778,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_To_ConfigurationStore_Spe
 		var operatorSpec storage.ConfigurationStoreOperatorSpec
 		err := store.OperatorSpec.AssignProperties_To_ConfigurationStoreOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ConfigurationStoreOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ConfigurationStoreOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -951,7 +809,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_To_ConfigurationStore_Spe
 		var sku storage.Sku
 		err := store.Sku.AssignProperties_To_Sku(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -966,7 +824,7 @@ func (store *ConfigurationStore_Spec) AssignProperties_To_ConfigurationStore_Spe
 		var systemDatum storage.SystemData
 		err := store.SystemData.AssignProperties_To_SystemData(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1019,7 +877,7 @@ func (store *ConfigurationStore_Spec) Initialize_From_ConfigurationStore_STATUS(
 		var encryption EncryptionProperties
 		err := encryption.Initialize_From_EncryptionProperties_STATUS(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_EncryptionProperties_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling Initialize_From_EncryptionProperties_STATUS() to populate field Encryption")
 		}
 		store.Encryption = &encryption
 	} else {
@@ -1031,7 +889,7 @@ func (store *ConfigurationStore_Spec) Initialize_From_ConfigurationStore_STATUS(
 		var identity ResourceIdentity
 		err := identity.Initialize_From_ResourceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ResourceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling Initialize_From_ResourceIdentity_STATUS() to populate field Identity")
 		}
 		store.Identity = &identity
 	} else {
@@ -1054,7 +912,7 @@ func (store *ConfigurationStore_Spec) Initialize_From_ConfigurationStore_STATUS(
 		var sku Sku
 		err := sku.Initialize_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling Initialize_From_Sku_STATUS() to populate field Sku")
 		}
 		store.Sku = &sku
 	} else {
@@ -1069,7 +927,7 @@ func (store *ConfigurationStore_Spec) Initialize_From_ConfigurationStore_STATUS(
 		var systemDatum SystemData
 		err := systemDatum.Initialize_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling Initialize_From_SystemData_STATUS() to populate field SystemData")
 		}
 		store.SystemData = &systemDatum
 	} else {
@@ -1169,13 +1027,13 @@ func (store *ConfigurationStore_STATUS) ConvertStatusFrom(source genruntime.Conv
 	src = &storage.ConfigurationStore_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = store.AssignProperties_From_ConfigurationStore_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -1193,13 +1051,13 @@ func (store *ConfigurationStore_STATUS) ConvertStatusTo(destination genruntime.C
 	dst = &storage.ConfigurationStore_STATUS{}
 	err := store.AssignProperties_To_ConfigurationStore_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1434,7 +1292,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_From_ConfigurationStore
 		var encryption EncryptionProperties_STATUS
 		err := encryption.AssignProperties_From_EncryptionProperties_STATUS(source.Encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_EncryptionProperties_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_From_EncryptionProperties_STATUS() to populate field Encryption")
 		}
 		store.Encryption = &encryption
 	} else {
@@ -1452,7 +1310,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_From_ConfigurationStore
 		var identity ResourceIdentity_STATUS
 		err := identity.AssignProperties_From_ResourceIdentity_STATUS(source.Identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ResourceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_From_ResourceIdentity_STATUS() to populate field Identity")
 		}
 		store.Identity = &identity
 	} else {
@@ -1474,7 +1332,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_From_ConfigurationStore
 			var privateEndpointConnection PrivateEndpointConnectionReference_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnectionReference_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnectionReference_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnectionReference_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -1506,7 +1364,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_From_ConfigurationStore
 		var sku Sku_STATUS
 		err := sku.AssignProperties_From_Sku_STATUS(source.Sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_From_Sku_STATUS() to populate field Sku")
 		}
 		store.Sku = &sku
 	} else {
@@ -1521,7 +1379,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_From_ConfigurationStore
 		var systemDatum SystemData_STATUS
 		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
 		}
 		store.SystemData = &systemDatum
 	} else {
@@ -1578,7 +1436,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_To_ConfigurationStore_S
 		var encryption storage.EncryptionProperties_STATUS
 		err := store.Encryption.AssignProperties_To_EncryptionProperties_STATUS(&encryption)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_EncryptionProperties_STATUS() to populate field Encryption")
+			return eris.Wrap(err, "calling AssignProperties_To_EncryptionProperties_STATUS() to populate field Encryption")
 		}
 		destination.Encryption = &encryption
 	} else {
@@ -1596,7 +1454,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_To_ConfigurationStore_S
 		var identity storage.ResourceIdentity_STATUS
 		err := store.Identity.AssignProperties_To_ResourceIdentity_STATUS(&identity)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ResourceIdentity_STATUS() to populate field Identity")
+			return eris.Wrap(err, "calling AssignProperties_To_ResourceIdentity_STATUS() to populate field Identity")
 		}
 		destination.Identity = &identity
 	} else {
@@ -1618,7 +1476,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_To_ConfigurationStore_S
 			var privateEndpointConnection storage.PrivateEndpointConnectionReference_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnectionReference_STATUS(&privateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnectionReference_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnectionReference_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -1648,7 +1506,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_To_ConfigurationStore_S
 		var sku storage.Sku_STATUS
 		err := store.Sku.AssignProperties_To_Sku_STATUS(&sku)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
+			return eris.Wrap(err, "calling AssignProperties_To_Sku_STATUS() to populate field Sku")
 		}
 		destination.Sku = &sku
 	} else {
@@ -1663,7 +1521,7 @@ func (store *ConfigurationStore_STATUS) AssignProperties_To_ConfigurationStore_S
 		var systemDatum storage.SystemData_STATUS
 		err := store.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
 		}
 		destination.SystemData = &systemDatum
 	} else {
@@ -1743,7 +1601,7 @@ func (operator *ConfigurationStoreOperatorSpec) AssignProperties_From_Configurat
 		var secret ConfigurationStoreOperatorSecrets
 		err := secret.AssignProperties_From_ConfigurationStoreOperatorSecrets(source.Secrets)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ConfigurationStoreOperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_From_ConfigurationStoreOperatorSecrets() to populate field Secrets")
 		}
 		operator.Secrets = &secret
 	} else {
@@ -1800,7 +1658,7 @@ func (operator *ConfigurationStoreOperatorSpec) AssignProperties_To_Configuratio
 		var secret storage.ConfigurationStoreOperatorSecrets
 		err := operator.Secrets.AssignProperties_To_ConfigurationStoreOperatorSecrets(&secret)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ConfigurationStoreOperatorSecrets() to populate field Secrets")
+			return eris.Wrap(err, "calling AssignProperties_To_ConfigurationStoreOperatorSecrets() to populate field Secrets")
 		}
 		destination.Secrets = &secret
 	} else {
@@ -1955,7 +1813,7 @@ func (properties *EncryptionProperties) AssignProperties_From_EncryptionProperti
 		var keyVaultProperty KeyVaultProperties
 		err := keyVaultProperty.AssignProperties_From_KeyVaultProperties(source.KeyVaultProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultProperties() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultProperties() to populate field KeyVaultProperties")
 		}
 		properties.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -1976,7 +1834,7 @@ func (properties *EncryptionProperties) AssignProperties_To_EncryptionProperties
 		var keyVaultProperty storage.KeyVaultProperties
 		err := properties.KeyVaultProperties.AssignProperties_To_KeyVaultProperties(&keyVaultProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultProperties() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultProperties() to populate field KeyVaultProperties")
 		}
 		destination.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -2002,7 +1860,7 @@ func (properties *EncryptionProperties) Initialize_From_EncryptionProperties_STA
 		var keyVaultProperty KeyVaultProperties
 		err := keyVaultProperty.Initialize_From_KeyVaultProperties_STATUS(source.KeyVaultProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling Initialize_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
 		}
 		properties.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -2056,7 +1914,7 @@ func (properties *EncryptionProperties_STATUS) AssignProperties_From_EncryptionP
 		var keyVaultProperty KeyVaultProperties_STATUS
 		err := keyVaultProperty.AssignProperties_From_KeyVaultProperties_STATUS(source.KeyVaultProperties)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
 		}
 		properties.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -2077,7 +1935,7 @@ func (properties *EncryptionProperties_STATUS) AssignProperties_To_EncryptionPro
 		var keyVaultProperty storage.KeyVaultProperties_STATUS
 		err := properties.KeyVaultProperties.AssignProperties_To_KeyVaultProperties_STATUS(&keyVaultProperty)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultProperties_STATUS() to populate field KeyVaultProperties")
 		}
 		destination.KeyVaultProperties = &keyVaultProperty
 	} else {
@@ -2243,7 +2101,7 @@ func (identity *ResourceIdentity) AssignProperties_From_ResourceIdentity(source 
 			var userAssignedIdentity UserAssignedIdentityDetails
 			err := userAssignedIdentity.AssignProperties_From_UserAssignedIdentityDetails(&userAssignedIdentityItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -2278,7 +2136,7 @@ func (identity *ResourceIdentity) AssignProperties_To_ResourceIdentity(destinati
 			var userAssignedIdentity storage.UserAssignedIdentityDetails
 			err := userAssignedIdentityItem.AssignProperties_To_UserAssignedIdentityDetails(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserAssignedIdentityDetails() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityList[userAssignedIdentityIndex] = userAssignedIdentity
 		}
@@ -2422,7 +2280,7 @@ func (identity *ResourceIdentity_STATUS) AssignProperties_From_ResourceIdentity_
 			var userAssignedIdentity UserIdentity_STATUS
 			err := userAssignedIdentity.AssignProperties_From_UserIdentity_STATUS(&userAssignedIdentityValue)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_UserIdentity_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_From_UserIdentity_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}
@@ -2463,7 +2321,7 @@ func (identity *ResourceIdentity_STATUS) AssignProperties_To_ResourceIdentity_ST
 			var userAssignedIdentity storage.UserIdentity_STATUS
 			err := userAssignedIdentityValue.AssignProperties_To_UserIdentity_STATUS(&userAssignedIdentity)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_UserIdentity_STATUS() to populate field UserAssignedIdentities")
+				return eris.Wrap(err, "calling AssignProperties_To_UserIdentity_STATUS() to populate field UserAssignedIdentities")
 			}
 			userAssignedIdentityMap[userAssignedIdentityKey] = userAssignedIdentity
 		}

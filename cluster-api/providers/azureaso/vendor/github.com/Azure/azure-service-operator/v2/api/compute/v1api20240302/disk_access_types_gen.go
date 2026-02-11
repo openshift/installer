@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/compute/v1api20240302/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (access *DiskAccess) ConvertTo(hub conversion.Hub) error {
 
 	return access.AssignProperties_To_DiskAccess(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-compute-azure-com-v1api20240302-diskaccess,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=compute.azure.com,resources=diskaccesses,verbs=create;update,versions=v1api20240302,name=default.v1api20240302.diskaccesses.compute.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &DiskAccess{}
-
-// Default applies defaults to the DiskAccess resource
-func (access *DiskAccess) Default() {
-	access.defaultImpl()
-	var temp any = access
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (access *DiskAccess) defaultAzureName() {
-	if access.Spec.AzureName == "" {
-		access.Spec.AzureName = access.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the DiskAccess resource
-func (access *DiskAccess) defaultImpl() { access.defaultAzureName() }
 
 var _ configmaps.Exporter = &DiskAccess{}
 
@@ -173,6 +147,10 @@ func (access *DiskAccess) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (access *DiskAccess) Owner() *genruntime.ResourceReference {
+	if access.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(access.Spec)
 	return access.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -189,114 +167,11 @@ func (access *DiskAccess) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st DiskAccess_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	access.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-compute-azure-com-v1api20240302-diskaccess,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=compute.azure.com,resources=diskaccesses,verbs=create;update,versions=v1api20240302,name=validate.v1api20240302.diskaccesses.compute.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &DiskAccess{}
-
-// ValidateCreate validates the creation of the resource
-func (access *DiskAccess) ValidateCreate() (admission.Warnings, error) {
-	validations := access.createValidations()
-	var temp any = access
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (access *DiskAccess) ValidateDelete() (admission.Warnings, error) {
-	validations := access.deleteValidations()
-	var temp any = access
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (access *DiskAccess) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := access.updateValidations()
-	var temp any = access
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (access *DiskAccess) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){access.validateResourceReferences, access.validateOwnerReference, access.validateSecretDestinations, access.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (access *DiskAccess) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (access *DiskAccess) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return access.validateResourceReferences()
-		},
-		access.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return access.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return access.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return access.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (access *DiskAccess) validateConfigMapDestinations() (admission.Warnings, error) {
-	if access.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(access, nil, access.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (access *DiskAccess) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(access)
-}
-
-// validateResourceReferences validates all resource references
-func (access *DiskAccess) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&access.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (access *DiskAccess) validateSecretDestinations() (admission.Warnings, error) {
-	if access.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(access, nil, access.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (access *DiskAccess) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*DiskAccess)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, access)
 }
 
 // AssignProperties_From_DiskAccess populates our DiskAccess from the provided source DiskAccess
@@ -309,7 +184,7 @@ func (access *DiskAccess) AssignProperties_From_DiskAccess(source *storage.DiskA
 	var spec DiskAccess_Spec
 	err := spec.AssignProperties_From_DiskAccess_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DiskAccess_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_DiskAccess_Spec() to populate field Spec")
 	}
 	access.Spec = spec
 
@@ -317,7 +192,7 @@ func (access *DiskAccess) AssignProperties_From_DiskAccess(source *storage.DiskA
 	var status DiskAccess_STATUS
 	err = status.AssignProperties_From_DiskAccess_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_DiskAccess_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_DiskAccess_STATUS() to populate field Status")
 	}
 	access.Status = status
 
@@ -335,7 +210,7 @@ func (access *DiskAccess) AssignProperties_To_DiskAccess(destination *storage.Di
 	var spec storage.DiskAccess_Spec
 	err := access.Spec.AssignProperties_To_DiskAccess_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DiskAccess_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_DiskAccess_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (access *DiskAccess) AssignProperties_To_DiskAccess(destination *storage.Di
 	var status storage.DiskAccess_STATUS
 	err = access.Status.AssignProperties_To_DiskAccess_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_DiskAccess_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_DiskAccess_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -500,13 +375,13 @@ func (access *DiskAccess_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec
 	src = &storage.DiskAccess_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = access.AssignProperties_From_DiskAccess_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -524,13 +399,13 @@ func (access *DiskAccess_Spec) ConvertSpecTo(destination genruntime.ConvertibleS
 	dst = &storage.DiskAccess_Spec{}
 	err := access.AssignProperties_To_DiskAccess_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -547,7 +422,7 @@ func (access *DiskAccess_Spec) AssignProperties_From_DiskAccess_Spec(source *sto
 		var extendedLocation ExtendedLocation
 		err := extendedLocation.AssignProperties_From_ExtendedLocation(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation() to populate field ExtendedLocation")
 		}
 		access.ExtendedLocation = &extendedLocation
 	} else {
@@ -562,7 +437,7 @@ func (access *DiskAccess_Spec) AssignProperties_From_DiskAccess_Spec(source *sto
 		var operatorSpec DiskAccessOperatorSpec
 		err := operatorSpec.AssignProperties_From_DiskAccessOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_DiskAccessOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_DiskAccessOperatorSpec() to populate field OperatorSpec")
 		}
 		access.OperatorSpec = &operatorSpec
 	} else {
@@ -597,7 +472,7 @@ func (access *DiskAccess_Spec) AssignProperties_To_DiskAccess_Spec(destination *
 		var extendedLocation storage.ExtendedLocation
 		err := access.ExtendedLocation.AssignProperties_To_ExtendedLocation(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation() to populate field ExtendedLocation")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -612,7 +487,7 @@ func (access *DiskAccess_Spec) AssignProperties_To_DiskAccess_Spec(destination *
 		var operatorSpec storage.DiskAccessOperatorSpec
 		err := access.OperatorSpec.AssignProperties_To_DiskAccessOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_DiskAccessOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_DiskAccessOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -652,7 +527,7 @@ func (access *DiskAccess_Spec) Initialize_From_DiskAccess_STATUS(source *DiskAcc
 		var extendedLocation ExtendedLocation
 		err := extendedLocation.Initialize_From_ExtendedLocation_STATUS(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling Initialize_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		access.ExtendedLocation = &extendedLocation
 	} else {
@@ -725,13 +600,13 @@ func (access *DiskAccess_STATUS) ConvertStatusFrom(source genruntime.Convertible
 	src = &storage.DiskAccess_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = access.AssignProperties_From_DiskAccess_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -749,13 +624,13 @@ func (access *DiskAccess_STATUS) ConvertStatusTo(destination genruntime.Converti
 	dst = &storage.DiskAccess_STATUS{}
 	err := access.AssignProperties_To_DiskAccess_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -866,7 +741,7 @@ func (access *DiskAccess_STATUS) AssignProperties_From_DiskAccess_STATUS(source 
 		var extendedLocation ExtendedLocation_STATUS
 		err := extendedLocation.AssignProperties_From_ExtendedLocation_STATUS(source.ExtendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_From_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		access.ExtendedLocation = &extendedLocation
 	} else {
@@ -891,7 +766,7 @@ func (access *DiskAccess_STATUS) AssignProperties_From_DiskAccess_STATUS(source 
 			var privateEndpointConnection PrivateEndpointConnection_STATUS
 			err := privateEndpointConnection.AssignProperties_From_PrivateEndpointConnection_STATUS(&privateEndpointConnectionItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_From_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}
@@ -929,7 +804,7 @@ func (access *DiskAccess_STATUS) AssignProperties_To_DiskAccess_STATUS(destinati
 		var extendedLocation storage.ExtendedLocation_STATUS
 		err := access.ExtendedLocation.AssignProperties_To_ExtendedLocation_STATUS(&extendedLocation)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
+			return eris.Wrap(err, "calling AssignProperties_To_ExtendedLocation_STATUS() to populate field ExtendedLocation")
 		}
 		destination.ExtendedLocation = &extendedLocation
 	} else {
@@ -954,7 +829,7 @@ func (access *DiskAccess_STATUS) AssignProperties_To_DiskAccess_STATUS(destinati
 			var privateEndpointConnection storage.PrivateEndpointConnection_STATUS
 			err := privateEndpointConnectionItem.AssignProperties_To_PrivateEndpointConnection_STATUS(&privateEndpointConnection)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
+				return eris.Wrap(err, "calling AssignProperties_To_PrivateEndpointConnection_STATUS() to populate field PrivateEndpointConnections")
 			}
 			privateEndpointConnectionList[privateEndpointConnectionIndex] = privateEndpointConnection
 		}

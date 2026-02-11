@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/sql/v1api20211101/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (group *ServersFailoverGroup) ConvertTo(hub conversion.Hub) error {
 
 	return group.AssignProperties_To_ServersFailoverGroup(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-sql-azure-com-v1api20211101-serversfailovergroup,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serversfailovergroups,verbs=create;update,versions=v1api20211101,name=default.v1api20211101.serversfailovergroups.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &ServersFailoverGroup{}
-
-// Default applies defaults to the ServersFailoverGroup resource
-func (group *ServersFailoverGroup) Default() {
-	group.defaultImpl()
-	var temp any = group
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (group *ServersFailoverGroup) defaultAzureName() {
-	if group.Spec.AzureName == "" {
-		group.Spec.AzureName = group.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the ServersFailoverGroup resource
-func (group *ServersFailoverGroup) defaultImpl() { group.defaultAzureName() }
 
 var _ configmaps.Exporter = &ServersFailoverGroup{}
 
@@ -173,6 +147,10 @@ func (group *ServersFailoverGroup) NewEmptyStatus() genruntime.ConvertibleStatus
 
 // Owner returns the ResourceReference of the owner
 func (group *ServersFailoverGroup) Owner() *genruntime.ResourceReference {
+	if group.Spec.Owner == nil {
+		return nil
+	}
+
 	ownerGroup, ownerKind := genruntime.LookupOwnerGroupKind(group.Spec)
 	return group.Spec.Owner.AsResourceReference(ownerGroup, ownerKind)
 }
@@ -189,114 +167,11 @@ func (group *ServersFailoverGroup) SetStatus(status genruntime.ConvertibleStatus
 	var st ServersFailoverGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	group.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-sql-azure-com-v1api20211101-serversfailovergroup,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=sql.azure.com,resources=serversfailovergroups,verbs=create;update,versions=v1api20211101,name=validate.v1api20211101.serversfailovergroups.sql.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &ServersFailoverGroup{}
-
-// ValidateCreate validates the creation of the resource
-func (group *ServersFailoverGroup) ValidateCreate() (admission.Warnings, error) {
-	validations := group.createValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (group *ServersFailoverGroup) ValidateDelete() (admission.Warnings, error) {
-	validations := group.deleteValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (group *ServersFailoverGroup) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := group.updateValidations()
-	var temp any = group
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (group *ServersFailoverGroup) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){group.validateResourceReferences, group.validateOwnerReference, group.validateSecretDestinations, group.validateConfigMapDestinations}
-}
-
-// deleteValidations validates the deletion of the resource
-func (group *ServersFailoverGroup) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (group *ServersFailoverGroup) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateResourceReferences()
-		},
-		group.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return group.validateConfigMapDestinations()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (group *ServersFailoverGroup) validateConfigMapDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(group, nil, group.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOwnerReference validates the owner field
-func (group *ServersFailoverGroup) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(group)
-}
-
-// validateResourceReferences validates all resource references
-func (group *ServersFailoverGroup) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&group.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (group *ServersFailoverGroup) validateSecretDestinations() (admission.Warnings, error) {
-	if group.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(group, nil, group.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (group *ServersFailoverGroup) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*ServersFailoverGroup)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, group)
 }
 
 // AssignProperties_From_ServersFailoverGroup populates our ServersFailoverGroup from the provided source ServersFailoverGroup
@@ -309,7 +184,7 @@ func (group *ServersFailoverGroup) AssignProperties_From_ServersFailoverGroup(so
 	var spec ServersFailoverGroup_Spec
 	err := spec.AssignProperties_From_ServersFailoverGroup_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersFailoverGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersFailoverGroup_Spec() to populate field Spec")
 	}
 	group.Spec = spec
 
@@ -317,7 +192,7 @@ func (group *ServersFailoverGroup) AssignProperties_From_ServersFailoverGroup(so
 	var status ServersFailoverGroup_STATUS
 	err = status.AssignProperties_From_ServersFailoverGroup_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_ServersFailoverGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_ServersFailoverGroup_STATUS() to populate field Status")
 	}
 	group.Status = status
 
@@ -335,7 +210,7 @@ func (group *ServersFailoverGroup) AssignProperties_To_ServersFailoverGroup(dest
 	var spec storage.ServersFailoverGroup_Spec
 	err := group.Spec.AssignProperties_To_ServersFailoverGroup_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersFailoverGroup_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersFailoverGroup_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -343,7 +218,7 @@ func (group *ServersFailoverGroup) AssignProperties_To_ServersFailoverGroup(dest
 	var status storage.ServersFailoverGroup_STATUS
 	err = group.Status.AssignProperties_To_ServersFailoverGroup_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_ServersFailoverGroup_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_ServersFailoverGroup_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -555,13 +430,13 @@ func (group *ServersFailoverGroup_Spec) ConvertSpecFrom(source genruntime.Conver
 	src = &storage.ServersFailoverGroup_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_ServersFailoverGroup_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -579,13 +454,13 @@ func (group *ServersFailoverGroup_Spec) ConvertSpecTo(destination genruntime.Con
 	dst = &storage.ServersFailoverGroup_Spec{}
 	err := group.AssignProperties_To_ServersFailoverGroup_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -615,7 +490,7 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_From_ServersFailoverGro
 		var operatorSpec ServersFailoverGroupOperatorSpec
 		err := operatorSpec.AssignProperties_From_ServersFailoverGroupOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_ServersFailoverGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_ServersFailoverGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		group.OperatorSpec = &operatorSpec
 	} else {
@@ -639,7 +514,7 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_From_ServersFailoverGro
 			var partnerServer PartnerInfo
 			err := partnerServer.AssignProperties_From_PartnerInfo(&partnerServerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PartnerInfo() to populate field PartnerServers")
+				return eris.Wrap(err, "calling AssignProperties_From_PartnerInfo() to populate field PartnerServers")
 			}
 			partnerServerList[partnerServerIndex] = partnerServer
 		}
@@ -653,7 +528,7 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_From_ServersFailoverGro
 		var readOnlyEndpoint FailoverGroupReadOnlyEndpoint
 		err := readOnlyEndpoint.AssignProperties_From_FailoverGroupReadOnlyEndpoint(source.ReadOnlyEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FailoverGroupReadOnlyEndpoint() to populate field ReadOnlyEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_FailoverGroupReadOnlyEndpoint() to populate field ReadOnlyEndpoint")
 		}
 		group.ReadOnlyEndpoint = &readOnlyEndpoint
 	} else {
@@ -665,7 +540,7 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_From_ServersFailoverGro
 		var readWriteEndpoint FailoverGroupReadWriteEndpoint
 		err := readWriteEndpoint.AssignProperties_From_FailoverGroupReadWriteEndpoint(source.ReadWriteEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FailoverGroupReadWriteEndpoint() to populate field ReadWriteEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_FailoverGroupReadWriteEndpoint() to populate field ReadWriteEndpoint")
 		}
 		group.ReadWriteEndpoint = &readWriteEndpoint
 	} else {
@@ -705,7 +580,7 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_To_ServersFailoverGroup
 		var operatorSpec storage.ServersFailoverGroupOperatorSpec
 		err := group.OperatorSpec.AssignProperties_To_ServersFailoverGroupOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_ServersFailoverGroupOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_ServersFailoverGroupOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -732,7 +607,7 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_To_ServersFailoverGroup
 			var partnerServer storage.PartnerInfo
 			err := partnerServerItem.AssignProperties_To_PartnerInfo(&partnerServer)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PartnerInfo() to populate field PartnerServers")
+				return eris.Wrap(err, "calling AssignProperties_To_PartnerInfo() to populate field PartnerServers")
 			}
 			partnerServerList[partnerServerIndex] = partnerServer
 		}
@@ -746,7 +621,7 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_To_ServersFailoverGroup
 		var readOnlyEndpoint storage.FailoverGroupReadOnlyEndpoint
 		err := group.ReadOnlyEndpoint.AssignProperties_To_FailoverGroupReadOnlyEndpoint(&readOnlyEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FailoverGroupReadOnlyEndpoint() to populate field ReadOnlyEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_FailoverGroupReadOnlyEndpoint() to populate field ReadOnlyEndpoint")
 		}
 		destination.ReadOnlyEndpoint = &readOnlyEndpoint
 	} else {
@@ -758,7 +633,7 @@ func (group *ServersFailoverGroup_Spec) AssignProperties_To_ServersFailoverGroup
 		var readWriteEndpoint storage.FailoverGroupReadWriteEndpoint
 		err := group.ReadWriteEndpoint.AssignProperties_To_FailoverGroupReadWriteEndpoint(&readWriteEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FailoverGroupReadWriteEndpoint() to populate field ReadWriteEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_FailoverGroupReadWriteEndpoint() to populate field ReadWriteEndpoint")
 		}
 		destination.ReadWriteEndpoint = &readWriteEndpoint
 	} else {
@@ -791,7 +666,7 @@ func (group *ServersFailoverGroup_Spec) Initialize_From_ServersFailoverGroup_STA
 			var partnerServer PartnerInfo
 			err := partnerServer.Initialize_From_PartnerInfo_STATUS(&partnerServerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling Initialize_From_PartnerInfo_STATUS() to populate field PartnerServers")
+				return eris.Wrap(err, "calling Initialize_From_PartnerInfo_STATUS() to populate field PartnerServers")
 			}
 			partnerServerList[partnerServerIndex] = partnerServer
 		}
@@ -805,7 +680,7 @@ func (group *ServersFailoverGroup_Spec) Initialize_From_ServersFailoverGroup_STA
 		var readOnlyEndpoint FailoverGroupReadOnlyEndpoint
 		err := readOnlyEndpoint.Initialize_From_FailoverGroupReadOnlyEndpoint_STATUS(source.ReadOnlyEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_FailoverGroupReadOnlyEndpoint_STATUS() to populate field ReadOnlyEndpoint")
+			return eris.Wrap(err, "calling Initialize_From_FailoverGroupReadOnlyEndpoint_STATUS() to populate field ReadOnlyEndpoint")
 		}
 		group.ReadOnlyEndpoint = &readOnlyEndpoint
 	} else {
@@ -817,7 +692,7 @@ func (group *ServersFailoverGroup_Spec) Initialize_From_ServersFailoverGroup_STA
 		var readWriteEndpoint FailoverGroupReadWriteEndpoint
 		err := readWriteEndpoint.Initialize_From_FailoverGroupReadWriteEndpoint_STATUS(source.ReadWriteEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_FailoverGroupReadWriteEndpoint_STATUS() to populate field ReadWriteEndpoint")
+			return eris.Wrap(err, "calling Initialize_From_FailoverGroupReadWriteEndpoint_STATUS() to populate field ReadWriteEndpoint")
 		}
 		group.ReadWriteEndpoint = &readWriteEndpoint
 	} else {
@@ -891,13 +766,13 @@ func (group *ServersFailoverGroup_STATUS) ConvertStatusFrom(source genruntime.Co
 	src = &storage.ServersFailoverGroup_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = group.AssignProperties_From_ServersFailoverGroup_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -915,13 +790,13 @@ func (group *ServersFailoverGroup_STATUS) ConvertStatusTo(destination genruntime
 	dst = &storage.ServersFailoverGroup_STATUS{}
 	err := group.AssignProperties_To_ServersFailoverGroup_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1075,7 +950,7 @@ func (group *ServersFailoverGroup_STATUS) AssignProperties_From_ServersFailoverG
 			var partnerServer PartnerInfo_STATUS
 			err := partnerServer.AssignProperties_From_PartnerInfo_STATUS(&partnerServerItem)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_From_PartnerInfo_STATUS() to populate field PartnerServers")
+				return eris.Wrap(err, "calling AssignProperties_From_PartnerInfo_STATUS() to populate field PartnerServers")
 			}
 			partnerServerList[partnerServerIndex] = partnerServer
 		}
@@ -1089,7 +964,7 @@ func (group *ServersFailoverGroup_STATUS) AssignProperties_From_ServersFailoverG
 		var readOnlyEndpoint FailoverGroupReadOnlyEndpoint_STATUS
 		err := readOnlyEndpoint.AssignProperties_From_FailoverGroupReadOnlyEndpoint_STATUS(source.ReadOnlyEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FailoverGroupReadOnlyEndpoint_STATUS() to populate field ReadOnlyEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_FailoverGroupReadOnlyEndpoint_STATUS() to populate field ReadOnlyEndpoint")
 		}
 		group.ReadOnlyEndpoint = &readOnlyEndpoint
 	} else {
@@ -1101,7 +976,7 @@ func (group *ServersFailoverGroup_STATUS) AssignProperties_From_ServersFailoverG
 		var readWriteEndpoint FailoverGroupReadWriteEndpoint_STATUS
 		err := readWriteEndpoint.AssignProperties_From_FailoverGroupReadWriteEndpoint_STATUS(source.ReadWriteEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_FailoverGroupReadWriteEndpoint_STATUS() to populate field ReadWriteEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_From_FailoverGroupReadWriteEndpoint_STATUS() to populate field ReadWriteEndpoint")
 		}
 		group.ReadWriteEndpoint = &readWriteEndpoint
 	} else {
@@ -1159,7 +1034,7 @@ func (group *ServersFailoverGroup_STATUS) AssignProperties_To_ServersFailoverGro
 			var partnerServer storage.PartnerInfo_STATUS
 			err := partnerServerItem.AssignProperties_To_PartnerInfo_STATUS(&partnerServer)
 			if err != nil {
-				return errors.Wrap(err, "calling AssignProperties_To_PartnerInfo_STATUS() to populate field PartnerServers")
+				return eris.Wrap(err, "calling AssignProperties_To_PartnerInfo_STATUS() to populate field PartnerServers")
 			}
 			partnerServerList[partnerServerIndex] = partnerServer
 		}
@@ -1173,7 +1048,7 @@ func (group *ServersFailoverGroup_STATUS) AssignProperties_To_ServersFailoverGro
 		var readOnlyEndpoint storage.FailoverGroupReadOnlyEndpoint_STATUS
 		err := group.ReadOnlyEndpoint.AssignProperties_To_FailoverGroupReadOnlyEndpoint_STATUS(&readOnlyEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FailoverGroupReadOnlyEndpoint_STATUS() to populate field ReadOnlyEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_FailoverGroupReadOnlyEndpoint_STATUS() to populate field ReadOnlyEndpoint")
 		}
 		destination.ReadOnlyEndpoint = &readOnlyEndpoint
 	} else {
@@ -1185,7 +1060,7 @@ func (group *ServersFailoverGroup_STATUS) AssignProperties_To_ServersFailoverGro
 		var readWriteEndpoint storage.FailoverGroupReadWriteEndpoint_STATUS
 		err := group.ReadWriteEndpoint.AssignProperties_To_FailoverGroupReadWriteEndpoint_STATUS(&readWriteEndpoint)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_FailoverGroupReadWriteEndpoint_STATUS() to populate field ReadWriteEndpoint")
+			return eris.Wrap(err, "calling AssignProperties_To_FailoverGroupReadWriteEndpoint_STATUS() to populate field ReadWriteEndpoint")
 		}
 		destination.ReadWriteEndpoint = &readWriteEndpoint
 	} else {

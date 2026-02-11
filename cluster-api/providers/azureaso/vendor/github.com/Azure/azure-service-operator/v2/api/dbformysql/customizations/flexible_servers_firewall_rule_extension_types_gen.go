@@ -8,6 +8,8 @@ import (
 	v20210501s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20210501/storage"
 	v20230630 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630"
 	v20230630s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20230630/storage"
+	v20231230 "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230"
+	v20231230s "github.com/Azure/azure-service-operator/v2/api/dbformysql/v1api20231230/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 )
 
@@ -20,5 +22,7 @@ func (extension *FlexibleServersFirewallRuleExtension) GetExtendedResources() []
 		&v20210501.FlexibleServersFirewallRule{},
 		&v20210501s.FlexibleServersFirewallRule{},
 		&v20230630.FlexibleServersFirewallRule{},
-		&v20230630s.FlexibleServersFirewallRule{}}
+		&v20230630s.FlexibleServersFirewallRule{},
+		&v20231230.FlexibleServersFirewallRule{},
+		&v20231230s.FlexibleServersFirewallRule{}}
 }

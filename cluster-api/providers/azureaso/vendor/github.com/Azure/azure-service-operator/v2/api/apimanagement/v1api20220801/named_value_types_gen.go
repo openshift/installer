@@ -7,18 +7,15 @@ import (
 	"fmt"
 	arm "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/arm"
 	storage "github.com/Azure/azure-service-operator/v2/api/apimanagement/v1api20220801/storage"
-	"github.com/Azure/azure-service-operator/v2/internal/reflecthelpers"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
-	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // +kubebuilder:object:root=true
@@ -70,29 +67,6 @@ func (value *NamedValue) ConvertTo(hub conversion.Hub) error {
 
 	return value.AssignProperties_To_NamedValue(destination)
 }
-
-// +kubebuilder:webhook:path=/mutate-apimanagement-azure-com-v1api20220801-namedvalue,mutating=true,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=namedvalues,verbs=create;update,versions=v1api20220801,name=default.v1api20220801.namedvalues.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Defaulter = &NamedValue{}
-
-// Default applies defaults to the NamedValue resource
-func (value *NamedValue) Default() {
-	value.defaultImpl()
-	var temp any = value
-	if runtimeDefaulter, ok := temp.(genruntime.Defaulter); ok {
-		runtimeDefaulter.CustomDefault()
-	}
-}
-
-// defaultAzureName defaults the Azure name of the resource to the Kubernetes name
-func (value *NamedValue) defaultAzureName() {
-	if value.Spec.AzureName == "" {
-		value.Spec.AzureName = value.Name
-	}
-}
-
-// defaultImpl applies the code generated defaults to the NamedValue resource
-func (value *NamedValue) defaultImpl() { value.defaultAzureName() }
 
 var _ configmaps.Exporter = &NamedValue{}
 
@@ -174,6 +148,10 @@ func (value *NamedValue) NewEmptyStatus() genruntime.ConvertibleStatus {
 
 // Owner returns the ResourceReference of the owner
 func (value *NamedValue) Owner() *genruntime.ResourceReference {
+	if value.Spec.Owner == nil {
+		return nil
+	}
+
 	group, kind := genruntime.LookupOwnerGroupKind(value.Spec)
 	return value.Spec.Owner.AsResourceReference(group, kind)
 }
@@ -190,126 +168,11 @@ func (value *NamedValue) SetStatus(status genruntime.ConvertibleStatus) error {
 	var st NamedValue_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	value.Status = st
 	return nil
-}
-
-// +kubebuilder:webhook:path=/validate-apimanagement-azure-com-v1api20220801-namedvalue,mutating=false,sideEffects=None,matchPolicy=Exact,failurePolicy=fail,groups=apimanagement.azure.com,resources=namedvalues,verbs=create;update,versions=v1api20220801,name=validate.v1api20220801.namedvalues.apimanagement.azure.com,admissionReviewVersions=v1
-
-var _ admission.Validator = &NamedValue{}
-
-// ValidateCreate validates the creation of the resource
-func (value *NamedValue) ValidateCreate() (admission.Warnings, error) {
-	validations := value.createValidations()
-	var temp any = value
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.CreateValidations()...)
-	}
-	return genruntime.ValidateCreate(validations)
-}
-
-// ValidateDelete validates the deletion of the resource
-func (value *NamedValue) ValidateDelete() (admission.Warnings, error) {
-	validations := value.deleteValidations()
-	var temp any = value
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.DeleteValidations()...)
-	}
-	return genruntime.ValidateDelete(validations)
-}
-
-// ValidateUpdate validates an update of the resource
-func (value *NamedValue) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	validations := value.updateValidations()
-	var temp any = value
-	if runtimeValidator, ok := temp.(genruntime.Validator); ok {
-		validations = append(validations, runtimeValidator.UpdateValidations()...)
-	}
-	return genruntime.ValidateUpdate(old, validations)
-}
-
-// createValidations validates the creation of the resource
-func (value *NamedValue) createValidations() []func() (admission.Warnings, error) {
-	return []func() (admission.Warnings, error){value.validateResourceReferences, value.validateOwnerReference, value.validateSecretDestinations, value.validateConfigMapDestinations, value.validateOptionalConfigMapReferences}
-}
-
-// deleteValidations validates the deletion of the resource
-func (value *NamedValue) deleteValidations() []func() (admission.Warnings, error) {
-	return nil
-}
-
-// updateValidations validates the update of the resource
-func (value *NamedValue) updateValidations() []func(old runtime.Object) (admission.Warnings, error) {
-	return []func(old runtime.Object) (admission.Warnings, error){
-		func(old runtime.Object) (admission.Warnings, error) {
-			return value.validateResourceReferences()
-		},
-		value.validateWriteOnceProperties,
-		func(old runtime.Object) (admission.Warnings, error) {
-			return value.validateOwnerReference()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return value.validateSecretDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return value.validateConfigMapDestinations()
-		},
-		func(old runtime.Object) (admission.Warnings, error) {
-			return value.validateOptionalConfigMapReferences()
-		},
-	}
-}
-
-// validateConfigMapDestinations validates there are no colliding genruntime.ConfigMapDestinations
-func (value *NamedValue) validateConfigMapDestinations() (admission.Warnings, error) {
-	if value.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return configmaps.ValidateDestinations(value, nil, value.Spec.OperatorSpec.ConfigMapExpressions)
-}
-
-// validateOptionalConfigMapReferences validates all optional configmap reference pairs to ensure that at most 1 is set
-func (value *NamedValue) validateOptionalConfigMapReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindOptionalConfigMapReferences(&value.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return configmaps.ValidateOptionalReferences(refs)
-}
-
-// validateOwnerReference validates the owner field
-func (value *NamedValue) validateOwnerReference() (admission.Warnings, error) {
-	return genruntime.ValidateOwner(value)
-}
-
-// validateResourceReferences validates all resource references
-func (value *NamedValue) validateResourceReferences() (admission.Warnings, error) {
-	refs, err := reflecthelpers.FindResourceReferences(&value.Spec)
-	if err != nil {
-		return nil, err
-	}
-	return genruntime.ValidateResourceReferences(refs)
-}
-
-// validateSecretDestinations validates there are no colliding genruntime.SecretDestination's
-func (value *NamedValue) validateSecretDestinations() (admission.Warnings, error) {
-	if value.Spec.OperatorSpec == nil {
-		return nil, nil
-	}
-	return secrets.ValidateDestinations(value, nil, value.Spec.OperatorSpec.SecretExpressions)
-}
-
-// validateWriteOnceProperties validates all WriteOnce properties
-func (value *NamedValue) validateWriteOnceProperties(old runtime.Object) (admission.Warnings, error) {
-	oldObj, ok := old.(*NamedValue)
-	if !ok {
-		return nil, nil
-	}
-
-	return genruntime.ValidateWriteOnceProperties(oldObj, value)
 }
 
 // AssignProperties_From_NamedValue populates our NamedValue from the provided source NamedValue
@@ -322,7 +185,7 @@ func (value *NamedValue) AssignProperties_From_NamedValue(source *storage.NamedV
 	var spec NamedValue_Spec
 	err := spec.AssignProperties_From_NamedValue_Spec(&source.Spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamedValue_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_From_NamedValue_Spec() to populate field Spec")
 	}
 	value.Spec = spec
 
@@ -330,7 +193,7 @@ func (value *NamedValue) AssignProperties_From_NamedValue(source *storage.NamedV
 	var status NamedValue_STATUS
 	err = status.AssignProperties_From_NamedValue_STATUS(&source.Status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_From_NamedValue_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_From_NamedValue_STATUS() to populate field Status")
 	}
 	value.Status = status
 
@@ -348,7 +211,7 @@ func (value *NamedValue) AssignProperties_To_NamedValue(destination *storage.Nam
 	var spec storage.NamedValue_Spec
 	err := value.Spec.AssignProperties_To_NamedValue_Spec(&spec)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamedValue_Spec() to populate field Spec")
+		return eris.Wrap(err, "calling AssignProperties_To_NamedValue_Spec() to populate field Spec")
 	}
 	destination.Spec = spec
 
@@ -356,7 +219,7 @@ func (value *NamedValue) AssignProperties_To_NamedValue(destination *storage.Nam
 	var status storage.NamedValue_STATUS
 	err = value.Status.AssignProperties_To_NamedValue_STATUS(&status)
 	if err != nil {
-		return errors.Wrap(err, "calling AssignProperties_To_NamedValue_STATUS() to populate field Status")
+		return eris.Wrap(err, "calling AssignProperties_To_NamedValue_STATUS() to populate field Status")
 	}
 	destination.Status = status
 
@@ -559,13 +422,13 @@ func (value *NamedValue_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec)
 	src = &storage.NamedValue_Spec{}
 	err := src.ConvertSpecFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
 	}
 
 	// Update our instance from src
 	err = value.AssignProperties_From_NamedValue_Spec(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
 	}
 
 	return nil
@@ -583,13 +446,13 @@ func (value *NamedValue_Spec) ConvertSpecTo(destination genruntime.ConvertibleSp
 	dst = &storage.NamedValue_Spec{}
 	err := value.AssignProperties_To_NamedValue_Spec(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertSpecTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertSpecTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
 	}
 
 	return nil
@@ -602,19 +465,14 @@ func (value *NamedValue_Spec) AssignProperties_From_NamedValue_Spec(source *stor
 	value.AzureName = source.AzureName
 
 	// DisplayName
-	if source.DisplayName != nil {
-		displayName := *source.DisplayName
-		value.DisplayName = &displayName
-	} else {
-		value.DisplayName = nil
-	}
+	value.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// KeyVault
 	if source.KeyVault != nil {
 		var keyVault KeyVaultContractCreateProperties
 		err := keyVault.AssignProperties_From_KeyVaultContractCreateProperties(source.KeyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultContractCreateProperties() to populate field KeyVault")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultContractCreateProperties() to populate field KeyVault")
 		}
 		value.KeyVault = &keyVault
 	} else {
@@ -626,7 +484,7 @@ func (value *NamedValue_Spec) AssignProperties_From_NamedValue_Spec(source *stor
 		var operatorSpec NamedValueOperatorSpec
 		err := operatorSpec.AssignProperties_From_NamedValueOperatorSpec(source.OperatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_NamedValueOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_From_NamedValueOperatorSpec() to populate field OperatorSpec")
 		}
 		value.OperatorSpec = &operatorSpec
 	} else {
@@ -650,25 +508,10 @@ func (value *NamedValue_Spec) AssignProperties_From_NamedValue_Spec(source *stor
 	}
 
 	// Tags
-	if source.Tags != nil {
-		tagList := make([]string, len(source.Tags))
-		for tagIndex, tagItem := range source.Tags {
-			// Shadow the loop variable to avoid aliasing
-			tagItem := tagItem
-			tagList[tagIndex] = tagItem
-		}
-		value.Tags = tagList
-	} else {
-		value.Tags = nil
-	}
+	value.Tags = genruntime.CloneSliceOfString(source.Tags)
 
 	// Value
-	if source.Value != nil {
-		valueTemp := *source.Value
-		value.Value = &valueTemp
-	} else {
-		value.Value = nil
-	}
+	value.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -683,19 +526,14 @@ func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *s
 	destination.AzureName = value.AzureName
 
 	// DisplayName
-	if value.DisplayName != nil {
-		displayName := *value.DisplayName
-		destination.DisplayName = &displayName
-	} else {
-		destination.DisplayName = nil
-	}
+	destination.DisplayName = genruntime.ClonePointerToString(value.DisplayName)
 
 	// KeyVault
 	if value.KeyVault != nil {
 		var keyVault storage.KeyVaultContractCreateProperties
 		err := value.KeyVault.AssignProperties_To_KeyVaultContractCreateProperties(&keyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultContractCreateProperties() to populate field KeyVault")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultContractCreateProperties() to populate field KeyVault")
 		}
 		destination.KeyVault = &keyVault
 	} else {
@@ -707,7 +545,7 @@ func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *s
 		var operatorSpec storage.NamedValueOperatorSpec
 		err := value.OperatorSpec.AssignProperties_To_NamedValueOperatorSpec(&operatorSpec)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_NamedValueOperatorSpec() to populate field OperatorSpec")
+			return eris.Wrap(err, "calling AssignProperties_To_NamedValueOperatorSpec() to populate field OperatorSpec")
 		}
 		destination.OperatorSpec = &operatorSpec
 	} else {
@@ -734,25 +572,10 @@ func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *s
 	}
 
 	// Tags
-	if value.Tags != nil {
-		tagList := make([]string, len(value.Tags))
-		for tagIndex, tagItem := range value.Tags {
-			// Shadow the loop variable to avoid aliasing
-			tagItem := tagItem
-			tagList[tagIndex] = tagItem
-		}
-		destination.Tags = tagList
-	} else {
-		destination.Tags = nil
-	}
+	destination.Tags = genruntime.CloneSliceOfString(value.Tags)
 
 	// Value
-	if value.Value != nil {
-		valueTemp := *value.Value
-		destination.Value = &valueTemp
-	} else {
-		destination.Value = nil
-	}
+	destination.Value = genruntime.ClonePointerToString(value.Value)
 
 	// Update the property bag
 	if len(propertyBag) > 0 {
@@ -769,19 +592,14 @@ func (value *NamedValue_Spec) AssignProperties_To_NamedValue_Spec(destination *s
 func (value *NamedValue_Spec) Initialize_From_NamedValue_STATUS(source *NamedValue_STATUS) error {
 
 	// DisplayName
-	if source.DisplayName != nil {
-		displayName := *source.DisplayName
-		value.DisplayName = &displayName
-	} else {
-		value.DisplayName = nil
-	}
+	value.DisplayName = genruntime.ClonePointerToString(source.DisplayName)
 
 	// KeyVault
 	if source.KeyVault != nil {
 		var keyVault KeyVaultContractCreateProperties
 		err := keyVault.Initialize_From_KeyVaultContractProperties_STATUS(source.KeyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling Initialize_From_KeyVaultContractProperties_STATUS() to populate field KeyVault")
+			return eris.Wrap(err, "calling Initialize_From_KeyVaultContractProperties_STATUS() to populate field KeyVault")
 		}
 		value.KeyVault = &keyVault
 	} else {
@@ -797,25 +615,10 @@ func (value *NamedValue_Spec) Initialize_From_NamedValue_STATUS(source *NamedVal
 	}
 
 	// Tags
-	if source.Tags != nil {
-		tagList := make([]string, len(source.Tags))
-		for tagIndex, tagItem := range source.Tags {
-			// Shadow the loop variable to avoid aliasing
-			tagItem := tagItem
-			tagList[tagIndex] = tagItem
-		}
-		value.Tags = tagList
-	} else {
-		value.Tags = nil
-	}
+	value.Tags = genruntime.CloneSliceOfString(source.Tags)
 
 	// Value
-	if source.Value != nil {
-		valueTemp := *source.Value
-		value.Value = &valueTemp
-	} else {
-		value.Value = nil
-	}
+	value.Value = genruntime.ClonePointerToString(source.Value)
 
 	// No error
 	return nil
@@ -874,13 +677,13 @@ func (value *NamedValue_STATUS) ConvertStatusFrom(source genruntime.ConvertibleS
 	src = &storage.NamedValue_STATUS{}
 	err := src.ConvertStatusFrom(source)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
 	}
 
 	// Update our instance from src
 	err = value.AssignProperties_From_NamedValue_STATUS(src)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
 	}
 
 	return nil
@@ -898,13 +701,13 @@ func (value *NamedValue_STATUS) ConvertStatusTo(destination genruntime.Convertib
 	dst = &storage.NamedValue_STATUS{}
 	err := value.AssignProperties_To_NamedValue_STATUS(dst)
 	if err != nil {
-		return errors.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
 	}
 
 	// Update dst from our instance
 	err = dst.ConvertStatusTo(destination)
 	if err != nil {
-		return errors.Wrap(err, "final step of conversion in ConvertStatusTo()")
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
 	}
 
 	return nil
@@ -1014,7 +817,7 @@ func (value *NamedValue_STATUS) AssignProperties_From_NamedValue_STATUS(source *
 		var keyVault KeyVaultContractProperties_STATUS
 		err := keyVault.AssignProperties_From_KeyVaultContractProperties_STATUS(source.KeyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultContractProperties_STATUS() to populate field KeyVault")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultContractProperties_STATUS() to populate field KeyVault")
 		}
 		value.KeyVault = &keyVault
 	} else {
@@ -1064,7 +867,7 @@ func (value *NamedValue_STATUS) AssignProperties_To_NamedValue_STATUS(destinatio
 		var keyVault storage.KeyVaultContractProperties_STATUS
 		err := value.KeyVault.AssignProperties_To_KeyVaultContractProperties_STATUS(&keyVault)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultContractProperties_STATUS() to populate field KeyVault")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultContractProperties_STATUS() to populate field KeyVault")
 		}
 		destination.KeyVault = &keyVault
 	} else {
@@ -1134,7 +937,7 @@ func (properties *KeyVaultContractCreateProperties) ConvertToARM(resolved genrun
 	if properties.IdentityClientIdFromConfig != nil {
 		identityClientIdValue, err := resolved.ResolvedConfigMaps.Lookup(*properties.IdentityClientIdFromConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "looking up configmap for property IdentityClientId")
+			return nil, eris.Wrap(err, "looking up configmap for property IdentityClientId")
 		}
 		identityClientId := identityClientIdValue
 		result.IdentityClientId = &identityClientId
@@ -1308,7 +1111,7 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_From_KeyVa
 		var lastStatus KeyVaultLastAccessStatusContractProperties_STATUS
 		err := lastStatus.AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS(source.LastStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
+			return eris.Wrap(err, "calling AssignProperties_From_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
 		}
 		properties.LastStatus = &lastStatus
 	} else {
@@ -1335,7 +1138,7 @@ func (properties *KeyVaultContractProperties_STATUS) AssignProperties_To_KeyVaul
 		var lastStatus storage.KeyVaultLastAccessStatusContractProperties_STATUS
 		err := properties.LastStatus.AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS(&lastStatus)
 		if err != nil {
-			return errors.Wrap(err, "calling AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
+			return eris.Wrap(err, "calling AssignProperties_To_KeyVaultLastAccessStatusContractProperties_STATUS() to populate field LastStatus")
 		}
 		destination.LastStatus = &lastStatus
 	} else {

@@ -171,9 +171,6 @@ type UserAssignedIdentityDetails struct {
 type AcrDetails struct {
 	// SystemCreatedAcrAccount: Details of system created ACR account to be used for the Registry
 	SystemCreatedAcrAccount *SystemCreatedAcrAccount `json:"systemCreatedAcrAccount,omitempty"`
-
-	// UserCreatedAcrAccount: Details of user created ACR account to be used for the Registry
-	UserCreatedAcrAccount *UserCreatedAcrAccount `json:"userCreatedAcrAccount,omitempty"`
 }
 
 // Properties of the Private Endpoint Connection
@@ -195,9 +192,6 @@ type RegistryPrivateEndpointConnectionProperties struct {
 type StorageAccountDetails struct {
 	// SystemCreatedStorageAccount: Details of system created storage account to be used for the registry
 	SystemCreatedStorageAccount *SystemCreatedStorageAccount `json:"systemCreatedStorageAccount,omitempty"`
-
-	// UserCreatedStorageAccount: Details of user created storage account to be used for the registry
-	UserCreatedStorageAccount *UserCreatedStorageAccount `json:"userCreatedStorageAccount,omitempty"`
 }
 
 // The PE network resource that is linked to this PE connection.
@@ -245,16 +239,6 @@ type SystemCreatedStorageAccount struct {
 	// "Premium_LRS",
 	// "Premium_ZRS"
 	StorageAccountType *string `json:"storageAccountType,omitempty"`
-}
-
-type UserCreatedAcrAccount struct {
-	// ArmResourceId: ARM ResourceId of a resource
-	ArmResourceId *ArmResourceId `json:"armResourceId,omitempty"`
-}
-
-type UserCreatedStorageAccount struct {
-	// ArmResourceId: ARM ResourceId of a resource
-	ArmResourceId *ArmResourceId `json:"armResourceId,omitempty"`
 }
 
 // Connection status of the service consumer with the service provider

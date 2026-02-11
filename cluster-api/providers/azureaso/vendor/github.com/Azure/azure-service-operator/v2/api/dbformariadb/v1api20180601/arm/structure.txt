@@ -12,11 +12,13 @@ Configuration_STATUS: Object (4 properties)
 │   ├── Source: *string
 │   └── Value: *string
 └── Type: *string
+
 Configuration_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── Source: *string
     └── Value: *string
+
 Database_STATUS: Object (4 properties)
 ├── Id: *string
 ├── Name: *string
@@ -24,11 +26,13 @@ Database_STATUS: Object (4 properties)
 │   ├── Charset: *string
 │   └── Collation: *string
 └── Type: *string
+
 Database_Spec: Object (2 properties)
 ├── Name: string
 └── Properties: *Object (2 properties)
     ├── Charset: *string
     └── Collation: *string
+
 Server_STATUS: Object (7 properties)
 ├── Id: *string
 ├── Location: *string
@@ -98,6 +102,7 @@ Server_STATUS: Object (7 properties)
 │       └── "MemoryOptimized"
 ├── Tags: map[string]string
 └── Type: *string
+
 Server_Spec: Object (5 properties)
 ├── Location: *string
 ├── Name: string
@@ -222,3 +227,4 @@ Server_Spec: Object (5 properties)
 │       ├── "GeneralPurpose"
 │       └── "MemoryOptimized"
 └── Tags: map[string]string
+

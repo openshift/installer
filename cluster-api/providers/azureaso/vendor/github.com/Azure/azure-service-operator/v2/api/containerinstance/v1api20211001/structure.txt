@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/containerinstance/v1api20211001
 ------------------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2021-10-01"
+
 ContainerGroup: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (19 properties)
@@ -385,3 +386,4 @@ ContainerGroup: Resource
     │   ├── Name: *string
     │   └── Secret: map[string]string
     └── Zones: string[]
+

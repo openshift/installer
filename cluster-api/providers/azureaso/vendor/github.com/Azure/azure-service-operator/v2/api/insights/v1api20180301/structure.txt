@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/insights/v1api20180301
 ---------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2018-03-01"
+
 MetricAlert: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (16 properties)
@@ -240,3 +241,4 @@ MetricAlert: Resource
     ├── TargetResourceType: *string
     ├── Type: *string
     └── WindowSize: *string
+

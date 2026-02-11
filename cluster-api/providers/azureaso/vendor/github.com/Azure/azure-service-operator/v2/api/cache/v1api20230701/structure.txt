@@ -3,6 +3,7 @@ github.com/Azure/azure-service-operator/v2/api/cache/v1api20230701
 ------------------------------------------------------------------
 APIVersion: Enum (1 value)
 └── "2023-07-01"
+
 RedisEnterprise: Resource
 ├── Owner: resources/v1apiv20191001.ResourceGroup
 ├── Spec: Object (8 properties)
@@ -74,6 +75,7 @@ RedisEnterprise: Resource
     ├── Tags: map[string]string
     ├── Type: *string
     └── Zones: string[]
+
 RedisEnterpriseDatabase: Resource
 ├── Owner: RedisEnterprise
 ├── Spec: Object (10 properties)
@@ -180,3 +182,4 @@ RedisEnterpriseDatabase: Resource
     │   ├── "UpdateFailed"
     │   └── "Updating"
     └── Type: *string
+

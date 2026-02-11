@@ -43,6 +43,7 @@ Webtest_STATUS: Object (6 properties)
 │       └── SSLCheck: *bool
 ├── Tags: map[string]string
 └── Type: *string
+
 Webtest_Spec: Object (4 properties)
 ├── Location: *string
 ├── Name: string
@@ -82,3 +83,4 @@ Webtest_Spec: Object (4 properties)
 │       ├── SSLCertRemainingLifetimeCheck: *int
 │       └── SSLCheck: *bool
 └── Tags: map[string]string
+

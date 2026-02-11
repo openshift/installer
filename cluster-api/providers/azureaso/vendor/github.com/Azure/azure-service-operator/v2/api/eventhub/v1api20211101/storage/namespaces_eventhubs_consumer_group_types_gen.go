@@ -4,22 +4,21 @@
 package storage
 
 import (
+	"fmt"
+	storage "github.com/Azure/azure-service-operator/v2/api/eventhub/v1api20240101/storage"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/conditions"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/configmaps"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/core"
 	"github.com/Azure/azure-service-operator/v2/pkg/genruntime/secrets"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"sigs.k8s.io/controller-runtime/pkg/conversion"
 )
-
-// +kubebuilder:rbac:groups=eventhub.azure.com,resources=namespaceseventhubsconsumergroups,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=eventhub.azure.com,resources={namespaceseventhubsconsumergroups/status,namespaceseventhubsconsumergroups/finalizers},verbs=get;update;patch
 
 // +kubebuilder:object:root=true
 // +kubebuilder:subresource:status
-// +kubebuilder:storageversion
 // +kubebuilder:printcolumn:name="Ready",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].status"
 // +kubebuilder:printcolumn:name="Severity",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].severity"
 // +kubebuilder:printcolumn:name="Reason",type="string",JSONPath=".status.conditions[?(@.type=='Ready')].reason"
@@ -45,6 +44,28 @@ func (group *NamespacesEventhubsConsumerGroup) GetConditions() conditions.Condit
 // SetConditions sets the conditions on the resource status
 func (group *NamespacesEventhubsConsumerGroup) SetConditions(conditions conditions.Conditions) {
 	group.Status.Conditions = conditions
+}
+
+var _ conversion.Convertible = &NamespacesEventhubsConsumerGroup{}
+
+// ConvertFrom populates our NamespacesEventhubsConsumerGroup from the provided hub NamespacesEventhubsConsumerGroup
+func (group *NamespacesEventhubsConsumerGroup) ConvertFrom(hub conversion.Hub) error {
+	source, ok := hub.(*storage.NamespacesEventhubsConsumerGroup)
+	if !ok {
+		return fmt.Errorf("expected eventhub/v1api20240101/storage/NamespacesEventhubsConsumerGroup but received %T instead", hub)
+	}
+
+	return group.AssignProperties_From_NamespacesEventhubsConsumerGroup(source)
+}
+
+// ConvertTo populates the provided hub NamespacesEventhubsConsumerGroup from our NamespacesEventhubsConsumerGroup
+func (group *NamespacesEventhubsConsumerGroup) ConvertTo(hub conversion.Hub) error {
+	destination, ok := hub.(*storage.NamespacesEventhubsConsumerGroup)
+	if !ok {
+		return fmt.Errorf("expected eventhub/v1api20240101/storage/NamespacesEventhubsConsumerGroup but received %T instead", hub)
+	}
+
+	return group.AssignProperties_To_NamespacesEventhubsConsumerGroup(destination)
 }
 
 var _ configmaps.Exporter = &NamespacesEventhubsConsumerGroup{}
@@ -115,6 +136,10 @@ func (group *NamespacesEventhubsConsumerGroup) NewEmptyStatus() genruntime.Conve
 
 // Owner returns the ResourceReference of the owner
 func (group *NamespacesEventhubsConsumerGroup) Owner() *genruntime.ResourceReference {
+	if group.Spec.Owner == nil {
+		return nil
+	}
+
 	ownerGroup, ownerKind := genruntime.LookupOwnerGroupKind(group.Spec)
 	return group.Spec.Owner.AsResourceReference(ownerGroup, ownerKind)
 }
@@ -131,15 +156,82 @@ func (group *NamespacesEventhubsConsumerGroup) SetStatus(status genruntime.Conve
 	var st NamespacesEventhubsConsumerGroup_STATUS
 	err := status.ConvertStatusTo(&st)
 	if err != nil {
-		return errors.Wrap(err, "failed to convert status")
+		return eris.Wrap(err, "failed to convert status")
 	}
 
 	group.Status = st
 	return nil
 }
 
-// Hub marks that this NamespacesEventhubsConsumerGroup is the hub type for conversion
-func (group *NamespacesEventhubsConsumerGroup) Hub() {}
+// AssignProperties_From_NamespacesEventhubsConsumerGroup populates our NamespacesEventhubsConsumerGroup from the provided source NamespacesEventhubsConsumerGroup
+func (group *NamespacesEventhubsConsumerGroup) AssignProperties_From_NamespacesEventhubsConsumerGroup(source *storage.NamespacesEventhubsConsumerGroup) error {
+
+	// ObjectMeta
+	group.ObjectMeta = *source.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec NamespacesEventhubsConsumerGroup_Spec
+	err := spec.AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec(&source.Spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec() to populate field Spec")
+	}
+	group.Spec = spec
+
+	// Status
+	var status NamespacesEventhubsConsumerGroup_STATUS
+	err = status.AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS(&source.Status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS() to populate field Status")
+	}
+	group.Status = status
+
+	// Invoke the augmentConversionForNamespacesEventhubsConsumerGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNamespacesEventhubsConsumerGroup); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesEventhubsConsumerGroup populates the provided destination NamespacesEventhubsConsumerGroup from our NamespacesEventhubsConsumerGroup
+func (group *NamespacesEventhubsConsumerGroup) AssignProperties_To_NamespacesEventhubsConsumerGroup(destination *storage.NamespacesEventhubsConsumerGroup) error {
+
+	// ObjectMeta
+	destination.ObjectMeta = *group.ObjectMeta.DeepCopy()
+
+	// Spec
+	var spec storage.NamespacesEventhubsConsumerGroup_Spec
+	err := group.Spec.AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec(&spec)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec() to populate field Spec")
+	}
+	destination.Spec = spec
+
+	// Status
+	var status storage.NamespacesEventhubsConsumerGroup_STATUS
+	err = group.Status.AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS(&status)
+	if err != nil {
+		return eris.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS() to populate field Status")
+	}
+	destination.Status = status
+
+	// Invoke the augmentConversionForNamespacesEventhubsConsumerGroup interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNamespacesEventhubsConsumerGroup); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
 
 // OriginalGVK returns a GroupValueKind for the original API version used to create the resource
 func (group *NamespacesEventhubsConsumerGroup) OriginalGVK() *schema.GroupVersionKind {
@@ -159,6 +251,11 @@ type NamespacesEventhubsConsumerGroupList struct {
 	metav1.TypeMeta `json:",inline"`
 	metav1.ListMeta `json:"metadata,omitempty"`
 	Items           []NamespacesEventhubsConsumerGroup `json:"items"`
+}
+
+type augmentConversionForNamespacesEventhubsConsumerGroup interface {
+	AssignPropertiesFrom(src *storage.NamespacesEventhubsConsumerGroup) error
+	AssignPropertiesTo(dst *storage.NamespacesEventhubsConsumerGroup) error
 }
 
 // Storage version of v1api20211101.NamespacesEventhubsConsumerGroup_Spec
@@ -182,20 +279,158 @@ var _ genruntime.ConvertibleSpec = &NamespacesEventhubsConsumerGroup_Spec{}
 
 // ConvertSpecFrom populates our NamespacesEventhubsConsumerGroup_Spec from the provided source
 func (group *NamespacesEventhubsConsumerGroup_Spec) ConvertSpecFrom(source genruntime.ConvertibleSpec) error {
-	if source == group {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	src, ok := source.(*storage.NamespacesEventhubsConsumerGroup_Spec)
+	if ok {
+		// Populate our instance from source
+		return group.AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec(src)
 	}
 
-	return source.ConvertSpecTo(group)
+	// Convert to an intermediate form
+	src = &storage.NamespacesEventhubsConsumerGroup_Spec{}
+	err := src.ConvertSpecFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecFrom()")
+	}
+
+	// Update our instance from src
+	err = group.AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecFrom()")
+	}
+
+	return nil
 }
 
 // ConvertSpecTo populates the provided destination from our NamespacesEventhubsConsumerGroup_Spec
 func (group *NamespacesEventhubsConsumerGroup_Spec) ConvertSpecTo(destination genruntime.ConvertibleSpec) error {
-	if destination == group {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleSpec")
+	dst, ok := destination.(*storage.NamespacesEventhubsConsumerGroup_Spec)
+	if ok {
+		// Populate destination from our instance
+		return group.AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec(dst)
 	}
 
-	return destination.ConvertSpecFrom(group)
+	// Convert to an intermediate form
+	dst = &storage.NamespacesEventhubsConsumerGroup_Spec{}
+	err := group.AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertSpecTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertSpecTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertSpecTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec populates our NamespacesEventhubsConsumerGroup_Spec from the provided source NamespacesEventhubsConsumerGroup_Spec
+func (group *NamespacesEventhubsConsumerGroup_Spec) AssignProperties_From_NamespacesEventhubsConsumerGroup_Spec(source *storage.NamespacesEventhubsConsumerGroup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// AzureName
+	group.AzureName = source.AzureName
+
+	// OperatorSpec
+	if source.OperatorSpec != nil {
+		var operatorSpec NamespacesEventhubsConsumerGroupOperatorSpec
+		err := operatorSpec.AssignProperties_From_NamespacesEventhubsConsumerGroupOperatorSpec(source.OperatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_NamespacesEventhubsConsumerGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		group.OperatorSpec = &operatorSpec
+	} else {
+		group.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	group.OriginalVersion = source.OriginalVersion
+
+	// Owner
+	if source.Owner != nil {
+		owner := source.Owner.Copy()
+		group.Owner = &owner
+	} else {
+		group.Owner = nil
+	}
+
+	// UserMetadata
+	group.UserMetadata = genruntime.ClonePointerToString(source.UserMetadata)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesEventhubsConsumerGroup_Spec interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNamespacesEventhubsConsumerGroup_Spec); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec populates the provided destination NamespacesEventhubsConsumerGroup_Spec from our NamespacesEventhubsConsumerGroup_Spec
+func (group *NamespacesEventhubsConsumerGroup_Spec) AssignProperties_To_NamespacesEventhubsConsumerGroup_Spec(destination *storage.NamespacesEventhubsConsumerGroup_Spec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// AzureName
+	destination.AzureName = group.AzureName
+
+	// OperatorSpec
+	if group.OperatorSpec != nil {
+		var operatorSpec storage.NamespacesEventhubsConsumerGroupOperatorSpec
+		err := group.OperatorSpec.AssignProperties_To_NamespacesEventhubsConsumerGroupOperatorSpec(&operatorSpec)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_NamespacesEventhubsConsumerGroupOperatorSpec() to populate field OperatorSpec")
+		}
+		destination.OperatorSpec = &operatorSpec
+	} else {
+		destination.OperatorSpec = nil
+	}
+
+	// OriginalVersion
+	destination.OriginalVersion = group.OriginalVersion
+
+	// Owner
+	if group.Owner != nil {
+		owner := group.Owner.Copy()
+		destination.Owner = &owner
+	} else {
+		destination.Owner = nil
+	}
+
+	// UserMetadata
+	destination.UserMetadata = genruntime.ClonePointerToString(group.UserMetadata)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesEventhubsConsumerGroup_Spec interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNamespacesEventhubsConsumerGroup_Spec); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
 }
 
 // Storage version of v1api20211101.NamespacesEventhubsConsumerGroup_STATUS
@@ -216,20 +451,182 @@ var _ genruntime.ConvertibleStatus = &NamespacesEventhubsConsumerGroup_STATUS{}
 
 // ConvertStatusFrom populates our NamespacesEventhubsConsumerGroup_STATUS from the provided source
 func (group *NamespacesEventhubsConsumerGroup_STATUS) ConvertStatusFrom(source genruntime.ConvertibleStatus) error {
-	if source == group {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	src, ok := source.(*storage.NamespacesEventhubsConsumerGroup_STATUS)
+	if ok {
+		// Populate our instance from source
+		return group.AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS(src)
 	}
 
-	return source.ConvertStatusTo(group)
+	// Convert to an intermediate form
+	src = &storage.NamespacesEventhubsConsumerGroup_STATUS{}
+	err := src.ConvertStatusFrom(source)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusFrom()")
+	}
+
+	// Update our instance from src
+	err = group.AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS(src)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusFrom()")
+	}
+
+	return nil
 }
 
 // ConvertStatusTo populates the provided destination from our NamespacesEventhubsConsumerGroup_STATUS
 func (group *NamespacesEventhubsConsumerGroup_STATUS) ConvertStatusTo(destination genruntime.ConvertibleStatus) error {
-	if destination == group {
-		return errors.New("attempted conversion between unrelated implementations of github.com/Azure/azure-service-operator/v2/pkg/genruntime/ConvertibleStatus")
+	dst, ok := destination.(*storage.NamespacesEventhubsConsumerGroup_STATUS)
+	if ok {
+		// Populate destination from our instance
+		return group.AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS(dst)
 	}
 
-	return destination.ConvertStatusFrom(group)
+	// Convert to an intermediate form
+	dst = &storage.NamespacesEventhubsConsumerGroup_STATUS{}
+	err := group.AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS(dst)
+	if err != nil {
+		return eris.Wrap(err, "initial step of conversion in ConvertStatusTo()")
+	}
+
+	// Update dst from our instance
+	err = dst.ConvertStatusTo(destination)
+	if err != nil {
+		return eris.Wrap(err, "final step of conversion in ConvertStatusTo()")
+	}
+
+	return nil
+}
+
+// AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS populates our NamespacesEventhubsConsumerGroup_STATUS from the provided source NamespacesEventhubsConsumerGroup_STATUS
+func (group *NamespacesEventhubsConsumerGroup_STATUS) AssignProperties_From_NamespacesEventhubsConsumerGroup_STATUS(source *storage.NamespacesEventhubsConsumerGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// Conditions
+	group.Conditions = genruntime.CloneSliceOfCondition(source.Conditions)
+
+	// CreatedAt
+	group.CreatedAt = genruntime.ClonePointerToString(source.CreatedAt)
+
+	// Id
+	group.Id = genruntime.ClonePointerToString(source.Id)
+
+	// Location
+	group.Location = genruntime.ClonePointerToString(source.Location)
+
+	// Name
+	group.Name = genruntime.ClonePointerToString(source.Name)
+
+	// SystemData
+	if source.SystemData != nil {
+		var systemDatum SystemData_STATUS
+		err := systemDatum.AssignProperties_From_SystemData_STATUS(source.SystemData)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_From_SystemData_STATUS() to populate field SystemData")
+		}
+		group.SystemData = &systemDatum
+	} else {
+		group.SystemData = nil
+	}
+
+	// Type
+	group.Type = genruntime.ClonePointerToString(source.Type)
+
+	// UpdatedAt
+	group.UpdatedAt = genruntime.ClonePointerToString(source.UpdatedAt)
+
+	// UserMetadata
+	group.UserMetadata = genruntime.ClonePointerToString(source.UserMetadata)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		group.PropertyBag = propertyBag
+	} else {
+		group.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesEventhubsConsumerGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNamespacesEventhubsConsumerGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS populates the provided destination NamespacesEventhubsConsumerGroup_STATUS from our NamespacesEventhubsConsumerGroup_STATUS
+func (group *NamespacesEventhubsConsumerGroup_STATUS) AssignProperties_To_NamespacesEventhubsConsumerGroup_STATUS(destination *storage.NamespacesEventhubsConsumerGroup_STATUS) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(group.PropertyBag)
+
+	// Conditions
+	destination.Conditions = genruntime.CloneSliceOfCondition(group.Conditions)
+
+	// CreatedAt
+	destination.CreatedAt = genruntime.ClonePointerToString(group.CreatedAt)
+
+	// Id
+	destination.Id = genruntime.ClonePointerToString(group.Id)
+
+	// Location
+	destination.Location = genruntime.ClonePointerToString(group.Location)
+
+	// Name
+	destination.Name = genruntime.ClonePointerToString(group.Name)
+
+	// SystemData
+	if group.SystemData != nil {
+		var systemDatum storage.SystemData_STATUS
+		err := group.SystemData.AssignProperties_To_SystemData_STATUS(&systemDatum)
+		if err != nil {
+			return eris.Wrap(err, "calling AssignProperties_To_SystemData_STATUS() to populate field SystemData")
+		}
+		destination.SystemData = &systemDatum
+	} else {
+		destination.SystemData = nil
+	}
+
+	// Type
+	destination.Type = genruntime.ClonePointerToString(group.Type)
+
+	// UpdatedAt
+	destination.UpdatedAt = genruntime.ClonePointerToString(group.UpdatedAt)
+
+	// UserMetadata
+	destination.UserMetadata = genruntime.ClonePointerToString(group.UserMetadata)
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesEventhubsConsumerGroup_STATUS interface (if implemented) to customize the conversion
+	var groupAsAny any = group
+	if augmentedGroup, ok := groupAsAny.(augmentConversionForNamespacesEventhubsConsumerGroup_STATUS); ok {
+		err := augmentedGroup.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNamespacesEventhubsConsumerGroup_Spec interface {
+	AssignPropertiesFrom(src *storage.NamespacesEventhubsConsumerGroup_Spec) error
+	AssignPropertiesTo(dst *storage.NamespacesEventhubsConsumerGroup_Spec) error
+}
+
+type augmentConversionForNamespacesEventhubsConsumerGroup_STATUS interface {
+	AssignPropertiesFrom(src *storage.NamespacesEventhubsConsumerGroup_STATUS) error
+	AssignPropertiesTo(dst *storage.NamespacesEventhubsConsumerGroup_STATUS) error
 }
 
 // Storage version of v1api20211101.NamespacesEventhubsConsumerGroupOperatorSpec
@@ -238,6 +635,133 @@ type NamespacesEventhubsConsumerGroupOperatorSpec struct {
 	ConfigMapExpressions []*core.DestinationExpression `json:"configMapExpressions,omitempty"`
 	PropertyBag          genruntime.PropertyBag        `json:"$propertyBag,omitempty"`
 	SecretExpressions    []*core.DestinationExpression `json:"secretExpressions,omitempty"`
+}
+
+// AssignProperties_From_NamespacesEventhubsConsumerGroupOperatorSpec populates our NamespacesEventhubsConsumerGroupOperatorSpec from the provided source NamespacesEventhubsConsumerGroupOperatorSpec
+func (operator *NamespacesEventhubsConsumerGroupOperatorSpec) AssignProperties_From_NamespacesEventhubsConsumerGroupOperatorSpec(source *storage.NamespacesEventhubsConsumerGroupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(source.PropertyBag)
+
+	// ConfigMapExpressions
+	if source.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(source.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range source.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		operator.ConfigMapExpressions = configMapExpressionList
+	} else {
+		operator.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if source.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(source.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range source.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		operator.SecretExpressions = secretExpressionList
+	} else {
+		operator.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		operator.PropertyBag = propertyBag
+	} else {
+		operator.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesEventhubsConsumerGroupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesEventhubsConsumerGroupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesFrom(source)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesFrom() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+// AssignProperties_To_NamespacesEventhubsConsumerGroupOperatorSpec populates the provided destination NamespacesEventhubsConsumerGroupOperatorSpec from our NamespacesEventhubsConsumerGroupOperatorSpec
+func (operator *NamespacesEventhubsConsumerGroupOperatorSpec) AssignProperties_To_NamespacesEventhubsConsumerGroupOperatorSpec(destination *storage.NamespacesEventhubsConsumerGroupOperatorSpec) error {
+	// Clone the existing property bag
+	propertyBag := genruntime.NewPropertyBag(operator.PropertyBag)
+
+	// ConfigMapExpressions
+	if operator.ConfigMapExpressions != nil {
+		configMapExpressionList := make([]*core.DestinationExpression, len(operator.ConfigMapExpressions))
+		for configMapExpressionIndex, configMapExpressionItem := range operator.ConfigMapExpressions {
+			// Shadow the loop variable to avoid aliasing
+			configMapExpressionItem := configMapExpressionItem
+			if configMapExpressionItem != nil {
+				configMapExpression := *configMapExpressionItem.DeepCopy()
+				configMapExpressionList[configMapExpressionIndex] = &configMapExpression
+			} else {
+				configMapExpressionList[configMapExpressionIndex] = nil
+			}
+		}
+		destination.ConfigMapExpressions = configMapExpressionList
+	} else {
+		destination.ConfigMapExpressions = nil
+	}
+
+	// SecretExpressions
+	if operator.SecretExpressions != nil {
+		secretExpressionList := make([]*core.DestinationExpression, len(operator.SecretExpressions))
+		for secretExpressionIndex, secretExpressionItem := range operator.SecretExpressions {
+			// Shadow the loop variable to avoid aliasing
+			secretExpressionItem := secretExpressionItem
+			if secretExpressionItem != nil {
+				secretExpression := *secretExpressionItem.DeepCopy()
+				secretExpressionList[secretExpressionIndex] = &secretExpression
+			} else {
+				secretExpressionList[secretExpressionIndex] = nil
+			}
+		}
+		destination.SecretExpressions = secretExpressionList
+	} else {
+		destination.SecretExpressions = nil
+	}
+
+	// Update the property bag
+	if len(propertyBag) > 0 {
+		destination.PropertyBag = propertyBag
+	} else {
+		destination.PropertyBag = nil
+	}
+
+	// Invoke the augmentConversionForNamespacesEventhubsConsumerGroupOperatorSpec interface (if implemented) to customize the conversion
+	var operatorAsAny any = operator
+	if augmentedOperator, ok := operatorAsAny.(augmentConversionForNamespacesEventhubsConsumerGroupOperatorSpec); ok {
+		err := augmentedOperator.AssignPropertiesTo(destination)
+		if err != nil {
+			return eris.Wrap(err, "calling augmented AssignPropertiesTo() for conversion")
+		}
+	}
+
+	// No error
+	return nil
+}
+
+type augmentConversionForNamespacesEventhubsConsumerGroupOperatorSpec interface {
+	AssignPropertiesFrom(src *storage.NamespacesEventhubsConsumerGroupOperatorSpec) error
+	AssignPropertiesTo(dst *storage.NamespacesEventhubsConsumerGroupOperatorSpec) error
 }
 
 func init() {

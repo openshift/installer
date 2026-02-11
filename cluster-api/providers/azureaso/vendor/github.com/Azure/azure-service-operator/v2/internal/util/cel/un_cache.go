@@ -9,7 +9,7 @@ import (
 	"reflect"
 
 	"github.com/google/cel-go/cel"
-	"github.com/pkg/errors"
+	"github.com/rotisserie/eris"
 )
 
 // UnCache is a cache that doesn't cache, useful mostly for testing purposes
@@ -37,7 +37,7 @@ func (c *UnCache) Stop() {}
 func (c *UnCache) Get(resource reflect.Type, expression string) (*CompilationResult, error) {
 	env, err := c.newEnv(resource)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to get CEL env")
+		return nil, eris.Wrap(err, "failed to get CEL env")
 	}
 
 	return c.compile(env, expression)
