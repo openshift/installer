@@ -131,13 +131,12 @@ func resourceContainerClusterResourceV1() *schema.Resource {
 							},
 						},
 						"gcp_filestore_csi_driver_config": {
-							Type:          schema.TypeList,
-							Optional:      true,
-							Computed:      true,
-							AtLeastOneOf:  addonsConfigKeys,
-							MaxItems:      1,
-							Description:   `The status of the Filestore CSI driver addon, which allows the usage of filestore instance as volumes. Defaults to disabled; set enabled = true to enable.`,
-							ConflictsWith: []string{"enable_autopilot"},
+							Type:         schema.TypeList,
+							Optional:     true,
+							Computed:     true,
+							AtLeastOneOf: addonsConfigKeys,
+							MaxItems:     1,
+							Description:  `The status of the Filestore CSI driver addon, which allows the usage of filestore instance as volumes. Defaults to disabled for Standard clusters; set enabled = true to enable. It is enabled by default for Autopilot clusters; set enabled = true to enable it explicitly.`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"enabled": {
@@ -517,6 +516,13 @@ func resourceContainerClusterResourceV1() *schema.Resource {
 								},
 							},
 						},
+						"auto_provisioning_locations": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Computed:    true,
+							Elem:        &schema.Schema{Type: schema.TypeString},
+							Description: `The list of Google Compute Engine zones in which the NodePool's nodes can be created by NAP.`,
+						},
 					},
 				},
 			},
@@ -660,10 +666,10 @@ func resourceContainerClusterResourceV1() *schema.Resource {
 						"enable_components": {
 							Type:        schema.TypeList,
 							Required:    true,
-							Description: `GKE components exposing logs. Valid values include SYSTEM_COMPONENTS, APISERVER, CONTROLLER_MANAGER, SCHEDULER, and WORKLOADS.`,
+							Description: `GKE components exposing logs. Valid values include SYSTEM_COMPONENTS, APISERVER, CONTROLLER_MANAGER, KCP_CONNECTION, KCP_SSHD, SCHEDULER, and WORKLOADS.`,
 							Elem: &schema.Schema{
 								Type:         schema.TypeString,
-								ValidateFunc: validation.StringInSlice([]string{"SYSTEM_COMPONENTS", "APISERVER", "CONTROLLER_MANAGER", "SCHEDULER", "WORKLOADS"}, false),
+								ValidateFunc: validation.StringInSlice([]string{"SYSTEM_COMPONENTS", "APISERVER", "CONTROLLER_MANAGER", "KCP_CONNECTION", "KCP_SSHD", "SCHEDULER", "WORKLOADS"}, false),
 							},
 						},
 					},
@@ -1049,7 +1055,7 @@ func resourceContainerClusterResourceV1() *schema.Resource {
 				},
 			},
 
-			"node_config": clusterSchemaNodeConfig(),
+			"node_config": schemaNodeConfig(),
 
 			"node_pool": {
 				Type:     schema.TypeList,

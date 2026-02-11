@@ -129,8 +129,7 @@ except the last character, which cannot be a dash.`,
 				Required:         true,
 				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-				Description: `The URL of a forwarding rule that represents the service identified by
-this service attachment.`,
+				Description:      `The URL of a service serving the endpoint identified by this service attachment.`,
 			},
 			"consumer_accept_lists": {
 				Type:     schema.TypeSet,
@@ -166,6 +165,18 @@ supported is 1.`,
 					Type: schema.TypeString,
 				},
 			},
+			"propagated_connection_limit": {
+				Type:     schema.TypeInt,
+				Computed: true,
+				Optional: true,
+				Description: `The number of consumer spokes that connected Private Service Connect endpoints can be propagated to through Network Connectivity Center.
+This limit lets the service producer limit how many propagated Private Service Connect connections can be established to this service attachment from a single consumer.
+
+If the connection preference of the service attachment is ACCEPT_MANUAL, the limit applies to each project or network that is listed in the consumer accept list.
+If the connection preference of the service attachment is ACCEPT_AUTOMATIC, the limit applies to each project that contains a connected endpoint.
+
+If unspecified, the default propagated connection limit is 250.`,
+			},
 			"reconcile_connections": {
 				Type:     schema.TypeBool,
 				Computed: true,
@@ -190,10 +201,25 @@ If true, update will affect both PENDING and ACCEPTED/REJECTED PSC endpoints. Fo
 attachment.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"consumer_network": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `The url of the consumer network.`,
+						},
 						"endpoint": {
 							Type:        schema.TypeString,
 							Computed:    true,
 							Description: `The URL of the consumer forwarding rule.`,
+						},
+						"propagated_connection_count": {
+							Type:        schema.TypeInt,
+							Computed:    true,
+							Description: `The number of consumer Network Connectivity Center spokes that the connected Private Service Connect endpoint has propagated to.`,
+						},
+						"psc_connection_id": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `The PSC connection id of the connected endpoint.`,
 						},
 						"status": {
 							Type:     schema.TypeString,
@@ -324,6 +350,12 @@ func resourceComputeServiceAttachmentCreate(d *schema.ResourceData, meta interfa
 		return err
 	} else if v, ok := d.GetOkExists("reconcile_connections"); ok || !reflect.DeepEqual(v, reconcileConnectionsProp) {
 		obj["reconcileConnections"] = reconcileConnectionsProp
+	}
+	propagatedConnectionLimitProp, err := expandComputeServiceAttachmentPropagatedConnectionLimit(d.Get("propagated_connection_limit"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("propagated_connection_limit"); !tpgresource.IsEmptyValue(reflect.ValueOf(propagatedConnectionLimitProp)) && (ok || !reflect.DeepEqual(v, propagatedConnectionLimitProp)) {
+		obj["propagatedConnectionLimit"] = propagatedConnectionLimitProp
 	}
 	regionProp, err := expandComputeServiceAttachmentRegion(d.Get("region"), d, config)
 	if err != nil {
@@ -474,6 +506,9 @@ func resourceComputeServiceAttachmentRead(d *schema.ResourceData, meta interface
 	if err := d.Set("reconcile_connections", flattenComputeServiceAttachmentReconcileConnections(res["reconcileConnections"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
 	}
+	if err := d.Set("propagated_connection_limit", flattenComputeServiceAttachmentPropagatedConnectionLimit(res["propagatedConnectionLimit"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
+	}
 	if err := d.Set("self_link", tpgresource.ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
 		return fmt.Errorf("Error reading ServiceAttachment: %s", err)
 	}
@@ -544,6 +579,12 @@ func resourceComputeServiceAttachmentUpdate(d *schema.ResourceData, meta interfa
 		return err
 	} else if v, ok := d.GetOkExists("reconcile_connections"); ok || !reflect.DeepEqual(v, reconcileConnectionsProp) {
 		obj["reconcileConnections"] = reconcileConnectionsProp
+	}
+	propagatedConnectionLimitProp, err := expandComputeServiceAttachmentPropagatedConnectionLimit(d.Get("propagated_connection_limit"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("propagated_connection_limit"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, propagatedConnectionLimitProp)) {
+		obj["propagatedConnectionLimit"] = propagatedConnectionLimitProp
 	}
 
 	obj, err = resourceComputeServiceAttachmentUpdateEncoder(d, meta, obj)
@@ -698,8 +739,11 @@ func flattenComputeServiceAttachmentConnectedEndpoints(v interface{}, d *schema.
 			continue
 		}
 		transformed = append(transformed, map[string]interface{}{
-			"endpoint": flattenComputeServiceAttachmentConnectedEndpointsEndpoint(original["endpoint"], d, config),
-			"status":   flattenComputeServiceAttachmentConnectedEndpointsStatus(original["status"], d, config),
+			"endpoint":                    flattenComputeServiceAttachmentConnectedEndpointsEndpoint(original["endpoint"], d, config),
+			"status":                      flattenComputeServiceAttachmentConnectedEndpointsStatus(original["status"], d, config),
+			"consumer_network":            flattenComputeServiceAttachmentConnectedEndpointsConsumerNetwork(original["consumerNetwork"], d, config),
+			"psc_connection_id":           flattenComputeServiceAttachmentConnectedEndpointsPscConnectionId(original["pscConnectionId"], d, config),
+			"propagated_connection_count": flattenComputeServiceAttachmentConnectedEndpointsPropagatedConnectionCount(original["propagatedConnectionCount"], d, config),
 		})
 	}
 	return transformed
@@ -712,11 +756,33 @@ func flattenComputeServiceAttachmentConnectedEndpointsStatus(v interface{}, d *s
 	return v
 }
 
-func flattenComputeServiceAttachmentTargetService(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
+func flattenComputeServiceAttachmentConnectedEndpointsConsumerNetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeServiceAttachmentConnectedEndpointsPscConnectionId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeServiceAttachmentConnectedEndpointsPropagatedConnectionCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
 	}
-	return tpgresource.ConvertSelfLinkToV1(v.(string))
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenComputeServiceAttachmentTargetService(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func flattenComputeServiceAttachmentNatSubnets(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -787,6 +853,23 @@ func flattenComputeServiceAttachmentReconcileConnections(v interface{}, d *schem
 	return v
 }
 
+func flattenComputeServiceAttachmentPropagatedConnectionLimit(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
 func expandComputeServiceAttachmentName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -804,11 +887,7 @@ func expandComputeServiceAttachmentConnectionPreference(v interface{}, d tpgreso
 }
 
 func expandComputeServiceAttachmentTargetService(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	f, err := tpgresource.ParseRegionalFieldValue("forwardingRules", v.(string), "project", "region", "zone", d, config, true)
-	if err != nil {
-		return nil, fmt.Errorf("Invalid value for target_service: %s", err)
-	}
-	return f.RelativeLink(), nil
+	return v, nil
 }
 
 func expandComputeServiceAttachmentNatSubnets(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
@@ -889,6 +968,10 @@ func expandComputeServiceAttachmentConsumerAcceptListsConnectionLimit(v interfac
 }
 
 func expandComputeServiceAttachmentReconcileConnections(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeServiceAttachmentPropagatedConnectionLimit(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

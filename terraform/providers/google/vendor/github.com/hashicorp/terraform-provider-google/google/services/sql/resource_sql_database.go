@@ -91,11 +91,11 @@ a value of 'en_US.UTF8' at creation time.`,
 			"deletion_policy": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "DELETE",
 				Description: `The deletion policy for the database. Setting ABANDON allows the resource
 to be abandoned rather than deleted. This is useful for Postgres, where databases cannot be
 deleted from the API if there are users other than cloudsqlsuperuser with access. Possible
 values are: "ABANDON", "DELETE". Defaults to "DELETE".`,
+				Default: "DELETE",
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -234,6 +234,14 @@ func resourceSQLDatabaseRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	headers := make(http.Header)
+	instance := d.Get("instance").(string)
+	databaseInstance, err := config.NewSqlAdminClient(userAgent).Instances.Get(project, instance).Do()
+	if err != nil {
+		return err
+	}
+	if databaseInstance.Settings.ActivationPolicy != "ALWAYS" {
+		return nil
+	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",

@@ -32,6 +32,10 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
+func InterconnectTypeDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
+	return old == "IT_PRIVATE" && new == "DEDICATED"
+}
+
 func ResourceComputeInterconnect() *schema.Resource {
 	return &schema.Resource{
 		Create: resourceComputeInterconnectCreate,
@@ -55,18 +59,12 @@ func ResourceComputeInterconnect() *schema.Resource {
 		),
 
 		Schema: map[string]*schema.Schema{
-			"customer_name": {
-				Type:     schema.TypeString,
-				Required: true,
-				ForceNew: true,
-				Description: `Customer name, to put in the Letter of Authorization as the party authorized to request a
-crossconnect.`,
-			},
 			"interconnect_type": {
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"DEDICATED", "PARTNER", "IT_PRIVATE"}),
+				Type:             schema.TypeString,
+				Required:         true,
+				ForceNew:         true,
+				ValidateFunc:     verify.ValidateEnum([]string{"DEDICATED", "PARTNER", "IT_PRIVATE"}),
+				DiffSuppressFunc: InterconnectTypeDiffSuppress,
 				Description: `Type of interconnect. Note that a value IT_PRIVATE has been deprecated in favor of DEDICATED.
 Can take one of the following values:
   - PARTNER: A partner-managed interconnection shared between customers though a partner.
@@ -81,13 +79,6 @@ Can take one of the following values:
 bundle, not the speed of the entire bundle. Can take one of the following values:
   - LINK_TYPE_ETHERNET_10G_LR: A 10G Ethernet with LR optics.
   - LINK_TYPE_ETHERNET_100G_LR: A 100G Ethernet with LR optics. Possible values: ["LINK_TYPE_ETHERNET_10G_LR", "LINK_TYPE_ETHERNET_100G_LR"]`,
-			},
-			"location": {
-				Type:             schema.TypeString,
-				Required:         true,
-				ForceNew:         true,
-				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-				Description:      `URL of the InterconnectLocation object that represents where this connection is to be provisioned.`,
 			},
 			"name": {
 				Type:         schema.TypeString,
@@ -109,16 +100,22 @@ lowercase letter, or digit, except the last character, which cannot be a dash.`,
 			"admin_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				ForceNew: true,
 				Description: `Administrative status of the interconnect. When this is set to true, the Interconnect is
 functional and can carry traffic. When set to false, no packets can be carried over the
 interconnect and no BGP routes are exchanged over it. By default, the status is set to true.`,
 				Default: true,
 			},
+			"customer_name": {
+				Type:     schema.TypeString,
+				Optional: true,
+				ForceNew: true,
+				Description: `Customer name, to put in the Letter of Authorization as the party authorized to request a
+crossconnect. This field is required for Dedicated and Partner Interconnect, should not be specified
+for cross-cloud interconnect.`,
+			},
 			"description": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				ForceNew:    true,
 				Description: `An optional description of this resource. Provide this property when you create the resource.`,
 			},
 			"labels": {
@@ -132,10 +129,17 @@ method. Each label key/value pair must comply with RFC1035. Label values may be 
 Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
+			"location": {
+				Type:             schema.TypeString,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
+				Description: `URL of the InterconnectLocation object that represents where this connection is to be provisioned.
+Specifies the location inside Google's Networks, should not be passed in case of cross-cloud interconnect.`,
+			},
 			"macsec": {
 				Type:     schema.TypeList,
 				Optional: true,
-				ForceNew: true,
 				Description: `Configuration that enables Media Access Control security (MACsec) on the Cloud
 Interconnect connection between Google and your on-premises router.`,
 				MaxItems: 1,
@@ -144,7 +148,6 @@ Interconnect connection between Google and your on-premises router.`,
 						"pre_shared_keys": {
 							Type:     schema.TypeList,
 							Required: true,
-							ForceNew: true,
 							Description: `A keychain placeholder describing a set of named key objects along with their
 start times. A MACsec CKN/CAK is generated for each key in the key chain.
 Google router automatically picks the key with the most recent startTime when establishing
@@ -154,7 +157,6 @@ or re-establishing a MACsec secure link.`,
 									"name": {
 										Type:         schema.TypeString,
 										Required:     true,
-										ForceNew:     true,
 										ValidateFunc: verify.ValidateRegexp(`^[a-z]([-a-z0-9]*[a-z0-9])?$`),
 										Description: `A name for this pre-shared key. The name must be 1-63 characters long, and
  comply with RFC1035. Specifically, the name must be 1-63 characters long and match
@@ -163,9 +165,9 @@ or re-establishing a MACsec secure link.`,
  letter, or digit, except the last character, which cannot be a dash.`,
 									},
 									"fail_open": {
-										Type:     schema.TypeBool,
-										Optional: true,
-										ForceNew: true,
+										Type:       schema.TypeBool,
+										Optional:   true,
+										Deprecated: "`failOpen` is deprecated and will be removed in a future major release. Use other `failOpen` instead.",
 										Description: `If set to true, the Interconnect connection is configured with a should-secure
 MACsec security policy, that allows the Google router to fallback to cleartext
 traffic if the MKA session cannot be established. By default, the Interconnect
@@ -175,7 +177,6 @@ if the MKA session cannot be established with your router.`,
 									"start_time": {
 										Type:     schema.TypeString,
 										Optional: true,
-										ForceNew: true,
 										Description: `A RFC3339 timestamp on or after which the key is valid. startTime can be in the
 future. If the keychain has a single key, startTime can be omitted. If the keychain
 has multiple keys, startTime is mandatory for each key. The start times of keys must
@@ -185,20 +186,27 @@ hours apart.`,
 								},
 							},
 						},
+						"fail_open": {
+							Type:     schema.TypeBool,
+							Optional: true,
+							Description: `If set to true, the Interconnect connection is configured with a should-secure
+MACsec security policy, that allows the Google router to fallback to cleartext
+traffic if the MKA session cannot be established. By default, the Interconnect
+connection is configured with a must-secure security policy that drops all traffic
+if the MKA session cannot be established with your router.`,
+						},
 					},
 				},
 			},
 			"macsec_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				ForceNew: true,
 				Description: `Enable or disable MACsec on this Interconnect connection.
 MACsec enablement fails if the MACsec object is not specified.`,
 			},
 			"noc_contact_email": {
 				Type:     schema.TypeString,
 				Optional: true,
-				ForceNew: true,
 				Description: `Email address to contact the customer NOC for operations and maintenance notifications
 regarding this Interconnect. If specified, this will be used for notifications in addition to
 all other forms described, such as Cloud Monitoring logs alerting and Cloud Notifications.
@@ -216,13 +224,14 @@ of Google's network that the interconnect is connected to.`,
 				Type:     schema.TypeList,
 				Optional: true,
 				ForceNew: true,
-				Description: `interconnects.list of features requested for this Interconnect connection. Options: MACSEC (
+				Description: `interconnects.list of features requested for this Interconnect connection. Options: IF_MACSEC (
 If specified then the connection is created on MACsec capable hardware ports. If not
 specified, the default value is false, which allocates non-MACsec capable ports first if
-available). Possible values: ["MACSEC"]`,
+available). Note that MACSEC is still technically allowed for compatibility reasons, but it
+does not work with the API, and will be removed in an upcoming major version. Possible values: ["MACSEC", "IF_MACSEC"]`,
 				Elem: &schema.Schema{
 					Type:         schema.TypeString,
-					ValidateFunc: verify.ValidateEnum([]string{"MACSEC"}),
+					ValidateFunc: verify.ValidateEnum([]string{"MACSEC", "IF_MACSEC"}),
 				},
 			},
 			"available_features": {
@@ -269,7 +278,6 @@ Google to the customer in the LOA.`,
 			"effective_labels": {
 				Type:        schema.TypeMap,
 				Computed:    true,
-				ForceNew:    true,
 				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -576,6 +584,66 @@ func resourceComputeInterconnectCreate(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error waiting to create Interconnect: %s", err)
 	}
 
+	if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+		labels := d.Get("labels")
+		terraformLables := d.Get("terraform_labels")
+
+		// Labels cannot be set in a create.  We'll have to set them here.
+		err = resourceComputeInterconnectRead(d, meta)
+		if err != nil {
+			return err
+		}
+
+		obj := make(map[string]interface{})
+		// d.Get("effective_labels") will have been overridden by the Read call.
+		labelsProp, err := expandComputeInterconnectEffectiveLabels(v, d, config)
+		if err != nil {
+			return err
+		}
+		obj["labels"] = labelsProp
+		labelFingerprintProp := d.Get("label_fingerprint")
+		obj["labelFingerprint"] = labelFingerprintProp
+
+		url, err = tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/interconnects/{{name}}/setLabels")
+		if err != nil {
+			return err
+		}
+		res, err = transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "POST",
+			Project:   project,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+		})
+		if err != nil {
+			return fmt.Errorf("Error adding labels to ComputeInterconnect %q: %s", d.Id(), err)
+		}
+
+		err = ComputeOperationWaitTime(
+			config, res, project, "Updating ComputeInterconnect Labels", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+
+		if err != nil {
+			return err
+		}
+
+		// Set back the labels field, as it is needed to decide the value of "labels" in the state in the read function.
+		if err := d.Set("labels", labels); err != nil {
+			return fmt.Errorf("Error setting back labels: %s", err)
+		}
+
+		// Set back the terraform_labels field, as it is needed to decide the value of "terraform_labels" in the state in the read function.
+		if err := d.Set("terraform_labels", terraformLables); err != nil {
+			return fmt.Errorf("Error setting back terraform_labels: %s", err)
+		}
+
+		// Set back the effective_labels field, as it is needed to decide the value of "effective_labels" in the state in the read function.
+		if err := d.Set("effective_labels", v); err != nil {
+			return fmt.Errorf("Error setting back effective_labels: %s", err)
+		}
+	}
+
 	log.Printf("[DEBUG] Finished creating Interconnect %q: %#v", d.Id(), res)
 
 	return resourceComputeInterconnectRead(d, meta)
@@ -715,7 +783,145 @@ func resourceComputeInterconnectRead(d *schema.ResourceData, meta interface{}) e
 }
 
 func resourceComputeInterconnectUpdate(d *schema.ResourceData, meta interface{}) error {
-	// Only the root field "labels" and "terraform_labels" are mutable
+	config := meta.(*transport_tpg.Config)
+	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	if err != nil {
+		return err
+	}
+
+	billingProject := ""
+
+	project, err := tpgresource.GetProject(d, config)
+	if err != nil {
+		return fmt.Errorf("Error fetching project for Interconnect: %s", err)
+	}
+	billingProject = project
+
+	obj := make(map[string]interface{})
+	descriptionProp, err := expandComputeInterconnectDescription(d.Get("description"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
+		obj["description"] = descriptionProp
+	}
+	adminEnabledProp, err := expandComputeInterconnectAdminEnabled(d.Get("admin_enabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("admin_enabled"); ok || !reflect.DeepEqual(v, adminEnabledProp) {
+		obj["adminEnabled"] = adminEnabledProp
+	}
+	nocContactEmailProp, err := expandComputeInterconnectNocContactEmail(d.Get("noc_contact_email"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("noc_contact_email"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, nocContactEmailProp)) {
+		obj["nocContactEmail"] = nocContactEmailProp
+	}
+	macsecProp, err := expandComputeInterconnectMacsec(d.Get("macsec"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("macsec"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, macsecProp)) {
+		obj["macsec"] = macsecProp
+	}
+	macsecEnabledProp, err := expandComputeInterconnectMacsecEnabled(d.Get("macsec_enabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("macsec_enabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, macsecEnabledProp)) {
+		obj["macsecEnabled"] = macsecEnabledProp
+	}
+
+	url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/interconnects/{{name}}")
+	if err != nil {
+		return err
+	}
+
+	log.Printf("[DEBUG] Updating Interconnect %q: %#v", d.Id(), obj)
+	headers := make(http.Header)
+
+	// err == nil indicates that the billing_project value was found
+	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+		billingProject = bp
+	}
+
+	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+		Config:    config,
+		Method:    "PATCH",
+		Project:   billingProject,
+		RawURL:    url,
+		UserAgent: userAgent,
+		Body:      obj,
+		Timeout:   d.Timeout(schema.TimeoutUpdate),
+		Headers:   headers,
+	})
+
+	if err != nil {
+		return fmt.Errorf("Error updating Interconnect %q: %s", d.Id(), err)
+	} else {
+		log.Printf("[DEBUG] Finished updating Interconnect %q: %#v", d.Id(), res)
+	}
+
+	err = ComputeOperationWaitTime(
+		config, res, project, "Updating Interconnect", userAgent,
+		d.Timeout(schema.TimeoutUpdate))
+
+	if err != nil {
+		return err
+	}
+	d.Partial(true)
+
+	if d.HasChange("label_fingerprint") || d.HasChange("effective_labels") {
+		obj := make(map[string]interface{})
+
+		labelFingerprintProp, err := expandComputeInterconnectLabelFingerprint(d.Get("label_fingerprint"), d, config)
+		if err != nil {
+			return err
+		} else if v, ok := d.GetOkExists("label_fingerprint"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelFingerprintProp)) {
+			obj["labelFingerprint"] = labelFingerprintProp
+		}
+		labelsProp, err := expandComputeInterconnectEffectiveLabels(d.Get("effective_labels"), d, config)
+		if err != nil {
+			return err
+		} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
+			obj["labels"] = labelsProp
+		}
+
+		url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/interconnects/{{name}}/setLabels")
+		if err != nil {
+			return err
+		}
+
+		headers := make(http.Header)
+
+		// err == nil indicates that the billing_project value was found
+		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+			billingProject = bp
+		}
+
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "POST",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
+		if err != nil {
+			return fmt.Errorf("Error updating Interconnect %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating Interconnect %q: %#v", d.Id(), res)
+		}
+
+		err = ComputeOperationWaitTime(
+			config, res, project, "Updating Interconnect", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
+	}
+
+	d.Partial(false)
+
 	return resourceComputeInterconnectRead(d, meta)
 }
 
@@ -1015,6 +1221,8 @@ func flattenComputeInterconnectMacsec(v interface{}, d *schema.ResourceData, con
 	transformed := make(map[string]interface{})
 	transformed["pre_shared_keys"] =
 		flattenComputeInterconnectMacsecPreSharedKeys(original["preSharedKeys"], d, config)
+	transformed["fail_open"] =
+		flattenComputeInterconnectMacsecFailOpen(original["failOpen"], d, config)
 	return []interface{}{transformed}
 }
 func flattenComputeInterconnectMacsecPreSharedKeys(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1046,6 +1254,10 @@ func flattenComputeInterconnectMacsecPreSharedKeysStartTime(v interface{}, d *sc
 }
 
 func flattenComputeInterconnectMacsecPreSharedKeysFailOpen(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenComputeInterconnectMacsecFailOpen(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1140,6 +1352,13 @@ func expandComputeInterconnectMacsec(v interface{}, d tpgresource.TerraformResou
 		transformed["preSharedKeys"] = transformedPreSharedKeys
 	}
 
+	transformedFailOpen, err := expandComputeInterconnectMacsecFailOpen(original["fail_open"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedFailOpen); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["failOpen"] = transformedFailOpen
+	}
+
 	return transformed, nil
 }
 
@@ -1188,6 +1407,10 @@ func expandComputeInterconnectMacsecPreSharedKeysStartTime(v interface{}, d tpgr
 }
 
 func expandComputeInterconnectMacsecPreSharedKeysFailOpen(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandComputeInterconnectMacsecFailOpen(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

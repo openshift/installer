@@ -123,7 +123,7 @@ func ResourceComputeForwardingRule() *schema.Resource {
 
 		CustomizeDiff: customdiff.All(
 			forwardingRuleCustomizeDiff,
-			tpgresource.SetLabelsDiff,
+			tpgresource.SetLabelsDiffWithoutAttributionLabel,
 			tpgresource.DefaultProviderProject,
 		),
 
@@ -528,6 +528,11 @@ For Private Service Connect forwarding rules that forward traffic to managed ser
 				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
+			"forwarding_rule_id": {
+				Type:        schema.TypeInt,
+				Computed:    true,
+				Description: `The unique identifier number for the resource. This identifier is defined by the server.`,
+			},
 			"label_fingerprint": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -561,8 +566,8 @@ This field is only used for INTERNAL load balancing.`,
 			"recreate_closed_psc": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: `This is used in PSC consumer ForwardingRule to make terraform recreate the ForwardingRule when the status is closed`,
+				Default:     false,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -752,6 +757,12 @@ func resourceComputeForwardingRuleCreate(d *schema.ResourceData, meta interface{
 	}
 
 	headers := make(http.Header)
+	// Labels cannot be set in a create for PSC forwarding rules, so remove it from the CREATE request.
+	if targetProp != nil && strings.Contains(targetProp.(string), "/serviceAttachments/") {
+		if _, ok := obj["labels"]; ok {
+			delete(obj, "labels")
+		}
+	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -900,6 +911,9 @@ func resourceComputeForwardingRuleRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading ForwardingRule: %s", err)
 	}
 	if err := d.Set("is_mirroring_collector", flattenComputeForwardingRuleIsMirroringCollector(res["isMirroringCollector"], d, config)); err != nil {
+		return fmt.Errorf("Error reading ForwardingRule: %s", err)
+	}
+	if err := d.Set("forwarding_rule_id", flattenComputeForwardingRuleForwardingRuleId(res["id"], d, config)); err != nil {
 		return fmt.Errorf("Error reading ForwardingRule: %s", err)
 	}
 	if err := d.Set("psc_connection_id", flattenComputeForwardingRulePscConnectionId(res["pscConnectionId"], d, config)); err != nil {
@@ -1313,6 +1327,23 @@ func flattenComputeForwardingRuleCreationTimestamp(v interface{}, d *schema.Reso
 
 func flattenComputeForwardingRuleIsMirroringCollector(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
+}
+
+func flattenComputeForwardingRuleForwardingRuleId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
 }
 
 func flattenComputeForwardingRulePscConnectionId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {

@@ -61,20 +61,28 @@ func resourceBigQueryDatasetAccessIamMemberDiffSuppress(k, old, new string, d *s
 		}
 
 		if memberInState := d.Get("user_by_email").(string); memberInState != "" {
-			return strings.ToUpper(memberInState) == strings.ToUpper(strippedIamMember)
+			return strings.ToLower(memberInState) == strings.ToLower(strippedIamMember)
 		}
 
 		if memberInState := d.Get("group_by_email").(string); memberInState != "" {
-			return strings.ToUpper(memberInState) == strings.ToUpper(strippedIamMember)
+			return strings.ToLower(memberInState) == strings.ToLower(strippedIamMember)
 		}
 
 		if memberInState := d.Get("domain").(string); memberInState != "" {
-			return strings.ToUpper(memberInState) == strings.ToUpper(strippedIamMember)
+			return strings.ToLower(memberInState) == strings.ToLower(strippedIamMember)
 		}
 
 		if memberInState := d.Get("special_group").(string); memberInState != "" {
-			return strings.ToUpper(memberInState) == strings.ToUpper(strippedIamMember)
+			return strings.ToLower(memberInState) == strings.ToLower(strippedIamMember)
 		}
+	}
+
+	if memberInState := d.Get("user_by_email").(string); memberInState != "" {
+		return strings.ToLower(old) == strings.ToLower(new)
+	}
+
+	if memberInState := d.Get("group_by_email").(string); memberInState != "" {
+		return strings.ToLower(old) == strings.ToLower(new)
 	}
 
 	return false
@@ -296,17 +304,9 @@ is 256 characters.`,
 				ForceNew:         true,
 				DiffSuppressFunc: resourceBigQueryDatasetAccessIamMemberDiffSuppress,
 				Description: `A special group to grant access to. Possible values include:
-
-
 * 'projectOwners': Owners of the enclosing project.
-
-
 * 'projectReaders': Readers of the enclosing project.
-
-
 * 'projectWriters': Writers of the enclosing project.
-
-
 * 'allAuthenticatedUsers': All authenticated BigQuery users.`,
 				ExactlyOneOf: []string{"user_by_email", "group_by_email", "domain", "special_group", "iam_member", "view", "dataset", "routine"},
 			},
@@ -679,11 +679,19 @@ func flattenNestedBigQueryDatasetAccessRole(v interface{}, d *schema.ResourceDat
 }
 
 func flattenNestedBigQueryDatasetAccessUserByEmail(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return nil
+	}
+
+	return strings.ToLower(v.(string))
 }
 
 func flattenNestedBigQueryDatasetAccessGroupByEmail(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
+	if v == nil {
+		return nil
+	}
+
+	return strings.ToLower(v.(string))
 }
 
 func flattenNestedBigQueryDatasetAccessDomain(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -814,11 +822,19 @@ func expandNestedBigQueryDatasetAccessRole(v interface{}, d tpgresource.Terrafor
 }
 
 func expandNestedBigQueryDatasetAccessUserByEmail(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
+	if v == nil {
+		return nil, nil
+	}
+
+	return strings.ToLower(v.(string)), nil
 }
 
 func expandNestedBigQueryDatasetAccessGroupByEmail(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
+	if v == nil {
+		return nil, nil
+	}
+
+	return strings.ToLower(v.(string)), nil
 }
 
 func expandNestedBigQueryDatasetAccessDomain(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {

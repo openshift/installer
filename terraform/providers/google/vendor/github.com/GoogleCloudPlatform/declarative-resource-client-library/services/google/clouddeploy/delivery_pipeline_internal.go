@@ -1987,6 +1987,11 @@ func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig
 	} else {
 		cDes.StableCutbackDuration = des.StableCutbackDuration
 	}
+	if dcl.StringCanonicalize(des.PodSelectorLabel, initial.PodSelectorLabel) || dcl.IsZeroValue(des.PodSelectorLabel) {
+		cDes.PodSelectorLabel = initial.PodSelectorLabel
+	} else {
+		cDes.PodSelectorLabel = des.PodSelectorLabel
+	}
 
 	return cDes
 }
@@ -2047,6 +2052,9 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeCon
 	}
 	if dcl.StringCanonicalize(des.StableCutbackDuration, nw.StableCutbackDuration) {
 		nw.StableCutbackDuration = des.StableCutbackDuration
+	}
+	if dcl.StringCanonicalize(des.PodSelectorLabel, nw.PodSelectorLabel) {
+		nw.PodSelectorLabel = des.PodSelectorLabel
 	}
 
 	return nw
@@ -2127,6 +2135,11 @@ func canonicalizeDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfig
 	} else {
 		cDes.DisablePodOverprovisioning = des.DisablePodOverprovisioning
 	}
+	if dcl.StringCanonicalize(des.PodSelectorLabel, initial.PodSelectorLabel) || dcl.IsZeroValue(des.PodSelectorLabel) {
+		cDes.PodSelectorLabel = initial.PodSelectorLabel
+	} else {
+		cDes.PodSelectorLabel = des.PodSelectorLabel
+	}
 
 	return cDes
 }
@@ -2181,6 +2194,9 @@ func canonicalizeNewDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeCon
 	}
 	if dcl.BoolCanonicalize(des.DisablePodOverprovisioning, nw.DisablePodOverprovisioning) {
 		nw.DisablePodOverprovisioning = des.DisablePodOverprovisioning
+	}
+	if dcl.StringCanonicalize(des.PodSelectorLabel, nw.PodSelectorLabel) {
+		nw.PodSelectorLabel = des.PodSelectorLabel
 	}
 
 	return nw
@@ -4348,6 +4364,13 @@ func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKuber
 		}
 		diffs = append(diffs, ds...)
 	}
+
+	if ds, err := dcl.Diff(desired.PodSelectorLabel, actual.PodSelectorLabel, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("PodSelectorLabel")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
 	return diffs, nil
 }
 
@@ -4386,6 +4409,13 @@ func compareDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKuber
 	}
 
 	if ds, err := dcl.Diff(desired.DisablePodOverprovisioning, actual.DisablePodOverprovisioning, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("DisablePodOverprovisioning")); len(ds) != 0 || err != nil {
+		if err != nil {
+			return nil, err
+		}
+		diffs = append(diffs, ds...)
+	}
+
+	if ds, err := dcl.Diff(desired.PodSelectorLabel, actual.PodSelectorLabel, dcl.DiffInfo{OperationSelector: dcl.TriggersOperation("updateDeliveryPipelineUpdateDeliveryPipelineOperation")}, fn.AddNest("PodSelectorLabel")); len(ds) != 0 || err != nil {
 		if err != nil {
 			return nil, err
 		}
@@ -6224,6 +6254,9 @@ func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubern
 	if v := f.StableCutbackDuration; !dcl.IsEmptyValueIndirect(v) {
 		m["stableCutbackDuration"] = v
 	}
+	if v := f.PodSelectorLabel; !dcl.IsEmptyValueIndirect(v) {
+		m["podSelectorLabel"] = v
+	}
 
 	return m, nil
 }
@@ -6246,6 +6279,7 @@ func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKuber
 	r.Deployment = dcl.FlattenString(m["deployment"])
 	r.RouteUpdateWaitTime = dcl.FlattenString(m["routeUpdateWaitTime"])
 	r.StableCutbackDuration = dcl.FlattenString(m["stableCutbackDuration"])
+	r.PodSelectorLabel = dcl.FlattenString(m["podSelectorLabel"])
 
 	return r
 }
@@ -6348,6 +6382,9 @@ func expandDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKubern
 	if v := f.DisablePodOverprovisioning; !dcl.IsEmptyValueIndirect(v) {
 		m["disablePodOverprovisioning"] = v
 	}
+	if v := f.PodSelectorLabel; !dcl.IsEmptyValueIndirect(v) {
+		m["podSelectorLabel"] = v
+	}
 
 	return m, nil
 }
@@ -6368,6 +6405,7 @@ func flattenDeliveryPipelineSerialPipelineStagesStrategyCanaryRuntimeConfigKuber
 	r.Service = dcl.FlattenString(m["service"])
 	r.Deployment = dcl.FlattenString(m["deployment"])
 	r.DisablePodOverprovisioning = dcl.FlattenBool(m["disablePodOverprovisioning"])
+	r.PodSelectorLabel = dcl.FlattenString(m["podSelectorLabel"])
 
 	return r
 }

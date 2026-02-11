@@ -97,6 +97,7 @@ Must be unique within the project.`,
 			},
 			"dnssec_config": {
 				Type:        schema.TypeList,
+				Computed:    true,
 				Optional:    true,
 				Description: `DNSSEC configuration`,
 				MaxItems:    1,
@@ -334,8 +335,8 @@ defined by the server`,
 			"force_destroy": {
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     false,
 				Description: `Set this true to delete all records in the zone.`,
+				Default:     false,
 			},
 			"project": {
 				Type:     schema.TypeString,

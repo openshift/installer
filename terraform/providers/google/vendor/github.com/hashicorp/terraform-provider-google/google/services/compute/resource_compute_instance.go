@@ -22,6 +22,7 @@ import (
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
+	"github.com/hashicorp/terraform-provider-google/google/verify"
 
 	"google.golang.org/api/compute/v1"
 )
@@ -51,6 +52,13 @@ func IpCidrRangeDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
 }
 
 var (
+	advancedMachineFeaturesKeys = []string{
+		"advanced_machine_features.0.enable_nested_virtualization",
+		"advanced_machine_features.0.threads_per_core",
+		"advanced_machine_features.0.turbo_mode",
+		"advanced_machine_features.0.visible_core_count",
+	}
+
 	bootDiskKeys = []string{
 		"boot_disk.0.auto_delete",
 		"boot_disk.0.device_name",
@@ -70,6 +78,8 @@ var (
 		"boot_disk.0.initialize_params.0.provisioned_iops",
 		"boot_disk.0.initialize_params.0.provisioned_throughput",
 		"boot_disk.0.initialize_params.0.enable_confidential_compute",
+		"boot_disk.0.initialize_params.0.storage_pool",
+		"boot_disk.0.initialize_params.0.resource_policies",
 	}
 
 	schedulingKeys = []string{
@@ -92,6 +102,36 @@ var (
 	}
 )
 
+// This checks if the project provided in subnetwork's self_link matches
+// the project provided in subnetwork_project not to produce a confusing plan diff.
+func validateSubnetworkProject(ctx context.Context, d *schema.ResourceDiff, meta interface{}) error {
+	// separate func to allow unit testing
+	return ValidateSubnetworkProjectFunc(d)
+}
+
+func ValidateSubnetworkProjectFunc(d tpgresource.TerraformResourceDiff) error {
+	oldCount, newCount := d.GetChange("network_interface.#")
+	if oldCount.(int) != newCount.(int) {
+		return nil
+	}
+	for i := 0; i < newCount.(int); i++ {
+		prefix := fmt.Sprintf("network_interface.%d", i)
+		subnetworkProject := d.Get(prefix + ".subnetwork_project")
+		subnetwork := d.Get(prefix + ".subnetwork")
+
+		_, err := tpgresource.GetRelativePath(subnetwork.(string))
+		if err != nil {
+			log.Printf("[DEBUG] Subnetwork %q is not a selflink", subnetwork)
+			return nil
+		}
+
+		if tpgresource.GetProjectFromRegionalSelfLink(subnetwork.(string)) != subnetworkProject.(string) {
+			return fmt.Errorf("project in subnetwork's self_link %q must match subnetwork_project %q", subnetwork, subnetworkProject)
+		}
+	}
+	return nil
+}
+
 // network_interface.[d].network_ip can only change when subnet/network
 // is also changing. Validate that if network_ip is changing this scenario
 // holds up to par.
@@ -109,11 +149,13 @@ func forceNewIfNetworkIPNotUpdatableFunc(d tpgresource.TerraformResourceDiff) er
 	for i := 0; i < newCount.(int); i++ {
 		prefix := fmt.Sprintf("network_interface.%d", i)
 		networkKey := prefix + ".network"
+		oldN, newN := d.GetChange(networkKey)
 		subnetworkKey := prefix + ".subnetwork"
+		oldS, newS := d.GetChange(subnetworkKey)
 		subnetworkProjectKey := prefix + ".subnetwork_project"
 		networkIPKey := prefix + ".network_ip"
-		if d.HasChange(networkIPKey) {
-			if !d.HasChange(networkKey) && !d.HasChange(subnetworkKey) && !d.HasChange(subnetworkProjectKey) {
+		if d.HasChange(networkIPKey) && d.Get(networkIPKey).(string) != "" {
+			if tpgresource.CompareSelfLinkOrResourceName("", oldS.(string), newS.(string), nil) && !d.HasChange(subnetworkProjectKey) && tpgresource.CompareSelfLinkOrResourceName("", oldN.(string), newN.(string), nil) {
 				if err := d.ForceNew(networkIPKey); err != nil {
 					return err
 				}
@@ -197,6 +239,13 @@ func ResourceComputeInstance() *schema.Resource {
 							Description: `The RFC 4648 base64 encoded SHA-256 hash of the customer-supplied encryption key that protects this resource.`,
 						},
 
+						"interface": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validation.StringInSlice([]string{"SCSI", "NVME"}, false),
+							Description:  `The disk interface used for attaching this disk. One of SCSI or NVME. (This field is shared with attached_disk and only used for specific cases, please don't specify this field without advice from Google.)`,
+						},
+
 						"kms_key_self_link": {
 							Type:             schema.TypeString,
 							Optional:         true,
@@ -264,6 +313,18 @@ func ResourceComputeInstance() *schema.Resource {
 										Description:  `A map of resource manager tags. Resource manager tag keys and values have the same definition as resource manager tags. Keys must be in the format tagKeys/{tag_key_id}, and values are in the format tagValues/456. The field is ignored (both PUT & PATCH) when empty.`,
 									},
 
+									"resource_policies": {
+										Type:             schema.TypeList,
+										Elem:             &schema.Schema{Type: schema.TypeString},
+										Optional:         true,
+										ForceNew:         true,
+										Computed:         true,
+										AtLeastOneOf:     initializeParamsKeys,
+										DiffSuppressFunc: tpgresource.CompareSelfLinkRelativePaths,
+										MaxItems:         1,
+										Description:      `A list of self_links of resource policies to attach to the instance's boot disk. Modifying this list will cause the instance to recreate. Currently a max of 1 resource policy is supported.`,
+									},
+
 									"provisioned_iops": {
 										Type:         schema.TypeInt,
 										Optional:     true,
@@ -288,6 +349,15 @@ func ResourceComputeInstance() *schema.Resource {
 										AtLeastOneOf: initializeParamsKeys,
 										ForceNew:     true,
 										Description:  `A flag to enable confidential compute mode on boot disk`,
+									},
+
+									"storage_pool": {
+										Type:             schema.TypeString,
+										Optional:         true,
+										AtLeastOneOf:     initializeParamsKeys,
+										ForceNew:         true,
+										DiffSuppressFunc: tpgresource.CompareResourceNames,
+										Description:      `The URL of the storage pool in which the new disk is created`,
 									},
 								},
 							},
@@ -325,10 +395,11 @@ func ResourceComputeInstance() *schema.Resource {
 			},
 
 			"name": {
-				Type:        schema.TypeString,
-				Required:    true,
-				ForceNew:    true,
-				Description: `The name of the instance. One of name or self_link must be provided.`,
+				Type:         schema.TypeString,
+				Required:     true,
+				ForceNew:     true,
+				ValidateFunc: verify.ValidateRFC1035Name(1, 63),
+				Description:  `The name of the instance. One of name or self_link must be provided.`,
 			},
 
 			"network_interface": {
@@ -617,7 +688,6 @@ func ResourceComputeInstance() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ForceNew:    true,
-				ConfigMode:  schema.SchemaConfigModeAttr,
 				Description: `List of the type and count of accelerator cards attached to the instance.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -964,19 +1034,26 @@ be from 0 to 999,999,999 inclusive.`,
 						"enable_nested_virtualization": {
 							Type:         schema.TypeBool,
 							Optional:     true,
-							AtLeastOneOf: []string{"advanced_machine_features.0.enable_nested_virtualization", "advanced_machine_features.0.threads_per_core"},
+							AtLeastOneOf: advancedMachineFeaturesKeys,
 							Description:  `Whether to enable nested virtualization or not.`,
 						},
 						"threads_per_core": {
 							Type:         schema.TypeInt,
 							Optional:     true,
-							AtLeastOneOf: []string{"advanced_machine_features.0.enable_nested_virtualization", "advanced_machine_features.0.threads_per_core"},
+							AtLeastOneOf: advancedMachineFeaturesKeys,
 							Description:  `The number of threads per physical core. To disable simultaneous multithreading (SMT) set this to 1. If unset, the maximum number of threads supported per core by the underlying processor is assumed.`,
+						},
+						"turbo_mode": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							AtLeastOneOf: advancedMachineFeaturesKeys,
+							Description:  `Turbo frequency mode to use for the instance. Currently supported modes is "ALL_CORE_MAX".`,
+							ValidateFunc: validation.StringInSlice([]string{"ALL_CORE_MAX"}, false),
 						},
 						"visible_core_count": {
 							Type:         schema.TypeInt,
 							Optional:     true,
-							AtLeastOneOf: []string{"advanced_machine_features.0.enable_nested_virtualization", "advanced_machine_features.0.threads_per_core", "advanced_machine_features.0.visible_core_count"},
+							AtLeastOneOf: advancedMachineFeaturesKeys,
 							Description:  `The number of physical cores to expose to an instance. Multiply by the number of threads per core to compute the total number of virtual CPUs to expose to the instance. If unset, the number of cores is inferred from the instance\'s nominal CPU count and the underlying platform\'s SMT width.`,
 						},
 					},
@@ -1001,9 +1078,10 @@ be from 0 to 999,999,999 inclusive.`,
 							Type:     schema.TypeString,
 							Optional: true,
 							Description: `
-								Specifies which confidential computing technology to use.
-								This could be one of the following values: SEV, SEV_SNP.
-								If SEV_SNP, min_cpu_platform = "AMD Milan" is currently required.`,
+								The confidential computing technology the instance uses.
+								SEV is an AMD feature. TDX is an Intel feature. One of the following
+								values is required: SEV, SEV_SNP, TDX. If SEV_SNP, min_cpu_platform =
+								"AMD Milan" is currently required.`,
 							AtLeastOneOf: []string{"confidential_instance_config.0.enable_confidential_compute", "confidential_instance_config.0.confidential_instance_type"},
 						},
 					},
@@ -1012,8 +1090,8 @@ be from 0 to 999,999,999 inclusive.`,
 			"desired_status": {
 				Type:         schema.TypeString,
 				Optional:     true,
-				ValidateFunc: validation.StringInSlice([]string{"RUNNING", "TERMINATED"}, false),
-				Description:  `Desired status of the instance. Either "RUNNING" or "TERMINATED".`,
+				ValidateFunc: validation.StringInSlice([]string{"RUNNING", "TERMINATED", "SUSPENDED"}, false),
+				Description:  `Desired status of the instance. Either "RUNNING", "SUSPENDED" or "TERMINATED".`,
 			},
 			"current_status": {
 				Type:     schema.TypeString,
@@ -1049,6 +1127,12 @@ be from 0 to 999,999,999 inclusive.`,
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The server-assigned unique identifier of this instance.`,
+			},
+
+			"creation_timestamp": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Creation timestamp in RFC3339 text format.`,
 			},
 
 			"label_fingerprint": {
@@ -1136,6 +1220,14 @@ be from 0 to 999,999,999 inclusive.`,
 					},
 				},
 			},
+
+			"key_revocation_action_type": {
+				Type:         schema.TypeString,
+				Optional:     true,
+				ForceNew:     true,
+				ValidateFunc: validation.StringInSlice([]string{"STOP", "NONE", ""}, false),
+				Description:  `Action to be taken when a customer's encryption key is revoked. Supports "STOP" and "NONE", with "NONE" being the default.`,
+			},
 		},
 		CustomizeDiff: customdiff.All(
 			tpgresource.DefaultProviderProject,
@@ -1146,7 +1238,7 @@ be from 0 to 999,999,999 inclusive.`,
 				},
 				suppressEmptyGuestAcceleratorDiff,
 			),
-			desiredStatusDiff,
+			validateSubnetworkProject,
 			forceNewIfNetworkIPNotUpdatable,
 			tpgresource.SetLabelsDiff,
 		),
@@ -1296,6 +1388,7 @@ func expandComputeInstance(project string, d *schema.ResourceData, config *trans
 		DisplayDevice:              expandDisplayDevice(d),
 		ResourcePolicies:           tpgresource.ConvertStringArr(d.Get("resource_policies").([]interface{})),
 		ReservationAffinity:        reservationAffinity,
+		KeyRevocationActionType:    d.Get("key_revocation_action_type").(string),
 	}, nil
 }
 
@@ -1321,10 +1414,34 @@ func getAllStatusBut(status string) []string {
 	return computeInstanceStatus
 }
 
-func waitUntilInstanceHasDesiredStatus(config *transport_tpg.Config, d *schema.ResourceData) error {
-	desiredStatus := d.Get("desired_status").(string)
+func changeInstanceStatusOnCreation(config *transport_tpg.Config, d *schema.ResourceData, project, zone, status, userAgent string) error {
+	var op *compute.Operation
+	var err error
+	if status == "TERMINATED" {
+		op, err = config.NewComputeClient(userAgent).Instances.Stop(project, zone, d.Get("name").(string)).Do()
+	} else if status == "SUSPENDED" {
+		op, err = config.NewComputeClient(userAgent).Instances.Suspend(project, zone, d.Get("name").(string)).Do()
+	}
+	if err != nil {
+		return fmt.Errorf("Error changing instance status after creation: %s", err)
+	}
 
-	if desiredStatus != "" {
+	waitErr := ComputeOperationWaitTime(config, op, project, "changing instance status", userAgent, d.Timeout(schema.TimeoutCreate))
+	if waitErr != nil {
+		d.SetId("")
+		return waitErr
+	}
+
+	err = waitUntilInstanceHasDesiredStatus(config, d, status)
+	if err != nil {
+		return fmt.Errorf("Error waiting for status: %s", err)
+	}
+
+	return nil
+}
+
+func waitUntilInstanceHasDesiredStatus(config *transport_tpg.Config, d *schema.ResourceData, status string) error {
+	if status != "" {
 		stateRefreshFunc := func() (interface{}, string, error) {
 			instance, err := getInstance(config, d)
 			if err != nil || instance == nil {
@@ -1335,9 +1452,9 @@ func waitUntilInstanceHasDesiredStatus(config *transport_tpg.Config, d *schema.R
 		}
 		stateChangeConf := retry.StateChangeConf{
 			Delay:      5 * time.Second,
-			Pending:    getAllStatusBut(desiredStatus),
+			Pending:    getAllStatusBut(status),
 			Refresh:    stateRefreshFunc,
-			Target:     []string{desiredStatus},
+			Target:     []string{status},
 			Timeout:    d.Timeout(schema.TimeoutUpdate),
 			MinTimeout: 2 * time.Second,
 		}
@@ -1345,7 +1462,7 @@ func waitUntilInstanceHasDesiredStatus(config *transport_tpg.Config, d *schema.R
 
 		if err != nil {
 			return fmt.Errorf(
-				"Error waiting for instance to reach desired status %s: %s", desiredStatus, err)
+				"Error waiting for instance to reach desired status %s: %s", status, err)
 		}
 	}
 
@@ -1398,9 +1515,18 @@ func resourceComputeInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		return waitErr
 	}
 
-	err = waitUntilInstanceHasDesiredStatus(config, d)
+	err = waitUntilInstanceHasDesiredStatus(config, d, "RUNNING")
 	if err != nil {
 		return fmt.Errorf("Error waiting for status: %s", err)
+	}
+
+	if val, ok := d.GetOk("desired_status"); ok {
+		if val.(string) != "RUNNING" {
+			err = changeInstanceStatusOnCreation(config, d, project, zone.Name, val.(string), userAgent)
+			if err != nil {
+				return fmt.Errorf("Error changing instance status after creation: %s", err)
+			}
+		}
 	}
 
 	return resourceComputeInstanceRead(d, meta)
@@ -1574,6 +1700,7 @@ func resourceComputeInstanceRead(d *schema.ResourceData, meta interface{}) error
 					di["disk_encryption_key_sha256"] = key.Sha256
 				}
 			}
+
 			// We want the disks to remain in the order we set in the config, so if a disk
 			// is present in the config, make sure it's at the correct index. Otherwise, append it.
 			if inConfig {
@@ -1635,6 +1762,9 @@ func resourceComputeInstanceRead(d *schema.ResourceData, meta interface{}) error
 	if err := d.Set("instance_id", fmt.Sprintf("%d", instance.Id)); err != nil {
 		return fmt.Errorf("Error setting instance_id: %s", err)
 	}
+	if err := d.Set("creation_timestamp", instance.CreationTimestamp); err != nil {
+		return fmt.Errorf("Error setting creation_timestamp: %s", err)
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error setting project: %s", err)
 	}
@@ -1666,6 +1796,9 @@ func resourceComputeInstanceRead(d *schema.ResourceData, meta interface{}) error
 	}
 	if err := d.Set("reservation_affinity", flattenReservationAffinity(instance.ReservationAffinity)); err != nil {
 		return fmt.Errorf("Error setting reservation_affinity: %s", err)
+	}
+	if err := d.Set("key_revocation_action_type", instance.KeyRevocationActionType); err != nil {
+		return fmt.Errorf("Error setting key_revocation_action_type: %s", err)
 	}
 
 	d.SetId(fmt.Sprintf("projects/%s/zones/%s/instances/%s", project, zone, instance.Name))
@@ -1978,6 +2111,9 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 					Fingerprint:     instNetworkInterface.Fingerprint,
 					ForceSendFields: []string{"AliasIpRanges"},
 				}
+				if commonAliasIpRanges := CheckForCommonAliasIp(instNetworkInterface, networkInterface); len(commonAliasIpRanges) > 0 {
+					ni.AliasIpRanges = commonAliasIpRanges
+				}
 				op, err := config.NewComputeClient(userAgent).Instances.UpdateNetworkInterface(project, zone, instance.Name, networkName, ni).Do()
 				if err != nil {
 					return errwrap.Wrapf("Error removing alias_ip_range: {{err}}", err)
@@ -2248,18 +2384,30 @@ func resourceComputeInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	needToStopInstanceBeforeUpdating := scopesChange || d.HasChange("service_account.0.email") || d.HasChange("machine_type") || d.HasChange("min_cpu_platform") || d.HasChange("enable_display") || d.HasChange("shielded_instance_config") || len(updatesToNIWhileStopped) > 0 || bootRequiredSchedulingChange || d.HasChange("advanced_machine_features")
 
 	if d.HasChange("desired_status") && !needToStopInstanceBeforeUpdating {
-		desiredStatus := d.Get("desired_status").(string)
+		previousStatus, desiredStatus := d.GetChange("desired_status")
 
 		if desiredStatus != "" {
 			var op *compute.Operation
 
 			if desiredStatus == "RUNNING" {
-				op, err = startInstanceOperation(d, config)
-				if err != nil {
-					return errwrap.Wrapf("Error starting instance: {{err}}", err)
+				if previousStatus == "SUSPENDED" {
+					op, err = config.NewComputeClient(userAgent).Instances.Resume(project, zone, instance.Name).Do()
+					if err != nil {
+						return err
+					}
+				} else {
+					op, err = startInstanceOperation(d, config)
+					if err != nil {
+						return errwrap.Wrapf("Error starting instance: {{err}}", err)
+					}
 				}
 			} else if desiredStatus == "TERMINATED" {
 				op, err = config.NewComputeClient(userAgent).Instances.Stop(project, zone, instance.Name).Do()
+				if err != nil {
+					return err
+				}
+			} else if desiredStatus == "SUSPENDED" {
+				op, err = config.NewComputeClient(userAgent).Instances.Suspend(project, zone, instance.Name).Do()
 				if err != nil {
 					return err
 				}
@@ -2546,6 +2694,10 @@ func expandAttachedDisk(diskConfig map[string]interface{}, d *schema.ResourceDat
 		disk.DeviceName = v.(string)
 	}
 
+	if v, ok := d.GetOk("boot_disk.0.interface"); ok && v != "" {
+		disk.Interface = v.(string)
+	}
+
 	keyValue, keyOk := diskConfig["disk_encryption_key_raw"]
 	if keyOk {
 		if keyValue != "" {
@@ -2640,25 +2792,6 @@ func suppressEmptyGuestAcceleratorDiff(_ context.Context, d *schema.ResourceDiff
 	return nil
 }
 
-// return an error if the desired_status field is set to a value other than RUNNING on Create.
-func desiredStatusDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
-	// when creating an instance, name is not set
-	oldName, _ := diff.GetChange("name")
-
-	if oldName == nil || oldName == "" {
-		_, newDesiredStatus := diff.GetChange("desired_status")
-
-		if newDesiredStatus == nil || newDesiredStatus == "" {
-			return nil
-		} else if newDesiredStatus != "RUNNING" {
-			return fmt.Errorf("When creating an instance, desired_status can only accept RUNNING value")
-		}
-		return nil
-	}
-
-	return nil
-}
-
 func resourceComputeInstanceDelete(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
@@ -2746,6 +2879,10 @@ func expandBootDisk(d *schema.ResourceData, config *transport_tpg.Config, projec
 		disk.DeviceName = v.(string)
 	}
 
+	if v, ok := d.GetOk("boot_disk.0.interface"); ok {
+		disk.Interface = v.(string)
+	}
+
 	if v, ok := d.GetOk("boot_disk.0.disk_encryption_key_raw"); ok {
 		if v != "" {
 			disk.DiskEncryptionKey = &compute.CustomerEncryptionKey{
@@ -2823,6 +2960,14 @@ func expandBootDisk(d *schema.ResourceData, config *transport_tpg.Config, projec
 		if _, ok := d.GetOk("boot_disk.0.initialize_params.0.resource_manager_tags"); ok {
 			disk.InitializeParams.ResourceManagerTags = tpgresource.ExpandStringMap(d, "boot_disk.0.initialize_params.0.resource_manager_tags")
 		}
+
+		if _, ok := d.GetOk("boot_disk.0.initialize_params.0.resource_policies"); ok {
+			disk.InitializeParams.ResourcePolicies = tpgresource.ConvertStringArr(d.Get("boot_disk.0.initialize_params.0.resource_policies").([]interface{}))
+		}
+
+		if v, ok := d.GetOk("boot_disk.0.initialize_params.0.storage_pool"); ok {
+			disk.InitializeParams.StoragePool = v.(string)
+		}
 	}
 
 	if v, ok := d.GetOk("boot_disk.0.mode"); ok {
@@ -2841,6 +2986,9 @@ func flattenBootDisk(d *schema.ResourceData, disk *compute.AttachedDisk, config 
 		// disk_encryption_key_raw is not returned from the API, so copy it from what the user
 		// originally specified to avoid diffs.
 		"disk_encryption_key_raw": d.Get("boot_disk.0.disk_encryption_key_raw"),
+	}
+	if _, ok := d.GetOk("boot_disk.0.interface"); ok {
+		result["interface"] = disk.Interface
 	}
 
 	diskDetails, err := getDisk(disk.Source, d, config)
@@ -2862,9 +3010,11 @@ func flattenBootDisk(d *schema.ResourceData, disk *compute.AttachedDisk, config 
 			"size":                        diskDetails.SizeGb,
 			"labels":                      diskDetails.Labels,
 			"resource_manager_tags":       d.Get("boot_disk.0.initialize_params.0.resource_manager_tags"),
+			"resource_policies":           diskDetails.ResourcePolicies,
 			"provisioned_iops":            diskDetails.ProvisionedIops,
 			"provisioned_throughput":      diskDetails.ProvisionedThroughput,
 			"enable_confidential_compute": diskDetails.EnableConfidentialCompute,
+			"storage_pool":                tpgresource.GetResourceNameFromSelfLink(diskDetails.StoragePool),
 		}}
 	}
 
@@ -2995,4 +3145,21 @@ func isEmptyServiceAccountBlock(d *schema.ResourceData) bool {
 		return true
 	}
 	return false
+}
+
+// Alias ip ranges cannot be removed and created at the same time. This checks if there are any unchanged alias ip ranges
+// to be kept in between the PATCH operations on Network Interface
+func CheckForCommonAliasIp(old, new *compute.NetworkInterface) []*compute.AliasIpRange {
+	newAliasIpMap := make(map[string]bool)
+	for _, ipRange := range new.AliasIpRanges {
+		newAliasIpMap[ipRange.IpCidrRange] = true
+	}
+
+	resultAliasIpRanges := make([]*compute.AliasIpRange, 0)
+	for _, val := range old.AliasIpRanges {
+		if newAliasIpMap[val.IpCidrRange] {
+			resultAliasIpRanges = append(resultAliasIpRanges, val)
+		}
+	}
+	return resultAliasIpRanges
 }

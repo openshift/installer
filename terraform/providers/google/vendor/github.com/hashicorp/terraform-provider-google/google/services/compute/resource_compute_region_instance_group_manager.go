@@ -312,14 +312,14 @@ func ResourceComputeRegionInstanceGroupManager() *schema.Resource {
 							Optional:      true,
 							Computed:      true,
 							ConflictsWith: []string{"update_policy.0.max_surge_percent"},
-							Description:   `The maximum number of instances that can be created above the specified targetSize during the update process. Conflicts with max_surge_percent. It has to be either 0 or at least equal to the number of zones. If fixed values are used, at least one of max_unavailable_fixed or max_surge_fixed must be greater than 0.`,
+							Description:   `Specifies a fixed number of VM instances. This must be a positive integer. Conflicts with max_surge_percent. Both cannot be 0`,
 						},
 
 						"max_surge_percent": {
 							Type:          schema.TypeInt,
 							Optional:      true,
 							ConflictsWith: []string{"update_policy.0.max_surge_fixed"},
-							Description:   `The maximum number of instances(calculated as percentage) that can be created above the specified targetSize during the update process. Conflicts with max_surge_fixed. Percent value is only allowed for regional managed instance groups with size at least 10.`,
+							Description:   `Specifies a percentage of instances between 0 to 100%, inclusive. For example, specify 80 for 80%. Conflicts with max_surge_fixed.`,
 							ValidateFunc:  validation.IntBetween(0, 100),
 						},
 
@@ -327,7 +327,7 @@ func ResourceComputeRegionInstanceGroupManager() *schema.Resource {
 							Type:          schema.TypeInt,
 							Optional:      true,
 							Computed:      true,
-							Description:   `The maximum number of instances that can be unavailable during the update process. Conflicts with max_unavailable_percent. It has to be either 0 or at least equal to the number of zones. If fixed values are used, at least one of max_unavailable_fixed or max_surge_fixed must be greater than 0.`,
+							Description:   `Specifies a fixed number of VM instances. This must be a positive integer.`,
 							ConflictsWith: []string{"update_policy.0.max_unavailable_percent"},
 						},
 
@@ -336,7 +336,7 @@ func ResourceComputeRegionInstanceGroupManager() *schema.Resource {
 							Optional:      true,
 							ConflictsWith: []string{"update_policy.0.max_unavailable_fixed"},
 							ValidateFunc:  validation.IntBetween(0, 100),
-							Description:   `The maximum number of instances(calculated as percentage) that can be unavailable during the update process. Conflicts with max_unavailable_fixed. Percent value is only allowed for regional managed instance groups with size at least 10.`,
+							Description:   `Specifies a percentage of instances between 0 to 100%, inclusive. For example, specify 80 for 80%.`,
 						},
 
 						"instance_redistribution_type": {
@@ -555,7 +555,7 @@ func resourceComputeRegionInstanceGroupManagerCreate(d *schema.ResourceData, met
 		UpdatePolicy:                expandRegionUpdatePolicy(d.Get("update_policy").([]interface{})),
 		InstanceLifecyclePolicy:     expandInstanceLifecyclePolicy(d.Get("instance_lifecycle_policy").([]interface{})),
 		AllInstancesConfig:          expandAllInstancesConfig(nil, d.Get("all_instances_config").([]interface{})),
-		DistributionPolicy:          expandDistributionPolicy(d),
+		DistributionPolicy:          expandDistributionPolicyForCreate(d),
 		StatefulPolicy:              expandStatefulPolicy(d),
 		// Force send TargetSize to allow size of 0.
 		ForceSendFields: []string{"TargetSize"},
@@ -815,7 +815,7 @@ func resourceComputeRegionInstanceGroupManagerUpdate(d *schema.ResourceData, met
 	}
 
 	if d.HasChange("distribution_policy_target_shape") {
-		updatedManager.DistributionPolicy = expandDistributionPolicy(d)
+		updatedManager.DistributionPolicy = expandDistributionPolicyForUpdate(d)
 		change = true
 	}
 
@@ -1027,24 +1027,39 @@ func flattenRegionUpdatePolicy(updatePolicy *compute.InstanceGroupManagerUpdateP
 	return results
 }
 
-func expandDistributionPolicy(d *schema.ResourceData) *compute.DistributionPolicy {
+func expandDistributionPolicyForUpdate(d *schema.ResourceData) *compute.DistributionPolicy {
+	dpts := d.Get("distribution_policy_target_shape").(string)
+	if dpts == "" {
+		return nil
+	}
+	// distributionPolicy.Zones is NOT updateable.
+	return &compute.DistributionPolicy{TargetShape: dpts}
+}
+
+func expandDistributionPolicyForCreate(d *schema.ResourceData) *compute.DistributionPolicy {
 	dpz := d.Get("distribution_policy_zones").(*schema.Set)
 	dpts := d.Get("distribution_policy_target_shape").(string)
 	if dpz.Len() == 0 && dpts == "" {
 		return nil
 	}
+	distributionPolicy := &compute.DistributionPolicy{}
 
-	distributionPolicyZoneConfigs := make([]*compute.DistributionPolicyZoneConfiguration, 0, dpz.Len())
-	for _, raw := range dpz.List() {
-		data := raw.(string)
-		distributionPolicyZoneConfig := compute.DistributionPolicyZoneConfiguration{
-			Zone: "zones/" + data,
+	if dpz.Len() > 0 {
+		distributionPolicyZoneConfigs := make([]*compute.DistributionPolicyZoneConfiguration, 0, dpz.Len())
+		for _, raw := range dpz.List() {
+			data := raw.(string)
+			distributionPolicyZoneConfig := compute.DistributionPolicyZoneConfiguration{
+				Zone: "zones/" + data,
+			}
+
+			distributionPolicyZoneConfigs = append(distributionPolicyZoneConfigs, &distributionPolicyZoneConfig)
 		}
-
-		distributionPolicyZoneConfigs = append(distributionPolicyZoneConfigs, &distributionPolicyZoneConfig)
+		distributionPolicy.Zones = distributionPolicyZoneConfigs
 	}
-
-	return &compute.DistributionPolicy{Zones: distributionPolicyZoneConfigs, TargetShape: dpts}
+	if dpts != "" {
+		distributionPolicy.TargetShape = dpts
+	}
+	return distributionPolicy
 }
 
 func flattenDistributionPolicy(distributionPolicy *compute.DistributionPolicy) []string {

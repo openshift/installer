@@ -39,6 +39,7 @@ type NodePool struct {
 	Annotations       map[string]string          `json:"annotations"`
 	MaxPodsConstraint *NodePoolMaxPodsConstraint `json:"maxPodsConstraint"`
 	Management        *NodePoolManagement        `json:"management"`
+	KubeletConfig     *NodePoolKubeletConfig     `json:"kubeletConfig"`
 	UpdateSettings    *NodePoolUpdateSettings    `json:"updateSettings"`
 	Project           *string                    `json:"project"`
 	Location          *string                    `json:"location"`
@@ -125,6 +126,33 @@ func (v NodePoolStateEnum) Validate() error {
 	}
 	return &dcl.EnumInvalidError{
 		Enum:  "NodePoolStateEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum NodePoolKubeletConfigCpuManagerPolicyEnum.
+type NodePoolKubeletConfigCpuManagerPolicyEnum string
+
+// NodePoolKubeletConfigCpuManagerPolicyEnumRef returns a *NodePoolKubeletConfigCpuManagerPolicyEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func NodePoolKubeletConfigCpuManagerPolicyEnumRef(s string) *NodePoolKubeletConfigCpuManagerPolicyEnum {
+	v := NodePoolKubeletConfigCpuManagerPolicyEnum(s)
+	return &v
+}
+
+func (v NodePoolKubeletConfigCpuManagerPolicyEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"none", "static"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "NodePoolKubeletConfigCpuManagerPolicyEnum",
 		Value: string(v),
 		Valid: []string{},
 	}
@@ -647,6 +675,61 @@ func (r *NodePoolManagement) HashCode() string {
 	return fmt.Sprintf("%x", hash)
 }
 
+type NodePoolKubeletConfig struct {
+	empty             bool                                       `json:"-"`
+	CpuManagerPolicy  *NodePoolKubeletConfigCpuManagerPolicyEnum `json:"cpuManagerPolicy"`
+	CpuCfsQuota       *bool                                      `json:"cpuCfsQuota"`
+	CpuCfsQuotaPeriod *string                                    `json:"cpuCfsQuotaPeriod"`
+	PodPidsLimit      *int64                                     `json:"podPidsLimit"`
+}
+
+type jsonNodePoolKubeletConfig NodePoolKubeletConfig
+
+func (r *NodePoolKubeletConfig) UnmarshalJSON(data []byte) error {
+	var res jsonNodePoolKubeletConfig
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyNodePoolKubeletConfig
+	} else {
+
+		r.CpuManagerPolicy = res.CpuManagerPolicy
+
+		r.CpuCfsQuota = res.CpuCfsQuota
+
+		r.CpuCfsQuotaPeriod = res.CpuCfsQuotaPeriod
+
+		r.PodPidsLimit = res.PodPidsLimit
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this NodePoolKubeletConfig is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyNodePoolKubeletConfig *NodePoolKubeletConfig = &NodePoolKubeletConfig{empty: true}
+
+func (r *NodePoolKubeletConfig) Empty() bool {
+	return r.empty
+}
+
+func (r *NodePoolKubeletConfig) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *NodePoolKubeletConfig) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
 type NodePoolUpdateSettings struct {
 	empty         bool                                 `json:"-"`
 	SurgeSettings *NodePoolUpdateSettingsSurgeSettings `json:"surgeSettings"`
@@ -772,6 +855,7 @@ func (r *NodePool) ID() (string, error) {
 		"annotations":         dcl.ValueOrEmptyString(nr.Annotations),
 		"max_pods_constraint": dcl.ValueOrEmptyString(nr.MaxPodsConstraint),
 		"management":          dcl.ValueOrEmptyString(nr.Management),
+		"kubelet_config":      dcl.ValueOrEmptyString(nr.KubeletConfig),
 		"update_settings":     dcl.ValueOrEmptyString(nr.UpdateSettings),
 		"project":             dcl.ValueOrEmptyString(nr.Project),
 		"location":            dcl.ValueOrEmptyString(nr.Location),

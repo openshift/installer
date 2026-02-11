@@ -48,17 +48,6 @@ func computeInstanceFromTemplateSchema() map[string]*schema.Schema {
 		s[field].Optional = true
 	}
 
-	// schema.SchemaConfigModeAttr allows these fields to be removed in Terraform 0.12.
-	// Passing field_name = [] in this mode differentiates between an intentionally empty
-	// block vs an ignored computed block.
-	nic := s["network_interface"].Elem.(*schema.Resource)
-	nic.Schema["alias_ip_range"].ConfigMode = schema.SchemaConfigModeAttr
-	nic.Schema["access_config"].ConfigMode = schema.SchemaConfigModeAttr
-
-	for _, field := range []string{"attached_disk", "guest_accelerator", "service_account", "scratch_disk"} {
-		s[field].ConfigMode = schema.SchemaConfigModeAttr
-	}
-
 	// Remove deprecated/removed fields that are never d.Set. We can't
 	// programmatically remove all of them, because some of them still have d.Set
 	// calls.
@@ -258,6 +247,15 @@ func adjustInstanceFromTemplateDisks(d *schema.ResourceData, config *transport_t
 						// Instances need a URL for the disk type, but instance templates
 						// only have the name (since they're global).
 						disk.InitializeParams.DiskType = fmt.Sprintf("zones/%s/diskTypes/%s", zone.Name, dt)
+					}
+					if rp := disk.InitializeParams.ResourcePolicies; len(rp) > 0 {
+						// Instances need a URL for the resource policy, but instance templates
+						// only have the name (since they're global).
+						for i := range rp {
+							rp[i], _ = parseUniqueId(rp[i]) // in some cases the API translation doesn't work and returns entire url when only name is provided. And allows for id to be passed as well
+							rp[i] = fmt.Sprintf("projects/%s/regions/%s/resourcePolicies/%s", project, regionFromUrl(zone.Region), rp[i])
+						}
+						disk.InitializeParams.ResourcePolicies = rp
 					}
 				}
 				disks = append(disks, disk)
