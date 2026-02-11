@@ -76,12 +76,12 @@ var (
 	ipConfigurationKeys = []string{
 		"settings.0.ip_configuration.0.authorized_networks",
 		"settings.0.ip_configuration.0.ipv4_enabled",
-		"settings.0.ip_configuration.0.require_ssl",
 		"settings.0.ip_configuration.0.private_network",
 		"settings.0.ip_configuration.0.allocated_ip_range",
 		"settings.0.ip_configuration.0.enable_private_path_for_google_cloud_services",
 		"settings.0.ip_configuration.0.psc_config",
 		"settings.0.ip_configuration.0.ssl_mode",
+		"settings.0.ip_configuration.0.server_ca_mode",
 	}
 
 	maintenanceWindowKeys = []string{
@@ -179,7 +179,7 @@ func ResourceSqlDatabaseInstance() *schema.Resource {
 						"edition": {
 							Type:         schema.TypeString,
 							Optional:     true,
-							Default:      "ENTERPRISE",
+							Computed:     true,
 							ValidateFunc: validation.StringInSlice([]string{"ENTERPRISE", "ENTERPRISE_PLUS"}, false),
 							Description:  `The edition of the instance, can be ENTERPRISE or ENTERPRISE_PLUS.`,
 						},
@@ -200,6 +200,7 @@ func ResourceSqlDatabaseInstance() *schema.Resource {
 						"data_cache_config": {
 							Type:        schema.TypeList,
 							Optional:    true,
+							Computed:    true,
 							MaxItems:    1,
 							Description: `Data cache configurations.`,
 							Elem: &schema.Resource{
@@ -286,7 +287,6 @@ func ResourceSqlDatabaseInstance() *schema.Resource {
 						},
 						"time_zone": {
 							Type:        schema.TypeString,
-							ForceNew:    true,
 							Optional:    true,
 							Description: `The time_zone to be used by the database engine (supported only for SQL Server), in SQL Server timezone format.`,
 						},
@@ -402,6 +402,11 @@ is set to true. Defaults to ZONAL.`,
 							Optional:    true,
 							Description: `Enables Vertex AI Integration.`,
 						},
+						"enable_dataplex_integration": {
+							Type:        schema.TypeBool,
+							Optional:    true,
+							Description: `Enables Dataplex Integration.`,
+						},
 						"disk_size": {
 							Type:     schema.TypeInt,
 							Optional: true,
@@ -437,13 +442,6 @@ is set to true. Defaults to ZONAL.`,
 										Default:      true,
 										AtLeastOneOf: ipConfigurationKeys,
 										Description:  `Whether this Cloud SQL instance should be assigned a public IPV4 address. At least ipv4_enabled must be enabled or a private_network must be configured.`,
-									},
-									"require_ssl": {
-										Type:         schema.TypeBool,
-										Optional:     true,
-										AtLeastOneOf: ipConfigurationKeys,
-										Description:  `Whether SSL connections over IP are enforced or not. To change this field, also set the corresponding value in ssl_mode if it has been set too.`,
-										Deprecated:   "`require_ssl` will be fully deprecated in a future major release. For now, please use `ssl_mode` with a compatible `require_ssl` value instead.",
 									},
 									"private_network": {
 										Type:             schema.TypeString,
@@ -493,7 +491,15 @@ is set to true. Defaults to ZONAL.`,
 										Optional:     true,
 										Computed:     true,
 										ValidateFunc: validation.StringInSlice([]string{"ALLOW_UNENCRYPTED_AND_ENCRYPTED", "ENCRYPTED_ONLY", "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"}, false),
-										Description:  `Specify how SSL connection should be enforced in DB connections. This field provides more SSL enforcment options compared to require_ssl. To change this field, also set the correspoding value in require_ssl until next major release.`,
+										Description:  `Specify how SSL connection should be enforced in DB connections.`,
+										AtLeastOneOf: ipConfigurationKeys,
+									},
+									"server_ca_mode": {
+										Type:         schema.TypeString,
+										Optional:     true,
+										Computed:     true,
+										ValidateFunc: validation.StringInSlice([]string{"CA_MODE_UNSPECIFIED", "GOOGLE_MANAGED_INTERNAL_CA", "GOOGLE_MANAGED_CAS_CA"}, false),
+										Description:  `Specify how the server certificate's Certificate Authority is hosted.`,
 										AtLeastOneOf: ipConfigurationKeys,
 									},
 								},
@@ -572,6 +578,7 @@ is set to true. Defaults to ZONAL.`,
 						"insights_config": {
 							Type:     schema.TypeList,
 							Optional: true,
+							Computed: true,
 							MaxItems: 1,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
@@ -660,7 +667,7 @@ is set to true. Defaults to ZONAL.`,
 							Optional:     true,
 							Computed:     true,
 							ValidateFunc: validation.StringInSlice([]string{"NOT_REQUIRED", "REQUIRED"}, false),
-							Description:  `Specifies if connections must use Cloud SQL connectors.`,
+							Description:  `Enables the enforcement of Cloud SQL Auth Proxy or Cloud SQL connectors for all the connections. If enabled, all the direct connections are rejected.`,
 						},
 						"deletion_protection_enabled": {
 							Type:        schema.TypeBool,
@@ -1274,7 +1281,7 @@ func expandSqlDatabaseInstanceSettings(configured []interface{}, databaseVersion
 		Tier:                      _settings["tier"].(string),
 		Edition:                   _settings["edition"].(string),
 		AdvancedMachineFeatures:   expandSqlServerAdvancedMachineFeatures(_settings["advanced_machine_features"].([]interface{})),
-		ForceSendFields:           []string{"StorageAutoResize", "EnableGoogleMlIntegration"},
+		ForceSendFields:           []string{"StorageAutoResize", "EnableGoogleMlIntegration", "EnableDataplexIntegration"},
 		ActivationPolicy:          _settings["activation_policy"].(string),
 		ActiveDirectoryConfig:     expandActiveDirectoryConfig(_settings["active_directory_config"].([]interface{})),
 		DenyMaintenancePeriods:    expandDenyMaintenancePeriod(_settings["deny_maintenance_period"].([]interface{})),
@@ -1288,6 +1295,7 @@ func expandSqlDatabaseInstanceSettings(configured []interface{}, databaseVersion
 		PricingPlan:               _settings["pricing_plan"].(string),
 		DeletionProtectionEnabled: _settings["deletion_protection_enabled"].(bool),
 		EnableGoogleMlIntegration: _settings["enable_google_ml_integration"].(bool),
+		EnableDataplexIntegration: _settings["enable_dataplex_integration"].(bool),
 		UserLabels:                tpgresource.ConvertStringMap(_settings["user_labels"].(map[string]interface{})),
 		BackupConfiguration:       expandBackupConfiguration(_settings["backup_configuration"].([]interface{})),
 		DatabaseFlags:             expandDatabaseFlags(_settings["database_flags"].(*schema.Set).List()),
@@ -1386,7 +1394,8 @@ func expandIpConfiguration(configured []interface{}, databaseVersion string) *sq
 
 	_ipConfiguration := configured[0].(map[string]interface{})
 
-	forceSendFields := []string{"Ipv4Enabled", "RequireSsl"}
+	forceSendFields := []string{"Ipv4Enabled"}
+	nullFields := []string{"RequireSsl"}
 
 	if !strings.HasPrefix(databaseVersion, "SQLSERVER") {
 		forceSendFields = append(forceSendFields, "EnablePrivatePathForGoogleCloudServices")
@@ -1394,14 +1403,15 @@ func expandIpConfiguration(configured []interface{}, databaseVersion string) *sq
 
 	return &sqladmin.IpConfiguration{
 		Ipv4Enabled:                             _ipConfiguration["ipv4_enabled"].(bool),
-		RequireSsl:                              _ipConfiguration["require_ssl"].(bool),
 		PrivateNetwork:                          _ipConfiguration["private_network"].(string),
 		AllocatedIpRange:                        _ipConfiguration["allocated_ip_range"].(string),
 		AuthorizedNetworks:                      expandAuthorizedNetworks(_ipConfiguration["authorized_networks"].(*schema.Set).List()),
 		EnablePrivatePathForGoogleCloudServices: _ipConfiguration["enable_private_path_for_google_cloud_services"].(bool),
 		ForceSendFields:                         forceSendFields,
+		NullFields:                              nullFields,
 		PscConfig:                               expandPscConfig(_ipConfiguration["psc_config"].(*schema.Set).List()),
 		SslMode:                                 _ipConfiguration["ssl_mode"].(string),
+		ServerCaMode:                            _ipConfiguration["server_ca_mode"].(string),
 	}
 }
 
@@ -1971,6 +1981,31 @@ func resourceSqlDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{})
 		}
 	}
 
+	// Check if timezone is updated
+	if d.HasChange("settings.0.time_zone") {
+		timezone := d.Get("settings.0.time_zone").(string)
+		instance = &sqladmin.DatabaseInstance{Settings: &sqladmin.Settings{TimeZone: timezone}}
+		err = transport_tpg.Retry(transport_tpg.RetryOptions{
+			RetryFunc: func() (rerr error) {
+				op, rerr = config.NewSqlAdminClient(userAgent).Instances.Patch(project, d.Get("name").(string), instance).Do()
+				return err
+			},
+			Timeout:              d.Timeout(schema.TimeoutUpdate),
+			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsSqlOperationInProgressError},
+		})
+		if err != nil {
+			return fmt.Errorf("Error, failed to patch instance settings for %s: %s", instance.Name, err)
+		}
+		err = SqlAdminOperationWaitTime(config, op, project, "Patch Instance", userAgent, d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
+		err = resourceSqlDatabaseInstanceRead(d, meta)
+		if err != nil {
+			return err
+		}
+	}
+
 	return resourceSqlDatabaseInstanceRead(d, meta)
 }
 
@@ -2112,6 +2147,7 @@ func flattenSettings(settings *sqladmin.Settings, d *schema.ResourceData) []map[
 	data["disk_autoresize_limit"] = settings.StorageAutoResizeLimit
 
 	data["enable_google_ml_integration"] = settings.EnableGoogleMlIntegration
+	data["enable_dataplex_integration"] = settings.EnableDataplexIntegration
 
 	if settings.UserLabels != nil {
 		data["user_labels"] = settings.UserLabels
@@ -2240,8 +2276,9 @@ func flattenIpConfiguration(ipConfiguration *sqladmin.IpConfiguration, d *schema
 		"ipv4_enabled":       ipConfiguration.Ipv4Enabled,
 		"private_network":    ipConfiguration.PrivateNetwork,
 		"allocated_ip_range": ipConfiguration.AllocatedIpRange,
-		"require_ssl":        ipConfiguration.RequireSsl,
 		"enable_private_path_for_google_cloud_services": ipConfiguration.EnablePrivatePathForGoogleCloudServices,
+		"ssl_mode":       ipConfiguration.SslMode,
+		"server_ca_mode": ipConfiguration.ServerCaMode,
 	}
 
 	if ipConfiguration.AuthorizedNetworks != nil {
@@ -2250,11 +2287,6 @@ func flattenIpConfiguration(ipConfiguration *sqladmin.IpConfiguration, d *schema
 
 	if ipConfiguration.PscConfig != nil {
 		data["psc_config"] = flattenPscConfigs(ipConfiguration.PscConfig)
-	}
-
-	// We store the ssl_mode value only if the customer already uses `ssl_mode`.
-	if _, ok := d.GetOk("settings.0.ip_configuration.0.ssl_mode"); ok {
-		data["ssl_mode"] = ipConfiguration.SslMode
 	}
 
 	return []map[string]interface{}{data}

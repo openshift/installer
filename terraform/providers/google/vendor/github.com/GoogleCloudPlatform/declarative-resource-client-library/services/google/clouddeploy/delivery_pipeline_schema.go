@@ -584,6 +584,11 @@ func DCLDeliveryPipelineSchema() *dcl.Schema {
 																							GoName:      "HttpRoute",
 																							Description: "Required. Name of the Gateway API HTTPRoute.",
 																						},
+																						"podSelectorLabel": &dcl.Property{
+																							Type:        "string",
+																							GoName:      "PodSelectorLabel",
+																							Description: "Optional. The label to use when selecting Pods for the Deployment and Service resources. This label must already be present in both resources.",
+																						},
 																						"routeUpdateWaitTime": &dcl.Property{
 																							Type:        "string",
 																							GoName:      "RouteUpdateWaitTime",
@@ -623,6 +628,11 @@ func DCLDeliveryPipelineSchema() *dcl.Schema {
 																							Type:        "boolean",
 																							GoName:      "DisablePodOverprovisioning",
 																							Description: "Optional. Whether to disable Pod overprovisioning. If Pod overprovisioning is disabled then Cloud Deploy will limit the number of total Pods used for the deployment strategy to the number of Pods the Deployment has on the cluster.",
+																						},
+																						"podSelectorLabel": &dcl.Property{
+																							Type:        "string",
+																							GoName:      "PodSelectorLabel",
+																							Description: "Optional. The label to use when selecting Pods for the Deployment resource. This label must already be present in the Deployment.",
 																						},
 																						"service": &dcl.Property{
 																							Type:        "string",

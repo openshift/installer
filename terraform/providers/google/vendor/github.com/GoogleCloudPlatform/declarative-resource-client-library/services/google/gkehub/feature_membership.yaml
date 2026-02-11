@@ -110,6 +110,15 @@ components:
               description: Config Sync configuration for the cluster.
               x-dcl-send-empty: true
               properties:
+                enabled:
+                  type: boolean
+                  x-dcl-go-name: Enabled
+                  description: Enables the installation of ConfigSync. If set to true,
+                    ConfigSync resources will be created and the other ConfigSync
+                    fields will be applied if exist. If set to false, all other ConfigSync
+                    fields will be ignored, ConfigSync resources will be deleted.
+                    If omitted, ConfigSync resources will be managed depends on the
+                    presence of the git or oci field.
                 git:
                   type: object
                   x-dcl-go-name: Git
@@ -238,13 +247,29 @@ components:
                 enabled:
                   type: boolean
                   x-dcl-go-name: Enabled
-                  description: Whether Hierarchy Controller is enabled in this cluster.
+                  description: '**DEPRECATED** Configuring Hierarchy Controller through
+                    the configmanagement feature is no longer recommended. Use https://github.com/kubernetes-sigs/hierarchical-namespaces
+                    instead.'
                   x-dcl-send-empty: true
+            management:
+              type: string
+              x-dcl-go-name: Management
+              x-dcl-go-type: FeatureMembershipConfigmanagementManagementEnum
+              description: Set this field to MANAGEMENT_AUTOMATIC to enable Config
+                Sync auto-upgrades, and set this field to MANAGEMENT_MANUAL or MANAGEMENT_UNSPECIFIED
+                to disable Config Sync auto-upgrades.
+              x-dcl-server-default: true
+              enum:
+              - MANAGEMENT_UNSPECIFIED
+              - MANAGEMENT_AUTOMATIC
+              - MANAGEMENT_MANUAL
             policyController:
               type: object
               x-dcl-go-name: PolicyController
               x-dcl-go-type: FeatureMembershipConfigmanagementPolicyController
-              description: Policy Controller configuration for the cluster.
+              description: '**DEPRECATED** Configuring Policy Controller through the
+                configmanagement feature is no longer recommended. Use the policycontroller
+                feature instead.'
               properties:
                 auditIntervalSeconds:
                   type: string

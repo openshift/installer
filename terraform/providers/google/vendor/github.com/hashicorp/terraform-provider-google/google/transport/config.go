@@ -34,6 +34,7 @@ import (
 	appengine "google.golang.org/api/appengine/v1"
 	"google.golang.org/api/bigquery/v2"
 	"google.golang.org/api/bigtableadmin/v2"
+	"google.golang.org/api/certificatemanager/v1"
 	"google.golang.org/api/cloudbilling/v1"
 	"google.golang.org/api/cloudbuild/v1"
 	"google.golang.org/api/cloudfunctions/v1"
@@ -235,7 +236,6 @@ type Config struct {
 	DataplexBasePath                 string
 	DataprocBasePath                 string
 	DataprocMetastoreBasePath        string
-	DatastoreBasePath                string
 	DatastreamBasePath               string
 	DeploymentManagerBasePath        string
 	DialogflowBasePath               string
@@ -275,16 +275,19 @@ type Config struct {
 	NetworkSecurityBasePath          string
 	NetworkServicesBasePath          string
 	NotebooksBasePath                string
+	OracleDatabaseBasePath           string
 	OrgPolicyBasePath                string
 	OSConfigBasePath                 string
 	OSLoginBasePath                  string
 	PrivatecaBasePath                string
+	PrivilegedAccessManagerBasePath  string
 	PublicCABasePath                 string
 	PubsubBasePath                   string
 	PubsubLiteBasePath               string
 	RedisBasePath                    string
 	ResourceManagerBasePath          string
 	SecretManagerBasePath            string
+	SecretManagerRegionalBasePath    string
 	SecureSourceManagerBasePath      string
 	SecurityCenterBasePath           string
 	SecurityCenterManagementBasePath string
@@ -293,6 +296,7 @@ type Config struct {
 	ServiceManagementBasePath        string
 	ServiceNetworkingBasePath        string
 	ServiceUsageBasePath             string
+	SiteVerificationBasePath         string
 	SourceRepoBasePath               string
 	SpannerBasePath                  string
 	SQLBasePath                      string
@@ -301,6 +305,7 @@ type Config struct {
 	StorageTransferBasePath          string
 	TagsBasePath                     string
 	TPUBasePath                      string
+	TranscoderBasePath               string
 	VertexAIBasePath                 string
 	VmwareengineBasePath             string
 	VPCAccessBasePath                string
@@ -373,7 +378,6 @@ const DataPipelineBasePathKey = "DataPipeline"
 const DataplexBasePathKey = "Dataplex"
 const DataprocBasePathKey = "Dataproc"
 const DataprocMetastoreBasePathKey = "DataprocMetastore"
-const DatastoreBasePathKey = "Datastore"
 const DatastreamBasePathKey = "Datastream"
 const DeploymentManagerBasePathKey = "DeploymentManager"
 const DialogflowBasePathKey = "Dialogflow"
@@ -413,16 +417,19 @@ const NetworkManagementBasePathKey = "NetworkManagement"
 const NetworkSecurityBasePathKey = "NetworkSecurity"
 const NetworkServicesBasePathKey = "NetworkServices"
 const NotebooksBasePathKey = "Notebooks"
+const OracleDatabaseBasePathKey = "OracleDatabase"
 const OrgPolicyBasePathKey = "OrgPolicy"
 const OSConfigBasePathKey = "OSConfig"
 const OSLoginBasePathKey = "OSLogin"
 const PrivatecaBasePathKey = "Privateca"
+const PrivilegedAccessManagerBasePathKey = "PrivilegedAccessManager"
 const PublicCABasePathKey = "PublicCA"
 const PubsubBasePathKey = "Pubsub"
 const PubsubLiteBasePathKey = "PubsubLite"
 const RedisBasePathKey = "Redis"
 const ResourceManagerBasePathKey = "ResourceManager"
 const SecretManagerBasePathKey = "SecretManager"
+const SecretManagerRegionalBasePathKey = "SecretManagerRegional"
 const SecureSourceManagerBasePathKey = "SecureSourceManager"
 const SecurityCenterBasePathKey = "SecurityCenter"
 const SecurityCenterManagementBasePathKey = "SecurityCenterManagement"
@@ -431,6 +438,7 @@ const SecuritypostureBasePathKey = "Securityposture"
 const ServiceManagementBasePathKey = "ServiceManagement"
 const ServiceNetworkingBasePathKey = "ServiceNetworking"
 const ServiceUsageBasePathKey = "ServiceUsage"
+const SiteVerificationBasePathKey = "SiteVerification"
 const SourceRepoBasePathKey = "SourceRepo"
 const SpannerBasePathKey = "Spanner"
 const SQLBasePathKey = "SQL"
@@ -439,6 +447,7 @@ const StorageInsightsBasePathKey = "StorageInsights"
 const StorageTransferBasePathKey = "StorageTransfer"
 const TagsBasePathKey = "Tags"
 const TPUBasePathKey = "TPU"
+const TranscoderBasePathKey = "Transcoder"
 const VertexAIBasePathKey = "VertexAI"
 const VmwareengineBasePathKey = "Vmwareengine"
 const VPCAccessBasePathKey = "VPCAccess"
@@ -505,7 +514,6 @@ var DefaultBasePaths = map[string]string{
 	DataplexBasePathKey:                 "https://dataplex.googleapis.com/v1/",
 	DataprocBasePathKey:                 "https://dataproc.googleapis.com/v1/",
 	DataprocMetastoreBasePathKey:        "https://metastore.googleapis.com/v1/",
-	DatastoreBasePathKey:                "https://datastore.googleapis.com/v1/",
 	DatastreamBasePathKey:               "https://datastream.googleapis.com/v1/",
 	DeploymentManagerBasePathKey:        "https://www.googleapis.com/deploymentmanager/v2/",
 	DialogflowBasePathKey:               "https://dialogflow.googleapis.com/v2/",
@@ -545,16 +553,19 @@ var DefaultBasePaths = map[string]string{
 	NetworkSecurityBasePathKey:          "https://networksecurity.googleapis.com/v1/",
 	NetworkServicesBasePathKey:          "https://networkservices.googleapis.com/v1/",
 	NotebooksBasePathKey:                "https://notebooks.googleapis.com/v1/",
+	OracleDatabaseBasePathKey:           "https://oracledatabase.googleapis.com/v1/",
 	OrgPolicyBasePathKey:                "https://orgpolicy.googleapis.com/v2/",
 	OSConfigBasePathKey:                 "https://osconfig.googleapis.com/v1/",
 	OSLoginBasePathKey:                  "https://oslogin.googleapis.com/v1/",
 	PrivatecaBasePathKey:                "https://privateca.googleapis.com/v1/",
+	PrivilegedAccessManagerBasePathKey:  "https://privilegedaccessmanager.googleapis.com/v1/",
 	PublicCABasePathKey:                 "https://publicca.googleapis.com/v1/",
 	PubsubBasePathKey:                   "https://pubsub.googleapis.com/v1/",
 	PubsubLiteBasePathKey:               "https://{{region}}-pubsublite.googleapis.com/v1/admin/",
 	RedisBasePathKey:                    "https://redis.googleapis.com/v1/",
 	ResourceManagerBasePathKey:          "https://cloudresourcemanager.googleapis.com/v1/",
 	SecretManagerBasePathKey:            "https://secretmanager.googleapis.com/v1/",
+	SecretManagerRegionalBasePathKey:    "https://secretmanager.{{location}}.rep.googleapis.com/v1/",
 	SecureSourceManagerBasePathKey:      "https://securesourcemanager.googleapis.com/v1/",
 	SecurityCenterBasePathKey:           "https://securitycenter.googleapis.com/v1/",
 	SecurityCenterManagementBasePathKey: "https://securitycentermanagement.googleapis.com/v1/",
@@ -563,6 +574,7 @@ var DefaultBasePaths = map[string]string{
 	ServiceManagementBasePathKey:        "https://servicemanagement.googleapis.com/v1/",
 	ServiceNetworkingBasePathKey:        "https://servicenetworking.googleapis.com/v1/",
 	ServiceUsageBasePathKey:             "https://serviceusage.googleapis.com/v1/",
+	SiteVerificationBasePathKey:         "https://www.googleapis.com/siteVerification/v1/",
 	SourceRepoBasePathKey:               "https://sourcerepo.googleapis.com/v1/",
 	SpannerBasePathKey:                  "https://spanner.googleapis.com/v1/",
 	SQLBasePathKey:                      "https://sqladmin.googleapis.com/sql/v1beta4/",
@@ -571,6 +583,7 @@ var DefaultBasePaths = map[string]string{
 	StorageTransferBasePathKey:          "https://storagetransfer.googleapis.com/v1/",
 	TagsBasePathKey:                     "https://cloudresourcemanager.googleapis.com/v3/",
 	TPUBasePathKey:                      "https://tpu.googleapis.com/v1/",
+	TranscoderBasePathKey:               "https://transcoder.googleapis.com/v1/",
 	VertexAIBasePathKey:                 "https://{{region}}-aiplatform.googleapis.com/v1/",
 	VmwareengineBasePathKey:             "https://vmwareengine.googleapis.com/v1/",
 	VPCAccessBasePathKey:                "https://vpcaccess.googleapis.com/v1/",
@@ -900,11 +913,6 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_DATAPROC_METASTORE_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[DataprocMetastoreBasePathKey]))
 	}
-	if d.Get("datastore_custom_endpoint") == "" {
-		d.Set("datastore_custom_endpoint", MultiEnvDefault([]string{
-			"GOOGLE_DATASTORE_CUSTOM_ENDPOINT",
-		}, DefaultBasePaths[DatastoreBasePathKey]))
-	}
 	if d.Get("datastream_custom_endpoint") == "" {
 		d.Set("datastream_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_DATASTREAM_CUSTOM_ENDPOINT",
@@ -1100,6 +1108,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_NOTEBOOKS_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[NotebooksBasePathKey]))
 	}
+	if d.Get("oracle_database_custom_endpoint") == "" {
+		d.Set("oracle_database_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_ORACLE_DATABASE_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[OracleDatabaseBasePathKey]))
+	}
 	if d.Get("org_policy_custom_endpoint") == "" {
 		d.Set("org_policy_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_ORG_POLICY_CUSTOM_ENDPOINT",
@@ -1119,6 +1132,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("privateca_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_PRIVATECA_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[PrivatecaBasePathKey]))
+	}
+	if d.Get("privileged_access_manager_custom_endpoint") == "" {
+		d.Set("privileged_access_manager_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_PRIVILEGED_ACCESS_MANAGER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[PrivilegedAccessManagerBasePathKey]))
 	}
 	if d.Get("public_ca_custom_endpoint") == "" {
 		d.Set("public_ca_custom_endpoint", MultiEnvDefault([]string{
@@ -1149,6 +1167,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("secret_manager_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_SECRET_MANAGER_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[SecretManagerBasePathKey]))
+	}
+	if d.Get("secret_manager_regional_custom_endpoint") == "" {
+		d.Set("secret_manager_regional_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SECRET_MANAGER_REGIONAL_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SecretManagerRegionalBasePathKey]))
 	}
 	if d.Get("secure_source_manager_custom_endpoint") == "" {
 		d.Set("secure_source_manager_custom_endpoint", MultiEnvDefault([]string{
@@ -1190,6 +1213,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 			"GOOGLE_SERVICE_USAGE_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[ServiceUsageBasePathKey]))
 	}
+	if d.Get("site_verification_custom_endpoint") == "" {
+		d.Set("site_verification_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_SITE_VERIFICATION_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[SiteVerificationBasePathKey]))
+	}
 	if d.Get("source_repo_custom_endpoint") == "" {
 		d.Set("source_repo_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_SOURCE_REPO_CUSTOM_ENDPOINT",
@@ -1229,6 +1257,11 @@ func SetEndpointDefaults(d *schema.ResourceData) error {
 		d.Set("tpu_custom_endpoint", MultiEnvDefault([]string{
 			"GOOGLE_TPU_CUSTOM_ENDPOINT",
 		}, DefaultBasePaths[TPUBasePathKey]))
+	}
+	if d.Get("transcoder_custom_endpoint") == "" {
+		d.Set("transcoder_custom_endpoint", MultiEnvDefault([]string{
+			"GOOGLE_TRANSCODER_CUSTOM_ENDPOINT",
+		}, DefaultBasePaths[TranscoderBasePathKey]))
 	}
 	if d.Get("vertex_ai_custom_endpoint") == "" {
 		d.Set("vertex_ai_custom_endpoint", MultiEnvDefault([]string{
@@ -1510,6 +1543,20 @@ func (c *Config) getTokenSource(clientScopes []string, initialCredentialsOnly bo
 // while most only want the host URL, some older ones also want the version and some
 // of those "projects" as well. You can find out if this is required by looking at
 // the basePath value in the client library file.
+func (c *Config) NewCertificateManagerClient(userAgent string) *certificatemanager.Service {
+	certificateManagerClientBasePath := RemoveBasePathVersion(c.CertificateManagerBasePath)
+	log.Printf("[INFO] Instantiating Certificate Manager client for path %s", certificateManagerClientBasePath)
+	clientCertificateManager, err := certificatemanager.NewService(c.Context, option.WithHTTPClient(c.Client))
+	if err != nil {
+		log.Printf("[WARN] Error creating client certificate manager: %s", err)
+		return nil
+	}
+	clientCertificateManager.UserAgent = userAgent
+	clientCertificateManager.BasePath = certificateManagerClientBasePath
+
+	return clientCertificateManager
+}
+
 func (c *Config) NewComputeClient(userAgent string) *compute.Service {
 	log.Printf("[INFO] Instantiating GCE client for path %s", c.ComputeBasePath)
 	clientCompute, err := compute.NewService(c.Context, option.WithHTTPClient(c.Client))
@@ -2196,7 +2243,6 @@ func ConfigureBasePaths(c *Config) {
 	c.DataplexBasePath = DefaultBasePaths[DataplexBasePathKey]
 	c.DataprocBasePath = DefaultBasePaths[DataprocBasePathKey]
 	c.DataprocMetastoreBasePath = DefaultBasePaths[DataprocMetastoreBasePathKey]
-	c.DatastoreBasePath = DefaultBasePaths[DatastoreBasePathKey]
 	c.DatastreamBasePath = DefaultBasePaths[DatastreamBasePathKey]
 	c.DeploymentManagerBasePath = DefaultBasePaths[DeploymentManagerBasePathKey]
 	c.DialogflowBasePath = DefaultBasePaths[DialogflowBasePathKey]
@@ -2236,16 +2282,19 @@ func ConfigureBasePaths(c *Config) {
 	c.NetworkSecurityBasePath = DefaultBasePaths[NetworkSecurityBasePathKey]
 	c.NetworkServicesBasePath = DefaultBasePaths[NetworkServicesBasePathKey]
 	c.NotebooksBasePath = DefaultBasePaths[NotebooksBasePathKey]
+	c.OracleDatabaseBasePath = DefaultBasePaths[OracleDatabaseBasePathKey]
 	c.OrgPolicyBasePath = DefaultBasePaths[OrgPolicyBasePathKey]
 	c.OSConfigBasePath = DefaultBasePaths[OSConfigBasePathKey]
 	c.OSLoginBasePath = DefaultBasePaths[OSLoginBasePathKey]
 	c.PrivatecaBasePath = DefaultBasePaths[PrivatecaBasePathKey]
+	c.PrivilegedAccessManagerBasePath = DefaultBasePaths[PrivilegedAccessManagerBasePathKey]
 	c.PublicCABasePath = DefaultBasePaths[PublicCABasePathKey]
 	c.PubsubBasePath = DefaultBasePaths[PubsubBasePathKey]
 	c.PubsubLiteBasePath = DefaultBasePaths[PubsubLiteBasePathKey]
 	c.RedisBasePath = DefaultBasePaths[RedisBasePathKey]
 	c.ResourceManagerBasePath = DefaultBasePaths[ResourceManagerBasePathKey]
 	c.SecretManagerBasePath = DefaultBasePaths[SecretManagerBasePathKey]
+	c.SecretManagerRegionalBasePath = DefaultBasePaths[SecretManagerRegionalBasePathKey]
 	c.SecureSourceManagerBasePath = DefaultBasePaths[SecureSourceManagerBasePathKey]
 	c.SecurityCenterBasePath = DefaultBasePaths[SecurityCenterBasePathKey]
 	c.SecurityCenterManagementBasePath = DefaultBasePaths[SecurityCenterManagementBasePathKey]
@@ -2254,6 +2303,7 @@ func ConfigureBasePaths(c *Config) {
 	c.ServiceManagementBasePath = DefaultBasePaths[ServiceManagementBasePathKey]
 	c.ServiceNetworkingBasePath = DefaultBasePaths[ServiceNetworkingBasePathKey]
 	c.ServiceUsageBasePath = DefaultBasePaths[ServiceUsageBasePathKey]
+	c.SiteVerificationBasePath = DefaultBasePaths[SiteVerificationBasePathKey]
 	c.SourceRepoBasePath = DefaultBasePaths[SourceRepoBasePathKey]
 	c.SpannerBasePath = DefaultBasePaths[SpannerBasePathKey]
 	c.SQLBasePath = DefaultBasePaths[SQLBasePathKey]
@@ -2262,6 +2312,7 @@ func ConfigureBasePaths(c *Config) {
 	c.StorageTransferBasePath = DefaultBasePaths[StorageTransferBasePathKey]
 	c.TagsBasePath = DefaultBasePaths[TagsBasePathKey]
 	c.TPUBasePath = DefaultBasePaths[TPUBasePathKey]
+	c.TranscoderBasePath = DefaultBasePaths[TranscoderBasePathKey]
 	c.VertexAIBasePath = DefaultBasePaths[VertexAIBasePathKey]
 	c.VmwareengineBasePath = DefaultBasePaths[VmwareengineBasePathKey]
 	c.VPCAccessBasePath = DefaultBasePaths[VPCAccessBasePathKey]

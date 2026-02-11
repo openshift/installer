@@ -129,7 +129,7 @@ func DCLWorkloadSchema() *dcl.Schema {
 								Type:        "string",
 								GoName:      "ComplianceRegime",
 								GoType:      "WorkloadComplianceRegimeEnum",
-								Description: "Required. Immutable. Compliance Regime associated with this workload. Possible values: COMPLIANCE_REGIME_UNSPECIFIED, IL4, CJIS, FEDRAMP_HIGH, FEDRAMP_MODERATE, US_REGIONAL_ACCESS, HIPAA, HITRUST, EU_REGIONS_AND_SUPPORT, CA_REGIONS_AND_SUPPORT, ITAR, AU_REGIONS_AND_US_SUPPORT, ASSURED_WORKLOADS_FOR_PARTNERS, ISR_REGIONS, ISR_REGIONS_AND_SUPPORT, CA_PROTECTED_B, IL5, IL2, JP_REGIONS_AND_SUPPORT",
+								Description: "Required. Immutable. Compliance Regime associated with this workload. Possible values: COMPLIANCE_REGIME_UNSPECIFIED, IL4, CJIS, FEDRAMP_HIGH, FEDRAMP_MODERATE, US_REGIONAL_ACCESS, HIPAA, HITRUST, EU_REGIONS_AND_SUPPORT, CA_REGIONS_AND_SUPPORT, ITAR, AU_REGIONS_AND_US_SUPPORT, ASSURED_WORKLOADS_FOR_PARTNERS, ISR_REGIONS, ISR_REGIONS_AND_SUPPORT, CA_PROTECTED_B, IL5, IL2, JP_REGIONS_AND_SUPPORT, KSA_REGIONS_AND_SUPPORT_WITH_SOVEREIGNTY_CONTROLS, REGIONAL_CONTROLS, HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS, HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS_WITH_US_SUPPORT",
 								Immutable:   true,
 								Enum: []string{
 									"COMPLIANCE_REGIME_UNSPECIFIED",
@@ -151,6 +151,10 @@ func DCLWorkloadSchema() *dcl.Schema {
 									"IL5",
 									"IL2",
 									"JP_REGIONS_AND_SUPPORT",
+									"KSA_REGIONS_AND_SUPPORT_WITH_SOVEREIGNTY_CONTROLS",
+									"REGIONAL_CONTROLS",
+									"HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS",
+									"HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS_WITH_US_SUPPORT",
 								},
 							},
 							"complianceStatus": &dcl.Property{
@@ -352,7 +356,7 @@ func DCLWorkloadSchema() *dcl.Schema {
 								Type:        "string",
 								GoName:      "Partner",
 								GoType:      "WorkloadPartnerEnum",
-								Description: "Optional. Partner regime associated with this workload. Possible values: PARTNER_UNSPECIFIED, LOCAL_CONTROLS_BY_S3NS, SOVEREIGN_CONTROLS_BY_T_SYSTEMS, SOVEREIGN_CONTROLS_BY_SIA_MINSAIT, SOVEREIGN_CONTROLS_BY_PSN",
+								Description: "Optional. Partner regime associated with this workload. Possible values: PARTNER_UNSPECIFIED, LOCAL_CONTROLS_BY_S3NS, SOVEREIGN_CONTROLS_BY_T_SYSTEMS, SOVEREIGN_CONTROLS_BY_SIA_MINSAIT, SOVEREIGN_CONTROLS_BY_PSN, SOVEREIGN_CONTROLS_BY_CNTXT, SOVEREIGN_CONTROLS_BY_CNTXT_NO_EKM",
 								Immutable:   true,
 								Enum: []string{
 									"PARTNER_UNSPECIFIED",
@@ -360,6 +364,8 @@ func DCLWorkloadSchema() *dcl.Schema {
 									"SOVEREIGN_CONTROLS_BY_T_SYSTEMS",
 									"SOVEREIGN_CONTROLS_BY_SIA_MINSAIT",
 									"SOVEREIGN_CONTROLS_BY_PSN",
+									"SOVEREIGN_CONTROLS_BY_CNTXT",
+									"SOVEREIGN_CONTROLS_BY_CNTXT_NO_EKM",
 								},
 							},
 							"partnerPermissions": &dcl.Property{
@@ -388,6 +394,13 @@ func DCLWorkloadSchema() *dcl.Schema {
 										Immutable:   true,
 									},
 								},
+							},
+							"partnerServicesBillingAccount": &dcl.Property{
+								Type:        "string",
+								GoName:      "PartnerServicesBillingAccount",
+								Description: "Optional. Input only. Billing account necessary for purchasing services from Sovereign Partners. This field is required for creating SIA/PSN/CNTXT partner workloads. The caller should have 'billing.resourceAssociations.create' IAM permission on this billing-account. The format of this string is billingAccounts/AAAAAA-BBBBBB-CCCCCC.",
+								Immutable:   true,
+								Unreadable:  true,
 							},
 							"provisionedResourcesParent": &dcl.Property{
 								Type:        "string",
@@ -518,6 +531,29 @@ func DCLWorkloadSchema() *dcl.Schema {
 								GoName:      "ViolationNotificationsEnabled",
 								Description: "Optional. Indicates whether the e-mail notification for a violation is enabled for a workload. This value will be by default True, and if not present will be considered as true. This should only be updated via updateWorkload call. Any Changes to this field during the createWorkload call will not be honored. This will always be true while creating the workload.",
 								Immutable:   true,
+							},
+							"workloadOptions": &dcl.Property{
+								Type:        "object",
+								GoName:      "WorkloadOptions",
+								GoType:      "WorkloadWorkloadOptions",
+								Description: "Optional. Used to specify certain options for a workload during workload creation - currently only supporting KAT Optionality for Regional Controls workloads.",
+								Immutable:   true,
+								Unreadable:  true,
+								Properties: map[string]*dcl.Property{
+									"kajEnrollmentType": &dcl.Property{
+										Type:        "string",
+										GoName:      "KajEnrollmentType",
+										GoType:      "WorkloadWorkloadOptionsKajEnrollmentTypeEnum",
+										Description: "Indicates type of KAJ enrollment for the workload. Currently, only specifiying KEY_ACCESS_TRANSPARENCY_OFF is implemented to not enroll in KAT-level KAJ enrollment for Regional Controls workloads. Possible values: KAJ_ENROLLMENT_TYPE_UNSPECIFIED, FULL_KAJ, EKM_ONLY, KEY_ACCESS_TRANSPARENCY_OFF",
+										Immutable:   true,
+										Enum: []string{
+											"KAJ_ENROLLMENT_TYPE_UNSPECIFIED",
+											"FULL_KAJ",
+											"EKM_ONLY",
+											"KEY_ACCESS_TRANSPARENCY_OFF",
+										},
+									},
+								},
 							},
 						},
 					},

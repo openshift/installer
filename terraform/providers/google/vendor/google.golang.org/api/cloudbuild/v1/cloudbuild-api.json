@@ -453,7 +453,7 @@
                   "type": "string"
                 },
                 "parent": {
-                  "description": "Required. Name of the parent project. For example: projects/{$project_number} or projects/{$project_id}",
+                  "description": "Name of the parent project. For example: projects/{$project_number} or projects/{$project_id}",
                   "location": "path",
                   "pattern": "^projects/[^/]+$",
                   "required": true,
@@ -1384,7 +1384,7 @@
                       "type": "string"
                     },
                     "parent": {
-                      "description": "Required. Name of the parent project. For example: projects/{$project_number} or projects/{$project_id}",
+                      "description": "Name of the parent project. For example: projects/{$project_number} or projects/{$project_id}",
                       "location": "path",
                       "pattern": "^projects/[^/]+/locations/[^/]+$",
                       "required": true,
@@ -2346,7 +2346,7 @@
       }
     }
   },
-  "revision": "20240609",
+  "revision": "20240923",
   "rootUrl": "https://cloudbuild.googleapis.com/",
   "schemas": {
     "ApprovalConfig": {
@@ -3017,11 +3017,13 @@
           "description": "Optional. Option to specify how default logs buckets are setup.",
           "enum": [
             "DEFAULT_LOGS_BUCKET_BEHAVIOR_UNSPECIFIED",
-            "REGIONAL_USER_OWNED_BUCKET"
+            "REGIONAL_USER_OWNED_BUCKET",
+            "LEGACY_BUCKET"
           ],
           "enumDescriptions": [
             "Unspecified.",
-            "Bucket is located in user-owned project in the same region as the build. The builder service account must have access to create and write to Cloud Storage buckets in the build project."
+            "Bucket is located in user-owned project in the same region as the build. The builder service account must have access to create and write to Cloud Storage buckets in the build project.",
+            "Bucket is located in a Google-owned project and is not regionalized."
           ],
           "type": "string"
         },
@@ -3428,7 +3430,7 @@
           "type": "string"
         },
         "serviceAccount": {
-          "description": "The service account used for all user-controlled operations including UpdateBuildTrigger, RunBuildTrigger, CreateBuild, and CancelBuild. If no service account is set, then the standard Cloud Build service account ([PROJECT_NUM]@system.gserviceaccount.com) will be used instead. Format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT_ID_OR_EMAIL}`",
+          "description": "The service account used for all user-controlled operations including UpdateBuildTrigger, RunBuildTrigger, CreateBuild, and CancelBuild. If no service account is set and the legacy Cloud Build service account ([PROJECT_NUM]@cloudbuild.gserviceaccount.com) is the default for the project then it will be used instead. Format: `projects/{PROJECT_ID}/serviceAccounts/{ACCOUNT_ID_OR_EMAIL}`",
           "type": "string"
         },
         "sourceToBuild": {
@@ -3806,26 +3808,6 @@
             "$ref": "Hash"
           },
           "type": "array"
-        }
-      },
-      "type": "object"
-    },
-    "GCSLocation": {
-      "description": "Represents a storage location in Cloud Storage",
-      "id": "GCSLocation",
-      "properties": {
-        "bucket": {
-          "description": "Cloud Storage bucket. See https://cloud.google.com/storage/docs/naming#requirements",
-          "type": "string"
-        },
-        "generation": {
-          "description": "Cloud Storage generation for the object. If the generation is omitted, the latest generation will be used.",
-          "format": "int64",
-          "type": "string"
-        },
-        "object": {
-          "description": "Cloud Storage object. See https://cloud.google.com/storage/docs/naming#objectnames",
-          "type": "string"
         }
       },
       "type": "object"
@@ -4315,12 +4297,8 @@
       "id": "HttpConfig",
       "properties": {
         "proxySecretVersionName": {
-          "description": "SecretVersion resource of the HTTP proxy URL. The proxy URL should be in format protocol://@]proxyhost[:port].",
+          "description": "SecretVersion resource of the HTTP proxy URL. The Service Account used in the build (either the default Service Account or user-specified Service Account) should have `secretmanager.versions.access` permissions on this secret. The proxy URL should be in format `protocol://@]proxyhost[:port]`.",
           "type": "string"
-        },
-        "proxySslCaInfo": {
-          "$ref": "GCSLocation",
-          "description": "Optional. Cloud Storage object storing the certificate to use with the HTTP proxy."
         }
       },
       "type": "object"

@@ -109,10 +109,13 @@ Accepted format is '//certificatemanager.googleapis.com/projects/{project}/locat
 				ForceNew: true,
 				Description: `Specifies how long to keep a connection open, after completing a response,
 while there is no matching traffic (in seconds). If an HTTP keepalive is
-not specified, a default value (610 seconds) will be used. For Global
-external HTTP(S) load balancer, the minimum allowed value is 5 seconds and
-the maximum allowed value is 1200 seconds. For Global external HTTP(S)
-load balancer (classic), this option is not available publicly.`,
+not specified, a default value will be used. For Global
+external HTTP(S) load balancer, the default value is 610 seconds, the
+minimum allowed value is 5 seconds and the maximum allowed value is 1200
+seconds. For cross-region internal HTTP(S) load balancer, the default
+value is 600 seconds, the minimum allowed value is 5 seconds, and the
+maximum allowed value is 600 seconds. For Global external HTTP(S) load
+balancer (classic), this option is not available publicly.`,
 			},
 			"proxy_bind": {
 				Type:     schema.TypeBool,
@@ -135,7 +138,6 @@ specified, Google manages whether QUIC is used. Default value: "NONE" Possible v
 			"server_tls_policy": {
 				Type:             schema.TypeString,
 				Optional:         true,
-				ForceNew:         true,
 				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 				Description: `A URL referring to a networksecurity.ServerTlsPolicy
 resource that describes how the proxy should authenticate inbound
@@ -145,7 +147,12 @@ set to INTERNAL_SELF_MANAGED or EXTERNAL or EXTERNAL_MANAGED.
 For details which ServerTlsPolicy resources are accepted with
 INTERNAL_SELF_MANAGED and which with EXTERNAL, EXTERNAL_MANAGED
 loadBalancingScheme consult ServerTlsPolicy documentation.
-If left blank, communications are not encrypted.`,
+If left blank, communications are not encrypted.
+
+If you remove this field from your configuration at the same time as
+deleting or recreating a referenced ServerTlsPolicy resource, you will
+receive a resourceInUseByAnotherResource error. Use lifecycle.create_before_destroy
+within the ServerTlsPolicy resource to avoid this.`,
 			},
 			"ssl_certificates": {
 				Type:     schema.TypeList,
@@ -721,6 +728,79 @@ func resourceComputeTargetHttpsProxyUpdate(d *schema.ResourceData, meta interfac
 			return err
 		}
 	}
+	if d.HasChange("server_tls_policy") {
+		obj := make(map[string]interface{})
+
+		getUrl, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/targetHttpsProxies/{{name}}")
+		if err != nil {
+			return err
+		}
+
+		// err == nil indicates that the billing_project value was found
+		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+			billingProject = bp
+		}
+
+		getRes, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "GET",
+			Project:   billingProject,
+			RawURL:    getUrl,
+			UserAgent: userAgent,
+		})
+		if err != nil {
+			return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeTargetHttpsProxy %q", d.Id()))
+		}
+
+		obj["fingerprint"] = getRes["fingerprint"]
+
+		serverTlsPolicyProp, err := expandComputeTargetHttpsProxyServerTlsPolicy(d.Get("server_tls_policy"), d, config)
+		if err != nil {
+			return err
+		} else if v, ok := d.GetOkExists("server_tls_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, serverTlsPolicyProp)) {
+			obj["serverTlsPolicy"] = serverTlsPolicyProp
+		}
+
+		obj, err = resourceComputeTargetHttpsProxyUpdateEncoder(d, meta, obj)
+		if err != nil {
+			return err
+		}
+
+		url, err := tpgresource.ReplaceVars(d, config, "{{ComputeBasePath}}projects/{{project}}/global/targetHttpsProxies/{{name}}")
+		if err != nil {
+			return err
+		}
+
+		headers := make(http.Header)
+
+		// err == nil indicates that the billing_project value was found
+		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
+			billingProject = bp
+		}
+
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    url,
+			UserAgent: userAgent,
+			Body:      obj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+			Headers:   headers,
+		})
+		if err != nil {
+			return fmt.Errorf("Error updating TargetHttpsProxy %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating TargetHttpsProxy %q: %#v", d.Id(), res)
+		}
+
+		err = ComputeOperationWaitTime(
+			config, res, project, "Updating TargetHttpsProxy", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+		if err != nil {
+			return err
+		}
+	}
 
 	d.Partial(false)
 
@@ -1000,6 +1080,14 @@ func resourceComputeTargetHttpsProxyEncoder(d *schema.ResourceData, meta interfa
 		obj["sslCertificates"] = obj["certificateManagerCertificates"]
 		delete(obj, "certificateManagerCertificates")
 	}
+
+	// Send null if serverTlsPolicy is not set. Without this, Terraform would not send any value for `serverTlsPolicy`
+	// in the "PATCH" payload so if you were to remove a server TLS policy from a target HTTPS proxy, it would NOT remove
+	// the association.
+	if _, ok := obj["serverTlsPolicy"]; !ok {
+		obj["serverTlsPolicy"] = nil
+	}
+
 	return obj, nil
 }
 
@@ -1013,6 +1101,14 @@ func resourceComputeTargetHttpsProxyUpdateEncoder(d *schema.ResourceData, meta i
 		obj["sslCertificates"] = obj["certificateManagerCertificates"]
 		delete(obj, "certificateManagerCertificates")
 	}
+
+	// Send null if serverTlsPolicy is not set. Without this, Terraform would not send any value for `serverTlsPolicy`
+	// in the "PATCH" payload so if you were to remove a server TLS policy from a target HTTPS proxy, it would NOT remove
+	// the association.
+	if _, ok := obj["serverTlsPolicy"]; !ok {
+		obj["serverTlsPolicy"] = nil
+	}
+
 	return obj, nil
 }
 

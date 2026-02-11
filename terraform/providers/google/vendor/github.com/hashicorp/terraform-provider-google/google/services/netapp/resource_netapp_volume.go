@@ -220,6 +220,17 @@ Format: 'projects/{{projectId}}/locations/{{location}}/backupVaults/{{backupVaul
 Please refer to the field 'effective_labels' for all of the labels present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
+			"large_capacity": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `Optional. Flag indicating if the volume will be a large capacity volume or a regular volume.`,
+			},
+			"multiple_endpoints": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				Description: `Optional. Flag indicating if the volume will have an IP address per node for volumes supporting multiple IP endpoints.
+Only the volume with largeCapacity will be allowed to have multiple endpoints.`,
+			},
 			"restore_parameters": {
 				Type:        schema.TypeList,
 				Optional:    true,
@@ -269,6 +280,7 @@ Use NTFS to use NTFS ACLs for file permissions. Can only be set for volumes whic
 			},
 			"smb_settings": {
 				Type:        schema.TypeList,
+				Computed:    true,
 				Optional:    true,
 				Description: `Settings for volumes with SMB access. Possible values: ["ENCRYPT_DATA", "BROWSABLE", "CHANGE_NOTIFY", "NON_BROWSABLE", "OPLOCKS", "SHOW_SNAPSHOT", "SHOW_PREVIOUS_VERSIONS", "ACCESS_BASED_ENUMERATION", "CONTINUOUSLY_AVAILABLE"]`,
 				Elem: &schema.Schema{
@@ -413,6 +425,29 @@ To disable automatic snapshot creation you have to remove the whole snapshot_pol
 					},
 				},
 			},
+			"tiering_policy": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Tiering policy for the volume.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"cooling_threshold_days": {
+							Type:     schema.TypeInt,
+							Optional: true,
+							Description: `Optional. Time in days to mark the volume's data block as cold and make it eligible for tiering, can be range from 7-183.
+Default is 31.`,
+						},
+						"tier_action": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: verify.ValidateEnum([]string{"ENABLED", "PAUSED", ""}),
+							Description:  `Optional. Flag indicating if the volume has tiering policy enable/pause. Default is PAUSED. Default value: "PAUSED" Possible values: ["ENABLED", "PAUSED"]`,
+							Default:      "PAUSED",
+						},
+					},
+				},
+			},
 			"unix_permissions": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -423,6 +458,11 @@ To disable automatic snapshot creation you have to remove the whole snapshot_pol
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `Reports the resource name of the Active Directory policy being used. Inherited from storage pool.`,
+			},
+			"cold_tier_size_gib": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Output only. Size of the volume cold tier data in GiB.`,
 			},
 			"create_time": {
 				Type:        schema.TypeString,
@@ -498,6 +538,11 @@ Format for SMB volumes: '\\\\netbios_prefix-four_random_hex_letters.domain_name\
 				Computed:    true,
 				Description: `Name of the Private Service Access allocated range. Inherited from storage pool.`,
 			},
+			"replica_zone": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Specifies the replica zone for regional volume.`,
+			},
 			"service_level": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -525,13 +570,19 @@ Format for SMB volumes: '\\\\netbios_prefix-four_random_hex_letters.domain_name\
 				Computed:    true,
 				Description: `Used capacity of the volume (in GiB). This is computed periodically and it does not represent the realtime usage.`,
 			},
+			"zone": {
+				Type:        schema.TypeString,
+				Computed:    true,
+				Description: `Specifies the active zone for regional volume.`,
+			},
 			"deletion_policy": {
 				Type:     schema.TypeString,
 				Optional: true,
-				Default:  "DEFAULT",
 				Description: `Policy to determine if the volume should be deleted forcefully.
 Volumes may have nested snapshot resources. Deleting such a volume will fail.
-Setting this parameter to FORCE will delete volumes including nested snapshots.`,
+Setting this parameter to FORCE will delete volumes including nested snapshots.
+Possible values: DEFAULT, FORCE.`,
+				Default: "DEFAULT",
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -641,6 +692,24 @@ func resourceNetappVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 		return err
 	} else if v, ok := d.GetOkExists("backup_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(backupConfigProp)) && (ok || !reflect.DeepEqual(v, backupConfigProp)) {
 		obj["backupConfig"] = backupConfigProp
+	}
+	largeCapacityProp, err := expandNetappVolumeLargeCapacity(d.Get("large_capacity"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("large_capacity"); !tpgresource.IsEmptyValue(reflect.ValueOf(largeCapacityProp)) && (ok || !reflect.DeepEqual(v, largeCapacityProp)) {
+		obj["largeCapacity"] = largeCapacityProp
+	}
+	multipleEndpointsProp, err := expandNetappVolumeMultipleEndpoints(d.Get("multiple_endpoints"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("multiple_endpoints"); !tpgresource.IsEmptyValue(reflect.ValueOf(multipleEndpointsProp)) && (ok || !reflect.DeepEqual(v, multipleEndpointsProp)) {
+		obj["multipleEndpoints"] = multipleEndpointsProp
+	}
+	tieringPolicyProp, err := expandNetappVolumeTieringPolicy(d.Get("tiering_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("tiering_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(tieringPolicyProp)) && (ok || !reflect.DeepEqual(v, tieringPolicyProp)) {
+		obj["tieringPolicy"] = tieringPolicyProp
 	}
 	labelsProp, err := expandNetappVolumeEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
@@ -837,6 +906,24 @@ func resourceNetappVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("backup_config", flattenNetappVolumeBackupConfig(res["backupConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Volume: %s", err)
 	}
+	if err := d.Set("zone", flattenNetappVolumeZone(res["zone"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Volume: %s", err)
+	}
+	if err := d.Set("replica_zone", flattenNetappVolumeReplicaZone(res["replicaZone"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Volume: %s", err)
+	}
+	if err := d.Set("large_capacity", flattenNetappVolumeLargeCapacity(res["largeCapacity"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Volume: %s", err)
+	}
+	if err := d.Set("multiple_endpoints", flattenNetappVolumeMultipleEndpoints(res["multipleEndpoints"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Volume: %s", err)
+	}
+	if err := d.Set("cold_tier_size_gib", flattenNetappVolumeColdTierSizeGib(res["coldTierSizeGib"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Volume: %s", err)
+	}
+	if err := d.Set("tiering_policy", flattenNetappVolumeTieringPolicy(res["tieringPolicy"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Volume: %s", err)
+	}
 	if err := d.Set("terraform_labels", flattenNetappVolumeTerraformLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Volume: %s", err)
 	}
@@ -923,6 +1010,24 @@ func resourceNetappVolumeUpdate(d *schema.ResourceData, meta interface{}) error 
 	} else if v, ok := d.GetOkExists("backup_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, backupConfigProp)) {
 		obj["backupConfig"] = backupConfigProp
 	}
+	largeCapacityProp, err := expandNetappVolumeLargeCapacity(d.Get("large_capacity"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("large_capacity"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, largeCapacityProp)) {
+		obj["largeCapacity"] = largeCapacityProp
+	}
+	multipleEndpointsProp, err := expandNetappVolumeMultipleEndpoints(d.Get("multiple_endpoints"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("multiple_endpoints"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, multipleEndpointsProp)) {
+		obj["multipleEndpoints"] = multipleEndpointsProp
+	}
+	tieringPolicyProp, err := expandNetappVolumeTieringPolicy(d.Get("tiering_policy"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("tiering_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, tieringPolicyProp)) {
+		obj["tieringPolicy"] = tieringPolicyProp
+	}
 	labelsProp, err := expandNetappVolumeEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -979,6 +1084,19 @@ func resourceNetappVolumeUpdate(d *schema.ResourceData, meta interface{}) error 
 		updateMask = append(updateMask, "backup_config.backup_policies",
 			"backup_config.backup_vault",
 			"backup_config.scheduled_backup_enabled")
+	}
+
+	if d.HasChange("large_capacity") {
+		updateMask = append(updateMask, "largeCapacity")
+	}
+
+	if d.HasChange("multiple_endpoints") {
+		updateMask = append(updateMask, "multipleEndpoints")
+	}
+
+	if d.HasChange("tiering_policy") {
+		updateMask = append(updateMask, "tiering_policy.cooling_threshold_days",
+			"tiering_policy.tier_action")
 	}
 
 	if d.HasChange("effective_labels") {
@@ -1660,6 +1778,62 @@ func flattenNetappVolumeBackupConfigScheduledBackupEnabled(v interface{}, d *sch
 	return v
 }
 
+func flattenNetappVolumeZone(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNetappVolumeReplicaZone(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNetappVolumeLargeCapacity(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNetappVolumeMultipleEndpoints(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNetappVolumeColdTierSizeGib(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenNetappVolumeTieringPolicy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["cooling_threshold_days"] =
+		flattenNetappVolumeTieringPolicyCoolingThresholdDays(original["coolingThresholdDays"], d, config)
+	transformed["tier_action"] =
+		flattenNetappVolumeTieringPolicyTierAction(original["tierAction"], d, config)
+	return []interface{}{transformed}
+}
+func flattenNetappVolumeTieringPolicyCoolingThresholdDays(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenNetappVolumeTieringPolicyTierAction(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenNetappVolumeTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -2196,6 +2370,48 @@ func expandNetappVolumeBackupConfigBackupVault(v interface{}, d tpgresource.Terr
 }
 
 func expandNetappVolumeBackupConfigScheduledBackupEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetappVolumeLargeCapacity(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetappVolumeMultipleEndpoints(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetappVolumeTieringPolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedCoolingThresholdDays, err := expandNetappVolumeTieringPolicyCoolingThresholdDays(original["cooling_threshold_days"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCoolingThresholdDays); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["coolingThresholdDays"] = transformedCoolingThresholdDays
+	}
+
+	transformedTierAction, err := expandNetappVolumeTieringPolicyTierAction(original["tier_action"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedTierAction); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["tierAction"] = transformedTierAction
+	}
+
+	return transformed, nil
+}
+
+func expandNetappVolumeTieringPolicyCoolingThresholdDays(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandNetappVolumeTieringPolicyTierAction(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

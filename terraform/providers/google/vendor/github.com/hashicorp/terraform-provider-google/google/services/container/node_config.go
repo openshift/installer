@@ -3,10 +3,14 @@
 package container
 
 import (
+	"log"
+	"time"
+
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
+	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 
 	"google.golang.org/api/container/v1"
 )
@@ -71,6 +75,18 @@ func schemaContainerdConfig() *schema.Schema {
 	}
 }
 
+// Note: this is a bool internally, but implementing as an enum internally to
+// make it easier to accept API level defaults.
+func schemaInsecureKubeletReadonlyPortEnabled() *schema.Schema {
+	return &schema.Schema{
+		Type:         schema.TypeString,
+		Optional:     true,
+		Computed:     true,
+		Description:  "Controls whether the kubelet read-only port is enabled. It is strongly recommended to set this to `FALSE`. Possible values: `TRUE`, `FALSE`.",
+		ValidateFunc: validation.StringInSlice([]string{"FALSE", "TRUE"}, false),
+	}
+}
+
 func schemaLoggingVariant() *schema.Schema {
 	return &schema.Schema{
 		Type:         schema.TypeString,
@@ -81,19 +97,18 @@ func schemaLoggingVariant() *schema.Schema {
 	}
 }
 
-func schemaGcfsConfig(forceNew bool) *schema.Schema {
+func schemaGcfsConfig() *schema.Schema {
 	return &schema.Schema{
 		Type:        schema.TypeList,
 		Optional:    true,
+		Computed:    true,
 		MaxItems:    1,
 		Description: `GCFS configuration for this node.`,
-		ForceNew:    forceNew,
 		Elem: &schema.Resource{
 			Schema: map[string]*schema.Schema{
 				"enabled": {
 					Type:        schema.TypeBool,
 					Required:    true,
-					ForceNew:    forceNew,
 					Description: `Whether or not GCFS is enabled`,
 				},
 			},
@@ -128,13 +143,10 @@ func schemaNodeConfig() *schema.Schema {
 				},
 
 				"guest_accelerator": {
-					Type:     schema.TypeList,
-					Optional: true,
-					Computed: true,
-					ForceNew: true,
-					// Legacy config mode allows removing GPU's from an existing resource
-					// See https://www.terraform.io/docs/configuration/attr-as-blocks.html
-					ConfigMode:  schema.SchemaConfigModeAttr,
+					Type:        schema.TypeList,
+					Optional:    true,
+					Computed:    true,
+					ForceNew:    true,
 					Description: `List of the type and count of accelerator cards attached to the instance.`,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
@@ -155,8 +167,8 @@ func schemaNodeConfig() *schema.Schema {
 								Type:        schema.TypeList,
 								MaxItems:    1,
 								Optional:    true,
+								Computed:    true,
 								ForceNew:    true,
-								ConfigMode:  schema.SchemaConfigModeAttr,
 								Description: `Configuration for auto installation of GPU driver.`,
 								Elem: &schema.Resource{
 									Schema: map[string]*schema.Schema{
@@ -181,7 +193,6 @@ func schemaNodeConfig() *schema.Schema {
 								MaxItems:    1,
 								Optional:    true,
 								ForceNew:    true,
-								ConfigMode:  schema.SchemaConfigModeAttr,
 								Description: `Configuration for GPU sharing.`,
 								Elem: &schema.Resource{
 									Schema: map[string]*schema.Schema{
@@ -301,7 +312,7 @@ func schemaNodeConfig() *schema.Schema {
 					},
 				},
 
-				"gcfs_config": schemaGcfsConfig(true),
+				"gcfs_config": schemaGcfsConfig(),
 
 				"gvnic": {
 					Type:        schema.TypeList,
@@ -424,6 +435,14 @@ func schemaNodeConfig() *schema.Schema {
 					Description: `The list of instance tags applied to all nodes.`,
 				},
 
+				"storage_pools": {
+					Type:        schema.TypeList,
+					ForceNew:    true,
+					Optional:    true,
+					Elem:        &schema.Schema{Type: schema.TypeString},
+					Description: `The list of Storage Pools where boot disks are provisioned.`,
+				},
+
 				"shielded_instance_config": {
 					Type:        schema.TypeList,
 					Optional:    true,
@@ -531,13 +550,14 @@ func schemaNodeConfig() *schema.Schema {
 				"kubelet_config": {
 					Type:        schema.TypeList,
 					Optional:    true,
+					Computed:    true,
 					MaxItems:    1,
 					Description: `Node kubelet configs.`,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
 							"cpu_manager_policy": {
 								Type:         schema.TypeString,
-								Required:     true,
+								Optional:     true,
 								ValidateFunc: validation.StringInSlice([]string{"static", "none", ""}, false),
 								Description:  `Control the CPU management policy on the node.`,
 							},
@@ -551,6 +571,7 @@ func schemaNodeConfig() *schema.Schema {
 								Optional:    true,
 								Description: `Set the CPU CFS quota period value 'cpu.cfs_period_us'.`,
 							},
+							"insecure_kubelet_readonly_port_enabled": schemaInsecureKubeletReadonlyPortEnabled(),
 							"pod_pids_limit": {
 								Type:        schema.TypeInt,
 								Optional:    true,
@@ -580,6 +601,26 @@ func schemaNodeConfig() *schema.Schema {
 								ValidateFunc:     validation.StringInSlice([]string{"CGROUP_MODE_UNSPECIFIED", "CGROUP_MODE_V1", "CGROUP_MODE_V2"}, false),
 								Description:      `cgroupMode specifies the cgroup mode to be used on the node.`,
 								DiffSuppressFunc: tpgresource.EmptyOrDefaultStringSuppress("CGROUP_MODE_UNSPECIFIED"),
+							},
+							"hugepages_config": {
+								Type:        schema.TypeList,
+								Optional:    true,
+								MaxItems:    1,
+								Description: `Amounts for 2M and 1G hugepages.`,
+								Elem: &schema.Resource{
+									Schema: map[string]*schema.Schema{
+										"hugepage_size_2m": {
+											Type:        schema.TypeInt,
+											Optional:    true,
+											Description: `Amount of 2M hugepages.`,
+										},
+										"hugepage_size_1g": {
+											Type:        schema.TypeInt,
+											Optional:    true,
+											Description: `Amount of 1G hugepages.`,
+										},
+									},
+								},
 							},
 						},
 					},
@@ -722,6 +763,23 @@ func schemaNodeConfig() *schema.Schema {
 	}
 }
 
+// Separate since this currently only supports a single value -- a subset of
+// the overall NodeKubeletConfig
+func schemaNodePoolAutoConfigNodeKubeletConfig() *schema.Schema {
+	return &schema.Schema{
+		Type:        schema.TypeList,
+		Optional:    true,
+		Computed:    true,
+		MaxItems:    1,
+		Description: `Node kubelet configs.`,
+		Elem: &schema.Resource{
+			Schema: map[string]*schema.Schema{
+				"insecure_kubelet_readonly_port_enabled": schemaInsecureKubeletReadonlyPortEnabled(),
+			},
+		},
+	}
+}
+
 func expandNodeConfigDefaults(configured interface{}) *container.NodeConfigDefaults {
 	configs := configured.([]interface{})
 	if len(configs) == 0 || configs[0] == nil {
@@ -731,6 +789,11 @@ func expandNodeConfigDefaults(configured interface{}) *container.NodeConfigDefau
 
 	nodeConfigDefaults := &container.NodeConfigDefaults{}
 	nodeConfigDefaults.ContainerdConfig = expandContainerdConfig(config["containerd_config"])
+	if v, ok := config["insecure_kubelet_readonly_port_enabled"]; ok {
+		nodeConfigDefaults.NodeKubeletConfig = &container.NodeKubeletConfig{
+			InsecureKubeletReadonlyPortEnabled: expandInsecureKubeletReadonlyPortEnabled(v),
+		}
+	}
 	if variant, ok := config["logging_variant"]; ok {
 		nodeConfigDefaults.LoggingConfig = &container.NodePoolLoggingConfig{
 			VariantConfig: &container.LoggingVariantConfig{
@@ -738,6 +801,14 @@ func expandNodeConfigDefaults(configured interface{}) *container.NodeConfigDefau
 			},
 		}
 	}
+
+	if v, ok := config["gcfs_config"]; ok && len(v.([]interface{})) > 0 {
+		gcfsConfig := v.([]interface{})[0].(map[string]interface{})
+		nodeConfigDefaults.GcfsConfig = &container.GcfsConfig{
+			Enabled: gcfsConfig["enabled"].(bool),
+		}
+	}
+
 	return nodeConfigDefaults
 }
 
@@ -944,6 +1015,16 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 		nc.Tags = tags
 	}
 
+	if v, ok := nodeConfig["storage_pools"]; ok {
+		spList := v.([]interface{})
+		storagePools := []string{}
+		for _, v := range spList {
+			if v != nil {
+				storagePools = append(storagePools, v.(string))
+			}
+		}
+		nc.StoragePools = storagePools
+	}
 	if v, ok := nodeConfig["shielded_instance_config"]; ok && len(v.([]interface{})) > 0 {
 		conf := v.([]interface{})[0].(map[string]interface{})
 		nc.ShieldedInstanceConfig = &container.ShieldedInstanceConfig{
@@ -1023,6 +1104,10 @@ func expandNodeConfig(v interface{}) *container.NodeConfig {
 }
 
 func expandResourceManagerTags(v interface{}) *container.ResourceManagerTags {
+	if v == nil {
+		return nil
+	}
+
 	rmts := make(map[string]string)
 
 	if v != nil {
@@ -1054,6 +1139,13 @@ func expandWorkloadMetadataConfig(v interface{}) *container.WorkloadMetadataConf
 	return wmc
 }
 
+func expandInsecureKubeletReadonlyPortEnabled(v interface{}) bool {
+	if v == "TRUE" {
+		return true
+	}
+	return false
+}
+
 func expandKubeletConfig(v interface{}) *container.NodeKubeletConfig {
 	if v == nil {
 		return nil
@@ -1073,6 +1165,10 @@ func expandKubeletConfig(v interface{}) *container.NodeKubeletConfig {
 	}
 	if cpuCfsQuotaPeriod, ok := cfg["cpu_cfs_quota_period"]; ok {
 		kConfig.CpuCfsQuotaPeriod = cpuCfsQuotaPeriod.(string)
+	}
+	if insecureKubeletReadonlyPortEnabled, ok := cfg["insecure_kubelet_readonly_port_enabled"]; ok {
+		kConfig.InsecureKubeletReadonlyPortEnabled = expandInsecureKubeletReadonlyPortEnabled(insecureKubeletReadonlyPortEnabled)
+		kConfig.ForceSendFields = append(kConfig.ForceSendFields, "InsecureKubeletReadonlyPortEnabled")
 	}
 	if podPidsLimit, ok := cfg["pod_pids_limit"]; ok {
 		kConfig.PodPidsLimit = int64(podPidsLimit.(int))
@@ -1103,6 +1199,10 @@ func expandLinuxNodeConfig(v interface{}) *container.LinuxNodeConfig {
 		linuxNodeConfig.CgroupMode = cgroupMode
 	}
 
+	if v, ok := cfg["hugepages_config"]; ok {
+		linuxNodeConfig.Hugepages = expandHugepagesConfig(v)
+	}
+
 	return linuxNodeConfig
 }
 
@@ -1125,6 +1225,32 @@ func expandCgroupMode(cfg map[string]interface{}) string {
 	}
 
 	return cgroupMode.(string)
+}
+
+func expandHugepagesConfig(v interface{}) *container.HugepagesConfig {
+	if v == nil {
+		return nil
+	}
+	ls := v.([]interface{})
+	if len(ls) == 0 {
+		return nil
+	}
+	if ls[0] == nil {
+		return &container.HugepagesConfig{}
+	}
+	cfg := ls[0].(map[string]interface{})
+
+	hugepagesConfig := &container.HugepagesConfig{}
+
+	if v, ok := cfg["hugepage_size_2m"]; ok {
+		hugepagesConfig.HugepageSize2m = int64(v.(int))
+	}
+
+	if v, ok := cfg["hugepage_size_1g"]; ok {
+		hugepagesConfig.HugepageSize1g = int64(v.(int))
+	}
+
+	return hugepagesConfig
 }
 
 func expandContainerdConfig(v interface{}) *container.ContainerdConfig {
@@ -1263,7 +1389,11 @@ func flattenNodeConfigDefaults(c *container.NodeConfigDefaults) []map[string]int
 
 	result[0]["containerd_config"] = flattenContainerdConfig(c.ContainerdConfig)
 
+	result[0]["insecure_kubelet_readonly_port_enabled"] = flattenInsecureKubeletReadonlyPortEnabled(c.NodeKubeletConfig)
+
 	result[0]["logging_variant"] = flattenLoggingVariant(c.LoggingConfig)
+
+	result[0]["gcfs_config"] = flattenGcfsConfig(c.GcfsConfig)
 
 	return result
 }
@@ -1307,6 +1437,7 @@ func flattenNodeConfig(c *container.NodeConfig, v interface{}) []map[string]inte
 		"tags":                               c.Tags,
 		"preemptible":                        c.Preemptible,
 		"secondary_boot_disks":               flattenSecondaryBootDisks(c.SecondaryBootDisks),
+		"storage_pools":                      c.StoragePools,
 		"spot":                               c.Spot,
 		"min_cpu_platform":                   c.MinCpuPlatform,
 		"shielded_instance_config":           flattenShieldedInstanceConfig(c.ShieldedInstanceConfig),
@@ -1333,6 +1464,10 @@ func flattenNodeConfig(c *container.NodeConfig, v interface{}) []map[string]inte
 }
 
 func flattenResourceManagerTags(c *container.ResourceManagerTags) map[string]interface{} {
+	if c == nil {
+		return nil
+	}
+
 	rmt := make(map[string]interface{})
 
 	if c != nil {
@@ -1428,6 +1563,14 @@ func flattenSecondaryBootDisks(c []*container.SecondaryBootDisk) []map[string]in
 	return result
 }
 
+func flattenInsecureKubeletReadonlyPortEnabled(c *container.NodeKubeletConfig) string {
+	// Convert bool from the API to the enum values used internally
+	if c != nil && c.InsecureKubeletReadonlyPortEnabled {
+		return "TRUE"
+	}
+	return "FALSE"
+}
+
 func flattenLoggingVariant(c *container.NodePoolLoggingConfig) string {
 	variant := "DEFAULT"
 	if c != nil && c.VariantConfig != nil && c.VariantConfig.Variant != "" {
@@ -1519,10 +1662,21 @@ func flattenKubeletConfig(c *container.NodeKubeletConfig) []map[string]interface
 	result := []map[string]interface{}{}
 	if c != nil {
 		result = append(result, map[string]interface{}{
-			"cpu_cfs_quota":        c.CpuCfsQuota,
-			"cpu_cfs_quota_period": c.CpuCfsQuotaPeriod,
-			"cpu_manager_policy":   c.CpuManagerPolicy,
-			"pod_pids_limit":       c.PodPidsLimit,
+			"cpu_cfs_quota":                          c.CpuCfsQuota,
+			"cpu_cfs_quota_period":                   c.CpuCfsQuotaPeriod,
+			"cpu_manager_policy":                     c.CpuManagerPolicy,
+			"insecure_kubelet_readonly_port_enabled": flattenInsecureKubeletReadonlyPortEnabled(c),
+			"pod_pids_limit":                         c.PodPidsLimit,
+		})
+	}
+	return result
+}
+
+func flattenNodePoolAutoConfigNodeKubeletConfig(c *container.NodeKubeletConfig) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c != nil {
+		result = append(result, map[string]interface{}{
+			"insecure_kubelet_readonly_port_enabled": flattenInsecureKubeletReadonlyPortEnabled(c),
 		})
 	}
 	return result
@@ -1532,8 +1686,20 @@ func flattenLinuxNodeConfig(c *container.LinuxNodeConfig) []map[string]interface
 	result := []map[string]interface{}{}
 	if c != nil {
 		result = append(result, map[string]interface{}{
-			"sysctls":     c.Sysctls,
-			"cgroup_mode": c.CgroupMode,
+			"sysctls":          c.Sysctls,
+			"cgroup_mode":      c.CgroupMode,
+			"hugepages_config": flattenHugepagesConfig(c.Hugepages),
+		})
+	}
+	return result
+}
+
+func flattenHugepagesConfig(c *container.HugepagesConfig) []map[string]interface{} {
+	result := []map[string]interface{}{}
+	if c != nil {
+		result = append(result, map[string]interface{}{
+			"hugepage_size_2m": c.HugepageSize2m,
+			"hugepage_size_1g": c.HugepageSize1g,
 		})
 	}
 	return result
@@ -1643,4 +1809,534 @@ func flattenFastSocket(c *container.FastSocket) []map[string]interface{} {
 		})
 	}
 	return result
+}
+
+// This portion of nodePoolUpdate() is moved here to be shared with
+// node pool updates in `resource_container_cluster`
+func nodePoolNodeConfigUpdate(d *schema.ResourceData, config *transport_tpg.Config, nodePoolInfo *NodePoolInformation, prefix, name string, timeout time.Duration) error {
+
+	// Nodepool write-lock will be acquired when update function is called.
+	npLockKey := nodePoolInfo.nodePoolLockKey(name)
+
+	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
+	if err != nil {
+		return err
+	}
+
+	if d.HasChange(prefix + "node_config") {
+
+		if d.HasChange(prefix + "node_config.0.logging_variant") {
+			if v, ok := d.GetOk(prefix + "node_config.0.logging_variant"); ok {
+				loggingVariant := v.(string)
+				req := &container.UpdateNodePoolRequest{
+					Name: name,
+					LoggingConfig: &container.NodePoolLoggingConfig{
+						VariantConfig: &container.LoggingVariantConfig{
+							Variant: loggingVariant,
+						},
+					},
+				}
+
+				updateF := func() error {
+					clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+					if config.UserProjectOverride {
+						clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+					}
+					op, err := clusterNodePoolsUpdateCall.Do()
+					if err != nil {
+						return err
+					}
+
+					// Wait until it's updated
+					return ContainerOperationWait(config, op,
+						nodePoolInfo.project,
+						nodePoolInfo.location,
+						"updating GKE node pool logging_variant", userAgent,
+						timeout)
+				}
+
+				if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+					return err
+				}
+
+				log.Printf("[INFO] Updated logging_variant for node pool %s", name)
+			}
+		}
+
+		if d.HasChange("node_config.0.disk_size_gb") ||
+			d.HasChange("node_config.0.disk_type") ||
+			d.HasChange("node_config.0.machine_type") ||
+			d.HasChange("node_config.0.storage_pools") {
+			req := &container.UpdateNodePoolRequest{
+				Name:        name,
+				DiskSizeGb:  int64(d.Get("node_config.0.disk_size_gb").(int)),
+				DiskType:    d.Get("node_config.0.disk_type").(string),
+				MachineType: d.Get("node_config.0.machine_type").(string),
+			}
+			if v, ok := d.GetOk("node_config.0.storage_pools"); ok {
+				spList := v.([]interface{})
+				storagePools := []string{}
+				for _, v := range spList {
+					if v != nil {
+						storagePools = append(storagePools, v.(string))
+					}
+				}
+				req.StoragePools = storagePools
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool disk_size_gb/disk_type/machine_type/storage_pools", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated disk disk_size_gb/disk_type/machine_type/storage_pools for Node Pool %s", d.Id())
+		}
+
+		if d.HasChange(prefix + "node_config.0.taint") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+			if v, ok := d.GetOk(prefix + "node_config.0.taint"); ok {
+				taintsList := v.([]interface{})
+				taints := make([]*container.NodeTaint, 0, len(taintsList))
+				for _, v := range taintsList {
+					if v != nil {
+						data := v.(map[string]interface{})
+						taint := &container.NodeTaint{
+							Key:    data["key"].(string),
+							Value:  data["value"].(string),
+							Effect: data["effect"].(string),
+						}
+						taints = append(taints, taint)
+					}
+				}
+				ntaints := &container.NodeTaints{
+					Taints: taints,
+				}
+				req.Taints = ntaints
+			}
+
+			if req.Taints == nil {
+				taints := make([]*container.NodeTaint, 0, 0)
+				ntaints := &container.NodeTaints{
+					Taints: taints,
+				}
+				req.Taints = ntaints
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool taints", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated taints for Node Pool %s", d.Id())
+		}
+
+		if d.HasChange(prefix + "node_config.0.tags") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+			if v, ok := d.GetOk(prefix + "node_config.0.tags"); ok {
+				tagsList := v.([]interface{})
+				tags := []string{}
+				for _, v := range tagsList {
+					if v != nil {
+						tags = append(tags, v.(string))
+					}
+				}
+				ntags := &container.NetworkTags{
+					Tags: tags,
+				}
+				req.Tags = ntags
+			}
+
+			// sets tags to the empty list when user removes a previously defined list of tags entriely
+			// aka the node pool goes from having tags to no longer having any
+			if req.Tags == nil {
+				tags := []string{}
+				ntags := &container.NetworkTags{
+					Tags: tags,
+				}
+				req.Tags = ntags
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool tags", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated tags for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.resource_manager_tags") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+			if v, ok := d.GetOk(prefix + "node_config.0.resource_manager_tags"); ok {
+				req.ResourceManagerTags = expandResourceManagerTags(v)
+			}
+
+			// sets resource manager tags to the empty list when user removes a previously defined list of tags entriely
+			// aka the node pool goes from having tags to no longer having any
+			if req.ResourceManagerTags == nil {
+				tags := make(map[string]string)
+				rmTags := &container.ResourceManagerTags{
+					Tags: tags,
+				}
+				req.ResourceManagerTags = rmTags
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool resource manager tags", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated resource manager tags for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.resource_labels") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+
+			if v, ok := d.GetOk(prefix + "node_config.0.resource_labels"); ok {
+				resourceLabels := v.(map[string]interface{})
+				req.ResourceLabels = &container.ResourceLabels{
+					Labels: tpgresource.ConvertStringMap(resourceLabels),
+				}
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool resource labels", userAgent,
+					timeout)
+			}
+
+			// Call update serially.
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated resource labels for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.labels") {
+			req := &container.UpdateNodePoolRequest{
+				Name: name,
+			}
+
+			if v, ok := d.GetOk(prefix + "node_config.0.labels"); ok {
+				labels := v.(map[string]interface{})
+				req.Labels = &container.NodeLabels{
+					Labels: tpgresource.ConvertStringMap(labels),
+				}
+			}
+
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool labels", userAgent,
+					timeout)
+			}
+
+			// Call update serially.
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated labels for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.image_type") {
+			req := &container.UpdateClusterRequest{
+				Update: &container.ClusterUpdate{
+					DesiredNodePoolId: name,
+					DesiredImageType:  d.Get(prefix + "node_config.0.image_type").(string),
+				},
+			}
+
+			updateF := func() error {
+				clusterUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.Update(nodePoolInfo.parent(), req)
+				if config.UserProjectOverride {
+					clusterUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location, "updating GKE node pool", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated image type in Node Pool %s", d.Id())
+		}
+
+		if d.HasChange(prefix + "node_config.0.workload_metadata_config") {
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId: name,
+				WorkloadMetadataConfig: expandWorkloadMetadataConfig(
+					d.Get(prefix + "node_config.0.workload_metadata_config")),
+			}
+			if req.WorkloadMetadataConfig == nil {
+				req.WorkloadMetadataConfig = &container.WorkloadMetadataConfig{}
+				req.ForceSendFields = []string{"WorkloadMetadataConfig"}
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool workload_metadata_config", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+			log.Printf("[INFO] Updated workload_metadata_config for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.gcfs_config") {
+			gcfsEnabled := bool(d.Get(prefix + "node_config.0.gcfs_config.0.enabled").(bool))
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId: name,
+				GcfsConfig: &container.GcfsConfig{
+					Enabled: gcfsEnabled,
+				},
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool gcfs_config", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated gcfs_config for node pool %s", name)
+		}
+
+		if d.HasChange(prefix + "node_config.0.kubelet_config") {
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId: name,
+				KubeletConfig: expandKubeletConfig(
+					d.Get(prefix + "node_config.0.kubelet_config")),
+			}
+			if req.KubeletConfig == nil {
+				req.KubeletConfig = &container.NodeKubeletConfig{}
+				req.ForceSendFields = []string{"KubeletConfig"}
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool kubelet_config", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated kubelet_config for node pool %s", name)
+		}
+		if d.HasChange(prefix + "node_config.0.linux_node_config") {
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId: name,
+				LinuxNodeConfig: expandLinuxNodeConfig(
+					d.Get(prefix + "node_config.0.linux_node_config")),
+			}
+			if req.LinuxNodeConfig == nil {
+				req.LinuxNodeConfig = &container.LinuxNodeConfig{}
+				req.ForceSendFields = []string{"LinuxNodeConfig"}
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool linux_node_config", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated linux_node_config for node pool %s", name)
+		}
+		if d.HasChange(prefix + "node_config.0.fast_socket") {
+			req := &container.UpdateNodePoolRequest{
+				NodePoolId: name,
+				FastSocket: &container.FastSocket{},
+			}
+			if v, ok := d.GetOk(prefix + "node_config.0.fast_socket"); ok {
+				fastSocket := v.([]interface{})[0].(map[string]interface{})
+				req.FastSocket = &container.FastSocket{
+					Enabled: fastSocket["enabled"].(bool),
+				}
+			}
+			updateF := func() error {
+				clusterNodePoolsUpdateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Update(nodePoolInfo.fullyQualifiedName(name), req)
+				if config.UserProjectOverride {
+					clusterNodePoolsUpdateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
+				}
+				op, err := clusterNodePoolsUpdateCall.Do()
+				if err != nil {
+					return err
+				}
+
+				// Wait until it's updated
+				return ContainerOperationWait(config, op,
+					nodePoolInfo.project,
+					nodePoolInfo.location,
+					"updating GKE node pool fast_socket", userAgent,
+					timeout)
+			}
+
+			if err := retryWhileIncompatibleOperation(timeout, npLockKey, updateF); err != nil {
+				return err
+			}
+
+			log.Printf("[INFO] Updated fast_socket for node pool %s", name)
+		}
+	}
+
+	return nil
 }
