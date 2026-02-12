@@ -329,3 +329,16 @@ func GetDefaultServiceEndpoint(ctx context.Context, service string, opts Endpoin
 	}
 	return endpoint, nil
 }
+
+// GetPartitionIDForRegion retrieves the partition ID for a given region.
+// For example, us-east-1 returns "aws" and "eusc-de-east-1" returns "aws-eusc".
+func GetPartitionIDForRegion(ctx context.Context, region string) (string, error) {
+	// We just need to choose any services (e.g. EC2), whose version is the most up-to-date.
+	// If the SDK cannot resolve the endpoint for a (unknown) region, the partitionID is returned as "aws".
+	endpoint, err := ec2.NewDefaultEndpointResolver().ResolveEndpoint(region, ec2.EndpointResolverOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to resolve AWS ec2 endpoint: %w", err)
+	}
+
+	return endpoint.PartitionID, nil
+}
