@@ -234,6 +234,7 @@ func defaultPowerVSMachinePoolPlatform(ic *types.InstallConfig) powervstypes.Mac
 		// Fallback to hardcoded list
 		sysTypes, err = powervstypes.AvailableSysTypes(ic.PowerVS.Region, ic.PowerVS.Zone)
 		if err == nil {
+			// this is prior case behavior
 			sysType = sysTypes[0]
 		} else {
 			logrus.Warnf("For given zone %v, AvailableSysTypes returns %v", ic.PowerVS.Zone, err)
