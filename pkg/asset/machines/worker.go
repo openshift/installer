@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	_ "slices"
 	"strings"
 
 	"github.com/pkg/errors"
