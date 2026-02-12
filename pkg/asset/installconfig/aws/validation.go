@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"slices"
 	"sort"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -459,6 +460,10 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 			errMsg := fmt.Sprintf("instance type %s not found", pool.InstanceType)
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 		}
+	}
+
+	if pool.CPUOptions != nil {
+		allErrs = append(allErrs, validateCPUOptions(ctx, meta, fldPath, pool)...)
 	}
 
 	if len(pool.AdditionalSecurityGroupIDs) > 0 {
@@ -978,4 +983,78 @@ func validateInstanceProfile(ctx context.Context, meta *Metadata, fldPath *field
 	}
 
 	return nil
+}
+
+func validateCPUOptions(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+	cpuOpts := pool.CPUOptions
+
+	// Early return if no CPU options specified
+	if cpuOpts == nil {
+		return allErrs
+	}
+
+	// See sev-snp support requirements: https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/sev-snp.html#snp-requirements
+	if cpuOpts.ConfidentialCompute != nil && *cpuOpts.ConfidentialCompute == awstypes.ConfidentialComputePolicySEVSNP {
+		// Validate AMI boot mode for SEV-SNP
+		allErrs = append(allErrs, validateAMIBootMode(ctx, meta, fldPath, pool)...)
+
+		// Validate instance type for SEV-SNP
+		allErrs = append(allErrs, validateInstanceTypeForSEVSNP(ctx, meta, fldPath, pool)...)
+	}
+
+	return allErrs
+}
+
+func validateInstanceTypeForSEVSNP(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Warn if using default instance type
+	if pool.InstanceType == "" {
+		logrus.Warnf("AMD SEV-SNP confidential computing is enabled for %s but no instance type is specified. The default instance type may not support amd-sev-snp", fldPath)
+		return allErrs
+	}
+
+	// Fetch instance types metadata
+	instanceTypes, err := meta.InstanceTypes(ctx)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath, err))
+	}
+
+	// Validate the specified instance type supports SEV-SNP
+	// If the instance type is not found, it's already caught in validateMachinePool
+	typeMeta, ok := instanceTypes[pool.InstanceType]
+	if !ok {
+		return allErrs
+	}
+
+	if !slices.Contains(typeMeta.Features, string(ec2types.SupportedAdditionalProcessorFeatureAmdSevSnp)) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, "specified instance type in the specified region doesn't support amd-sev-snp"))
+	}
+
+	return allErrs
+}
+
+func validateAMIBootMode(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	amiID := pool.AMIID
+	if amiID == "" {
+		// Warn when using default AMI with SEV-SNP
+		logrus.Warnf("AMD SEV-SNP confidential computing is enabled for %s but no custom AMI is specified. The default RHCOS AMI may not have UEFI boot mode enabled", fldPath)
+		return allErrs
+	}
+
+	// Get image metadata
+	imageInfo, err := meta.Images(ctx, amiID)
+	if err != nil {
+		return append(allErrs, field.InternalError(fldPath.Child("amiID"), fmt.Errorf("unable to retrieve AMI metadata: %w", err)))
+	}
+
+	// Check if boot mode supports UEFI
+	if imageInfo.BootMode != string(ec2types.BootModeValuesUefi) && imageInfo.BootMode != string(ec2types.BootModeValuesUefiPreferred) {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("amiID"), amiID, fmt.Sprintf("AMI boot mode must be 'uefi' or 'uefi-preferred' when using AMD SEV-SNP confidential computing, got '%s'", imageInfo.BootMode)))
+	}
+
+	return allErrs
 }

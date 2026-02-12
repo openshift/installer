@@ -25,6 +25,7 @@ type Metadata struct {
 	vpcSubnets        SubnetGroups
 	vpc               VPC
 	instanceTypes     map[string]InstanceType
+	images            map[string]ImageInfo
 
 	Region          string                     `json:"region,omitempty"`
 	ProvidedSubnets []typesaws.Subnet          `json:"subnets,omitempty"`
@@ -391,4 +392,40 @@ func (m *Metadata) InstanceTypes(ctx context.Context) (map[string]InstanceType, 
 	}
 
 	return m.instanceTypes, nil
+}
+
+// Images retrieves image metadata for the specified AMI ID.
+func (m *Metadata) Images(ctx context.Context, amiID string) (ImageInfo, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if amiID == "" {
+		return ImageInfo{}, fmt.Errorf("AMI ID cannot be empty")
+	}
+
+	// Check if AMI is already cached
+	if imageInfo, ok := m.images[amiID]; ok {
+		return imageInfo, nil
+	}
+
+	// Fetch uncached AMI
+	client, err := m.EC2Client(ctx)
+	if err != nil {
+		return ImageInfo{}, err
+	}
+
+	imageInfo, err := images(ctx, client, amiID)
+	if err != nil {
+		return ImageInfo{}, fmt.Errorf("error fetching AMI metadata: %w", err)
+	}
+
+	// Initialize map if needed
+	if m.images == nil {
+		m.images = map[string]ImageInfo{}
+	}
+
+	// Add newly fetched image to cache
+	m.images[amiID] = imageInfo
+
+	return imageInfo, nil
 }
