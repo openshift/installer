@@ -22,6 +22,7 @@ import (
 	"github.com/openshift/installer/pkg/types/external"
 	"github.com/openshift/installer/pkg/types/gcp"
 	"github.com/openshift/installer/pkg/types/ibmcloud"
+	"github.com/openshift/installer/pkg/types/network"
 	"github.com/openshift/installer/pkg/types/none"
 	"github.com/openshift/installer/pkg/types/nutanix"
 	"github.com/openshift/installer/pkg/types/openstack"
@@ -283,7 +284,7 @@ func validDualStackNetworkingConfig() *types.Networking {
 		},
 	}
 }
-func InvalidPrimaryV6DualStackNetworkingConfig() *types.Networking {
+func validPrimaryV6DualStackNetworkingConfig() *types.Networking {
 	return &types.Networking{
 		NetworkType: "OVNKubernetes",
 		MachineNetwork: []types.MachineNetworkEntry{
@@ -295,8 +296,8 @@ func InvalidPrimaryV6DualStackNetworkingConfig() *types.Networking {
 			},
 		},
 		ServiceNetwork: []ipnet.IPNet{
-			*ipnet.MustParseCIDR("172.30.0.0/16"),
 			*ipnet.MustParseCIDR("ffd1::/112"),
+			*ipnet.MustParseCIDR("172.30.0.0/16"),
 		},
 		ClusterNetwork: []types.ClusterNetworkEntry{
 			{
@@ -1822,6 +1823,121 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 		},
 		{
+			name: "aws: valid dual-stack with DualStackIPv4Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv4Primary
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "aws: valid AWS dual-stack with DualStackIPv6Primary",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv6Primary
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				return c
+			}(),
+		},
+		{
+			name: "aws: valid dual-stack with DualStackIPv4Primary and only IPv4 machineNetwork (IPv6 auto-assigned)",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv4Primary
+				c.Networking = validDualStackNetworkingConfig()
+				c.Networking.MachineNetwork = c.Networking.MachineNetwork[:1]
+				return c
+			}(),
+		},
+		{
+			name: "aws: invalid AWS dual-stack without ipFamily set",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				// IPFamily not set on AWS platform
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `networking: Invalid value: "DualStack": dual-stack IPv4/IPv6 can only be specified when platform.aws.ipFamily is DualStackIPv4Primary or DualStackIPv6Primary`,
+		},
+		{
+			name: "aws: invalid dual-stack with DualStackIPv4Primary but IPv6-primary networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = "DualStackIPv4Primary"
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `^\Q[networking.clusterNetwork: Invalid value: "ffd2::/48, 192.168.1.0/24": DualStackIPv4Primary requires an IPv4 network first in this list, networking.machineNetwork: Invalid value: "ffd0::/48, 10.0.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list, networking.serviceNetwork: Invalid value: "ffd1::/112, 172.30.0.0/16": DualStackIPv4Primary requires an IPv4 network first in this list]\E$`,
+		},
+		{
+			name: "aws: invalid dual-stack with DualStackIPv6Primary but IPv4-primary networks",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = "DualStackIPv6Primary"
+				c.Networking = validDualStackNetworkingConfig()
+				return c
+			}(),
+			expectedError: `^\Q[networking.clusterNetwork: Invalid value: "192.168.1.0/24, ffd2::/48": DualStackIPv6Primary requires an IPv6 network first in this list, networking.machineNetwork: Invalid value: "10.0.0.0/16, ffd0::/48": DualStackIPv6Primary requires an IPv6 network first in this list, networking.serviceNetwork: Invalid value: "172.30.0.0/16, ffd1::/112": DualStackIPv6Primary requires an IPv6 network first in this list]\E$`,
+		},
+		{
+			name: "aws: invalid dual-stack with DualStackIPv4Primary but only IPv4 serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv4Primary
+				c.Networking = validDualStackNetworkingConfig()
+				// Remove IPv6 service network, leaving only IPv4
+				c.Networking.ServiceNetwork = c.Networking.ServiceNetwork[:1]
+				return c
+			}(),
+			expectedError: `networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
+		},
+		{
+			name: "aws: invalid dual-stack with DualStackIPv4Primary but only IPv6 serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv4Primary
+				c.Networking = validDualStackNetworkingConfig()
+				// Remove IPv4 service network, leaving only IPv6
+				c.Networking.ServiceNetwork = c.Networking.ServiceNetwork[1:]
+				return c
+			}(),
+			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
+		},
+		{
+			name: "aws: invalid dual-stack with DualStackIPv6Primary but only IPv4 serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv6Primary
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				// Remove IPv6 service network, leaving only IPv4
+				c.Networking.ServiceNetwork = c.Networking.ServiceNetwork[1:]
+				return c
+			}(),
+			expectedError: `networking.serviceNetwork: Invalid value: "172.30.0.0/16": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
+		},
+		{
+			name: "aws: invalid dual-stack with DualStackIPv6Primary but only IPv6 serviceNetwork",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.Platform.AWS.IPFamily = network.DualStackIPv6Primary
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				// Remove IPv4 service network, leaving only IPv6
+				c.Networking.ServiceNetwork = c.Networking.ServiceNetwork[:1]
+				return c
+			}(),
+			expectedError: `networking.serviceNetwork: Invalid value: "ffd1::/112": when installing dual-stack IPv4/IPv6 you must provide two service networks, one for each IP address type`,
+		},
+		{
 			name: "invalid IPv6 hostprefix",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
@@ -2474,7 +2590,12 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "baremetal API VIP set to an incorrect IP Family with invalid primary IPv6 network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking = InvalidPrimaryV6DualStackNetworkingConfig()
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				// Make service network IPv6-primary (wrong order)
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					c.Networking.ServiceNetwork[1],
+					c.Networking.ServiceNetwork[0],
+				}
 				c.Platform = types.Platform{
 					BareMetal: validBareMetalPlatform(),
 				}
@@ -2500,7 +2621,12 @@ func TestValidateInstallConfig(t *testing.T) {
 			name: "baremetal Ingress VIP set to an incorrect IP Family with invalid primary IPv6 network",
 			installConfig: func() *types.InstallConfig {
 				c := validInstallConfig()
-				c.Networking = InvalidPrimaryV6DualStackNetworkingConfig()
+				c.Networking = validPrimaryV6DualStackNetworkingConfig()
+				// Make service network IPv6-primary (wrong order)
+				c.Networking.ServiceNetwork = []ipnet.IPNet{
+					c.Networking.ServiceNetwork[1],
+					c.Networking.ServiceNetwork[0],
+				}
 				c.Platform = types.Platform{
 					BareMetal: validBareMetalPlatform(),
 				}
