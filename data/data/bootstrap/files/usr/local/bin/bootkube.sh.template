@@ -203,6 +203,7 @@ then
 		render \
 			--output-dir=/assets/cvo-bootstrap \
 			--release-image="${RELEASE_IMAGE_DIGEST}" \
+			--cluster-version-manifest-path=/assets/manifests/cvo-overrides.yaml \
 			--feature-gate-manifest-path=/assets/manifests/99_feature-gate.yaml
 
 	cp cvo-bootstrap/bootstrap/* bootstrap-manifests/
