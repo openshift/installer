@@ -17,6 +17,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/sirupsen/logrus"
 	ini "gopkg.in/ini.v1"
+	"k8s.io/apimachinery/pkg/util/sets"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/version"
@@ -28,6 +29,13 @@ var (
 		credentials.EnvProviderName:         new(sync.Once),
 		"credentialsFromSession":            new(sync.Once),
 	}
+
+	// SDKv2OnlyRegions contains AWS regions that are only available in AWS SDK v2
+	// and do not exist in the SDK v1 endpoint resolver. For these regions, we cannot
+	// use endpoints.DefaultResolver().EndpointFor() to look up signing regions as it
+	// would return invalid value. Instead, we use the region itself as the signing region.
+	// Example: eusc-de-east-1 (European Sovereign Cloud Germany East 1).
+	SDKv2OnlyRegions = sets.New("eusc-de-east-1")
 )
 
 // SessionOptions is a function that modifies the provided session.Option.
@@ -249,11 +257,15 @@ func newAWSResolver(region string, services []typesaws.ServiceEndpoint) *awsReso
 func (ar *awsResolver) EndpointFor(service, region string, optFns ...func(*endpoints.Options)) (endpoints.ResolvedEndpoint, error) {
 	if s, ok := ar.services[resolverKey(service)]; ok {
 		logrus.Debugf("resolved AWS service %s (%s) to %q", service, region, s.URL)
+
 		signingRegion := ar.region
-		def, _ := endpoints.DefaultResolver().EndpointFor(service, region)
-		if len(def.SigningRegion) > 0 {
-			signingRegion = def.SigningRegion
+		if !SDKv2OnlyRegions.Has(ar.region) {
+			def, _ := endpoints.DefaultResolver().EndpointFor(service, region) //nolint:errcheck
+			if len(def.SigningRegion) > 0 {
+				signingRegion = def.SigningRegion
+			}
 		}
+
 		return endpoints.ResolvedEndpoint{
 			URL:           s.URL,
 			SigningRegion: signingRegion,
