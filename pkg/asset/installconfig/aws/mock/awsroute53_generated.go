@@ -10,94 +10,95 @@
 package mock
 
 import (
+	context "context"
 	reflect "reflect"
 
-	aws "github.com/aws/aws-sdk-go/aws"
-	route53 "github.com/aws/aws-sdk-go/service/route53"
-	types "github.com/openshift/installer/pkg/types"
+	route53 "github.com/aws/aws-sdk-go-v2/service/route53"
+	types "github.com/aws/aws-sdk-go-v2/service/route53/types"
+	types0 "github.com/openshift/installer/pkg/types"
 	gomock "go.uber.org/mock/gomock"
 	field "k8s.io/apimachinery/pkg/util/validation/field"
 )
 
-// MockAPI is a mock of API interface.
-type MockAPI struct {
+// MockRoute53API is a mock of Route53API interface.
+type MockRoute53API struct {
 	ctrl     *gomock.Controller
-	recorder *MockAPIMockRecorder
+	recorder *MockRoute53APIMockRecorder
 	isgomock struct{}
 }
 
-// MockAPIMockRecorder is the mock recorder for MockAPI.
-type MockAPIMockRecorder struct {
-	mock *MockAPI
+// MockRoute53APIMockRecorder is the mock recorder for MockRoute53API.
+type MockRoute53APIMockRecorder struct {
+	mock *MockRoute53API
 }
 
-// NewMockAPI creates a new mock instance.
-func NewMockAPI(ctrl *gomock.Controller) *MockAPI {
-	mock := &MockAPI{ctrl: ctrl}
-	mock.recorder = &MockAPIMockRecorder{mock}
+// NewMockRoute53API creates a new mock instance.
+func NewMockRoute53API(ctrl *gomock.Controller) *MockRoute53API {
+	mock := &MockRoute53API{ctrl: ctrl}
+	mock.recorder = &MockRoute53APIMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockAPI) EXPECT() *MockAPIMockRecorder {
+func (m *MockRoute53API) EXPECT() *MockRoute53APIMockRecorder {
 	return m.recorder
 }
 
 // GetBaseDomain mocks base method.
-func (m *MockAPI) GetBaseDomain(baseDomainName string) (*route53.HostedZone, error) {
+func (m *MockRoute53API) GetBaseDomain(ctx context.Context, baseDomainName string) (*types.HostedZone, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetBaseDomain", baseDomainName)
-	ret0, _ := ret[0].(*route53.HostedZone)
+	ret := m.ctrl.Call(m, "GetBaseDomain", ctx, baseDomainName)
+	ret0, _ := ret[0].(*types.HostedZone)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetBaseDomain indicates an expected call of GetBaseDomain.
-func (mr *MockAPIMockRecorder) GetBaseDomain(baseDomainName any) *gomock.Call {
+func (mr *MockRoute53APIMockRecorder) GetBaseDomain(ctx, baseDomainName any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseDomain", reflect.TypeOf((*MockAPI)(nil).GetBaseDomain), baseDomainName)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBaseDomain", reflect.TypeOf((*MockRoute53API)(nil).GetBaseDomain), ctx, baseDomainName)
 }
 
 // GetHostedZone mocks base method.
-func (m *MockAPI) GetHostedZone(hostedZone string, cfg *aws.Config) (*route53.GetHostedZoneOutput, error) {
+func (m *MockRoute53API) GetHostedZone(ctx context.Context, hostedZone string) (*route53.GetHostedZoneOutput, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetHostedZone", hostedZone, cfg)
+	ret := m.ctrl.Call(m, "GetHostedZone", ctx, hostedZone)
 	ret0, _ := ret[0].(*route53.GetHostedZoneOutput)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetHostedZone indicates an expected call of GetHostedZone.
-func (mr *MockAPIMockRecorder) GetHostedZone(hostedZone, cfg any) *gomock.Call {
+func (mr *MockRoute53APIMockRecorder) GetHostedZone(ctx, hostedZone any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHostedZone", reflect.TypeOf((*MockAPI)(nil).GetHostedZone), hostedZone, cfg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetHostedZone", reflect.TypeOf((*MockRoute53API)(nil).GetHostedZone), ctx, hostedZone)
 }
 
 // GetSubDomainDNSRecords mocks base method.
-func (m *MockAPI) GetSubDomainDNSRecords(hostedZone *route53.HostedZone, ic *types.InstallConfig, cfg *aws.Config) ([]string, error) {
+func (m *MockRoute53API) GetSubDomainDNSRecords(ctx context.Context, hostedZone *types.HostedZone, ic *types0.InstallConfig) ([]string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetSubDomainDNSRecords", hostedZone, ic, cfg)
+	ret := m.ctrl.Call(m, "GetSubDomainDNSRecords", ctx, hostedZone, ic)
 	ret0, _ := ret[0].([]string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetSubDomainDNSRecords indicates an expected call of GetSubDomainDNSRecords.
-func (mr *MockAPIMockRecorder) GetSubDomainDNSRecords(hostedZone, ic, cfg any) *gomock.Call {
+func (mr *MockRoute53APIMockRecorder) GetSubDomainDNSRecords(ctx, hostedZone, ic any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubDomainDNSRecords", reflect.TypeOf((*MockAPI)(nil).GetSubDomainDNSRecords), hostedZone, ic, cfg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetSubDomainDNSRecords", reflect.TypeOf((*MockRoute53API)(nil).GetSubDomainDNSRecords), ctx, hostedZone, ic)
 }
 
 // ValidateZoneRecords mocks base method.
-func (m *MockAPI) ValidateZoneRecords(zone *route53.HostedZone, zoneName string, zonePath *field.Path, ic *types.InstallConfig, cfg *aws.Config) field.ErrorList {
+func (m *MockRoute53API) ValidateZoneRecords(ctx context.Context, zone *types.HostedZone, zoneName string, fldPath *field.Path, ic *types0.InstallConfig) field.ErrorList {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateZoneRecords", zone, zoneName, zonePath, ic, cfg)
+	ret := m.ctrl.Call(m, "ValidateZoneRecords", ctx, zone, zoneName, fldPath, ic)
 	ret0, _ := ret[0].(field.ErrorList)
 	return ret0
 }
 
 // ValidateZoneRecords indicates an expected call of ValidateZoneRecords.
-func (mr *MockAPIMockRecorder) ValidateZoneRecords(zone, zoneName, zonePath, ic, cfg any) *gomock.Call {
+func (mr *MockRoute53APIMockRecorder) ValidateZoneRecords(ctx, zone, zoneName, fldPath, ic any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateZoneRecords", reflect.TypeOf((*MockAPI)(nil).ValidateZoneRecords), zone, zoneName, zonePath, ic, cfg)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateZoneRecords", reflect.TypeOf((*MockRoute53API)(nil).ValidateZoneRecords), ctx, zone, zoneName, fldPath, ic)
 }

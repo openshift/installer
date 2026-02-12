@@ -2,6 +2,7 @@ package installconfig
 
 import (
 	"context"
+	"fmt"
 
 	survey "github.com/AlecAivazis/survey/v2"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
@@ -37,17 +38,25 @@ func (a *baseDomain) Dependencies() []asset.Asset {
 }
 
 // Generate queries for the base domain from the user.
-func (a *baseDomain) Generate(_ context.Context, parents asset.Parents) error {
+func (a *baseDomain) Generate(ctx context.Context, parents asset.Parents) error {
 	platform := &platform{}
 	parents.Get(platform)
 
 	var err error
 	switch platform.CurrentName() {
 	case aws.Name:
-		a.BaseDomain, err = awsconfig.GetBaseDomain()
+		client, err := awsconfig.NewRoute53Client(ctx, awsconfig.EndpointOptions{
+			Region:    platform.AWS.Region,
+			Endpoints: platform.AWS.ServiceEndpoints,
+		}, "")
+		if err != nil {
+			return fmt.Errorf("failed to create route 53 client: %w", err)
+		}
+
+		a.BaseDomain, err = awsconfig.GetBaseDomain(ctx, client)
 		cause := errors.Cause(err)
 		isThrottleError := retry.IsErrorThrottles(retry.DefaultThrottles).IsErrorThrottle(cause).Bool()
-		if !(awsconfig.IsForbidden(cause) || isThrottleError) {
+		if !(awsconfig.IsHTTPForbidden(cause) || isThrottleError) {
 			return err
 		}
 	case azure.Name:

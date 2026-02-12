@@ -65,12 +65,25 @@ func (a *PlatformProvisionCheck) Generate(ctx context.Context, dependencies asse
 
 	switch platform {
 	case aws.Name:
-		session, err := ic.AWS.Session(ctx)
+		clientset := awsconfig.NewRoute53Clientset(awsconfig.EndpointOptions{
+			Region:    ic.AWS.Region,
+			Endpoints: ic.AWS.Services,
+		})
+
+		publicHzClient, err := clientset.WithDefault(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create route 53 client: %w", err)
 		}
-		client := awsconfig.NewClient(session)
-		return awsconfig.ValidateForProvisioning(client, ic.Config, ic.AWS)
+
+		privHzClient := publicHzClient
+		if len(ic.Config.AWS.HostedZoneRole) > 0 {
+			privHzClient, err = clientset.WithAssumedRole(ctx, ic.Config.AWS.HostedZoneRole)
+			if err != nil {
+				return fmt.Errorf("failed to create route 53 client: %w", err)
+			}
+		}
+
+		return awsconfig.ValidateForProvisioning(ctx, privHzClient, publicHzClient, ic.Config, ic.AWS)
 	case azure.Name:
 		dnsConfig, err := ic.Azure.DNSConfig()
 		if err != nil {

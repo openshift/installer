@@ -21,15 +21,6 @@ import (
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
 
-// Partition identifiers.
-const (
-	AwsPartitionID      = "aws"        // AWS Standard partition.
-	AwsCnPartitionID    = "aws-cn"     // AWS China partition.
-	AwsUsGovPartitionID = "aws-us-gov" // AWS GovCloud (US) partition.
-	AwsIsoPartitionID   = "aws-iso"    // AWS ISO (US) partition.
-	AwsIsoBPartitionID  = "aws-iso-b"  // AWS ISOB (US) partition.
-)
-
 var (
 	// In v1 sdk, a constant EndpointsID is exported in each service to look up the custom service endpoint.
 	// For example: https://github.com/aws/aws-sdk-go/blob/070853e88d22854d2355c2543d0958a5f76ad407/service/resourcegroupstaggingapi/service.go#L33-L34
