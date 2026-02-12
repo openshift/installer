@@ -194,6 +194,23 @@ func TestFeatureGates(t *testing.T) {
 				return c
 			}(),
 		},
+		{
+			name: "OKD featureset requires SCOS-compiled installer",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = v1.OKD
+				return c
+			}(),
+			// This test will fail when installer is compiled without TAGS=scos
+			// When compiled with TAGS=scos, this should pass (no error)
+			expected: func() string {
+				// Only expect error if not compiled with SCOS
+				if !types.SCOS {
+					return `^featureSet: Forbidden: OKD featureset is not supported on OpenShift clusters$`
+				}
+				return ""
+			}(),
+		},
 	}
 
 	for _, tc := range cases {

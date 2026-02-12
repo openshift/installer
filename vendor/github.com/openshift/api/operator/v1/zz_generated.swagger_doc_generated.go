@@ -210,7 +210,7 @@ func (AddPage) SwaggerDoc() map[string]string {
 
 var map_Capability = map[string]string{
 	"":           "Capabilities contains set of UI capabilities and their state in the console UI.",
-	"name":       "name is the unique name of a capability. Available capabilities are LightspeedButton and GettingStartedBanner.",
+	"name":       "name is the unique name of a capability. Available capabilities are LightspeedButton, GettingStartedBanner, and GuidedTour.",
 	"visibility": "visibility defines the visibility state of the capability.",
 }
 
@@ -259,7 +259,7 @@ func (ConsoleConfigRoute) SwaggerDoc() map[string]string {
 var map_ConsoleCustomization = map[string]string{
 	"":                     "ConsoleCustomization defines a list of optional configuration for the console UI. Ensure that Logos and CustomLogoFile cannot be set at the same time.",
 	"logos":                "logos is used to replace the OpenShift Masthead and Favicon logos in the console UI with custom logos. logos is an optional field that allows a list of logos. Only one of logos or customLogoFile can be set at a time. If logos is set, customLogoFile must be unset. When specified, there must be at least one entry and no more than 2 entries. Each type must appear only once in the list.",
-	"capabilities":         "capabilities defines an array of capabilities that can be interacted with in the console UI. Each capability defines a visual state that can be interacted with the console to render in the UI. Available capabilities are LightspeedButton and GettingStartedBanner. Each of the available capabilities may appear only once in the list.",
+	"capabilities":         "capabilities defines an array of capabilities that can be interacted with in the console UI. Each capability defines a visual state that can be interacted with the console to render in the UI. Available capabilities are LightspeedButton, GettingStartedBanner, and GuidedTour. Each of the available capabilities may appear only once in the list.",
 	"brand":                "brand is the default branding of the web console which can be overridden by providing the brand field.  There is a limited set of specific brand options. This field controls elements of the console such as the logo. Invalid value will prevent a console rollout.",
 	"documentationBaseURL": "documentationBaseURL links to external documentation are shown in various sections of the web console.  Providing documentationBaseURL will override the default documentation URL. Invalid value will prevent a console rollout.",
 	"customProductName":    "customProductName is the name that will be displayed in page titles, logo alt text, and the about dialog instead of the normal OpenShift product name.",
