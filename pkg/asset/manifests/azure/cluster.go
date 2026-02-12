@@ -15,6 +15,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	"sigs.k8s.io/cluster-api/api/core/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -211,6 +212,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Kind:       "AzureClusterIdentity",
 					Name:       clusterID.InfraID,
 				},
+				FailureDomains: setFailureDomains(installConfig),
 			},
 			NetworkSpec: capz.NetworkSpec{
 				NetworkClassSpec: capz.NetworkClassSpec{
@@ -677,4 +679,16 @@ func deepCopy(src, dst interface{}) error {
 		return err
 	}
 	return json.Unmarshal(bytes, dst)
+}
+
+func setFailureDomains(installConfig *installconfig.InstallConfig) v1beta1.FailureDomains {
+	failureDomains := v1beta1.FailureDomains{}
+	if cp := installConfig.Config.ControlPlane; cp != nil && cp.Platform.Azure != nil {
+		if len(cp.Platform.Azure.Zones) > 0 {
+			for _, zone := range cp.Platform.Azure.Zones {
+				failureDomains[zone] = v1beta1.FailureDomainSpec{}
+			}
+		}
+	}
+	return failureDomains
 }
