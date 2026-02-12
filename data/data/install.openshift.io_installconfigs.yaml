@@ -325,6 +325,11 @@ spec:
                         - storageAccountName
                         - type
                         type: object
+                      capacityReservationGroupID:
+                        description: |-
+                          CapacityReservationGroupID specifies the capacity reservation group resource id that should be
+                          used for allocating the virtual machine.
+                        type: string
                       dataDisks:
                         description: DataDisk specifies the parameters that are used
                           to add one or more data disks to the machine.
@@ -1885,6 +1890,11 @@ spec:
                           - storageAccountName
                           - type
                           type: object
+                        capacityReservationGroupID:
+                          description: |-
+                            CapacityReservationGroupID specifies the capacity reservation group resource id that should be
+                            used for allocating the virtual machine.
+                          type: string
                         dataDisks:
                           description: DataDisk specifies the parameters that are
                             used to add one or more data disks to the machine.
@@ -3385,6 +3395,11 @@ spec:
                         - storageAccountName
                         - type
                         type: object
+                      capacityReservationGroupID:
+                        description: |-
+                          CapacityReservationGroupID specifies the capacity reservation group resource id that should be
+                          used for allocating the virtual machine.
+                        type: string
                       dataDisks:
                         description: DataDisk specifies the parameters that are used
                           to add one or more data disks to the machine.
@@ -5352,6 +5367,11 @@ spec:
                         - storageAccountName
                         - type
                         type: object
+                      capacityReservationGroupID:
+                        description: |-
+                          CapacityReservationGroupID specifies the capacity reservation group resource id that should be
+                          used for allocating the virtual machine.
+                        type: string
                       dataDisks:
                         description: DataDisk specifies the parameters that are used
                           to add one or more data disks to the machine.
