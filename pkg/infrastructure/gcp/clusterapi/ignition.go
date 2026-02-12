@@ -48,12 +48,11 @@ func editIgnition(ctx context.Context, in clusterapi.IgnitionInput) (*clusterapi
 	}
 
 	project := in.InstallConfig.Config.GCP.ProjectID
-	if in.InstallConfig.Config.GCP.NetworkProjectID != "" {
-		project = in.InstallConfig.Config.GCP.NetworkProjectID
-	}
 
 	apiIntIPAddress := *gcpCluster.Status.Network.APIInternalAddress
 	addressIntCut := apiIntIPAddress[strings.LastIndex(apiIntIPAddress, "/")+1:]
+	// The LoadBalancer's IP address which is part of the frontend configuration, would be located in
+	// the service project even in the case of Shared VPC (XPN) installs.
 	computeIntAddressObj, err := svc.Addresses.Get(project, in.InstallConfig.Config.GCP.Region, addressIntCut).Context(ctx).Do()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get compute address: %w", err)
