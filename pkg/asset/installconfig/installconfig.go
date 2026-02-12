@@ -206,7 +206,7 @@ func (a *InstallConfig) finishAWS() error {
 		if totalEdgeSubnets == 0 {
 			return nil
 		}
-		if edgePool := defaults.CreateEdgeMachinePoolDefaults(a.Config.Compute, &a.Config.Platform, totalEdgeSubnets); edgePool != nil {
+		if edgePool := defaults.CreateEdgeMachinePoolDefaults(a.Config.Compute, &a.Config.Platform, totalEdgeSubnets, a.Config.EnabledFeatureGates()); edgePool != nil {
 			a.Config.Compute = append(a.Config.Compute, *edgePool)
 		}
 	}
