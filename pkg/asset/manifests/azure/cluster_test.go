@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	icazure "github.com/openshift/installer/pkg/asset/installconfig/azure"
@@ -17,6 +18,95 @@ import (
 	"github.com/openshift/installer/pkg/types"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 )
+
+func TestSetFailureDomains(t *testing.T) {
+	tests := []struct {
+		name         string
+		hasDefault   bool
+		defaultZones []string
+		controlZones []string
+		computeZones [][]string
+		want         clusterv1.FailureDomains
+	}{
+		{
+			name: "no zones",
+		},
+		{
+			name:         "control plane zones only",
+			controlZones: []string{"1", "2"},
+		},
+		{
+			name:         "compute zones without default machine platform",
+			computeZones: [][]string{{"3"}},
+		},
+		{
+			name:       "default machine platform without zones",
+			hasDefault: true,
+		},
+		{
+			name:         "default machine platform without zones includes compute zones",
+			hasDefault:   true,
+			computeZones: [][]string{{"3"}},
+			want:         clusterv1.FailureDomains{"3": {}},
+		},
+		{
+			name:         "default machine platform zones",
+			hasDefault:   true,
+			defaultZones: []string{"1", "2"},
+			want: clusterv1.FailureDomains{
+				"1": {},
+				"2": {},
+			},
+		},
+		{
+			name:         "default and control plane zones are combined",
+			hasDefault:   true,
+			defaultZones: []string{"1", "2"},
+			controlZones: []string{"3"},
+			want: clusterv1.FailureDomains{
+				"1": {},
+				"2": {},
+				"3": {},
+			},
+		},
+		{
+			name:         "default, control plane and compute zones are combined",
+			hasDefault:   true,
+			defaultZones: []string{"1", "2"},
+			controlZones: []string{"2", "3"},
+			computeZones: [][]string{{"3", "4"}, {"5"}},
+			want: clusterv1.FailureDomains{
+				"1": {},
+				"2": {},
+				"3": {},
+				"4": {},
+				"5": {},
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			platform := &azuretypes.Platform{}
+			if tc.hasDefault {
+				platform.DefaultMachinePlatform = &azuretypes.MachinePool{Zones: tc.defaultZones}
+			}
+			ic := &types.InstallConfig{Platform: types.Platform{Azure: platform}}
+			if tc.controlZones != nil {
+				ic.ControlPlane = &types.MachinePool{Platform: types.MachinePoolPlatform{
+					Azure: &azuretypes.MachinePool{Zones: tc.controlZones},
+				}}
+			}
+			for _, zones := range tc.computeZones {
+				ic.Compute = append(ic.Compute, types.MachinePool{Platform: types.MachinePoolPlatform{
+					Azure: &azuretypes.MachinePool{Zones: zones},
+				}})
+			}
+
+			assert.Equal(t, tc.want, setFailureDomains(installconfig.MakeAsset(ic)))
+		})
+	}
+}
 
 const (
 	testNetworkResourceGroup = "test-network-rg"

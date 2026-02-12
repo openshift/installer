@@ -14,6 +14,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -332,6 +333,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 					Kind:       "AzureClusterIdentity",
 					Name:       clusterID.InfraID,
 				},
+				FailureDomains: setFailureDomains(installConfig),
 			},
 			NetworkSpec: capz.NetworkSpec{
 				NetworkClassSpec: capz.NetworkClassSpec{
@@ -859,4 +861,36 @@ func deepCopy(src, dst interface{}) error {
 		return err
 	}
 	return json.Unmarshal(bytes, dst)
+}
+
+// setFailureDomains lets users limit where Azure cluster resources are deployed
+// by combining zones from defaultMachinePlatform, control plane, and compute.
+// The defaultMachinePlatform must be set to opt in; without it, or when no
+// zones are configured, failure domains are left unset and CAPZ defaults to
+// all zones in the region.
+func setFailureDomains(installConfig *installconfig.InstallConfig) clusterv1.FailureDomains {
+	defaultMachinePlatform := installConfig.Config.Azure.DefaultMachinePlatform
+	if defaultMachinePlatform == nil {
+		return nil
+	}
+
+	var failureDomains clusterv1.FailureDomains
+	addZones := func(zones []string) {
+		for _, zone := range zones {
+			if failureDomains == nil {
+				failureDomains = make(clusterv1.FailureDomains)
+			}
+			failureDomains[zone] = clusterv1.FailureDomainSpec{}
+		}
+	}
+	addZones(defaultMachinePlatform.Zones)
+	if cp := installConfig.Config.ControlPlane; cp != nil && cp.Platform.Azure != nil {
+		addZones(cp.Platform.Azure.Zones)
+	}
+	for _, compute := range installConfig.Config.Compute {
+		if compute.Platform.Azure != nil {
+			addZones(compute.Platform.Azure.Zones)
+		}
+	}
+	return failureDomains
 }
