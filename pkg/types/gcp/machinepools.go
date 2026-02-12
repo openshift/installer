@@ -1,6 +1,10 @@
 package gcp
 
-import "k8s.io/apimachinery/pkg/util/sets"
+import (
+	"strings"
+
+	"k8s.io/apimachinery/pkg/util/sets"
+)
 
 // FeatureSwitch indicates whether the feature is enabled or disabled.
 type FeatureSwitch string
@@ -37,24 +41,53 @@ var (
 	// InstanceTypeToDiskTypeMap contains a map where the key is the Instance Type, and the
 	// values are a list of disk types that are supported by the installer and correlate to the Instance Type.
 	InstanceTypeToDiskTypeMap = map[string][]string{
-		"a2":  {PDStandard, PDSSD, PDBalanced},
-		"a3":  {PDSSD, PDBalanced},
+		// General Purpose Machine Family
+		// https://docs.cloud.google.com/compute/docs/general-purpose-machines
+		"c4d": {HyperDiskBalanced},                    // unsupported: hyperdisk-extreme
+		"c4":  {HyperDiskBalanced},                    // unsupported: hyperdisk-extreme, hyperdisk-throughput, hyperdisk-balanced-high-availability
+		"c4a": {HyperDiskBalanced},                    // unsupported: hyperdisk-extreme, hyperdisk-throughput, hyperdisk-balanced-high-availability, hyperdisk-ml
+		"c3":  {PDSSD, PDBalanced, HyperDiskBalanced}, // unsupported: hyperdisk-extreme, hyperdisk-throughput, hyperdisk-balanced-high-availability, hyperdisk-ml
+		"c3d": {PDSSD, PDBalanced, HyperDiskBalanced}, // unsupported: hyperdisk-extreme, hyperdisk-throughput, hyperdisk-balanced-high-availability, hyperdisk-ml
+		"n4":  {HyperDiskBalanced},                    // unsupported: hyperdisk-throughput, hyperdisk-balanced-high-availability
+		"n4a": {HyperDiskBalanced},                    // unsupported: hyperdisk-throughput, hyperdisk-balanced-high-availability
+		"n4d": {HyperDiskBalanced},                    // unsupported: hyperdisk-throughput, hyperdisk-balanced-high-availability
+		"n2":  {PDStandard, PDSSD, PDBalanced},        // unsupported: hyperdisk-extreme, hyperdisk-throughput, pd-extreme
+		"n2d": {PDStandard, PDSSD, PDBalanced},        // unsupported: hyperdisk-throughput
+		"n1":  {PDStandard, PDSSD, PDBalanced},
+		"e2":  {PDStandard, PDSSD, PDBalanced},
+		"t2a": {PDStandard, PDSSD, PDBalanced},
+		"t2d": {PDStandard, PDSSD, PDBalanced}, // unsupported: hyperdisk-throughput
+
+		// Storage Optimized Machine Family
+		// https://docs.cloud.google.com/compute/docs/storage-optimized-machines
+		"z3": {PDSSD, PDBalanced, HyperDiskBalanced}, // unsupported: hyperdisk-extreme, hyperdisk-throughput, hyperdisk-balanced-high-availability
+
+		// Compute Optimized Machine Family
+		// https://docs.cloud.google.com/compute/docs/compute-optimized-machines
+		"h4d": {HyperDiskBalanced},
+		"h3":  {PDBalanced, HyperDiskBalanced}, // unsupported: hyperdisk-throughput
 		"c2":  {PDStandard, PDSSD, PDBalanced},
 		"c2d": {PDStandard, PDSSD, PDBalanced},
-		"c3":  {PDSSD, PDBalanced, HyperDiskBalanced},
-		"c3d": {PDSSD, PDBalanced, HyperDiskBalanced},
-		"c4":  {HyperDiskBalanced},
-		"c4a": {HyperDiskBalanced},
-		"e2":  {PDStandard, PDSSD, PDBalanced},
-		"g2":  {PDStandard, PDSSD, PDBalanced},
-		"m1":  {PDSSD, PDBalanced, HyperDiskBalanced},
-		"n1":  {PDStandard, PDSSD, PDBalanced},
-		"n2":  {PDStandard, PDSSD, PDBalanced},
-		"n2d": {PDStandard, PDSSD, PDBalanced},
-		"n4":  {HyperDiskBalanced},
-		"n4a": {HyperDiskBalanced},
-		"t2a": {PDStandard, PDSSD, PDBalanced},
-		"t2d": {PDStandard, PDSSD, PDBalanced},
+
+		// Memory Optimized Machine Family
+		// https://docs.cloud.google.com/compute/docs/memory-optimized-machines
+		"x4": {HyperDiskBalanced},                    // unsupported: hyperdisk-extreme
+		"m4": {HyperDiskBalanced},                    // unsupported: hyperdisk-extreme
+		"m3": {PDSSD, PDBalanced, HyperDiskBalanced}, // unsupported: hyperdisk-extreme, hyperdisk-throughput, hyperdisk-balanced-high-availability, pd-extreme
+		"m2": {PDSSD, PDBalanced, HyperDiskBalanced}, // unsupported: hyperdisk-extreme, pd-extreme
+		"m1": {PDSSD, PDBalanced, HyperDiskBalanced}, // unsupported: hyperdisk-extreme, pd-extreme
+
+		// Accelerator Optimized Machine Family
+		// https://docs.cloud.google.com/compute/docs/accelerator-optimized-machines
+		"a4x": {HyperDiskBalanced}, // unsupported: hyperdisk-balanced-high-availability
+		"a4":  {HyperDiskBalanced}, // unsupported: hyperdisk-extreme
+		// A3 machines are separated into A3 Ultra, A3 Mega, A3 High, and A3 Edge machine types. The
+		// A3 Ultra machines only support Hyperdisk Balanced, but all types listed below are available
+		// for the other A3 machine types.
+		"a3": {PDSSD, PDBalanced, HyperDiskBalanced}, // unsupported: hyperdisk-balanced-high-availability, hyperdisk-extreme
+		"a2": {PDStandard, PDSSD, PDBalanced},        // unsupported: hyperdisk-ml
+		"g4": {HyperDiskBalanced},                    // unsupported: hyperdisk-extreme, hyperdisk-throughput, hyperdisk-balanced-high-availability
+		"g2": {PDSSD, PDBalanced},                    // unsupported: hyperdisk-ml, hyperdisk-throughput
 	}
 )
 
@@ -226,6 +259,15 @@ func (a *MachinePool) Set(required *MachinePool) {
 		a.OSDisk.DiskType = required.OSDisk.DiskType
 	}
 
+	if a.InstanceType != "" {
+		family := GetGCPInstanceFamily(a.InstanceType)
+		if diskTypes, ok := InstanceTypeToDiskTypeMap[family]; ok {
+			if !sets.New(diskTypes...).Has(a.OSDisk.DiskType) {
+				a.OSDisk.DiskType = DefaultDiskTypeForInstance(a.InstanceType)
+			}
+		}
+	}
+
 	if required.OSImage != nil {
 		a.OSImage = required.OSImage
 	}
@@ -327,4 +369,36 @@ func (k *KMSKeyReference) Set(required *KMSKeyReference) {
 	if required.Location != "" {
 		k.Location = required.Location
 	}
+}
+
+// GetGCPInstanceFamily extracts the instance family from the instance type (for instance c4-standard-4 returns c4).
+func GetGCPInstanceFamily(instanceType string) string {
+	family, _, _ := strings.Cut(instanceType, "-")
+	if family == "custom" {
+		family = DefaultCustomInstanceType
+	}
+	return family
+}
+
+// DefaultDiskTypeForInstance returns the default disk type for a GCP instance type. If instance type is not
+// recognized, pd-ssd is return.
+func DefaultDiskTypeForInstance(instanceType string) string {
+	defaultDiskType := PDSSD
+
+	family := GetGCPInstanceFamily(instanceType)
+	diskTypes, ok := InstanceTypeToDiskTypeMap[family]
+	if ok {
+		supportedDiskTypes := sets.New(diskTypes...)
+		switch {
+		case supportedDiskTypes.Has(PDSSD):
+			defaultDiskType = PDSSD
+		case supportedDiskTypes.Has(HyperDiskBalanced):
+			defaultDiskType = HyperDiskBalanced
+		default:
+			// this shouldn't happen because all supported instance types
+			// have either pd-ssd or hyperdisk balanced
+			defaultDiskType = diskTypes[0]
+		}
+	}
+	return defaultDiskType
 }
