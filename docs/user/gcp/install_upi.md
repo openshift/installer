@@ -1,6 +1,6 @@
 # Install: User-Provided Infrastructure
 The steps for performing a user-provided infrastructure install are outlined here. Several
-[Deployment Manager][deploymentmanager] templates are provided to assist in
+[Infrastructure Manager][inframanager] templates are provided to assist in
 completing these steps or to help model your own. You are also free to create
 the required resources through other methods; the templates are just an
 example.
@@ -11,10 +11,10 @@ example.
   * gcloud
   * gsutil
 * gcloud authenticated to an account with [additional](iam.md) roles:
-  * Deployment Manager Editor
+  * Cloud Infrastructure Manager Admin
   * Service Account Key Admin
 * the following API Services enabled:
-  * Cloud Deployment Manager V2 API (deploymentmanager.googleapis.com)
+  * Cloud Infrastructure Manager API (config.googleapis.com)
 
 ## Create Ignition configs
 The machines will be started manually. Therefore, it is required to generate
@@ -252,43 +252,41 @@ export ZONE_2=$(gcloud compute regions describe ${REGION} --format=json | jq -r 
 
 export MASTER_IGNITION=$(cat master.ign)
 export WORKER_IGNITION=$(cat worker.ign)
+
+# Fill in your service account email used for the installation
+SERVICE_ACCOUNT_NAME=""
+export INSTALL_SERVICE_ACCOUNT="projects/${PROJECT_NAME}/serviceAccounts/${SERVICE_ACCOUNT_NAME}"
+
+export CLUSTER_DOMAIN="${CLUSTER_NAME}.${BASE_DOMAIN}"
 ```
 
 ## Create the VPC
 Create the VPC, network, and subnets for the cluster.
 This step can be skipped if installing into a pre-existing VPC, such as a [Shared VPC (XPN)][sharedvpc].
 
-Copy [`01_vpc.py`](../../../upi/gcp/01_vpc.py) locally.
-
-Create a resource definition file: `01_vpc.yaml`
-
-```console
-$ cat <<EOF >01_vpc.yaml
-imports:
-- path: 01_vpc.py
-resources:
-- name: cluster-vpc
-  type: 01_vpc.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    master_subnet_cidr: '${MASTER_SUBNET_CIDR}'
-    worker_subnet_cidr: '${WORKER_SUBNET_CIDR}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `master_subnet_cidr`: the CIDR for the master subnet (for example 10.0.0.0/17)
-- `worker_subnet_cidr`: the CIDR for the worker subnet (for example 10.0.128.0/17)
+Copy [`vpc`](../../../upi/gcp/vpc) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-vpc --config 01_vpc.yaml
+```console
+gcloud infra-manager deployments apply upi-network \
+--location=${REGION} \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},master_subnet_cidr=${MASTER_SUBNET_CIDR},worker_subnet_cidr=${WORKER_SUBNET_CIDR} \
+--project=${PROJECT_NAME} \
+--local-source=./vpc \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
 ```
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `region`/`location`: the region to deploy the cluster into (for example us-east1)
+- `project`: Name of the GCP service project
+- `master_subnet_cidr`: the CIDR for the master subnet (for example 10.0.0.0/17)
+- `worker_subnet_cidr`: the CIDR for the worker subnet (for example 10.0.128.0/17)
+- `service-account`: Service account used for gcloud infrastructure creation
+
+**Note**: You may add the `--async` option to immediately apply and allow processing to continue in the background.
 
 ## Configure VPC variables
-Configure the variables based on the VPC created with `01_vpc.yaml`.
+Configure the variables based on the VPC created above through terraform.
 If you are using a pre-existing VPC, such as a [Shared VPC (XPN)][sharedvpc], set these to the `.selfLink` of the targeted resources.
 
 ```sh
@@ -305,55 +303,33 @@ If you choose to exclude the DNS zone, you will need to create it some other way
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 exclude the DNS section as it must be created in the host project.
 
-Copy [`02_dns.py`](../../../upi/gcp/02_dns.py) locally.
-Copy [`02_lb_ext.py`](../../../upi/gcp/02_lb_ext.py) locally.
-Copy [`02_lb_int.py`](../../../upi/gcp/02_lb_int.py) locally.
-
-Create a resource definition file: `02_infra.yaml`
-
-```console
-$ cat <<EOF >02_infra.yaml
-imports:
-- path: 02_dns.py
-- path: 02_lb_ext.py
-- path: 02_lb_int.py
-resources:
-- name: cluster-dns
-  type: 02_dns.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    cluster_domain: '${CLUSTER_NAME}.${BASE_DOMAIN}'
-    cluster_network: '${CLUSTER_NETWORK}'
-- name: cluster-lb-ext
-  type: 02_lb_ext.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-- name: cluster-lb-int
-  type: 02_lb_int.py
-  properties:
-    cluster_network: '${CLUSTER_NETWORK}'
-    control_subnet: '${CONTROL_SUBNET}'
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    zones:
-    - '${ZONE_0}'
-    - '${ZONE_1}'
-    - '${ZONE_2}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `cluster_domain`: the domain for the cluster (for example openshift.example.com)
-- `cluster_network`: the URI to the cluster network
-- `control_subnet`: the URI to the control subnet
-- `zones`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
+Copy [`infra`](../../../upi/gcp/infra) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-infra --config 02_infra.yaml
+```console
+gcloud infra-manager deployments apply upi-infra \
+--location=${REGION} \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},cluster_domain=${CLUSTER_DOMAIN},cluster_network=${CLUSTER_NETWORK},control_subnet=${CONTROL_SUBNET},zone_0=${ZONE_0},zone_1=${ZONE_1},zone_2=${ZONE_2} \
+--project=${PROJECT_NAME} \
+--local-source=./infra \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
 ```
+
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `region`/`location`: the region to deploy the cluster into (for example us-east1)
+- `project`: Name of the GCP service project
+- `cluster_domain`: the domain for the cluster (for example openshift.example.com)
+- `cluster_network`: the URI to the cluster network
+- `control_subnet`: the URI to the control subnet
+- `service-account`: Service account used for gcloud infrastructure creation
+- `zone_0`: the first zone to deploy the control plane instances into (for example us-east1-b)
+- `zone_1`: the second zone to deploy the control plane instances into (for example us-east1-c)
+- `zone_2`: the third zone to deploy the control plane instances into (for example us-east1-d)
+
+**Note**: Terraform accepts lists, but the infra-manager will only accept scalar values. If you would like to alter the number
+of zones, please edit the terraform file.
+
 
 ## Configure infra variables
 If you excluded the `cluster-lb-ext` section above, then skip `CLUSTER_PUBLIC_IP`.
@@ -380,7 +356,7 @@ gcloud dns record-sets transaction execute --zone ${INFRA_ID}-private-zone
 ```
 
 ### Add external DNS entries (optional)
-If you deployed external load balancers with `02_infra.yaml`, you can deploy external DNS entries.
+If you deployed external load balancers with `02_infra.tf`, you can deploy external DNS entries.
 
 ```sh
 if [ -f transaction.yaml ]; then rm transaction.yaml; fi
@@ -398,44 +374,30 @@ Details about these resources can be found in the imported python templates.
 If you are installing into a [Shared VPC (XPN)][sharedvpc],
 exclude the firewall section as they must be created in the host project.
 
-Copy [`03_firewall.py`](../../../upi/gcp/03_firewall.py) locally.
-Copy [`03_iam.py`](../../../upi/gcp/03_iam.py) locally.
-
-Create a resource definition file: `03_security.yaml`
-
-```console
-$ cat <<EOF >03_security.yaml
-imports:
-- path: 03_firewall.py
-- path: 03_iam.py
-resources:
-- name: cluster-firewall
-  type: 03_firewall.py
-  properties:
-    allowed_external_cidr: '0.0.0.0/0'
-    infra_id: '${INFRA_ID}'
-    cluster_network: '${CLUSTER_NETWORK}'
-    network_cidr: '${NETWORK_CIDR}'
-- name: cluster-iam
-  type: 03_iam.py
-  properties:
-    infra_id: '${INFRA_ID}'
-EOF
-```
-- `allowed_external_cidr`: limits access to the cluster API and ssh to the bootstrap host. (for example External: 0.0.0.0/0, Internal: ${NETWORK_CIDR})
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `cluster_network`: the URI to the cluster network
-- `network_cidr`: the CIDR of the vpc network (for example 10.0.0.0/16)
+Copy [`security`](../../../upi/gcp/security) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-security --config 03_security.yaml
+```console
+gcloud infra-manager deployments apply upi-security \
+--location=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./security \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},cluster_network=${CLUSTER_NETWORK},network_cidr=${NETWORK_CIDR} \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
 ```
 
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `region`/`location`: the region to deploy the cluster into (for example us-east1)
+- `project`: Name of the GCP service project
+- `cluster_network`: the URI to the cluster network
+- `network_cidr`: the CIDR of the vpc network (for example 10.0.0.0/16)
+- `allowed_external_cidr`: [optional] limits access to the cluster API and ssh to the bootstrap host. (for example External: 0.0.0.0/0, Internal: ${NETWORK_CIDR})
+- `service-account`: Service account used for gcloud infrastructure creation
+
+
 ## Configure security variables
-Configure the variables based on the `03_security.yaml` deployment.
+Configure the variables based on the `03_security.tf` deployment.
 If you excluded the IAM section, ensure these are set to the `.email` of their associated resources.
 
 ```sh
@@ -471,7 +433,7 @@ gcloud iam service-accounts keys create service-account-key.json --iam-account=$
 Locate the RHCOS image source and create a cluster image.
 
 ```sh
-export IMAGE_SOURCE=$(curl https://raw.githubusercontent.com/openshift/installer/master/data/data/coreos/rhcos.json | jq -r '.architecture.x86_64.images.gcp')
+export IMAGE_SOURCE=$(curl https://raw.githubusercontent.com/openshift/installer/master/data/data/coreos/rhcos.json | jq -r '.architectures.x86_64.images.gcp')
 export IMAGE_NAME=$(echo "${IMAGE_SOURCE}" | jq -r '.name')
 export IMAGE_PROJECT=$(echo "${IMAGE_SOURCE}" | jq -r '.project')
 export CLUSTER_IMAGE=$(gcloud compute images describe ${IMAGE_NAME} --project ${IMAGE_PROJECT} --format json | jq -r .selfLink)
@@ -494,54 +456,38 @@ export BOOTSTRAP_IGN=$(gsutil signurl -d 1h service-account-key.json gs://${INFR
 
 ## Launch temporary bootstrap resources
 
-Copy [`04_bootstrap.py`](../../../upi/gcp/04_bootstrap.py) locally.
-
-Create a resource definition file: `04_bootstrap.yaml`
-
-```console
-$ cat <<EOF >04_bootstrap.yaml
-imports:
-- path: 04_bootstrap.py
-resources:
-- name: cluster-bootstrap
-  type: 04_bootstrap.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    region: '${REGION}'
-    zone: '${ZONE_0}'
-    cluster_network: '${CLUSTER_NETWORK}'
-    control_subnet: '${CONTROL_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    bootstrap_ign: '${BOOTSTRAP_IGN}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `zone`: the zone to deploy the bootstrap instance into (for example us-east1-b)
-- `cluster_network`: the URI to the cluster network
-- `control_subnet`: the URI to the control subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: the machine type of the instance (for example n1-standard-4)
-- `bootstrap_ign`: the URL output when creating a signed URL above.
-
-You can add custom tags to `04_bootstrap.py` as needed
-
-```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-master',
-                    context.properties['infra_id'] + '-bootstrap',
-                    'my-custom-tag-example'
-                ]
-            },
-```
+Copy [`bootstrap`](../../../upi/gcp/bootstrap) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-bootstrap --config 04_bootstrap.yaml
+```console
+gcloud infra-manager deployments apply upi-bootstrap \
+--location=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./bootstrap \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},zone=${ZONE_0},cluster_network=${CLUSTER_NETWORK},subnet=${CONTROL_SUBNET},image=${CLUSTER_IMAGE},bootstrap_ign=${BOOTSTRAP_IGN} \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
+```
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `region`/`location`: the region to deploy the cluster into (for example us-east1)
+- `project`: Name of the GCP service project
+- `zone`: the zone to deploy the bootstrap instance into (for example us-east1-b)
+- `cluster_network`: the URI to the cluster network
+- `subnet`: the URI to the control subnet
+- `image`: the URI to the RHCOS image
+- `machine_type`: [optional] the machine type of the instance (for example n1-standard-4)
+- `root_volume_size`: [optional] the size (in GB) for the instance (for example 128)
+- `bootstrap_ign`: the URL output when creating a signed URL above.
+- `service-account`: Service account used for gcloud infrastructure creation
+
+You can add custom tags to `04_bootstrap.tf` as needed
+
+```console
+  tags = [
+    "${var.infra_id}-master",
+    "${var.infra_id}-bootstrap",
+    "custom-tag-example"
+  ]
 ```
 
 ## Add the bootstrap instance to the load balancers
@@ -562,55 +508,57 @@ gcloud compute backend-services add-backend ${INFRA_ID}-api-internal --region=${
 
 ## Launch permanent control plane
 
-Copy [`05_control_plane.py`](../../../upi/gcp/05_control_plane.py) locally.
-
-Create a resource definition file: `05_control_plane.yaml`
-
-```console
-$ cat <<EOF >05_control_plane.yaml
-imports:
-- path: 05_control_plane.py
-resources:
-- name: cluster-control-plane
-  type: 05_control_plane.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zones:
-    - '${ZONE_0}'
-    - '${ZONE_1}'
-    - '${ZONE_2}'
-    control_subnet: '${CONTROL_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${MASTER_SERVICE_ACCOUNT}'
-    ignition: '${MASTER_IGNITION}'
-EOF
-```
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `region`: the region to deploy the cluster into (for example us-east1)
-- `zones`: the zones to deploy the control plane instances into (for example us-east1-b, us-east1-c, us-east1-d)
-- `control_subnet`: the URI to the control subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: the machine type of the instance (for example n1-standard-4)
-- `service_account_email`: the email address for the master service account created above
-- `ignition`: the contents of the master.ign file
-
-You can add custom tags to `05_control_plane.py` as needed
+### Copy the ignition file
+The ignition data cannot be passed through the infra-manager `input-values`. The data is read from the `master.ign` file.
+The file must be present in the same location as the `.tf` file.
 
 ```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-master',
-                    'my-custom-tag-example'
-                ]
-            },
+cp master.ign control_plane/master.ign
 ```
+
+Copy [`control_plane`](../../../upi/gcp/control_plane) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-control-plane --config 05_control_plane.yaml
+```console
+gcloud infra-manager deployments apply upi-control-plane \
+--location=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./control_plane \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},zone_0=${ZONE_0},zone_1=${ZONE_1},zone_2=${ZONE_2},subnet=${CONTROL_SUBNET},image=${CLUSTER_IMAGE},ignition="master.ign",service_account_email=${MASTER_SERVICE_ACCOUNT} \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
+```
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `region`/`location`: the region to deploy the cluster into (for example us-east1)
+- `project`: Name of the GCP service project
+- `zone_0`: the first zone to deploy the control plane instances into (for example us-east1-b)
+- `zone_1`: the second zone to deploy the control plane instances into (for example us-east1-c)
+- `zone_2`: the third zone to deploy the control plane instances into (for example us-east1-d)
+- `subnet`: the URI to the control subnet
+- `image`: the URI to the RHCOS image
+- `machine_type`: [optional] the machine type of the instance (for example n1-standard-4)
+- `disk_size`: [optional] the size (in GB) for the instance (for example 128)
+- `disk_type`: [optional] the type of storage disk (for example pd-ssd)
+- `service_account_email`: the email address for the master service account created above
+- `ignition`: the contents of the master.ign file
+- `service-account`: Service account used for gcloud infrastructure creation
+
+**Note**: Terraform accepts lists, but the infra-manager will only accept scalar values. If you would like to alter the number
+of zones, please edit the terraform file.
+
+You can add custom tags to `05_control_plane.tf` as needed
+
+```console
+  tags = [
+    "${var.infra_id}-master",
+    "custom-tag-example"
+  ]
+```
+
+### Remove the temporary ignition file
+
+```console
+rm control_plane/master.ign
 ```
 
 ## Add control plane instances to load balancers
@@ -626,7 +574,7 @@ gcloud compute instance-groups unmanaged add-instances ${INFRA_ID}-master-${ZONE
 ```
 
 ### Add control plane instances to external load balancer target pools (optional)
-If you deployed external load balancers with `02_infra.yaml`, add the control plane instances to the target pool.
+If you deployed external load balancers with `02_infra.tf`, add the control plane instances to the target pool.
 
 ```sh
 gcloud compute target-pools add-instances ${INFRA_ID}-api-target-pool --instances-zone="${ZONE_0}" --instances=${INFRA_ID}-master-0
@@ -641,64 +589,58 @@ can also take advantage of the built in cluster scaling mechanisms and the
 machine API in OpenShift, as mentioned [above](#create-ignition-configs). In
 this example, we'll manually launch one instance via the Deployment Manager
 template. Additional instances can be launched by including additional
-resources of type 06_worker.py in the file.
+resources of type 06_worker.tf in the file.
 
-Copy [`06_worker.py`](../../../upi/gcp/06_worker.py) locally.
-
-Create a resource definition file: `06_worker.yaml`
-```console
-$ cat <<EOF >06_worker.yaml
-imports:
-- path: 06_worker.py
-resources:
-- name: 'worker-0'
-  type: 06_worker.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zone: '${ZONE_0}'
-    compute_subnet: '${COMPUTE_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${WORKER_SERVICE_ACCOUNT}'
-    ignition: '${WORKER_IGNITION}'
-- name: 'worker-1'
-  type: 06_worker.py
-  properties:
-    infra_id: '${INFRA_ID}'
-    zone: '${ZONE_1}'
-    compute_subnet: '${COMPUTE_SUBNET}'
-    image: '${CLUSTER_IMAGE}'
-    machine_type: 'n1-standard-4'
-    root_volume_size: '128'
-    service_account_email: '${WORKER_SERVICE_ACCOUNT}'
-    ignition: '${WORKER_IGNITION}'
-EOF
-```
-- `name`: the name of the compute node (for example worker-0)
-- `infra_id`: the infrastructure name (INFRA_ID above)
-- `zone`: the zone to deploy the worker node into (for example us-east1-b)
-- `compute_subnet`: the URI to the compute subnet
-- `image`: the URI to the RHCOS image
-- `machine_type`: The machine type of the instance (for example n1-standard-4)
-- `service_account_email`: the email address for the worker service account created above
-- `ignition`: the contents of the worker.ign file
-
-You can add custom tags to `06_worker.py` as needed
+### Copy the ignition file
+The ignition data cannot be passed through the infra-manager `input-values`. The data is read from the `worker.ign` file.
+The file must be present in the same location as the `.tf` file.
 
 ```console
-            'tags': {
-                'items': [
-                    context.properties['infra_id'] + '-worker',
-                    'my-custom-tag-example'
-                ]
-            },
+cp worker.ign worker/worker.ign
 ```
+
+Copy [`worker`](../../../upi/gcp/worker) locally. The directory contains the terraform source file for this stage.
 
 Create the deployment using gcloud.
 
-```sh
-gcloud deployment-manager deployments create ${INFRA_ID}-worker --config 06_worker.yaml
+```console
+gcloud infra-manager deployments apply upi-worker \
+--location=${REGION} \
+--project=${PROJECT_NAME} \
+--local-source=./worker \
+--input-values=infra_id=${INFRA_ID},project=${PROJECT_NAME},region=${REGION},zone_0=${ZONE_0},zone_1=${ZONE_1},subnet=${COMPUTE_SUBNET},image=${CLUSTER_IMAGE},ignition="worker.ign",service_account_email=${WORKER_SERVICE_ACCOUNT} \
+--service-account=${INSTALL_SERVICE_ACCOUNT}
+```
+- `infra_id`: the infrastructure name (INFRA_ID above)
+- `region`/`location`: the region to deploy the cluster into (for example us-east1)
+- `project`: Name of the GCP service project
+- `zone_0`: the first zone to deploy the compute instances into (for example us-east1-b)
+- `zone_1`: the second zone to deploy the compute instances into (for example us-east1-c)
+- `subnet`: the URI to the compute subnet
+- `image`: the URI to the RHCOS image
+- `machine_type`: [optional] the machine type of the instance (for example n1-standard-4)
+- `disk_size`: [optional] the size (in GB) for the instance (for example 128)
+- `disk_type`: [optional] the type of storage disk (for example pd-ssd)
+- `service_account_email`: the email address for the worker service account created above
+- `ignition`: the contents of the worker.ign file
+- `service-account`: Service account used for gcloud infrastructure creation
+
+**Note**: Terraform accepts lists, but the infra-manager will only accept scalar values. If you would like to alter the number
+of zones, please edit the terraform file.
+
+You can add custom tags to `06_worker.tf` as needed
+
+```console
+  tags = [
+    "${var.infra_id}-worker",
+    "custom-tag-example"
+  ]
+```
+
+### Remove the temporary ignition file
+
+```console
+rm worker/worker.ign
 ```
 
 ## Monitor for `bootstrap-complete`
@@ -717,10 +659,10 @@ If you are installing into a [Shared VPC (XPN)][sharedvpc],
 it is safe to remove any bootstrap-specific firewall rules at this time.
 
 ```sh
-gcloud compute backend-services remove-backend ${INFRA_ID}-api-internal --region=${REGION} --instance-group=${INFRA_ID}-bootstrap-instance-group --instance-group-zone=${ZONE_0}
+gcloud compute backend-services remove-backend ${INFRA_ID}-api-internal --region=${REGION} --instance-group=${INFRA_ID}-bootstrap--ig --instance-group-zone=${ZONE_0}
 gsutil rm gs://${INFRA_ID}-bootstrap-ignition/bootstrap.ign
 gsutil rb gs://${INFRA_ID}-bootstrap-ignition
-gcloud deployment-manager deployments delete ${INFRA_ID}-bootstrap
+gcloud infra-manager deployments delete --project=${PROJECT_NAME} --location=${REGION} upi-bootstrap
 ```
 
 ## Approving the CSR requests for nodes
@@ -891,7 +833,7 @@ openshift-service-catalog-apiserver-operator            openshift-service-catalo
 openshift-service-catalog-controller-manager-operator   openshift-service-catalog-controller-manager-operator-b78cr2lnm     1/1       Running     0          31m
 ```
 
-[deploymentmanager]: https://cloud.google.com/deployment-manager/docs
+[inframanager]: https://docs.cloud.google.com/infrastructure-manager/docs
 [ingress-operator]: https://github.com/openshift/cluster-ingress-operator
 [kubernetes-service-load-balancers-exclude-masters]: https://github.com/kubernetes/kubernetes/issues/65618
 [machine-api-operator]: https://github.com/openshift/machine-api-operator
