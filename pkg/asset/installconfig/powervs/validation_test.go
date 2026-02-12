@@ -113,6 +113,8 @@ var (
 			ID:   &validRG,
 		},
 	}
+	validSSHKey      = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDKwDrQ6Rqd3DmVj8FdrcSmJz2KFuRwWhIVFZNNwG9wxcFDAuELrb0iDi6ZcVpB+M5UBsS7W8lZaOxOJ1HuIMrQsxGfOjSLFAQeNP3RbCsb7GsjMXcWae/XH8G5ZREQAQ37e+6jKT1wHlZxDZwFMe1b5BINtDez8vG3O0UeZ5JNPflo2sxU7kHO8ZlR9HPSw3xFRIIzioQsdeiNa+c9lO0tYpQ4VV18NpBuMu/HWknG+3OGeg54TlUOOAsRsLL7i23HCjHlnwKp8uLfnsMATeCHf4jQvke+4fihhbWF1H7fFvTSNuPiPaK9IJ6qwPJs1L8c/H3guvLpzgqgL2QB3g+KfJvj+w2OUoO+l+SvaiULRNLl9s4b7Vpxi3DpBZ+nWe9HzmVYKWNSIMeaojdjr1jsh9V3WLPq2aJxdP5d/8RoDXFjf9q+0yiB9o/sWGgTSVyF6I3TOtdLSdE6Ahy9+beC+2WnN8lLcklIP5ukKfASryQwqRiGkkhFez/MKkVmajk= azuread\ashwinhendre2@DESKTOP-RSR2EUD"
+	invalidSSHKey    = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBKnZv4Fr3W7TUYd9YNvvGGvkULb6XbsaeB+uJ7zUlrR azuread\ashwinhendre2@DESKTOP-RSR2EUD"
 	regionWithPER    = "dal10"
 	regionWithoutPER = "foo99"
 	regionPERUnknown = "bah77"
@@ -678,6 +680,54 @@ func TestValidateServiceInstance(t *testing.T) {
 			}
 
 			aggregatedErrors := powervs.ValidateServiceInstance(powervsClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateSSHKey(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name: "Invalid SSH key specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.SSHKey = invalidSSHKey
+				},
+			},
+			errorMsg: fmt.Sprintf("unsupported ssh public key type %s. The public key must be of type RSA.", "ssh-ed25519"),
+		},
+		{
+			name: "Valid SSH Key specified",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.SSHKey = validSSHKey
+				},
+			},
+			errorMsg: "",
+		},
+	}
+	setMockEnvVars()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	// Run tests
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := powervs.ValidateSSHKey(editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {

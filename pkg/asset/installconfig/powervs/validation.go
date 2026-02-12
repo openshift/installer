@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/ssh"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -350,4 +351,22 @@ func ValidateTransitGateway(client API, ic *types.InstallConfig) error {
 	}
 
 	return nil
+}
+
+// ValidateSSHKey checks if the SSH key uses the RSA Algorithm.
+func ValidateSSHKey(ic *types.InstallConfig) error {
+	var (
+		key     ssh.PublicKey
+		keyType string
+		err     error
+	)
+	key, _, _, _, err = ssh.ParseAuthorizedKey([]byte(ic.SSHKey))
+	if err != nil {
+		return fmt.Errorf("provided ssh public key is not valid: %w", err)
+	}
+	keyType = key.Type()
+	if keyType == "ssh-rsa" {
+		return nil
+	}
+	return fmt.Errorf("unsupported ssh public key type %s. The public key must be of type RSA", keyType)
 }
