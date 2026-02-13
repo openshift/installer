@@ -151,7 +151,62 @@ func validateVCenters(p *vsphere.Platform, fldPath *field.Path) field.ErrorList 
 		if len(vCenter.Datacenters) == 0 {
 			allErrs = append(allErrs, field.Required(fldPath.Index(index).Child("datacenters"), "must specify at least one datacenter"))
 		}
+
+		// Validate component credentials if provided
+		if vCenter.ComponentCredentials != nil {
+			allErrs = append(allErrs, validateComponentCredentials(
+				vCenter.ComponentCredentials,
+				fldPath.Index(index).Child("componentCredentials"),
+			)...)
+		}
 	}
+	return allErrs
+}
+
+// validateComponentCredentials validates per-component credential fields.
+func validateComponentCredentials(creds *vsphere.VCenterComponentCredentials, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	// Validate machine-api credentials
+	if creds.MachineAPI != nil {
+		if len(creds.MachineAPI.User) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("machineAPI", "user"), "must specify the username"))
+		}
+		if len(creds.MachineAPI.Password) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("machineAPI", "password"), "must specify the password"))
+		}
+	}
+
+	// Validate csi-driver credentials
+	if creds.CSIDriver != nil {
+		if len(creds.CSIDriver.User) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("csiDriver", "user"), "must specify the username"))
+		}
+		if len(creds.CSIDriver.Password) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("csiDriver", "password"), "must specify the password"))
+		}
+	}
+
+	// Validate cloud-controller credentials
+	if creds.CloudController != nil {
+		if len(creds.CloudController.User) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("cloudController", "user"), "must specify the username"))
+		}
+		if len(creds.CloudController.Password) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("cloudController", "password"), "must specify the password"))
+		}
+	}
+
+	// Validate diagnostics credentials
+	if creds.Diagnostics != nil {
+		if len(creds.Diagnostics.User) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("diagnostics", "user"), "must specify the username"))
+		}
+		if len(creds.Diagnostics.Password) == 0 {
+			allErrs = append(allErrs, field.Required(fldPath.Child("diagnostics", "password"), "must specify the password"))
+		}
+	}
+
 	return allErrs
 }
 
