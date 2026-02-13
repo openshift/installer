@@ -7,7 +7,7 @@ resource "libvirt_volume" "bootstrap" {
   base_volume_id = var.base_volume_id
   pool           = var.pool
   # Bump this so it works for OKD/FCOS too
-  size = "21474836480"
+  size = "34359738368"
 }
 
 resource "libvirt_ignition" "bootstrap" {
