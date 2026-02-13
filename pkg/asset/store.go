@@ -22,4 +22,7 @@ type Store interface {
 	// Load retrieves the state of the given asset but does not generate it if it
 	// does not exist and instead will return nil if not found.
 	Load(Asset) (Asset, error)
+
+	// PersistToFile writes the asset's files to disk for the user to edit
+	PersistToFile(wa WritableAsset) error
 }

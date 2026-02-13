@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	// RootOpts holds the log directory and log level configuration.
+	// RootOpts holds the directory and log level configuration.
 	RootOpts struct {
-		Dir      string
-		LogLevel string
+		Dir          string
+		LogLevel     string
+		ConsumeFiles bool
 	}
 )
 

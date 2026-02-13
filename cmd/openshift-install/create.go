@@ -296,8 +296,12 @@ func newCreateCmd(ctx context.Context) *cobra.Command {
 }
 
 func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd *cobra.Command, args []string) {
-	runner := func(directory string) error {
-		fetcher := assetstore.NewAssetsFetcher(directory)
+	runner := func(directory string, consumeFiles bool) error {
+		if !(forcePreserveInputs || forceConsumeInputs) {
+			logrus.Info("Pass --preserve to leave input files in place")
+		}
+
+		fetcher := assetstore.NewAssetsFetcher(directory, consumeFiles)
 		return fetcher.FetchAndPersist(ctx, targets)
 	}
 
@@ -312,7 +316,7 @@ func runTargetCmd(ctx context.Context, targets ...asset.WritableAsset) func(cmd 
 
 		cluster.InstallDir = command.RootOpts.Dir
 
-		err := runner(command.RootOpts.Dir)
+		err := runner(command.RootOpts.Dir, command.RootOpts.ConsumeFiles)
 		if err != nil {
 			if strings.Contains(err.Error(), asset.InstallConfigError) {
 				logrus.Error(err)
