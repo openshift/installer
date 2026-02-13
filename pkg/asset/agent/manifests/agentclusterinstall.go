@@ -663,9 +663,6 @@ func (a *AgentClusterInstall) validateDiskEncryption() field.ErrorList {
 }
 
 // convertLoadBalancerType converts the configv1 PlatformLoadBalancerType to hiveext LoadBalancerType.
-// This is needed because the two packages use different type names for the same concept:
-// - configv1.LoadBalancerTypeOpenShiftManagedDefault -> hiveext.LoadBalancerTypeClusterManaged
-// - configv1.LoadBalancerTypeUserManaged -> hiveext.LoadBalancerTypeUserManaged
 func convertLoadBalancerType(lbType configv1.PlatformLoadBalancerType) hiveext.LoadBalancerType {
 	switch lbType {
 	case configv1.LoadBalancerTypeUserManaged:
