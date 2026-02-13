@@ -308,6 +308,13 @@ func (a *AgentClusterInstall) Generate(_ context.Context, dependencies asset.Par
 			agentClusterInstall.Spec.IngressVIPs = installConfig.Config.Platform.BareMetal.IngressVIPs
 			agentClusterInstall.Spec.APIVIP = installConfig.Config.Platform.BareMetal.APIVIPs[0]
 			agentClusterInstall.Spec.IngressVIP = installConfig.Config.Platform.BareMetal.IngressVIPs[0]
+
+			// Copy LoadBalancer configuration to allow UserManaged load balancer with same API/Ingress VIPs
+			if installConfig.Config.Platform.BareMetal.LoadBalancer != nil {
+				agentClusterInstall.Spec.LoadBalancer = &hiveext.LoadBalancer{
+					Type: convertLoadBalancerType(installConfig.Config.Platform.BareMetal.LoadBalancer.Type),
+				}
+			}
 		} else if installConfig.Config.Platform.VSphere != nil {
 			vspherePlatform := vsphere.Platform{}
 			if len(installConfig.Config.Platform.VSphere.APIVIPs) > 1 {
@@ -653,4 +660,20 @@ func (a *AgentClusterInstall) validateDiskEncryption() field.ErrorList {
 		}
 	}
 	return allErrs
+}
+
+// convertLoadBalancerType converts the configv1 PlatformLoadBalancerType to hiveext LoadBalancerType.
+// This is needed because the two packages use different type names for the same concept:
+// - configv1.LoadBalancerTypeOpenShiftManagedDefault -> hiveext.LoadBalancerTypeClusterManaged
+// - configv1.LoadBalancerTypeUserManaged -> hiveext.LoadBalancerTypeUserManaged
+func convertLoadBalancerType(lbType configv1.PlatformLoadBalancerType) hiveext.LoadBalancerType {
+	switch lbType {
+	case configv1.LoadBalancerTypeUserManaged:
+		return hiveext.LoadBalancerTypeUserManaged
+	case configv1.LoadBalancerTypeOpenShiftManagedDefault:
+		return hiveext.LoadBalancerTypeClusterManaged
+	default:
+		// Default to ClusterManaged if type is empty or unknown
+		return hiveext.LoadBalancerTypeClusterManaged
+	}
 }
