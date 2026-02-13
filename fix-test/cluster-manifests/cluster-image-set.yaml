@@ -1,0 +1,8 @@
+apiVersion: hive.openshift.io/v1
+kind: ClusterImageSet
+metadata:
+  creationTimestamp: null
+  name: openshift-1f026bc5be128afc4f4095c715264f089f18f28b-dirty
+spec:
+  releaseImage: registry.ci.openshift.org/origin/release:4.20
+status: {}

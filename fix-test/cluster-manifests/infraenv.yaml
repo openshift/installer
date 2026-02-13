@@ -1,0 +1,25 @@
+apiVersion: agent-install.openshift.io/v1beta1
+kind: InfraEnv
+metadata:
+  creationTimestamp: null
+  name: test-cluster
+spec:
+  clusterRef:
+    name: test-cluster
+  cpuArchitecture: x86_64
+  ipxeScriptType: ""
+  nmStateConfigLabelSelector:
+    matchLabels:
+      infraenvs.agent-install.openshift.io: test-cluster
+  pullSecretRef:
+    name: test-cluster-pull-secret
+status:
+  agentLabelSelector: {}
+  bootArtifacts:
+    discoveryIgnitionURL: ""
+    initrd: ""
+    ipxeScript: ""
+    kernel: ""
+    rootfs: ""
+  debugInfo:
+    eventsURL: ""
