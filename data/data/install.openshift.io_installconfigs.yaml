@@ -8509,6 +8509,70 @@ spec:
                         VCenter stores the vCenter connection fields
                         https://github.com/kubernetes/cloud-provider-vsphere/blob/master/pkg/common/config/types_yaml.go
                       properties:
+                        componentCredentials:
+                          description: |-
+                            ComponentCredentials specifies per-component credentials for this vCenter.
+                            If not specified, the main Username/Password is used for all components.
+                            This enables least-privilege security by allowing separate accounts
+                            for installer, machine-api, CSI driver, cloud controller, and diagnostics.
+                          properties:
+                            cloudController:
+                              description: CloudController specifies credentials for
+                                the cloud controller manager on this vCenter.
+                              properties:
+                                password:
+                                  description: Password is the password for the account.
+                                  type: string
+                                user:
+                                  description: User is the username for the account.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            csiDriver:
+                              description: CSIDriver specifies credentials for the
+                                vSphere CSI driver on this vCenter.
+                              properties:
+                                password:
+                                  description: Password is the password for the account.
+                                  type: string
+                                user:
+                                  description: User is the username for the account.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            diagnostics:
+                              description: Diagnostics specifies credentials for vsphere-problem-detector
+                                on this vCenter.
+                              properties:
+                                password:
+                                  description: Password is the password for the account.
+                                  type: string
+                                user:
+                                  description: User is the username for the account.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                            machineAPI:
+                              description: MachineAPI specifies credentials for machine-api-operator
+                                on this vCenter.
+                              properties:
+                                password:
+                                  description: Password is the password for the account.
+                                  type: string
+                                user:
+                                  description: User is the username for the account.
+                                  type: string
+                              required:
+                              - password
+                              - user
+                              type: object
+                          type: object
                         datacenters:
                           description: Datacenter in which VMs are located.
                           items:

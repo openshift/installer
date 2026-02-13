@@ -207,6 +207,12 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 		a.PowerVS = icpowervs.NewMetadata(a.Config)
 	}
 	if a.Config.VSphere != nil {
+		// Merge credentials from ~/.vsphere/credentials file if present
+		if err := a.mergeVSphereCredentialsFromFile(); err != nil {
+			logrus.Warnf("Failed to load vSphere credentials from file: %v", err)
+			// Non-fatal - credentials in install-config take precedence anyway
+		}
+
 		a.VSphere = icvsphere.NewMetadata()
 
 		for _, v := range a.Config.VSphere.VCenters {
@@ -283,4 +289,19 @@ func (a *InstallConfig) platformValidation(ctx context.Context) error {
 		return icnutanix.Validate(a.Config)
 	}
 	return field.ErrorList{}.ToAggregate()
+}
+
+// mergeVSphereCredentialsFromFile loads credentials from ~/.vsphere/credentials
+// and merges them with install-config, with install-config taking precedence.
+func (a *InstallConfig) mergeVSphereCredentialsFromFile() error {
+	fileCredentials, err := icvsphere.LoadCredentialsFile()
+	if err != nil {
+		return err
+	}
+
+	if fileCredentials != nil {
+		icvsphere.MergeCredentials(a.Config.VSphere.VCenters, fileCredentials)
+	}
+
+	return nil
 }

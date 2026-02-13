@@ -386,7 +386,19 @@ NodeIPFamilies=ipv4
 		}
 		cm.Data[cloudProviderConfigDataKey] = powervsConfig
 	case vspheretypes.Name:
-		vsphereConfig, err := vspheremanifests.CloudProviderConfigYaml(clusterID.InfraID, installConfig.Config.Platform.VSphere)
+		// Determine which secret name to use for cloud controller credentials
+		secretName := "vsphere-creds" // Default legacy secret name
+
+		// Check if any vCenter has component credentials defined
+		for _, vCenter := range installConfig.Config.Platform.VSphere.VCenters {
+			if vCenter.ComponentCredentials != nil {
+				// Use component-specific secret when component credentials are configured
+				secretName = "vsphere-creds-cloud-controller"
+				break
+			}
+		}
+
+		vsphereConfig, err := vspheremanifests.CloudProviderConfigYaml(clusterID.InfraID, installConfig.Config.Platform.VSphere, secretName)
 
 		if err != nil {
 			return errors.Wrap(err, "could not create cloud provider config")
