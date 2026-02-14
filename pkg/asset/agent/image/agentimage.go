@@ -65,6 +65,11 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 	baseIso := &BaseIso{}
 	dependencies.Get(agentArtifacts, agentManifests, baseIso, agentWorkflow, clusterInfo)
 
+	var err error
+	if a.tmpPath, err = agentArtifacts.PrepareArtifacts(ctx); err != nil {
+		return err
+	}
+
 	if err := workflowreport.GetReport(ctx).Stage(workflow.StageGenerateISO); err != nil {
 		return err
 	}
@@ -88,7 +93,6 @@ func (a *AgentImage) Generate(ctx context.Context, dependencies asset.Parents) e
 
 	a.cpuArch = agentArtifacts.CPUArch
 	a.rendezvousIP = agentArtifacts.RendezvousIP
-	a.tmpPath = agentArtifacts.TmpPath
 	a.isoPath = agentArtifacts.ISOPath
 	a.bootArtifactsBaseURL = agentArtifacts.BootArtifactsBaseURL
 	a.minimalISO = agentArtifacts.MinimalISO
