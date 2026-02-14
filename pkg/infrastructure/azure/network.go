@@ -370,11 +370,11 @@ func deleteSecurityGroupRule(ctx context.Context, in *securityGroupInput) error 
 	securityRulesClient := in.networkClientFactory.NewSecurityRulesClient()
 	securityRulesPoller, err := securityRulesClient.BeginDelete(ctx, in.resourceGroupName, in.securityGroupName, in.securityRuleName, nil)
 	if err != nil {
-		return fmt.Errorf("failed to delete security rule: %w", err)
+		return err
 	}
 	_, err = securityRulesPoller.PollUntilDone(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to delete security rule: %w", err)
+		return err
 	}
 	return nil
 }
@@ -417,11 +417,11 @@ func deleteInboundNatRule(ctx context.Context, in *inboundNatRuleInput) error {
 		nil,
 	)
 	if err != nil {
-		return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+		return err
 	}
 	_, err = inboundNatRulesPoller.PollUntilDone(ctx, nil)
 	if err != nil {
-		return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+		return err
 	}
 	return nil
 }
