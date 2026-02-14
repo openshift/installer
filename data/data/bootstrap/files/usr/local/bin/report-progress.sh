@@ -6,6 +6,9 @@
 # shellcheck disable=SC1091  # using path on bootstrap machine
 . /usr/local/bin/wait-for-ha-api.sh
 
+# shellcheck disable=SC1091  # using path on bootstrap machine
+./usr/local/bin/wait-for-etcd-ha.sh
+
 KUBECONFIG="${1}"
 
 wait_for_existence() {
@@ -22,6 +25,9 @@ record_service_stage_success
 
 ## wait for API to be available
 wait_for_ha_api
+
+## wait for etcd to be high available except the bootstrap
+wait_for_etcd_ha
 
 record_service_stage_start "report-bootstrap-complete"
 echo "Reporting install progress..."
