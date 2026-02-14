@@ -110,10 +110,14 @@ func (o *ClusterUninstaller) removeSharedTag(ctx context.Context, tagClients []*
 				continue
 			}
 
+			// Some regions may not support untag operations for certain resources
+			arns = o.filterUnsupportedUntagResources(arns)
+
 			if len(arns) == 0 {
 				o.Logger.Debugf("No matches in %s for %s: shared, removing client", tagClient.Options().Region, key)
 				continue
 			}
+
 			// appending the tag client here but it needs to be removed if there is a InvalidParameterException when trying to
 			// untag below since that only leads to an infinite loop error.
 			nextTagClients = append(nextTagClients, tagClient)
@@ -299,4 +303,35 @@ func deleteMatchingRecordSetInPublicZone(ctx context.Context, client *route53.Cl
 		return nil
 	}
 	return deleteRoute53RecordSet(ctx, client, zoneID, &matchingRecordSet, logger)
+}
+
+// filterUnsupportedUntagResources filters out ARNs that cannot be untagged due to AWS limitation.
+// For example, hosted zones cannot be untagged in region "eusc-de-east-1".
+func (o *ClusterUninstaller) filterUnsupportedUntagResources(arns []string) []string {
+	filtered := make([]string, 0, len(arns))
+	switch o.Region {
+	case endpointEUSCDeEast1:
+		for _, arnString := range arns {
+			parsedARN, err := arn.Parse(arnString)
+			if err != nil {
+				filtered = append(filtered, arnString)
+				continue
+			}
+
+			resourceType, _, err := splitSlash("resource", parsedARN.Resource)
+			if err != nil {
+				filtered = append(filtered, arnString)
+				continue
+			}
+
+			if parsedARN.Service == "route53" && resourceType == "hostedzone" {
+				o.Logger.WithField("arn", arnString).Debugf("AWS does not support untagging this resource in %s", o.Region)
+				continue
+			}
+			filtered = append(filtered, arnString)
+		}
+	default:
+		filtered = arns
+	}
+	return filtered
 }
