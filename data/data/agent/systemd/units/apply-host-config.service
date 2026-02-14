@@ -1,7 +1,6 @@
 [Unit]
 Description=Service that applies host-specific configuration
-Wants=network-online.target
-Requires=agent-register-infraenv.service
+Wants=network-online.target agent-register-infraenv.service
 PartOf=assisted-service-pod.service
 After=network-online.target agent-register-infraenv.service
 ConditionPathExists=/etc/assisted/node0
@@ -15,6 +14,7 @@ EnvironmentFile=/usr/local/share/assisted-service/assisted-service.env
 ExecStartPre=/bin/rm -f %t/%n.ctr-id
 ExecStartPre=/bin/mkdir -p %t/agent-installer /etc/assisted/hostconfig
 ExecStartPre=/usr/local/bin/wait-for-assisted-service.sh
+ExecStartPre=/usr/local/bin/wait-for-service-active.sh agent-register-infraenv.service
 ExecStart=podman run --net host --cidfile=%t/%n.ctr-id --cgroups=no-conmon --log-driver=passthrough --restart=on-failure:10 --pod-id-file=%t/assisted-service-pod.pod-id --replace --name=apply-host-config -v /etc/assisted/hostconfig:/etc/assisted/hostconfig -v %t/agent-installer:/var/run/agent-installer:z --env SERVICE_BASE_URL --env INFRA_ENV_ID --env WORKFLOW_TYPE --env USER_AUTH_TOKEN $SERVICE_IMAGE /usr/local/bin/agent-installer-client configure
 ExecStop=/usr/bin/podman stop --ignore --cidfile=%t/%n.ctr-id
 ExecStopPost=/usr/bin/podman rm -f --ignore --cidfile=%t/%n.ctr-id
