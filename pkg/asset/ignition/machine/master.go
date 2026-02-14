@@ -13,6 +13,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/tls"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
 )
 
@@ -42,12 +43,28 @@ func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 	rootCA := &tls.RootCA{}
 	dependencies.Get(installConfig, rootCA)
 
+	ic := installConfig.Config
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
 
 	if installConfig.Config.Platform.Name() == azure.Name {
-		logrus.Debugf("Adding /var partition to skip CoreOS growfs step")
-		// See https://issues.redhat.com/browse/OCPBUGS-43625
-		ignition.AppendVarPartition(a.Config)
+		if ic.Azure != nil {
+			varMountPath := false
+			if ic.ControlPlane != nil {
+				for _, ds := range ic.ControlPlane.DiskSetup {
+					if ds.Type == types.UserDefined && ds.UserDefined != nil {
+						if ds.UserDefined.MountPath == "/var" {
+							varMountPath = true
+						}
+					}
+				}
+			}
+
+			if !varMountPath {
+				logrus.Debugf("Adding /var partition to skip CoreOS growfs step")
+				// See https://issues.redhat.com/browse/OCPBUGS-43625
+				ignition.AppendVarPartition(a.Config)
+			}
+		}
 	}
 
 	data, err := ignition.Marshal(a.Config)

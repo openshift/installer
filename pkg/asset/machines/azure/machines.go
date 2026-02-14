@@ -242,8 +242,15 @@ func provider(platform *azure.Platform, mpool *azure.MachinePool, osImage string
 				StorageAccountType: machineapi.StorageAccountType(disk.ManagedDisk.StorageAccountType),
 			}
 
+			// Handle disk encryption set for data disks (OCPBUGS-59521)
 			if disk.ManagedDisk.DiskEncryptionSet != nil {
-				dataDisk.ManagedDisk.DiskEncryptionSet = (*machineapi.DiskEncryptionSetParameters)(disk.ManagedDisk.SecurityProfile.DiskEncryptionSet)
+				encryptionSetID := disk.ManagedDisk.DiskEncryptionSet.ID
+				if encryptionSetID == "" {
+					return nil, fmt.Errorf("data disk %s has invalid disk encryption set: empty ID", disk.NameSuffix)
+				}
+				dataDisk.ManagedDisk.DiskEncryptionSet = &machineapi.DiskEncryptionSetParameters{
+					ID: encryptionSetID,
+				}
 			}
 		}
 

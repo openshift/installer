@@ -80,7 +80,7 @@ type MachinePool struct {
 	// +optional
 	Identity *VMIdentity `json:"identity,omitempty"`
 
-	// DataDisk specifies the parameters that are used to add one or more data disks to the machine.
+	// DataDisks holds information of the data disks to attach to the machine.
 	// +optional
 	DataDisks []capz.DataDisk `json:"dataDisks,omitempty"`
 }
