@@ -46,6 +46,10 @@ const (
 // a custom DNS configuration. Find the public and private load balancer addresses and fill in the
 // infrastructure file within the ignition struct.
 func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateIPAddresses []string) (*IgnitionOutput, error) {
+	// Before editing bootstrap ignition, check if it is base64 encoded.
+	// If it is, decode it so that we have a JSON file to unmarshal.
+	in.BootstrapIgnData = decodeIgnition(in.BootstrapIgnData)
+
 	ignData := &igntypes.Config{}
 	err := json.Unmarshal(in.BootstrapIgnData, ignData)
 	if err != nil {
@@ -118,6 +122,7 @@ func EditIgnition(in IgnitionInput, platform string, publicIPAddresses, privateI
 // the infrastructure CR. This will occur after the data has already been inserted into the
 // ignition file.
 func addLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs []string, privateLBs []string) error {
+	updateError := fmt.Errorf("unable to find infrastructure manifest %s within bootstrap ignition to update", infrastructureFilepath)
 	for i, fileData := range config.Storage.Files {
 		// update the contents of this file
 		if fileData.Path == infrastructureFilepath {
@@ -173,11 +178,14 @@ func addLoadBalancersToInfra(platform string, config *igntypes.Config, publicLBs
 			// replace the contents with the edited information
 			config.Storage.Files[i].Contents.Source = &encoded
 
+			// Reset error state
+			updateError = nil
+
 			break
 		}
 	}
 
-	return nil
+	return updateError
 }
 
 func updatePointerIgnition(in IgnitionInput, privateLBs []string, role string) ([]byte, error) {
@@ -291,4 +299,16 @@ func updateUserDataSecret(in IgnitionInput, role string, config *igntypes.Config
 		}
 	}
 	return nil
+}
+
+// decodeIgnition attempts to base64 decode the byte slice passed in.
+// If unable to do so, it assumes input is not base64 encoded.
+func decodeIgnition(bootstrapIgnData []byte) []byte {
+	// Decode the Base64 encoded byte slice
+	decodedIgnition, err := base64.StdEncoding.DecodeString(string(bootstrapIgnData))
+	if err != nil {
+		// Bootstrap Ignition is not base64 encoded
+		return bootstrapIgnData
+	}
+	return decodedIgnition
 }
