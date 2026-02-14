@@ -976,3 +976,42 @@ func TestIncludesEdgeDefaultInstance(t *testing.T) {
 		})
 	})
 }
+
+func TestAMIEncryptionPermissions(t *testing.T) {
+	t.Run("Should include AMI encryption permissions", func(t *testing.T) {
+		t.Run("when custom AMI is specified for defaultMachinePlatform", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{
+				AMIID: "custom-presumably-encrypted-ami",
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionKMSEncryptionKeys)
+			assert.Contains(t, requiredPerms, PermissionAMIEncryptionKeys)
+		})
+		t.Run("when custom AMI specified for control plane", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.ControlPlane.Platform.AWS = &aws.MachinePool{
+				AMIID: "custom-presumably-encrypted-ami",
+			}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionKMSEncryptionKeys)
+			assert.Contains(t, requiredPerms, PermissionAMIEncryptionKeys)
+		})
+	})
+
+	t.Run("Should not include AMI encryption permissions", func(t *testing.T) {
+		t.Run("when no machine types specified", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.ControlPlane = nil
+			ic.Compute = nil
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionAMIEncryptionKeys)
+		})
+		t.Run("when no custom AMI specified", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.AWS.DefaultMachinePlatform = &aws.MachinePool{}
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionAMIEncryptionKeys)
+		})
+	})
+}
