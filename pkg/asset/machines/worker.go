@@ -9,12 +9,12 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	meta "k8s.io/apimachinery/pkg/api/meta"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"k8s.io/utils/pointer"
-	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
-	ipamv1 "sigs.k8s.io/cluster-api/api/ipam/v1beta1" //nolint:staticcheck //CORS-3563
+	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1" //nolint:staticcheck //CORS-3563
 	"sigs.k8s.io/yaml"
 
 	configv1 "github.com/openshift/api/config/v1"
@@ -325,14 +325,11 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 	dependencies.Get(clusterID, installConfig, rhcosImage, rhcosRelease, wign)
 
 	workerUserDataSecretName := "worker-user-data"
-
-	machines := []machinev1beta1.Machine{}
 	machineConfigs := []*mcfgv1.MachineConfig{}
-	machineSets := []runtime.Object{}
-	var ipClaims []ipamv1.IPAddressClaim
-	var ipAddrs []ipamv1.IPAddress
+	var ipClaims, ipAddrs, machines, machineSets []runtime.Object
 	var err error
 	ic := installConfig.Config
+
 	for _, pool := range ic.Compute {
 		pool := pool // this makes golint happy... G601: Implicit memory aliasing in for loop. (gosec)
 		if pool.Hyperthreading == types.HyperthreadingDisabled {
@@ -727,9 +724,15 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 					return errors.Wrap(err, "failed to create worker machine objects")
 				}
 
-				machines = data.Machines
-				ipClaims = data.IPClaims
-				ipAddrs = data.IPAddresses
+				for _, m := range data.Machines {
+					machines = append(machines, &m)
+				}
+				for _, c := range data.IPClaims {
+					ipClaims = append(ipClaims, &c)
+				}
+				for _, a := range data.IPAddresses {
+					ipAddrs = append(ipAddrs, &a)
+				}
 
 				logrus.Debugf("Generated %v worker machines.", len(machines))
 
@@ -801,58 +804,17 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 		return errors.Wrap(err, "failed to create MachineConfig manifests for worker machines")
 	}
 
-	w.MachineSetFiles = make([]*asset.File, len(machineSets))
-	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(machineSets))))
-	for i, machineSet := range machineSets {
-		data, err := yaml.Marshal(machineSet)
-		if err != nil {
-			return errors.Wrapf(err, "marshal worker %d", i)
-		}
-
-		padded := fmt.Sprintf(padFormat, i)
-		w.MachineSetFiles[i] = &asset.File{
-			Filename: filepath.Join(directory, fmt.Sprintf(workerMachineSetFileName, padded)),
-			Data:     data,
-		}
+	if w.MachineSetFiles, err = serialize(machineSets, workerMachineSetFileName, false); err != nil {
+		return fmt.Errorf("failed to serialize worker machine sets: %w", err)
 	}
-
-	w.IPClaimFiles = make([]*asset.File, len(ipClaims))
-	for i, claim := range ipClaims {
-		data, err := yaml.Marshal(claim)
-		if err != nil {
-			return errors.Wrapf(err, "marshal ip claim %v", claim.Name)
-		}
-
-		w.IPClaimFiles[i] = &asset.File{
-			Filename: filepath.Join(directory, fmt.Sprintf(ipClaimFileName, claim.Name)),
-			Data:     data,
-		}
+	if w.IPClaimFiles, err = serialize(ipClaims, ipClaimFileName, true); err != nil {
+		return fmt.Errorf("failed to serialize worker ip claims: %w", err)
 	}
-
-	w.IPAddrFiles = make([]*asset.File, len(ipAddrs))
-	for i, address := range ipAddrs {
-		data, err := yaml.Marshal(address)
-		if err != nil {
-			return errors.Wrapf(err, "marshal ip claim %v", address.Name)
-		}
-
-		w.IPAddrFiles[i] = &asset.File{
-			Filename: filepath.Join(directory, fmt.Sprintf(ipAddressFileName, address.Name)),
-			Data:     data,
-		}
+	if w.IPAddrFiles, err = serialize(ipAddrs, ipAddressFileName, true); err != nil {
+		return fmt.Errorf("failed to serialize worker ip addresses: %w", err)
 	}
-	w.MachineFiles = make([]*asset.File, len(machines))
-	for i, machineDef := range machines {
-		data, err := yaml.Marshal(machineDef)
-		if err != nil {
-			return errors.Wrapf(err, "marshal master %d", i)
-		}
-
-		padded := fmt.Sprintf(padFormat, i)
-		w.MachineFiles[i] = &asset.File{
-			Filename: filepath.Join(directory, fmt.Sprintf(workerMachineFileName, padded)),
-			Data:     data,
-		}
+	if w.MachineFiles, err = serialize(machines, workerMachineFileName, false); err != nil {
+		return fmt.Errorf("failed to serialize worker machines: %w", err)
 	}
 	return nil
 }
@@ -965,4 +927,35 @@ func (w *Worker) MachineSets() ([]machinev1beta1.MachineSet, error) {
 	}
 
 	return machineSets, nil
+}
+
+// serialize marshals a list of runtime.Object manifests into asset files.
+// When useObjectName is true, the object's metadata name is used in the filename,
+// e.g. "99_openshift-machine-api_claim-cluster-worker-0-claim-0-0.yaml".
+// When false, a zero-padded index is used instead,
+// e.g. "99_openshift-cluster-api_worker-machineset-0.yaml".
+func serialize(manifests []runtime.Object, fileNameTemplate string, useObjectName bool) ([]*asset.File, error) {
+	files := make([]*asset.File, len(manifests))
+	padFormat := fmt.Sprintf("%%0%dd", len(fmt.Sprintf("%d", len(manifests))))
+	for i, m := range manifests {
+		key := fmt.Sprintf(padFormat, i)
+		if useObjectName {
+			accessor, err := meta.Accessor(m)
+			if err != nil {
+				return nil, fmt.Errorf("accessing object metadata: %w", err)
+			}
+			key = accessor.GetName()
+		}
+		filename := filepath.Join(directory, fmt.Sprintf(fileNameTemplate, key))
+
+		data, err := yaml.Marshal(m)
+		if err != nil {
+			return nil, fmt.Errorf("marshaling %s: %w", filename, err)
+		}
+		files[i] = &asset.File{
+			Filename: filename,
+			Data:     data,
+		}
+	}
+	return files, nil
 }
