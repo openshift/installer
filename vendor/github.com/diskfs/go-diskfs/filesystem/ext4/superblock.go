@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/diskfs/go-diskfs/filesystem/ext4/crc"
-	"github.com/diskfs/go-diskfs/util"
+	"github.com/diskfs/go-diskfs/util/slices"
 	"github.com/google/uuid"
 )
 
@@ -347,7 +347,10 @@ func superblockFromBytes(b []byte) (*superblock, error) {
 
 	sb.hashVersion = hashAlgorithm(b[0xfc])
 
-	sb.groupDescriptorSize = binary.LittleEndian.Uint16(b[0xfe:0x100])
+	sb.groupDescriptorSize = 32
+	if sb.features.fs64Bit {
+		sb.groupDescriptorSize = binary.LittleEndian.Uint16(b[0xfe:0x100])
+	}
 
 	sb.defaultMountOptions = parseMountOptions(binary.LittleEndian.Uint32(b[0x100:0x104]))
 	sb.firstMetablockGroup = binary.LittleEndian.Uint32(b[0x104:0x108])
@@ -735,7 +738,7 @@ func calculateBackupSuperblockGroups(bgs int64) []int64 {
 		backupGroups = append(backupGroups, bg)
 	}
 	// sort the backup groups
-	uniqBackupGroups := util.Uniqify[int64](backupGroups)
+	uniqBackupGroups := slices.Uniqify[int64](backupGroups)
 	sort.Slice(uniqBackupGroups, func(i, j int) bool {
 		return uniqBackupGroups[i] < uniqBackupGroups[j]
 	})

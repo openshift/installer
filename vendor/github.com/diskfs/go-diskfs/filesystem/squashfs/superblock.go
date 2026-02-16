@@ -168,7 +168,7 @@ func (s *superblock) toBytes() []byte {
 	binary.LittleEndian.PutUint32(b[16:20], s.fragmentCount)
 	binary.LittleEndian.PutUint16(b[20:22], uint16(s.compression))
 	binary.LittleEndian.PutUint16(b[22:24], uint16(math.Log2(float64(s.blocksize))))
-	copy(b[24:26], s.superblockFlags.bytes())
+	copy(b[24:26], s.superblockFlags.bytes()) //nolint:staticcheck // this could be as s.bytes() but it would be more confusing
 	binary.LittleEndian.PutUint16(b[26:28], s.idCount)
 	binary.LittleEndian.PutUint16(b[28:30], superblockMajorVersion)
 	binary.LittleEndian.PutUint16(b[30:32], superblockMinorVersion)

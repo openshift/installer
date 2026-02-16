@@ -87,6 +87,9 @@ func (gds *groupDescriptors) equal(a *groupDescriptors) bool {
 
 // groupDescriptorsFromBytes create a groupDescriptors struct from bytes
 func groupDescriptorsFromBytes(b []byte, gdSize uint16, hashSeed uint32, checksumType gdtChecksumType) (*groupDescriptors, error) {
+	if gdSize == 0 {
+		return nil, fmt.Errorf("group descriptor size cannot be zero")
+	}
 	gds := groupDescriptors{}
 	gdSlice := make([]groupDescriptor, 0, 10)
 
@@ -157,6 +160,7 @@ func groupDescriptorFromBytes(b []byte, gdSize uint16, number int, checksumType 
 	copy(blockBitmapChecksum[0:2], b[0x18:0x1a])
 	copy(inodeBitmapChecksum[0:2], b[0x1a:0x1c])
 	copy(unusedInodes[0:2], b[0x1c:0x1e])
+	checksumInput := b[0x0:0x20]
 
 	if gdSize == 64 {
 		copy(blockBitmapLocation[4:8], b[0x20:0x24])
@@ -169,17 +173,10 @@ func groupDescriptorFromBytes(b []byte, gdSize uint16, number int, checksumType 
 		copy(snapshotExclusionBitmapLocation[4:8], b[0x34:0x38])
 		copy(blockBitmapChecksum[2:4], b[0x38:0x3a])
 		copy(inodeBitmapChecksum[2:4], b[0x3a:0x3c])
+		checksumInput = b[0x0:0x40]
 	}
 
 	gdNumber := uint16(number)
-	// only bother with checking the checksum if it was not type none (pre-checksums)
-	if checksumType != gdtChecksumNone {
-		checksum := binary.LittleEndian.Uint16(b[0x1e:0x20])
-		actualChecksum := groupDescriptorChecksum(b[0x0:0x40], hashSeed, gdNumber, checksumType)
-		if checksum != actualChecksum {
-			return nil, fmt.Errorf("checksum mismatch, passed %x, actual %x", checksum, actualChecksum)
-		}
-	}
 
 	gd := groupDescriptor{
 		size:                            gdSize,
@@ -195,6 +192,15 @@ func groupDescriptorFromBytes(b []byte, gdSize uint16, number int, checksumType 
 		inodeBitmapChecksum:             binary.LittleEndian.Uint32(inodeBitmapChecksum),
 		unusedInodes:                    binary.LittleEndian.Uint32(unusedInodes),
 		flags:                           parseBlockGroupFlags(binary.LittleEndian.Uint16(b[0x12:0x14])),
+	}
+
+	// only bother with checking the checksum if it was not type none (pre-checksums)
+	if checksumType != gdtChecksumNone {
+		checksum := binary.LittleEndian.Uint16(b[0x1e:0x20])
+		actualChecksum := groupDescriptorChecksum(checksumInput, hashSeed, gdNumber, checksumType)
+		if checksum != actualChecksum {
+			return nil, fmt.Errorf("checksum mismatch, passed %x, actual %x", checksum, actualChecksum)
+		}
 	}
 
 	return &gd, nil

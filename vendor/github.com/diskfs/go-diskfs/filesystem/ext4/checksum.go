@@ -48,3 +48,8 @@ func directoryChecksumAppender(seed, inodeNumber, inodeGeneration uint32) checks
 func nullDirectoryChecksummer(b []byte) []byte {
 	return b
 }
+
+// bitmapChecksum calculate the checksum for a bitmap
+func bitmapChecksum(b []byte, hashSeed uint32) uint32 {
+	return crc.CRC32c(hashSeed, b)
+}

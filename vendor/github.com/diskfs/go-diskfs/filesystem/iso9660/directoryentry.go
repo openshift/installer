@@ -305,7 +305,7 @@ func parseDirEntry(b []byte, f *FileSystem) (*directoryEntry, error) {
 				offset := int64(ce.Offset())
 				// read it from disk
 				continuationBytes := make([]byte, size)
-				read, err := f.file.ReadAt(continuationBytes, location*f.blocksize+offset)
+				read, err := f.backend.ReadAt(continuationBytes, location*f.blocksize+offset)
 				if err != nil {
 					return nil, fmt.Errorf("error reading continuation entry data at %d: %v", location, err)
 				}
@@ -373,7 +373,7 @@ func (de *directoryEntry) getLocation(p string) (location, size uint32, err erro
 		current := parts[0]
 		// read the directory bytes
 		dirb := make([]byte, de.size)
-		n, err := de.filesystem.file.ReadAt(dirb, int64(de.location)*de.filesystem.blocksize)
+		n, err := de.filesystem.backend.ReadAt(dirb, int64(de.location)*de.filesystem.blocksize)
 		if err != nil {
 			return 0, 0, fmt.Errorf("could not read directory: %v", err)
 		}
@@ -400,7 +400,7 @@ func (de *directoryEntry) getLocation(p string) (location, size uint32, err erro
 						return 0, 0, fmt.Errorf("extension %s count not find a filename property: %v", e.ID(), err2)
 					default:
 						checkFilename = filename
-						//nolint:gosimple // redundant break, but we want this explicit
+						//nolint:staticcheck // redundant break, but we want this explicit
 						break
 					}
 				}
@@ -414,7 +414,7 @@ func (de *directoryEntry) getLocation(p string) (location, size uint32, err erro
 							if location2 != 0 {
 								// need to get the directory entry for the child
 								dirb := make([]byte, de.filesystem.blocksize)
-								n, err2 := de.filesystem.file.ReadAt(dirb, int64(location2)*de.filesystem.blocksize)
+								n, err2 := de.filesystem.backend.ReadAt(dirb, int64(location2)*de.filesystem.blocksize)
 								if err2 != nil {
 									return 0, 0, fmt.Errorf("could not read bytes of relocated directory %s from block %d: %v", checkFilename, location2, err2)
 								}
@@ -459,7 +459,7 @@ func (de *directoryEntry) Name() string {
 				continue
 			default:
 				name = filename
-				//nolint:gosimple // redundant break, but we want this explicit
+				//nolint:staticcheck // redundant break, but we want this explicit
 				break
 			}
 		}

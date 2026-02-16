@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/diskfs/go-diskfs/filesystem"
 )
 
 // File represents a single file in a FAT32 filesystem
@@ -14,6 +16,65 @@ type File struct {
 	offset      int64
 	parent      *Directory
 	filesystem  *FileSystem
+}
+
+// Get the full cluster chain of the File.
+// Getting this file system internal info can be beneficial for some low-level operations, such as:
+// - Performing secure erase.
+// - Detecting file fragmentation.
+// - Passing Disk locations to a different tool that can work with it.
+func (fl *File) GetClusterChain() ([]uint32, error) {
+	if fl == nil || fl.filesystem == nil {
+		return nil, os.ErrClosed
+	}
+
+	fs := fl.filesystem
+	clusters, err := fs.getClusterList(fl.clusterLocation)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get list of clusters for file: %v", err)
+	}
+
+	return clusters, nil
+}
+
+type DiskRange struct {
+	Offset uint64
+	Length uint64
+}
+
+// Get the disk ranges occupied by the File.
+// Returns an array of disk ranges, where each entry is a contiguous area on disk.
+// This information is similar to that returned by GetClusterChain, just in a different format,
+// directly returning disk ranges instead of FAT clusters.
+func (fl *File) GetDiskRanges() ([]DiskRange, error) {
+	clusters, err := fl.GetClusterChain()
+	if err != nil {
+		return nil, err
+	}
+
+	fs := fl.filesystem
+	bytesPerCluster := uint64(fs.bytesPerCluster)
+	dataStart := uint64(fs.dataStart)
+
+	var ranges []DiskRange
+	var lastCluster uint32
+
+	for _, cluster := range clusters {
+		if lastCluster != 0 && cluster == lastCluster+1 {
+			// Extend the current range
+			ranges[len(ranges)-1].Length += bytesPerCluster
+		} else {
+			// Add a new range
+			offset := dataStart + uint64(cluster-2)*bytesPerCluster
+			ranges = append(ranges, DiskRange{
+				Offset: offset,
+				Length: bytesPerCluster,
+			})
+		}
+		lastCluster = cluster
+	}
+
+	return ranges, nil
 }
 
 // Read reads up to len(b) bytes from the File.
@@ -35,7 +96,7 @@ func (fl *File) Read(b []byte) (int, error) {
 	start := int(fs.dataStart)
 	size := int(fl.fileSize) - int(fl.offset)
 	maxRead := size
-	file := fs.file
+	file := fs.backend
 	clusters, err := fs.getClusterList(fl.clusterLocation)
 	if err != nil {
 		return totalRead, fmt.Errorf("unable to get list of clusters for file: %v", err)
@@ -78,8 +139,8 @@ func (fl *File) Read(b []byte) (int, error) {
 		if toRead > left {
 			toRead = left
 		}
-		offset := uint32(start) + (clusters[i]-2)*uint32(bytesPerCluster)
-		_, _ = file.ReadAt(b[totalRead:totalRead+toRead], int64(offset)+fs.start)
+		offset := int64(start) + int64(clusters[i]-2)*int64(bytesPerCluster)
+		_, _ = file.ReadAt(b[totalRead:totalRead+toRead], offset+fs.start)
 		totalRead += toRead
 		if totalRead >= maxRead {
 			break
@@ -104,11 +165,17 @@ func (fl *File) Write(p []byte) (int, error) {
 	if fl == nil || fl.filesystem == nil {
 		return 0, os.ErrClosed
 	}
+
 	totalWritten := 0
+	writableFile, err := fl.filesystem.backend.Writable()
+	if err != nil {
+		return totalWritten, err
+	}
+
 	fs := fl.filesystem
 	// if the file was not opened RDWR, nothing we can do
 	if !fl.isReadWrite {
-		return totalWritten, fmt.Errorf("cannot write to file opened read-only")
+		return totalWritten, filesystem.ErrReadonlyFilesystem
 	}
 	// what is the new file size?
 	writeSize := len(p)
@@ -129,7 +196,6 @@ func (fl *File) Write(p []byte) (int, error) {
 	}
 	// write the content for the file
 	bytesPerCluster := fl.filesystem.bytesPerCluster
-	file := fl.filesystem.file
 	start := int(fl.filesystem.dataStart)
 	clusterIndex := 0
 
@@ -146,7 +212,7 @@ func (fl *File) Write(p []byte) (int, error) {
 			if toWrite > int64(len(p)) {
 				toWrite = int64(len(p))
 			}
-			_, err := file.WriteAt(p[0:toWrite], offset+fs.start)
+			_, err := writableFile.WriteAt(p[0:toWrite], offset+fs.start)
 			if err != nil {
 				return totalWritten, fmt.Errorf("unable to write to file: %v", err)
 			}
@@ -161,8 +227,8 @@ func (fl *File) Write(p []byte) (int, error) {
 		if toWrite > left {
 			toWrite = left
 		}
-		offset := uint32(start) + (clusters[i]-2)*uint32(bytesPerCluster)
-		_, err := file.WriteAt(p[totalWritten:totalWritten+toWrite], int64(offset)+fs.start)
+		offset := int64(start) + int64(clusters[i]-2)*int64(bytesPerCluster)
+		_, err := writableFile.WriteAt(p[totalWritten:totalWritten+toWrite], offset+fs.start)
 		if err != nil {
 			return totalWritten, fmt.Errorf("unable to write to file: %v", err)
 		}
@@ -205,4 +271,34 @@ func (fl *File) Seek(offset int64, whence int) (int64, error) {
 func (fl *File) Close() error {
 	fl.filesystem = nil
 	return nil
+}
+
+func (fl *File) SetSystem(on bool) error {
+	fs := fl.filesystem
+	fl.isSystem = on
+	return fs.writeDirectoryEntries(fl.parent)
+}
+
+func (fl *File) IsSystem() bool {
+	return fl.isSystem
+}
+
+func (fl *File) SetHidden(on bool) error {
+	fs := fl.filesystem
+	fl.isHidden = on
+	return fs.writeDirectoryEntries(fl.parent)
+}
+
+func (fl *File) IsHidden() bool {
+	return fl.isHidden
+}
+
+func (fl *File) SetReadOnly(on bool) error {
+	fs := fl.filesystem
+	fl.isReadOnly = on
+	return fs.writeDirectoryEntries(fl.parent)
+}
+
+func (fl *File) IsReadOnly() bool {
+	return fl.isReadOnly
 }

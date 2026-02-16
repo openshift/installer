@@ -2,7 +2,7 @@ package fat32
 
 import (
 	"encoding/binary"
-	"reflect"
+	"slices"
 )
 
 // table a FAT32 table
@@ -10,7 +10,7 @@ type table struct {
 	fatID          uint32
 	eocMarker      uint32
 	unusedMarker   uint32
-	clusters       map[uint32]uint32
+	clusters       []uint32
 	rootDirCluster uint32
 	size           uint32
 	maxCluster     uint32
@@ -28,7 +28,7 @@ func (t *table) equal(a *table) bool {
 		t.rootDirCluster == a.rootDirCluster &&
 		t.size == a.size &&
 		t.maxCluster == a.maxCluster &&
-		reflect.DeepEqual(t.clusters, a.clusters)
+		slices.Equal(a.clusters, t.clusters)
 }
 
 /*
@@ -37,12 +37,14 @@ func (t *table) equal(a *table) bool {
 */
 
 func tableFromBytes(b []byte) *table {
+	maxCluster := uint32(len(b) / 4)
+
 	t := table{
 		fatID:          binary.LittleEndian.Uint32(b[0:4]),
 		eocMarker:      binary.LittleEndian.Uint32(b[4:8]),
 		size:           uint32(len(b)),
-		clusters:       map[uint32]uint32{},
-		maxCluster:     uint32(len(b) / 4),
+		clusters:       make([]uint32, maxCluster+1),
+		maxCluster:     maxCluster,
 		rootDirCluster: 2, // always 2 for FAT32
 	}
 	// just need to map the clusters in
@@ -71,10 +73,7 @@ func (t *table) bytes() []byte {
 	for i := uint32(2); i < numClusters; i++ {
 		bStart := i * 4
 		bEnd := bStart + 4
-		val := uint32(0)
-		if cluster, ok := t.clusters[i]; ok {
-			val = cluster
-		}
+		val := t.clusters[i]
 		binary.LittleEndian.PutUint32(b[bStart:bEnd], val)
 	}
 

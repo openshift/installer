@@ -7,8 +7,8 @@ import (
 	"hash/crc32"
 	"strings"
 
+	"github.com/diskfs/go-diskfs/backend"
 	"github.com/diskfs/go-diskfs/partition/part"
-	"github.com/diskfs/go-diskfs/util"
 	uuid "github.com/google/uuid"
 )
 
@@ -295,7 +295,7 @@ func (t *Table) toGPTBytes(primary bool) ([]byte, error) {
 	copy(b[56:72], bytesToUUIDBytes(guid[0:16]))
 
 	// starting LBA of array of partition entries
-	binary.LittleEndian.PutUint64(b[72:80], t.partitionArraySector(true))
+	binary.LittleEndian.PutUint64(b[72:80], t.partitionArraySector(primary))
 
 	// how many entries?
 	binary.LittleEndian.PutUint32(b[80:84], uint32(t.partitionArraySize))
@@ -462,8 +462,8 @@ func (t *Table) Type() string {
 }
 
 // Write writes a GPT to disk
-// Must be passed the util.File to which to write and the size of the disk
-func (t *Table) Write(f util.File, size int64) error {
+// Must be passed the backend.WritableFile to which to write and the size of the disk
+func (t *Table) Write(f backend.WritableFile, size int64) error {
 	// it is possible that we are given a basic new table that we need to initialize
 	if !t.initialized {
 		t.initTable(size)
@@ -536,11 +536,11 @@ func (t *Table) Write(f util.File, size int64) error {
 }
 
 // Read read a partition table from a disk
-// must be passed the util.File from which to read, and the logical and physical block sizes
+// must be passed the backend.File from which to read, and the logical and physical block sizes
 //
 // if successful, returns a gpt.Table struct
 // returns errors if fails at any stage reading the disk or processing the bytes on disk as a GPT
-func Read(f util.File, logicalBlockSize, physicalBlockSize int) (*Table, error) {
+func Read(f backend.File, logicalBlockSize, physicalBlockSize int) (*Table, error) {
 	// read the data off of the disk - first block is the compatibility MBR, ssecond is the GPT table
 	b := make([]byte, logicalBlockSize*2)
 	read, err := f.ReadAt(b, 0)
@@ -595,7 +595,7 @@ func (t *Table) UUID() string {
 }
 
 // Verify will attempt to evaluate the headers
-func (t *Table) Verify(f util.File, diskSize uint64) error {
+func (t *Table) Verify(f backend.File, diskSize uint64) error {
 	if t.LogicalSectorSize == 0 {
 		// Avoid divide by zero panic.
 		return fmt.Errorf("table is not initialized")
