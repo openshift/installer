@@ -197,10 +197,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 		logrus.Debugf("publish strategy is set to external but api address is empty")
 	}
 
-	if err := createBootstrapFirewallRules(ctx, in, *gcpCluster.Status.Network.SelfLink); err != nil {
-		return fmt.Errorf("failed to add bootstrap firewall rule: %w", err)
-	}
-
 	client, err := icgcp.NewClient(context.TODO(), in.InstallConfig.Config.GCP.Endpoint)
 	if err != nil {
 		return err
@@ -233,12 +229,6 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 
 	if masterSubnetSelflink == "" {
 		return fmt.Errorf("could not find master subnet %s in subnets %v", masterSubnetName, subnets)
-	}
-
-	// The firewall for masters, aka control-plane, is created by CAPG
-	// Create the ones needed for worker to master communication
-	if err = createFirewallRules(ctx, in, *gcpCluster.Status.Network.SelfLink); err != nil {
-		return fmt.Errorf("failed to add firewall rules: %w", err)
 	}
 
 	if in.InstallConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
