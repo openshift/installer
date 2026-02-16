@@ -41,6 +41,7 @@ func (o *ClusterUninstaller) listFirewallsWithFilter(ctx context.Context, fields
 	results := []cloudResource{}
 
 	if o.firewallRulesManagement == gcp.UnmanagedFirewallRules {
+		// The cluster does not manage firewall rules, so their deletion is skipped.
 		return results, nil
 	}
 
