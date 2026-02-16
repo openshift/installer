@@ -7,4 +7,4 @@ ConditionPathExists=/run/ostree-live
 What=tmpfs
 Where=/var/ostreecontainer
 Type=tmpfs
-Options=size=4G
+Options=size=5G
