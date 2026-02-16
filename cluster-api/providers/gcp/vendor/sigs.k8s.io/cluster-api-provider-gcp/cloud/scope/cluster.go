@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -27,7 +28,8 @@ import (
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -185,17 +187,24 @@ func (s *ClusterScope) ResourceManagerTags() infrav1.ResourceManagerTags {
 
 // ControlPlaneEndpoint returns the cluster control-plane endpoint.
 func (s *ClusterScope) ControlPlaneEndpoint() clusterv1.APIEndpoint {
-	endpoint := s.GCPCluster.Spec.ControlPlaneEndpoint
-	endpoint.Port = 443
-	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
-		endpoint.Port = ptr.Deref(c.APIServerPort, 443)
+	endpoint := clusterv1.APIEndpoint{
+		Host: s.GCPCluster.Spec.ControlPlaneEndpoint.Host,
+		Port: 443,
+	}
+
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
+		endpoint.Port = s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	return endpoint
 }
 
 // FailureDomains returns the cluster failure domains.
-func (s *ClusterScope) FailureDomains() clusterv1.FailureDomains {
-	return s.GCPCluster.Status.FailureDomains
+func (s *ClusterScope) FailureDomains() []string {
+	failureDomains := []string{}
+	for failureDomainName := range s.GCPCluster.Status.FailureDomains {
+		failureDomains = append(failureDomains, failureDomainName)
+	}
+	return failureDomains
 }
 
 // ANCHOR_END: ClusterGetter
@@ -208,13 +217,16 @@ func (s *ClusterScope) SetReady() {
 }
 
 // SetFailureDomains sets cluster failure domains.
-func (s *ClusterScope) SetFailureDomains(fd clusterv1.FailureDomains) {
+func (s *ClusterScope) SetFailureDomains(fd clusterv1beta1.FailureDomains) {
 	s.GCPCluster.Status.FailureDomains = fd
 }
 
 // SetControlPlaneEndpoint sets cluster control-plane endpoint.
 func (s *ClusterScope) SetControlPlaneEndpoint(endpoint clusterv1.APIEndpoint) {
-	s.GCPCluster.Spec.ControlPlaneEndpoint = endpoint
+	s.GCPCluster.Spec.ControlPlaneEndpoint = clusterv1beta1.APIEndpoint{
+		Host: endpoint.Host,
+		Port: endpoint.Port,
+	}
 }
 
 // ANCHOR_END: ClusterSetter
@@ -324,6 +336,55 @@ func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
 		},
 	}
 
+	// Add user defined firewall rules.
+	for _, rule := range s.GCPCluster.Spec.Network.Firewall.FirewallRules {
+		allowed := []*compute.FirewallAllowed{}
+		for _, a := range rule.Allowed {
+			allowed = append(allowed, &compute.FirewallAllowed{
+				IPProtocol: strings.ToLower(string(a.IPProtocol)),
+				Ports:      a.Ports,
+			})
+		}
+
+		denied := []*compute.FirewallDenied{}
+		for _, d := range rule.Denied {
+			denied = append(denied, &compute.FirewallDenied{
+				IPProtocol: strings.ToLower(string(d.IPProtocol)),
+				Ports:      d.Ports,
+			})
+		}
+
+		direction := strings.ToUpper(string(rule.Direction))
+		name := fmt.Sprintf("%s-%s", s.Name(), strings.ToLower(direction))
+		if rule.Name != "" {
+			name = rule.Name
+			if !strings.HasPrefix(name, s.Name()) {
+				name = fmt.Sprintf("%s-%s", s.Name(), name)
+			}
+		}
+		name = name[:min(len(name), 63)]
+		name = strings.TrimSuffix(name, "-")
+
+		description := rule.Description
+		if description == "" {
+			description = fmt.Sprintf("Firewall rule %s is created by Cluster API GCP Provider.", s.Name())
+		}
+
+		firewallRules = append(firewallRules, &compute.Firewall{
+			Name:         name,
+			Description:  description,
+			Network:      s.NetworkLink(),
+			Allowed:      allowed,
+			Denied:       denied,
+			Direction:    direction,
+			Priority:     int64(rule.Priority),
+			Disabled:     false,
+			SourceRanges: rule.SourceRanges,
+			TargetTags:   rule.TargetTags,
+			SourceTags:   rule.SourceTags,
+		})
+	}
+
 	return firewallRules
 }
 
@@ -354,8 +415,8 @@ func (s *ClusterScope) BackendServiceSpec(lbname string) *compute.BackendService
 // ForwardingRuleSpec returns google compute forwarding-rule spec.
 func (s *ClusterScope) ForwardingRuleSpec(lbname string) *compute.ForwardingRule {
 	port := int32(443)
-	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
-		port = ptr.Deref(c.APIServerPort, 443)
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
+		port = s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	portRange := fmt.Sprintf("%d-%d", port, port)
 	return &compute.ForwardingRule{

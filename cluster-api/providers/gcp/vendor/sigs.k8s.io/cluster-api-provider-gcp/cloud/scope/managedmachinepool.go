@@ -26,15 +26,16 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/location"
 
-	"sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 
 	compute "cloud.google.com/go/compute/apiv1"
 	container "cloud.google.com/go/container/apiv1"
 	"cloud.google.com/go/container/apiv1/containerpb"
 	"github.com/pkg/errors"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
-	patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
+	v1beta1patch "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -84,7 +85,7 @@ func NewManagedMachinePoolScope(ctx context.Context, params ManagedMachinePoolSc
 		params.InstanceGroupManagersClient = instanceGroupManagersClient
 	}
 
-	helper, err := patch.NewHelper(params.GCPManagedMachinePool, params.Client)
+	helper, err := v1beta1patch.NewHelper(params.GCPManagedMachinePool, params.Client)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to init patch helper")
 	}
@@ -104,7 +105,7 @@ func NewManagedMachinePoolScope(ctx context.Context, params ManagedMachinePoolSc
 // ManagedMachinePoolScope defines the basic context for an actuator to operate upon.
 type ManagedMachinePoolScope struct {
 	client      client.Client
-	patchHelper *patch.Helper
+	patchHelper *v1beta1patch.Helper
 
 	Cluster                *clusterv1.Cluster
 	MachinePool            *clusterv1.MachinePool
@@ -120,7 +121,7 @@ func (s *ManagedMachinePoolScope) PatchObject() error {
 	return s.patchHelper.Patch(
 		context.TODO(),
 		s.GCPManagedMachinePool,
-		patch.WithOwnedConditions{Conditions: []clusterv1.ConditionType{
+		v1beta1patch.WithOwnedConditions{Conditions: []clusterv1beta1.ConditionType{
 			infrav1exp.GKEMachinePoolReadyCondition,
 			infrav1exp.GKEMachinePoolCreatingCondition,
 			infrav1exp.GKEMachinePoolUpdatingCondition,
@@ -136,7 +137,7 @@ func (s *ManagedMachinePoolScope) Close() error {
 }
 
 // ConditionSetter return a condition setter (which is GCPManagedMachinePool itself).
-func (s *ManagedMachinePoolScope) ConditionSetter() conditions.Setter {
+func (s *ManagedMachinePoolScope) ConditionSetter() v1beta1conditions.Setter {
 	return s.GCPManagedMachinePool
 }
 
@@ -151,7 +152,7 @@ func (s *ManagedMachinePoolScope) InstanceGroupManagersClient() *compute.Instanc
 }
 
 // NodePoolVersion returns the k8s version of the node pool.
-func (s *ManagedMachinePoolScope) NodePoolVersion() *string {
+func (s *ManagedMachinePoolScope) NodePoolVersion() string {
 	return s.MachinePool.Spec.Template.Spec.Version
 }
 
@@ -268,8 +269,8 @@ func ConvertToSdkNodePool(nodePool infrav1exp.GCPManagedMachinePool, machinePool
 			Type: containerpb.SandboxConfig_GVISOR,
 		}
 	}
-	if machinePool.Spec.Template.Spec.Version != nil {
-		sdkNodePool.Version = strings.Replace(*machinePool.Spec.Template.Spec.Version, "v", "", 1)
+	if machinePool.Spec.Template.Spec.Version != "" {
+		sdkNodePool.Version = strings.Replace(machinePool.Spec.Template.Spec.Version, "v", "", 1)
 	}
 	return &sdkNodePool
 }
