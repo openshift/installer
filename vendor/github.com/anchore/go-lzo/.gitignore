@@ -1,0 +1,23 @@
+# Tools and test cache
+.tool/
+*.lzo
+*.lzop
+*.test
+
+# IDE
+.idea/
+*.out
+
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Go workspace file
+go.work
+go.work.sum
+
+# env file
+.env

@@ -3,15 +3,15 @@ package ext4
 import (
 	"fmt"
 
-	"github.com/diskfs/go-diskfs/util"
+	"github.com/diskfs/go-diskfs/util/bitmap"
 )
 
 // blockGroup is a structure holding the data about a single block group
 //
 //nolint:unused // will be used in the future, not yet
 type blockGroup struct {
-	inodeBitmap    *util.Bitmap
-	blockBitmap    *util.Bitmap
+	inodeBitmap    *bitmap.Bitmap
+	blockBitmap    *bitmap.Bitmap
 	blockSize      int
 	number         int
 	inodeTableSize int
@@ -28,8 +28,8 @@ func blockGroupFromBytes(b []byte, blockSize, groupNumber int) (*blockGroup, err
 	if actualSize != expectedSize {
 		return nil, fmt.Errorf("expected to be passed %d bytes for 2 blocks of size %d, instead received %d", expectedSize, blockSize, actualSize)
 	}
-	inodeBitmap := util.BitmapFromBytes(b[0:blockSize])
-	blockBitmap := util.BitmapFromBytes(b[blockSize : 2*blockSize])
+	inodeBitmap := bitmap.FromBytes(b[0:blockSize])
+	blockBitmap := bitmap.FromBytes(b[blockSize : 2*blockSize])
 
 	bg := blockGroup{
 		inodeBitmap: inodeBitmap,

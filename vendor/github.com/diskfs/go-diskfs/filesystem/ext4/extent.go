@@ -680,8 +680,13 @@ func writeNodeToDisk(node extentBlockFinder, fs *FileSystem, parent *extentInter
 		return fmt.Errorf("block number not found for node")
 	}
 
+	writableFile, err := fs.backend.Writable()
+	if err != nil {
+		return err
+	}
+
 	data := node.toBytes()
-	_, err := fs.file.WriteAt(data, int64(blockNumber)*int64(fs.superblock.blockSize))
+	_, err = writableFile.WriteAt(data, int64(blockNumber)*int64(fs.superblock.blockSize))
 	return err
 }
 
@@ -720,7 +725,7 @@ func findChildNode(node *extentInternalNode, added *extents) int {
 //nolint:unparam // this parameter will be used eventually
 func loadChildNode(childPtr *extentChildPtr, fs *FileSystem) (extentBlockFinder, error) {
 	data := make([]byte, fs.superblock.blockSize)
-	_, err := fs.file.ReadAt(data, int64(childPtr.diskBlock)*int64(fs.superblock.blockSize))
+	_, err := fs.backend.ReadAt(data, int64(childPtr.diskBlock)*int64(fs.superblock.blockSize))
 	if err != nil {
 		return nil, err
 	}

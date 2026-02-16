@@ -30,7 +30,7 @@ func getFileProperties(fi os.FileInfo) (links, uid, gid uint32) {
 	return links, uid, gid
 }
 
-//nolint:deadcode // this is here solely so that linter does not complain on darwin about unconvert
+// this is here solely so that linter does not complain on darwin about unconvert
 func unused() uint32 {
 	var f uint32 = 25
 	return uint32(f)

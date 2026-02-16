@@ -16,9 +16,17 @@ Note: detailed go documentation is available at [godoc.org](https://godoc.org/gi
 ### Concepts
 `go-diskfs` has a few basic concepts:
 
+* Backend
 * Disk
 * Partition
 * Filesystem
+
+#### Backend
+Backend is a (relatively) thin layer which abstracts low-level read/write operations. Through a backend you can seamlessly operate different disk formats.
+
+Currently there is only one implementation - file.
+
+Use `file` backend to access block devices and raw image files.
 
 #### Disk
 A disk represents either a file or block device that you access and manipulate. With access to the disk, you can:
