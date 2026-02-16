@@ -72,7 +72,7 @@ func TestGenerateInfrastructure(t *testing.T) {
 		installConfig: icBuild.build(icBuild.forGCP()),
 		expectedInfrastructure: infraBuild.build(
 			infraBuild.forPlatform(configv1.GCPPlatformType),
-			infraBuild.withGCPClusterHostedDNS("Disabled"),
+			infraBuild.withGCPClusterHostedDNS("Enabled"),
 		),
 		expectedFilesGenerated: 2,
 	}, {

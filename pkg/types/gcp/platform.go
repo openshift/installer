@@ -102,8 +102,8 @@ type Platform struct {
 
 	// UserProvisionedDNS indicates if the customer is providing their own DNS solution in place of the default
 	// provisioned by the Installer.
-	// +kubebuilder:default:="Disabled"
-	// +default="Disabled"
+	// +kubebuilder:default:="Enabled"
+	// +default="Enabled"
 	// +kubebuilder:validation:Enum="Enabled";"Disabled"
 	UserProvisionedDNS dns.UserProvisionedDNS `json:"userProvisionedDNS,omitempty"`
 

@@ -1,11 +1,18 @@
 package defaults
 
-import "github.com/openshift/installer/pkg/types/gcp"
+import (
+	"github.com/openshift/installer/pkg/types/dns"
+	"github.com/openshift/installer/pkg/types/gcp"
+)
 
 // SetPlatformDefaults sets the defaults for the platform.
 func SetPlatformDefaults(p *gcp.Platform) {
 	if p == nil {
 		return
+	}
+
+	if p.UserProvisionedDNS == "" {
+		p.UserProvisionedDNS = dns.UserProvisionedDNSEnabled
 	}
 
 	if gcpDmp := p.DefaultMachinePlatform; gcpDmp != nil {
