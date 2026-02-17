@@ -1,8 +1,8 @@
 module github.com/openshift/installer
 
-go 1.24.0
+go 1.25.0
 
-toolchain go1.24.5
+toolchain go1.25.5
 
 require (
 	cloud.google.com/go/kms v1.22.0
@@ -172,6 +172,8 @@ require (
 	github.com/envoyproxy/go-control-plane/envoy v1.32.4 // indirect
 	github.com/envoyproxy/protoc-gen-validate v1.2.1 // indirect
 	github.com/go-jose/go-jose/v4 v4.1.2 // indirect
+	github.com/jackc/pgio v1.0.0 // indirect
+	github.com/jackc/pgtype v1.14.4 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.5 // indirect
@@ -366,11 +368,11 @@ replace (
 	k8s.io/cloud-provider-vsphere => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928
 )
 
-replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea
+replace github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20260217103711-fc83c93f3e12
 
-replace github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20250922204150-a52b83145bea
+replace github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20260217103711-fc83c93f3e12
 
-replace github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20250922204150-a52b83145bea
+replace github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20260217103711-fc83c93f3e12
 
 // https://issues.redhat.com/browse/OCPBUGS-8119
 // https://issues.redhat.com/browse/OCPBUGS-27507
