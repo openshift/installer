@@ -165,6 +165,19 @@ type HostSystemVendor struct {
 	Virtual      bool   `json:"virtual,omitempty"`
 }
 
+type HostGpu struct {
+	// Device address (for example "0000:00:02.0")
+	Address string `json:"address,omitempty"`
+	// ID of the device (for example "3ea0")
+	DeviceID string `json:"deviceID,omitempty"`
+	// Product name of the device (for example "UHD Graphics 620 (Whiskey Lake)")
+	Name string `json:"name,omitempty"`
+	// The name of the device vendor (for example "Intel Corporation")
+	Vendor string `json:"vendor,omitempty"`
+	// ID of the vendor (for example "8086")
+	VendorID string `json:"vendorID,omitempty"`
+}
+
 type HostInventory struct {
 	// Name in REST API: timestamp
 	ReportTime   *metav1.Time     `json:"reportTime,omitempty"`
@@ -177,6 +190,7 @@ type HostInventory struct {
 	Disks        []HostDisk       `json:"disks,omitempty"`
 	Boot         HostBoot         `json:"boot,omitempty"`
 	SystemVendor HostSystemVendor `json:"systemVendor,omitempty"`
+	Gpus         []HostGpu        `json:"gpus,omitempty"`
 }
 
 // AgentSpec defines the desired state of Agent
@@ -188,7 +202,11 @@ type AgentSpec struct {
 	MachineConfigPool     string            `json:"machineConfigPool,omitempty"`
 	Approved              bool              `json:"approved"`
 	// InstallationDiskID defines the installation destination disk (must be equal to the inventory disk id).
+	// +optional
 	InstallationDiskID string `json:"installation_disk_id,omitempty"`
+	// InstallationDiskPath defines the installation destination disk using either its by-id or by-path value.
+	// +optional
+	InstallationDiskPath string `json:"installation_disk_path,omitempty"`
 	// Json formatted string containing the user overrides for the host's coreos installer args
 	InstallerArgs string `json:"installerArgs,omitempty"`
 	// Json formatted string containing the user overrides for the host's ignition config
@@ -199,6 +217,8 @@ type AgentSpec struct {
 	IgnitionEndpointHTTPHeaders map[string]string `json:"ignitionEndpointHTTPHeaders,omitempty"`
 	// NodeLabels are the labels to be applied on the node associated with this agent
 	NodeLabels map[string]string `json:"nodeLabels,omitempty"`
+	// FencingCredentialsSecretRef is a name of a secret in the Agent's namespace that contains fencing credentials
+	FencingCredentialsSecretRef string `json:"fencingCredentialsSecretRef,omitempty"`
 }
 
 type IgnitionEndpointTokenReference struct {

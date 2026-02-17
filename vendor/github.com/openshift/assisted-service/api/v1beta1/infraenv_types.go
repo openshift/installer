@@ -25,11 +25,15 @@ import (
 )
 
 const (
-	ImageCreatedReason       = "ImageCreated"
-	ImageStateCreated        = "Image has been created"
-	ImageCreationErrorReason = "ImageCreationError"
-	ImageStateFailedToCreate = "Failed to create image"
-	InfraEnvNameLabel        = "infraenvs.agent-install.openshift.io"
+	ImageCreatedReason       	      = "ImageCreated"
+	ImageStateCreated        	      = "Image has been created"
+	ImageCreationErrorReason 	      = "ImageCreationError"
+	ImageStateFailedToCreate 	      = "Failed to create image"
+	InfraEnvNameLabel        	      = "infraenvs.agent-install.openshift.io"
+	MissingClusterDeploymentReason    = "MissingClusterDeployment"
+	MissingClusterDeploymentReference = "ClusterDeployment is missing"
+	InfraEnvAvailableReason           = "InfraEnvAvailable"
+	InfraEnvAvailableMessage          = "InfraEnv is available"
 )
 
 // ClusterReference represents a Cluster Reference. It has enough information to retrieve cluster
@@ -44,7 +48,9 @@ type ClusterReference struct {
 }
 
 const (
-	ImageCreatedCondition conditionsv1.ConditionType = "ImageCreated"
+	ImageCreatedCondition      conditionsv1.ConditionType = "ImageCreated"
+	ClusterDeploymentReference conditionsv1.ConditionType = "ClusterDeploymentReference"
+
 )
 
 type InfraEnvSpec struct {
@@ -130,6 +136,23 @@ type InfraEnvSpec struct {
 	// - minimal-iso: A lightweight ISO that retrieves the remainder of the RHCOS root file system (rootfs) dynamically from the Internet
 	// +optional
 	ImageType models.ImageType `json:"imageType,omitempty"`
+
+	// AgentApproval defines configuration for automatic approval of Agents
+	// discovered by this InfraEnv.
+	// +optional
+	AgentApproval *AgentApproval `json:"agentApproval,omitempty"`
+}
+
+// AgentApproval defines configuration for automatic approval of Agents
+// discovered by this InfraEnv.
+type AgentApproval struct {
+	// AutoApprove indicates whether Agents discovered using this InfraEnv
+	// should be automatically approved by the system.
+	// If true, any Agent referencing this InfraEnv may be approved without manual intervention.
+	// Use only in trusted environments.
+	// +optional
+	// +kubebuilder:default=false
+	AutoApprove bool `json:"autoApprove,omitempty"`
 }
 
 type KernelArgument struct {

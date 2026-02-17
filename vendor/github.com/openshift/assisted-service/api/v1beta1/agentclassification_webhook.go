@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -47,21 +48,25 @@ func (r *AgentClassification) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 //+kubebuilder:webhook:path=/validate-agent-install-openshift-io-v1beta1-agentclassification,mutating=false,failurePolicy=fail,sideEffects=None,groups=agent-install.openshift.io,resources=agentclassifications,verbs=create;update,versions=v1beta1,name=vagentclassification.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &AgentClassification{}
+var _ webhook.CustomValidator = &AgentClassification{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *AgentClassification) ValidateCreate() (admission.Warnings, error) {
-	agentclassificationlog.Info("validate create", "name", r.Name)
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *AgentClassification) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
+	agentClassification, ok := obj.(*AgentClassification)
+	if !ok {
+		return nil, fmt.Errorf("object is not an AgentClassification")
+	}
+	agentclassificationlog.Info("validate create", "name", agentClassification.Name)
 	f := field.NewPath("spec")
-	errs := validation.ValidateLabels(map[string]string{ClassificationLabelPrefix + r.Spec.LabelKey: r.Spec.LabelValue}, f)
-	if strings.HasPrefix(r.Spec.LabelValue, "QUERYERROR") {
-		errs = append(errs, field.Invalid(f, r.Spec.LabelValue, "label must not start with QUERYERROR as this is reserved"))
+	errs := validation.ValidateLabels(map[string]string{ClassificationLabelPrefix + agentClassification.Spec.LabelKey: agentClassification.Spec.LabelValue}, f)
+	if strings.HasPrefix(agentClassification.Spec.LabelValue, "QUERYERROR") {
+		errs = append(errs, field.Invalid(f, agentClassification.Spec.LabelValue, "label must not start with QUERYERROR as this is reserved"))
 	}
 
 	// Validate that we can parse the specified query
-	_, err := gojq.Parse(r.Spec.Query)
+	_, err := gojq.Parse(agentClassification.Spec.Query)
 	if err != nil {
-		errs = append(errs, field.Invalid(f, r.Spec.Query, err.Error()))
+		errs = append(errs, field.Invalid(f, agentClassification.Spec.Query, err.Error()))
 	}
 
 	if len(errs) > 0 {
@@ -73,17 +78,21 @@ func (r *AgentClassification) ValidateCreate() (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *AgentClassification) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	agentclassificationlog.Info("validate update", "name", r.Name)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *AgentClassification) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	agentClassification, ok := newObj.(*AgentClassification)
+	if !ok {
+		return nil, fmt.Errorf("new object is not an AgentClassification")
+	}
+	agentclassificationlog.Info("validate update", "name", agentClassification.Name)
 
-	oldAgentClassification, ok := old.(*AgentClassification)
+	oldAgentClassification, ok := oldObj.(*AgentClassification)
 	if !ok {
 		return nil, fmt.Errorf("old object is not an AgentClassification")
 	}
 
 	// Validate that the label key and value haven't changed
-	if (oldAgentClassification.Spec.LabelKey != r.Spec.LabelKey) || (oldAgentClassification.Spec.LabelValue != r.Spec.LabelValue) {
+	if (oldAgentClassification.Spec.LabelKey != agentClassification.Spec.LabelKey) || (oldAgentClassification.Spec.LabelValue != agentClassification.Spec.LabelValue) {
 		return nil, fmt.Errorf("Label modified: the specified label may not be modified after creation")
 	}
 
@@ -92,7 +101,7 @@ func (r *AgentClassification) ValidateUpdate(old runtime.Object) (admission.Warn
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *AgentClassification) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *AgentClassification) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }

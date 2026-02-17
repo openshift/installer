@@ -87,7 +87,16 @@ type V2ClusterUpdateParams struct {
 	Name *string `json:"name,omitempty"`
 
 	// The desired network type used.
-	// Enum: [OpenShiftSDN OVNKubernetes]
+	// - OVNKubernetes: Default CNI for OpenShift (recommended)
+	// - OpenShiftSDN: Legacy SDN (deprecated in newer versions)
+	// - CiscoACI: Cisco ACI CNI (requires custom manifests)
+	// - Cilium: Isovalent Cilium CNI (requires custom manifests)
+	// - Calico: Tigera Calico CNI (requires custom manifests)
+	// - None: No CNI - user must provide custom CNI manifests
+	// Note: Third-party CNIs (CiscoACI, Cilium, Calico, None) require uploading
+	// CNI manifests via the custom manifests API before installation.
+	//
+	// Enum: [OpenShiftSDN OVNKubernetes CiscoACI Cilium Calico None]
 	NetworkType *string `json:"network_type,omitempty"`
 
 	// An "*" or a comma-separated list of destination domain names, domains, IP addresses, or other network CIDRs to exclude from proxying.
@@ -489,7 +498,7 @@ var v2ClusterUpdateParamsTypeNetworkTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes","CiscoACI","Cilium","Calico","None"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -504,6 +513,18 @@ const (
 
 	// V2ClusterUpdateParamsNetworkTypeOVNKubernetes captures enum value "OVNKubernetes"
 	V2ClusterUpdateParamsNetworkTypeOVNKubernetes string = "OVNKubernetes"
+
+	// V2ClusterUpdateParamsNetworkTypeCiscoACI captures enum value "CiscoACI"
+	V2ClusterUpdateParamsNetworkTypeCiscoACI string = "CiscoACI"
+
+	// V2ClusterUpdateParamsNetworkTypeCilium captures enum value "Cilium"
+	V2ClusterUpdateParamsNetworkTypeCilium string = "Cilium"
+
+	// V2ClusterUpdateParamsNetworkTypeCalico captures enum value "Calico"
+	V2ClusterUpdateParamsNetworkTypeCalico string = "Calico"
+
+	// V2ClusterUpdateParamsNetworkTypeNone captures enum value "None"
+	V2ClusterUpdateParamsNetworkTypeNone string = "None"
 )
 
 // prop value enum

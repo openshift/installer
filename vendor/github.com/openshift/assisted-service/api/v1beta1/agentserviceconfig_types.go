@@ -234,6 +234,8 @@ const (
 	ReasonKonnectivityAgentFailure string = "KonnectivityAgentFailure"
 	// ReasonOSImageCACertRefFailure when there has been a failure resolving the OS image CA using OSImageCACertRef.
 	ReasonOSImageCACertRefFailure string = "OSImageCACertRefFailure"
+	// ReasonOSImagesShouldBeEmptyFailure when OSImages are not empty but image service is disabled.
+	ReasonOSImagesShouldBeEmptyFailure string = "OSImagesShouldBeEmptyFailure"
 	// ReasonMonitoringFailure indicates there was a failure monitoring operand status
 	ReasonMonitoringFailure string = "MonitoringFailure"
 	// ReasonKubernetesIngressMissing indicates the user has not provided the required configuration for kubernetes ingress

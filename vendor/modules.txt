@@ -1091,6 +1091,12 @@ github.com/itchyny/gojq
 # github.com/itchyny/timefmt-go v0.1.4
 ## explicit; go 1.17
 github.com/itchyny/timefmt-go
+# github.com/jackc/pgio v1.0.0
+## explicit; go 1.12
+github.com/jackc/pgio
+# github.com/jackc/pgtype v1.14.4
+## explicit; go 1.13
+github.com/jackc/pgtype
 # github.com/jarcoal/httpmock v1.3.1
 ## explicit; go 1.18
 github.com/jarcoal/httpmock
@@ -1358,13 +1364,13 @@ github.com/openshift/api/route/v1
 ## explicit; go 1.21
 github.com/openshift/assisted-image-service/pkg/isoeditor
 github.com/openshift/assisted-image-service/pkg/overlay
-# github.com/openshift/assisted-service/api v0.0.0 => github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea
-## explicit; go 1.21
+# github.com/openshift/assisted-service/api v0.0.0 => github.com/openshift/assisted-service/api v0.0.0-20260217103711-fc83c93f3e12
+## explicit; go 1.25.0
 github.com/openshift/assisted-service/api/common
 github.com/openshift/assisted-service/api/hiveextension/v1beta1
 github.com/openshift/assisted-service/api/v1beta1
-# github.com/openshift/assisted-service/client v0.0.0 => github.com/openshift/assisted-service/client v0.0.0-20250922204150-a52b83145bea
-## explicit; go 1.21
+# github.com/openshift/assisted-service/client v0.0.0 => github.com/openshift/assisted-service/client v0.0.0-20260217103711-fc83c93f3e12
+## explicit; go 1.25.0
 github.com/openshift/assisted-service/client
 github.com/openshift/assisted-service/client/events
 github.com/openshift/assisted-service/client/installer
@@ -1372,8 +1378,8 @@ github.com/openshift/assisted-service/client/managed_domains
 github.com/openshift/assisted-service/client/manifests
 github.com/openshift/assisted-service/client/operators
 github.com/openshift/assisted-service/client/versions
-# github.com/openshift/assisted-service/models v0.0.0 => github.com/openshift/assisted-service/models v0.0.0-20250922204150-a52b83145bea
-## explicit; go 1.21
+# github.com/openshift/assisted-service/models v0.0.0 => github.com/openshift/assisted-service/models v0.0.0-20260217103711-fc83c93f3e12
+## explicit; go 1.25.0
 github.com/openshift/assisted-service/models
 github.com/openshift/assisted-service/models/validations
 # github.com/openshift/client-go v0.0.0-20260108185524-48f4ccfc4e13
@@ -3014,9 +3020,9 @@ sigs.k8s.io/yaml/kyaml
 # github.com/metal3-io/baremetal-operator/apis => github.com/openshift/baremetal-operator/apis v0.0.0-20231128154154-6736c9b9c6c8
 # github.com/metal3-io/baremetal-operator/pkg/hardwareutils => github.com/openshift/baremetal-operator/pkg/hardwareutils v0.0.0-20231128154154-6736c9b9c6c8
 # k8s.io/cloud-provider-vsphere => github.com/openshift/cloud-provider-vsphere v1.19.1-0.20240626105621-6464d0bb4928
-# github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20250922204150-a52b83145bea
-# github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20250922204150-a52b83145bea
-# github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20250922204150-a52b83145bea
+# github.com/openshift/assisted-service/api => github.com/openshift/assisted-service/api v0.0.0-20260217103711-fc83c93f3e12
+# github.com/openshift/assisted-service/client => github.com/openshift/assisted-service/client v0.0.0-20260217103711-fc83c93f3e12
+# github.com/openshift/assisted-service/models => github.com/openshift/assisted-service/models v0.0.0-20260217103711-fc83c93f3e12
 # github.com/containerd/containerd => github.com/containerd/containerd v1.6.26
 # github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels => github.com/vmware-tanzu/vm-operator/pkg/constants/testlabels v0.0.0-20240404200847-de75746a9505
 # github.com/vmware/govmomi => github.com/vmware/govmomi v0.51.0

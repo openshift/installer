@@ -24,7 +24,7 @@ type APIVip struct {
 	ClusterID strfmt.UUID `json:"cluster_id,omitempty" gorm:"primaryKey"`
 
 	// The IP address.
-	IP IP `json:"ip,omitempty" gorm:"primaryKey"`
+	IP IP `json:"ip,omitempty" gorm:"primaryKey;type:inet"`
 
 	// API VIP verification result.
 	Verification *VipVerification `json:"verification,omitempty"`

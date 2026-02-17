@@ -48,6 +48,9 @@ const (
 	// HostStageWritingImageToDisk captures enum value "Writing image to disk"
 	HostStageWritingImageToDisk HostStage = "Writing image to disk"
 
+	// HostStageCopyingRegistryDataToDisk captures enum value "Copying registry data to disk"
+	HostStageCopyingRegistryDataToDisk HostStage = "Copying registry data to disk"
+
 	// HostStageRebooting captures enum value "Rebooting"
 	HostStageRebooting HostStage = "Rebooting"
 
@@ -72,7 +75,7 @@ var hostStageEnum []interface{}
 
 func init() {
 	var res []HostStage
-	if err := json.Unmarshal([]byte(`["Starting installation","Waiting for control plane","Waiting for bootkube","Waiting for controller","Installing","Writing image to disk","Rebooting","Waiting for ignition","Configuring","Joined","Done","Failed"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["Starting installation","Waiting for control plane","Waiting for bootkube","Waiting for controller","Installing","Writing image to disk","Copying registry data to disk","Rebooting","Waiting for ignition","Configuring","Joined","Done","Failed"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {

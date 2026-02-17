@@ -91,7 +91,16 @@ type ClusterCreateParams struct {
 	Name *string `json:"name"`
 
 	// The desired network type used.
-	// Enum: [OpenShiftSDN OVNKubernetes]
+	// - OVNKubernetes: Default CNI for OpenShift (recommended)
+	// - OpenShiftSDN: Legacy SDN (deprecated in newer versions)
+	// - CiscoACI: Cisco ACI CNI (requires custom manifests)
+	// - Cilium: Isovalent Cilium CNI (requires custom manifests)
+	// - Calico: Tigera Calico CNI (requires custom manifests)
+	// - None: No CNI - user must provide custom CNI manifests
+	// Note: Third-party CNIs (CiscoACI, Cilium, Calico, None) require uploading
+	// CNI manifests via the custom manifests API before installation.
+	//
+	// Enum: [OpenShiftSDN OVNKubernetes CiscoACI Cilium Calico None]
 	NetworkType *string `json:"network_type,omitempty"`
 
 	// An "*" or a comma-separated list of destination domain names, domains, IP addresses, or other network CIDRs to exclude from proxying.
@@ -598,7 +607,7 @@ var clusterCreateParamsTypeNetworkTypePropEnum []interface{}
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["OpenShiftSDN","OVNKubernetes","CiscoACI","Cilium","Calico","None"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -613,6 +622,18 @@ const (
 
 	// ClusterCreateParamsNetworkTypeOVNKubernetes captures enum value "OVNKubernetes"
 	ClusterCreateParamsNetworkTypeOVNKubernetes string = "OVNKubernetes"
+
+	// ClusterCreateParamsNetworkTypeCiscoACI captures enum value "CiscoACI"
+	ClusterCreateParamsNetworkTypeCiscoACI string = "CiscoACI"
+
+	// ClusterCreateParamsNetworkTypeCilium captures enum value "Cilium"
+	ClusterCreateParamsNetworkTypeCilium string = "Cilium"
+
+	// ClusterCreateParamsNetworkTypeCalico captures enum value "Calico"
+	ClusterCreateParamsNetworkTypeCalico string = "Calico"
+
+	// ClusterCreateParamsNetworkTypeNone captures enum value "None"
+	ClusterCreateParamsNetworkTypeNone string = "None"
 )
 
 // prop value enum

@@ -14,6 +14,7 @@ import (
 	"github.com/go-openapi/runtime"
 	cr "github.com/go-openapi/runtime/client"
 	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
 )
 
 // NewV2GetBundleParams creates a new V2GetBundleParams object,
@@ -61,9 +62,15 @@ V2GetBundleParams contains all the parameters to send to the API endpoint
 */
 type V2GetBundleParams struct {
 
+	/* FeatureIds.
+
+	   Array of feature IDs that affect bundle composition (e.g., ["SNO"] for Single Node OpenShift).
+	*/
+	FeatureIds []string
+
 	/* ID.
 
-	   Identifier of the bundle, for example, `virtualization` or `openshift-ai-nvidia`.
+	   Identifier of the bundle, for example, `virtualization` or `openshift-ai`.
 	*/
 	ID string
 
@@ -120,6 +127,17 @@ func (o *V2GetBundleParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
+// WithFeatureIds adds the featureIds to the v2 get bundle params
+func (o *V2GetBundleParams) WithFeatureIds(featureIds []string) *V2GetBundleParams {
+	o.SetFeatureIds(featureIds)
+	return o
+}
+
+// SetFeatureIds adds the featureIds to the v2 get bundle params
+func (o *V2GetBundleParams) SetFeatureIds(featureIds []string) {
+	o.FeatureIds = featureIds
+}
+
 // WithID adds the id to the v2 get bundle params
 func (o *V2GetBundleParams) WithID(id string) *V2GetBundleParams {
 	o.SetID(id)
@@ -139,6 +157,17 @@ func (o *V2GetBundleParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.R
 	}
 	var res []error
 
+	if o.FeatureIds != nil {
+
+		// binding items for feature_ids
+		joinedFeatureIds := o.bindParamFeatureIds(reg)
+
+		// query array param feature_ids
+		if err := r.SetQueryParam("feature_ids", joinedFeatureIds...); err != nil {
+			return err
+		}
+	}
+
 	// path param id
 	if err := r.SetPathParam("id", o.ID); err != nil {
 		return err
@@ -148,4 +177,21 @@ func (o *V2GetBundleParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.R
 		return errors.CompositeValidationError(res...)
 	}
 	return nil
+}
+
+// bindParamV2GetBundle binds the parameter feature_ids
+func (o *V2GetBundleParams) bindParamFeatureIds(formats strfmt.Registry) []string {
+	featureIdsIR := o.FeatureIds
+
+	var featureIdsIC []string
+	for _, featureIdsIIR := range featureIdsIR { // explode []string
+
+		featureIdsIIV := featureIdsIIR // string as string
+		featureIdsIC = append(featureIdsIC, featureIdsIIV)
+	}
+
+	// items.CollectionFormat: "multi"
+	featureIdsIS := swag.JoinByFormat(featureIdsIC, "multi")
+
+	return featureIdsIS
 }

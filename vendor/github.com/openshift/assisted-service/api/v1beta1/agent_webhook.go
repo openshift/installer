@@ -17,6 +17,7 @@ limitations under the License.
 package v1beta1
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/openshift/assisted-service/models"
@@ -40,21 +41,25 @@ func (r *Agent) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 //+kubebuilder:webhook:path=/validate-agent-install-openshift-io-v1beta1-agent,mutating=false,failurePolicy=fail,sideEffects=None,groups=agent-install.openshift.io,resources=agents,verbs=create;update,versions=v1beta1,name=vagent.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &Agent{}
+var _ webhook.CustomValidator = &Agent{}
 
-// ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *Agent) ValidateCreate() (admission.Warnings, error) {
+// ValidateCreate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *Agent) ValidateCreate(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *Agent) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	agentlog.Info("validate update", "name", r.Name)
-	oldObject, ok := old.(*Agent)
+// ValidateUpdate implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *Agent) ValidateUpdate(ctx context.Context, oldObj, newObj runtime.Object) (admission.Warnings, error) {
+	agent, ok := newObj.(*Agent)
+	if !ok {
+		return nil, fmt.Errorf("new object is not an Agent")
+	}
+	agentlog.Info("validate update", "name", agent.Name)
+	oldObject, ok := oldObj.(*Agent)
 	if !ok {
 		return nil, fmt.Errorf("old object is not an Agent")
 	}
-	if !areClusterRefsEqual(oldObject.Spec.ClusterDeploymentName, r.Spec.ClusterDeploymentName) {
+	if !areClusterRefsEqual(oldObject.Spec.ClusterDeploymentName, agent.Spec.ClusterDeploymentName) {
 		installingStatuses := []string{
 			models.HostStatusPreparingForInstallation,
 			models.HostStatusPreparingFailed,
@@ -63,7 +68,7 @@ func (r *Agent) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 			models.HostStatusInstallingInProgress,
 			models.HostStatusInstallingPendingUserAction,
 		}
-		if funk.ContainsString(installingStatuses, r.Status.DebugInfo.State) {
+		if funk.ContainsString(installingStatuses, agent.Status.DebugInfo.State) {
 			err := fmt.Errorf("Failed validation: Attempted to change Spec.ClusterDeploymentName which is immutable during Agent installation.")
 			agentlog.Info(err.Error())
 			return nil, err
@@ -72,8 +77,8 @@ func (r *Agent) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
-// ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *Agent) ValidateDelete() (admission.Warnings, error) {
+// ValidateDelete implements webhook.CustomValidator so a webhook will be registered for the type
+func (r *Agent) ValidateDelete(ctx context.Context, obj runtime.Object) (admission.Warnings, error) {
 	return nil, nil
 }
 
