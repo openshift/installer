@@ -32,10 +32,11 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/networks"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/compute/subnets"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
-	"sigs.k8s.io/cluster-api-provider-gcp/pkg/capiutils"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/reconciler"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
+	"sigs.k8s.io/cluster-api/util/annotations"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	"sigs.k8s.io/cluster-api/util/record"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -81,7 +82,7 @@ func (r *GCPManagedClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	}
 
 	// Fetch the Cluster.
-	cluster, err := capiutils.GetOwnerCluster(ctx, r.Client, gcpCluster.ObjectMeta)
+	cluster, err := util.GetOwnerCluster(ctx, r.Client, gcpCluster.ObjectMeta)
 	if err != nil {
 		log.Error(err, "Failed to get owner cluster")
 		return ctrl.Result{}, err
@@ -91,7 +92,7 @@ func (r *GCPManagedClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 		return ctrl.Result{}, nil
 	}
 
-	if capiutils.IsPaused(cluster, gcpCluster) {
+	if annotations.IsPaused(cluster, gcpCluster) {
 		log.Info("GCPManagedCluster or linked Cluster is marked as paused. Won't reconcile")
 		return ctrl.Result{}, nil
 	}
@@ -101,7 +102,7 @@ func (r *GCPManagedClusterReconciler) Reconcile(ctx context.Context, req ctrl.Re
 	controlPlane := &infrav1exp.GCPManagedControlPlane{}
 	controlPlaneRef := types.NamespacedName{
 		Name:      cluster.Spec.ControlPlaneRef.Name,
-		Namespace: cluster.Spec.ControlPlaneRef.Namespace,
+		Namespace: cluster.Namespace,
 	}
 
 	log.V(4).Info("getting control plane ", "ref", controlPlaneRef)
@@ -186,9 +187,9 @@ func (r *GCPManagedClusterReconciler) reconcile(ctx context.Context, clusterScop
 		return err
 	}
 
-	failureDomains := make(clusterv1.FailureDomains, len(zones))
+	failureDomains := make(clusterv1beta1.FailureDomains, len(zones))
 	for _, zone := range zones {
-		failureDomains[zone.Name] = clusterv1.FailureDomainSpec{
+		failureDomains[zone.Name] = clusterv1beta1.FailureDomainSpec{
 			ControlPlane: false,
 		}
 	}
@@ -212,7 +213,10 @@ func (r *GCPManagedClusterReconciler) reconcile(ctx context.Context, clusterScop
 	record.Event(clusterScope.GCPManagedCluster, "GCPManagedClusterReconcile", "Ready")
 
 	controlPlaneEndpoint := clusterScope.GCPManagedControlPlane.Spec.Endpoint
-	clusterScope.SetControlPlaneEndpoint(controlPlaneEndpoint)
+	clusterScope.SetControlPlaneEndpoint(clusterv1.APIEndpoint{
+		Host: controlPlaneEndpoint.Host,
+		Port: controlPlaneEndpoint.Port,
+	})
 
 	if controlPlaneEndpoint.IsZero() {
 		log.Info("GCPManagedControlplane does not have endpoint yet. Reconciling")
@@ -280,7 +284,7 @@ func (r *GCPManagedClusterReconciler) managedControlPlaneMapper() handler.MapFun
 			return nil
 		}
 
-		cluster, err := capiutils.GetOwnerCluster(ctx, r.Client, gcpManagedControlPlane.ObjectMeta)
+		cluster, err := util.GetOwnerCluster(ctx, r.Client, gcpManagedControlPlane.ObjectMeta)
 		if err != nil {
 			log.Error(err, "failed to get owning cluster")
 			return nil
@@ -291,7 +295,7 @@ func (r *GCPManagedClusterReconciler) managedControlPlaneMapper() handler.MapFun
 		}
 
 		managedClusterRef := cluster.Spec.InfrastructureRef
-		if managedClusterRef == nil || managedClusterRef.Kind != "GCPManagedCluster" {
+		if !managedClusterRef.IsDefined() || managedClusterRef.Kind != "GCPManagedCluster" {
 			log.Info("InfrastructureRef is nil or not GCPManagedCluster, skipping mapping")
 			return nil
 		}
@@ -300,7 +304,7 @@ func (r *GCPManagedClusterReconciler) managedControlPlaneMapper() handler.MapFun
 			{
 				NamespacedName: types.NamespacedName{
 					Name:      managedClusterRef.Name,
-					Namespace: managedClusterRef.Namespace,
+					Namespace: cluster.Namespace,
 				},
 			},
 		}

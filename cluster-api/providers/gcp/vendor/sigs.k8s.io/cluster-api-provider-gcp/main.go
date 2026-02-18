@@ -27,11 +27,13 @@ import (
 	"time"
 
 	// +kubebuilder:scaffold:imports
+
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	cgrecord "k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	infrav1beta1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/controllers"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
@@ -41,7 +43,7 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/feature"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-gcp/version"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/util/flags"
 	"sigs.k8s.io/cluster-api/util/record"
@@ -97,7 +99,7 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
-	_, metricsOptions, err := flags.GetManagerOptions(managerOptions)
+	tlsOptions, metricsOptions, err := flags.GetManagerOptions(managerOptions)
 	if err != nil {
 		setupLog.Error(err, "Unable to start manager: invalid flags")
 	}
@@ -151,6 +153,7 @@ func main() {
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port:    webhookPort,
 			CertDir: webhookCertDir,
+			TLSOpts: tlsOptions,
 		}),
 		HealthProbeBindAddress: healthAddr,
 		EventBroadcaster:       broadcaster,
@@ -203,6 +206,19 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) error {
 		WatchFilterValue: watchFilterValue,
 	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: gcpClusterConcurrency}); err != nil {
 		return fmt.Errorf("setting up GCPCluster controller: %w", err)
+	}
+
+	if feature.Gates.Enabled(capifeature.MachinePool) {
+		setupLog.Info("Enabling MachinePool reconcilers")
+		gcpMachinePoolConcurrency := gcpMachineConcurrency
+
+		if err := (&expcontrollers.GCPMachinePoolReconciler{
+			Client:           mgr.GetClient(),
+			Recorder:         mgr.GetEventRecorderFor("gcpmachinepool-controller"),
+			WatchFilterValue: watchFilterValue,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: gcpMachinePoolConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
+			return fmt.Errorf("creating GCPMachinePool controller: %w", err)
+		}
 	}
 
 	if feature.Gates.Enabled(feature.GKE) {
@@ -258,6 +274,14 @@ func setupWebhooks(mgr ctrl.Manager) error {
 	}
 	if err := (&infrav1beta1.GCPMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("setting up GCPMachineTemplate webhook: %w", err)
+	}
+
+	if feature.Gates.Enabled(capifeature.MachinePool) {
+		setupLog.Info("Enabling GCPMachinePool webhooks")
+
+		if err := (&infrav1exp.GCPMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
+			return fmt.Errorf("creating GCPMachinePool webhook: %w", err)
+		}
 	}
 
 	if feature.Gates.Enabled(feature.GKE) {

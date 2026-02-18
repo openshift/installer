@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"fmt"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // GCPMachineTemplateResource describes the data needed to create am GCPMachine from a template.
@@ -27,7 +27,7 @@ type GCPMachineTemplateResource struct {
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	ObjectMeta clusterv1.ObjectMeta `json:"metadata,omitempty"`
+	ObjectMeta clusterv1beta1.ObjectMeta `json:"metadata,omitempty"`
 
 	// Spec is the specification of the desired behavior of the machine.
 	Spec GCPMachineSpec `json:"spec"`
@@ -137,6 +137,24 @@ const (
 	RulesManagementUnmanaged RulesManagementPolicy = "Unmanaged"
 )
 
+// StackType is a string enum type indicating the types of network addresses that are valid.
+// +kubebuilder:validation:Enum=IPv4Only;DualStack
+type StackType string
+
+const (
+	// IPv4OnlyStackType indicates a stack type where only IPv4 addresses are valid.
+	IPv4OnlyStackType StackType = "IPv4Only"
+
+	// DualStackType indicates a stack type where both IPv4 and IPv6 addresses are valid.
+	DualStackType StackType = "DualStack"
+)
+
+const (
+	// DualStackAdditionalResourceSuffix is an identifier appended to the resource name to indicate
+	// that it is not for the ipv4 [default] stack type.
+	DualStackAdditionalResourceSuffix string = "ipv6"
+)
+
 // NetworkSpec encapsulates all things related to a GCP network.
 type NetworkSpec struct {
 	// Name is the name of the network to be used.
@@ -191,6 +209,25 @@ type NetworkSpec struct {
 	// +kubebuilder:default:=64
 	// +optional
 	MinPortsPerVM int64 `json:"minPortsPerVm,omitempty"`
+
+	// Ipv6Address: An IPv6 internal network address for this network interface.
+	// To use a static internal IP address, it must be unused and in the same
+	// region as the instance's zone. If not specified, Google Cloud will
+	// automatically assign an internal IPv6 address from the instance's subnetwork.
+	// +optional
+	Ipv6Address string `json:"ipv6Address,omitempty"`
+
+	// StackType: The stackType for the subnets. If set to IPv4Only, new VMs in
+	// the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
+	// the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+	// IPv4Only is used. This field can be both set at resource creation time and
+	// updated using patch.
+	// GCP allows subnet stack types to be set independently, but, for simplicity,
+	// all subnets in the network will be created with the same stackType.
+	//
+	// +kubebuilder:default=IPv4Only
+	// +optional
+	StackType StackType `json:"stackType,omitempty"`
 }
 
 // LoadBalancerType defines the Load Balancer that should be created.
@@ -285,21 +322,18 @@ type SubnetSpec struct {
 	// +optional
 	Purpose *string `json:"purpose,omitempty"`
 
-	// StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
-	// the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+	// StackType: The stackType for the subnet. If set to IPv4Only, new VMs in
+	// the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
 	// the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
-	// IPV4_ONLY is used. This field can be both set at resource creation time and
+	// IPv4Only is used. This field can be both set at resource creation time and
 	// updated using patch.
 	//
-	// Possible values:
-	//   "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
-	// addresses.
-	//   "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
-	//   "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
-	// +kubebuilder:validation:Enum=IPV4_ONLY;IPV4_IPV6;IPV6_ONLY
-	// +kubebuilder:default=IPV4_ONLY
+	// NOT IMPLEMENTED: Stack type is currently set in the `NetworkSpec` and all
+	// subnets will have the same stack type.
+	//
+	// +kubebuilder:default=IPv4Only
 	// +optional
-	StackType string `json:"stackType,omitempty"`
+	StackType StackType `json:"stackType,omitempty"`
 }
 
 // String returns a string representation of the subnet.
