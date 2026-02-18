@@ -675,3 +675,9 @@ const (
 	// OSImageStreamRHCOS10 represents the RHEL 10 OS Image Stream.
 	OSImageStreamRHCOS10 OSImageStream = "rhel-10"
 )
+
+// OSImageStreamValues holds the list of valid values a OSImageStream can take.
+var OSImageStreamValues = []OSImageStream{
+	OSImageStreamRHCOS9,
+	OSImageStreamRHCOS10,
+}

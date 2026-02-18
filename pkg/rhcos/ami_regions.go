@@ -11,8 +11,8 @@ import (
 )
 
 // AMIRegions returns the AWS regions in which an RHCOS AMI for the specified architecture is published.
-func AMIRegions(architecture types.Architecture) sets.String {
-	stream, err := FetchCoreOSBuild(context.Background())
+func AMIRegions(architecture types.Architecture, osImageStream types.OSImageStream) sets.Set[string] {
+	stream, err := FetchCoreOSBuild(context.Background(), osImageStream)
 	if err != nil {
 		logrus.Errorf("could not fetch the rhcos stream data: %v", err)
 		return nil
@@ -29,5 +29,5 @@ func AMIRegions(architecture types.Architecture) sets.String {
 		}
 		regions = append(regions, name)
 	}
-	return sets.NewString(regions...)
+	return sets.New[string](regions...)
 }

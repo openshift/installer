@@ -15,8 +15,8 @@ import (
 )
 
 const (
-	streamRHCOSJSON            = "data/data/coreos/rhcos.json"
-	streamMarketplaceRHCOSJSON = "data/data/coreos/marketplace-rhcos.json"
+	streamRHCOSJSON            = "data/data/coreos/coreos-rhel-9.json"
+	streamMarketplaceRHCOSJSON = "data/data/coreos/marketplace-coreos-rhel-9.json"
 
 	x86   = "x86_64"
 	arm64 = "aarch64"

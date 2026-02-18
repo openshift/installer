@@ -18,14 +18,15 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/data"
+	"github.com/openshift/installer/pkg/types"
 )
 
 type marketplaceStream map[string]*rhcos.Marketplace
 
 // FetchRawCoreOSStream returns the raw stream metadata for the
 // bootimages embedded in the installer.
-func FetchRawCoreOSStream(ctx context.Context) ([]byte, error) {
-	st, err := FetchCoreOSBuild(ctx)
+func FetchRawCoreOSStream(ctx context.Context, osImageStream types.OSImageStream) ([]byte, error) {
+	st, err := FetchCoreOSBuild(ctx, osImageStream)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get combined CoreOS build: %w", err)
 	}
@@ -39,8 +40,8 @@ func FetchRawCoreOSStream(ctx context.Context) ([]byte, error) {
 // FetchCoreOSBuild returns the pinned version of RHEL/Fedora CoreOS used
 // by the installer to provision the bootstrap node and control plane currently.
 // For more information, see e.g. https://github.com/openshift/enhancements/pull/201
-func FetchCoreOSBuild(ctx context.Context) (*stream.Stream, error) {
-	body, err := fetchRawCoreOSStream(ctx)
+func FetchCoreOSBuild(ctx context.Context, osImageStream types.OSImageStream) (*stream.Stream, error) {
+	body, err := fetchRawCoreOSStream(osImageStream)
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +51,7 @@ func FetchCoreOSBuild(ctx context.Context) (*stream.Stream, error) {
 	}
 
 	// Merge marketplace json file into stream json file
-	mktBody, err := fetchRawMarketplaceStream()
+	mktBody, err := fetchRawMarketplaceStream(osImageStream)
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			logrus.Debug("No marketplace json file found: skipping merge.")
@@ -69,6 +70,7 @@ func FetchCoreOSBuild(ctx context.Context) (*stream.Stream, error) {
 				arch.RHELCoreOSExtensions = &rhcos.Extensions{}
 			}
 			arch.RHELCoreOSExtensions.Marketplace = mkt
+			st.Architectures[name] = arch
 		}
 	}
 	return &st, nil
@@ -113,8 +115,8 @@ func FindArtifactURL(artifacts stream.PlatformArtifacts) (string, error) {
 	return "", fmt.Errorf("no \"disk\" artifact found")
 }
 
-func fetchRawCoreOSStream(ctx context.Context) ([]byte, error) {
-	file, err := data.Assets.Open(getStreamFileName())
+func fetchRawCoreOSStream(osImageStream types.OSImageStream) ([]byte, error) {
+	file, err := data.Assets.Open(getStreamFileName(osImageStream))
 	if err != nil {
 		return nil, fmt.Errorf("failed to read embedded CoreOS stream metadata: %w", err)
 	}
@@ -127,8 +129,8 @@ func fetchRawCoreOSStream(ctx context.Context) ([]byte, error) {
 	return body, nil
 }
 
-func fetchRawMarketplaceStream() ([]byte, error) {
-	file, err := data.Assets.Open(getMarketplaceStreamFileName())
+func fetchRawMarketplaceStream(osImageStream types.OSImageStream) ([]byte, error) {
+	file, err := data.Assets.Open(getMarketplaceStreamFileName(osImageStream))
 	if err != nil {
 		return nil, err
 	}

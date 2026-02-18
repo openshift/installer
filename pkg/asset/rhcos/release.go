@@ -53,7 +53,7 @@ func release(ctx context.Context, config *types.InstallConfig) (string, error) {
 
 	archName := arch.RpmArch(string(config.ControlPlane.Architecture))
 
-	st, err := rhcos.FetchCoreOSBuild(ctx)
+	st, err := rhcos.FetchCoreOSBuild(ctx, config.OSImageStream)
 	if err != nil {
 		return "", err
 	}

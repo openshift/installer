@@ -30,7 +30,9 @@ type BaseIso struct {
 type CoreOSBuildFetcher func(ctx context.Context) (*stream.Stream, error)
 
 // defaultCoreOSStreamGetter uses the pinned metadata.
-var defaultCoreOSStreamGetter = rhcos.FetchCoreOSBuild
+var defaultCoreOSStreamGetter = func(ctx context.Context) (*stream.Stream, error) {
+	return rhcos.FetchCoreOSBuild(ctx, rhcos.DefaultOSImageStream)
+}
 
 // NewBaseISOFetcher returns a struct that can be used to fetch a base ISO using
 // the default method.
