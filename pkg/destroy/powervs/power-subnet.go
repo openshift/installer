@@ -51,6 +51,37 @@ func (o *ClusterUninstaller) listPowerSubnets() (cloudResources, error) {
 	return cloudResources{}.insert(result...), nil
 }
 
+// deleteNetworkInterfaces deletes all network interfaces attached to a subnet.
+func (o *ClusterUninstaller) deleteNetworkInterfaces(subnetID string) error {
+	interfaces, err := o.networkClient.GetAllNetworkInterfaces(subnetID)
+	if err != nil {
+		return fmt.Errorf("failed to list network interfaces: %w", err)
+	}
+
+	for _, nic := range interfaces.Interfaces {
+		if nic.ID != nil {
+			o.Logger.Debugf("Deleting network interface %q from subnet %q", *nic.ID, subnetID)
+			if err := o.networkClient.DeleteNetworkInterface(subnetID, *nic.ID); err != nil {
+				o.Logger.Warnf("Failed to delete network interface %q: %v", *nic.ID, err)
+				// Continue trying to delete other interfaces
+			}
+		}
+	}
+
+	return nil
+}
+
+// isNetworkInterfaceError checks if an error indicates network interfaces are blocking deletion. (i.e 409 Conflict)
+func isNetworkInterfaceError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "one or more network interfaces have an IP allocation") ||
+		strings.Contains(errStr, "status 409") ||
+		strings.Contains(errStr, "409")
+}
+
 func (o *ClusterUninstaller) deletePowerSubnet(item cloudResource) error {
 	if _, err := o.networkClient.Get(item.id); err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
@@ -61,6 +92,16 @@ func (o *ClusterUninstaller) deletePowerSubnet(item cloudResource) error {
 	o.Logger.Debugf("Deleting Power Network %q", item.name)
 
 	if err := o.networkClient.Delete(item.id); err != nil {
+		// If deletion failed due to attached network interfaces, delete them and retry
+		if isNetworkInterfaceError(err) {
+			o.Logger.Debugf("Subnet %q has attached network interfaces. Deleting them...", item.name)
+			if nicErr := o.deleteNetworkInterfaces(item.id); nicErr != nil {
+				o.Logger.Warnf("Failed to delete network interfaces for subnet %q: %v", item.name, nicErr)
+			}
+			// Return error to trigger retry after NIC deletion
+			return fmt.Errorf("subnet deletion blocked by network interfaces: %w", err)
+		}
+
 		o.Logger.Infof("Error: o.networkClient.Delete: %q", err)
 		return err
 	}
