@@ -107,6 +107,8 @@ spec:
                 description: |-
                   CredentialsRef is a reference to a Secret that contains the credentials to use for provisioning this cluster. If not
                   supplied then the credentials of the controller will be used.
+                  When creating a new GCP client, the controller will try to extract the type
+                  of credential from the JSON data, and it will request a client for the specific credential type.
                 properties:
                   name:
                     description: |-
@@ -224,6 +226,13 @@ spec:
                     description: HostProject is the name of the project hosting the
                       shared VPC network resources.
                     type: string
+                  ipv6Address:
+                    description: |-
+                      Ipv6Address: An IPv6 internal network address for this network interface.
+                      To use a static internal IP address, it must be unused and in the same
+                      region as the instance's zone. If not specified, Google Cloud will
+                      automatically assign an internal IPv6 address from the instance's subnetwork.
+                    type: string
                   loadBalancerBackendPort:
                     description: Allow for configuration of load balancer backend
                       (useful for changing apiserver port)
@@ -254,6 +263,20 @@ spec:
                     type: integer
                   name:
                     description: Name is the name of the network to be used.
+                    type: string
+                  stackType:
+                    default: IPv4Only
+                    description: |-
+                      StackType: The stackType for the subnets. If set to IPv4Only, new VMs in
+                      the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
+                      the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+                      IPv4Only is used. This field can be both set at resource creation time and
+                      updated using patch.
+                      GCP allows subnet stack types to be set independently, but, for simplicity,
+                      all subnets in the network will be created with the same stackType.
+                    enum:
+                    - IPv4Only
+                    - DualStack
                     type: string
                   subnets:
                     description: Subnets configuration.
@@ -323,23 +346,19 @@ spec:
                             from which secondary IP ranges of a VM may be allocated
                           type: object
                         stackType:
-                          default: IPV4_ONLY
+                          default: IPv4Only
                           description: |-
-                            StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
-                            the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+                            StackType: The stackType for the subnet. If set to IPv4Only, new VMs in
+                            the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
                             the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
-                            IPV4_ONLY is used. This field can be both set at resource creation time and
+                            IPv4Only is used. This field can be both set at resource creation time and
                             updated using patch.
 
-                            Possible values:
-                              "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
-                            addresses.
-                              "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
-                              "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+                            NOT IMPLEMENTED: Stack type is currently set in the `NetworkSpec` and all
+                            subnets will have the same stack type.
                           enum:
-                          - IPV4_ONLY
-                          - IPV4_IPV6
-                          - IPV6_ONLY
+                          - IPv4Only
+                          - DualStack
                           type: string
                       type: object
                     type: array
@@ -656,6 +675,8 @@ spec:
                         description: |-
                           CredentialsRef is a reference to a Secret that contains the credentials to use for provisioning this cluster. If not
                           supplied then the credentials of the controller will be used.
+                          When creating a new GCP client, the controller will try to extract the type
+                          of credential from the JSON data, and it will request a client for the specific credential type.
                         properties:
                           name:
                             description: |-
@@ -775,6 +796,13 @@ spec:
                             description: HostProject is the name of the project hosting
                               the shared VPC network resources.
                             type: string
+                          ipv6Address:
+                            description: |-
+                              Ipv6Address: An IPv6 internal network address for this network interface.
+                              To use a static internal IP address, it must be unused and in the same
+                              region as the instance's zone. If not specified, Google Cloud will
+                              automatically assign an internal IPv6 address from the instance's subnetwork.
+                            type: string
                           loadBalancerBackendPort:
                             description: Allow for configuration of load balancer
                               backend (useful for changing apiserver port)
@@ -805,6 +833,20 @@ spec:
                             type: integer
                           name:
                             description: Name is the name of the network to be used.
+                            type: string
+                          stackType:
+                            default: IPv4Only
+                            description: |-
+                              StackType: The stackType for the subnets. If set to IPv4Only, new VMs in
+                              the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
+                              the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+                              IPv4Only is used. This field can be both set at resource creation time and
+                              updated using patch.
+                              GCP allows subnet stack types to be set independently, but, for simplicity,
+                              all subnets in the network will be created with the same stackType.
+                            enum:
+                            - IPv4Only
+                            - DualStack
                             type: string
                           subnets:
                             description: Subnets configuration.
@@ -874,23 +916,19 @@ spec:
                                     from which secondary IP ranges of a VM may be allocated
                                   type: object
                                 stackType:
-                                  default: IPV4_ONLY
+                                  default: IPv4Only
                                   description: |-
-                                    StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
-                                    the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+                                    StackType: The stackType for the subnet. If set to IPv4Only, new VMs in
+                                    the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
                                     the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
-                                    IPV4_ONLY is used. This field can be both set at resource creation time and
+                                    IPv4Only is used. This field can be both set at resource creation time and
                                     updated using patch.
 
-                                    Possible values:
-                                      "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
-                                    addresses.
-                                      "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
-                                      "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+                                    NOT IMPLEMENTED: Stack type is currently set in the `NetworkSpec` and all
+                                    subnets will have the same stack type.
                                   enum:
-                                  - IPV4_ONLY
-                                  - IPV4_IPV6
-                                  - IPV6_ONLY
+                                  - IPv4Only
+                                  - DualStack
                                   type: string
                               type: object
                             type: array
@@ -992,6 +1030,548 @@ spec:
         type: object
     served: true
     storage: true
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.17.3
+  labels:
+    cluster.x-k8s.io/provider: infrastructure-gcp
+    cluster.x-k8s.io/v1beta1: v1beta1
+  name: gcpmachinepools.infrastructure.cluster.x-k8s.io
+spec:
+  group: infrastructure.cluster.x-k8s.io
+  names:
+    categories:
+    - cluster-api
+    kind: GCPMachinePool
+    listKind: GCPMachinePoolList
+    plural: gcpmachinepools
+    shortNames:
+    - gcpmp
+    singular: gcpmachinepool
+  scope: Namespaced
+  versions:
+  - additionalPrinterColumns:
+    - description: MachinePool ready status
+      jsonPath: .status.ready
+      name: Ready
+      type: string
+    - description: Number of replicas
+      jsonPath: .status.replicas
+      name: Replicas
+      type: integer
+    name: v1beta1
+    schema:
+      openAPIV3Schema:
+        description: GCPMachinePool is the Schema for the gcpmachinepools API.
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: GCPMachinePoolSpec defines the desired state of GCPMachinePool.
+            properties:
+              additionalDisks:
+                description: AdditionalDisks are optional non-boot attached disks.
+                items:
+                  description: AttachedDiskSpec degined GCP machine disk.
+                  properties:
+                    deviceType:
+                      description: |-
+                        DeviceType is a device type of the attached disk.
+                        Supported types of non-root attached volumes:
+                        1. "pd-standard" - Standard (HDD) persistent disk
+                        2. "pd-ssd" - SSD persistent disk
+                        3. "local-ssd" - Local SSD disk (https://cloud.google.com/compute/docs/disks/local-ssd).
+                        4. "pd-balanced" - Balanced Persistent Disk
+                        5. "hyperdisk-balanced" - Hyperdisk Balanced
+                        Default is "pd-standard".
+                      type: string
+                    encryptionKey:
+                      description: EncryptionKey defines the KMS key to be used to
+                        encrypt the disk.
+                      properties:
+                        keyType:
+                          description: |-
+                            KeyType is the type of encryption key. Must be either Managed, aka Customer-Managed Encryption Key (CMEK) or
+                            Supplied, aka Customer-Supplied EncryptionKey (CSEK).
+                          enum:
+                          - Managed
+                          - Supplied
+                          type: string
+                        kmsKeyServiceAccount:
+                          description: |-
+                            KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key.
+                            If absent, the Compute Engine default service account is used. For example:
+                            "kmsKeyServiceAccount": "name@project_id.iam.gserviceaccount.com.
+                            The maximum length is based on the Service Account ID (max 30), Project (max 30), and a valid gcloud email
+                            suffix ("iam.gserviceaccount.com").
+                          maxLength: 85
+                          pattern: '[-_[A-Za-z0-9]+@[-_[A-Za-z0-9]+.iam.gserviceaccount.com'
+                          type: string
+                        managedKey:
+                          description: ManagedKey references keys managed by the Cloud
+                            Key Management Service. This should be set when KeyType
+                            is Managed.
+                          properties:
+                            kmsKeyName:
+                              description: |-
+                                KMSKeyName is the name of the encryption key that is stored in Google Cloud KMS. For example:
+                                "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key
+                              maxLength: 160
+                              pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
+                              type: string
+                          required:
+                          - kmsKeyName
+                          type: object
+                        suppliedKey:
+                          description: SuppliedKey provides the key used to create
+                            or manage a disk. This should be set when KeyType is Managed.
+                          maxProperties: 1
+                          minProperties: 1
+                          properties:
+                            rawKey:
+                              description: |-
+                                RawKey specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+                                base64 to either encrypt or decrypt this resource. You can provide either the rawKey or the rsaEncryptedKey.
+                                For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
+                              format: byte
+                              type: string
+                            rsaEncryptedKey:
+                              description: |-
+                                RSAEncryptedKey specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
+                                key to either encrypt or decrypt this resource. You can provide either the rawKey or the
+                                rsaEncryptedKey.
+                                For example: "rsaEncryptedKey": "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
+                                z0mBibXUInrC/jEk014kCK/NPjYgEMOyssZ4ZINPKxlUh2zn1bV+MCaTICrdmuSBTWlUUiFoDi
+                                D6PYznLwh8ZNdaheCeZ8ewEXgFQ8V+sDroLaN3Xs3MDTXQEMMoNUXMCZEIpg9Vtp9x2oe=="
+                                The key must meet the following requirements before you can provide it to Compute Engine:
+                                1. The key is wrapped using a RSA public key certificate provided by Google.
+                                2. After being wrapped, the key must be encoded in RFC 4648 base64 encoding.
+                                Gets the RSA public key certificate provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem
+                              format: byte
+                              type: string
+                          type: object
+                      required:
+                      - keyType
+                      type: object
+                    size:
+                      description: |-
+                        Size is the size of the disk in GBs.
+                        Defaults to 30GB. For "local-ssd" size is always 375GB.
+                      format: int64
+                      type: integer
+                  type: object
+                type: array
+              additionalLabels:
+                additionalProperties:
+                  type: string
+                description: |-
+                  AdditionalLabels is an optional set of tags to add to an instance, in addition to the ones added by default by the
+                  GCP provider. If both the GCPCluster and the GCPMachinePool specify the same tag name with different values, the
+                  GCPMachinePool's value takes precedence.
+                type: object
+              additionalMetadata:
+                description: |-
+                  AdditionalMetadata is an optional set of metadata to add to an instance, in addition to the ones added by default by the
+                  GCP provider.
+                items:
+                  description: MetadataItem defines a single piece of metadata associated
+                    with an instance.
+                  properties:
+                    key:
+                      description: Key is the identifier for the metadata entry.
+                      type: string
+                    value:
+                      description: Value is the value of the metadata entry.
+                      type: string
+                  required:
+                  - key
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - key
+                x-kubernetes-list-type: map
+              additionalNetworkTags:
+                description: |-
+                  AdditionalNetworkTags is a list of network tags that should be applied to the
+                  instance. These tags are set in addition to any network tags defined
+                  at the cluster level or in the actuator.
+                items:
+                  type: string
+                type: array
+              confidentialCompute:
+                description: |-
+                  ConfidentialCompute Defines whether the instance should have confidential compute enabled or not, and the confidential computing technology of choice.
+                  If Disabled, the machine will not be configured to be a confidential computing instance.
+                  If Enabled, confidential computing will be configured and AMD Secure Encrypted Virtualization will be configured by default. That is subject to change over time. If using AMD Secure Encrypted Virtualization is vital, use AMDEncryptedVirtualization explicitly instead.
+                  If AMDEncryptedVirtualization, it will configure AMD Secure Encrypted Virtualization (AMD SEV) as the confidential computing technology.
+                  If AMDEncryptedVirtualizationNestedPaging, it will configure AMD Secure Encrypted Virtualization Secure Nested Paging (AMD SEV-SNP) as the confidential computing technology.
+                  If IntelTrustedDomainExtensions, it will configure Intel TDX as the confidential computing technology.
+                  If enabled (any value other than Disabled) OnHostMaintenance is required to be set to "Terminate".
+                  If omitted, the platform chooses a default, which is subject to change over time, currently that default is false.
+                enum:
+                - Enabled
+                - Disabled
+                - AMDEncryptedVirtualization
+                - AMDEncryptedVirtualizationNestedPaging
+                - IntelTrustedDomainExtensions
+                type: string
+              guestAccelerators:
+                description: |-
+                  GuestAccelerators is a list of the type and count of accelerator cards
+                  attached to the instance.
+                items:
+                  description: |-
+                    Accelerator is a specification of the type and number of accelerator
+                    cards attached to the instance.
+                  properties:
+                    count:
+                      description: |-
+                        Count is the number of the guest accelerator cards exposed to this
+                        instance.
+                      format: int64
+                      type: integer
+                    type:
+                      description: |-
+                        Type is the full or partial URL of the accelerator type resource to
+                        attach to this instance. For example:
+                        projects/my-project/zones/us-central1-c/acceleratorTypes/nvidia-tesla-p100
+                        If you are creating an instance template, specify only the accelerator name.
+                        See GPUs on Compute Engine for a full list of accelerator types.
+                      type: string
+                  type: object
+                type: array
+              image:
+                description: |-
+                  Image is the full reference to a valid image to be used for this machine.
+                  Takes precedence over ImageFamily.
+                type: string
+              imageFamily:
+                description: ImageFamily is the full reference to a valid image family
+                  to be used for this machine.
+                type: string
+              instanceType:
+                description: 'InstanceType is the type of instance to create. Example:
+                  n1.standard-2'
+                type: string
+              ipForwarding:
+                default: Enabled
+                description: |-
+                  IPForwarding Allows this instance to send and receive packets with non-matching destination or source IPs.
+                  This is required if you plan to use this instance to forward routes. Defaults to enabled.
+                enum:
+                - Enabled
+                - Disabled
+                type: string
+              onHostMaintenance:
+                description: |-
+                  OnHostMaintenance determines the behavior when a maintenance event occurs that might cause the instance to reboot.
+                  If omitted, the platform chooses a default, which is subject to change over time, currently that default is "Migrate".
+                enum:
+                - Migrate
+                - Terminate
+                type: string
+              preemptible:
+                description: Preemptible defines if instance is preemptible
+                type: boolean
+              providerIDList:
+                description: |-
+                  ProviderIDList are the identification IDs of machine instances provided by the provider.
+                  This field must match the provider IDs as seen on the node objects corresponding to a machine pool's machine instances.
+                items:
+                  type: string
+                type: array
+              provisioningModel:
+                description: |-
+                  ProvisioningModel defines if instance is spot.
+                  If set to "Standard" while preemptible is true, then the VM will be of type "Preemptible".
+                  If "Spot", VM type is "Spot". When unspecified, defaults to "Standard".
+                enum:
+                - Standard
+                - Spot
+                type: string
+              publicIP:
+                description: |-
+                  PublicIP specifies whether the instance should get a public IP.
+                  Set this to true if you don't have a NAT instances or Cloud Nat setup.
+                type: boolean
+              resourceManagerTags:
+                description: |-
+                  ResourceManagerTags is an optional set of tags to apply to GCP resources managed
+                  by the GCP provider. GCP supports a maximum of 50 tags per resource.
+                items:
+                  description: ResourceManagerTag is a tag to apply to GCP resources
+                    managed by the GCP provider.
+                  properties:
+                    key:
+                      description: |-
+                        Key is the key part of the tag. A tag key can have a maximum of 63 characters and cannot
+                        be empty. Tag key must begin and end with an alphanumeric character, and must contain
+                        only uppercase, lowercase alphanumeric characters, and the following special
+                        characters `._-`.
+                      maxLength: 63
+                      minLength: 1
+                      pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.-]{0,61}[a-zA-Z0-9])?$
+                      type: string
+                    parentID:
+                      description: |-
+                        ParentID is the ID of the hierarchical resource where the tags are defined
+                        e.g. at the Organization or the Project level. To find the Organization or Project ID ref
+                        https://cloud.google.com/resource-manager/docs/creating-managing-organization#retrieving_your_organization_id
+                        https://cloud.google.com/resource-manager/docs/creating-managing-projects#identifying_projects
+                        An OrganizationID must consist of decimal numbers, and cannot have leading zeroes.
+                        A ProjectID must be 6 to 30 characters in length, can only contain lowercase letters,
+                        numbers, and hyphens, and must start with a letter, and cannot end with a hyphen.
+                      maxLength: 32
+                      minLength: 1
+                      pattern: (^[1-9][0-9]{0,31}$)|(^[a-z][a-z0-9-]{4,28}[a-z0-9]$)
+                      type: string
+                    value:
+                      description: |-
+                        Value is the value part of the tag. A tag value can have a maximum of 63 characters and
+                        cannot be empty. Tag value must begin and end with an alphanumeric character, and must
+                        contain only uppercase, lowercase alphanumeric characters, and the following special
+                        characters `_-.@%=+:,*#&(){}[]` and spaces.
+                      maxLength: 63
+                      minLength: 1
+                      pattern: ^[a-zA-Z0-9]([0-9A-Za-z_.@%=+:,*#&()\[\]{}\-\s]{0,61}[a-zA-Z0-9])?$
+                      type: string
+                  required:
+                  - key
+                  - parentID
+                  - value
+                  type: object
+                type: array
+              rootDeviceSize:
+                description: |-
+                  RootDeviceSize is the size of the root volume in GB.
+                  Defaults to 30.
+                format: int64
+                type: integer
+              rootDeviceType:
+                description: |-
+                  RootDeviceType is the type of the root volume.
+                  Supported types of root volumes:
+                  1. "pd-standard" - Standard (HDD) persistent disk
+                  2. "pd-ssd" - SSD persistent disk
+                  3. "pd-balanced" - Balanced Persistent Disk
+                  4. "hyperdisk-balanced" - Hyperdisk Balanced
+                  Default is "pd-standard".
+                type: string
+              rootDiskEncryptionKey:
+                description: RootDiskEncryptionKey defines the KMS key to be used
+                  to encrypt the root disk.
+                properties:
+                  keyType:
+                    description: |-
+                      KeyType is the type of encryption key. Must be either Managed, aka Customer-Managed Encryption Key (CMEK) or
+                      Supplied, aka Customer-Supplied EncryptionKey (CSEK).
+                    enum:
+                    - Managed
+                    - Supplied
+                    type: string
+                  kmsKeyServiceAccount:
+                    description: |-
+                      KMSKeyServiceAccount is the service account being used for the encryption request for the given KMS key.
+                      If absent, the Compute Engine default service account is used. For example:
+                      "kmsKeyServiceAccount": "name@project_id.iam.gserviceaccount.com.
+                      The maximum length is based on the Service Account ID (max 30), Project (max 30), and a valid gcloud email
+                      suffix ("iam.gserviceaccount.com").
+                    maxLength: 85
+                    pattern: '[-_[A-Za-z0-9]+@[-_[A-Za-z0-9]+.iam.gserviceaccount.com'
+                    type: string
+                  managedKey:
+                    description: ManagedKey references keys managed by the Cloud Key
+                      Management Service. This should be set when KeyType is Managed.
+                    properties:
+                      kmsKeyName:
+                        description: |-
+                          KMSKeyName is the name of the encryption key that is stored in Google Cloud KMS. For example:
+                          "kmsKeyName": "projects/kms_project_id/locations/region/keyRings/key_region/cryptoKeys/key
+                        maxLength: 160
+                        pattern: projects\/[-_[A-Za-z0-9]+\/locations\/[-_[A-Za-z0-9]+\/keyRings\/[-_[A-Za-z0-9]+\/cryptoKeys\/[-_[A-Za-z0-9]+
+                        type: string
+                    required:
+                    - kmsKeyName
+                    type: object
+                  suppliedKey:
+                    description: SuppliedKey provides the key used to create or manage
+                      a disk. This should be set when KeyType is Managed.
+                    maxProperties: 1
+                    minProperties: 1
+                    properties:
+                      rawKey:
+                        description: |-
+                          RawKey specifies a 256-bit customer-supplied encryption key, encoded in RFC 4648
+                          base64 to either encrypt or decrypt this resource. You can provide either the rawKey or the rsaEncryptedKey.
+                          For example: "rawKey": "SGVsbG8gZnJvbSBHb29nbGUgQ2xvdWQgUGxhdGZvcm0="
+                        format: byte
+                        type: string
+                      rsaEncryptedKey:
+                        description: |-
+                          RSAEncryptedKey specifies an RFC 4648 base64 encoded, RSA-wrapped 2048-bit customer-supplied encryption
+                          key to either encrypt or decrypt this resource. You can provide either the rawKey or the
+                          rsaEncryptedKey.
+                          For example: "rsaEncryptedKey": "ieCx/NcW06PcT7Ep1X6LUTc/hLvUDYyzSZPPVCVPTVEohpeHASqC8uw5TzyO9U+Fka9JFHi
+                          z0mBibXUInrC/jEk014kCK/NPjYgEMOyssZ4ZINPKxlUh2zn1bV+MCaTICrdmuSBTWlUUiFoDi
+                          D6PYznLwh8ZNdaheCeZ8ewEXgFQ8V+sDroLaN3Xs3MDTXQEMMoNUXMCZEIpg9Vtp9x2oe=="
+                          The key must meet the following requirements before you can provide it to Compute Engine:
+                          1. The key is wrapped using a RSA public key certificate provided by Google.
+                          2. After being wrapped, the key must be encoded in RFC 4648 base64 encoding.
+                          Gets the RSA public key certificate provided by Google at: https://cloud-certs.storage.googleapis.com/google-cloud-csek-ingress.pem
+                        format: byte
+                        type: string
+                    type: object
+                required:
+                - keyType
+                type: object
+              serviceAccounts:
+                description: |-
+                  ServiceAccount specifies the service account email and which scopes to assign to the machine.
+                  Defaults to: email: "default", scope: []{compute.CloudPlatformScope}
+                properties:
+                  email:
+                    description: 'Email: Email address of the service account.'
+                    type: string
+                  scopes:
+                    description: |-
+                      Scopes: The list of scopes to be made available for this service
+                      account.
+                    items:
+                      type: string
+                    type: array
+                type: object
+              shieldedInstanceConfig:
+                description: ShieldedInstanceConfig is the Shielded VM configuration
+                  for this machine
+                properties:
+                  integrityMonitoring:
+                    description: |-
+                      IntegrityMonitoring determines whether the instance should have integrity monitoring that verify the runtime boot integrity.
+                      Compares the most recent boot measurements to the integrity policy baseline and return
+                      a pair of pass/fail results depending on whether they match or not.
+                      If omitted, the platform chooses a default, which is subject to change over time, currently that default is Enabled.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
+                  secureBoot:
+                    description: |-
+                      SecureBoot Defines whether the instance should have secure boot enabled.
+                      Secure Boot verify the digital signature of all boot components, and halting the boot process if signature verification fails.
+                      If omitted, the platform chooses a default, which is subject to change over time, currently that default is Disabled.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
+                  virtualizedTrustedPlatformModule:
+                    description: |-
+                      VirtualizedTrustedPlatformModule enable virtualized trusted platform module measurements to create a known good boot integrity policy baseline.
+                      The integrity policy baseline is used for comparison with measurements from subsequent VM boots to determine if anything has changed.
+                      If omitted, the platform chooses a default, which is subject to change over time, currently that default is Enabled.
+                    enum:
+                    - Enabled
+                    - Disabled
+                    type: string
+                type: object
+              subnet:
+                description: |-
+                  Subnet is a reference to the subnetwork to use for this instance. If not specified,
+                  the first subnetwork retrieved from the Cluster Region and Network is picked.
+                type: string
+            required:
+            - instanceType
+            type: object
+          status:
+            description: GCPMachinePoolStatus defines the observed state of GCPMachinePool.
+            properties:
+              conditions:
+                description: Conditions defines current service state of the GCPMachinePool.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+              ready:
+                description: Ready is true when the provider resource is ready.
+                type: boolean
+              replicas:
+                description: Replicas is the most recently observed number of replicas
+                format: int32
+                type: integer
+            type: object
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}
 ---
 apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
@@ -2321,6 +2901,13 @@ spec:
                     description: HostProject is the name of the project hosting the
                       shared VPC network resources.
                     type: string
+                  ipv6Address:
+                    description: |-
+                      Ipv6Address: An IPv6 internal network address for this network interface.
+                      To use a static internal IP address, it must be unused and in the same
+                      region as the instance's zone. If not specified, Google Cloud will
+                      automatically assign an internal IPv6 address from the instance's subnetwork.
+                    type: string
                   loadBalancerBackendPort:
                     description: Allow for configuration of load balancer backend
                       (useful for changing apiserver port)
@@ -2351,6 +2938,20 @@ spec:
                     type: integer
                   name:
                     description: Name is the name of the network to be used.
+                    type: string
+                  stackType:
+                    default: IPv4Only
+                    description: |-
+                      StackType: The stackType for the subnets. If set to IPv4Only, new VMs in
+                      the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
+                      the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+                      IPv4Only is used. This field can be both set at resource creation time and
+                      updated using patch.
+                      GCP allows subnet stack types to be set independently, but, for simplicity,
+                      all subnets in the network will be created with the same stackType.
+                    enum:
+                    - IPv4Only
+                    - DualStack
                     type: string
                   subnets:
                     description: Subnets configuration.
@@ -2420,23 +3021,19 @@ spec:
                             from which secondary IP ranges of a VM may be allocated
                           type: object
                         stackType:
-                          default: IPV4_ONLY
+                          default: IPv4Only
                           description: |-
-                            StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
-                            the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+                            StackType: The stackType for the subnet. If set to IPv4Only, new VMs in
+                            the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
                             the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
-                            IPV4_ONLY is used. This field can be both set at resource creation time and
+                            IPv4Only is used. This field can be both set at resource creation time and
                             updated using patch.
 
-                            Possible values:
-                              "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
-                            addresses.
-                              "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
-                              "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+                            NOT IMPLEMENTED: Stack type is currently set in the `NetworkSpec` and all
+                            subnets will have the same stack type.
                           enum:
-                          - IPV4_ONLY
-                          - IPV4_IPV6
-                          - IPV6_ONLY
+                          - IPv4Only
+                          - DualStack
                           type: string
                       type: object
                     type: array
@@ -2883,6 +3480,13 @@ spec:
                             description: HostProject is the name of the project hosting
                               the shared VPC network resources.
                             type: string
+                          ipv6Address:
+                            description: |-
+                              Ipv6Address: An IPv6 internal network address for this network interface.
+                              To use a static internal IP address, it must be unused and in the same
+                              region as the instance's zone. If not specified, Google Cloud will
+                              automatically assign an internal IPv6 address from the instance's subnetwork.
+                            type: string
                           loadBalancerBackendPort:
                             description: Allow for configuration of load balancer
                               backend (useful for changing apiserver port)
@@ -2913,6 +3517,20 @@ spec:
                             type: integer
                           name:
                             description: Name is the name of the network to be used.
+                            type: string
+                          stackType:
+                            default: IPv4Only
+                            description: |-
+                              StackType: The stackType for the subnets. If set to IPv4Only, new VMs in
+                              the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
+                              the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+                              IPv4Only is used. This field can be both set at resource creation time and
+                              updated using patch.
+                              GCP allows subnet stack types to be set independently, but, for simplicity,
+                              all subnets in the network will be created with the same stackType.
+                            enum:
+                            - IPv4Only
+                            - DualStack
                             type: string
                           subnets:
                             description: Subnets configuration.
@@ -2982,23 +3600,19 @@ spec:
                                     from which secondary IP ranges of a VM may be allocated
                                   type: object
                                 stackType:
-                                  default: IPV4_ONLY
+                                  default: IPv4Only
                                   description: |-
-                                    StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
-                                    the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+                                    StackType: The stackType for the subnet. If set to IPv4Only, new VMs in
+                                    the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
                                     the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
-                                    IPV4_ONLY is used. This field can be both set at resource creation time and
+                                    IPv4Only is used. This field can be both set at resource creation time and
                                     updated using patch.
 
-                                    Possible values:
-                                      "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
-                                    addresses.
-                                      "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
-                                      "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
+                                    NOT IMPLEMENTED: Stack type is currently set in the `NetworkSpec` and all
+                                    subnets will have the same stack type.
                                   enum:
-                                  - IPV4_ONLY
-                                  - IPV4_IPV6
-                                  - IPV6_ONLY
+                                  - IPv4Only
+                                  - DualStack
                                   type: string
                               type: object
                             type: array
@@ -4703,6 +5317,8 @@ rules:
   resources:
   - clusters
   - clusters/status
+  - machinepools
+  - machinepools/status
   verbs:
   - get
   - list
@@ -4711,8 +5327,6 @@ rules:
 - apiGroups:
   - cluster.x-k8s.io
   resources:
-  - machinepools
-  - machinepools/status
   - machines
   - machines/status
   verbs:
@@ -4739,6 +5353,7 @@ rules:
   - infrastructure.cluster.x-k8s.io
   resources:
   - gcpclusters/status
+  - gcpmachinepools/status
   - gcpmachines/status
   - gcpmanagedclusters/status
   - gcpmanagedcontrolplanes/status
@@ -4747,6 +5362,17 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - infrastructure.cluster.x-k8s.io
+  resources:
+  - gcpmachinepools
+  verbs:
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
 - apiGroups:
   - infrastructure.cluster.x-k8s.io
   resources:
@@ -4837,7 +5463,7 @@ spec:
       containers:
       - args:
         - --leader-elect
-        - --feature-gates=GKE=${EXP_CAPG_GKE:=false}
+        - --feature-gates=GKE=${EXP_CAPG_GKE:=false},MachinePool=${EXP_MACHINE_POOL:=false}
         - --diagnostics-address=${CAPG_DIAGNOSTICS_ADDRESS:=:8443}
         - --insecure-diagnostics=${CAPG_INSECURE_DIAGNOSTICS:=false}
         - --v=${CAPG_LOGLEVEL:=0}
@@ -5225,6 +5851,25 @@ webhooks:
     - UPDATE
     resources:
     - gcpmachinetemplates
+  sideEffects: None
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: capg-webhook-service
+      namespace: capg-system
+      path: /validate-infrastructure-cluster-x-k8s-io-v1beta1-gcpmachinepool
+  failurePolicy: Fail
+  name: validation.gcpmachinepool.infrastructure.cluster.x-k8s.io
+  rules:
+  - apiGroups:
+    - infrastructure.cluster.x-k8s.io
+    apiVersions:
+    - v1beta1
+    operations:
+    - UPDATE
+    resources:
+    - gcpmachinepools
   sideEffects: None
 - admissionReviewVersions:
   - v1
