@@ -22,7 +22,8 @@ resource "google_compute_region_backend_service" "api_internal" {
     for_each = var.gcp_bootstrap_lb ? concat(var.bootstrap_instance_groups, var.master_instance_groups) : var.master_instance_groups
 
     content {
-      group = backend.value
+      group          = backend.value
+      balancing_mode = "CONNECTION"
     }
   }
 
