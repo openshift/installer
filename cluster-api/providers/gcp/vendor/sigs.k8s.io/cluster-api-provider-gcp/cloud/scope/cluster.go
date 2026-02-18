@@ -27,7 +27,8 @@ import (
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -119,6 +120,20 @@ func (s *ClusterScope) IsSharedVpc() bool {
 	return s.NetworkProject() != s.Project()
 }
 
+// StackType returns the network stack type for the cluster.
+func (s *ClusterScope) StackType() infrav1.StackType {
+	return s.GCPCluster.Spec.Network.StackType
+}
+
+// Ipv6Address returns the IPv6 address when one is provided in the spec and the cluster network is not IPv4 Only.
+func (s *ClusterScope) Ipv6Address() string {
+	address := ""
+	if s.StackType() != infrav1.IPv4OnlyStackType {
+		address = s.GCPCluster.Spec.Network.Ipv6Address
+	}
+	return address
+}
+
 // Region returns the cluster region.
 func (s *ClusterScope) Region() string {
 	return s.GCPCluster.Spec.Region
@@ -185,17 +200,24 @@ func (s *ClusterScope) ResourceManagerTags() infrav1.ResourceManagerTags {
 
 // ControlPlaneEndpoint returns the cluster control-plane endpoint.
 func (s *ClusterScope) ControlPlaneEndpoint() clusterv1.APIEndpoint {
-	endpoint := s.GCPCluster.Spec.ControlPlaneEndpoint
-	endpoint.Port = 443
-	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
-		endpoint.Port = ptr.Deref(c.APIServerPort, 443)
+	endpoint := clusterv1.APIEndpoint{
+		Host: s.GCPCluster.Spec.ControlPlaneEndpoint.Host,
+		Port: 443,
+	}
+
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
+		endpoint.Port = s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	return endpoint
 }
 
 // FailureDomains returns the cluster failure domains.
-func (s *ClusterScope) FailureDomains() clusterv1.FailureDomains {
-	return s.GCPCluster.Status.FailureDomains
+func (s *ClusterScope) FailureDomains() []string {
+	failureDomains := []string{}
+	for failureDomainName := range s.GCPCluster.Status.FailureDomains {
+		failureDomains = append(failureDomains, failureDomainName)
+	}
+	return failureDomains
 }
 
 // ANCHOR_END: ClusterGetter
@@ -208,13 +230,16 @@ func (s *ClusterScope) SetReady() {
 }
 
 // SetFailureDomains sets cluster failure domains.
-func (s *ClusterScope) SetFailureDomains(fd clusterv1.FailureDomains) {
+func (s *ClusterScope) SetFailureDomains(fd clusterv1beta1.FailureDomains) {
 	s.GCPCluster.Status.FailureDomains = fd
 }
 
 // SetControlPlaneEndpoint sets cluster control-plane endpoint.
 func (s *ClusterScope) SetControlPlaneEndpoint(endpoint clusterv1.APIEndpoint) {
-	s.GCPCluster.Spec.ControlPlaneEndpoint = endpoint
+	s.GCPCluster.Spec.ControlPlaneEndpoint = clusterv1beta1.APIEndpoint{
+		Host: endpoint.Host,
+		Port: endpoint.Port,
+	}
 }
 
 // ANCHOR_END: ClusterSetter
@@ -256,6 +281,12 @@ func (s *ClusterScope) NatRouterSpec() *compute.Router {
 // SubnetSpecs returns google compute subnets spec.
 func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 	subnets := []*compute.Subnetwork{}
+
+	stackType := "IPV4_ONLY"
+	if s.StackType() == infrav1.DualStackType {
+		stackType = "IPV4_IPV6"
+	}
+
 	for _, subnetwork := range s.GCPCluster.Spec.Network.Subnets {
 		secondaryIPRanges := []*compute.SubnetworkSecondaryRange{}
 		for rangeName, secondaryCidrBlock := range subnetwork.SecondaryCidrBlocks {
@@ -272,7 +303,7 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			Network:               s.NetworkLink(),
 			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
-			StackType:             subnetwork.StackType,
+			StackType:             stackType,
 		})
 	}
 
@@ -331,13 +362,24 @@ func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
 
 // ANCHOR: ClusterControlPlaneSpec
 
-// AddressSpec returns google compute address spec.
-func (s *ClusterScope) AddressSpec(lbname string) *compute.Address {
-	return &compute.Address{
+// AddressSpecs returns google compute address specs.
+func (s *ClusterScope) AddressSpecs(lbname string) []*compute.Address {
+	specs := []*compute.Address{{
 		Name:        fmt.Sprintf("%s-%s", s.Name(), lbname),
 		AddressType: "EXTERNAL",
 		IpVersion:   "IPV4",
+	}}
+
+	if s.StackType() == infrav1.DualStackType {
+		specs = append(specs, &compute.Address{
+			Name:             fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
+			AddressType:      "EXTERNAL",
+			IpVersion:        "IPV6",
+			Ipv6EndpointType: "NETLB",
+		})
 	}
+
+	return specs
 }
 
 // BackendServiceSpec returns google compute backend-service spec.
@@ -351,37 +393,72 @@ func (s *ClusterScope) BackendServiceSpec(lbname string) *compute.BackendService
 	}
 }
 
-// ForwardingRuleSpec returns google compute forwarding-rule spec.
-func (s *ClusterScope) ForwardingRuleSpec(lbname string) *compute.ForwardingRule {
+// ForwardingRuleSpecs returns a list of google compute forwarding-rule spec.
+func (s *ClusterScope) ForwardingRuleSpecs(lbname string) []*compute.ForwardingRule {
 	port := int32(443)
-	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
-		port = ptr.Deref(c.APIServerPort, 443)
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
+		port = s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	portRange := fmt.Sprintf("%d-%d", port, port)
-	return &compute.ForwardingRule{
-		Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
-		IPProtocol:          "TCP",
-		LoadBalancingScheme: "EXTERNAL",
-		PortRange:           portRange,
-		Labels:              s.AdditionalLabels(),
+
+	forwardingRules := []*compute.ForwardingRule{
+		{
+			Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
+			IPProtocol:          "TCP",
+			LoadBalancingScheme: "EXTERNAL",
+			PortRange:           portRange,
+			Labels:              s.AdditionalLabels(),
+		},
 	}
+
+	if s.StackType() == infrav1.DualStackType {
+		forwardingRules = append(forwardingRules, &compute.ForwardingRule{
+			Name:                fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
+			IPProtocol:          "TCP",
+			LoadBalancingScheme: "EXTERNAL",
+			PortRange:           portRange,
+			Labels:              s.AdditionalLabels(),
+		})
+	}
+
+	return forwardingRules
 }
 
-// HealthCheckSpec returns google compute health-check spec.
-func (s *ClusterScope) HealthCheckSpec(lbname string) *compute.HealthCheck {
-	return &compute.HealthCheck{
-		Name: fmt.Sprintf("%s-%s", s.Name(), lbname),
-		Type: "HTTPS",
-		HttpsHealthCheck: &compute.HTTPSHealthCheck{
-			Port:              6443,
-			PortSpecification: "USE_FIXED_PORT",
-			RequestPath:       "/readyz",
+// HealthCheckSpecs returns a list of google compute health-check spec items.
+func (s *ClusterScope) HealthCheckSpecs(lbname string) []*compute.HealthCheck {
+	specs := []*compute.HealthCheck{
+		{
+			Name: fmt.Sprintf("%s-%s", s.Name(), lbname),
+			Type: "HTTPS",
+			HttpsHealthCheck: &compute.HTTPSHealthCheck{
+				Port:              6443,
+				PortSpecification: "USE_FIXED_PORT",
+				RequestPath:       "/readyz",
+			},
+			CheckIntervalSec:   10,
+			TimeoutSec:         5,
+			HealthyThreshold:   5,
+			UnhealthyThreshold: 3,
 		},
-		CheckIntervalSec:   10,
-		TimeoutSec:         5,
-		HealthyThreshold:   5,
-		UnhealthyThreshold: 3,
 	}
+
+	if s.StackType() == infrav1.DualStackType {
+		specs = append(specs, &compute.HealthCheck{
+			Name: fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
+			Type: "HTTPS",
+			HttpsHealthCheck: &compute.HTTPSHealthCheck{
+				Port:              6443,
+				PortSpecification: "USE_FIXED_PORT",
+				RequestPath:       "/readyz",
+			},
+			CheckIntervalSec:   10,
+			TimeoutSec:         5,
+			HealthyThreshold:   5,
+			UnhealthyThreshold: 3,
+		})
+	}
+
+	return specs
 }
 
 // InstanceGroupSpec returns google compute instance-group spec.

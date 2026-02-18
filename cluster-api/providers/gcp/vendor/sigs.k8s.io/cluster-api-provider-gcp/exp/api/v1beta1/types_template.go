@@ -18,7 +18,7 @@ package v1beta1
 
 import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // GCPManagedControlPlaneTemplateResourceSpec specifies an GCP managed control plane template resource.
@@ -45,7 +45,7 @@ type GCPManagedClusterTemplateResourceSpec struct {
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// NetworkSpec encapsulates all things related to the GCP network.
 	// +optional
