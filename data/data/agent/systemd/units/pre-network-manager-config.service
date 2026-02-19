@@ -6,7 +6,7 @@ DefaultDependencies=no
 [Service]
 User=root
 ExecStart=/usr/local/bin/pre-network-manager-config.sh
-TimeoutSec=60
+TimeoutSec=300
 KillMode=none
 Type=oneshot
 PrivateTmp=true
