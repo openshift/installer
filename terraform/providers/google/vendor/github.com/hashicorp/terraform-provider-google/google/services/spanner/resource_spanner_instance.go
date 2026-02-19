@@ -20,14 +20,13 @@ package spanner
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -369,7 +368,6 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -378,7 +376,6 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
@@ -458,14 +455,12 @@ func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SpannerInstance %q", d.Id()))
@@ -585,7 +580,6 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	if resourceSpannerInstanceVirtualUpdate(d, ResourceSpannerInstance().Schema) {
 		if d.Get("force_destroy") != nil {
 			if err := d.Set("force_destroy", d.Get("force_destroy")); err != nil {
@@ -608,7 +602,6 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -655,8 +648,6 @@ func resourceSpannerInstanceDelete(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	if d.Get("force_destroy").(bool) {
 		backupsUrl, err := tpgresource.ReplaceVars(d, config, "{{SpannerBasePath}}projects/{{project}}/instances/{{name}}/backups")
 		if err != nil {
@@ -690,7 +681,6 @@ func resourceSpannerInstanceDelete(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Instance")
@@ -1131,7 +1121,7 @@ func resourceSpannerInstanceEncoder(d *schema.ResourceData, meta interface{}, ob
 	newObj := make(map[string]interface{})
 	newObj["instance"] = obj
 	if obj["name"] == nil {
-		if err := d.Set("name", id.PrefixedUniqueId("tfgen-spanid-")[:30]); err != nil {
+		if err := d.Set("name", resource.PrefixedUniqueId("tfgen-spanid-")[:30]); err != nil {
 			return nil, fmt.Errorf("Error setting name: %s", err)
 		}
 		newObj["instanceId"] = d.Get("name").(string)

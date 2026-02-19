@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -80,21 +79,13 @@ Format: ''projects/{{project}}/locations/{{location}}/keyRings/{{keyRing}}''.`,
 				ForceNew:    true,
 				Description: `The resource name for the CryptoKey.`,
 			},
-			"crypto_key_backend": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
-				ForceNew: true,
-				Description: `The resource name of the backend environment associated with all CryptoKeyVersions within this CryptoKey.
-The resource name is in the format "projects/*/locations/*/ekmConnections/*" and only applies to "EXTERNAL_VPC" keys.`,
-			},
 			"destroy_scheduled_duration": {
 				Type:     schema.TypeString,
 				Computed: true,
 				Optional: true,
 				ForceNew: true,
 				Description: `The period of time that versions of this key spend in the DESTROY_SCHEDULED state before transitioning to DESTROYED.
-If not specified at creation time, the default duration is 30 days.`,
+If not specified at creation time, the default duration is 24 hours.`,
 			},
 			"import_only": {
 				Type:        schema.TypeBool,
@@ -137,8 +128,7 @@ letter 's' (seconds). It must be greater than a day (ie, 86400).`,
 				Optional: true,
 				ForceNew: true,
 				Description: `If set to true, the request will create a CryptoKey without any CryptoKeyVersions.
-You must use the 'google_kms_crypto_key_version' resource to create a new CryptoKeyVersion
-or 'google_kms_key_ring_import_job' resource to import the CryptoKeyVersion.`,
+You must use the 'google_kms_key_ring_import_job' resource to import the CryptoKeyVersion.`,
 			},
 			"version_template": {
 				Type:        schema.TypeList,
@@ -240,12 +230,6 @@ func resourceKMSCryptoKeyCreate(d *schema.ResourceData, meta interface{}) error 
 	} else if v, ok := d.GetOkExists("import_only"); !tpgresource.IsEmptyValue(reflect.ValueOf(importOnlyProp)) && (ok || !reflect.DeepEqual(v, importOnlyProp)) {
 		obj["importOnly"] = importOnlyProp
 	}
-	cryptoKeyBackendProp, err := expandKMSCryptoKeyCryptoKeyBackend(d.Get("crypto_key_backend"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("crypto_key_backend"); !tpgresource.IsEmptyValue(reflect.ValueOf(cryptoKeyBackendProp)) && (ok || !reflect.DeepEqual(v, cryptoKeyBackendProp)) {
-		obj["cryptoKeyBackend"] = cryptoKeyBackendProp
-	}
 	labelsProp, err := expandKMSCryptoKeyEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -275,7 +259,6 @@ func resourceKMSCryptoKeyCreate(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -284,7 +267,6 @@ func resourceKMSCryptoKeyCreate(d *schema.ResourceData, meta interface{}) error 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating CryptoKey: %s", err)
@@ -325,14 +307,12 @@ func resourceKMSCryptoKeyRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("KMSCryptoKey %q", d.Id()))
@@ -369,9 +349,6 @@ func resourceKMSCryptoKeyRead(d *schema.ResourceData, meta interface{}) error {
 		return fmt.Errorf("Error reading CryptoKey: %s", err)
 	}
 	if err := d.Set("import_only", flattenKMSCryptoKeyImportOnly(res["importOnly"], d, config)); err != nil {
-		return fmt.Errorf("Error reading CryptoKey: %s", err)
-	}
-	if err := d.Set("crypto_key_backend", flattenKMSCryptoKeyCryptoKeyBackend(res["cryptoKeyBackend"], d, config)); err != nil {
 		return fmt.Errorf("Error reading CryptoKey: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenKMSCryptoKeyTerraformLabels(res["labels"], d, config)); err != nil {
@@ -424,7 +401,6 @@ func resourceKMSCryptoKeyUpdate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	log.Printf("[DEBUG] Updating CryptoKey %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("rotation_period") {
@@ -464,7 +440,6 @@ func resourceKMSCryptoKeyUpdate(d *schema.ResourceData, meta interface{}) error 
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -618,10 +593,6 @@ func flattenKMSCryptoKeyImportOnly(v interface{}, d *schema.ResourceData, config
 	return v
 }
 
-func flattenKMSCryptoKeyCryptoKeyBackend(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func flattenKMSCryptoKeyTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -688,10 +659,6 @@ func expandKMSCryptoKeyDestroyScheduledDuration(v interface{}, d tpgresource.Ter
 }
 
 func expandKMSCryptoKeyImportOnly(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandKMSCryptoKeyCryptoKeyBackend(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

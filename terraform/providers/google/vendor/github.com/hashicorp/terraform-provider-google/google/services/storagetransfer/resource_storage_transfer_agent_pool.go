@@ -20,13 +20,12 @@ package storagetransfer
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -36,20 +35,20 @@ import (
 // waitForAgentPoolReady waits for an agent pool to leave the
 // "CREATING" state and become "CREATED", to indicate that it's ready.
 func waitForAgentPoolReady(d *schema.ResourceData, config *transport_tpg.Config, timeout time.Duration) error {
-	return retry.Retry(timeout, func() *retry.RetryError {
+	return resource.Retry(timeout, func() *resource.RetryError {
 		if err := resourceStorageTransferAgentPoolRead(d, config); err != nil {
-			return retry.NonRetryableError(err)
+			return resource.NonRetryableError(err)
 		}
 
 		name := d.Get("name").(string)
 		state := d.Get("state").(string)
 		if state == "CREATING" {
-			return retry.RetryableError(fmt.Errorf("AgentPool %q has state %q.", name, state))
+			return resource.RetryableError(fmt.Errorf("AgentPool %q has state %q.", name, state))
 		} else if state == "CREATED" {
 			log.Printf("[DEBUG] AgentPool %q has state %q.", name, state)
 			return nil
 		} else {
-			return retry.NonRetryableError(fmt.Errorf("AgentPool %q has state %q.", name, state))
+			return resource.NonRetryableError(fmt.Errorf("AgentPool %q has state %q.", name, state))
 		}
 	})
 }
@@ -167,7 +166,6 @@ func resourceStorageTransferAgentPoolCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -176,7 +174,6 @@ func resourceStorageTransferAgentPoolCreate(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating AgentPool: %s", err)
@@ -223,14 +220,12 @@ func resourceStorageTransferAgentPoolRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("StorageTransferAgentPool %q", d.Id()))
@@ -288,7 +283,6 @@ func resourceStorageTransferAgentPoolUpdate(d *schema.ResourceData, meta interfa
 	}
 
 	log.Printf("[DEBUG] Updating AgentPool %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -323,7 +317,6 @@ func resourceStorageTransferAgentPoolUpdate(d *schema.ResourceData, meta interfa
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -364,8 +357,6 @@ func resourceStorageTransferAgentPoolDelete(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting AgentPool %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -375,7 +366,6 @@ func resourceStorageTransferAgentPoolDelete(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "AgentPool")

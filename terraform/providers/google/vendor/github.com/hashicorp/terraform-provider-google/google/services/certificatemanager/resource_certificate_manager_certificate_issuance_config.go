@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -253,7 +252,6 @@ func resourceCertificateManagerCertificateIssuanceConfigCreate(d *schema.Resourc
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -262,7 +260,6 @@ func resourceCertificateManagerCertificateIssuanceConfigCreate(d *schema.Resourc
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating CertificateIssuanceConfig: %s", err)
@@ -315,14 +312,12 @@ func resourceCertificateManagerCertificateIssuanceConfigRead(d *schema.ResourceD
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CertificateManagerCertificateIssuanceConfig %q", d.Id()))
@@ -398,8 +393,6 @@ func resourceCertificateManagerCertificateIssuanceConfigDelete(d *schema.Resourc
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting CertificateIssuanceConfig %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -409,7 +402,6 @@ func resourceCertificateManagerCertificateIssuanceConfigDelete(d *schema.Resourc
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "CertificateIssuanceConfig")

@@ -13,7 +13,7 @@ import (
 
 	"github.com/hashicorp/go-cty/cty"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -130,9 +130,9 @@ func ResourceSqlDatabaseInstance() *schema.Resource {
 		},
 
 		Timeouts: &schema.ResourceTimeout{
-			Create: schema.DefaultTimeout(90 * time.Minute),
-			Update: schema.DefaultTimeout(90 * time.Minute),
-			Delete: schema.DefaultTimeout(90 * time.Minute),
+			Create: schema.DefaultTimeout(40 * time.Minute),
+			Update: schema.DefaultTimeout(30 * time.Minute),
+			Delete: schema.DefaultTimeout(30 * time.Minute),
 		},
 
 		CustomizeDiff: customdiff.All(
@@ -397,11 +397,6 @@ is set to true. Defaults to ZONAL.`,
 							Default:     0,
 							Description: `The maximum size, in GB, to which storage capacity can be automatically increased. The default value is 0, which specifies that there is no limit.`,
 						},
-						"enable_google_ml_integration": {
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: `Enables Vertex AI Integration.`,
-						},
 						"disk_size": {
 							Type:     schema.TypeInt,
 							Optional: true,
@@ -443,7 +438,6 @@ is set to true. Defaults to ZONAL.`,
 										Optional:     true,
 										AtLeastOneOf: ipConfigurationKeys,
 										Description:  `Whether SSL connections over IP are enforced or not. To change this field, also set the corresponding value in ssl_mode if it has been set too.`,
-										Deprecated:   "`require_ssl` will be fully deprecated in a future major release. For now, please use `ssl_mode` with a compatible `require_ssl` value instead.",
 									},
 									"private_network": {
 										Type:             schema.TypeString,
@@ -493,7 +487,7 @@ is set to true. Defaults to ZONAL.`,
 										Optional:     true,
 										Computed:     true,
 										ValidateFunc: validation.StringInSlice([]string{"ALLOW_UNENCRYPTED_AND_ENCRYPTED", "ENCRYPTED_ONLY", "TRUSTED_CLIENT_CERTIFICATE_REQUIRED"}, false),
-										Description:  `Specify how SSL connection should be enforced in DB connections. This field provides more SSL enforcment options compared to require_ssl. To change this field, also set the correspoding value in require_ssl until next major release.`,
+										Description:  `Specify how SSL connection should be enforced in DB connections. This field provides more SSL enforcment options compared to require_ssl. To change this field, also set the correspoding value in require_ssl.`,
 										AtLeastOneOf: ipConfigurationKeys,
 									},
 								},
@@ -550,7 +544,7 @@ is set to true. Defaults to ZONAL.`,
 										Type:         schema.TypeString,
 										Optional:     true,
 										AtLeastOneOf: maintenanceWindowKeys,
-										Description:  `Receive updates after one week (canary) or after two weeks (stable) or after five weeks (week5) of notification.`,
+										Description:  `Receive updates earlier (canary) or later (stable)`,
 									},
 								},
 							},
@@ -1054,7 +1048,7 @@ func resourceSqlDatabaseInstanceCreate(d *schema.ResourceData, meta interface{})
 	if v, ok := d.GetOk("name"); ok {
 		name = v.(string)
 	} else {
-		name = id.UniqueId()
+		name = resource.UniqueId()
 	}
 
 	if err := d.Set("name", name); err != nil {
@@ -1274,7 +1268,7 @@ func expandSqlDatabaseInstanceSettings(configured []interface{}, databaseVersion
 		Tier:                      _settings["tier"].(string),
 		Edition:                   _settings["edition"].(string),
 		AdvancedMachineFeatures:   expandSqlServerAdvancedMachineFeatures(_settings["advanced_machine_features"].([]interface{})),
-		ForceSendFields:           []string{"StorageAutoResize", "EnableGoogleMlIntegration"},
+		ForceSendFields:           []string{"StorageAutoResize"},
 		ActivationPolicy:          _settings["activation_policy"].(string),
 		ActiveDirectoryConfig:     expandActiveDirectoryConfig(_settings["active_directory_config"].([]interface{})),
 		DenyMaintenancePeriods:    expandDenyMaintenancePeriod(_settings["deny_maintenance_period"].([]interface{})),
@@ -1287,7 +1281,6 @@ func expandSqlDatabaseInstanceSettings(configured []interface{}, databaseVersion
 		DataDiskType:              _settings["disk_type"].(string),
 		PricingPlan:               _settings["pricing_plan"].(string),
 		DeletionProtectionEnabled: _settings["deletion_protection_enabled"].(bool),
-		EnableGoogleMlIntegration: _settings["enable_google_ml_integration"].(bool),
 		UserLabels:                tpgresource.ConvertStringMap(_settings["user_labels"].(map[string]interface{})),
 		BackupConfiguration:       expandBackupConfiguration(_settings["backup_configuration"].([]interface{})),
 		DatabaseFlags:             expandDatabaseFlags(_settings["database_flags"].(*schema.Set).List()),
@@ -1939,11 +1932,6 @@ func resourceSqlDatabaseInstanceUpdate(d *schema.ResourceData, meta interface{})
 		instance.InstanceType = d.Get("instance_type").(string)
 	}
 
-	// Database Version is required for all calls with Google ML integration enabled or it will be rejected by the API.
-	if d.Get("settings.0.enable_google_ml_integration").(bool) {
-		instance.DatabaseVersion = databaseVersion
-	}
-
 	err = transport_tpg.Retry(transport_tpg.RetryOptions{
 		RetryFunc: func() (rerr error) {
 			op, rerr = config.NewSqlAdminClient(userAgent).Instances.Update(project, d.Get("name").(string), instance).Do()
@@ -2110,8 +2098,6 @@ func flattenSettings(settings *sqladmin.Settings, d *schema.ResourceData) []map[
 
 	data["disk_autoresize"] = settings.StorageAutoResize
 	data["disk_autoresize_limit"] = settings.StorageAutoResizeLimit
-
-	data["enable_google_ml_integration"] = settings.EnableGoogleMlIntegration
 
 	if settings.UserLabels != nil {
 		data["user_labels"] = settings.UserLabels

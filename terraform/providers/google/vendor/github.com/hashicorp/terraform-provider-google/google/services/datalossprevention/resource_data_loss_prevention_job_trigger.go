@@ -20,7 +20,6 @@ package datalossprevention
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -215,8 +214,7 @@ rowsLimit and rowsLimitPercent can be specified. Cannot be used in conjunction w
 													Optional:     true,
 													ValidateFunc: verify.ValidateEnum([]string{"TOP", "RANDOM_START", ""}),
 													Description: `How to sample rows if not all rows are scanned. Meaningful only when used in conjunction with either
-rowsLimit or rowsLimitPercent. If not specified, rows are scanned in the order BigQuery reads them.
-If TimespanConfig is set, set this to an empty string to avoid using the default value. Default value: "TOP" Possible values: ["TOP", "RANDOM_START"]`,
+rowsLimit or rowsLimitPercent. If not specified, rows are scanned in the order BigQuery reads them. Default value: "TOP" Possible values: ["TOP", "RANDOM_START"]`,
 													Default: "TOP",
 												},
 											},
@@ -1471,7 +1469,6 @@ func resourceDataLossPreventionJobTriggerCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1480,7 +1477,6 @@ func resourceDataLossPreventionJobTriggerCreate(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating JobTrigger: %s", err)
@@ -1520,14 +1516,12 @@ func resourceDataLossPreventionJobTriggerRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DataLossPreventionJobTrigger %q", d.Id()))
@@ -1628,7 +1622,6 @@ func resourceDataLossPreventionJobTriggerUpdate(d *schema.ResourceData, meta int
 	}
 
 	log.Printf("[DEBUG] Updating JobTrigger %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -1672,7 +1665,6 @@ func resourceDataLossPreventionJobTriggerUpdate(d *schema.ResourceData, meta int
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -1707,8 +1699,6 @@ func resourceDataLossPreventionJobTriggerDelete(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting JobTrigger %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -1718,7 +1708,6 @@ func resourceDataLossPreventionJobTriggerDelete(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "JobTrigger")

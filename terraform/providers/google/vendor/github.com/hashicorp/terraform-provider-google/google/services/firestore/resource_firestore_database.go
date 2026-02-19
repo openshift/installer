@@ -20,7 +20,6 @@ package firestore
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -258,7 +257,6 @@ func resourceFirestoreDatabaseCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -267,7 +265,6 @@ func resourceFirestoreDatabaseCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Database: %s", err)
@@ -334,14 +331,12 @@ func resourceFirestoreDatabaseRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("FirestoreDatabase %q", d.Id()))
@@ -462,7 +457,6 @@ func resourceFirestoreDatabaseUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Database %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("type") {
@@ -510,7 +504,6 @@ func resourceFirestoreDatabaseUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -558,7 +551,6 @@ func resourceFirestoreDatabaseDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	if deletionPolicy := d.Get("deletion_policy"); deletionPolicy != "DELETE" {
 		log.Printf("[WARN] Firestore database %q deletion_policy is not set to 'DELETE', skipping deletion", d.Get("name").(string))
 		return nil
@@ -576,7 +568,6 @@ func resourceFirestoreDatabaseDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Database")

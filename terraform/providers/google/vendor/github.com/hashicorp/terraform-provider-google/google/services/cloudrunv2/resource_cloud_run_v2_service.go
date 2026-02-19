@@ -20,7 +20,6 @@ package cloudrunv2
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -302,7 +301,6 @@ is the value of container.ports[0].containerPort.`,
 										Description: `List of ports to expose from the container. Only a single port can be specified. The specified ports must be listening on all interfaces (0.0.0.0) within the container to be accessible.
 
 If omitted, a port number will be chosen and passed to the container through the PORT environment variable for the container to listen on`,
-										MaxItems: 1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"container_port": {
@@ -559,10 +557,9 @@ All system labels in v1 now have a corresponding field in v2 RevisionTemplate.`,
 							Description: `Enables session affinity. For more information, go to https://cloud.google.com/run/docs/configuring/session-affinity`,
 						},
 						"timeout": {
-							Type:         schema.TypeString,
-							Computed:     true,
-							Optional:     true,
-							ValidateFunc: verify.ValidateRegexp(`^[0-9]+(?:\.[0-9]{1,9})?s$`),
+							Type:     schema.TypeString,
+							Computed: true,
+							Optional: true,
 							Description: `Max allowed time for an instance to respond to a request.
 
 A duration in seconds with up to nine fractional digits, ending with 's'. Example: "3.5s".`,
@@ -600,7 +597,7 @@ A duration in seconds with up to nine fractional digits, ending with 's'. Exampl
 									"gcs": {
 										Type:        schema.TypeList,
 										Optional:    true,
-										Description: `Cloud Storage bucket mounted as a volume using GCSFuse. This feature is only supported in the gen2 execution environment and requires launch-stage to be set to ALPHA or BETA.`,
+										Description: `Represents a GCS Bucket mounted as a volume.`,
 										MaxItems:    1,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
@@ -1201,7 +1198,6 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1210,7 +1206,6 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Service: %s", err)
@@ -1230,6 +1225,9 @@ func resourceCloudRunV2ServiceCreate(d *schema.ResourceData, meta interface{}) e
 		config, res, &opRes, project, "Creating Service", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
+		// The resource didn't actually create
+		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Service: %s", err)
 	}
 
@@ -1270,14 +1268,12 @@ func resourceCloudRunV2ServiceRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudRunV2Service %q", d.Id()))
@@ -1473,7 +1469,6 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Service %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1488,7 +1483,6 @@ func resourceCloudRunV2ServiceUpdate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -1535,8 +1529,6 @@ func resourceCloudRunV2ServiceDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Service %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -1546,7 +1538,6 @@ func resourceCloudRunV2ServiceDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Service")

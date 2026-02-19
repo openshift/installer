@@ -20,7 +20,6 @@ package networkservices
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -216,7 +215,6 @@ func resourceNetworkServicesEdgeCacheKeysetCreate(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -225,7 +223,6 @@ func resourceNetworkServicesEdgeCacheKeysetCreate(d *schema.ResourceData, meta i
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
-		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {
@@ -279,14 +276,12 @@ func resourceNetworkServicesEdgeCacheKeysetRead(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
-		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {
@@ -366,7 +361,6 @@ func resourceNetworkServicesEdgeCacheKeysetUpdate(d *schema.ResourceData, meta i
 	}
 
 	log.Printf("[DEBUG] Updating EdgeCacheKeyset %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -406,7 +400,6 @@ func resourceNetworkServicesEdgeCacheKeysetUpdate(d *schema.ResourceData, meta i
 			UserAgent:            userAgent,
 			Body:                 obj,
 			Timeout:              d.Timeout(schema.TimeoutUpdate),
-			Headers:              headers,
 			ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 		})
 
@@ -455,8 +448,6 @@ func resourceNetworkServicesEdgeCacheKeysetDelete(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting EdgeCacheKeyset %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
@@ -466,7 +457,6 @@ func resourceNetworkServicesEdgeCacheKeysetDelete(d *schema.ResourceData, meta i
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
-		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {

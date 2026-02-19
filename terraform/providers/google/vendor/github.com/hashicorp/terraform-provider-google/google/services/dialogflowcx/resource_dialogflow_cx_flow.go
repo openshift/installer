@@ -21,7 +21,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -772,8 +771,6 @@ func resourceDialogflowCXFlowCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	// extract location from the parent
 	location := ""
 
@@ -824,7 +821,6 @@ func resourceDialogflowCXFlowCreate(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Flow: %s", err)
@@ -864,8 +860,6 @@ func resourceDialogflowCXFlowRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	// extract location from the parent
 	location := ""
 
@@ -886,7 +880,6 @@ func resourceDialogflowCXFlowRead(d *schema.ResourceData, meta interface{}) erro
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DialogflowCXFlow %q", d.Id()))
@@ -984,7 +977,6 @@ func resourceDialogflowCXFlowUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Updating Flow %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -1051,7 +1043,6 @@ func resourceDialogflowCXFlowUpdate(d *schema.ResourceData, meta interface{}) er
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -1085,8 +1076,6 @@ func resourceDialogflowCXFlowDelete(d *schema.ResourceData, meta interface{}) er
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
-
-	headers := make(http.Header)
 
 	// extract location from the parent
 	location := ""
@@ -1123,7 +1112,6 @@ func resourceDialogflowCXFlowDelete(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Flow")

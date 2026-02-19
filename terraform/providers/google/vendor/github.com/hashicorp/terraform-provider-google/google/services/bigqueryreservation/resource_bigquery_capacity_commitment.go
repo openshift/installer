@@ -20,7 +20,6 @@ package bigqueryreservation
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -190,7 +189,6 @@ func resourceBigqueryReservationCapacityCommitmentCreate(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -199,7 +197,6 @@ func resourceBigqueryReservationCapacityCommitmentCreate(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating CapacityCommitment: %s", err)
@@ -245,14 +242,12 @@ func resourceBigqueryReservationCapacityCommitmentRead(d *schema.ResourceData, m
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("BigqueryReservationCapacityCommitment %q", d.Id()))
@@ -325,7 +320,6 @@ func resourceBigqueryReservationCapacityCommitmentUpdate(d *schema.ResourceData,
 	}
 
 	log.Printf("[DEBUG] Updating CapacityCommitment %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("plan") {
@@ -357,7 +351,6 @@ func resourceBigqueryReservationCapacityCommitmentUpdate(d *schema.ResourceData,
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -398,8 +391,6 @@ func resourceBigqueryReservationCapacityCommitmentDelete(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting CapacityCommitment %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -409,7 +400,6 @@ func resourceBigqueryReservationCapacityCommitmentDelete(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "CapacityCommitment")

@@ -21,14 +21,13 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -70,20 +69,20 @@ func resourceDatastreamStreamCustomDiff(_ context.Context, diff *schema.Resource
 
 // waitForDatastreamStreamReady waits for an agent pool to reach a stable state to indicate that it's ready.
 func waitForDatastreamStreamReady(d *schema.ResourceData, config *transport_tpg.Config, timeout time.Duration) error {
-	return retry.Retry(timeout, func() *retry.RetryError {
+	return resource.Retry(timeout, func() *resource.RetryError {
 		if err := resourceDatastreamStreamRead(d, config); err != nil {
-			return retry.NonRetryableError(err)
+			return resource.NonRetryableError(err)
 		}
 
 		name := d.Get("name").(string)
 		state := d.Get("state").(string)
 		if state == "STARTING" || state == "DRAINING" {
-			return retry.RetryableError(fmt.Errorf("Stream %q has state %q.", name, state))
+			return resource.RetryableError(fmt.Errorf("Stream %q has state %q.", name, state))
 		} else if state == "NOT_STARTED" || state == "RUNNING" || state == "PAUSED" {
 			log.Printf("[DEBUG] Stream %q has state %q.", name, state)
 			return nil
 		} else {
-			return retry.NonRetryableError(fmt.Errorf("Stream %q has state %q.", name, state))
+			return resource.NonRetryableError(fmt.Errorf("Stream %q has state %q.", name, state))
 		}
 	})
 }
@@ -1261,13 +1260,6 @@ https://www.postgresql.org/docs/current/datatype.html`,
 				},
 				ExactlyOneOf: []string{"backfill_all", "backfill_none"},
 			},
-			"create_without_validation": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `Create the stream without validating it.`,
-				Default:     false,
-			},
 			"customer_managed_encryption_key": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -1380,7 +1372,7 @@ func resourceDatastreamStreamCreate(d *schema.ResourceData, meta interface{}) er
 		return err
 	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/streams?streamId={{stream_id}}&force={{create_without_validation}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/streams?streamId={{stream_id}}")
 	if err != nil {
 		return err
 	}
@@ -1399,7 +1391,6 @@ func resourceDatastreamStreamCreate(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1408,7 +1399,6 @@ func resourceDatastreamStreamCreate(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Stream: %s", err)
@@ -1486,14 +1476,12 @@ func resourceDatastreamStreamRead(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DatastreamStream %q", d.Id()))
@@ -1610,7 +1598,6 @@ func resourceDatastreamStreamUpdate(d *schema.ResourceData, meta interface{}) er
 	}
 
 	log.Printf("[DEBUG] Updating Stream %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -1685,7 +1672,6 @@ func resourceDatastreamStreamUpdate(d *schema.ResourceData, meta interface{}) er
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -1736,8 +1722,6 @@ func resourceDatastreamStreamDelete(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Stream %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -1747,7 +1731,6 @@ func resourceDatastreamStreamDelete(d *schema.ResourceData, meta interface{}) er
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Stream")

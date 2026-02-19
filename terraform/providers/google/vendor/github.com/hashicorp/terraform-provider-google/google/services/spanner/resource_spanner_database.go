@@ -21,8 +21,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
+	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -64,6 +65,44 @@ func resourceSpannerDBDdlCustomDiffFunc(diff tpgresource.TerraformResourceDiff) 
 func resourceSpannerDBDdlCustomDiff(_ context.Context, diff *schema.ResourceDiff, meta interface{}) error {
 	// separate func to allow unit testing
 	return resourceSpannerDBDdlCustomDiffFunc(diff)
+}
+
+func ValidateDatabaseRetentionPeriod(v interface{}, k string) (ws []string, errors []error) {
+	value := v.(string)
+	valueError := fmt.Errorf("version_retention_period should be in range [1h, 7d], in a format resembling 1d, 24h, 1440m, or 86400s")
+
+	r := regexp.MustCompile("^(\\d{1}d|\\d{1,3}h|\\d{2,5}m|\\d{4,6}s)$")
+	if !r.MatchString(value) {
+		errors = append(errors, valueError)
+		return
+	}
+
+	unit := value[len(value)-1:]
+	multiple := value[:len(value)-1]
+	num, err := strconv.Atoi(multiple)
+	if err != nil {
+		errors = append(errors, valueError)
+		return
+	}
+
+	if unit == "d" && (num < 1 || num > 7) {
+		errors = append(errors, valueError)
+		return
+	}
+	if unit == "h" && (num < 1 || num > 7*24) {
+		errors = append(errors, valueError)
+		return
+	}
+	if unit == "m" && (num < 1*60 || num > 7*24*60) {
+		errors = append(errors, valueError)
+		return
+	}
+	if unit == "s" && (num < 1*60*60 || num > 7*24*60*60) {
+		errors = append(errors, valueError)
+		return
+	}
+
+	return
 }
 
 func resourceSpannerDBVirtualUpdate(d *schema.ResourceData, resourceSchema map[string]*schema.Schema) bool {
@@ -171,9 +210,10 @@ in the same location as the Spanner Database.`,
 				},
 			},
 			"version_retention_period": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Optional: true,
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: ValidateDatabaseRetentionPeriod,
 				Description: `The retention period for the database. The retention period must be between 1 hour
 and 7 days, and can be specified in days, hours, minutes, or seconds. For example,
 the values 1d, 24h, 1440m, and 86400s are equivalent. Default value is 1h.
@@ -189,12 +229,8 @@ update the database's version_retention_period.`,
 				Type:     schema.TypeBool,
 				Optional: true,
 				Default:  true,
-				Description: `Whether Terraform will be prevented from destroying the database. Defaults to true.
-When a'terraform destroy' or 'terraform apply' would delete the database,
-the command will fail if this field is not set to false in Terraform state.
-When the field is set to true or unset in Terraform state, a 'terraform apply'
-or 'terraform destroy' that would delete the database will fail.
-When the field is set to false, deleting the database is allowed.`,
+				Description: `Whether or not to allow Terraform to destroy the database. Defaults to true. Unless this field is set to false
+in Terraform state, a 'terraform destroy' or 'terraform apply' that would delete the database will fail.`,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -282,7 +318,6 @@ func resourceSpannerDatabaseCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -291,7 +326,6 @@ func resourceSpannerDatabaseCreate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Database: %s", err)
@@ -473,14 +507,12 @@ func resourceSpannerDatabaseRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SpannerDatabase %q", d.Id()))
@@ -567,7 +599,6 @@ func resourceSpannerDatabaseUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Database %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("enable_drop_protection") {
@@ -613,7 +644,6 @@ func resourceSpannerDatabaseUpdate(d *schema.ResourceData, meta interface{}) err
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -658,8 +688,6 @@ func resourceSpannerDatabaseUpdate(d *schema.ResourceData, meta interface{}) err
 			return err
 		}
 
-		headers := make(http.Header)
-
 		if obj["statements"] != nil {
 			if len(obj["statements"].([]string)) == 0 {
 				// Return early to avoid making an API call that errors,
@@ -691,7 +719,6 @@ func resourceSpannerDatabaseUpdate(d *schema.ResourceData, meta interface{}) err
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Database %q: %s", d.Id(), err)
@@ -739,7 +766,6 @@ func resourceSpannerDatabaseDelete(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	if d.Get("deletion_protection").(bool) {
 		return fmt.Errorf("cannot destroy instance without setting deletion_protection=false and running `terraform apply`")
 	}
@@ -753,7 +779,6 @@ func resourceSpannerDatabaseDelete(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Database")

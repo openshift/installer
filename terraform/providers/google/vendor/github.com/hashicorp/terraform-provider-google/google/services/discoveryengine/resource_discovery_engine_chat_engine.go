@@ -20,7 +20,6 @@ package discoveryengine
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -260,7 +259,6 @@ func resourceDiscoveryEngineChatEngineCreate(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -269,7 +267,6 @@ func resourceDiscoveryEngineChatEngineCreate(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ChatEngine: %s", err)
@@ -336,14 +333,12 @@ func resourceDiscoveryEngineChatEngineRead(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DiscoveryEngineChatEngine %q", d.Id()))
@@ -415,7 +410,6 @@ func resourceDiscoveryEngineChatEngineUpdate(d *schema.ResourceData, meta interf
 	}
 
 	log.Printf("[DEBUG] Updating ChatEngine %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -443,7 +437,6 @@ func resourceDiscoveryEngineChatEngineUpdate(d *schema.ResourceData, meta interf
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -484,8 +477,6 @@ func resourceDiscoveryEngineChatEngineDelete(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting ChatEngine %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -495,7 +486,6 @@ func resourceDiscoveryEngineChatEngineDelete(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ChatEngine")

@@ -20,7 +20,6 @@ package cloudrunv2
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -256,10 +255,9 @@ If omitted, a port number will be chosen and passed to the container through the
 										Description: `Email address of the IAM service account associated with the Task of a Job. The service account represents the identity of the running task, and determines what permissions the task has. If not provided, the task will use the project's default service account.`,
 									},
 									"timeout": {
-										Type:         schema.TypeString,
-										Computed:     true,
-										Optional:     true,
-										ValidateFunc: verify.ValidateRegexp(`^[0-9]+(?:\.[0-9]{1,9})?s$`),
+										Type:     schema.TypeString,
+										Computed: true,
+										Optional: true,
 										Description: `Max allowed time duration the Task may be active before the system will actively try to mark it failed and kill associated containers. This applies per attempt of a task, meaning each retry can run for the full timeout.
 
 A duration in seconds with up to nine fractional digits, ending with 's'. Example: "3.5s".`,
@@ -798,7 +796,6 @@ func resourceCloudRunV2JobCreate(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -807,7 +804,6 @@ func resourceCloudRunV2JobCreate(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Job: %s", err)
@@ -827,6 +823,9 @@ func resourceCloudRunV2JobCreate(d *schema.ResourceData, meta interface{}) error
 		config, res, &opRes, project, "Creating Job", userAgent,
 		d.Timeout(schema.TimeoutCreate))
 	if err != nil {
+		// The resource didn't actually create
+		d.SetId("")
+
 		return fmt.Errorf("Error waiting to create Job: %s", err)
 	}
 
@@ -867,14 +866,12 @@ func resourceCloudRunV2JobRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudRunV2Job %q", d.Id()))
@@ -1028,7 +1025,6 @@ func resourceCloudRunV2JobUpdate(d *schema.ResourceData, meta interface{}) error
 	}
 
 	log.Printf("[DEBUG] Updating Job %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1043,7 +1039,6 @@ func resourceCloudRunV2JobUpdate(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -1090,8 +1085,6 @@ func resourceCloudRunV2JobDelete(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Job %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -1101,7 +1094,6 @@ func resourceCloudRunV2JobDelete(d *schema.ResourceData, meta interface{}) error
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Job")

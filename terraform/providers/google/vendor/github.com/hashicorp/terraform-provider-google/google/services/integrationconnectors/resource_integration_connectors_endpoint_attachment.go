@@ -20,7 +20,6 @@ package integrationconnectors
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -77,11 +76,6 @@ func ResourceIntegrationConnectorsEndpointAttachment() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				Description: `Description of the resource.`,
-			},
-			"endpoint_global_access": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: `Enable global access for endpoint attachment.`,
 			},
 			"labels": {
 				Type:     schema.TypeMap,
@@ -152,12 +146,6 @@ func resourceIntegrationConnectorsEndpointAttachmentCreate(d *schema.ResourceDat
 	} else if v, ok := d.GetOkExists("service_attachment"); !tpgresource.IsEmptyValue(reflect.ValueOf(serviceAttachmentProp)) && (ok || !reflect.DeepEqual(v, serviceAttachmentProp)) {
 		obj["serviceAttachment"] = serviceAttachmentProp
 	}
-	endpointGlobalAccessProp, err := expandIntegrationConnectorsEndpointAttachmentEndpointGlobalAccess(d.Get("endpoint_global_access"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("endpoint_global_access"); !tpgresource.IsEmptyValue(reflect.ValueOf(endpointGlobalAccessProp)) && (ok || !reflect.DeepEqual(v, endpointGlobalAccessProp)) {
-		obj["endpointGlobalAccess"] = endpointGlobalAccessProp
-	}
 	labelsProp, err := expandIntegrationConnectorsEndpointAttachmentEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -184,7 +172,6 @@ func resourceIntegrationConnectorsEndpointAttachmentCreate(d *schema.ResourceDat
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -193,7 +180,6 @@ func resourceIntegrationConnectorsEndpointAttachmentCreate(d *schema.ResourceDat
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating EndpointAttachment: %s", err)
@@ -256,14 +242,12 @@ func resourceIntegrationConnectorsEndpointAttachmentRead(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("IntegrationConnectorsEndpointAttachment %q", d.Id()))
@@ -289,9 +273,6 @@ func resourceIntegrationConnectorsEndpointAttachmentRead(d *schema.ResourceData,
 		return fmt.Errorf("Error reading EndpointAttachment: %s", err)
 	}
 	if err := d.Set("endpoint_ip", flattenIntegrationConnectorsEndpointAttachmentEndpointIp(res["endpointIp"], d, config)); err != nil {
-		return fmt.Errorf("Error reading EndpointAttachment: %s", err)
-	}
-	if err := d.Set("endpoint_global_access", flattenIntegrationConnectorsEndpointAttachmentEndpointGlobalAccess(res["endpointGlobalAccess"], d, config)); err != nil {
 		return fmt.Errorf("Error reading EndpointAttachment: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenIntegrationConnectorsEndpointAttachmentTerraformLabels(res["labels"], d, config)); err != nil {
@@ -326,12 +307,6 @@ func resourceIntegrationConnectorsEndpointAttachmentUpdate(d *schema.ResourceDat
 	} else if v, ok := d.GetOkExists("description"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, descriptionProp)) {
 		obj["description"] = descriptionProp
 	}
-	endpointGlobalAccessProp, err := expandIntegrationConnectorsEndpointAttachmentEndpointGlobalAccess(d.Get("endpoint_global_access"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("endpoint_global_access"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, endpointGlobalAccessProp)) {
-		obj["endpointGlobalAccess"] = endpointGlobalAccessProp
-	}
 	labelsProp, err := expandIntegrationConnectorsEndpointAttachmentEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -345,15 +320,10 @@ func resourceIntegrationConnectorsEndpointAttachmentUpdate(d *schema.ResourceDat
 	}
 
 	log.Printf("[DEBUG] Updating EndpointAttachment %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
 		updateMask = append(updateMask, "description")
-	}
-
-	if d.HasChange("endpoint_global_access") {
-		updateMask = append(updateMask, "endpointGlobalAccess")
 	}
 
 	if d.HasChange("effective_labels") {
@@ -381,7 +351,6 @@ func resourceIntegrationConnectorsEndpointAttachmentUpdate(d *schema.ResourceDat
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -429,8 +398,6 @@ func resourceIntegrationConnectorsEndpointAttachmentDelete(d *schema.ResourceDat
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting EndpointAttachment %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -440,7 +407,6 @@ func resourceIntegrationConnectorsEndpointAttachmentDelete(d *schema.ResourceDat
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "EndpointAttachment")
@@ -513,10 +479,6 @@ func flattenIntegrationConnectorsEndpointAttachmentEndpointIp(v interface{}, d *
 	return v
 }
 
-func flattenIntegrationConnectorsEndpointAttachmentEndpointGlobalAccess(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func flattenIntegrationConnectorsEndpointAttachmentTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -541,10 +503,6 @@ func expandIntegrationConnectorsEndpointAttachmentDescription(v interface{}, d t
 }
 
 func expandIntegrationConnectorsEndpointAttachmentServiceAttachment(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandIntegrationConnectorsEndpointAttachmentEndpointGlobalAccess(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

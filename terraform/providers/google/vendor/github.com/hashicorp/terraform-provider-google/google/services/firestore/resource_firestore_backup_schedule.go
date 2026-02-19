@@ -20,7 +20,6 @@ package firestore
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -61,13 +60,13 @@ func ResourceFirestoreBackupSchedule() *schema.Resource {
 				Description: `At what relative time in the future, compared to its creation time, the backup should be deleted, e.g. keep backups for 7 days.
 A duration in seconds with up to nine fractional digits, ending with 's'. Example: "3.5s".
 
-You can set this to a value up to 14 weeks.`,
+For a daily backup recurrence, set this to a value up to 7 days. If you set a weekly backup recurrence, set this to a value up to 14 weeks.`,
 			},
 			"daily_recurrence": {
 				Type:        schema.TypeList,
 				Optional:    true,
 				ForceNew:    true,
-				Description: `For a schedule that runs daily.`,
+				Description: `For a schedule that runs daily at a specified time.`,
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{},
@@ -85,7 +84,7 @@ You can set this to a value up to 14 weeks.`,
 				Type:        schema.TypeList,
 				Optional:    true,
 				ForceNew:    true,
-				Description: `For a schedule that runs weekly on a specific day.`,
+				Description: `For a schedule that runs weekly on a specific day and time.`,
 				MaxItems:    1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -162,7 +161,6 @@ func resourceFirestoreBackupScheduleCreate(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -171,7 +169,6 @@ func resourceFirestoreBackupScheduleCreate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating BackupSchedule: %s", err)
@@ -217,14 +214,12 @@ func resourceFirestoreBackupScheduleRead(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("FirestoreBackupSchedule %q", d.Id()))
@@ -279,7 +274,6 @@ func resourceFirestoreBackupScheduleUpdate(d *schema.ResourceData, meta interfac
 	}
 
 	log.Printf("[DEBUG] Updating BackupSchedule %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("retention") {
@@ -307,7 +301,6 @@ func resourceFirestoreBackupScheduleUpdate(d *schema.ResourceData, meta interfac
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -348,8 +341,6 @@ func resourceFirestoreBackupScheduleDelete(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting BackupSchedule %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -359,7 +350,6 @@ func resourceFirestoreBackupScheduleDelete(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "BackupSchedule")

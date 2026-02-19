@@ -20,7 +20,6 @@ package vertexai
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -172,7 +171,6 @@ func resourceVertexAIFeaturestoreEntitytypeFeatureCreate(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	if v, ok := d.GetOk("entitytype"); ok {
 		re := regexp.MustCompile("projects/([a-zA-Z0-9-]*)/(?:locations|regions)/([a-zA-Z0-9-]*)")
 		switch {
@@ -190,7 +188,6 @@ func resourceVertexAIFeaturestoreEntitytypeFeatureCreate(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating FeaturestoreEntitytypeFeature: %s", err)
@@ -247,14 +244,12 @@ func resourceVertexAIFeaturestoreEntitytypeFeatureRead(d *schema.ResourceData, m
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("VertexAIFeaturestoreEntitytypeFeature %q", d.Id()))
@@ -319,7 +314,6 @@ func resourceVertexAIFeaturestoreEntitytypeFeatureUpdate(d *schema.ResourceData,
 	}
 
 	log.Printf("[DEBUG] Updating FeaturestoreEntitytypeFeature %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -351,7 +345,6 @@ func resourceVertexAIFeaturestoreEntitytypeFeatureUpdate(d *schema.ResourceData,
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -387,7 +380,6 @@ func resourceVertexAIFeaturestoreEntitytypeFeatureDelete(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	if v, ok := d.GetOk("entitytype"); ok {
 		re := regexp.MustCompile("projects/([a-zA-Z0-9-]*)/(?:locations|regions)/([a-zA-Z0-9-]*)")
 		switch {
@@ -407,7 +399,6 @@ func resourceVertexAIFeaturestoreEntitytypeFeatureDelete(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "FeaturestoreEntitytypeFeature")

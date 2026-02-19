@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/terraform-provider-google/google/verify"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"google.golang.org/api/storagetransfer/v1"
@@ -804,10 +804,10 @@ func resourceStorageTransferJobDelete(d *schema.ResourceData, meta interface{}) 
 
 	// Update transfer job with status set to DELETE
 	log.Printf("[DEBUG] Setting status to DELETE for: %v\n\n", transferJobName)
-	err = retry.Retry(1*time.Minute, func() *retry.RetryError {
+	err = resource.Retry(1*time.Minute, func() *resource.RetryError {
 		_, err := config.NewStorageTransferClient(userAgent).TransferJobs.Patch(transferJobName, updateRequest).Do()
 		if err != nil {
-			return retry.RetryableError(err)
+			return resource.RetryableError(err)
 		}
 
 		return nil
@@ -1044,9 +1044,10 @@ func flattenAwsS3Data(awsS3Data *storagetransfer.AwsS3Data, d *schema.ResourceDa
 		"path":        awsS3Data.Path,
 		"role_arn":    awsS3Data.RoleArn,
 	}
-	if _, exist := d.GetOkExists("transfer_spec.0.aws_s3_data_source.0.aws_access_key"); exist {
+	if awsS3Data.AwsAccessKey != nil {
 		data["aws_access_key"] = flattenAwsAccessKeys(d)
 	}
+
 	return []map[string]interface{}{data}
 }
 

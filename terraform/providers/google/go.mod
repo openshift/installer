@@ -2,7 +2,7 @@ module github.com/openshift/installer/terraform/providers/google
 
 go 1.20
 
-require github.com/hashicorp/terraform-provider-google v1.20.1-0.20240708170355-9d7e7459a11c // v5.37.0
+require github.com/hashicorp/terraform-provider-google v1.20.1-0.20240318170109-82299d061602 // v5.21.0
 
 require (
 	bitbucket.org/creachadair/stringset v0.0.8 // indirect
@@ -76,6 +76,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.0.0 // indirect
+	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible // indirect
 	github.com/vmihailenco/msgpack/v5 v5.4.1 // indirect
@@ -87,9 +88,7 @@ require (
 	go.opentelemetry.io/otel v1.24.0 // indirect
 	go.opentelemetry.io/otel/metric v1.24.0 // indirect
 	go.opentelemetry.io/otel/trace v1.24.0 // indirect
-	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba // indirect
 	golang.org/x/crypto v0.24.0 // indirect
-	golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8 // indirect
 	golang.org/x/mod v0.17.0 // indirect
 	golang.org/x/net v0.26.0 // indirect
 	golang.org/x/oauth2 v0.21.0 // indirect
@@ -107,3 +106,6 @@ require (
 )
 
 replace bitbucket.org/creachadair/stringset => bitbucket.org/creachadair/stringset v0.0.11
+
+// https://issues.redhat.com/browse/OCPBUGS-76930
+replace github.com/hashicorp/terraform-provider-google v1.20.1-0.20240318170109-82299d061602 => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132832-427a18d1a1c3

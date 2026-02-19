@@ -20,7 +20,6 @@ package certificatemanager
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -65,21 +64,6 @@ func ResourceCertificateManagerTrustConfig() *schema.Resource {
 				Required:    true,
 				ForceNew:    true,
 				Description: `A user-defined name of the trust config. Trust config names must be unique globally.`,
-			},
-			"allowlisted_certificates": {
-				Type:     schema.TypeList,
-				Optional: true,
-				Description: `Allowlisted PEM-encoded certificates. A certificate matching an allowlisted certificate is always considered valid as long as
-the certificate is parseable, proof of private key possession is established, and constraints on the certificate's SAN field are met.`,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"pem_certificate": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: `PEM certificate that is allowlisted. The certificate can be up to 5k bytes, and must be a parseable X.509 certificate.`,
-						},
-					},
-				},
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -149,6 +133,7 @@ Examples: "2014-10-02T15:01:23Z" and "2014-10-02T15:01:23.045123456Z".`,
 			"effective_labels": {
 				Type:        schema.TypeMap,
 				Computed:    true,
+				ForceNew:    true,
 				Description: `All of labels (key/value pairs) present on the resource in GCP, including the labels configured through Terraform, other clients and services.`,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
@@ -198,12 +183,6 @@ func resourceCertificateManagerTrustConfigCreate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("trust_stores"); !tpgresource.IsEmptyValue(reflect.ValueOf(trustStoresProp)) && (ok || !reflect.DeepEqual(v, trustStoresProp)) {
 		obj["trustStores"] = trustStoresProp
 	}
-	allowlistedCertificatesProp, err := expandCertificateManagerTrustConfigAllowlistedCertificates(d.Get("allowlisted_certificates"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("allowlisted_certificates"); !tpgresource.IsEmptyValue(reflect.ValueOf(allowlistedCertificatesProp)) && (ok || !reflect.DeepEqual(v, allowlistedCertificatesProp)) {
-		obj["allowlistedCertificates"] = allowlistedCertificatesProp
-	}
 	labelsProp, err := expandCertificateManagerTrustConfigEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -230,7 +209,6 @@ func resourceCertificateManagerTrustConfigCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -239,7 +217,6 @@ func resourceCertificateManagerTrustConfigCreate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating TrustConfig: %s", err)
@@ -292,14 +269,12 @@ func resourceCertificateManagerTrustConfigRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CertificateManagerTrustConfig %q", d.Id()))
@@ -322,9 +297,6 @@ func resourceCertificateManagerTrustConfigRead(d *schema.ResourceData, meta inte
 		return fmt.Errorf("Error reading TrustConfig: %s", err)
 	}
 	if err := d.Set("trust_stores", flattenCertificateManagerTrustConfigTrustStores(res["trustStores"], d, config)); err != nil {
-		return fmt.Errorf("Error reading TrustConfig: %s", err)
-	}
-	if err := d.Set("allowlisted_certificates", flattenCertificateManagerTrustConfigAllowlistedCertificates(res["allowlistedCertificates"], d, config)); err != nil {
 		return fmt.Errorf("Error reading TrustConfig: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenCertificateManagerTrustConfigTerraformLabels(res["labels"], d, config)); err != nil {
@@ -365,18 +337,6 @@ func resourceCertificateManagerTrustConfigUpdate(d *schema.ResourceData, meta in
 	} else if v, ok := d.GetOkExists("trust_stores"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, trustStoresProp)) {
 		obj["trustStores"] = trustStoresProp
 	}
-	allowlistedCertificatesProp, err := expandCertificateManagerTrustConfigAllowlistedCertificates(d.Get("allowlisted_certificates"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("allowlisted_certificates"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, allowlistedCertificatesProp)) {
-		obj["allowlistedCertificates"] = allowlistedCertificatesProp
-	}
-	labelsProp, err := expandCertificateManagerTrustConfigEffectiveLabels(d.Get("effective_labels"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("effective_labels"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, labelsProp)) {
-		obj["labels"] = labelsProp
-	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{CertificateManagerBasePath}}projects/{{project}}/locations/{{location}}/trustConfigs/{{name}}")
 	if err != nil {
@@ -384,7 +344,10 @@ func resourceCertificateManagerTrustConfigUpdate(d *schema.ResourceData, meta in
 	}
 
 	log.Printf("[DEBUG] Updating TrustConfig %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
+	url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": "*"})
+	if err != nil {
+		return err
+	}
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -399,7 +362,6 @@ func resourceCertificateManagerTrustConfigUpdate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -446,8 +408,6 @@ func resourceCertificateManagerTrustConfigDelete(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting TrustConfig %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -457,7 +417,6 @@ func resourceCertificateManagerTrustConfigDelete(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "TrustConfig")
@@ -585,28 +544,6 @@ func flattenCertificateManagerTrustConfigTrustStoresIntermediateCasPemCertificat
 	return v
 }
 
-func flattenCertificateManagerTrustConfigAllowlistedCertificates(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
-			continue
-		}
-		transformed = append(transformed, map[string]interface{}{
-			"pem_certificate": flattenCertificateManagerTrustConfigAllowlistedCertificatesPemCertificate(original["pemCertificate"], d, config),
-		})
-	}
-	return transformed
-}
-func flattenCertificateManagerTrustConfigAllowlistedCertificatesPemCertificate(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func flattenCertificateManagerTrustConfigTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -708,32 +645,6 @@ func expandCertificateManagerTrustConfigTrustStoresIntermediateCas(v interface{}
 }
 
 func expandCertificateManagerTrustConfigTrustStoresIntermediateCasPemCertificate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCertificateManagerTrustConfigAllowlistedCertificates(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	req := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		if raw == nil {
-			continue
-		}
-		original := raw.(map[string]interface{})
-		transformed := make(map[string]interface{})
-
-		transformedPemCertificate, err := expandCertificateManagerTrustConfigAllowlistedCertificatesPemCertificate(original["pem_certificate"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedPemCertificate); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-			transformed["pemCertificate"] = transformedPemCertificate
-		}
-
-		req = append(req, transformed)
-	}
-	return req, nil
-}
-
-func expandCertificateManagerTrustConfigAllowlistedCertificatesPemCertificate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
