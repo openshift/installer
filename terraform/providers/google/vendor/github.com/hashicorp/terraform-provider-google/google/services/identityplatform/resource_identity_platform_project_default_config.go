@@ -20,7 +20,6 @@ package identityplatform
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -213,7 +212,6 @@ func resourceIdentityPlatformProjectDefaultConfigCreate(d *schema.ResourceData, 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PATCH",
@@ -222,7 +220,6 @@ func resourceIdentityPlatformProjectDefaultConfigCreate(d *schema.ResourceData, 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ProjectDefaultConfig: %s", err)
@@ -268,14 +265,12 @@ func resourceIdentityPlatformProjectDefaultConfigRead(d *schema.ResourceData, me
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("IdentityPlatformProjectDefaultConfig %q", d.Id()))
@@ -324,7 +319,6 @@ func resourceIdentityPlatformProjectDefaultConfigUpdate(d *schema.ResourceData, 
 	}
 
 	log.Printf("[DEBUG] Updating ProjectDefaultConfig %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("sign_in") {
@@ -352,7 +346,6 @@ func resourceIdentityPlatformProjectDefaultConfigUpdate(d *schema.ResourceData, 
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -393,8 +386,6 @@ func resourceIdentityPlatformProjectDefaultConfigDelete(d *schema.ResourceData, 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting ProjectDefaultConfig %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -404,7 +395,6 @@ func resourceIdentityPlatformProjectDefaultConfigDelete(d *schema.ResourceData, 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ProjectDefaultConfig")

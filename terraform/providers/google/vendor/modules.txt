@@ -51,6 +51,7 @@ github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl
 github.com/GoogleCloudPlatform/declarative-resource-client-library/dcl/operations
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/apikeys
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/assuredworkloads
+github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/bigqueryreservation
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/cloudbuild
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/clouddeploy
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/cloudresourcemanager
@@ -63,6 +64,8 @@ github.com/GoogleCloudPlatform/declarative-resource-client-library/services/goog
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/firebaserules
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/gkehub
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/networkconnectivity
+github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/orgpolicy
+github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/privateca
 github.com/GoogleCloudPlatform/declarative-resource-client-library/services/google/recaptchaenterprise
 # github.com/ProtonMail/go-crypto v1.1.0-alpha.0
 ## explicit; go 1.17
@@ -433,11 +436,10 @@ github.com/hashicorp/terraform-plugin-sdk/v2/internal/tfdiags
 github.com/hashicorp/terraform-plugin-sdk/v2/meta
 github.com/hashicorp/terraform-plugin-sdk/v2/plugin
 github.com/hashicorp/terraform-plugin-sdk/v2/terraform
-# github.com/hashicorp/terraform-provider-google v1.20.1-0.20240708170355-9d7e7459a11c
-## explicit; go 1.21
+# github.com/hashicorp/terraform-provider-google v1.20.1-0.20240318170109-82299d061602 => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132832-427a18d1a1c3
+## explicit; go 1.20
 github.com/hashicorp/terraform-provider-google
 github.com/hashicorp/terraform-provider-google/google/envvar
-github.com/hashicorp/terraform-provider-google/google/functions
 github.com/hashicorp/terraform-provider-google/google/fwmodels
 github.com/hashicorp/terraform-provider-google/google/fwprovider
 github.com/hashicorp/terraform-provider-google/google/fwresource
@@ -525,7 +527,6 @@ github.com/hashicorp/terraform-provider-google/google/services/iamworkforcepool
 github.com/hashicorp/terraform-provider-google/google/services/iap
 github.com/hashicorp/terraform-provider-google/google/services/identityplatform
 github.com/hashicorp/terraform-provider-google/google/services/integrationconnectors
-github.com/hashicorp/terraform-provider-google/google/services/integrations
 github.com/hashicorp/terraform-provider-google/google/services/kms
 github.com/hashicorp/terraform-provider-google/google/services/logging
 github.com/hashicorp/terraform-provider-google/google/services/looker
@@ -552,8 +553,6 @@ github.com/hashicorp/terraform-provider-google/google/services/resourcemanager
 github.com/hashicorp/terraform-provider-google/google/services/secretmanager
 github.com/hashicorp/terraform-provider-google/google/services/securesourcemanager
 github.com/hashicorp/terraform-provider-google/google/services/securitycenter
-github.com/hashicorp/terraform-provider-google/google/services/securitycentermanagement
-github.com/hashicorp/terraform-provider-google/google/services/securitycenterv2
 github.com/hashicorp/terraform-provider-google/google/services/securityposture
 github.com/hashicorp/terraform-provider-google/google/services/servicemanagement
 github.com/hashicorp/terraform-provider-google/google/services/servicenetworking
@@ -621,6 +620,8 @@ github.com/mitchellh/reflectwalk
 # github.com/oklog/run v1.0.0
 ## explicit
 github.com/oklog/run
+# github.com/rogpeppe/go-internal v1.12.0
+## explicit; go 1.20
 # github.com/sirupsen/logrus v1.8.1
 ## explicit; go 1.13
 github.com/sirupsen/logrus
@@ -696,9 +697,6 @@ go.opentelemetry.io/otel/metric/noop
 ## explicit; go 1.20
 go.opentelemetry.io/otel/trace
 go.opentelemetry.io/otel/trace/embedded
-# go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
-## explicit; go 1.18
-go4.org/netipx
 # golang.org/x/crypto v0.24.0
 ## explicit; go 1.18
 golang.org/x/crypto/argon2
@@ -712,9 +710,6 @@ golang.org/x/crypto/hkdf
 golang.org/x/crypto/internal/alias
 golang.org/x/crypto/internal/poly1305
 golang.org/x/crypto/sha3
-# golang.org/x/exp v0.0.0-20240409090435-93d18d7e34b8
-## explicit; go 1.20
-golang.org/x/exp/maps
 # golang.org/x/mod v0.17.0
 ## explicit; go 1.18
 golang.org/x/mod/internal/lazyregexp

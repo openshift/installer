@@ -20,7 +20,6 @@ package alloydb
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -181,73 +180,6 @@ Please refer to the field 'effective_labels' for all of the labels present on th
 					},
 				},
 			},
-			"network_config": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: `Instance level network configuration.`,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"authorized_external_networks": {
-							Type:     schema.TypeList,
-							Optional: true,
-							Description: `A list of external networks authorized to access this instance. This
-field is only allowed to be set when 'enable_public_ip' is set to
-true.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"cidr_range": {
-										Type:        schema.TypeString,
-										Optional:    true,
-										Description: `CIDR range for one authorized network of the instance.`,
-									},
-								},
-							},
-							RequiredWith: []string{"network_config.0.enable_public_ip"},
-						},
-						"enable_public_ip": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							Description: `Enabling public ip for the instance. If a user wishes to disable this,
-please also clear the list of the authorized external networks set on
-the same instance.`,
-						},
-					},
-				},
-			},
-			"psc_instance_config": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: `Configuration for Private Service Connect (PSC) for the instance.`,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"allowed_consumer_projects": {
-							Type:     schema.TypeList,
-							Optional: true,
-							Description: `List of consumer projects that are allowed to create PSC endpoints to service-attachments to this instance.
-These should be specified as project numbers only.`,
-							Elem: &schema.Schema{
-								Type:         schema.TypeString,
-								ValidateFunc: verify.ValidateRegexp(`^\d+$`),
-							},
-						},
-						"psc_dns_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-							Description: `The DNS name of the instance for PSC connectivity.
-Name convention: <uid>.<uid>.<region>.alloydb-psc.goog`,
-						},
-						"service_attachment_link": {
-							Type:     schema.TypeString,
-							Computed: true,
-							Description: `The service attachment created when Private Service Connect (PSC) is enabled for the instance.
-The name of the resource will be in the format of
-'projects/<alloydb-tenant-project-number>/regions/<region-name>/serviceAttachments/<service-attachment-name>'`,
-						},
-					},
-				},
-			},
 			"query_insights_config": {
 				Type:        schema.TypeList,
 				Computed:    true,
@@ -320,13 +252,6 @@ The name of the resource will be in the format of
 				Type:        schema.TypeString,
 				Computed:    true,
 				Description: `The name of the instance resource.`,
-			},
-			"public_ip_address": {
-				Type:     schema.TypeString,
-				Computed: true,
-				Description: `The public IP addresses for the Instance. This is available ONLY when
-networkConfig.enablePublicIp is set to true. This is the connection
-endpoint for an end-user application.`,
 			},
 			"reconciling": {
 				Type:        schema.TypeBool,
@@ -423,18 +348,6 @@ func resourceAlloydbInstanceCreate(d *schema.ResourceData, meta interface{}) err
 	} else if v, ok := d.GetOkExists("client_connection_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(clientConnectionConfigProp)) && (ok || !reflect.DeepEqual(v, clientConnectionConfigProp)) {
 		obj["clientConnectionConfig"] = clientConnectionConfigProp
 	}
-	pscInstanceConfigProp, err := expandAlloydbInstancePscInstanceConfig(d.Get("psc_instance_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("psc_instance_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(pscInstanceConfigProp)) && (ok || !reflect.DeepEqual(v, pscInstanceConfigProp)) {
-		obj["pscInstanceConfig"] = pscInstanceConfigProp
-	}
-	networkConfigProp, err := expandAlloydbInstanceNetworkConfig(d.Get("network_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("network_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(networkConfigProp)) && (ok || !reflect.DeepEqual(v, networkConfigProp)) {
-		obj["networkConfig"] = networkConfigProp
-	}
 	labelsProp, err := expandAlloydbInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -461,7 +374,6 @@ func resourceAlloydbInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	// Read the config and call createsecondary api if instance_type is SECONDARY
 
 	if instanceType := d.Get("instance_type"); instanceType == "SECONDARY" {
@@ -475,7 +387,6 @@ func resourceAlloydbInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Instance: %s", err)
@@ -522,14 +433,12 @@ func resourceAlloydbInstanceRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AlloydbInstance %q", d.Id()))
@@ -584,15 +493,6 @@ func resourceAlloydbInstanceRead(d *schema.ResourceData, meta interface{}) error
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("client_connection_config", flattenAlloydbInstanceClientConnectionConfig(res["clientConnectionConfig"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Instance: %s", err)
-	}
-	if err := d.Set("psc_instance_config", flattenAlloydbInstancePscInstanceConfig(res["pscInstanceConfig"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Instance: %s", err)
-	}
-	if err := d.Set("network_config", flattenAlloydbInstanceNetworkConfig(res["networkConfig"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Instance: %s", err)
-	}
-	if err := d.Set("public_ip_address", flattenAlloydbInstancePublicIpAddress(res["publicIpAddress"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenAlloydbInstanceTerraformLabels(res["labels"], d, config)); err != nil {
@@ -667,18 +567,6 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	} else if v, ok := d.GetOkExists("client_connection_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, clientConnectionConfigProp)) {
 		obj["clientConnectionConfig"] = clientConnectionConfigProp
 	}
-	pscInstanceConfigProp, err := expandAlloydbInstancePscInstanceConfig(d.Get("psc_instance_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("psc_instance_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, pscInstanceConfigProp)) {
-		obj["pscInstanceConfig"] = pscInstanceConfigProp
-	}
-	networkConfigProp, err := expandAlloydbInstanceNetworkConfig(d.Get("network_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("network_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, networkConfigProp)) {
-		obj["networkConfig"] = networkConfigProp
-	}
 	labelsProp, err := expandAlloydbInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -698,7 +586,6 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -733,14 +620,6 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		updateMask = append(updateMask, "clientConnectionConfig")
 	}
 
-	if d.HasChange("psc_instance_config") {
-		updateMask = append(updateMask, "pscInstanceConfig")
-	}
-
-	if d.HasChange("network_config") {
-		updateMask = append(updateMask, "networkConfig")
-	}
-
 	if d.HasChange("effective_labels") {
 		updateMask = append(updateMask, "labels")
 	}
@@ -770,7 +649,6 @@ func resourceAlloydbInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -813,7 +691,6 @@ func resourceAlloydbInstanceDelete(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	// Read the config and avoid calling the delete API if the instance_type is SECONDARY and instead return nil
 	// Returning nil is equivalent of returning a success message to the users
 	// This is done because deletion of secondary instance is not supported
@@ -842,7 +719,6 @@ func resourceAlloydbInstanceDelete(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Instance")
@@ -1111,80 +987,6 @@ func flattenAlloydbInstanceClientConnectionConfigSslConfigSslMode(v interface{},
 	return v
 }
 
-func flattenAlloydbInstancePscInstanceConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["service_attachment_link"] =
-		flattenAlloydbInstancePscInstanceConfigServiceAttachmentLink(original["serviceAttachmentLink"], d, config)
-	transformed["allowed_consumer_projects"] =
-		flattenAlloydbInstancePscInstanceConfigAllowedConsumerProjects(original["allowedConsumerProjects"], d, config)
-	transformed["psc_dns_name"] =
-		flattenAlloydbInstancePscInstanceConfigPscDnsName(original["pscDnsName"], d, config)
-	return []interface{}{transformed}
-}
-func flattenAlloydbInstancePscInstanceConfigServiceAttachmentLink(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAlloydbInstancePscInstanceConfigAllowedConsumerProjects(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAlloydbInstancePscInstanceConfigPscDnsName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAlloydbInstanceNetworkConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["authorized_external_networks"] =
-		flattenAlloydbInstanceNetworkConfigAuthorizedExternalNetworks(original["authorizedExternalNetworks"], d, config)
-	transformed["enable_public_ip"] =
-		flattenAlloydbInstanceNetworkConfigEnablePublicIp(original["enablePublicIp"], d, config)
-	return []interface{}{transformed}
-}
-func flattenAlloydbInstanceNetworkConfigAuthorizedExternalNetworks(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
-			continue
-		}
-		transformed = append(transformed, map[string]interface{}{
-			"cidr_range": flattenAlloydbInstanceNetworkConfigAuthorizedExternalNetworksCidrRange(original["cidrRange"], d, config),
-		})
-	}
-	return transformed
-}
-func flattenAlloydbInstanceNetworkConfigAuthorizedExternalNetworksCidrRange(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAlloydbInstanceNetworkConfigEnablePublicIp(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAlloydbInstancePublicIpAddress(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func flattenAlloydbInstanceTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -1387,107 +1189,6 @@ func expandAlloydbInstanceClientConnectionConfigSslConfig(v interface{}, d tpgre
 }
 
 func expandAlloydbInstanceClientConnectionConfigSslConfigSslMode(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandAlloydbInstancePscInstanceConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedServiceAttachmentLink, err := expandAlloydbInstancePscInstanceConfigServiceAttachmentLink(original["service_attachment_link"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedServiceAttachmentLink); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["serviceAttachmentLink"] = transformedServiceAttachmentLink
-	}
-
-	transformedAllowedConsumerProjects, err := expandAlloydbInstancePscInstanceConfigAllowedConsumerProjects(original["allowed_consumer_projects"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedAllowedConsumerProjects); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["allowedConsumerProjects"] = transformedAllowedConsumerProjects
-	}
-
-	transformedPscDnsName, err := expandAlloydbInstancePscInstanceConfigPscDnsName(original["psc_dns_name"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedPscDnsName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["pscDnsName"] = transformedPscDnsName
-	}
-
-	return transformed, nil
-}
-
-func expandAlloydbInstancePscInstanceConfigServiceAttachmentLink(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandAlloydbInstancePscInstanceConfigAllowedConsumerProjects(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandAlloydbInstancePscInstanceConfigPscDnsName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandAlloydbInstanceNetworkConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedAuthorizedExternalNetworks, err := expandAlloydbInstanceNetworkConfigAuthorizedExternalNetworks(original["authorized_external_networks"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedAuthorizedExternalNetworks); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["authorizedExternalNetworks"] = transformedAuthorizedExternalNetworks
-	}
-
-	transformedEnablePublicIp, err := expandAlloydbInstanceNetworkConfigEnablePublicIp(original["enable_public_ip"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedEnablePublicIp); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["enablePublicIp"] = transformedEnablePublicIp
-	}
-
-	return transformed, nil
-}
-
-func expandAlloydbInstanceNetworkConfigAuthorizedExternalNetworks(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	req := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		if raw == nil {
-			continue
-		}
-		original := raw.(map[string]interface{})
-		transformed := make(map[string]interface{})
-
-		transformedCidrRange, err := expandAlloydbInstanceNetworkConfigAuthorizedExternalNetworksCidrRange(original["cidr_range"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedCidrRange); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-			transformed["cidrRange"] = transformedCidrRange
-		}
-
-		req = append(req, transformed)
-	}
-	return req, nil
-}
-
-func expandAlloydbInstanceNetworkConfigAuthorizedExternalNetworksCidrRange(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandAlloydbInstanceNetworkConfigEnablePublicIp(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

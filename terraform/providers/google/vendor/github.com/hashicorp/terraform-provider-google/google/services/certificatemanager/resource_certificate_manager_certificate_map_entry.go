@@ -20,7 +20,6 @@ package certificatemanager
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -221,7 +220,6 @@ func resourceCertificateManagerCertificateMapEntryCreate(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -230,7 +228,6 @@ func resourceCertificateManagerCertificateMapEntryCreate(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating CertificateMapEntry: %s", err)
@@ -283,14 +280,12 @@ func resourceCertificateManagerCertificateMapEntryRead(d *schema.ResourceData, m
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CertificateManagerCertificateMapEntry %q", d.Id()))
@@ -378,7 +373,6 @@ func resourceCertificateManagerCertificateMapEntryUpdate(d *schema.ResourceData,
 	}
 
 	log.Printf("[DEBUG] Updating CertificateMapEntry %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -414,7 +408,6 @@ func resourceCertificateManagerCertificateMapEntryUpdate(d *schema.ResourceData,
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -462,8 +455,6 @@ func resourceCertificateManagerCertificateMapEntryDelete(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting CertificateMapEntry %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -473,7 +464,6 @@ func resourceCertificateManagerCertificateMapEntryDelete(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "CertificateMapEntry")

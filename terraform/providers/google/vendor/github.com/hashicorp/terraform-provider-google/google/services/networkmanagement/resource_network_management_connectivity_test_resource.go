@@ -20,7 +20,6 @@ package networkmanagement
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -325,7 +324,6 @@ func resourceNetworkManagementConnectivityTestCreate(d *schema.ResourceData, met
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -334,7 +332,6 @@ func resourceNetworkManagementConnectivityTestCreate(d *schema.ResourceData, met
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ConnectivityTest: %s", err)
@@ -401,14 +398,12 @@ func resourceNetworkManagementConnectivityTestRead(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("NetworkManagementConnectivityTest %q", d.Id()))
@@ -508,7 +503,6 @@ func resourceNetworkManagementConnectivityTestUpdate(d *schema.ResourceData, met
 	}
 
 	log.Printf("[DEBUG] Updating ConnectivityTest %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -565,7 +559,6 @@ func resourceNetworkManagementConnectivityTestUpdate(d *schema.ResourceData, met
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -613,8 +606,6 @@ func resourceNetworkManagementConnectivityTestDelete(d *schema.ResourceData, met
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting ConnectivityTest %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -624,7 +615,6 @@ func resourceNetworkManagementConnectivityTestDelete(d *schema.ResourceData, met
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ConnectivityTest")

@@ -20,7 +20,6 @@ package appengine
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -546,26 +545,6 @@ the configuration ID. In this case, configId must be omitted.`,
 				Description: `Environment variables available to the application.  As these are not returned in the API request, Terraform will not detect any changes made outside of the Terraform config.`,
 				Elem:        &schema.Schema{Type: schema.TypeString},
 			},
-			"flexible_runtime_settings": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: `Runtime settings for App Engine flexible environment.`,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"operating_system": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: `Operating System of the application runtime.`,
-						},
-						"runtime_version": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: `The runtime version of an App Engine flexible application.`,
-						},
-					},
-				},
-			},
 			"handlers": {
 				Type:     schema.TypeList,
 				Computed: true,
@@ -948,12 +927,6 @@ func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta inte
 	} else if v, ok := d.GetOkExists("runtime_channel"); !tpgresource.IsEmptyValue(reflect.ValueOf(runtimeChannelProp)) && (ok || !reflect.DeepEqual(v, runtimeChannelProp)) {
 		obj["runtimeChannel"] = runtimeChannelProp
 	}
-	flexibleRuntimeSettingsProp, err := expandAppEngineFlexibleAppVersionFlexibleRuntimeSettings(d.Get("flexible_runtime_settings"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("flexible_runtime_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(flexibleRuntimeSettingsProp)) && (ok || !reflect.DeepEqual(v, flexibleRuntimeSettingsProp)) {
-		obj["flexibleRuntimeSettings"] = flexibleRuntimeSettingsProp
-	}
 	betaSettingsProp, err := expandAppEngineFlexibleAppVersionBetaSettings(d.Get("beta_settings"), d, config)
 	if err != nil {
 		return err
@@ -1094,7 +1067,6 @@ func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -1103,7 +1075,6 @@ func resourceAppEngineFlexibleAppVersionCreate(d *schema.ResourceData, meta inte
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsAppEngineRetryableError},
 	})
 	if err != nil {
@@ -1157,14 +1128,12 @@ func resourceAppEngineFlexibleAppVersionRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsAppEngineRetryableError},
 	})
 	if err != nil {
@@ -1210,9 +1179,6 @@ func resourceAppEngineFlexibleAppVersionRead(d *schema.ResourceData, meta interf
 	if err := d.Set("runtime_channel", flattenAppEngineFlexibleAppVersionRuntimeChannel(res["runtimeChannel"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
 	}
-	if err := d.Set("flexible_runtime_settings", flattenAppEngineFlexibleAppVersionFlexibleRuntimeSettings(res["flexibleRuntimeSettings"], d, config)); err != nil {
-		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
-	}
 	if err := d.Set("serving_status", flattenAppEngineFlexibleAppVersionServingStatus(res["servingStatus"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
 	}
@@ -1241,6 +1207,9 @@ func resourceAppEngineFlexibleAppVersionRead(d *schema.ResourceData, meta interf
 		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
 	}
 	if err := d.Set("nobuild_files_regex", flattenAppEngineFlexibleAppVersionNobuildFilesRegex(res["nobuildFilesRegex"], d, config)); err != nil {
+		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
+	}
+	if err := d.Set("deployment", flattenAppEngineFlexibleAppVersionDeployment(res["deployment"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FlexibleAppVersion: %s", err)
 	}
 	if err := d.Set("endpoints_api_service", flattenAppEngineFlexibleAppVersionEndpointsApiService(res["endpointsApiService"], d, config)); err != nil {
@@ -1316,12 +1285,6 @@ func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta inte
 		return err
 	} else if v, ok := d.GetOkExists("runtime_channel"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, runtimeChannelProp)) {
 		obj["runtimeChannel"] = runtimeChannelProp
-	}
-	flexibleRuntimeSettingsProp, err := expandAppEngineFlexibleAppVersionFlexibleRuntimeSettings(d.Get("flexible_runtime_settings"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("flexible_runtime_settings"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, flexibleRuntimeSettingsProp)) {
-		obj["flexibleRuntimeSettings"] = flexibleRuntimeSettingsProp
 	}
 	betaSettingsProp, err := expandAppEngineFlexibleAppVersionBetaSettings(d.Get("beta_settings"), d, config)
 	if err != nil {
@@ -1450,7 +1413,6 @@ func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[DEBUG] Updating FlexibleAppVersion %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1465,7 +1427,6 @@ func resourceAppEngineFlexibleAppVersionUpdate(d *schema.ResourceData, meta inte
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutUpdate),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsAppEngineRetryableError},
 	})
 
@@ -1770,29 +1731,6 @@ func flattenAppEngineFlexibleAppVersionRuntimeChannel(v interface{}, d *schema.R
 	return v
 }
 
-func flattenAppEngineFlexibleAppVersionFlexibleRuntimeSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["operating_system"] =
-		flattenAppEngineFlexibleAppVersionFlexibleRuntimeSettingsOperatingSystem(original["operatingSystem"], d, config)
-	transformed["runtime_version"] =
-		flattenAppEngineFlexibleAppVersionFlexibleRuntimeSettingsRuntimeVersion(original["runtimeVersion"], d, config)
-	return []interface{}{transformed}
-}
-func flattenAppEngineFlexibleAppVersionFlexibleRuntimeSettingsOperatingSystem(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenAppEngineFlexibleAppVersionFlexibleRuntimeSettingsRuntimeVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func flattenAppEngineFlexibleAppVersionServingStatus(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -2075,6 +2013,61 @@ func flattenAppEngineFlexibleAppVersionLivenessCheckInitialDelay(v interface{}, 
 }
 
 func flattenAppEngineFlexibleAppVersionNobuildFilesRegex(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAppEngineFlexibleAppVersionDeployment(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	original := v.(map[string]interface{})
+	transformed := make(map[string]interface{})
+	transformed["zip"] = d.Get("deployment.0.zip")
+	transformed["files"] = d.Get("deployment.0.files")
+	transformed["container"] =
+		flattenAppEngineFlexibleAppVersionDeploymentContainer(original["container"], d, config)
+	transformed["cloud_build_options"] =
+		flattenAppEngineFlexibleAppVersionDeploymentCloudBuildOptions(original["cloudBuildOptions"], d, config)
+
+	return []interface{}{transformed}
+}
+
+func flattenAppEngineFlexibleAppVersionDeploymentContainer(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["image"] =
+		flattenAppEngineFlexibleAppVersionDeploymentContainerImage(original["image"], d, config)
+	return []interface{}{transformed}
+}
+
+func flattenAppEngineFlexibleAppVersionDeploymentContainerImage(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAppEngineFlexibleAppVersionDeploymentCloudBuildOptions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["app_yaml_path"] =
+		flattenAppEngineFlexibleAppVersionDeploymentCloudBuildOptionsAppYamlPath(original["appYamlPath"], d, config)
+	transformed["cloud_build_timeout"] =
+		flattenAppEngineFlexibleAppVersionDeploymentCloudBuildOptionsCloudBuildTimeout(original["cloudBuildTimeout"], d, config)
+	return []interface{}{transformed}
+}
+
+func flattenAppEngineFlexibleAppVersionDeploymentCloudBuildOptionsAppYamlPath(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenAppEngineFlexibleAppVersionDeploymentCloudBuildOptionsCloudBuildTimeout(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -2697,40 +2690,6 @@ func expandAppEngineFlexibleAppVersionRuntime(v interface{}, d tpgresource.Terra
 }
 
 func expandAppEngineFlexibleAppVersionRuntimeChannel(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandAppEngineFlexibleAppVersionFlexibleRuntimeSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedOperatingSystem, err := expandAppEngineFlexibleAppVersionFlexibleRuntimeSettingsOperatingSystem(original["operating_system"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedOperatingSystem); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["operatingSystem"] = transformedOperatingSystem
-	}
-
-	transformedRuntimeVersion, err := expandAppEngineFlexibleAppVersionFlexibleRuntimeSettingsRuntimeVersion(original["runtime_version"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedRuntimeVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["runtimeVersion"] = transformedRuntimeVersion
-	}
-
-	return transformed, nil
-}
-
-func expandAppEngineFlexibleAppVersionFlexibleRuntimeSettingsOperatingSystem(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandAppEngineFlexibleAppVersionFlexibleRuntimeSettingsRuntimeVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

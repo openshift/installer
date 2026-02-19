@@ -69,7 +69,7 @@ func ResourceClouddeployTarget() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: "Name of the `Target`. Format is `[a-z]([a-z0-9-]{0,61}[a-z0-9])?`.",
+				Description: "Name of the `Target`. Format is [a-z][a-z0-9\\-]{0,62}.",
 			},
 
 			"anthos_cluster": {
@@ -78,16 +78,7 @@ func ResourceClouddeployTarget() *schema.Resource {
 				Description:   "Information specifying an Anthos Cluster.",
 				MaxItems:      1,
 				Elem:          ClouddeployTargetAnthosClusterSchema(),
-				ConflictsWith: []string{"gke", "run", "multi_target", "custom_target"},
-			},
-
-			"custom_target": {
-				Type:          schema.TypeList,
-				Optional:      true,
-				Description:   "Optional. Information specifying a Custom Target.",
-				MaxItems:      1,
-				Elem:          ClouddeployTargetCustomTargetSchema(),
-				ConflictsWith: []string{"gke", "anthos_cluster", "run", "multi_target"},
+				ConflictsWith: []string{"gke", "run", "multi_target"},
 			},
 
 			"deploy_parameters": {
@@ -129,7 +120,7 @@ func ResourceClouddeployTarget() *schema.Resource {
 				Description:   "Information specifying a GKE Cluster.",
 				MaxItems:      1,
 				Elem:          ClouddeployTargetGkeSchema(),
-				ConflictsWith: []string{"anthos_cluster", "run", "multi_target", "custom_target"},
+				ConflictsWith: []string{"anthos_cluster", "run", "multi_target"},
 			},
 
 			"multi_target": {
@@ -138,7 +129,7 @@ func ResourceClouddeployTarget() *schema.Resource {
 				Description:   "Information specifying a multiTarget.",
 				MaxItems:      1,
 				Elem:          ClouddeployTargetMultiTargetSchema(),
-				ConflictsWith: []string{"gke", "anthos_cluster", "run", "custom_target"},
+				ConflictsWith: []string{"gke", "anthos_cluster", "run"},
 			},
 
 			"project": {
@@ -162,7 +153,7 @@ func ResourceClouddeployTarget() *schema.Resource {
 				Description:   "Information specifying a Cloud Run deployment target.",
 				MaxItems:      1,
 				Elem:          ClouddeployTargetRunSchema(),
-				ConflictsWith: []string{"gke", "anthos_cluster", "multi_target", "custom_target"},
+				ConflictsWith: []string{"gke", "anthos_cluster", "multi_target"},
 			},
 
 			"annotations": {
@@ -231,19 +222,6 @@ func ClouddeployTargetAnthosClusterSchema() *schema.Resource {
 	}
 }
 
-func ClouddeployTargetCustomTargetSchema() *schema.Resource {
-	return &schema.Resource{
-		Schema: map[string]*schema.Schema{
-			"custom_target_type": {
-				Type:             schema.TypeString,
-				Required:         true,
-				DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-				Description:      "Required. The name of the CustomTargetType. Format must be `projects/{project}/locations/{location}/customTargetTypes/{custom_target_type}`.",
-			},
-		},
-	}
-}
-
 func ClouddeployTargetExecutionConfigsSchema() *schema.Resource {
 	return &schema.Resource{
 		Schema: map[string]*schema.Schema{
@@ -273,12 +251,6 @@ func ClouddeployTargetExecutionConfigsSchema() *schema.Resource {
 				Computed:    true,
 				Optional:    true,
 				Description: "Optional. Google service account to use for execution. If unspecified, the project execution service account (-compute@developer.gserviceaccount.com) is used.",
-			},
-
-			"verbose": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: "Optional. If true, additional logging will be enabled when running builds in this execution environment.",
 			},
 
 			"worker_pool": {
@@ -346,7 +318,6 @@ func resourceClouddeployTargetCreate(d *schema.ResourceData, meta interface{}) e
 		Location:         dcl.String(d.Get("location").(string)),
 		Name:             dcl.String(d.Get("name").(string)),
 		AnthosCluster:    expandClouddeployTargetAnthosCluster(d.Get("anthos_cluster")),
-		CustomTarget:     expandClouddeployTargetCustomTarget(d.Get("custom_target")),
 		DeployParameters: tpgresource.CheckStringMap(d.Get("deploy_parameters")),
 		Description:      dcl.String(d.Get("description").(string)),
 		Annotations:      tpgresource.CheckStringMap(d.Get("effective_annotations")),
@@ -407,7 +378,6 @@ func resourceClouddeployTargetRead(d *schema.ResourceData, meta interface{}) err
 		Location:         dcl.String(d.Get("location").(string)),
 		Name:             dcl.String(d.Get("name").(string)),
 		AnthosCluster:    expandClouddeployTargetAnthosCluster(d.Get("anthos_cluster")),
-		CustomTarget:     expandClouddeployTargetCustomTarget(d.Get("custom_target")),
 		DeployParameters: tpgresource.CheckStringMap(d.Get("deploy_parameters")),
 		Description:      dcl.String(d.Get("description").(string)),
 		Annotations:      tpgresource.CheckStringMap(d.Get("effective_annotations")),
@@ -450,9 +420,6 @@ func resourceClouddeployTargetRead(d *schema.ResourceData, meta interface{}) err
 	}
 	if err = d.Set("anthos_cluster", flattenClouddeployTargetAnthosCluster(res.AnthosCluster)); err != nil {
 		return fmt.Errorf("error setting anthos_cluster in state: %s", err)
-	}
-	if err = d.Set("custom_target", flattenClouddeployTargetCustomTarget(res.CustomTarget)); err != nil {
-		return fmt.Errorf("error setting custom_target in state: %s", err)
 	}
 	if err = d.Set("deploy_parameters", res.DeployParameters); err != nil {
 		return fmt.Errorf("error setting deploy_parameters in state: %s", err)
@@ -522,7 +489,6 @@ func resourceClouddeployTargetUpdate(d *schema.ResourceData, meta interface{}) e
 		Location:         dcl.String(d.Get("location").(string)),
 		Name:             dcl.String(d.Get("name").(string)),
 		AnthosCluster:    expandClouddeployTargetAnthosCluster(d.Get("anthos_cluster")),
-		CustomTarget:     expandClouddeployTargetCustomTarget(d.Get("custom_target")),
 		DeployParameters: tpgresource.CheckStringMap(d.Get("deploy_parameters")),
 		Description:      dcl.String(d.Get("description").(string)),
 		Annotations:      tpgresource.CheckStringMap(d.Get("effective_annotations")),
@@ -578,7 +544,6 @@ func resourceClouddeployTargetDelete(d *schema.ResourceData, meta interface{}) e
 		Location:         dcl.String(d.Get("location").(string)),
 		Name:             dcl.String(d.Get("name").(string)),
 		AnthosCluster:    expandClouddeployTargetAnthosCluster(d.Get("anthos_cluster")),
-		CustomTarget:     expandClouddeployTargetCustomTarget(d.Get("custom_target")),
 		DeployParameters: tpgresource.CheckStringMap(d.Get("deploy_parameters")),
 		Description:      dcl.String(d.Get("description").(string)),
 		Annotations:      tpgresource.CheckStringMap(d.Get("effective_annotations")),
@@ -662,32 +627,6 @@ func flattenClouddeployTargetAnthosCluster(obj *clouddeploy.TargetAnthosCluster)
 	return []interface{}{transformed}
 
 }
-
-func expandClouddeployTargetCustomTarget(o interface{}) *clouddeploy.TargetCustomTarget {
-	if o == nil {
-		return clouddeploy.EmptyTargetCustomTarget
-	}
-	objArr := o.([]interface{})
-	if len(objArr) == 0 || objArr[0] == nil {
-		return clouddeploy.EmptyTargetCustomTarget
-	}
-	obj := objArr[0].(map[string]interface{})
-	return &clouddeploy.TargetCustomTarget{
-		CustomTargetType: dcl.String(obj["custom_target_type"].(string)),
-	}
-}
-
-func flattenClouddeployTargetCustomTarget(obj *clouddeploy.TargetCustomTarget) interface{} {
-	if obj == nil || obj.Empty() {
-		return nil
-	}
-	transformed := map[string]interface{}{
-		"custom_target_type": obj.CustomTargetType,
-	}
-
-	return []interface{}{transformed}
-
-}
 func expandClouddeployTargetExecutionConfigsArray(o interface{}) []clouddeploy.TargetExecutionConfigs {
 	if o == nil {
 		return nil
@@ -718,7 +657,6 @@ func expandClouddeployTargetExecutionConfigs(o interface{}) *clouddeploy.TargetE
 		ArtifactStorage:  dcl.StringOrNil(obj["artifact_storage"].(string)),
 		ExecutionTimeout: dcl.StringOrNil(obj["execution_timeout"].(string)),
 		ServiceAccount:   dcl.StringOrNil(obj["service_account"].(string)),
-		Verbose:          dcl.Bool(obj["verbose"].(bool)),
 		WorkerPool:       dcl.String(obj["worker_pool"].(string)),
 	}
 }
@@ -746,7 +684,6 @@ func flattenClouddeployTargetExecutionConfigs(obj *clouddeploy.TargetExecutionCo
 		"artifact_storage":  obj.ArtifactStorage,
 		"execution_timeout": obj.ExecutionTimeout,
 		"service_account":   obj.ServiceAccount,
-		"verbose":           obj.Verbose,
 		"worker_pool":       obj.WorkerPool,
 	}
 

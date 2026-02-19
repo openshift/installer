@@ -21,18 +21,6 @@ var CredsEnvVars = []string{
 	"GOOGLE_USE_DEFAULT_CREDENTIALS",
 }
 
-// CredsEnvVarsExcludingAdcs returns the contents of CredsEnvVars excluding GOOGLE_APPLICATION_CREDENTIALS
-func CredsEnvVarsExcludingAdcs() []string {
-	envs := CredsEnvVars
-	var filtered []string
-	for _, e := range envs {
-		if e != "GOOGLE_APPLICATION_CREDENTIALS" {
-			filtered = append(filtered, e)
-		}
-	}
-	return filtered
-}
-
 var ProjectNumberEnvVars = []string{
 	"GOOGLE_PROJECT_NUMBER",
 }
@@ -41,6 +29,10 @@ var ProjectEnvVars = []string{
 	"GOOGLE_PROJECT",
 	"GCLOUD_PROJECT",
 	"CLOUDSDK_CORE_PROJECT",
+}
+
+var FirestoreProjectEnvVars = []string{
+	"GOOGLE_FIRESTORE_PROJECT",
 }
 
 var RegionEnvVars = []string{
@@ -148,6 +140,13 @@ func GetTestCustIdFromEnv(t *testing.T) string {
 func GetTestIdentityUserFromEnv(t *testing.T) string {
 	SkipIfEnvNotSet(t, IdentityUserEnvVars...)
 	return transport_tpg.MultiEnvSearch(IdentityUserEnvVars)
+}
+
+// Firestore can't be enabled at the same time as Datastore, so we need a new
+// project to manage it until we can enable Firestore programmatically.
+func GetTestFirestoreProjectFromEnv(t *testing.T) string {
+	SkipIfEnvNotSet(t, FirestoreProjectEnvVars...)
+	return transport_tpg.MultiEnvSearch(FirestoreProjectEnvVars)
 }
 
 // Returns the raw organization id like 1234567890, skipping the test if one is

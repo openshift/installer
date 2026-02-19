@@ -20,7 +20,6 @@ package healthcare
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -108,11 +107,6 @@ was published. Notifications are only sent if the topic is non-empty. Topic name
 project. service-PROJECT_NUMBER@gcp-sa-healthcare.iam.gserviceaccount.com must have publisher permissions on the given
 Cloud Pub/Sub topic. Not having adequate permissions will cause the calls that send notifications to fail.`,
 						},
-						"send_for_bulk_import": {
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: `Indicates whether or not to send Pub/Sub notifications on bulk import. Only supported for DICOM imports.`,
-						},
 					},
 				},
 			},
@@ -179,7 +173,6 @@ func resourceHealthcareDicomStoreCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -188,7 +181,6 @@ func resourceHealthcareDicomStoreCreate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating DicomStore: %s", err)
@@ -225,14 +217,12 @@ func resourceHealthcareDicomStoreRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("HealthcareDicomStore %q", d.Id()))
@@ -298,7 +288,6 @@ func resourceHealthcareDicomStoreUpdate(d *schema.ResourceData, meta interface{}
 	}
 
 	log.Printf("[DEBUG] Updating DicomStore %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("notification_config") {
@@ -330,7 +319,6 @@ func resourceHealthcareDicomStoreUpdate(d *schema.ResourceData, meta interface{}
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -365,8 +353,6 @@ func resourceHealthcareDicomStoreDelete(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting DicomStore %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -376,7 +362,6 @@ func resourceHealthcareDicomStoreDelete(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "DicomStore")
@@ -435,15 +420,9 @@ func flattenHealthcareDicomStoreNotificationConfig(v interface{}, d *schema.Reso
 	transformed := make(map[string]interface{})
 	transformed["pubsub_topic"] =
 		flattenHealthcareDicomStoreNotificationConfigPubsubTopic(original["pubsubTopic"], d, config)
-	transformed["send_for_bulk_import"] =
-		flattenHealthcareDicomStoreNotificationConfigSendForBulkImport(original["sendForBulkImport"], d, config)
 	return []interface{}{transformed}
 }
 func flattenHealthcareDicomStoreNotificationConfigPubsubTopic(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenHealthcareDicomStoreNotificationConfigSendForBulkImport(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -486,21 +465,10 @@ func expandHealthcareDicomStoreNotificationConfig(v interface{}, d tpgresource.T
 		transformed["pubsubTopic"] = transformedPubsubTopic
 	}
 
-	transformedSendForBulkImport, err := expandHealthcareDicomStoreNotificationConfigSendForBulkImport(original["send_for_bulk_import"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedSendForBulkImport); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["sendForBulkImport"] = transformedSendForBulkImport
-	}
-
 	return transformed, nil
 }
 
 func expandHealthcareDicomStoreNotificationConfigPubsubTopic(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandHealthcareDicomStoreNotificationConfigSendForBulkImport(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

@@ -14,7 +14,7 @@ import (
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/go-version"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -24,15 +24,6 @@ import (
 
 	"google.golang.org/api/container/v1"
 )
-
-// Single-digit hour is equivalent to hour with leading zero e.g. suppress diff 1:00 => 01:00.
-// Assume either value could be in either format.
-func Rfc3339TimeDiffSuppress(k, old, new string, d *schema.ResourceData) bool {
-	if (len(old) == 4 && "0"+old == new) || (len(new) == 4 && "0"+new == old) {
-		return true
-	}
-	return false
-}
 
 var (
 	instanceGroupManagerURL = regexp.MustCompile(fmt.Sprintf("projects/(%s)/zones/([a-z0-9-]*)/instanceGroupManagers/([^/]*)", verify.ProjectRegex))
@@ -52,7 +43,7 @@ var (
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
-				Description: `Whether Kubernetes master is accessible via Google Compute Engine Public IPs.`,
+				Description: `Whether master is accessbile via Google Compute Engine Public IP addresses.`,
 			},
 		},
 	}
@@ -86,7 +77,6 @@ var (
 		"addons_config.0.gke_backup_agent_config",
 		"addons_config.0.config_connector_config",
 		"addons_config.0.gcs_fuse_csi_driver_config",
-		"addons_config.0.stateful_ha_config",
 	}
 
 	privateClusterConfigKeys = []string{
@@ -150,8 +140,7 @@ func clusterSchemaNodePoolDefaults() *schema.Schema {
 					MaxItems:    1,
 					Elem: &schema.Resource{
 						Schema: map[string]*schema.Schema{
-							"containerd_config": schemaContainerdConfig(),
-							"logging_variant":   schemaLoggingVariant(),
+							"logging_variant": schemaLoggingVariant(),
 						},
 					},
 				},
@@ -281,7 +270,7 @@ func ResourceContainerCluster() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: `When the field is set to true or unset in Terraform state, a terraform apply or terraform destroy that would delete the cluster will fail. When the field is set to false, deleting the cluster is allowed.`,
+				Description: `Whether or not to allow Terraform to destroy the instance. Defaults to true. Unless this field is set to false in Terraform state, a terraform destroy or terraform apply that would delete the cluster will fail.`,
 			},
 
 			"addons_config": {
@@ -451,23 +440,6 @@ func ResourceContainerCluster() *schema.Resource {
 							AtLeastOneOf: addonsConfigKeys,
 							MaxItems:     1,
 							Description:  `The of the Config Connector addon.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"enabled": {
-										Type:     schema.TypeBool,
-										Required: true,
-									},
-								},
-							},
-						},
-						"stateful_ha_config": {
-							Type:          schema.TypeList,
-							Optional:      true,
-							Computed:      true,
-							AtLeastOneOf:  addonsConfigKeys,
-							MaxItems:      1,
-							Description:   `The status of the Stateful HA addon, which provides automatic configurable failover for stateful applications. Defaults to disabled; set enabled = true to enable.`,
-							ConflictsWith: []string{"enable_autopilot"},
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"enabled": {
@@ -936,7 +908,7 @@ func ResourceContainerCluster() *schema.Resource {
 										Type:             schema.TypeString,
 										Required:         true,
 										ValidateFunc:     verify.ValidateRFC3339Time,
-										DiffSuppressFunc: Rfc3339TimeDiffSuppress,
+										DiffSuppressFunc: tpgresource.Rfc3339TimeDiffSuppress,
 									},
 									"duration": {
 										Type:     schema.TypeString,
@@ -1030,8 +1002,8 @@ func ResourceContainerCluster() *schema.Resource {
 							Type:             schema.TypeString,
 							Optional:         true,
 							Computed:         true,
-							ValidateFunc:     validation.StringInSlice([]string{"DISABLED", "BASIC", "ENTERPRISE", "MODE_UNSPECIFIED"}, false),
-							Description:      `Sets the mode of the Kubernetes security posture API's off-cluster features. Available options include DISABLED, BASIC, and ENTERPRISE.`,
+							ValidateFunc:     validation.StringInSlice([]string{"DISABLED", "BASIC", "MODE_UNSPECIFIED"}, false),
+							Description:      `Sets the mode of the Kubernetes security posture API's off-cluster features. Available options include DISABLED and BASIC.`,
 							DiffSuppressFunc: tpgresource.EmptyOrDefaultStringSuppress("MODE_UNSPECIFIED"),
 						},
 						"vulnerability_mode": {
@@ -1057,7 +1029,7 @@ func ResourceContainerCluster() *schema.Resource {
 							Type:        schema.TypeList,
 							Optional:    true,
 							Computed:    true,
-							Description: `GKE components exposing metrics. Valid values include SYSTEM_COMPONENTS, APISERVER, SCHEDULER, CONTROLLER_MANAGER, STORAGE, HPA, POD, DAEMONSET, DEPLOYMENT, STATEFULSET, KUBELET, CADVISOR and DCGM.`,
+							Description: `GKE components exposing metrics. Valid values include SYSTEM_COMPONENTS, APISERVER, SCHEDULER, CONTROLLER_MANAGER, STORAGE, HPA, POD, DAEMONSET, DEPLOYMENT and STATEFULSET.`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -1329,11 +1301,6 @@ func ResourceContainerCluster() *schema.Resource {
 								},
 							},
 						},
-						"resource_manager_tags": {
-							Type:        schema.TypeMap,
-							Optional:    true,
-							Description: `A map of resource manager tags. Resource manager tag keys and values have the same definition as resource manager tags. Keys must be in the format tagKeys/{tag_key_id}, and values are in the format tagValues/456. The field is ignored (both PUT & PATCH) when empty.`,
-						},
 					},
 				},
 			},
@@ -1551,7 +1518,7 @@ func ResourceContainerCluster() *schema.Resource {
 							Optional:         true,
 							ForceNew:         true,
 							AtLeastOneOf:     privateClusterConfigKeys,
-							DiffSuppressFunc: containerClusterPrivateClusterConfigSuppress,
+							DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
 							Description:      `Subnetwork in cluster's network where master's endpoint will be provisioned.`,
 						},
 						"public_endpoint": {
@@ -1625,8 +1592,9 @@ func ResourceContainerCluster() *schema.Resource {
 				// Computed is unsafe to remove- this API may return `"workloadIdentityConfig": {},` or omit the key entirely
 				// and both will be valid. Note that we don't handle the case where the API returns nothing & the user has defined
 				// workload_identity_config today.
-				Computed:    true,
-				Description: `Configuration for the use of Kubernetes Service Accounts in GCP IAM policies.`,
+				Computed:      true,
+				Description:   `Configuration for the use of Kubernetes Service Accounts in GCP IAM policies.`,
+				ConflictsWith: []string{"enable_autopilot"},
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"workload_pool": {
@@ -1666,7 +1634,7 @@ func ResourceContainerCluster() *schema.Resource {
 						"enabled": {
 							Type:        schema.TypeBool,
 							Required:    true,
-							Description: `When enabled, services with external ips specified will be allowed.`,
+							Description: `When enabled, services with exterenal ips specified will be allowed.`,
 						},
 					},
 				},
@@ -1766,12 +1734,7 @@ func ResourceContainerCluster() *schema.Resource {
 				ValidateFunc:     validation.StringInSlice([]string{"DATAPATH_PROVIDER_UNSPECIFIED", "LEGACY_DATAPATH", "ADVANCED_DATAPATH"}, false),
 				DiffSuppressFunc: tpgresource.EmptyOrDefaultStringSuppress("DATAPATH_PROVIDER_UNSPECIFIED"),
 			},
-			"enable_cilium_clusterwide_network_policy": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Description: `Whether Cilium cluster-wide network policy is enabled on this cluster.`,
-				Default:     false,
-			},
+
 			"enable_intranode_visibility": {
 				Type:          schema.TypeBool,
 				Optional:      true,
@@ -2064,14 +2027,13 @@ func resourceContainerClusterCreate(d *schema.ResourceData, meta interface{}) er
 		ReleaseChannel: expandReleaseChannel(d.Get("release_channel")),
 		EnableTpu:      d.Get("enable_tpu").(bool),
 		NetworkConfig: &container.NetworkConfig{
-			EnableIntraNodeVisibility:            d.Get("enable_intranode_visibility").(bool),
-			DefaultSnatStatus:                    expandDefaultSnatStatus(d.Get("default_snat_status")),
-			DatapathProvider:                     d.Get("datapath_provider").(string),
-			EnableCiliumClusterwideNetworkPolicy: d.Get("enable_cilium_clusterwide_network_policy").(bool),
-			PrivateIpv6GoogleAccess:              d.Get("private_ipv6_google_access").(string),
-			EnableL4ilbSubsetting:                d.Get("enable_l4_ilb_subsetting").(bool),
-			DnsConfig:                            expandDnsConfig(d.Get("dns_config")),
-			GatewayApiConfig:                     expandGatewayApiConfig(d.Get("gateway_api_config")),
+			EnableIntraNodeVisibility: d.Get("enable_intranode_visibility").(bool),
+			DefaultSnatStatus:         expandDefaultSnatStatus(d.Get("default_snat_status")),
+			DatapathProvider:          d.Get("datapath_provider").(string),
+			PrivateIpv6GoogleAccess:   d.Get("private_ipv6_google_access").(string),
+			EnableL4ilbSubsetting:     d.Get("enable_l4_ilb_subsetting").(bool),
+			DnsConfig:                 expandDnsConfig(d.Get("dns_config")),
+			GatewayApiConfig:          expandGatewayApiConfig(d.Get("gateway_api_config")),
 		},
 		MasterAuth:           expandMasterAuth(d.Get("master_auth")),
 		NotificationConfig:   expandNotificationConfig(d.Get("notification_config")),
@@ -2584,9 +2546,6 @@ func resourceContainerClusterRead(d *schema.ResourceData, meta interface{}) erro
 	if err := d.Set("datapath_provider", cluster.NetworkConfig.DatapathProvider); err != nil {
 		return fmt.Errorf("Error setting datapath_provider: %s", err)
 	}
-	if err := d.Set("enable_cilium_clusterwide_network_policy", cluster.NetworkConfig.EnableCiliumClusterwideNetworkPolicy); err != nil {
-		return fmt.Errorf("Error setting enable_cilium_clusterwide_network_policy: %s", err)
-	}
 	if err := d.Set("default_snat_status", flattenDefaultSnatStatus(cluster.NetworkConfig.DefaultSnatStatus)); err != nil {
 		return err
 	}
@@ -3040,22 +2999,6 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 
 		log.Printf("[INFO] GKE cluster %s L4 ILB Subsetting has been updated to %v", d.Id(), enabled)
-	}
-
-	if d.HasChange("enable_cilium_clusterwide_network_policy") {
-		enabled := d.Get("enable_cilium_clusterwide_network_policy").(bool)
-		req := &container.UpdateClusterRequest{
-			Update: &container.ClusterUpdate{
-				DesiredEnableCiliumClusterwideNetworkPolicy: enabled,
-			},
-		}
-		updateF := updateFunc(req, "updating cilium clusterwide network policy")
-		// Call update serially.
-		if err := transport_tpg.LockedCall(lockKey, updateF); err != nil {
-			return err
-		}
-
-		log.Printf("[INFO] GKE cluster %s Cilium Clusterwide Network Policy has been updated to %v", d.Id(), enabled)
 	}
 
 	if d.HasChange("cost_management_config") {
@@ -3854,21 +3797,6 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		log.Printf("[INFO] GKE cluster %s Security Posture Config has been updated to %#v", d.Id(), req.Update.DesiredSecurityPostureConfig)
 	}
 
-	if d.HasChange("node_pool_defaults") && d.HasChange("node_pool_defaults.0.node_config_defaults.0.containerd_config") {
-		if v, ok := d.GetOk("node_pool_defaults.0.node_config_defaults.0.containerd_config"); ok {
-			req := &container.UpdateClusterRequest{
-				Update: &container.ClusterUpdate{
-					DesiredContainerdConfig: expandContainerdConfig(v),
-				},
-			}
-			updateF := updateFunc(req, "updating GKE cluster containerd config")
-			if err := transport_tpg.LockedCall(lockKey, updateF); err != nil {
-				return err
-			}
-			log.Printf("[INFO] GKE cluster %s containerd config has been updated to %#v", d.Id(), req.Update.DesiredContainerdConfig)
-		}
-	}
-
 	if d.HasChange("node_pool_auto_config.0.network_tags.0.tags") {
 		tags := d.Get("node_pool_auto_config.0.network_tags.0.tags").([]interface{})
 
@@ -3888,24 +3816,6 @@ func resourceContainerClusterUpdate(d *schema.ResourceData, meta interface{}) er
 		}
 
 		log.Printf("[INFO] GKE cluster %s node pool auto config network tags have been updated", d.Id())
-	}
-
-	if d.HasChange("node_pool_auto_config.0.resource_manager_tags") {
-		rmtags := d.Get("node_pool_auto_config.0.resource_manager_tags")
-
-		req := &container.UpdateClusterRequest{
-			Update: &container.ClusterUpdate{
-				DesiredNodePoolAutoConfigResourceManagerTags: expandResourceManagerTags(rmtags),
-			},
-		}
-
-		updateF := updateFunc(req, "updating GKE cluster node pool auto config resource manager tags")
-		// Call update serially.
-		if err := transport_tpg.LockedCall(lockKey, updateF); err != nil {
-			return err
-		}
-
-		log.Printf("[INFO] GKE cluster %s node pool auto config resource manager tags have been updated", d.Id())
 	}
 
 	d.Partial(false)
@@ -3953,7 +3863,7 @@ func resourceContainerClusterDelete(d *schema.ResourceData, meta interface{}) er
 
 	var op *container.Operation
 	var count = 0
-	err = retry.Retry(30*time.Second, func() *retry.RetryError {
+	err = resource.Retry(30*time.Second, func() *resource.RetryError {
 		count++
 
 		name := containerClusterFullName(project, location, clusterName)
@@ -3965,11 +3875,11 @@ func resourceContainerClusterDelete(d *schema.ResourceData, meta interface{}) er
 
 		if err != nil {
 			log.Printf("[WARNING] Cluster is still not ready to delete, retrying %s", clusterName)
-			return retry.RetryableError(err)
+			return resource.RetryableError(err)
 		}
 
 		if count == 15 {
-			return retry.NonRetryableError(fmt.Errorf("Error retrying to delete cluster %s", clusterName))
+			return resource.NonRetryableError(fmt.Errorf("Error retrying to delete cluster %s", clusterName))
 		}
 		return nil
 	})
@@ -3999,7 +3909,7 @@ var containerClusterRestingStates = RestingStates{
 
 // returns a state with no error if the state is a resting state, and the last state with an error otherwise
 func containerClusterAwaitRestingState(config *transport_tpg.Config, project, location, clusterName, userAgent string, timeout time.Duration) (state string, err error) {
-	err = retry.Retry(timeout, func() *retry.RetryError {
+	err = resource.Retry(timeout, func() *resource.RetryError {
 		name := containerClusterFullName(project, location, clusterName)
 		clusterGetCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.Get(name)
 		if config.UserProjectOverride {
@@ -4007,7 +3917,7 @@ func containerClusterAwaitRestingState(config *transport_tpg.Config, project, lo
 		}
 		cluster, gErr := clusterGetCall.Do()
 		if gErr != nil {
-			return retry.NonRetryableError(gErr)
+			return resource.NonRetryableError(gErr)
 		}
 
 		state = cluster.Status
@@ -4020,7 +3930,7 @@ func containerClusterAwaitRestingState(config *transport_tpg.Config, project, lo
 			log.Printf("[DEBUG] Cluster %q has error state %q with message %q.", clusterName, state, cluster.StatusMessage)
 			return nil
 		default:
-			return retry.RetryableError(fmt.Errorf("Cluster %q has state %q with message %q", clusterName, state, cluster.StatusMessage))
+			return resource.RetryableError(fmt.Errorf("Cluster %q has state %q with message %q", clusterName, state, cluster.StatusMessage))
 		}
 	})
 
@@ -4111,14 +4021,6 @@ func expandClusterAddonsConfig(configured interface{}) *container.AddonsConfig {
 	if v, ok := config["gcs_fuse_csi_driver_config"]; ok && len(v.([]interface{})) > 0 {
 		addon := v.([]interface{})[0].(map[string]interface{})
 		ac.GcsFuseCsiDriverConfig = &container.GcsFuseCsiDriverConfig{
-			Enabled:         addon["enabled"].(bool),
-			ForceSendFields: []string{"Enabled"},
-		}
-	}
-
-	if v, ok := config["stateful_ha_config"]; ok && len(v.([]interface{})) > 0 {
-		addon := v.([]interface{})[0].(map[string]interface{})
-		ac.StatefulHaConfig = &container.StatefulHAConfig{
 			Enabled:         addon["enabled"].(bool),
 			ForceSendFields: []string{"Enabled"},
 		}
@@ -5001,10 +4903,6 @@ func expandNodePoolAutoConfig(configured interface{}) *container.NodePoolAutoCon
 		npac.NetworkTags = expandNodePoolAutoConfigNetworkTags(v)
 	}
 
-	if v, ok := config["resource_manager_tags"]; ok && len(v.(map[string]interface{})) > 0 {
-		npac.ResourceManagerTags = expandResourceManagerTags(v)
-	}
-
 	return npac
 }
 
@@ -5167,13 +5065,6 @@ func flattenClusterAddonsConfig(c *container.AddonsConfig) []map[string]interfac
 		result["gcs_fuse_csi_driver_config"] = []map[string]interface{}{
 			{
 				"enabled": c.GcsFuseCsiDriverConfig.Enabled,
-			},
-		}
-	}
-	if c.StatefulHaConfig != nil {
-		result["stateful_ha_config"] = []map[string]interface{}{
-			{
-				"enabled": c.StatefulHaConfig.Enabled,
 			},
 		}
 	}
@@ -5755,9 +5646,6 @@ func flattenNodePoolAutoConfig(c *container.NodePoolAutoConfig) []map[string]int
 	if c.NetworkTags != nil {
 		result["network_tags"] = flattenNodePoolAutoConfigNetworkTags(c.NetworkTags)
 	}
-	if c.ResourceManagerTags != nil {
-		result["resource_manager_tags"] = flattenResourceManagerTags(c.ResourceManagerTags)
-	}
 
 	return []map[string]interface{}{result}
 }
@@ -5898,14 +5786,6 @@ func containerClusterPrivateClusterConfigSuppress(k, old, new string, d *schema.
 		return suppressNodes && !hasSubnet
 	} else if k == "private_cluster_config.#" {
 		return suppressEndpoint && suppressNodes && !hasSubnet && !hasGlobalAccessConfig
-	} else if k == "private_cluster_config.0.private_endpoint_subnetwork" {
-		// Before regular compare, for the sake of private flexible cluster,
-		// suppress diffs in private_endpoint_subnetwork when
-		//   master_ipv4_cidr_block is set
-		//   && private_endpoint_subnetwork is unset in terraform (new value == "")
-		//   && private_endpoint_subnetwork is returned from resource (old value != "")
-		_, hasMasterCidr := d.GetOk("private_cluster_config.0.master_ipv4_cidr_block")
-		return (hasMasterCidr && new == "" && old != "") || tpgresource.CompareSelfLinkOrResourceName(k, old, new, d)
 	}
 	return false
 }

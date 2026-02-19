@@ -11,7 +11,7 @@ import (
 
 	"github.com/hashicorp/errwrap"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -31,8 +31,6 @@ var (
 		"scheduling.0.min_node_cpus",
 		"scheduling.0.provisioning_model",
 		"scheduling.0.instance_termination_action",
-		"scheduling.0.max_run_duration",
-		"scheduling.0.on_instance_stop_action",
 		"scheduling.0.local_ssd_recovery_timeout",
 	}
 
@@ -487,7 +485,7 @@ Google Cloud KMS.`,
 										Type:             schema.TypeString,
 										Required:         true,
 										ForceNew:         true,
-										DiffSuppressFunc: IpCidrRangeDiffSuppress,
+										DiffSuppressFunc: tpgresource.IpCidrRangeDiffSuppress,
 										Description:      `The IP CIDR range represented by this alias IP range. This IP CIDR range must belong to the specified subnetwork and cannot contain IP addresses reserved by system or used by other network interfaces. At the time of writing only a netmask (e.g. /24) may be supplied, with a CIDR format resulting in an API error.`,
 									},
 									"subnetwork_range_name": {
@@ -678,51 +676,6 @@ Google Cloud KMS.`,
 							AtLeastOneOf: schedulingInstTemplateKeys,
 							Description:  `Specifies the action GCE should take when SPOT VM is preempted.`,
 						},
-						"max_run_duration": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: `The timeout for new network connections to hosts.`,
-							MaxItems:    1,
-							ForceNew:    true,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"seconds": {
-										Type:     schema.TypeInt,
-										Required: true,
-										ForceNew: true,
-										Description: `Span of time at a resolution of a second.
-Must be from 0 to 315,576,000,000 inclusive.`,
-									},
-									"nanos": {
-										Type:     schema.TypeInt,
-										Optional: true,
-										ForceNew: true,
-										Description: `Span of time that's a fraction of a second at nanosecond
-resolution. Durations less than one second are represented
-with a 0 seconds field and a positive nanos field. Must
-be from 0 to 999,999,999 inclusive.`,
-									},
-								},
-							},
-						},
-						"on_instance_stop_action": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							MaxItems:    1,
-							ForceNew:    true,
-							Description: `Defines the behaviour for instances with the instance_termination_action.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"discard_local_ssd": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Description: `If true, the contents of any attached Local SSD disks will be discarded.`,
-										Default:     false,
-										ForceNew:    true,
-									},
-								},
-							},
-						},
 						"local_ssd_recovery_timeout": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -854,22 +807,12 @@ be from 0 to 999,999,999 inclusive.`,
 				Description: `The Confidential VM config being used by the instance. on_host_maintenance has to be set to TERMINATE or this will fail to create.`,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+
 						"enable_confidential_compute": {
-							Type:         schema.TypeBool,
-							Optional:     true,
-							ForceNew:     true,
-							Description:  `Defines whether the instance should have confidential compute enabled. Field will be deprecated in a future release.`,
-							AtLeastOneOf: []string{"confidential_instance_config.0.enable_confidential_compute", "confidential_instance_config.0.confidential_instance_type"},
-						},
-						"confidential_instance_type": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
-							Description: `
-								Specifies which confidential computing technology to use.
-								This could be one of the following values: SEV, SEV_SNP.
-								If SEV_SNP, min_cpu_platform = "AMD Milan" is currently required.`,
-							AtLeastOneOf: []string{"confidential_instance_config.0.enable_confidential_compute", "confidential_instance_config.0.confidential_instance_type"},
+							Type:        schema.TypeBool,
+							Required:    true,
+							ForceNew:    true,
+							Description: `Defines whether the instance should have confidential compute enabled.`,
 						},
 					},
 				},
@@ -1376,9 +1319,9 @@ func resourceComputeInstanceTemplateCreate(d *schema.ResourceData, meta interfac
 	if v, ok := d.GetOk("name"); ok {
 		itName = v.(string)
 	} else if v, ok := d.GetOk("name_prefix"); ok {
-		itName = id.PrefixedUniqueId(v.(string))
+		itName = resource.PrefixedUniqueId(v.(string))
 	} else {
-		itName = id.UniqueId()
+		itName = resource.UniqueId()
 	}
 	instanceTemplate := &compute.InstanceTemplate{
 		Description: d.Get("description").(string),

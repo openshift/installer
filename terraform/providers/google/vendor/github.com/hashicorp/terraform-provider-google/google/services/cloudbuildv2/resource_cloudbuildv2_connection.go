@@ -20,7 +20,6 @@ package cloudbuildv2
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -76,162 +75,6 @@ func ResourceCloudbuildv2Connection() *schema.Resource {
 Please refer to the field 'effective_annotations' for all of the annotations present on the resource.`,
 				Elem: &schema.Schema{Type: schema.TypeString},
 			},
-			"bitbucket_cloud_config": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: `Configuration for connections to Bitbucket Cloud.`,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"authorizer_credential": {
-							Type:        schema.TypeList,
-							Required:    true,
-							Description: `Required. An access token with the 'webhook', 'repository', 'repository:admin' and 'pullrequest' scope access. It can be either a workspace, project or repository access token. It's recommended to use a system account to generate these credentials.`,
-							MaxItems:    1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"user_token_secret_version": {
-										Type:             schema.TypeString,
-										Required:         true,
-										DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-										Description:      `Required. A SecretManager resource containing the user token that authorizes the Cloud Build connection. Format: 'projects/*/secrets/*/versions/*'.`,
-									},
-									"username": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `Output only. The username associated to this token.`,
-									},
-								},
-							},
-						},
-						"read_authorizer_credential": {
-							Type:        schema.TypeList,
-							Required:    true,
-							Description: `Required. An access token with the 'repository' access. It can be either a workspace, project or repository access token. It's recommended to use a system account to generate the credentials.`,
-							MaxItems:    1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"user_token_secret_version": {
-										Type:             schema.TypeString,
-										Required:         true,
-										DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-										Description:      `Required. A SecretManager resource containing the user token that authorizes the Cloud Build connection. Format: 'projects/*/secrets/*/versions/*'.`,
-									},
-									"username": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `Output only. The username associated to this token.`,
-									},
-								},
-							},
-						},
-						"webhook_secret_secret_version": {
-							Type:             schema.TypeString,
-							Required:         true,
-							ForceNew:         true,
-							DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-							Description:      `Required. Immutable. SecretManager resource containing the webhook secret used to verify webhook events, formatted as 'projects/*/secrets/*/versions/*'.`,
-						},
-						"workspace": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: `The Bitbucket Cloud Workspace ID to be connected to Google Cloud Platform.`,
-						},
-					},
-				},
-				ConflictsWith: []string{"github_config", "github_enterprise_config", "gitlab_config", "bitbucket_data_center_config"},
-			},
-			"bitbucket_data_center_config": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: `Configuration for connections to Bitbucket Data Center.`,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"authorizer_credential": {
-							Type:        schema.TypeList,
-							Required:    true,
-							Description: `Required. A http access token with the 'REPO_ADMIN' scope access.`,
-							MaxItems:    1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"user_token_secret_version": {
-										Type:             schema.TypeString,
-										Required:         true,
-										DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-										Description:      `Required. A SecretManager resource containing the user token that authorizes the Cloud Build connection. Format: 'projects/*/secrets/*/versions/*'.`,
-									},
-									"username": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `Output only. The username associated to this token.`,
-									},
-								},
-							},
-						},
-						"host_uri": {
-							Type:        schema.TypeString,
-							Required:    true,
-							Description: `The URI of the Bitbucket Data Center host this connection is for.`,
-						},
-						"read_authorizer_credential": {
-							Type:        schema.TypeList,
-							Required:    true,
-							Description: `Required. A http access token with the 'REPO_READ' access.`,
-							MaxItems:    1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"user_token_secret_version": {
-										Type:             schema.TypeString,
-										Required:         true,
-										DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-										Description:      `Required. A SecretManager resource containing the user token that authorizes the Cloud Build connection. Format: 'projects/*/secrets/*/versions/*'.`,
-									},
-									"username": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `Output only. The username associated to this token.`,
-									},
-								},
-							},
-						},
-						"webhook_secret_secret_version": {
-							Type:             schema.TypeString,
-							Required:         true,
-							ForceNew:         true,
-							DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-							Description:      `Required. Immutable. SecretManager resource containing the webhook secret used to verify webhook events, formatted as 'projects/*/secrets/*/versions/*'.`,
-						},
-						"service_directory_config": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: `Configuration for using Service Directory to privately connect to a Bitbucket Data Center. This should only be set if the Bitbucket Data Center is hosted on-premises and not reachable by public internet. If this field is left empty, calls to the Bitbucket Data Center will be made over the public internet.`,
-							MaxItems:    1,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"service": {
-										Type:             schema.TypeString,
-										Required:         true,
-										DiffSuppressFunc: tpgresource.CompareSelfLinkOrResourceName,
-										Description:      `Required. The Service Directory service name. Format: projects/{project}/locations/{location}/namespaces/{namespace}/services/{service}.`,
-									},
-								},
-							},
-						},
-						"ssl_ca": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: `SSL certificate to use for requests to the Bitbucket Data Center.`,
-						},
-						"server_version": {
-							Type:        schema.TypeString,
-							Computed:    true,
-							Description: `Output only. Version of the Bitbucket Data Center running on the 'host_uri'.`,
-						},
-					},
-				},
-				ConflictsWith: []string{"github_config", "github_enterprise_config", "bitbucket_cloud_config", "gitlab_config"},
-			},
 			"disabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -272,7 +115,7 @@ Please refer to the field 'effective_annotations' for all of the annotations pre
 						},
 					},
 				},
-				ConflictsWith: []string{"github_enterprise_config", "gitlab_config", "bitbucket_cloud_config", "bitbucket_data_center_config"},
+				ConflictsWith: []string{"github_enterprise_config", "gitlab_config"},
 			},
 			"github_enterprise_config": {
 				Type:        schema.TypeList,
@@ -336,7 +179,7 @@ Please refer to the field 'effective_annotations' for all of the annotations pre
 						},
 					},
 				},
-				ConflictsWith: []string{"github_config", "gitlab_config", "bitbucket_cloud_config", "bitbucket_data_center_config"},
+				ConflictsWith: []string{"github_config", "gitlab_config"},
 			},
 			"gitlab_config": {
 				Type:        schema.TypeList,
@@ -428,7 +271,7 @@ Please refer to the field 'effective_annotations' for all of the annotations pre
 						},
 					},
 				},
-				ConflictsWith: []string{"github_config", "github_enterprise_config", "bitbucket_cloud_config", "bitbucket_data_center_config"},
+				ConflictsWith: []string{"github_config", "github_enterprise_config"},
 			},
 			"create_time": {
 				Type:        schema.TypeString,
@@ -517,18 +360,6 @@ func resourceCloudbuildv2ConnectionCreate(d *schema.ResourceData, meta interface
 	} else if v, ok := d.GetOkExists("gitlab_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(gitlabConfigProp)) && (ok || !reflect.DeepEqual(v, gitlabConfigProp)) {
 		obj["gitlabConfig"] = gitlabConfigProp
 	}
-	bitbucketDataCenterConfigProp, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfig(d.Get("bitbucket_data_center_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("bitbucket_data_center_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(bitbucketDataCenterConfigProp)) && (ok || !reflect.DeepEqual(v, bitbucketDataCenterConfigProp)) {
-		obj["bitbucketDataCenterConfig"] = bitbucketDataCenterConfigProp
-	}
-	bitbucketCloudConfigProp, err := expandCloudbuildv2ConnectionBitbucketCloudConfig(d.Get("bitbucket_cloud_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("bitbucket_cloud_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(bitbucketCloudConfigProp)) && (ok || !reflect.DeepEqual(v, bitbucketCloudConfigProp)) {
-		obj["bitbucketCloudConfig"] = bitbucketCloudConfigProp
-	}
 	disabledProp, err := expandCloudbuildv2ConnectionDisabled(d.Get("disabled"), d, config)
 	if err != nil {
 		return err
@@ -567,7 +398,6 @@ func resourceCloudbuildv2ConnectionCreate(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -576,7 +406,6 @@ func resourceCloudbuildv2ConnectionCreate(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Connection: %s", err)
@@ -629,14 +458,12 @@ func resourceCloudbuildv2ConnectionRead(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("Cloudbuildv2Connection %q", d.Id()))
@@ -659,12 +486,6 @@ func resourceCloudbuildv2ConnectionRead(d *schema.ResourceData, meta interface{}
 		return fmt.Errorf("Error reading Connection: %s", err)
 	}
 	if err := d.Set("gitlab_config", flattenCloudbuildv2ConnectionGitlabConfig(res["gitlabConfig"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Connection: %s", err)
-	}
-	if err := d.Set("bitbucket_data_center_config", flattenCloudbuildv2ConnectionBitbucketDataCenterConfig(res["bitbucketDataCenterConfig"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Connection: %s", err)
-	}
-	if err := d.Set("bitbucket_cloud_config", flattenCloudbuildv2ConnectionBitbucketCloudConfig(res["bitbucketCloudConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Connection: %s", err)
 	}
 	if err := d.Set("installation_state", flattenCloudbuildv2ConnectionInstallationState(res["installationState"], d, config)); err != nil {
@@ -723,18 +544,6 @@ func resourceCloudbuildv2ConnectionUpdate(d *schema.ResourceData, meta interface
 	} else if v, ok := d.GetOkExists("gitlab_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, gitlabConfigProp)) {
 		obj["gitlabConfig"] = gitlabConfigProp
 	}
-	bitbucketDataCenterConfigProp, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfig(d.Get("bitbucket_data_center_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("bitbucket_data_center_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, bitbucketDataCenterConfigProp)) {
-		obj["bitbucketDataCenterConfig"] = bitbucketDataCenterConfigProp
-	}
-	bitbucketCloudConfigProp, err := expandCloudbuildv2ConnectionBitbucketCloudConfig(d.Get("bitbucket_cloud_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("bitbucket_cloud_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, bitbucketCloudConfigProp)) {
-		obj["bitbucketCloudConfig"] = bitbucketCloudConfigProp
-	}
 	disabledProp, err := expandCloudbuildv2ConnectionDisabled(d.Get("disabled"), d, config)
 	if err != nil {
 		return err
@@ -760,7 +569,6 @@ func resourceCloudbuildv2ConnectionUpdate(d *schema.ResourceData, meta interface
 	}
 
 	log.Printf("[DEBUG] Updating Connection %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -775,7 +583,6 @@ func resourceCloudbuildv2ConnectionUpdate(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -822,8 +629,6 @@ func resourceCloudbuildv2ConnectionDelete(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Connection %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -833,7 +638,6 @@ func resourceCloudbuildv2ConnectionDelete(d *schema.ResourceData, meta interface
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Connection")
@@ -1134,183 +938,6 @@ func flattenCloudbuildv2ConnectionGitlabConfigSslCa(v interface{}, d *schema.Res
 }
 
 func flattenCloudbuildv2ConnectionGitlabConfigServerVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["host_uri"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigHostUri(original["hostUri"], d, config)
-	transformed["webhook_secret_secret_version"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigWebhookSecretSecretVersion(original["webhookSecretSecretVersion"], d, config)
-	transformed["read_authorizer_credential"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredential(original["readAuthorizerCredential"], d, config)
-	transformed["authorizer_credential"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredential(original["authorizerCredential"], d, config)
-	transformed["service_directory_config"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigServiceDirectoryConfig(original["serviceDirectoryConfig"], d, config)
-	transformed["ssl_ca"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigSslCa(original["sslCa"], d, config)
-	transformed["server_version"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigServerVersion(original["serverVersion"], d, config)
-	return []interface{}{transformed}
-}
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigHostUri(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigWebhookSecretSecretVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredential(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["user_token_secret_version"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredentialUserTokenSecretVersion(original["userTokenSecretVersion"], d, config)
-	transformed["username"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredentialUsername(original["username"], d, config)
-	return []interface{}{transformed}
-}
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredentialUserTokenSecretVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredentialUsername(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredential(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["user_token_secret_version"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredentialUserTokenSecretVersion(original["userTokenSecretVersion"], d, config)
-	transformed["username"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredentialUsername(original["username"], d, config)
-	return []interface{}{transformed}
-}
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredentialUserTokenSecretVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredentialUsername(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigServiceDirectoryConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["service"] =
-		flattenCloudbuildv2ConnectionBitbucketDataCenterConfigServiceDirectoryConfigService(original["service"], d, config)
-	return []interface{}{transformed}
-}
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigServiceDirectoryConfigService(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigSslCa(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketDataCenterConfigServerVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketCloudConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["workspace"] =
-		flattenCloudbuildv2ConnectionBitbucketCloudConfigWorkspace(original["workspace"], d, config)
-	transformed["webhook_secret_secret_version"] =
-		flattenCloudbuildv2ConnectionBitbucketCloudConfigWebhookSecretSecretVersion(original["webhookSecretSecretVersion"], d, config)
-	transformed["read_authorizer_credential"] =
-		flattenCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredential(original["readAuthorizerCredential"], d, config)
-	transformed["authorizer_credential"] =
-		flattenCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredential(original["authorizerCredential"], d, config)
-	return []interface{}{transformed}
-}
-func flattenCloudbuildv2ConnectionBitbucketCloudConfigWorkspace(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketCloudConfigWebhookSecretSecretVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredential(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["user_token_secret_version"] =
-		flattenCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredentialUserTokenSecretVersion(original["userTokenSecretVersion"], d, config)
-	transformed["username"] =
-		flattenCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredentialUsername(original["username"], d, config)
-	return []interface{}{transformed}
-}
-func flattenCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredentialUserTokenSecretVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredentialUsername(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredential(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["user_token_secret_version"] =
-		flattenCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredentialUserTokenSecretVersion(original["userTokenSecretVersion"], d, config)
-	transformed["username"] =
-		flattenCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredentialUsername(original["username"], d, config)
-	return []interface{}{transformed}
-}
-func flattenCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredentialUserTokenSecretVersion(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredentialUsername(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1722,290 +1349,6 @@ func expandCloudbuildv2ConnectionGitlabConfigSslCa(v interface{}, d tpgresource.
 }
 
 func expandCloudbuildv2ConnectionGitlabConfigServerVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedHostUri, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigHostUri(original["host_uri"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedHostUri); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["hostUri"] = transformedHostUri
-	}
-
-	transformedWebhookSecretSecretVersion, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigWebhookSecretSecretVersion(original["webhook_secret_secret_version"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedWebhookSecretSecretVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["webhookSecretSecretVersion"] = transformedWebhookSecretSecretVersion
-	}
-
-	transformedReadAuthorizerCredential, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredential(original["read_authorizer_credential"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedReadAuthorizerCredential); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["readAuthorizerCredential"] = transformedReadAuthorizerCredential
-	}
-
-	transformedAuthorizerCredential, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredential(original["authorizer_credential"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedAuthorizerCredential); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["authorizerCredential"] = transformedAuthorizerCredential
-	}
-
-	transformedServiceDirectoryConfig, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigServiceDirectoryConfig(original["service_directory_config"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedServiceDirectoryConfig); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["serviceDirectoryConfig"] = transformedServiceDirectoryConfig
-	}
-
-	transformedSslCa, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigSslCa(original["ssl_ca"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedSslCa); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["sslCa"] = transformedSslCa
-	}
-
-	transformedServerVersion, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigServerVersion(original["server_version"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedServerVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["serverVersion"] = transformedServerVersion
-	}
-
-	return transformed, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigHostUri(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigWebhookSecretSecretVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredential(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedUserTokenSecretVersion, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredentialUserTokenSecretVersion(original["user_token_secret_version"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedUserTokenSecretVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["userTokenSecretVersion"] = transformedUserTokenSecretVersion
-	}
-
-	transformedUsername, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredentialUsername(original["username"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedUsername); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["username"] = transformedUsername
-	}
-
-	return transformed, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredentialUserTokenSecretVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigReadAuthorizerCredentialUsername(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredential(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedUserTokenSecretVersion, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredentialUserTokenSecretVersion(original["user_token_secret_version"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedUserTokenSecretVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["userTokenSecretVersion"] = transformedUserTokenSecretVersion
-	}
-
-	transformedUsername, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredentialUsername(original["username"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedUsername); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["username"] = transformedUsername
-	}
-
-	return transformed, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredentialUserTokenSecretVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigAuthorizerCredentialUsername(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigServiceDirectoryConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedService, err := expandCloudbuildv2ConnectionBitbucketDataCenterConfigServiceDirectoryConfigService(original["service"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedService); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["service"] = transformedService
-	}
-
-	return transformed, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigServiceDirectoryConfigService(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigSslCa(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketDataCenterConfigServerVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedWorkspace, err := expandCloudbuildv2ConnectionBitbucketCloudConfigWorkspace(original["workspace"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedWorkspace); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["workspace"] = transformedWorkspace
-	}
-
-	transformedWebhookSecretSecretVersion, err := expandCloudbuildv2ConnectionBitbucketCloudConfigWebhookSecretSecretVersion(original["webhook_secret_secret_version"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedWebhookSecretSecretVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["webhookSecretSecretVersion"] = transformedWebhookSecretSecretVersion
-	}
-
-	transformedReadAuthorizerCredential, err := expandCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredential(original["read_authorizer_credential"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedReadAuthorizerCredential); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["readAuthorizerCredential"] = transformedReadAuthorizerCredential
-	}
-
-	transformedAuthorizerCredential, err := expandCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredential(original["authorizer_credential"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedAuthorizerCredential); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["authorizerCredential"] = transformedAuthorizerCredential
-	}
-
-	return transformed, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfigWorkspace(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfigWebhookSecretSecretVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredential(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedUserTokenSecretVersion, err := expandCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredentialUserTokenSecretVersion(original["user_token_secret_version"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedUserTokenSecretVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["userTokenSecretVersion"] = transformedUserTokenSecretVersion
-	}
-
-	transformedUsername, err := expandCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredentialUsername(original["username"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedUsername); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["username"] = transformedUsername
-	}
-
-	return transformed, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredentialUserTokenSecretVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfigReadAuthorizerCredentialUsername(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredential(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedUserTokenSecretVersion, err := expandCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredentialUserTokenSecretVersion(original["user_token_secret_version"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedUserTokenSecretVersion); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["userTokenSecretVersion"] = transformedUserTokenSecretVersion
-	}
-
-	transformedUsername, err := expandCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredentialUsername(original["username"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedUsername); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["username"] = transformedUsername
-	}
-
-	return transformed, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredentialUserTokenSecretVersion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandCloudbuildv2ConnectionBitbucketCloudConfigAuthorizerCredentialUsername(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

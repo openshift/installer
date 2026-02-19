@@ -20,7 +20,6 @@ package bigqueryreservation
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -152,7 +151,6 @@ func resourceBigqueryReservationBiReservationCreate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("size") {
@@ -176,7 +174,6 @@ func resourceBigqueryReservationBiReservationCreate(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating BiReservation: %s", err)
@@ -222,14 +219,12 @@ func resourceBigqueryReservationBiReservationRead(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("BigqueryReservationBiReservation %q", d.Id()))
@@ -290,7 +285,6 @@ func resourceBigqueryReservationBiReservationUpdate(d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] Updating BiReservation %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("size") {
@@ -322,7 +316,6 @@ func resourceBigqueryReservationBiReservationUpdate(d *schema.ResourceData, meta
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {

@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"time"
@@ -809,6 +808,7 @@ The possible values are:
                      UNAVAILABLE_WEIGHT. Otherwise, Load Balancing remains
                      equal-weight.
 
+
 This field is applicable to either:
 
 * A regional backend service with the service_protocol set to HTTP, HTTPS, or HTTP2,
@@ -817,6 +817,7 @@ This field is applicable to either:
 * A regional backend service with loadBalancingScheme set to EXTERNAL (External Network
   Load Balancing). Only MAGLEV and WEIGHTED_MAGLEV values are possible for External
   Network Load Balancing. The default is MAGLEV.
+
 
 If session_affinity is not NONE, and this field is not set to MAGLEV, WEIGHTED_MAGLEV,
 or RING_HASH, session affinity settings will not take effect.
@@ -859,10 +860,7 @@ The default value is 1.0.`,
 				Optional: true,
 				Description: `Settings controlling eviction of unhealthy hosts from the load balancing pool.
 Applicable backend service types can be a global backend service with the
-loadBalancingScheme set to INTERNAL_SELF_MANAGED or EXTERNAL_MANAGED.
-
-From version 6.0.0 outlierDetection default terraform values will be removed to match default GCP value.
-Default values are enforce by GCP without providing them.`,
+loadBalancingScheme set to INTERNAL_SELF_MANAGED or EXTERNAL_MANAGED.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
@@ -1062,12 +1060,6 @@ alt name matches one of the specified values.`,
 					},
 				},
 			},
-			"service_lb_policy": {
-				Type:     schema.TypeString,
-				Optional: true,
-				Description: `URL to networkservices.ServiceLbPolicy resource.
-Can only be set if load balancing scheme is EXTERNAL, EXTERNAL_MANAGED, INTERNAL_MANAGED or INTERNAL_SELF_MANAGED and the scope is global.`,
-			},
 			"session_affinity": {
 				Type:         schema.TypeString,
 				Computed:     true,
@@ -1080,10 +1072,8 @@ not applicable if the protocol is UDP. Possible values: ["NONE", "CLIENT_IP", "C
 				Type:     schema.TypeInt,
 				Computed: true,
 				Optional: true,
-				Description: `The backend service timeout has a different meaning depending on the type of load balancer.
-For more information see, [Backend service settings](https://cloud.google.com/compute/docs/reference/rest/v1/backendServices).
-The default is 30 seconds.
-The full range of timeout values allowed goes from 1 through 2,147,483,647 seconds.`,
+				Description: `How many seconds to wait for the backend before considering it a
+failed request. Default is 30 seconds. Valid range is [1, 86400].`,
 			},
 			"creation_timestamp": {
 				Type:        schema.TypeString,
@@ -1152,9 +1142,7 @@ UTILIZATION. Valid values are UTILIZATION, RATE (for HTTP(S))
 and CONNECTION (for TCP/SSL).
 
 See the [Backend Services Overview](https://cloud.google.com/load-balancing/docs/backend-service#balancing-mode)
-for an explanation of load balancing modes.
-
-From version 6.0.0 default value will be UTILIZATION to match default GCP value. Default value: "UTILIZATION" Possible values: ["UTILIZATION", "RATE", "CONNECTION"]`,
+for an explanation of load balancing modes. Default value: "UTILIZATION" Possible values: ["UTILIZATION", "RATE", "CONNECTION"]`,
 				Default: "UTILIZATION",
 			},
 			"capacity_scaler": {
@@ -1420,12 +1408,6 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("log_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(logConfigProp)) && (ok || !reflect.DeepEqual(v, logConfigProp)) {
 		obj["logConfig"] = logConfigProp
 	}
-	serviceLbPolicyProp, err := expandComputeBackendServiceServiceLbPolicy(d.Get("service_lb_policy"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("service_lb_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(serviceLbPolicyProp)) && (ok || !reflect.DeepEqual(v, serviceLbPolicyProp)) {
-		obj["serviceLbPolicy"] = serviceLbPolicyProp
-	}
 
 	obj, err = resourceComputeBackendServiceEncoder(d, meta, obj)
 	if err != nil {
@@ -1451,7 +1433,6 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1460,7 +1441,6 @@ func resourceComputeBackendServiceCreate(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating BackendService: %s", err)
@@ -1552,14 +1532,12 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeBackendService %q", d.Id()))
@@ -1678,9 +1656,6 @@ func resourceComputeBackendServiceRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
 	if err := d.Set("log_config", flattenComputeBackendServiceLogConfig(res["logConfig"], d, config)); err != nil {
-		return fmt.Errorf("Error reading BackendService: %s", err)
-	}
-	if err := d.Set("service_lb_policy", flattenComputeBackendServiceServiceLbPolicy(res["serviceLbPolicy"], d, config)); err != nil {
 		return fmt.Errorf("Error reading BackendService: %s", err)
 	}
 	if err := d.Set("self_link", tpgresource.ConvertSelfLinkToV1(res["selfLink"].(string))); err != nil {
@@ -1868,12 +1843,6 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("log_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, logConfigProp)) {
 		obj["logConfig"] = logConfigProp
 	}
-	serviceLbPolicyProp, err := expandComputeBackendServiceServiceLbPolicy(d.Get("service_lb_policy"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("service_lb_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, serviceLbPolicyProp)) {
-		obj["serviceLbPolicy"] = serviceLbPolicyProp
-	}
 
 	obj, err = resourceComputeBackendServiceEncoder(d, meta, obj)
 	if err != nil {
@@ -1886,7 +1855,6 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 	}
 
 	log.Printf("[DEBUG] Updating BackendService %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1901,7 +1869,6 @@ func resourceComputeBackendServiceUpdate(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -1986,8 +1953,6 @@ func resourceComputeBackendServiceDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting BackendService %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -1997,7 +1962,6 @@ func resourceComputeBackendServiceDelete(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "BackendService")
@@ -3213,10 +3177,6 @@ func flattenComputeBackendServiceLogConfigSampleRate(v interface{}, d *schema.Re
 	return v
 }
 
-func flattenComputeBackendServiceServiceLbPolicy(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func expandComputeBackendServiceAffinityCookieTtlSec(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
@@ -4281,10 +4241,6 @@ func expandComputeBackendServiceLogConfigEnable(v interface{}, d tpgresource.Ter
 }
 
 func expandComputeBackendServiceLogConfigSampleRate(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandComputeBackendServiceServiceLbPolicy(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

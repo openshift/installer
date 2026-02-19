@@ -20,7 +20,6 @@ package healthcare
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -66,27 +65,6 @@ func ResourceHealthcareDataset() *schema.Resource {
 				ForceNew:    true,
 				Description: `The resource name for the Dataset.`,
 			},
-			"encryption_spec": {
-				Type:        schema.TypeList,
-				Computed:    true,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `A nested object resource`,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"kms_key_name": {
-							Type:     schema.TypeString,
-							Optional: true,
-							ForceNew: true,
-							Description: `KMS encryption key that is used to secure this dataset and its sub-resources. The key used for
-encryption and the dataset must be in the same location. If empty, the default Google encryption
-key will be used to secure this dataset. The format is
-projects/{projectId}/locations/{locationId}/keyRings/{keyRingId}/cryptoKeys/{keyId}.`,
-						},
-					},
-				},
-			},
 			"time_zone": {
 				Type:     schema.TypeString,
 				Computed: true,
@@ -131,12 +109,6 @@ func resourceHealthcareDatasetCreate(d *schema.ResourceData, meta interface{}) e
 	} else if v, ok := d.GetOkExists("time_zone"); !tpgresource.IsEmptyValue(reflect.ValueOf(timeZoneProp)) && (ok || !reflect.DeepEqual(v, timeZoneProp)) {
 		obj["timeZone"] = timeZoneProp
 	}
-	encryptionSpecProp, err := expandHealthcareDatasetEncryptionSpec(d.Get("encryption_spec"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("encryption_spec"); !tpgresource.IsEmptyValue(reflect.ValueOf(encryptionSpecProp)) && (ok || !reflect.DeepEqual(v, encryptionSpecProp)) {
-		obj["encryptionSpec"] = encryptionSpecProp
-	}
 
 	url, err := tpgresource.ReplaceVars(d, config, "{{HealthcareBasePath}}projects/{{project}}/locations/{{location}}/datasets?datasetId={{name}}")
 	if err != nil {
@@ -157,7 +129,6 @@ func resourceHealthcareDatasetCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -166,7 +137,6 @@ func resourceHealthcareDatasetCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.HealthcareDatasetNotInitialized},
 	})
 	if err != nil {
@@ -210,14 +180,12 @@ func resourceHealthcareDatasetRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.HealthcareDatasetNotInitialized},
 	})
 	if err != nil {
@@ -244,9 +212,6 @@ func resourceHealthcareDatasetRead(d *schema.ResourceData, meta interface{}) err
 		return fmt.Errorf("Error reading Dataset: %s", err)
 	}
 	if err := d.Set("time_zone", flattenHealthcareDatasetTimeZone(res["timeZone"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Dataset: %s", err)
-	}
-	if err := d.Set("encryption_spec", flattenHealthcareDatasetEncryptionSpec(res["encryptionSpec"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Dataset: %s", err)
 	}
 
@@ -282,7 +247,6 @@ func resourceHealthcareDatasetUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating Dataset %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("time_zone") {
@@ -310,7 +274,6 @@ func resourceHealthcareDatasetUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent:            userAgent,
 			Body:                 obj,
 			Timeout:              d.Timeout(schema.TimeoutUpdate),
-			Headers:              headers,
 			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.HealthcareDatasetNotInitialized},
 		})
 
@@ -352,8 +315,6 @@ func resourceHealthcareDatasetDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Dataset %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
@@ -363,7 +324,6 @@ func resourceHealthcareDatasetDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.HealthcareDatasetNotInitialized},
 	})
 	if err != nil {
@@ -402,51 +362,11 @@ func flattenHealthcareDatasetTimeZone(v interface{}, d *schema.ResourceData, con
 	return v
 }
 
-func flattenHealthcareDatasetEncryptionSpec(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["kms_key_name"] =
-		flattenHealthcareDatasetEncryptionSpecKmsKeyName(original["kmsKeyName"], d, config)
-	return []interface{}{transformed}
-}
-func flattenHealthcareDatasetEncryptionSpecKmsKeyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func expandHealthcareDatasetName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 
 func expandHealthcareDatasetTimeZone(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandHealthcareDatasetEncryptionSpec(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedKmsKeyName, err := expandHealthcareDatasetEncryptionSpecKmsKeyName(original["kms_key_name"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedKmsKeyName); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["kmsKeyName"] = transformedKmsKeyName
-	}
-
-	return transformed, nil
-}
-
-func expandHealthcareDatasetEncryptionSpecKmsKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

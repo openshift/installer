@@ -14,7 +14,6 @@ func DataSourceGoogleStorageBucket() *schema.Resource {
 
 	dsSchema := tpgresource.DatasourceSchemaFromResourceSchema(ResourceStorageBucket().Schema)
 
-	tpgresource.AddOptionalFieldsToSchema(dsSchema, "project")
 	tpgresource.AddRequiredFieldsToSchema(dsSchema, "name")
 
 	return &schema.Resource{

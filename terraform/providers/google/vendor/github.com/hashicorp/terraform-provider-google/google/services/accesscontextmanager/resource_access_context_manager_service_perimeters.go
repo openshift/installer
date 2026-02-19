@@ -20,7 +20,6 @@ package accesscontextmanager
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -151,9 +150,10 @@ a perimeter bridge.`,
 															"identities": {
 																Type:     schema.TypeSet,
 																Optional: true,
-																Description: `A list of identities that are allowed access through this 'EgressPolicy'.
-Should be in the format of email address. The email address should
-represent individual user or service account only.`,
+																Description: `'A list of identities that are allowed access through this 'EgressPolicy'.
+To specify an identity or identity group, use the IAM v1 format
+specified [here](https://cloud.google.com/iam/docs/principal-identifiers.md#v1).
+The following prefixes are supprted: user, group, serviceAccount, principal, and principalSet.'`,
 																Elem: &schema.Schema{
 																	Type: schema.TypeString,
 																},
@@ -290,9 +290,10 @@ to apply.`,
 															"identities": {
 																Type:     schema.TypeSet,
 																Optional: true,
-																Description: `A list of identities that are allowed access through this ingress policy.
-Should be in the format of email address. The email address should represent
-individual user or service account only.`,
+																Description: `'A list of identities that are allowed access through this 'IngressPolicy'.
+To specify an identity or identity group, use the IAM v1 format
+specified [here](https://cloud.google.com/iam/docs/principal-identifiers.md#v1).
+The following prefixes are supprted: user, group, serviceAccount, principal, and principalSet.'`,
 																Elem: &schema.Schema{
 																	Type: schema.TypeString,
 																},
@@ -512,9 +513,10 @@ a perimeter bridge.`,
 															"identities": {
 																Type:     schema.TypeSet,
 																Optional: true,
-																Description: `A list of identities that are allowed access through this 'EgressPolicy'.
-Should be in the format of email address. The email address should
-represent individual user or service account only.`,
+																Description: `'A list of identities that are allowed access through this 'EgressPolicy'.
+To specify an identity or identity group, use the IAM v1 format
+specified [here](https://cloud.google.com/iam/docs/principal-identifiers.md#v1).
+The following prefixes are supprted: user, group, serviceAccount, principal, and principalSet.'`,
 																Elem: &schema.Schema{
 																	Type: schema.TypeString,
 																},
@@ -740,9 +742,10 @@ to apply.`,
 						"identities": {
 							Type:     schema.TypeSet,
 							Optional: true,
-							Description: `A list of identities that are allowed access through this ingress policy.
-Should be in the format of email address. The email address should represent
-individual user or service account only.`,
+							Description: `'A list of identities that are allowed access through this 'IngressPolicy'.
+To specify an identity or identity group, use the IAM v1 format
+specified [here](https://cloud.google.com/iam/docs/principal-identifiers.md#v1).
+The following prefixes are supprted: user, group, serviceAccount, principal, and principalSet.'`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -897,7 +900,6 @@ func resourceAccessContextManagerServicePerimetersCreate(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -906,7 +908,6 @@ func resourceAccessContextManagerServicePerimetersCreate(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ServicePerimeters: %s", err)
@@ -953,14 +954,12 @@ func resourceAccessContextManagerServicePerimetersRead(d *schema.ResourceData, m
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerServicePerimeters %q", d.Id()))
@@ -1002,7 +1001,6 @@ func resourceAccessContextManagerServicePerimetersUpdate(d *schema.ResourceData,
 	}
 
 	log.Printf("[DEBUG] Updating ServicePerimeters %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -1017,7 +1015,6 @@ func resourceAccessContextManagerServicePerimetersUpdate(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -1099,13 +1096,14 @@ func flattenAccessContextManagerServicePerimetersServicePerimeters(v interface{}
 		return v
 	}
 	l := v.([]interface{})
-	apiData := make([]map[string]interface{}, 0, len(l))
+	transformed := make([]interface{}, 0, len(l))
 	for _, raw := range l {
 		original := raw.(map[string]interface{})
 		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
 			continue
 		}
-		apiData = append(apiData, map[string]interface{}{
+		transformed = append(transformed, map[string]interface{}{
 			"name":                      flattenAccessContextManagerServicePerimetersServicePerimetersName(original["name"], d, config),
 			"title":                     flattenAccessContextManagerServicePerimetersServicePerimetersTitle(original["title"], d, config),
 			"description":               flattenAccessContextManagerServicePerimetersServicePerimetersDescription(original["description"], d, config),
@@ -1117,19 +1115,8 @@ func flattenAccessContextManagerServicePerimetersServicePerimeters(v interface{}
 			"use_explicit_dry_run_spec": flattenAccessContextManagerServicePerimetersServicePerimetersUseExplicitDryRunSpec(original["useExplicitDryRunSpec"], d, config),
 		})
 	}
-	configData := []map[string]interface{}{}
-	for _, item := range d.Get("service_perimeters").([]interface{}) {
-		configData = append(configData, item.(map[string]interface{}))
-	}
-	sorted, err := tpgresource.SortMapsByConfigOrder(configData, apiData, "name")
-	if err != nil {
-		log.Printf("[ERROR] Could not sort API response value: %s", err)
-		return v
-	}
-
-	return sorted
+	return transformed
 }
-
 func flattenAccessContextManagerServicePerimetersServicePerimetersName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
