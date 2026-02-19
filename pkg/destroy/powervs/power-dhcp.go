@@ -189,11 +189,67 @@ func (o *ClusterUninstaller) listDHCPNetworksByName() ([]string, error) {
 	return result, nil
 }
 
+// extractNetworkIDFromError extracts network ID from error message if present.
+// Error format: "network xxx-xxx-xxxxx still attached to pvm-instances"
+func extractNetworkIDFromError(err error) string {
+	if err == nil {
+		return ""
+	}
+	errStr := err.Error()
+	// Look for pattern "network <uuid> still attached"
+	parts := strings.Split(errStr, "network ")
+	if len(parts) > 1 {
+		remaining := parts[1]
+		// Extract UUID from error message (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+		spaceIdx := strings.Index(remaining, " ")
+		if spaceIdx > 0 {
+			networkID := remaining[:spaceIdx]
+			// UUID format validation (36 chars with dashes)
+			if len(networkID) == 36 && strings.Count(networkID, "-") == 4 {
+				return networkID
+			}
+		}
+	}
+	return ""
+}
+
+// findNetworkIDByName finds a network ID by matching the network name.
+func (o *ClusterUninstaller) findNetworkIDByName(networkName string) string {
+	if o.networkClient == nil {
+		return ""
+	}
+	networks, err := o.networkClient.GetAll()
+	if err != nil {
+		o.Logger.Debugf("Failed to list networks to find ID for %q: %v", networkName, err)
+		return ""
+	}
+	for _, network := range networks.Networks {
+		if network.Name != nil && *network.Name == networkName {
+			if network.NetworkID != nil {
+				return *network.NetworkID
+			}
+		}
+	}
+	return ""
+}
+
+// isDHCPNetworkAttachedError checks if an error indicates the DHCP network is attached to PVM instances.
+func isDHCPNetworkAttachedError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "still attached to pvm-instances") ||
+		strings.Contains(errStr, "still attached to") ||
+		strings.Contains(errStr, "pcloudDhcpDeleteBadRequest") ||
+		strings.Contains(errStr, "400")
+}
+
 // destroyDHCPNetwork deletes a PowerVS DHCP network.
 func (o *ClusterUninstaller) destroyDHCPNetwork(item cloudResource) error {
 	var err error
 
-	_, err = o.dhcpClient.Get(item.id)
+	dhcpServer, err := o.dhcpClient.Get(item.id)
 	if err != nil {
 		o.deletePendingItems(item.typeName, []cloudResource{item})
 		o.Logger.Infof("Deleted DHCP Network %q", item.name)
@@ -202,8 +258,47 @@ func (o *ClusterUninstaller) destroyDHCPNetwork(item cloudResource) error {
 
 	o.Logger.Debugf("Deleting DHCP network %q", item.name)
 
+	// Before deleting the DHCP server, check if its network has attached network interfaces
+	// that need to be deleted first. This prevents errors like "network still attached to pvm-instances, that fail early before subnet network interfaces are deleted in the destroyPowerSubnets() stage."
+	var networkID string
+	if dhcpServer.Network != nil {
+		// Try to find network ID by name
+		if dhcpServer.Network.Name != nil {
+			networkID = o.findNetworkIDByName(*dhcpServer.Network.Name)
+			if networkID != "" {
+				o.Logger.Debugf("Found network ID %s for DHCP subnet %q. Checking for network interfaces...", networkID, item.name)
+				// Try to delete network interfaces from the subnet
+				if nicErr := o.deleteNetworkInterfaces(networkID); nicErr != nil {
+					o.Logger.Debugf("Note: Could not delete network interfaces for DHCP subnet %q: %v (will attempt DHCP deletion anyway)", item.name, nicErr)
+				}
+			}
+		}
+	}
+
 	err = o.dhcpClient.Delete(item.id)
 	if err != nil {
+		// If deletion failed because network is still attached to instances, try deleting network interfaces
+		if isDHCPNetworkAttachedError(err) {
+			// Try to extract network ID from error message if we don't have it yet
+			if networkID == "" {
+				networkID = extractNetworkIDFromError(err)
+			}
+			// If still no network ID, try finding by name again
+			if networkID == "" && dhcpServer.Network != nil && dhcpServer.Network.Name != nil {
+				networkID = o.findNetworkIDByName(*dhcpServer.Network.Name)
+			}
+
+			if networkID != "" {
+				o.Logger.Debugf("DHCP subnet %q is still attached to instances. Attempting to delete network interfaces from network %s...", item.name, networkID)
+				if nicErr := o.deleteNetworkInterfaces(networkID); nicErr != nil {
+					o.Logger.Warnf("Failed to delete network interfaces for DHCP subnet %q: %v", item.name, nicErr)
+				}
+				// Return error to trigger retry after NIC deletion
+				return fmt.Errorf("DHCP server deletion blocked by attached network interfaces: %w", err)
+			} else {
+				o.Logger.Warnf("Could not determine network ID for DHCP subnet %q to delete network interfaces", item.name)
+			}
+		}
 		o.Logger.Infof("Error: o.dhcpClient.Delete: %q", err)
 		return err
 	}
@@ -329,31 +424,11 @@ func (o *ClusterUninstaller) destroyDHCPNetworks() error {
 		o.Logger.Fatal("destroyDHCPNetworks: ExponentialBackoffWithContext (list) returns ", err)
 	}
 
-	// PowerVS hack:
-	// We were asked to query for the subnet still existing as a test for the DHCP network to be
-	// finally destroyed.  Even though we can't list it anymore, it is still being destroyed. :(
-	backoff = wait.Backoff{
-		Duration: 15 * time.Second,
-		Factor:   1.1,
-		Cap:      leftInContext(ctx),
-		Steps:    math.MaxInt32}
-	err = wait.ExponentialBackoffWithContext(ctx, backoff, func(context.Context) (bool, error) {
-		secondPassList, err2 := o.listPowerSubnets()
-		if err2 != nil {
-			return false, err2
-		}
-		if len(secondPassList) == 0 {
-			// We finally don't see any remaining instances!
-			return true, nil
-		}
-		for _, item := range secondPassList {
-			o.Logger.Debugf("destroyDHCPNetworks: found %s in second pass", item.name)
-		}
-		return false, nil
-	})
-	if err != nil {
-		o.Logger.Fatal("destroyDHCPNetworks: ExponentialBackoffWithContext (list) returns ", err)
-	}
+	// Note: DHCP server subnets will be deleted in the destroyPowerSubnets() stage.
+	// We no longer wait for them here since:
+	// 1. Network interfaces are now properly deleted during DHCP deletion
+	// 2. Subnet deletion happens in a later stage with its own retry logic
+	// 3. Waiting here was causing timeouts since subnets are deleted in a different stage
 
 	return nil
 }
