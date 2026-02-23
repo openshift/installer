@@ -65,6 +65,7 @@ type Provider struct {
 	clientOptions         *arm.ClientOptions
 	computeClientOptions  *arm.ClientOptions
 	publicLBIP            string
+	publicLBIPv6          string
 }
 
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
@@ -420,8 +421,9 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			session.Credentials.SubscriptionID,
 			resourceGroupName,
 		),
-		lbClient: lbClient,
-		tags:     p.Tags,
+		lbClient:    lbClient,
+		tags:        p.Tags,
+		isDualstack: in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled(),
 	}
 
 	intLoadBalancer, err := updateInternalLoadBalancer(ctx, lbInput)
@@ -430,9 +432,12 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 	logrus.Debugf("updated internal load balancer: %s", *intLoadBalancer.ID)
 
+	// Collect backend pools from internal load balancer - control plane VMs need to be in these pools
 	var lbBaps []*armnetwork.BackendAddressPool
+	lbBaps = append(lbBaps, intLoadBalancer.Properties.BackendAddressPools...)
 	var extLBFQDN string
 	if in.InstallConfig.Config.PublicAPI() {
+		var publicIPv6 *armnetwork.PublicIPAddress
 		publicIP, err := createPublicIP(ctx, &pipInput{
 			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
 			infraID:       in.InfraID,
@@ -440,32 +445,52 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 			resourceGroup: resourceGroupName,
 			pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
 			tags:          p.Tags,
+			ipversion:     armnetwork.IPVersionIPv4,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create public ip: %w", err)
 		}
 		logrus.Debugf("created public ip: %s", *publicIP.ID)
+		if lbInput.isDualstack {
+			publicIPv6, err = createPublicIP(ctx, &pipInput{
+				name:          fmt.Sprintf("%s-pip-v6", in.InfraID),
+				infraID:       in.InfraID,
+				region:        in.InstallConfig.Config.Azure.Region,
+				resourceGroup: resourceGroupName,
+				pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
+				tags:          p.Tags,
+				ipversion:     armnetwork.IPVersionIPv6,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create public ipv6: %w", err)
+			}
+			logrus.Debugf("created public ip v6: %s", *publicIPv6.ID)
+		}
 
 		lbInput.loadBalancerName = in.InfraID
 		lbInput.backendAddressPoolName = in.InfraID
 
 		var loadBalancer *armnetwork.LoadBalancer
 		if platform.OutboundType == aztypes.UserDefinedRoutingOutboundType {
-			loadBalancer, err = createAPILoadBalancer(ctx, publicIP, lbInput)
+			loadBalancer, err = createAPILoadBalancer(ctx, publicIP, publicIPv6, lbInput)
 			if err != nil {
 				return fmt.Errorf("failed to create API load balancer: %w", err)
 			}
 		} else {
-			loadBalancer, err = updateOutboundLoadBalancerToAPILoadBalancer(ctx, publicIP, lbInput)
+			loadBalancer, err = updateOutboundLoadBalancerToAPILoadBalancer(ctx, publicIP, publicIPv6, lbInput)
 			if err != nil {
 				return fmt.Errorf("failed to update external load balancer: %w", err)
 			}
 		}
 
 		logrus.Debugf("updated external load balancer: %s", *loadBalancer.ID)
-		lbBaps = loadBalancer.Properties.BackendAddressPools
+		// Append external load balancer backend pools to the list (internal pools already added)
+		lbBaps = append(lbBaps, loadBalancer.Properties.BackendAddressPools...)
 		extLBFQDN = *publicIP.Properties.DNSSettings.Fqdn
 		p.publicLBIP = *publicIP.Properties.IPAddress
+		if lbInput.isDualstack {
+			p.publicLBIPv6 = *publicIPv6.Properties.IPAddress
+		}
 	}
 
 	if (in.InstallConfig.Config.Azure.OutboundType == aztypes.NATGatewayMultiZoneOutboundType ||
@@ -493,6 +518,13 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.StorageClientFactory = storageClientFactory
 	p.NetworkClientFactory = networkClientFactory
 	p.lbBackendAddressPools = lbBaps
+
+	// Add IPv6 load balancing rule for internal LB API server port in dual-stack mode
+	if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+		if err := addIPv6InternalLBRule(ctx, in, networkClientFactory, resourceGroupName); err != nil {
+			return fmt.Errorf("failed to add IPv6 internal LB rule: %w", err)
+		}
+	}
 
 	if in.InstallConfig.Config.Azure.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
 		if err := createDNSEntries(ctx, in, extLBFQDN, p.publicLBIP, resourceGroupName, p.clientOptions); err != nil {
@@ -846,4 +878,104 @@ func getMachinePoolSecurityType(installConfig *types.InstallConfig) string {
 		return confidentialVMST
 	}
 	return ""
+}
+
+// addIPv6InternalLBRule adds an IPv6 load balancing rule for port 6443 on the internal load balancer.
+// CAPZ only creates a single LBRuleHTTPS that uses the first (IPv4) frontend IP.
+// For dual-stack, we need an additional rule for the IPv6 frontend IP.
+func addIPv6InternalLBRule(ctx context.Context, in clusterapi.InfraReadyInput, networkClientFactory *armnetwork.ClientFactory, resourceGroup string) error {
+	lbClient := networkClientFactory.NewLoadBalancersClient()
+	internalLBName := fmt.Sprintf("%s-internal", in.InfraID)
+
+	// Get the internal load balancer
+	lb, err := lbClient.Get(ctx, resourceGroup, internalLBName, nil)
+	if err != nil {
+		return fmt.Errorf("failed to get internal load balancer: %w", err)
+	}
+
+	if lb.Properties == nil {
+		return fmt.Errorf("internal load balancer has no properties")
+	}
+
+	// Find the IPv6 frontend IP configuration
+	var ipv6FrontendID string
+	for _, frontend := range lb.Properties.FrontendIPConfigurations {
+		if frontend.Properties != nil &&
+			frontend.Properties.PrivateIPAddressVersion != nil &&
+			*frontend.Properties.PrivateIPAddressVersion == armnetwork.IPVersionIPv6 {
+			ipv6FrontendID = *frontend.ID
+			break
+		}
+	}
+	if ipv6FrontendID == "" {
+		return fmt.Errorf("no IPv6 frontend IP configuration found on internal load balancer")
+	}
+
+	// Find the IPv6 backend pool
+	var ipv6BackendPoolID string
+	for _, pool := range lb.Properties.BackendAddressPools {
+		if pool.Name != nil && strings.HasSuffix(*pool.Name, "-v6") {
+			ipv6BackendPoolID = *pool.ID
+			break
+		}
+	}
+	if ipv6BackendPoolID == "" {
+		return fmt.Errorf("no IPv6 backend pool found on internal load balancer")
+	}
+
+	// Find the HTTPS probe
+	var httpsProbeID string
+	for _, probe := range lb.Properties.Probes {
+		if probe.Name != nil && *probe.Name == "HTTPSProbe" {
+			httpsProbeID = *probe.ID
+			break
+		}
+	}
+	if httpsProbeID == "" {
+		return fmt.Errorf("HTTPS probe not found on internal load balancer")
+	}
+
+	// Check if the IPv6 rule already exists
+	for _, rule := range lb.Properties.LoadBalancingRules {
+		if rule.Name != nil && *rule.Name == "LBRuleHTTPS-v6" {
+			logrus.Infof("IPv6 load balancing rule for port 6443 already exists")
+			return nil
+		}
+	}
+
+	// Add the IPv6 load balancing rule
+	lb.Properties.LoadBalancingRules = append(lb.Properties.LoadBalancingRules, &armnetwork.LoadBalancingRule{
+		Name: to.Ptr("LBRuleHTTPS-v6"),
+		Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+			Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+			FrontendPort:         to.Ptr(int32(6443)),
+			BackendPort:          to.Ptr(int32(6443)),
+			EnableFloatingIP:     to.Ptr(false),
+			IdleTimeoutInMinutes: to.Ptr(int32(4)),
+			LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+			FrontendIPConfiguration: &armnetwork.SubResource{
+				ID: to.Ptr(ipv6FrontendID),
+			},
+			BackendAddressPool: &armnetwork.SubResource{
+				ID: to.Ptr(ipv6BackendPoolID),
+			},
+			Probe: &armnetwork.SubResource{
+				ID: to.Ptr(httpsProbeID),
+			},
+		},
+	})
+
+	// Update the load balancer
+	poller, err := lbClient.BeginCreateOrUpdate(ctx, resourceGroup, internalLBName, lb.LoadBalancer, nil)
+	if err != nil {
+		return fmt.Errorf("failed to update internal load balancer with IPv6 rule: %w", err)
+	}
+
+	_, err = poller.PollUntilDone(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to update internal load balancer with IPv6 rule: %w", err)
+	}
+
+	logrus.Infof("Successfully added IPv6 load balancing rule for port 6443 on internal load balancer")
+	return nil
 }
