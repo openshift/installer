@@ -151,31 +151,11 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		return fmt.Errorf(errMsg, err)
 	}
 
-	// Creating a dummy nsg for existing vnets installation to appease the ingress operator.
+	// Creating an NSG for existing vnets installation with security rules and attaching to subnets.
 	if in.InstallConfig.Config.Azure.VirtualNetwork != "" {
-		networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, p.clientOptions)
-		if err != nil {
-			return fmt.Errorf("failed to create azure network factory: %w", err)
+		if err := createAndAttachNSG(ctx, in, subscriptionID, tokenCredential, platform.Region, p.clientOptions, p.Tags); err != nil {
+			return err
 		}
-		securityGroupName := in.InstallConfig.Config.Platform.Azure.NetworkSecurityGroupName(in.InfraID)
-		securityGroupsClient := networkClientFactory.NewSecurityGroupsClient()
-		pollerResp, err := securityGroupsClient.BeginCreateOrUpdate(
-			ctx,
-			p.ResourceGroupName,
-			securityGroupName,
-			armnetwork.SecurityGroup{
-				Location: to.Ptr(platform.Region),
-				Tags:     p.Tags,
-			},
-			nil)
-		if err != nil {
-			return fmt.Errorf("failed to create network security group: %w", err)
-		}
-		nsg, err := pollerResp.PollUntilDone(ctx, nil)
-		if err != nil {
-			return fmt.Errorf("failed to create network security group: %w", err)
-		}
-		logrus.Infof("nsg=%s", *nsg.ID)
 	}
 
 	var architecture armcompute.Architecture
@@ -846,4 +826,107 @@ func getMachinePoolSecurityType(installConfig *types.InstallConfig) string {
 		return confidentialVMST
 	}
 	return ""
+}
+
+// createAndAttachNSG creates a network security group with API server and SSH
+// inbound rules in the network resource group and attaches it to the subnets.
+func createAndAttachNSG(ctx context.Context, in clusterapi.InfraReadyInput, subscriptionID string, tokenCredential azcore.TokenCredential, region string, clientOpts *arm.ClientOptions, tags map[string]*string) error {
+	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, clientOpts)
+	if err != nil {
+		return fmt.Errorf("failed to create azure network factory: %w", err)
+	}
+	securityGroupName := in.InstallConfig.Config.Platform.Azure.NetworkSecurityGroupName(in.InfraID)
+	securityGroupsClient := networkClientFactory.NewSecurityGroupsClient()
+	// Create NSG in the network resource group (where VNet is) so CAPZ can find it
+	nsgResourceGroup := in.InstallConfig.Config.Azure.NetworkResourceGroupName
+	pollerResp, err := securityGroupsClient.BeginCreateOrUpdate(
+		ctx,
+		nsgResourceGroup,
+		securityGroupName,
+		armnetwork.SecurityGroup{
+			Location: to.Ptr(region),
+			Tags:     tags,
+			Properties: &armnetwork.SecurityGroupPropertiesFormat{
+				SecurityRules: []*armnetwork.SecurityRule{
+					{
+						Name: to.Ptr("apiserver_in"),
+						Properties: &armnetwork.SecurityRulePropertiesFormat{
+							Protocol:                 to.Ptr(armnetwork.SecurityRuleProtocolTCP),
+							SourcePortRange:          to.Ptr("*"),
+							DestinationPortRange:     to.Ptr("6443"),
+							SourceAddressPrefix:      to.Ptr("*"),
+							DestinationAddressPrefix: to.Ptr("*"),
+							Access:                   to.Ptr(armnetwork.SecurityRuleAccessAllow),
+							Priority:                 to.Ptr(int32(101)),
+							Direction:                to.Ptr(armnetwork.SecurityRuleDirectionInbound),
+						},
+					},
+					{
+						Name: to.Ptr(fmt.Sprintf("%s_ssh_in", in.InfraID)),
+						Properties: &armnetwork.SecurityRulePropertiesFormat{
+							Protocol:                 to.Ptr(armnetwork.SecurityRuleProtocolTCP),
+							SourcePortRange:          to.Ptr("*"),
+							DestinationPortRange:     to.Ptr("22"),
+							SourceAddressPrefix:      to.Ptr("*"),
+							DestinationAddressPrefix: to.Ptr("*"),
+							Access:                   to.Ptr(armnetwork.SecurityRuleAccessAllow),
+							Priority:                 to.Ptr(int32(220)),
+							Direction:                to.Ptr(armnetwork.SecurityRuleDirectionInbound),
+						},
+					},
+				},
+			},
+		},
+		nil)
+	if err != nil {
+		return fmt.Errorf("failed to create network security group: %w", err)
+	}
+	nsg, err := pollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return fmt.Errorf("failed to create network security group: %w", err)
+	}
+	logrus.Infof("nsg=%s", *nsg.ID)
+
+	// Attach the NSG to existing subnets
+	subnetsClient := networkClientFactory.NewSubnetsClient()
+	networkResourceGroup := in.InstallConfig.Config.Azure.NetworkResourceGroupName
+	vnetName := in.InstallConfig.Config.Azure.VirtualNetwork
+
+	subnetsToUpdate := []string{}
+	for _, subnet := range in.InstallConfig.Config.Azure.Subnets {
+		subnetsToUpdate = append(subnetsToUpdate, subnet.Name)
+	}
+	if len(subnetsToUpdate) == 0 {
+		subnetsToUpdate = []string{
+			in.InstallConfig.Config.Platform.Azure.ControlPlaneSubnetName(in.InfraID),
+			in.InstallConfig.Config.Platform.Azure.ComputeSubnetName(in.InfraID),
+		}
+	}
+	for _, subnetName := range subnetsToUpdate {
+		subnetResp, err := subnetsClient.Get(ctx, networkResourceGroup, vnetName, subnetName, nil)
+		if err != nil {
+			logrus.Warnf("failed to get subnet %s: %v", subnetName, err)
+			continue
+		}
+
+		subnet := subnetResp.Subnet
+		subnet.Properties.NetworkSecurityGroup = &armnetwork.SecurityGroup{
+			ID: nsg.ID,
+		}
+
+		subnetPoller, err := subnetsClient.BeginCreateOrUpdate(ctx, networkResourceGroup, vnetName, subnetName, subnet, nil)
+		if err != nil {
+			logrus.Warnf("failed to attach NSG to subnet %s: %v", subnetName, err)
+			continue
+		}
+
+		_, err = subnetPoller.PollUntilDone(ctx, nil)
+		if err != nil {
+			logrus.Warnf("failed to attach NSG to subnet %s: %v", subnetName, err)
+			continue
+		}
+
+		logrus.Infof("Successfully attached NSG %s to subnet %s", securityGroupName, subnetName)
+	}
+	return nil
 }

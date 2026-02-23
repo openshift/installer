@@ -73,6 +73,10 @@ func (params CloudProviderConfig) JSON() (string, error) {
 		config.UseInstanceMetadata = false
 	}
 
+	if params.VirtualNetworkName != "" {
+		config.SecurityGroupResourceGroup = params.NetworkResourceGroupName
+	}
+
 	buff := &bytes.Buffer{}
 	encoder := json.NewEncoder(buff)
 	encoder.SetIndent("", "\t")
