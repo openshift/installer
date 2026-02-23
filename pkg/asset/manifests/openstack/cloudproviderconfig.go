@@ -2,6 +2,8 @@ package openstack
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"os"
 	"strconv"
 	"strings"
@@ -24,6 +26,27 @@ type Error struct {
 
 func (e Error) Error() string { return e.msg + ": " + e.err.Error() }
 func (e Error) Unwrap() error { return e.err }
+
+// isOctaviaAvailable checks if the Octavia (load-balancer) endpoint exists
+// in the OpenStack service catalog.
+func isOctaviaAvailable(ctx context.Context, clientOpts *clientconfig.ClientOpts) bool {
+	if clientOpts == nil {
+		// If no client options provided, assume Octavia is available
+		// to maintain backward compatibility
+		return true
+	}
+	_, err := openstackdefaults.NewServiceClient(ctx, "load-balancer", clientOpts)
+	if err != nil {
+		var gerr *gophercloud.ErrEndpointNotFound
+		if errors.As(err, &gerr) {
+			return false
+		}
+		// For other errors, assume Octavia might be available
+		// to avoid incorrectly disabling it
+		return true
+	}
+	return true
+}
 
 // CloudProviderConfigSecret generates the cloud provider config for the OpenStack
 // platform, that will be stored in the system secret.
@@ -78,7 +101,7 @@ func CloudProviderConfigSecret(cloud *clientconfig.Cloud) ([]byte, error) {
 	return []byte(res.String()), nil
 }
 
-func generateCloudProviderConfig(ctx context.Context, networkClient *gophercloud.ServiceClient, cloudConfig *clientconfig.Cloud, installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
+func generateCloudProviderConfig(ctx context.Context, networkClient *gophercloud.ServiceClient, cloudConfig *clientconfig.Cloud, clientOpts *clientconfig.ClientOpts, installConfig types.InstallConfig) (cloudProviderConfigData, cloudProviderConfigCABundleData string, err error) {
 	cloudProviderConfigData = `[Global]
 secret-name = openstack-credentials
 secret-namespace = kube-system
@@ -96,7 +119,19 @@ secret-namespace = kube-system
 		cloudProviderConfigCABundleData = string(caFile)
 	}
 
-	if installConfig.OpenStack.ExternalNetwork != "" {
+	switch {
+	case installConfig.Platform.Name() == powervc.Name:
+		if installConfig.OpenStack.ExternalNetwork != "" {
+			return "", "", fmt.Errorf("powervc does not support external network")
+		}
+		// powervc does not provide an equivalent to Octavia
+		cloudProviderConfigData += "\n[LoadBalancer]\nenabled = false\n"
+	case !isOctaviaAvailable(ctx, clientOpts):
+		// Explicitly disable LoadBalancer when Octavia is not available
+		// to prevent CCM from crashing on startup.
+		// See: https://issues.redhat.com/browse/OCPBUGS-64842
+		cloudProviderConfigData += "\n[LoadBalancer]\nenabled = false\n"
+	case installConfig.OpenStack.ExternalNetwork != "":
 		networkName := installConfig.OpenStack.ExternalNetwork // Yes, we use a name in install-config.yaml :/
 		networkID, err := networkutils.IDFromName(ctx, networkClient, networkName)
 		if err != nil {
@@ -123,5 +158,5 @@ func GenerateCloudProviderConfig(ctx context.Context, installConfig types.Instal
 		return "", "", Error{err, "failed to create a network client"}
 	}
 
-	return generateCloudProviderConfig(ctx, networkClient, session.CloudConfig, installConfig)
+	return generateCloudProviderConfig(ctx, networkClient, session.CloudConfig, session.ClientOpts, installConfig)
 }
