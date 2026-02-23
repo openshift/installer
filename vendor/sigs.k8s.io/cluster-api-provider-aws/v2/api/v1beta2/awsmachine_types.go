@@ -251,18 +251,22 @@ type AWSMachineSpec struct {
 	HostID *string `json:"hostID,omitempty"`
 
 	// HostAffinity specifies the dedicated host affinity setting for the instance.
-	// When HostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
-	// When HostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
-	// When HostAffinity is defined, HostID is required.
+	// When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+	// - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+	// - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+	// When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+	// - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+	// - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
+	// If HostAffinity is not specified, it defaults to "default".
 	// +optional
 	// +kubebuilder:validation:Enum:=default;host
-	// +kubebuilder:default=host
+	// +kubebuilder:default=default
 	HostAffinity *string `json:"hostAffinity,omitempty"`
 
 	// DynamicHostAllocation enables automatic allocation of a single dedicated host.
-	// This field is mutually exclusive with HostID and always allocates exactly one host.
 	// Cost effectiveness of allocating a single instance on a dedicated host may vary
 	// depending on the instance type and the region.
+	// This field is mutually exclusive with HostID and always allocates exactly one host.
 	// +optional
 	DynamicHostAllocation *DynamicHostAllocationSpec `json:"dynamicHostAllocation,omitempty"`
 
@@ -412,6 +416,18 @@ type AWSMachineStatus struct {
 	// This will be set to true when SpotMarketOptions is not nil (i.e. this machine is using a spot instance).
 	// +optional
 	Interruptible bool `json:"interruptible,omitempty"`
+
+	// SpotRequestStartTime is the time when the controller first attempted to create a Spot instance.
+	// This is used in conjunction with SpotMarketOptions.WaitingTimeout to determine when to fall back
+	// to an On-Demand instance if Spot capacity is not available.
+	// +optional
+	SpotRequestStartTime *metav1.Time `json:"spotRequestStartTime,omitempty"`
+
+	// SpotFallbackToOnDemand indicates that the controller should create an On-Demand instance
+	// instead of a Spot instance because the WaitingTimeout has elapsed without Spot capacity
+	// becoming available.
+	// +optional
+	SpotFallbackToOnDemand bool `json:"spotFallbackToOnDemand,omitempty"`
 
 	// Addresses contains the AWS instance associated addresses.
 	Addresses []clusterv1beta1.MachineAddress `json:"addresses,omitempty"`

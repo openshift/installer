@@ -63,8 +63,16 @@ func (src *AWSMachine) ConvertTo(dstRaw conversion.Hub) error {
 			dst.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder = restored.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder
 		}
 	}
+	if restored.Spec.SpotMarketOptions != nil && restored.Spec.SpotMarketOptions.WaitingTimeout != nil {
+		if dst.Spec.SpotMarketOptions == nil {
+			dst.Spec.SpotMarketOptions = &infrav1.SpotMarketOptions{}
+		}
+		dst.Spec.SpotMarketOptions.WaitingTimeout = restored.Spec.SpotMarketOptions.WaitingTimeout
+	}
 
 	dst.Status.DedicatedHost = restored.Status.DedicatedHost
+	dst.Status.SpotRequestStartTime = restored.Status.SpotRequestStartTime
+	dst.Status.SpotFallbackToOnDemand = restored.Status.SpotFallbackToOnDemand
 	return nil
 }
 
@@ -134,6 +142,12 @@ func (r *AWSMachineTemplate) ConvertTo(dstRaw conversion.Hub) error {
 		if restored.Spec.Template.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder != nil {
 			dst.Spec.Template.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder = restored.Spec.Template.Spec.ElasticIPPool.PublicIpv4PoolFallBackOrder
 		}
+	}
+	if restored.Spec.Template.Spec.SpotMarketOptions != nil && restored.Spec.Template.Spec.SpotMarketOptions.WaitingTimeout != nil {
+		if dst.Spec.Template.Spec.SpotMarketOptions == nil {
+			dst.Spec.Template.Spec.SpotMarketOptions = &infrav1.SpotMarketOptions{}
+		}
+		dst.Spec.Template.Spec.SpotMarketOptions.WaitingTimeout = restored.Spec.Template.Spec.SpotMarketOptions.WaitingTimeout
 	}
 
 	// Restore Status fields that don't exist in v1beta1.

@@ -2863,9 +2863,12 @@ spec:
                   hostAffinity:
                     description: |-
                       HostAffinity specifies the dedicated host affinity setting for the instance.
-                      When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
-                      When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
-                      When HostAffinity is defined, HostID is required.
+                      When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+                      - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+                      - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+                      When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+                      - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+                      - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
                     enum:
                     - default
                     - host
@@ -3111,6 +3114,13 @@ spec:
                       maxPrice:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
+                        type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                         type: string
                     type: object
                   sshKeyName:
@@ -6449,6 +6459,13 @@ spec:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
                         type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                        type: string
                     type: object
                   sshKeyName:
                     description: |-
@@ -7112,6 +7129,13 @@ spec:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
                         type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                        type: string
                     type: object
                   sshKeyName:
                     description: |-
@@ -7707,6 +7731,7 @@ spec:
                     arn:
                       description: |-
                         ARN of resource.
+
                         Deprecated: This field has no function and is going to be removed in the next release.
                       type: string
                     filters:
@@ -7971,6 +7996,7 @@ spec:
                   arn:
                     description: |-
                       ARN of resource.
+
                       Deprecated: This field has no function and is going to be removed in the next release.
                     type: string
                   filters:
@@ -8347,9 +8373,9 @@ spec:
               dynamicHostAllocation:
                 description: |-
                   DynamicHostAllocation enables automatic allocation of a single dedicated host.
-                  This field is mutually exclusive with HostID and always allocates exactly one host.
                   Cost effectiveness of allocating a single instance on a dedicated host may vary
                   depending on the instance type and the region.
+                  This field is mutually exclusive with HostID and always allocates exactly one host.
                 properties:
                   tags:
                     additionalProperties:
@@ -8387,12 +8413,16 @@ spec:
                       rule: self in ['none','amazon-pool']
                 type: object
               hostAffinity:
-                default: host
+                default: default
                 description: |-
                   HostAffinity specifies the dedicated host affinity setting for the instance.
-                  When HostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
-                  When HostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
-                  When HostAffinity is defined, HostID is required.
+                  When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+                  - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+                  - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+                  When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+                  - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+                  - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
+                  If HostAffinity is not specified, it defaults to "default".
                 enum:
                 - default
                 - host
@@ -8769,6 +8799,13 @@ spec:
                     description: MaxPrice defines the maximum price the user is willing
                       to pay for Spot VM instances
                     type: string
+                  waitingTimeout:
+                    description: |-
+                      WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                      If the timeout is reached and no Spot instance is available, the controller will fall back
+                      to creating an On-Demand instance instead.
+                      If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                    type: string
                 type: object
               sshKeyName:
                 description: SSHKeyName is the name of the ssh key to attach to the
@@ -8976,6 +9013,19 @@ spec:
               ready:
                 description: Ready is true when the provider resource is ready.
                 type: boolean
+              spotFallbackToOnDemand:
+                description: |-
+                  SpotFallbackToOnDemand indicates that the controller should create an On-Demand instance
+                  instead of a Spot instance because the WaitingTimeout has elapsed without Spot capacity
+                  becoming available.
+                type: boolean
+              spotRequestStartTime:
+                description: |-
+                  SpotRequestStartTime is the time when the controller first attempted to create a Spot instance.
+                  This is used in conjunction with SpotMarketOptions.WaitingTimeout to determine when to fall back
+                  to an On-Demand instance if Spot capacity is not available.
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
@@ -9092,6 +9142,7 @@ spec:
                             arn:
                               description: |-
                                 ARN of resource.
+
                                 Deprecated: This field has no function and is going to be removed in the next release.
                               type: string
                             filters:
@@ -9361,6 +9412,7 @@ spec:
                           arn:
                             description: |-
                               ARN of resource.
+
                               Deprecated: This field has no function and is going to be removed in the next release.
                             type: string
                           filters:
@@ -9640,9 +9692,9 @@ spec:
                       dynamicHostAllocation:
                         description: |-
                           DynamicHostAllocation enables automatic allocation of a single dedicated host.
-                          This field is mutually exclusive with HostID and always allocates exactly one host.
                           Cost effectiveness of allocating a single instance on a dedicated host may vary
                           depending on the instance type and the region.
+                          This field is mutually exclusive with HostID and always allocates exactly one host.
                         properties:
                           tags:
                             additionalProperties:
@@ -9681,12 +9733,16 @@ spec:
                               rule: self in ['none','amazon-pool']
                         type: object
                       hostAffinity:
-                        default: host
+                        default: default
                         description: |-
                           HostAffinity specifies the dedicated host affinity setting for the instance.
-                          When HostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
-                          When HostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
-                          When HostAffinity is defined, HostID is required.
+                          When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+                          - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+                          - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+                          When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+                          - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+                          - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
+                          If HostAffinity is not specified, it defaults to "default".
                         enum:
                         - default
                         - host
@@ -10066,6 +10122,13 @@ spec:
                           maxPrice:
                             description: MaxPrice defines the maximum price the user
                               is willing to pay for Spot VM instances
+                            type: string
+                          waitingTimeout:
+                            description: |-
+                              WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                              If the timeout is reached and no Spot instance is available, the controller will fall back
+                              to creating an On-Demand instance instead.
+                              If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                             type: string
                         type: object
                       sshKeyName:
@@ -11797,9 +11860,12 @@ spec:
                   hostAffinity:
                     description: |-
                       HostAffinity specifies the dedicated host affinity setting for the instance.
-                      When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
-                      When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
-                      When HostAffinity is defined, HostID is required.
+                      When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+                      - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+                      - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+                      When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+                      - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+                      - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
                     enum:
                     - default
                     - host
@@ -12045,6 +12111,13 @@ spec:
                       maxPrice:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
+                        type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                         type: string
                     type: object
                   sshKeyName:
@@ -12816,6 +12889,85 @@ spec:
                       ignored when updating existing clusters. Defaults to true.
                     type: boolean
                 type: object
+              accessEntries:
+                description: |-
+                  AccessEntries specifies the access entries for the cluster
+                  Access entries require AuthenticationMode to be either "api" or "api_and_config_map"
+                items:
+                  description: AccessEntry represents an AWS EKS access entry for
+                    IAM principals
+                  properties:
+                    accessPolicies:
+                      description: |-
+                        AccessPolicies specifies the policies to associate with this access entry
+                        Cannot be specified if Type is "ec2_linux" or "ec2_windows"
+                      items:
+                        description: AccessPolicyReference represents a reference
+                          to an AWS EKS access policy
+                        properties:
+                          accessScope:
+                            description: AccessScope specifies the scope for the policy
+                            properties:
+                              namespaces:
+                                description: |-
+                                  Namespaces are the namespaces for the access scope
+                                  Only valid when Type is namespace
+                                items:
+                                  type: string
+                                minItems: 1
+                                type: array
+                              type:
+                                default: cluster
+                                description: Type is the type of access scope. Defaults
+                                  to "cluster".
+                                enum:
+                                - cluster
+                                - namespace
+                                type: string
+                            required:
+                            - type
+                            type: object
+                          policyARN:
+                            description: PolicyARN is the Amazon Resource Name (ARN)
+                              of the access policy
+                            type: string
+                        required:
+                        - accessScope
+                        - policyARN
+                        type: object
+                      maxItems: 20
+                      type: array
+                    kubernetesGroups:
+                      description: |-
+                        KubernetesGroups represents the Kubernetes groups for the access entry
+                        Cannot be specified if Type is "ec2_linux" or "ec2_windows"
+                      items:
+                        type: string
+                      type: array
+                    principalARN:
+                      description: PrincipalARN is the Amazon Resource Name (ARN)
+                        of the IAM principal
+                      type: string
+                    type:
+                      default: standard
+                      description: Type is the type of access entry. Defaults to standard
+                        if not specified.
+                      enum:
+                      - standard
+                      - ec2_linux
+                      - ec2_windows
+                      - fargate_linux
+                      - ec2
+                      - hybrid_linux
+                      - hyperpod_linux
+                      type: string
+                    username:
+                      description: Username is the username for the access entry
+                      type: string
+                  required:
+                  - principalARN
+                  type: object
+                type: array
               additionalTags:
                 additionalProperties:
                   type: string
@@ -14085,9 +14237,12 @@ spec:
                   hostAffinity:
                     description: |-
                       HostAffinity specifies the dedicated host affinity setting for the instance.
-                      When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
-                      When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
-                      When HostAffinity is defined, HostID is required.
+                      When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+                      - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+                      - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+                      When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+                      - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+                      - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
                     enum:
                     - default
                     - host
@@ -14333,6 +14488,13 @@ spec:
                       maxPrice:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
+                        type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                         type: string
                     type: object
                   sshKeyName:
@@ -15132,6 +15294,87 @@ spec:
                               ignored when updating existing clusters. Defaults to true.
                             type: boolean
                         type: object
+                      accessEntries:
+                        description: |-
+                          AccessEntries specifies the access entries for the cluster
+                          Access entries require AuthenticationMode to be either "api" or "api_and_config_map"
+                        items:
+                          description: AccessEntry represents an AWS EKS access entry
+                            for IAM principals
+                          properties:
+                            accessPolicies:
+                              description: |-
+                                AccessPolicies specifies the policies to associate with this access entry
+                                Cannot be specified if Type is "ec2_linux" or "ec2_windows"
+                              items:
+                                description: AccessPolicyReference represents a reference
+                                  to an AWS EKS access policy
+                                properties:
+                                  accessScope:
+                                    description: AccessScope specifies the scope for
+                                      the policy
+                                    properties:
+                                      namespaces:
+                                        description: |-
+                                          Namespaces are the namespaces for the access scope
+                                          Only valid when Type is namespace
+                                        items:
+                                          type: string
+                                        minItems: 1
+                                        type: array
+                                      type:
+                                        default: cluster
+                                        description: Type is the type of access scope.
+                                          Defaults to "cluster".
+                                        enum:
+                                        - cluster
+                                        - namespace
+                                        type: string
+                                    required:
+                                    - type
+                                    type: object
+                                  policyARN:
+                                    description: PolicyARN is the Amazon Resource
+                                      Name (ARN) of the access policy
+                                    type: string
+                                required:
+                                - accessScope
+                                - policyARN
+                                type: object
+                              maxItems: 20
+                              type: array
+                            kubernetesGroups:
+                              description: |-
+                                KubernetesGroups represents the Kubernetes groups for the access entry
+                                Cannot be specified if Type is "ec2_linux" or "ec2_windows"
+                              items:
+                                type: string
+                              type: array
+                            principalARN:
+                              description: PrincipalARN is the Amazon Resource Name
+                                (ARN) of the IAM principal
+                              type: string
+                            type:
+                              default: standard
+                              description: Type is the type of access entry. Defaults
+                                to standard if not specified.
+                              enum:
+                              - standard
+                              - ec2_linux
+                              - ec2_windows
+                              - fargate_linux
+                              - ec2
+                              - hybrid_linux
+                              - hyperpod_linux
+                              type: string
+                            username:
+                              description: Username is the username for the access
+                                entry
+                              type: string
+                          required:
+                          - principalARN
+                          type: object
+                        type: array
                       additionalTags:
                         additionalProperties:
                           type: string
@@ -16505,6 +16748,13 @@ spec:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
                         type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                        type: string
                     type: object
                   sshKeyName:
                     description: |-
@@ -17167,6 +17417,13 @@ spec:
                       maxPrice:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
+                        type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                         type: string
                     type: object
                   sshKeyName:
@@ -18880,6 +19137,31 @@ spec:
                 - candidate
                 - nightly
                 type: string
+              cloudWatchlogForwarder:
+                description: cloudWatchlogForwarder set the cloudWatch log forward
+                  config for applications and groupVersions.
+                properties:
+                  applications:
+                    description: applications list included in the groupLog Ids ex;
+                      for groupLog api allowed applications as audit-webhook.
+                    items:
+                      type: string
+                    type: array
+                  cloudWatchLogGroupName:
+                    description: cloudWatchLogGroupName is the name of the CloudWatch
+                      log group.
+                    type: string
+                  cloudWatchLogRoleArn:
+                    description: cloudWatchLogRoleArn is the ARN of the IAM CloudWatch
+                      role for log distribution.
+                    type: string
+                  groupLogIDs:
+                    description: groupLogIDs is list of available groupLog Ids ex;
+                      api, authentication, controller manager, scheduler
+                    items:
+                      type: string
+                    type: array
+                type: object
               clusterRegistryConfig:
                 description: ClusterRegistryConfig represents registry config used
                   with the cluster.
@@ -19002,7 +19284,7 @@ spec:
                         minimum: 1
                         type: integer
                       minReplicas:
-                        minimum: 1
+                        minimum: 0
                         type: integer
                     type: object
                   instanceType:
@@ -19601,6 +19883,30 @@ spec:
                     type: string
                 type: object
                 x-kubernetes-map-type: atomic
+              s3LogForwarder:
+                description: s3LogForwarder set the AWS S3 log forward config for
+                  applications and groupVersions.
+                properties:
+                  applications:
+                    description: applications list included in the groupLog Ids ex;
+                      for groupLog api allowed applications as audit-webhook.
+                    items:
+                      type: string
+                    type: array
+                  groupLogIDs:
+                    description: groupLogIDs is list of available groupLog Ids ex;
+                      api, authentication, controller manager, scheduler
+                    items:
+                      type: string
+                    type: array
+                  s3ConfigBucketName:
+                    description: s3ConfigBucketName is the name of the S3 bucket
+                    type: string
+                  s3ConfigBucketPrefix:
+                    description: s3ConfigBucketPrefix is the prefix to use for objects
+                      stored in the S3 bucket.
+                    type: string
+                type: object
               subnets:
                 description: |-
                   The Subnet IDs to use when installing the cluster.
@@ -19838,7 +20144,7 @@ spec:
                     minimum: 1
                     type: integer
                   minReplicas:
-                    minimum: 1
+                    minimum: 0
                     type: integer
                 type: object
               availabilityZone:
@@ -19851,8 +20157,16 @@ spec:
                   CapacityReservationID specifies the ID of an AWS On-Demand Capacity Reservation and Capacity Blocks for ML.
                   The CapacityReservationID must be pre-created in advance, before creating a NodePool.
                 type: string
+              imageType:
+                description: ImageType is the AMI (Amazon Machine Image) to use for
+                  running the associated NodePool (i.e. Windows or Default/Linux).
+                enum:
+                - Windows
+                - Default
+                type: string
               instanceType:
-                description: InstanceType specifies the AWS instance type
+                description: InstanceType specifies the AWS instance type, for example
+                  `r5.xlarge`. Instance type ref; https://aws.amazon.com/ec2/instance-types/
                 type: string
               labels:
                 additionalProperties:
@@ -20924,6 +21238,7 @@ rules:
   - clusters/status
   - machinedeployments
   - machines/status
+  - machinesets
   verbs:
   - get
   - list
@@ -21206,7 +21521,7 @@ spec:
         env:
         - name: AWS_SHARED_CREDENTIALS_FILE
           value: /home/.aws/credentials
-        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.9.0
+        image: gcr.io/k8s-staging-cluster-api-aws/cluster-api-aws-controller:v2.10.0
         imagePullPolicy: IfNotPresent
         livenessProbe:
           failureThreshold: 3

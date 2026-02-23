@@ -32,6 +32,7 @@ import (
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
@@ -569,6 +570,10 @@ func (r *AWSMachineReconciler) reconcileNormal(ctx context.Context, machineScope
 
 		instance, err = r.createInstance(ctx, ec2svc, machineScope, clusterScope, objectStoreSvc)
 		if err != nil {
+			// Check if this is a spot capacity error that we can retry
+			if spotErr := (&ec2.SpotCapacityError{}); errors.As(err, &spotErr) {
+				return r.handleSpotCapacityError(machineScope)
+			}
 			machineScope.Error(err, "unable to create instance")
 			v1beta1conditions.MarkFalse(machineScope.AWSMachine, infrav1.InstanceReadyCondition, infrav1.InstanceProvisionFailedReason, clusterv1beta1.ConditionSeverityError, "%s", err.Error())
 			return ctrl.Result{}, err
@@ -779,6 +784,44 @@ func (r *AWSMachineReconciler) createInstance(ctx context.Context, ec2svc servic
 	}
 
 	return instance, nil
+}
+
+// handleSpotCapacityError handles spot capacity errors by tracking the start time
+// and determining whether to wait for retry or fall back to on-demand.
+func (r *AWSMachineReconciler) handleSpotCapacityError(machineScope *scope.MachineScope) (ctrl.Result, error) {
+	spotOptions := machineScope.AWSMachine.Spec.SpotMarketOptions
+	now := metav1.Now()
+
+	if machineScope.AWSMachine.Status.SpotRequestStartTime == nil {
+		machineScope.Info("Spot capacity unavailable, starting timeout tracking", "timeout", spotOptions.WaitingTimeout.Duration.String())
+		machineScope.AWSMachine.Status.SpotRequestStartTime = &now
+		if err := machineScope.PatchObject(); err != nil {
+			return ctrl.Result{}, errors.Wrap(err, "failed to patch SpotRequestStartTime")
+		}
+		v1beta1conditions.MarkFalse(machineScope.AWSMachine, infrav1.InstanceReadyCondition, infrav1.InstanceProvisionStartedReason, clusterv1beta1.ConditionSeverityInfo, "waiting for spot capacity")
+		return ctrl.Result{RequeueAfter: DefaultReconcilerRequeue}, nil
+	}
+
+	elapsed := now.Sub(machineScope.AWSMachine.Status.SpotRequestStartTime.Time)
+	timeout := spotOptions.WaitingTimeout.Duration
+
+	if elapsed >= timeout {
+		machineScope.Info("Spot waiting timeout reached, falling back to on-demand instance",
+			"elapsed", elapsed.String(),
+			"timeout", timeout.String())
+		machineScope.AWSMachine.Status.SpotFallbackToOnDemand = true
+		if err := machineScope.PatchObject(); err != nil {
+			return ctrl.Result{}, errors.Wrap(err, "failed to patch SpotFallbackToOnDemand")
+		}
+		r.Recorder.Eventf(machineScope.AWSMachine, corev1.EventTypeWarning, "SpotTimeoutFallback",
+			"Spot instance not available after %s, falling back to on-demand", elapsed.String())
+		// Requeue immediately to retry with on-demand
+		return ctrl.Result{Requeue: true}, nil
+	}
+
+	v1beta1conditions.MarkFalse(machineScope.AWSMachine, infrav1.InstanceReadyCondition, infrav1.InstanceProvisionStartedReason, clusterv1beta1.ConditionSeverityInfo,
+		"waiting for spot capacity")
+	return ctrl.Result{RequeueAfter: DefaultReconcilerRequeue}, nil
 }
 
 func (r *AWSMachineReconciler) resolveUserData(ctx context.Context, machineScope *scope.MachineScope, clusterScope cloud.ClusterScoper, objectStoreSvc services.ObjectStoreInterface) ([]byte, string, error) {

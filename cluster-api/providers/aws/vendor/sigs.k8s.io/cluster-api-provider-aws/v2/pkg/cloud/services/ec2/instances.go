@@ -258,6 +258,12 @@ func (s *Service) CreateInstance(ctx context.Context, scope *scope.MachineScope,
 
 	input.MarketType = scope.AWSMachine.Spec.MarketType
 
+	// Check if we should fall back to on-demand due to spot timeout
+	if scope.AWSMachine.Status.SpotFallbackToOnDemand {
+		s.scope.Info("Creating on-demand instance due to spot timeout fallback")
+		input.SpotMarketOptions = nil
+		input.MarketType = infrav1.MarketTypeOnDemand
+	}
 	// Handle dynamic host allocation if specified
 	if scope.AWSMachine.Spec.DynamicHostAllocation != nil {
 		hostID, err := s.ensureDedicatedHostAllocation(ctx, scope)
@@ -594,7 +600,7 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 		for index, id := range i.NetworkInterfaces {
 			netInterfaces = append(netInterfaces, types.InstanceNetworkInterfaceSpecification{
 				NetworkInterfaceId: aws.String(id),
-				DeviceIndex:        aws.Int32(int32(index)), //nolint:gosec // disable G115
+				DeviceIndex:        aws.Int32(int32(index)),
 			})
 		}
 		netInterfaces[0].AssociatePublicIpAddress = i.PublicIPOnLaunch
@@ -709,11 +715,14 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 	if i.HostID != nil {
 		if i.HostAffinity == nil {
+			// If HostAffinity is not specified, default to "default" Affinity (flexible affinity).
 			i.HostAffinity = aws.String("default")
 		}
 		if len(i.Tenancy) == 0 {
+			// If Tenancy is not specified with HostID set, default to "host" Tenancy.
 			i.Tenancy = "host"
 		}
+
 		s.scope.Debug("Running instance with dedicated host placement",
 			"hostId", i.HostID,
 			"affinity", i.HostAffinity)
@@ -733,6 +742,9 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 
 	out, err := s.EC2Client.RunInstances(context.TODO(), input)
 	if err != nil {
+		if isSpotCapacityError(err) && isSpotWaitingTimeoutDefined(i) {
+			return nil, NewSpotCapacityError(err)
+		}
 		return nil, errors.Wrap(err, "failed to run instance")
 	}
 
@@ -741,6 +753,47 @@ func (s *Service) runInstance(role string, i *infrav1.Instance) (*infrav1.Instan
 	}
 
 	return s.SDKToInstance(out.Instances[0])
+}
+
+// SpotCapacityError represents an error when spot instance capacity is not available.
+// The controller can use this to decide whether to wait and retry or fall back to on-demand.
+type SpotCapacityError struct {
+	cause error
+}
+
+// NewSpotCapacityError creates a new SpotCapacityError with the given cause.
+func NewSpotCapacityError(cause error) *SpotCapacityError {
+	return &SpotCapacityError{cause: cause}
+}
+
+// Error returns the error message for the SpotCapacityError.
+func (e *SpotCapacityError) Error() string {
+	return fmt.Sprintf("spot capacity unavailable: %v", e.cause)
+}
+
+// Unwrap returns the underlying cause of the SpotCapacityError.
+func (e *SpotCapacityError) Unwrap() error {
+	return e.cause
+}
+
+// isSpotCapacityError returns true if the error indicates a spot capacity issue.
+func isSpotCapacityError(err error) bool {
+	code, ok := awserrors.Code(err)
+	if !ok {
+		return false
+	}
+	switch code {
+	case "InsufficientInstanceCapacity",
+		"MaxSpotInstanceCountExceeded",
+		"InstanceLimitExceeded":
+		return true
+	}
+	return false
+}
+
+func isSpotWaitingTimeoutDefined(i *infrav1.Instance) bool {
+	return i.SpotMarketOptions != nil && i.SpotMarketOptions.WaitingTimeout != nil && i.SpotMarketOptions.WaitingTimeout.Duration > 0 &&
+		i.MarketType == infrav1.MarketTypeSpot
 }
 
 func volumeToBlockDeviceMapping(v *infrav1.Volume) types.BlockDeviceMapping {
@@ -1165,7 +1218,7 @@ func (s *Service) GetDHCPOptionSetDomainName(ec2client common.EC2API, vpcID *str
 
 	dhcpResult, err := ec2client.DescribeDhcpOptions(context.TODO(), dhcpInput)
 	if err != nil {
-		log.Error(err, "failed to describe DHCP Options Set", "DhcpOptionsSet", *dhcpResult)
+		log.Error(err, "failed to describe DHCP Options Set", "input", *dhcpInput)
 		return nil
 	}
 

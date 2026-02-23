@@ -113,3 +113,9 @@ func Convert_v1beta2_AWSMachineTemplateStatus_To_v1beta1_AWSMachineTemplateStatu
 	// NodeInfo and Conditions fields are ignored (dropped) as they don't exist in v1beta1
 	return autoConvert_v1beta2_AWSMachineTemplateStatus_To_v1beta1_AWSMachineTemplateStatus(in, out, s)
 }
+
+// Convert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions converts SpotMarketOptions from v1beta2 to v1beta1.
+// Note: WaitingTimeout is not present in v1beta1, so it will be dropped during conversion.
+func Convert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(in *v1beta2.SpotMarketOptions, out *SpotMarketOptions, s conversion.Scope) error {
+	return autoConvert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(in, out, s)
+}

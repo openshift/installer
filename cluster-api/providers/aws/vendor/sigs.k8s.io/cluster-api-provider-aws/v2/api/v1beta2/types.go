@@ -19,6 +19,7 @@ package v1beta2
 import (
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
@@ -275,9 +276,12 @@ type Instance struct {
 	MarketType MarketType `json:"marketType,omitempty"`
 
 	// HostAffinity specifies the dedicated host affinity setting for the instance.
-	// When hostAffinity is set to host, an instance started onto a specific host always restarts on the same host if stopped.
-	// When hostAffinity is set to default, and you stop and restart the instance, it can be restarted on any available host.
-	// When HostAffinity is defined, HostID is required.
+	// When HostAffinity is set to "host", an instance started onto a specific host always restarts on the same host if stopped:
+	// - If HostID is set, the instance launches on the specific host and must return to that same host after any stop/start (Targeted & Pinned).
+	// - If HostID is not set, the instance gets launched on any available and must returns to the same host after any stop/start (Auto-placed & Pinned).
+	// When HostAffinity is set to "default" (the default value), the instance (when restarted) can return on any available host:
+	// - If HostID is set, the instance launches on the specified host now, but (when restarted) can return to any available hosts (Targeted & Flexible).
+	// - If HostID is not set, the instance launches on any available host now, and (when restarted) can return to any available hosts (Auto-placed & Flexible).
 	// +optional
 	// +kubebuilder:validation:Enum:=default;host
 	HostAffinity *string `json:"hostAffinity,omitempty"`
@@ -526,6 +530,13 @@ type SpotMarketOptions struct {
 	// +optional
 	// +kubebuilder:validation:pattern="^[0-9]+(\.[0-9]+)?$"
 	MaxPrice *string `json:"maxPrice,omitempty"`
+
+	// WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+	// If the timeout is reached and no Spot instance is available, the controller will fall back
+	// to creating an On-Demand instance instead.
+	// If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+	// +optional
+	WaitingTimeout *metav1.Duration `json:"waitingTimeout,omitempty"`
 }
 
 // EKSAMILookupType specifies which AWS AMI to use for a AWSMachine and AWSMachinePool.

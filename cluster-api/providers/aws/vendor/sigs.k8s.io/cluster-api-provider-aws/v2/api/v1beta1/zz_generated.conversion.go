@@ -484,11 +484,6 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}); err != nil {
 		return err
 	}
-	if err := s.AddGeneratedConversionFunc((*v1beta2.SpotMarketOptions)(nil), (*SpotMarketOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
-		return Convert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(a.(*v1beta2.SpotMarketOptions), b.(*SpotMarketOptions), scope)
-	}); err != nil {
-		return err
-	}
 	if err := s.AddGeneratedConversionFunc((*SubnetSpec)(nil), (*v1beta2.SubnetSpec)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta1_SubnetSpec_To_v1beta2_SubnetSpec(a.(*SubnetSpec), b.(*v1beta2.SubnetSpec), scope)
 	}); err != nil {
@@ -586,6 +581,11 @@ func RegisterConversions(s *runtime.Scheme) error {
 	}
 	if err := s.AddConversionFunc((*v1beta2.S3Bucket)(nil), (*S3Bucket)(nil), func(a, b interface{}, scope conversion.Scope) error {
 		return Convert_v1beta2_S3Bucket_To_v1beta1_S3Bucket(a.(*v1beta2.S3Bucket), b.(*S3Bucket), scope)
+	}); err != nil {
+		return err
+	}
+	if err := s.AddConversionFunc((*v1beta2.SpotMarketOptions)(nil), (*SpotMarketOptions)(nil), func(a, b interface{}, scope conversion.Scope) error {
+		return Convert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(a.(*v1beta2.SpotMarketOptions), b.(*SpotMarketOptions), scope)
 	}); err != nil {
 		return err
 	}
@@ -1369,7 +1369,15 @@ func autoConvert_v1beta1_AWSMachineSpec_To_v1beta2_AWSMachineSpec(in *AWSMachine
 	} else {
 		out.Ignition = nil
 	}
-	out.SpotMarketOptions = (*v1beta2.SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))
+	if in.SpotMarketOptions != nil {
+		in, out := &in.SpotMarketOptions, &out.SpotMarketOptions
+		*out = new(v1beta2.SpotMarketOptions)
+		if err := Convert_v1beta1_SpotMarketOptions_To_v1beta2_SpotMarketOptions(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.SpotMarketOptions = nil
+	}
 	out.Tenancy = in.Tenancy
 	return nil
 }
@@ -1429,7 +1437,15 @@ func autoConvert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in *v1beta2.AW
 	} else {
 		out.Ignition = nil
 	}
-	out.SpotMarketOptions = (*SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))
+	if in.SpotMarketOptions != nil {
+		in, out := &in.SpotMarketOptions, &out.SpotMarketOptions
+		*out = new(SpotMarketOptions)
+		if err := Convert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.SpotMarketOptions = nil
+	}
 	// WARNING: in.PlacementGroupName requires manual conversion: does not exist in peer-type
 	// WARNING: in.PlacementGroupPartition requires manual conversion: does not exist in peer-type
 	out.Tenancy = in.Tenancy
@@ -1462,6 +1478,8 @@ func Convert_v1beta1_AWSMachineStatus_To_v1beta2_AWSMachineStatus(in *AWSMachine
 func autoConvert_v1beta2_AWSMachineStatus_To_v1beta1_AWSMachineStatus(in *v1beta2.AWSMachineStatus, out *AWSMachineStatus, s conversion.Scope) error {
 	out.Ready = in.Ready
 	out.Interruptible = in.Interruptible
+	// WARNING: in.SpotRequestStartTime requires manual conversion: does not exist in peer-type
+	// WARNING: in.SpotFallbackToOnDemand requires manual conversion: does not exist in peer-type
 	out.Addresses = *(*[]corev1beta1.MachineAddress)(unsafe.Pointer(&in.Addresses))
 	out.InstanceState = (*InstanceState)(unsafe.Pointer(in.InstanceState))
 	out.FailureReason = (*string)(unsafe.Pointer(in.FailureReason))
@@ -1995,7 +2013,15 @@ func autoConvert_v1beta1_Instance_To_v1beta2_Instance(in *Instance, out *v1beta2
 	out.NetworkInterfaces = *(*[]string)(unsafe.Pointer(&in.NetworkInterfaces))
 	out.Tags = *(*map[string]string)(unsafe.Pointer(&in.Tags))
 	out.AvailabilityZone = in.AvailabilityZone
-	out.SpotMarketOptions = (*v1beta2.SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))
+	if in.SpotMarketOptions != nil {
+		in, out := &in.SpotMarketOptions, &out.SpotMarketOptions
+		*out = new(v1beta2.SpotMarketOptions)
+		if err := Convert_v1beta1_SpotMarketOptions_To_v1beta2_SpotMarketOptions(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.SpotMarketOptions = nil
+	}
 	out.Tenancy = in.Tenancy
 	out.VolumeIDs = *(*[]string)(unsafe.Pointer(&in.VolumeIDs))
 	return nil
@@ -2027,7 +2053,15 @@ func autoConvert_v1beta2_Instance_To_v1beta1_Instance(in *v1beta2.Instance, out 
 	// WARNING: in.NetworkInterfaceType requires manual conversion: does not exist in peer-type
 	out.Tags = *(*map[string]string)(unsafe.Pointer(&in.Tags))
 	out.AvailabilityZone = in.AvailabilityZone
-	out.SpotMarketOptions = (*SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))
+	if in.SpotMarketOptions != nil {
+		in, out := &in.SpotMarketOptions, &out.SpotMarketOptions
+		*out = new(SpotMarketOptions)
+		if err := Convert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(*in, *out, s); err != nil {
+			return err
+		}
+	} else {
+		out.SpotMarketOptions = nil
+	}
 	// WARNING: in.PlacementGroupName requires manual conversion: does not exist in peer-type
 	// WARNING: in.PlacementGroupPartition requires manual conversion: does not exist in peer-type
 	out.Tenancy = in.Tenancy
@@ -2239,12 +2273,8 @@ func Convert_v1beta1_SpotMarketOptions_To_v1beta2_SpotMarketOptions(in *SpotMark
 
 func autoConvert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(in *v1beta2.SpotMarketOptions, out *SpotMarketOptions, s conversion.Scope) error {
 	out.MaxPrice = (*string)(unsafe.Pointer(in.MaxPrice))
+	// WARNING: in.WaitingTimeout requires manual conversion: does not exist in peer-type
 	return nil
-}
-
-// Convert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions is an autogenerated conversion function.
-func Convert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(in *v1beta2.SpotMarketOptions, out *SpotMarketOptions, s conversion.Scope) error {
-	return autoConvert_v1beta2_SpotMarketOptions_To_v1beta1_SpotMarketOptions(in, out, s)
 }
 
 func autoConvert_v1beta1_SubnetSpec_To_v1beta2_SubnetSpec(in *SubnetSpec, out *v1beta2.SubnetSpec, s conversion.Scope) error {
