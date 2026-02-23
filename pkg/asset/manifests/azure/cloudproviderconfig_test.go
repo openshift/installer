@@ -38,6 +38,7 @@ func TestCloudProviderConfig(t *testing.T) {
 	"vnetResourceGroup": "clusterid-rg",
 	"subnetName": "clusterid-worker-subnet",
 	"securityGroupName": "clusterid-node-nsg",
+	"securityGroupResourceGroup": "clusterid-rg",
 	"routeTableName": "clusterid-node-routetable",
 	"vmType": "standard",
 	"loadBalancerSku": "standard",
