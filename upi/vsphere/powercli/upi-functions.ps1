@@ -315,8 +315,9 @@ function New-OpenshiftVMs {
             $tag = Get-Tag -Server $node.server -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
 
             # Get correct template / folder
-            $folder = Get-Folder -Server $node.server -Name $metadata.infraID -Location $node.datacenter
-            $template = Get-VM -Server $node.server -Name $vm_template -Location $($node.datacenter)
+            $dc = Get-Datacenter -Server $node.server -Name $node.datacenter
+            $folder = Get-Folder -Server $node.server -Name $metadata.infraID -Location $dc
+            $template = Get-VM -Server $node.server -Name $vm_template -Location $dc
 
             # Clone the virtual machine from the imported template
             #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
