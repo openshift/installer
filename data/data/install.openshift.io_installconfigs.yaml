@@ -478,11 +478,11 @@ spec:
                                 description: |-
                                   SubscriptionID defines the Azure subscription the disk encryption
                                   set is in.
+                                  Must be the same subscription ID as the resource group of the installer.
                                 type: string
                             required:
                             - name
                             - resourceGroup
-                            - subscriptionId
                             type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
@@ -522,11 +522,11 @@ spec:
                                     description: |-
                                       SubscriptionID defines the Azure subscription the disk encryption
                                       set is in.
+                                      Must be the same subscription ID as the resource group of the installer.
                                     type: string
                                 required:
                                 - name
                                 - resourceGroup
-                                - subscriptionId
                                 type: object
                               securityEncryptionType:
                                 description: |-
@@ -2039,11 +2039,11 @@ spec:
                                   description: |-
                                     SubscriptionID defines the Azure subscription the disk encryption
                                     set is in.
+                                    Must be the same subscription ID as the resource group of the installer.
                                   type: string
                               required:
                               - name
                               - resourceGroup
-                              - subscriptionId
                               type: object
                             diskSizeGB:
                               description: DiskSizeGB defines the size of disk in
@@ -2084,11 +2084,11 @@ spec:
                                       description: |-
                                         SubscriptionID defines the Azure subscription the disk encryption
                                         set is in.
+                                        Must be the same subscription ID as the resource group of the installer.
                                       type: string
                                   required:
                                   - name
                                   - resourceGroup
-                                  - subscriptionId
                                   type: object
                                 securityEncryptionType:
                                   description: |-
@@ -3538,11 +3538,11 @@ spec:
                                 description: |-
                                   SubscriptionID defines the Azure subscription the disk encryption
                                   set is in.
+                                  Must be the same subscription ID as the resource group of the installer.
                                 type: string
                             required:
                             - name
                             - resourceGroup
-                            - subscriptionId
                             type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
@@ -3582,11 +3582,11 @@ spec:
                                     description: |-
                                       SubscriptionID defines the Azure subscription the disk encryption
                                       set is in.
+                                      Must be the same subscription ID as the resource group of the installer.
                                     type: string
                                 required:
                                 - name
                                 - resourceGroup
-                                - subscriptionId
                                 type: object
                               securityEncryptionType:
                                 description: |-
@@ -5505,11 +5505,11 @@ spec:
                                 description: |-
                                   SubscriptionID defines the Azure subscription the disk encryption
                                   set is in.
+                                  Must be the same subscription ID as the resource group of the installer.
                                 type: string
                             required:
                             - name
                             - resourceGroup
-                            - subscriptionId
                             type: object
                           diskSizeGB:
                             description: DiskSizeGB defines the size of disk in GB.
@@ -5549,11 +5549,11 @@ spec:
                                     description: |-
                                       SubscriptionID defines the Azure subscription the disk encryption
                                       set is in.
+                                      Must be the same subscription ID as the resource group of the installer.
                                     type: string
                                 required:
                                 - name
                                 - resourceGroup
-                                - subscriptionId
                                 type: object
                               securityEncryptionType:
                                 description: |-

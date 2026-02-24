@@ -50,6 +50,9 @@ type OSDisk struct {
 type DiskEncryptionSet struct {
 	// SubscriptionID defines the Azure subscription the disk encryption
 	// set is in.
+	// Must be the same subscription ID as the resource group of the installer.
+	//
+	// +optional
 	SubscriptionID string `json:"subscriptionId"`
 	// ResourceGroup defines the Azure resource group used by the disk
 	// encryption set.
