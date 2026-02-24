@@ -108,5 +108,5 @@ replace github.com/prometheus/client_golang => github.com/prometheus/client_gola
 // https://issues.redhat.com/browse/OCPBUGS-6422
 replace golang.org/x/net => golang.org/x/net v0.5.0
 
-// https://issues.redhat.com/browse/OCPBUGS-66232
-replace github.com/hashicorp/terraform-provider-google v1.20.1-0.20211220202130-c575d59d1cdf => github.com/openshift/terraform-providers-terraform-provider-google v0.0.0-20251201175940-2adc9d854545
+// https://issues.redhat.com/browse/OCPBUGS-76931
+replace github.com/hashicorp/terraform-provider-google v1.20.1-0.20211220202130-c575d59d1cdf => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132813-0e67eab55529

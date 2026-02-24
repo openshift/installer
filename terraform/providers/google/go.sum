@@ -321,8 +321,8 @@ github.com/mitchellh/reflectwalk v1.0.2/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx
 github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e/go.mod h1:zD1mROLANZcx1PVRCS0qkT7pwLkGfwJo4zjcN/Tysno=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=
 github.com/oklog/run v1.0.0/go.mod h1:dlhp/R75TPv97u0XWUtDeV/lRKWPKSdTuV0TZvrmrQA=
-github.com/openshift/terraform-providers-terraform-provider-google v0.0.0-20251201175940-2adc9d854545 h1:JJzwReA0yNUTEl1B72aUiGF8H1VMakmHQ/rTNk9t9gg=
-github.com/openshift/terraform-providers-terraform-provider-google v0.0.0-20251201175940-2adc9d854545/go.mod h1:Wn+5oEyIb0xoRzKqjLIZ8DE7bvH9WQ68mAb3G8RJrcE=
+github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132813-0e67eab55529 h1:czUaxpVAmLFIYFKw3IQ2Ei7WEb4er+zZeMbzjIW4Zhs=
+github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132813-0e67eab55529/go.mod h1:Wn+5oEyIb0xoRzKqjLIZ8DE7bvH9WQ68mAb3G8RJrcE=
 github.com/opentracing/opentracing-go v1.1.0/go.mod h1:UkNAQd3GIcIGf0SeVgPpRdFStlNbqXla1AfSYxPUl2o=
 github.com/pkg/errors v0.8.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
 github.com/pkg/errors v0.9.1/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
