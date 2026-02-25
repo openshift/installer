@@ -278,7 +278,8 @@ func (s *ManagedClusterScope) SubnetSpecs() []*compute.Subnetwork {
 		for rangeName, secondaryCidrBlock := range subnetwork.SecondaryCidrBlocks {
 			secondaryIPRanges = append(secondaryIPRanges, &compute.SubnetworkSecondaryRange{RangeName: rangeName, IpCidrRange: secondaryCidrBlock})
 		}
-		subnets = append(subnets, &compute.Subnetwork{
+
+		subnet := &compute.Subnetwork{
 			Name:                  subnetwork.Name,
 			Region:                subnetwork.Region,
 			EnableFlowLogs:        ptr.Deref(subnetwork.EnableFlowLogs, false),
@@ -290,7 +291,13 @@ func (s *ManagedClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
 			StackType:             stackType,
-		})
+		}
+
+		if s.StackType() == infrav1.DualStackType {
+			subnet.Ipv6AccessType =	"EXTERNAL"
+		}
+
+		subnets = append(subnets, subnet)
 	}
 
 	return subnets

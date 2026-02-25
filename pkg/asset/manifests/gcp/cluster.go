@@ -138,6 +138,9 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		firewallRulesManagementPolicy = capg.RulesManagementUnmanaged
 	}
 
+	// FIXME: This field should be set based on the install config
+	stackType := capg.DualStackType
+
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -156,6 +159,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Firewall: capg.FirewallSpec{
 					DefaultRulesManagement: firewallRulesManagementPolicy,
 				},
+				StackType: stackType,
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),

@@ -339,24 +339,24 @@ func InstanceNetworkInterfaceSpec(cluster cloud.ClusterGetter, publicIP *bool, s
 			},
 		}
 
-		if cluster.StackType() == infrav1.DualStackType {
-			networkInterface.Ipv6AccessConfigs = []*compute.AccessConfig{
-				{
-					Type: "DIRECT_IPV6",
-					Name: "External IPv6",
-				},
-			}
-		}
+		//if cluster.StackType() == infrav1.DualStackType {
+		//	networkInterface.Ipv6AccessConfigs = []*compute.AccessConfig{
+		//		{
+		//			Type: "DIRECT_IPV6",
+		//			Name: "External IPv6",
+		//		},
+		//	}
+		//}
 	}
 
-	if cluster.StackType() == infrav1.DualStackType {
-		accessType := "INTERNAL"
-		if publicIP != nil && *publicIP {
-			accessType = "EXTERNAL"
-		}
-		networkInterface.Ipv6AccessType = accessType
-		networkInterface.Ipv6Address = cluster.Ipv6Address()
-	}
+	//if cluster.StackType() == infrav1.DualStackType {
+	//	accessType := "INTERNAL"
+	//	if publicIP != nil && *publicIP {
+	//		accessType = "EXTERNAL"
+	//	}
+	//	networkInterface.Ipv6AccessType = accessType
+	//	networkInterface.Ipv6Address = cluster.Ipv6Address()
+	//}
 
 	if subnet != nil {
 		networkInterface.Subnetwork = path.Join("projects", cluster.NetworkProject(), "regions", cluster.Region(), "subnetworks", *subnet)

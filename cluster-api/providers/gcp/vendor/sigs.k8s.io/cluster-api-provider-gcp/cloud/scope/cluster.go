@@ -292,7 +292,8 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 		for rangeName, secondaryCidrBlock := range subnetwork.SecondaryCidrBlocks {
 			secondaryIPRanges = append(secondaryIPRanges, &compute.SubnetworkSecondaryRange{RangeName: rangeName, IpCidrRange: secondaryCidrBlock})
 		}
-		subnets = append(subnets, &compute.Subnetwork{
+
+		subnet := &compute.Subnetwork{
 			Name:                  subnetwork.Name,
 			Region:                subnetwork.Region,
 			EnableFlowLogs:        ptr.Deref(subnetwork.EnableFlowLogs, false),
@@ -304,7 +305,13 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
 			StackType:             stackType,
-		})
+		}
+
+		if s.StackType() == infrav1.DualStackType {
+			subnet.Ipv6AccessType = "EXTERNAL"
+		}
+
+		subnets = append(subnets, subnet)
 	}
 
 	return subnets
@@ -370,14 +377,14 @@ func (s *ClusterScope) AddressSpecs(lbname string) []*compute.Address {
 		IpVersion:   "IPV4",
 	}}
 
-	if s.StackType() == infrav1.DualStackType {
-		specs = append(specs, &compute.Address{
-			Name:             fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
-			AddressType:      "EXTERNAL",
-			IpVersion:        "IPV6",
-			Ipv6EndpointType: "NETLB",
-		})
-	}
+	//if s.StackType() == infrav1.DualStackType {
+	//	specs = append(specs, &compute.Address{
+	//		Name:             fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
+	//		AddressType:      "EXTERNAL",
+	//		IpVersion:        "IPV6",
+	//		Ipv6EndpointType: "NETLB",
+	//	})
+	//}
 
 	return specs
 }
@@ -411,15 +418,15 @@ func (s *ClusterScope) ForwardingRuleSpecs(lbname string) []*compute.ForwardingR
 		},
 	}
 
-	if s.StackType() == infrav1.DualStackType {
-		forwardingRules = append(forwardingRules, &compute.ForwardingRule{
-			Name:                fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
-			IPProtocol:          "TCP",
-			LoadBalancingScheme: "EXTERNAL",
-			PortRange:           portRange,
-			Labels:              s.AdditionalLabels(),
-		})
-	}
+	//if s.StackType() == infrav1.DualStackType {
+	//	forwardingRules = append(forwardingRules, &compute.ForwardingRule{
+	//		Name:                fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
+	//		IPProtocol:          "TCP",
+	//		LoadBalancingScheme: "EXTERNAL",
+	//		PortRange:           portRange,
+	//		Labels:              s.AdditionalLabels(),
+	//	})
+	//}
 
 	return forwardingRules
 }
@@ -442,21 +449,21 @@ func (s *ClusterScope) HealthCheckSpecs(lbname string) []*compute.HealthCheck {
 		},
 	}
 
-	if s.StackType() == infrav1.DualStackType {
-		specs = append(specs, &compute.HealthCheck{
-			Name: fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
-			Type: "HTTPS",
-			HttpsHealthCheck: &compute.HTTPSHealthCheck{
-				Port:              6443,
-				PortSpecification: "USE_FIXED_PORT",
-				RequestPath:       "/readyz",
-			},
-			CheckIntervalSec:   10,
-			TimeoutSec:         5,
-			HealthyThreshold:   5,
-			UnhealthyThreshold: 3,
-		})
-	}
+	//if s.StackType() == infrav1.DualStackType {
+	//	specs = append(specs, &compute.HealthCheck{
+	//		Name: fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
+	//		Type: "HTTPS",
+	//		HttpsHealthCheck: &compute.HTTPSHealthCheck{
+	//			Port:              6443,
+	//			PortSpecification: "USE_FIXED_PORT",
+	//			RequestPath:       "/readyz",
+	//		},
+	//		CheckIntervalSec:   10,
+	//		TimeoutSec:         5,
+	//		HealthyThreshold:   5,
+	//		UnhealthyThreshold: 3,
+	//	})
+	//}
 
 	return specs
 }

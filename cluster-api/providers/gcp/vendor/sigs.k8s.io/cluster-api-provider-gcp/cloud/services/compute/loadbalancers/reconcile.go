@@ -169,16 +169,18 @@ func (s *Service) deleteInternalLoadBalancer(ctx context.Context, name string) e
 
 // createExternalLoadBalancer creates the components for a Global External Proxy LoadBalancer.
 func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1.LoadBalancerType, instancegroups []*compute.InstanceGroup) error {
+	log := log.FromContext(ctx) // FIXME:
+
 	name := infrav1.APIServerRoleTagValue
 	healthchecks, err := s.createOrGetHealthChecks(ctx, name)
 	if err != nil {
 		return err
 	}
 	for _, healthcheck := range healthchecks {
-		if (strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-			(!strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
+		//if (strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
+		//	(!strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
 			s.scope.Network().APIServerHealthCheck = ptr.To[string](healthcheck.SelfLink)
-		}
+		//}
 	}
 
 	// If an Internal LoadBalancer is being created, the BalancingMode must match the Internal LB.
@@ -208,11 +210,12 @@ func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1
 
 	endpoint := s.scope.ControlPlaneEndpoint()
 	for _, addr := range addrs {
-		if (strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-			(!strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
+		//if (strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
+		//	(!strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
 			s.scope.Network().APIServerAddress = ptr.To[string](addr.SelfLink)
+			log.Info("Setting control plane host in LB", "address", addr.Address)
 			endpoint.Host = addr.Address
-		}
+		//}
 	}
 	s.scope.SetControlPlaneEndpoint(endpoint)
 
@@ -221,10 +224,10 @@ func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1
 		return err
 	}
 	for _, forwardingrule := range forwardingrules {
-		if (strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-			(!strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
+		//if (strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
+		//	(!strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
 			s.scope.Network().APIServerForwardingRule = ptr.To[string](forwardingrule.SelfLink)
-		}
+		//}
 	}
 
 	return nil
@@ -233,16 +236,18 @@ func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1
 // createInternalLoadBalancer creates the components for a Regional Internal Passthrough LoadBalancer.
 // Since this is a passthrough LoadBalancer the TargetTCPProxy resource is not created.
 func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, lbType infrav1.LoadBalancerType, instancegroups []*compute.InstanceGroup) error {
+	log := log.FromContext(ctx) // fixme:
+
 	healthchecks, err := s.createOrGetRegionalHealthChecks(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	for _, healthcheck := range healthchecks {
-		if (strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-			(!strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
+		//if (strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
+		//	(!strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
 			s.scope.Network().APIInternalHealthCheck = ptr.To[string](healthcheck.SelfLink)
-		}
+		//}
 	}
 
 	backendsvc, err := s.createOrGetRegionalBackendService(ctx, name, instancegroups, healthchecks)
@@ -257,17 +262,18 @@ func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, l
 		return err
 	}
 	for _, addr := range addrs {
-		if (strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-			(!strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
+		//if (strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
+		//	(!strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
 			s.scope.Network().APIInternalAddress = ptr.To[string](addr.SelfLink)
 
 			if lbType == infrav1.Internal {
 				// If only creating an internal Load Balancer, set the control plane endpoint
 				endpoint := s.scope.ControlPlaneEndpoint()
+				log.Info("Setting control plane host in LB (createInternalLoadBalancer)", "address", addr.Address)
 				endpoint.Host = addr.Address
 				s.scope.SetControlPlaneEndpoint(endpoint)
 			}
-		}
+		//}
 	}
 
 	// Create a regional forwarding rule to the backend service
@@ -276,10 +282,10 @@ func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, l
 		return err
 	}
 	for _, forwardingrule := range forwardingrules {
-		if (strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-			(!strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
+		//if (strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
+		//	(!strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
 			s.scope.Network().APIInternalForwardingRule = ptr.To[string](forwardingrule.SelfLink)
-		}
+		//}
 	}
 
 	return nil
@@ -616,10 +622,10 @@ func (s *Service) createOrGetForwardingRules(ctx context.Context, lbname string,
 	for _, spec := range specs {
 		spec.Target = target.SelfLink
 		for _, addr := range addrs {
-			if (strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) ||
-				(!strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && !strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) {
+			//if (strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) ||
+			//	(!strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && !strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) {
 				spec.IPAddress = addr.SelfLink
-			}
+			//}
 		}
 
 		key := meta.GlobalKey(spec.Name)
@@ -689,10 +695,10 @@ func (s *Service) createOrGetRegionalForwardingRules(ctx context.Context, lbname
 		}
 		spec.Subnetwork = subnet.SelfLink
 		for _, addr := range addrs {
-			if (strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) ||
-				(!strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && !strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) {
+			//if (strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) ||
+			//	(!strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && !strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) {
 				spec.IPAddress = addr.SelfLink
-			}
+			//}
 		}
 
 		key := meta.RegionalKey(spec.Name, s.scope.Region())
