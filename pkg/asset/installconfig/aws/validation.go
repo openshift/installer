@@ -13,8 +13,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
+	"github.com/aws/aws-sdk-go-v2/service/route53"
+	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/aws/aws-sdk-go/aws/endpoints"
-	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -876,7 +877,7 @@ var requiredServices = []string{
 }
 
 // ValidateForProvisioning validates if the install config is valid for provisioning the cluster.
-func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Metadata) error {
+func ValidateForProvisioning(ctx context.Context, privHzClient Route53API, publicHzClient Route53API, ic *types.InstallConfig, metadata *Metadata) error {
 	if ic.Publish == types.InternalPublishingStrategy && ic.AWS.HostedZone == "" {
 		return nil
 	}
@@ -888,52 +889,49 @@ func ValidateForProvisioning(client API, ic *types.InstallConfig, metadata *Meta
 
 	var zoneName string
 	var zonePath *field.Path
-	var zone *route53.HostedZone
+	var zone *route53types.HostedZone
+	var client Route53API
 
 	allErrs := field.ErrorList{}
-	r53cfg := GetR53ClientCfg(metadata.session, ic.AWS.HostedZoneRole)
 
 	if ic.AWS.HostedZone != "" {
 		zoneName = ic.AWS.HostedZone
 		zonePath = field.NewPath("aws", "hostedZone")
-		zoneOutput, err := client.GetHostedZone(zoneName, r53cfg)
+		zoneOutput, err := privHzClient.GetHostedZone(ctx, zoneName)
 		if err != nil {
-			errMsg := fmt.Errorf("unable to retrieve hosted zone: %w", err).Error()
-			return field.ErrorList{
-				field.Invalid(zonePath, zoneName, errMsg),
-			}.ToAggregate()
+			return field.ErrorList{field.Invalid(zonePath, zoneName, fmt.Sprintf("unable to retrieve hosted zone: %v", err))}.ToAggregate()
 		}
 
-		if errs := validateHostedZone(zoneOutput, zonePath, zoneName, metadata); len(errs) > 0 {
+		if errs := validateHostedZone(ctx, zoneOutput, zonePath, zoneName, metadata); len(errs) > 0 {
 			allErrs = append(allErrs, errs...)
 		}
 
 		zone = zoneOutput.HostedZone
+		client = privHzClient
 	} else {
 		zoneName = ic.BaseDomain
 		zonePath = field.NewPath("baseDomain")
-		baseDomainOutput, err := client.GetBaseDomain(zoneName)
+		baseDomainOutput, err := publicHzClient.GetBaseDomain(ctx, zoneName)
 		if err != nil {
-			return field.ErrorList{
-				field.Invalid(zonePath, zoneName, "cannot find base domain"),
-			}.ToAggregate()
+			return field.ErrorList{field.Invalid(zonePath, zoneName, fmt.Sprintf("cannot find base domain %s: %v", zoneName, err))}.ToAggregate()
 		}
 
 		zone = baseDomainOutput
+		client = publicHzClient
 	}
 
-	if errs := client.ValidateZoneRecords(zone, zoneName, zonePath, ic, r53cfg); len(errs) > 0 {
+	if errs := client.ValidateZoneRecords(ctx, zone, zoneName, zonePath, ic); len(errs) > 0 {
 		allErrs = append(allErrs, errs...)
 	}
 
 	return allErrs.ToAggregate()
 }
 
-func validateHostedZone(hostedZoneOutput *route53.GetHostedZoneOutput, hostedZonePath *field.Path, hostedZoneName string, metadata *Metadata) field.ErrorList {
+func validateHostedZone(ctx context.Context, hostedZoneOutput *route53.GetHostedZoneOutput, hostedZonePath *field.Path, hostedZoneName string, metadata *Metadata) field.ErrorList {
 	allErrs := field.ErrorList{}
 
 	// validate that the hosted zone is associated with the VPC containing the existing subnets for the cluster
-	vpcID, err := metadata.VPCID(context.TODO())
+	vpcID, err := metadata.VPCID(ctx)
 	if err == nil {
 		if !isHostedZoneAssociatedWithVPC(hostedZoneOutput, vpcID) {
 			allErrs = append(allErrs, field.Invalid(hostedZonePath, hostedZoneName, "hosted zone is not associated with the VPC"))
