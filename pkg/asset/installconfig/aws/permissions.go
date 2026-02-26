@@ -734,8 +734,9 @@ func includesAssumeRole(installConfig *types.InstallConfig) bool {
 }
 
 func includesWavelengthZones(installConfig *types.InstallConfig) bool {
-	// Examples of WL zones: us-east-1-wl1-atl-wlz-1, eu-west-2-wl1-lon-wlz-1, eu-west-2-wl2-man-wlz1 ...
-	isWLZoneRegex := regexp.MustCompile(`wl\d\-.*$`)
+	// Examples of WL zones: us-east-1-wl1-atl-wlz-1, eu-west-2-wl1-lon-wlz-1, eu-west-2-wl2-man-wlz-1, etc
+	// https://docs.aws.amazon.com/wavelength/latest/developerguide/available-wavelength-zones.html
+	isWLZoneRegex := regexp.MustCompile(`-wlz.*$`)
 
 	for _, mpool := range installConfig.Compute {
 		if mpool.Name != types.MachinePoolEdgeRoleName || mpool.Platform.AWS == nil {
