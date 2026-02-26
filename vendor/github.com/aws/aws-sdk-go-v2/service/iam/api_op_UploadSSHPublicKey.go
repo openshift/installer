@@ -71,7 +71,9 @@ type UploadSSHPublicKeyInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful UploadSSHPublicKey request.
+// Contains the response to a successful [UploadSSHPublicKey] request.
+//
+// [UploadSSHPublicKey]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_UploadSSHPublicKey.html
 type UploadSSHPublicKeyOutput struct {
 
 	// Contains information about the SSH public key.
@@ -126,6 +128,9 @@ func (c *Client) addOperationUploadSSHPublicKeyMiddlewares(stack *middleware.Sta
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -142,6 +147,9 @@ func (c *Client) addOperationUploadSSHPublicKeyMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUploadSSHPublicKeyValidationMiddleware(stack); err != nil {
@@ -163,6 +171,15 @@ func (c *Client) addOperationUploadSSHPublicKeyMiddlewares(stack *middleware.Sta
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

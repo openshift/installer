@@ -124,7 +124,9 @@ type CreatePolicyInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful CreatePolicy request.
+// Contains the response to a successful [CreatePolicy] request.
+//
+// [CreatePolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_CreatePolicy.html
 type CreatePolicyOutput struct {
 
 	// A structure containing details about the new policy.
@@ -179,6 +181,9 @@ func (c *Client) addOperationCreatePolicyMiddlewares(stack *middleware.Stack, op
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -195,6 +200,9 @@ func (c *Client) addOperationCreatePolicyMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpCreatePolicyValidationMiddleware(stack); err != nil {
@@ -216,6 +224,15 @@ func (c *Client) addOperationCreatePolicyMiddlewares(stack *middleware.Stack, op
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
