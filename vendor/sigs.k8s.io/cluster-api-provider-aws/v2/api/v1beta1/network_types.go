@@ -189,8 +189,7 @@ type VPCSpec struct {
 	// Defaults to 10.0.0.0/16.
 	CidrBlock string `json:"cidrBlock,omitempty"`
 
-	// IPv6 contains ipv6 specific settings for the network. Supported only in managed clusters.
-	// This field cannot be set on AWSCluster object.
+	// IPv6 contains ipv6 specific settings for the network.
 	// +optional
 	IPv6 *IPv6 `json:"ipv6,omitempty"`
 
@@ -249,7 +248,6 @@ type SubnetSpec struct {
 
 	// IPv6CidrBlock is the IPv6 CIDR block to be used when the provider creates a managed VPC.
 	// A subnet can have an IPv4 and an IPv6 address.
-	// IPv6 is only supported in managed clusters, this field cannot be set on AWSCluster object.
 	// +optional
 	IPv6CidrBlock string `json:"ipv6CidrBlock,omitempty"`
 
@@ -260,8 +258,7 @@ type SubnetSpec struct {
 	// +optional
 	IsPublic bool `json:"isPublic"`
 
-	// IsIPv6 defines the subnet as an IPv6 subnet. A subnet is IPv6 when it is associated with a VPC that has IPv6 enabled.
-	// IPv6 is only supported in managed clusters, this field cannot be set on AWSCluster object.
+	// IsIPv6 defines the subnet as an IPv6 subnet. A subnet is IPv6 when it is associated with an IPv6 CIDR.
 	// +optional
 	IsIPv6 bool `json:"isIpv6,omitempty"`
 

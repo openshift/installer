@@ -186,6 +186,24 @@ func (r *AWSMachineTemplate) validateHostAllocation() field.ErrorList {
 		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.template.spec.hostID"), "hostID and dynamicHostAllocation are mutually exclusive"), field.Forbidden(field.NewPath("spec.template.spec.dynamicHostAllocation"), "hostID and dynamicHostAllocation are mutually exclusive"))
 	}
 
+	// HostID, HostAffinity, and DynamicHostAllocation can only be set when Tenancy is "host"
+	if hasHostID && spec.Tenancy != hostTenancy {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.template.spec.hostID"), "hostID can only be set when tenancy is 'host'"))
+	}
+
+	if spec.HostAffinity != nil && *spec.HostAffinity == hostAffinity && spec.Tenancy != hostTenancy {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.template.spec.hostAffinity"), "hostAffinity can only be set to 'host' when tenancy is 'host'"))
+	}
+
+	if hasDynamicHostAllocation && spec.Tenancy != hostTenancy {
+		allErrs = append(allErrs, field.Forbidden(field.NewPath("spec.template.spec.dynamicHostAllocation"), "dynamicHostAllocation can only be set when tenancy is 'host'"))
+	}
+
+	// When hostAffinity is "host", either hostID or dynamicHostAllocation must be specified
+	if spec.HostAffinity != nil && *spec.HostAffinity == hostAffinity && !hasHostID && !hasDynamicHostAllocation {
+		allErrs = append(allErrs, field.Required(field.NewPath("spec.template.spec.hostID"), "hostID or dynamicHostAllocation must be set when hostAffinity is 'host'"))
+	}
+
 	return allErrs
 }
 

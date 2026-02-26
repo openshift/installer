@@ -21,8 +21,6 @@ package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v
 
 import (
 	time "time"
-
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 )
 
 // Contains the properties of the provision shard, including AWS and GCP related configurations
@@ -34,13 +32,13 @@ type ProvisionShardBuilder struct {
 	awsBaseDomain            string
 	gcpBaseDomain            string
 	gcpProjectOperator       *ServerConfigBuilder
-	cloudProvider            *v1.CloudProviderBuilder
+	cloudProvider            *CloudProviderBuilder
 	creationTimestamp        time.Time
 	hiveConfig               *ServerConfigBuilder
 	hypershiftConfig         *ServerConfigBuilder
 	lastUpdateTimestamp      time.Time
 	managementCluster        string
-	region                   *v1.CloudRegionBuilder
+	region                   *CloudRegionBuilder
 	status                   string
 }
 
@@ -149,7 +147,7 @@ func (b *ProvisionShardBuilder) GCPProjectOperator(value *ServerConfigBuilder) *
 // CloudProvider sets the value of the 'cloud_provider' attribute to the given value.
 //
 // Cloud provider.
-func (b *ProvisionShardBuilder) CloudProvider(value *v1.CloudProviderBuilder) *ProvisionShardBuilder {
+func (b *ProvisionShardBuilder) CloudProvider(value *CloudProviderBuilder) *ProvisionShardBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 15)
 	}
@@ -227,7 +225,7 @@ func (b *ProvisionShardBuilder) ManagementCluster(value string) *ProvisionShardB
 // Region sets the value of the 'region' attribute to the given value.
 //
 // Description of a region of a cloud provider.
-func (b *ProvisionShardBuilder) Region(value *v1.CloudRegionBuilder) *ProvisionShardBuilder {
+func (b *ProvisionShardBuilder) Region(value *CloudRegionBuilder) *ProvisionShardBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 15)
 	}
@@ -274,7 +272,7 @@ func (b *ProvisionShardBuilder) Copy(object *ProvisionShard) *ProvisionShardBuil
 		b.gcpProjectOperator = nil
 	}
 	if object.cloudProvider != nil {
-		b.cloudProvider = v1.NewCloudProvider().Copy(object.cloudProvider)
+		b.cloudProvider = NewCloudProvider().Copy(object.cloudProvider)
 	} else {
 		b.cloudProvider = nil
 	}
@@ -292,7 +290,7 @@ func (b *ProvisionShardBuilder) Copy(object *ProvisionShard) *ProvisionShardBuil
 	b.lastUpdateTimestamp = object.lastUpdateTimestamp
 	b.managementCluster = object.managementCluster
 	if object.region != nil {
-		b.region = v1.NewCloudRegion().Copy(object.region)
+		b.region = NewCloudRegion().Copy(object.region)
 	} else {
 		b.region = nil
 	}

@@ -42,6 +42,7 @@ type MachineType struct {
 	architecture  ProcessorType
 	category      MachineTypeCategory
 	cloudProvider *CloudProvider
+	features      *MachineTypeFeatures
 	genericName   string
 	memory        *Value
 	name          string
@@ -231,6 +232,29 @@ func (o *MachineType) GetCloudProvider() (value *CloudProvider, ok bool) {
 	return
 }
 
+// Features returns the value of the 'features' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Features available to the particular MachineType
+func (o *MachineType) Features() *MachineTypeFeatures {
+	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
+		return o.features
+	}
+	return nil
+}
+
+// GetFeatures returns the value of the 'features' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Features available to the particular MachineType
+func (o *MachineType) GetFeatures() (value *MachineTypeFeatures, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
+	if ok {
+		value = o.features
+	}
+	return
+}
+
 // GenericName returns the value of the 'generic_name' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 //
@@ -239,7 +263,7 @@ func (o *MachineType) GetCloudProvider() (value *CloudProvider, ok bool) {
 // machine types on different providers.
 // Corresponds to `resource_name` values in "compute.node"  quota cost data.
 func (o *MachineType) GenericName() string {
-	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
+	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
 		return o.genericName
 	}
 	return ""
@@ -253,7 +277,7 @@ func (o *MachineType) GenericName() string {
 // machine types on different providers.
 // Corresponds to `resource_name` values in "compute.node"  quota cost data.
 func (o *MachineType) GetGenericName() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
+	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
 	if ok {
 		value = o.genericName
 	}
@@ -265,7 +289,7 @@ func (o *MachineType) GetGenericName() (value string, ok bool) {
 //
 // The amount of memory of the machine type.
 func (o *MachineType) Memory() *Value {
-	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
+	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
 		return o.memory
 	}
 	return nil
@@ -276,7 +300,7 @@ func (o *MachineType) Memory() *Value {
 //
 // The amount of memory of the machine type.
 func (o *MachineType) GetMemory() (value *Value, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
+	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
 	if ok {
 		value = o.memory
 	}
@@ -288,7 +312,7 @@ func (o *MachineType) GetMemory() (value *Value, ok bool) {
 //
 // Human friendly identifier of the machine type, for example `r5.xlarge - Memory Optimized`.
 func (o *MachineType) Name() string {
-	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
+	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
 		return o.name
 	}
 	return ""
@@ -299,7 +323,7 @@ func (o *MachineType) Name() string {
 //
 // Human friendly identifier of the machine type, for example `r5.xlarge - Memory Optimized`.
 func (o *MachineType) GetName() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
+	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
 	if ok {
 		value = o.name
 	}
@@ -311,7 +335,7 @@ func (o *MachineType) GetName() (value string, ok bool) {
 //
 // The size of the machine type.
 func (o *MachineType) Size() MachineTypeSize {
-	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
+	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
 		return o.size
 	}
 	return MachineTypeSize("")
@@ -322,7 +346,7 @@ func (o *MachineType) Size() MachineTypeSize {
 //
 // The size of the machine type.
 func (o *MachineType) GetSize() (value MachineTypeSize, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
+	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
 	if ok {
 		value = o.size
 	}

@@ -21,6 +21,11 @@ resource VersionGate {
 		out Body VersionGate
 	}
 
+	// Updates the version gate.
+	method Update {
+		in out Body VersionGate
+	}
+
 	// Deletes the version gate.
 	method Delete {
 	}

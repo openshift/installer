@@ -70,6 +70,12 @@ var pathTreeData = `{
         "notify_details": null,
         "organizations": {
           "-": {
+            "account_group_assignments": {
+              "-": null
+            },
+            "account_groups": {
+              "-": null
+            },
             "labels": {
               "-": null
             },
@@ -252,6 +258,9 @@ var pathTreeData = `{
             },
             "clusterdeployment": null,
             "control_plane": {
+              "log_forwarders": {
+                "-": null
+              },
               "upgrade_policies": {
                 "-": null
               }
@@ -381,6 +390,10 @@ var pathTreeData = `{
           "-": null
         },
         "load_balancer_quota_values": null,
+        "log_forwarding": {
+          "applications": null,
+          "groups": null
+        },
         "machine_types": {
           "-": null
         },

@@ -19,18 +19,14 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import (
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-)
-
 // GcpImageOverride specifies what a GCP VM Image should be used for a particular product and billing model
 type GCPImageOverrideBuilder struct {
 	fieldSet_    []bool
 	id           string
 	href         string
-	billingModel *v1.BillingModelItemBuilder
+	billingModel *BillingModelItemBuilder
 	imageID      string
-	product      *v1.ProductBuilder
+	product      *ProductBuilder
 	projectID    string
 }
 
@@ -87,7 +83,7 @@ func (b *GCPImageOverrideBuilder) Empty() bool {
 // BillingModel sets the value of the 'billing_model' attribute to the given value.
 //
 // BillingModelItem represents a billing model
-func (b *GCPImageOverrideBuilder) BillingModel(value *v1.BillingModelItemBuilder) *GCPImageOverrideBuilder {
+func (b *GCPImageOverrideBuilder) BillingModel(value *BillingModelItemBuilder) *GCPImageOverrideBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 7)
 	}
@@ -113,7 +109,7 @@ func (b *GCPImageOverrideBuilder) ImageID(value string) *GCPImageOverrideBuilder
 // Product sets the value of the 'product' attribute to the given value.
 //
 // Representation of an product that can be selected as a cluster type.
-func (b *GCPImageOverrideBuilder) Product(value *v1.ProductBuilder) *GCPImageOverrideBuilder {
+func (b *GCPImageOverrideBuilder) Product(value *ProductBuilder) *GCPImageOverrideBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 7)
 	}
@@ -148,13 +144,13 @@ func (b *GCPImageOverrideBuilder) Copy(object *GCPImageOverride) *GCPImageOverri
 	b.id = object.id
 	b.href = object.href
 	if object.billingModel != nil {
-		b.billingModel = v1.NewBillingModelItem().Copy(object.billingModel)
+		b.billingModel = NewBillingModelItem().Copy(object.billingModel)
 	} else {
 		b.billingModel = nil
 	}
 	b.imageID = object.imageID
 	if object.product != nil {
-		b.product = v1.NewProduct().Copy(object.product)
+		b.product = NewProduct().Copy(object.product)
 	} else {
 		b.product = nil
 	}

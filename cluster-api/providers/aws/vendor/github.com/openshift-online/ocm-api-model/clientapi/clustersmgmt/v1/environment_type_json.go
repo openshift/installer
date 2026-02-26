@@ -57,11 +57,38 @@ func WriteEnvironment(object *Environment, stream *jsoniter.Stream) {
 		if count > 0 {
 			stream.WriteMore()
 		}
+		stream.WriteObjectField("last_cluster_imageset_sync")
+		stream.WriteString((object.lastClusterImagesetSync).Format(time.RFC3339))
+		count++
+	}
+	present_ = len(object.fieldSet_) > 2 && object.fieldSet_[2]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("last_hibernation_check")
+		stream.WriteString((object.lastHibernationCheck).Format(time.RFC3339))
+		count++
+	}
+	present_ = len(object.fieldSet_) > 3 && object.fieldSet_[3]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
 		stream.WriteObjectField("last_limited_support_check")
 		stream.WriteString((object.lastLimitedSupportCheck).Format(time.RFC3339))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 2 && object.fieldSet_[2]
+	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("last_limited_support_override_check")
+		stream.WriteString((object.lastLimitedSupportOverrideCheck).Format(time.RFC3339))
+		count++
+	}
+	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -70,7 +97,7 @@ func WriteEnvironment(object *Environment, stream *jsoniter.Stream) {
 		stream.WriteString((object.lastUpgradeAvailableCheck).Format(time.RFC3339))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 3 && object.fieldSet_[3]
+	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -96,7 +123,7 @@ func UnmarshalEnvironment(source interface{}) (object *Environment, err error) {
 // ReadEnvironment reads a value of the 'environment' type from the given iterator.
 func ReadEnvironment(iterator *jsoniter.Iterator) *Environment {
 	object := &Environment{
-		fieldSet_: make([]bool, 4),
+		fieldSet_: make([]bool, 7),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -108,6 +135,22 @@ func ReadEnvironment(iterator *jsoniter.Iterator) *Environment {
 			value := iterator.ReadString()
 			object.backplaneURL = value
 			object.fieldSet_[0] = true
+		case "last_cluster_imageset_sync":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.lastClusterImagesetSync = value
+			object.fieldSet_[1] = true
+		case "last_hibernation_check":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.lastHibernationCheck = value
+			object.fieldSet_[2] = true
 		case "last_limited_support_check":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -115,7 +158,15 @@ func ReadEnvironment(iterator *jsoniter.Iterator) *Environment {
 				iterator.ReportError("", err.Error())
 			}
 			object.lastLimitedSupportCheck = value
-			object.fieldSet_[1] = true
+			object.fieldSet_[3] = true
+		case "last_limited_support_override_check":
+			text := iterator.ReadString()
+			value, err := time.Parse(time.RFC3339, text)
+			if err != nil {
+				iterator.ReportError("", err.Error())
+			}
+			object.lastLimitedSupportOverrideCheck = value
+			object.fieldSet_[4] = true
 		case "last_upgrade_available_check":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -123,11 +174,11 @@ func ReadEnvironment(iterator *jsoniter.Iterator) *Environment {
 				iterator.ReportError("", err.Error())
 			}
 			object.lastUpgradeAvailableCheck = value
-			object.fieldSet_[2] = true
+			object.fieldSet_[5] = true
 		case "name":
 			value := iterator.ReadString()
 			object.name = value
-			object.fieldSet_[3] = true
+			object.fieldSet_[6] = true
 		default:
 			iterator.ReadAny()
 		}

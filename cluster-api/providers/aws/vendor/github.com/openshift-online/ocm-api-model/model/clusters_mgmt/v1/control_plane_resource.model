@@ -14,11 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Manages a specific upgrade policy.
+// Manages control plane resources.
 resource ControlPlane {
-	// Reference to the state of the upgrade policy.
+	// Reference to the collection of upgrade policies for the control plane.
 	locator UpgradePolicies {
 		target ControlPlaneUpgradePolicies
+	}
+
+	// Reference to the collection of log forwarders for the control plane.
+	locator LogForwarders {
+		target LogForwarders
 	}
 
     // Retrieves the details of the control plane

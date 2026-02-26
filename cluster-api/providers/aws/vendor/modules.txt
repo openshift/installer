@@ -284,7 +284,7 @@ github.com/danieljoos/wincred
 # github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc
 ## explicit
 github.com/davecgh/go-spew/spew
-# github.com/dvsekhvalnov/jose2go v1.6.0
+# github.com/dvsekhvalnov/jose2go v1.7.0
 ## explicit; go 1.15
 github.com/dvsekhvalnov/jose2go
 github.com/dvsekhvalnov/jose2go/aes
@@ -510,7 +510,7 @@ github.com/onsi/gomega/matchers/support/goraph/edge
 github.com/onsi/gomega/matchers/support/goraph/node
 github.com/onsi/gomega/matchers/support/goraph/util
 github.com/onsi/gomega/types
-# github.com/openshift-online/ocm-api-model/clientapi v0.0.431
+# github.com/openshift-online/ocm-api-model/clientapi v0.0.440
 ## explicit; go 1.23.0
 github.com/openshift-online/ocm-api-model/clientapi/accesstransparency/v1
 github.com/openshift-online/ocm-api-model/clientapi/accountsmgmt/v1
@@ -526,7 +526,7 @@ github.com/openshift-online/ocm-api-model/clientapi/servicelogs/v1
 github.com/openshift-online/ocm-api-model/clientapi/servicemgmt/v1
 github.com/openshift-online/ocm-api-model/clientapi/statusboard/v1
 github.com/openshift-online/ocm-api-model/clientapi/webrca/v1
-# github.com/openshift-online/ocm-api-model/model v0.0.431
+# github.com/openshift-online/ocm-api-model/model v0.0.440
 ## explicit; go 1.23.0
 github.com/openshift-online/ocm-api-model/model/access_transparency/v1
 github.com/openshift-online/ocm-api-model/model/accounts_mgmt/v1
@@ -559,7 +559,7 @@ github.com/openshift-online/ocm-common/pkg/rosa/accountroles
 github.com/openshift-online/ocm-common/pkg/rosa/oidcconfigs
 github.com/openshift-online/ocm-common/pkg/rosa/operatorroles
 github.com/openshift-online/ocm-common/pkg/utils
-# github.com/openshift-online/ocm-sdk-go v0.1.476
+# github.com/openshift-online/ocm-sdk-go v0.1.486
 ## explicit; go 1.23.0
 github.com/openshift-online/ocm-sdk-go
 github.com/openshift-online/ocm-sdk-go/accesstransparency
@@ -595,8 +595,8 @@ github.com/openshift-online/ocm-sdk-go/statusboard
 github.com/openshift-online/ocm-sdk-go/statusboard/v1
 github.com/openshift-online/ocm-sdk-go/webrca
 github.com/openshift-online/ocm-sdk-go/webrca/v1
-# github.com/openshift/rosa v1.99.9-testing.0.20250926125556-7903b7e2b476
-## explicit; go 1.23.1
+# github.com/openshift/rosa v1.99.9-testing.0.20260119170238-86bcc988bb87
+## explicit; go 1.24.0
 github.com/openshift/rosa/assets
 github.com/openshift/rosa/cmd/create/accountroles
 github.com/openshift/rosa/cmd/create/network
@@ -628,6 +628,7 @@ github.com/openshift/rosa/pkg/interactive/confirm
 github.com/openshift/rosa/pkg/interactive/consts
 github.com/openshift/rosa/pkg/interactive/oidc
 github.com/openshift/rosa/pkg/interactive/roles
+github.com/openshift/rosa/pkg/logforwarding
 github.com/openshift/rosa/pkg/logging
 github.com/openshift/rosa/pkg/network
 github.com/openshift/rosa/pkg/ocm
@@ -640,7 +641,7 @@ github.com/openshift/rosa/pkg/rosa
 # github.com/pkg/errors v0.9.1
 ## explicit
 github.com/pkg/errors
-# github.com/prometheus/client_golang v1.23.0
+# github.com/prometheus/client_golang v1.23.2
 ## explicit; go 1.23.0
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil
 github.com/prometheus/client_golang/internal/github.com/golang/gddo/httputil/header
@@ -655,12 +656,12 @@ github.com/prometheus/client_golang/prometheus/testutil/promlint/validations
 # github.com/prometheus/client_model v0.6.2
 ## explicit; go 1.22.0
 github.com/prometheus/client_model/go
-# github.com/prometheus/common v0.65.0
-## explicit; go 1.23.0
+# github.com/prometheus/common v0.67.4
+## explicit; go 1.24.0
 github.com/prometheus/common/expfmt
 github.com/prometheus/common/model
-# github.com/prometheus/procfs v0.17.0
-## explicit; go 1.23.0
+# github.com/prometheus/procfs v0.19.2
+## explicit; go 1.24.0
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
@@ -781,10 +782,10 @@ go.uber.org/zap/internal/exit
 go.uber.org/zap/internal/pool
 go.uber.org/zap/internal/stacktrace
 go.uber.org/zap/zapcore
-# go.yaml.in/yaml/v2 v2.4.2
+# go.yaml.in/yaml/v2 v2.4.3
 ## explicit; go 1.15
 go.yaml.in/yaml/v2
-# golang.org/x/crypto v0.43.0
+# golang.org/x/crypto v0.46.0
 ## explicit; go 1.24.0
 golang.org/x/crypto/bcrypt
 golang.org/x/crypto/blake2b
@@ -794,9 +795,8 @@ golang.org/x/crypto/pbkdf2
 ## explicit; go 1.20
 golang.org/x/exp/constraints
 golang.org/x/exp/slices
-# golang.org/x/net v0.46.0
+# golang.org/x/net v0.48.0
 ## explicit; go 1.24.0
-golang.org/x/net/context
 golang.org/x/net/html
 golang.org/x/net/html/atom
 golang.org/x/net/html/charset
@@ -808,25 +808,25 @@ golang.org/x/net/internal/httpcommon
 golang.org/x/net/internal/timeseries
 golang.org/x/net/trace
 golang.org/x/net/websocket
-# golang.org/x/oauth2 v0.32.0
+# golang.org/x/oauth2 v0.34.0
 ## explicit; go 1.24.0
 golang.org/x/oauth2
 golang.org/x/oauth2/internal
-# golang.org/x/sync v0.17.0
+# golang.org/x/sync v0.19.0
 ## explicit; go 1.24.0
 golang.org/x/sync/errgroup
 golang.org/x/sync/singleflight
-# golang.org/x/sys v0.37.0
+# golang.org/x/sys v0.39.0
 ## explicit; go 1.24.0
 golang.org/x/sys/cpu
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 golang.org/x/sys/windows/registry
-# golang.org/x/term v0.36.0
+# golang.org/x/term v0.38.0
 ## explicit; go 1.24.0
 golang.org/x/term
-# golang.org/x/text v0.30.0
+# golang.org/x/text v0.32.0
 ## explicit; go 1.24.0
 golang.org/x/text/cases
 golang.org/x/text/encoding
@@ -861,7 +861,7 @@ golang.org/x/text/width
 # golang.org/x/time v0.13.0
 ## explicit; go 1.24.0
 golang.org/x/time/rate
-# golang.org/x/tools v0.37.0
+# golang.org/x/tools v0.39.0
 ## explicit; go 1.24.0
 golang.org/x/tools/cover
 golang.org/x/tools/go/ast/edge
@@ -1577,7 +1577,7 @@ sigs.k8s.io/cluster-api/util/secret
 sigs.k8s.io/cluster-api/util/topology
 sigs.k8s.io/cluster-api/util/version
 sigs.k8s.io/cluster-api/version
-# sigs.k8s.io/cluster-api-provider-aws/v2 v2.9.1-0.20251121222432-04a4f62bf90a
+# sigs.k8s.io/cluster-api-provider-aws/v2 v2.10.1-0.20260226000023-67627b2da0df
 ## explicit; go 1.24.0
 sigs.k8s.io/cluster-api-provider-aws/v2
 sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta1

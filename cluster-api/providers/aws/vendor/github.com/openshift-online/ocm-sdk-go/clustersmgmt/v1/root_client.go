@@ -181,6 +181,16 @@ func (c *Client) LoadBalancerQuotaValues() *LoadBalancerQuotaValuesClient {
 	)
 }
 
+// LogForwarding returns the target 'log_forwarding' resource.
+//
+// Reference to log forwarding related resources.
+func (c *Client) LogForwarding() *LogForwardingClient {
+	return NewLogForwardingClient(
+		c.transport,
+		path.Join(c.path, "log_forwarding"),
+	)
+}
+
 // MachineTypes returns the target 'machine_types' resource.
 //
 // Reference to the resource that manage the collection of machine types.

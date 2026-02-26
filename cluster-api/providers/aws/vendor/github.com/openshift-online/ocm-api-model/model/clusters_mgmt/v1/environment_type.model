@@ -25,6 +25,15 @@ struct Environment {
 	// last time that the worker checked for limited support clusters
 	LastLimitedSupportCheck Date
 
+	// last time that the limited support override worker checked for clusters
+	LastLimitedSupportOverrideCheck Date
+
+	// last time that the hibernation worker checked for hibernating clusters
+	LastHibernationCheck Date
+
+	// last time that the cluster imageset sync worker checked for version updates
+	LastClusterImagesetSync Date
+
 	// the backplane url for the environment
 	BackplaneURL String
 }

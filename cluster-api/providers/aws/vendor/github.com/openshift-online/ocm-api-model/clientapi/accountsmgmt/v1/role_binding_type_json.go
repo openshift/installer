@@ -84,7 +84,25 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteString(object.accountID)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5]
+	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5] && object.accountGroup != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("account_group")
+		WriteAccountGroup(object.accountGroup, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("account_group_id")
+		stream.WriteString(object.accountGroupID)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -93,7 +111,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteBool(object.configManaged)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -102,7 +120,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteString((object.createdAt).Format(time.RFC3339))
 		count++
 	}
-	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -111,7 +129,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteString(object.managedBy)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8] && object.organization != nil
+	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10] && object.organization != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -120,7 +138,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		WriteOrganization(object.organization, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9]
+	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -129,7 +147,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteString(object.organizationID)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10] && object.role != nil
+	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12] && object.role != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -138,7 +156,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		WriteRole(object.role, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11]
+	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -147,7 +165,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteString(object.roleID)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12] && object.subscription != nil
+	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14] && object.subscription != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -156,7 +174,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		WriteSubscription(object.subscription, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13]
+	present_ = len(object.fieldSet_) > 15 && object.fieldSet_[15]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -165,7 +183,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteString(object.subscriptionID)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14]
+	present_ = len(object.fieldSet_) > 16 && object.fieldSet_[16]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -174,7 +192,7 @@ func WriteRoleBinding(object *RoleBinding, stream *jsoniter.Stream) {
 		stream.WriteString(object.type_)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 15 && object.fieldSet_[15]
+	present_ = len(object.fieldSet_) > 17 && object.fieldSet_[17]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -200,7 +218,7 @@ func UnmarshalRoleBinding(source interface{}) (object *RoleBinding, err error) {
 // ReadRoleBinding reads a value of the 'role_binding' type from the given iterator.
 func ReadRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 	object := &RoleBinding{
-		fieldSet_: make([]bool, 16),
+		fieldSet_: make([]bool, 18),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -227,10 +245,18 @@ func ReadRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 			value := iterator.ReadString()
 			object.accountID = value
 			object.fieldSet_[4] = true
+		case "account_group":
+			value := ReadAccountGroup(iterator)
+			object.accountGroup = value
+			object.fieldSet_[5] = true
+		case "account_group_id":
+			value := iterator.ReadString()
+			object.accountGroupID = value
+			object.fieldSet_[6] = true
 		case "config_managed":
 			value := iterator.ReadBool()
 			object.configManaged = value
-			object.fieldSet_[5] = true
+			object.fieldSet_[7] = true
 		case "created_at":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -238,39 +264,39 @@ func ReadRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 				iterator.ReportError("", err.Error())
 			}
 			object.createdAt = value
-			object.fieldSet_[6] = true
+			object.fieldSet_[8] = true
 		case "managed_by":
 			value := iterator.ReadString()
 			object.managedBy = value
-			object.fieldSet_[7] = true
+			object.fieldSet_[9] = true
 		case "organization":
 			value := ReadOrganization(iterator)
 			object.organization = value
-			object.fieldSet_[8] = true
+			object.fieldSet_[10] = true
 		case "organization_id":
 			value := iterator.ReadString()
 			object.organizationID = value
-			object.fieldSet_[9] = true
+			object.fieldSet_[11] = true
 		case "role":
 			value := ReadRole(iterator)
 			object.role = value
-			object.fieldSet_[10] = true
+			object.fieldSet_[12] = true
 		case "role_id":
 			value := iterator.ReadString()
 			object.roleID = value
-			object.fieldSet_[11] = true
+			object.fieldSet_[13] = true
 		case "subscription":
 			value := ReadSubscription(iterator)
 			object.subscription = value
-			object.fieldSet_[12] = true
+			object.fieldSet_[14] = true
 		case "subscription_id":
 			value := iterator.ReadString()
 			object.subscriptionID = value
-			object.fieldSet_[13] = true
+			object.fieldSet_[15] = true
 		case "type":
 			value := iterator.ReadString()
 			object.type_ = value
-			object.fieldSet_[14] = true
+			object.fieldSet_[16] = true
 		case "updated_at":
 			text := iterator.ReadString()
 			value, err := time.Parse(time.RFC3339, text)
@@ -278,7 +304,7 @@ func ReadRoleBinding(iterator *jsoniter.Iterator) *RoleBinding {
 				iterator.ReportError("", err.Error())
 			}
 			object.updatedAt = value
-			object.fieldSet_[15] = true
+			object.fieldSet_[17] = true
 		default:
 			iterator.ReadAny()
 		}

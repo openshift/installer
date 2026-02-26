@@ -19,7 +19,6 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1" //
 // Description of a region of a cloud provider.
 type CloudRegionBuilder struct {
 	fieldSet_          []bool
@@ -27,7 +26,7 @@ type CloudRegionBuilder struct {
 	href               string
 	kmsLocationID      string
 	kmsLocationName    string
-	cloudProvider      *v1.CloudProviderBuilder
+	cloudProvider      *CloudProviderBuilder
 	displayName        string
 	name               string
 	ccsOnly            bool
@@ -120,7 +119,7 @@ func (b *CloudRegionBuilder) KMSLocationName(value string) *CloudRegionBuilder {
 // CloudProvider sets the value of the 'cloud_provider' attribute to the given value.
 //
 // Cloud provider.
-func (b *CloudRegionBuilder) CloudProvider(value *v1.CloudProviderBuilder) *CloudRegionBuilder {
+func (b *CloudRegionBuilder) CloudProvider(value *CloudProviderBuilder) *CloudRegionBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 13)
 	}
@@ -208,7 +207,7 @@ func (b *CloudRegionBuilder) Copy(object *CloudRegion) *CloudRegionBuilder {
 	b.kmsLocationID = object.kmsLocationID
 	b.kmsLocationName = object.kmsLocationName
 	if object.cloudProvider != nil {
-		b.cloudProvider = v1.NewCloudProvider().Copy(object.cloudProvider)
+		b.cloudProvider = NewCloudProvider().Copy(object.cloudProvider)
 	} else {
 		b.cloudProvider = nil
 	}

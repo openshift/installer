@@ -542,6 +542,12 @@ func nodePoolBuilder(rosaMachinePoolSpec expinfrav1.RosaMachinePoolSpec, machine
 		npBuilder = npBuilder.ManagementUpgrade(configMgmtBuilder)
 	}
 
+	if rosaMachinePoolSpec.ImageType == string(cmv1.ImageTypeWindows) {
+		npBuilder = npBuilder.ImageType(cmv1.ImageTypeWindows)
+	} else if rosaMachinePoolSpec.ImageType == string(cmv1.ImageTypeDefault) {
+		npBuilder = npBuilder.ImageType(cmv1.ImageTypeDefault)
+	}
+
 	return npBuilder
 }
 

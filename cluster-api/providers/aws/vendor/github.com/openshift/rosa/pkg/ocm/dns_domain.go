@@ -22,6 +22,7 @@ func (c *Client) ListDNSDomains(search string) ([]*cmv1.DNSDomain, error) {
 		DNSDomains().
 		List().
 		Parameter("search", search).
+		Parameter("order", "organization.id asc").
 		Page(1).Size(-1).
 		Send()
 	if err != nil {

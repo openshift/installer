@@ -34,7 +34,7 @@ import (
 
 // ClustersClient is the client of the 'clusters' resource.
 //
-// Manages the collection of aro_hcp clusters.
+// Manages the collection of aro-hcp clusters.
 type ClustersClient struct {
 	transport http.RoundTripper
 	path      string
