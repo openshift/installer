@@ -19,12 +19,12 @@ package cloud
 import (
 	"context"
 
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	ctrl "sigs.k8s.io/controller-runtime"
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud"
 	corev1 "k8s.io/api/core/v1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // Cloud alias for cloud.Cloud interface.
@@ -58,10 +58,12 @@ type ClusterGetter interface {
 	NetworkName() string
 	NetworkProject() string
 	IsSharedVpc() bool
+	StackType() infrav1.StackType
+	Ipv6Address() string
 	SkipFirewallRuleCreation() bool
 	Network() *infrav1.Network
 	AdditionalLabels() infrav1.Labels
-	FailureDomains() clusterv1.FailureDomains
+	FailureDomains() []string
 	ControlPlaneEndpoint() clusterv1.APIEndpoint
 	ResourceManagerTags() infrav1.ResourceManagerTags
 	LoadBalancer() infrav1.LoadBalancerSpec
@@ -90,7 +92,7 @@ type MachineGetter interface {
 	ControlPlaneGroupName() string
 	GetInstanceID() *string
 	GetProviderID() string
-	GetBootstrapData() (string, error)
+	GetBootstrapData(ctx context.Context) (string, error)
 	GetInstanceStatus() *infrav1.InstanceStatus
 }
 
