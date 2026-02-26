@@ -37,6 +37,7 @@ type firewallsInterface interface {
 type Scope interface {
 	cloud.ClusterGetter
 	FirewallRulesSpec() []*compute.Firewall
+	IPv6FirewallRulesSpec() []*compute.Firewall
 }
 
 // Service implements firewalls reconciler.

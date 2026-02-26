@@ -21,6 +21,7 @@ import (
 
 	"github.com/GoogleCloudPlatform/k8s-cloud-provider/pkg/cloud/meta"
 
+	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/gcperrors"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -33,7 +34,13 @@ func (s *Service) Reconcile(ctx context.Context) error {
 		return nil
 	}
 	log.Info("Reconciling firewall resources")
-	for _, spec := range s.scope.FirewallRulesSpec() {
+
+	firewallRules := s.scope.FirewallRulesSpec()
+	if s.scope.StackType() == infrav1.DualStackType {
+		firewallRules = append(firewallRules, s.scope.IPv6FirewallRulesSpec()...)
+	}
+
+	for _, spec := range firewallRules {
 		log.V(2).Info("Looking firewall", "name", spec.Name)
 		firewallKey := meta.GlobalKey(spec.Name)
 		if _, err := s.firewalls.Get(ctx, firewallKey); err != nil {
@@ -59,7 +66,13 @@ func (s *Service) Delete(ctx context.Context) error {
 		return nil
 	}
 	log.Info("Deleting firewall resources")
-	for _, spec := range s.scope.FirewallRulesSpec() {
+
+	firewallRules := s.scope.FirewallRulesSpec()
+	if s.scope.StackType() == infrav1.DualStackType {
+		firewallRules = append(firewallRules, s.scope.IPv6FirewallRulesSpec()...)
+	}
+
+	for _, spec := range firewallRules {
 		log.V(2).Info("Deleting firewall", "name", spec.Name)
 		firewallKey := meta.GlobalKey(spec.Name)
 		if err := s.firewalls.Delete(ctx, firewallKey); err != nil {

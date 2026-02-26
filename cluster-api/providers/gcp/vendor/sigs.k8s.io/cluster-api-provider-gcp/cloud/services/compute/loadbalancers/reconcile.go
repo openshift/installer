@@ -138,6 +138,17 @@ func (s *Service) deleteExternalLoadBalancer(ctx context.Context) error {
 	}
 	s.scope.Network().APIServerHealthCheck = nil
 
+	// FIXME: make sure the cleanup process is happening correctly
+	if s.scope.StackType() == infrav1.DualStackType {
+		if err := s.deleteForwardingRule(ctx, fmt.Sprintf("%s-ipv6")); err != nil {
+			return fmt.Errorf("deleting ForwardingRule: %w", err)
+		}
+
+		if err := s.deleteAddress(ctx, fmt.Sprintf("%s-ipv6")); err != nil {
+			return fmt.Errorf("deleting Address: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -169,19 +180,12 @@ func (s *Service) deleteInternalLoadBalancer(ctx context.Context, name string) e
 
 // createExternalLoadBalancer creates the components for a Global External Proxy LoadBalancer.
 func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1.LoadBalancerType, instancegroups []*compute.InstanceGroup) error {
-	log := log.FromContext(ctx) // FIXME:
-
 	name := infrav1.APIServerRoleTagValue
-	healthchecks, err := s.createOrGetHealthChecks(ctx, name)
+	healthcheck, err := s.createOrGetHealthCheck(ctx, name)
 	if err != nil {
 		return err
 	}
-	for _, healthcheck := range healthchecks {
-		//if (strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-		//	(!strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
-			s.scope.Network().APIServerHealthCheck = ptr.To[string](healthcheck.SelfLink)
-		//}
-	}
+	s.scope.Network().APIServerHealthCheck = ptr.To[string](healthcheck.SelfLink)
 
 	// If an Internal LoadBalancer is being created, the BalancingMode must match the Internal LB.
 	// which must be CONNECTION for Internal Proxy Load Balancers, see
@@ -190,7 +194,7 @@ func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1
 	if lbType == infrav1.InternalExternal {
 		mode = loadBalancingModeConnection
 	}
-	backendsvc, err := s.createOrGetBackendService(ctx, name, mode, instancegroups, healthchecks)
+	backendsvc, err := s.createOrGetBackendService(ctx, name, mode, instancegroups, healthcheck)
 	if err != nil {
 		return err
 	}
@@ -203,31 +207,38 @@ func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1
 	}
 	s.scope.Network().APIServerTargetProxy = ptr.To[string](target.SelfLink)
 
-	addrs, err := s.createOrGetAddress(ctx, name)
+	addr, err := s.createOrGetAddress(ctx, name)
 	if err != nil {
 		return err
 	}
 
 	endpoint := s.scope.ControlPlaneEndpoint()
-	for _, addr := range addrs {
-		//if (strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-		//	(!strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
-			s.scope.Network().APIServerAddress = ptr.To[string](addr.SelfLink)
-			log.Info("Setting control plane host in LB", "address", addr.Address)
-			endpoint.Host = addr.Address
-		//}
-	}
+	s.scope.Network().APIServerAddress = ptr.To[string](addr.SelfLink)
+	// FIXME: for now the ip address/host for the control plane endpoint will always be the IPv4 Address
+	endpoint.Host = addr.Address
 	s.scope.SetControlPlaneEndpoint(endpoint)
 
-	forwardingrules, err := s.createOrGetForwardingRules(ctx, name, target, addrs)
+	forwardingrule, err := s.createOrGetForwardingRule(ctx, name, target, addr)
 	if err != nil {
 		return err
 	}
-	for _, forwardingrule := range forwardingrules {
-		//if (strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-		//	(!strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
-			s.scope.Network().APIServerForwardingRule = ptr.To[string](forwardingrule.SelfLink)
-		//}
+	// FIXME: for now the forwarding rule associated with IPv4 address will always be set as the API Server Forwarding Rule
+	s.scope.Network().APIServerForwardingRule = ptr.To[string](forwardingrule.SelfLink)
+
+	// FIXME: Not sure what to do below yet but this will create the ipv6 address and the forwarding rule.
+	if s.scope.StackType() == infrav1.DualStackType {
+		// FIXME: this ip address will need to be provided back in the status
+		ipv6Addr, err := s.createOrGetIPv6Address(ctx, name)
+		if err != nil {
+			return err
+		}
+
+		// FIXME: This should be saved to
+		// s.scope.Network().APIServerIPv6ForwardingRule
+		_, err = s.createOrGetForwardingRule(ctx, fmt.Sprintf("%s-ipv6", name), target, ipv6Addr)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -236,57 +247,43 @@ func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1
 // createInternalLoadBalancer creates the components for a Regional Internal Passthrough LoadBalancer.
 // Since this is a passthrough LoadBalancer the TargetTCPProxy resource is not created.
 func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, lbType infrav1.LoadBalancerType, instancegroups []*compute.InstanceGroup) error {
-	log := log.FromContext(ctx) // fixme:
-
-	healthchecks, err := s.createOrGetRegionalHealthChecks(ctx, name)
+	healthcheck, err := s.createOrGetRegionalHealthCheck(ctx, name)
 	if err != nil {
 		return err
 	}
 
-	for _, healthcheck := range healthchecks {
-		//if (strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-		//	(!strings.HasSuffix(healthcheck.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
-			s.scope.Network().APIInternalHealthCheck = ptr.To[string](healthcheck.SelfLink)
-		//}
-	}
+	s.scope.Network().APIInternalHealthCheck = ptr.To[string](healthcheck.SelfLink)
 
-	backendsvc, err := s.createOrGetRegionalBackendService(ctx, name, instancegroups, healthchecks)
+	backendsvc, err := s.createOrGetRegionalBackendService(ctx, name, instancegroups, healthcheck)
 	if err != nil {
 		return err
 	}
 	s.scope.Network().APIInternalBackendService = ptr.To[string](backendsvc.SelfLink)
 
+	// During Dual Stack installations, an IPv4 and IPv6 address should be made available
+	// to the frontends and then connected to the backends to create the load balancer.
+	// An internal load balancer will only use an IPv4 Address, and the
+	// IpAddressSelectionPolicy cannot be set to PREFER_IPV6.
+
 	// Create an address on internal subnet.
-	addrs, err := s.createOrGetInternalAddresses(ctx, name)
+	addr, err := s.createOrGetInternalAddress(ctx, name)
 	if err != nil {
 		return err
 	}
-	for _, addr := range addrs {
-		//if (strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-		//	(!strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
-			s.scope.Network().APIInternalAddress = ptr.To[string](addr.SelfLink)
-
-			if lbType == infrav1.Internal {
-				// If only creating an internal Load Balancer, set the control plane endpoint
-				endpoint := s.scope.ControlPlaneEndpoint()
-				log.Info("Setting control plane host in LB (createInternalLoadBalancer)", "address", addr.Address)
-				endpoint.Host = addr.Address
-				s.scope.SetControlPlaneEndpoint(endpoint)
-			}
-		//}
+	s.scope.Network().APIInternalAddress = ptr.To[string](addr.SelfLink)
+	if lbType == infrav1.Internal {
+		// If only creating an internal Load Balancer, set the control plane endpoint
+		endpoint := s.scope.ControlPlaneEndpoint()
+		endpoint.Host = addr.Address
+		s.scope.SetControlPlaneEndpoint(endpoint)
 	}
 
 	// Create a regional forwarding rule to the backend service
-	forwardingrules, err := s.createOrGetRegionalForwardingRules(ctx, name, backendsvc, addrs)
+	forwardingrule, err := s.createOrGetRegionalForwardingRule(ctx, name, backendsvc, addr)
 	if err != nil {
 		return err
 	}
-	for _, forwardingrule := range forwardingrules {
-		//if (strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.DualStackType) ||
-		//	(!strings.HasSuffix(forwardingrule.Name, infrav1.DualStackAdditionalResourceSuffix) && s.scope.StackType() == infrav1.IPv4OnlyStackType) {
-			s.scope.Network().APIInternalForwardingRule = ptr.To[string](forwardingrule.SelfLink)
-		//}
-	}
+	s.scope.Network().APIInternalForwardingRule = ptr.To[string](forwardingrule.SelfLink)
 
 	return nil
 }
@@ -331,68 +328,60 @@ func (s *Service) createOrGetInstanceGroups(ctx context.Context) ([]*compute.Ins
 	return groups, nil
 }
 
-func (s *Service) createOrGetHealthChecks(ctx context.Context, lbname string) ([]*compute.HealthCheck, error) {
+func (s *Service) createOrGetHealthCheck(ctx context.Context, lbname string) (*compute.HealthCheck, error) {
 	log := log.FromContext(ctx)
-	healthcheckSpecs := s.scope.HealthCheckSpecs(lbname)
-	healthchecks := []*compute.HealthCheck{}
-	for _, healthcheckSpec := range healthcheckSpecs {
-		log.V(2).Info("Looking for healthcheck", "name", healthcheckSpec.Name)
-		key := meta.GlobalKey(healthcheckSpec.Name)
-		healthcheck, err := s.healthchecks.Get(ctx, key)
-		if err != nil {
-			if !gcperrors.IsNotFound(err) {
-				log.Error(err, "Error looking for healthcheck", "name", healthcheckSpec.Name)
-				return nil, err
-			}
-
-			log.V(2).Info("Creating a healthcheck", "name", healthcheckSpec.Name)
-			if err := s.healthchecks.Insert(ctx, key, healthcheckSpec); err != nil {
-				log.Error(err, "Error creating a healthcheck", "name", healthcheckSpec.Name)
-				return nil, err
-			}
-
-			healthcheck, err = s.healthchecks.Get(ctx, key)
-			if err != nil {
-				return nil, err
-			}
+	healthcheckSpec := s.scope.HealthCheckSpec(lbname)
+	log.V(2).Info("Looking for healthcheck", "name", healthcheckSpec.Name)
+	key := meta.GlobalKey(healthcheckSpec.Name)
+	healthcheck, err := s.healthchecks.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for healthcheck", "name", healthcheckSpec.Name)
+			return nil, err
 		}
-		healthchecks = append(healthchecks, healthcheck)
+
+		log.V(2).Info("Creating a healthcheck", "name", healthcheckSpec.Name)
+		if err := s.healthchecks.Insert(ctx, key, healthcheckSpec); err != nil {
+			log.Error(err, "Error creating a healthcheck", "name", healthcheckSpec.Name)
+			return nil, err
+		}
+
+		healthcheck, err = s.healthchecks.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return healthchecks, nil
+	return healthcheck, nil
 }
 
-func (s *Service) createOrGetRegionalHealthChecks(ctx context.Context, lbname string) ([]*compute.HealthCheck, error) {
+func (s *Service) createOrGetRegionalHealthCheck(ctx context.Context, lbname string) (*compute.HealthCheck, error) {
 	log := log.FromContext(ctx)
-	healthcheckSpecs := s.scope.HealthCheckSpecs(lbname)
-	healthchecks := []*compute.HealthCheck{}
-	for _, healthcheckSpec := range healthcheckSpecs {
-		healthcheckSpec.Region = s.scope.Region()
-		log.V(2).Info("Looking for regional healthcheck", "name", healthcheckSpec.Name)
-		key := meta.RegionalKey(healthcheckSpec.Name, s.scope.Region())
-		healthcheck, err := s.regionalhealthchecks.Get(ctx, key)
-		if err != nil {
-			if !gcperrors.IsNotFound(err) {
-				log.Error(err, "Error looking for regional healthcheck", "name", healthcheckSpec.Name)
-				return nil, err
-			}
-
-			log.V(2).Info("Creating a regional healthcheck", "name", healthcheckSpec.Name)
-			if err := s.regionalhealthchecks.Insert(ctx, key, healthcheckSpec); err != nil {
-				log.Error(err, "Error creating a regional healthcheck", "name", healthcheckSpec.Name)
-				return nil, err
-			}
-
-			healthcheck, err = s.regionalhealthchecks.Get(ctx, key)
-			if err != nil {
-				return nil, err
-			}
+	healthcheckSpec := s.scope.HealthCheckSpec(lbname)
+	healthcheckSpec.Region = s.scope.Region()
+	log.V(2).Info("Looking for regional healthcheck", "name", healthcheckSpec.Name)
+	key := meta.RegionalKey(healthcheckSpec.Name, s.scope.Region())
+	healthcheck, err := s.regionalhealthchecks.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for regional healthcheck", "name", healthcheckSpec.Name)
+			return nil, err
 		}
-		healthchecks = append(healthchecks, healthcheck)
+
+		log.V(2).Info("Creating a regional healthcheck", "name", healthcheckSpec.Name)
+		if err := s.regionalhealthchecks.Insert(ctx, key, healthcheckSpec); err != nil {
+			log.Error(err, "Error creating a regional healthcheck", "name", healthcheckSpec.Name)
+			return nil, err
+		}
+
+		healthcheck, err = s.regionalhealthchecks.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return healthchecks, nil
+	return healthcheck, nil
 }
 
-func (s *Service) createOrGetBackendService(ctx context.Context, lbname string, mode loadBalancingMode, instancegroups []*compute.InstanceGroup, healthchecks []*compute.HealthCheck) (*compute.BackendService, error) {
+func (s *Service) createOrGetBackendService(ctx context.Context, lbname string, mode loadBalancingMode, instancegroups []*compute.InstanceGroup, healthcheck *compute.HealthCheck) (*compute.BackendService, error) {
 	log := log.FromContext(ctx)
 	backends := make([]*compute.Backend, 0, len(instancegroups))
 	for _, group := range instancegroups {
@@ -410,11 +399,7 @@ func (s *Service) createOrGetBackendService(ctx context.Context, lbname string, 
 
 	backendsvcSpec := s.scope.BackendServiceSpec(lbname)
 	backendsvcSpec.Backends = backends
-	healthcheckLinks := []string{}
-	for _, healthcheck := range healthchecks {
-		healthcheckLinks = append(healthcheckLinks, healthcheck.SelfLink)
-	}
-	backendsvcSpec.HealthChecks = healthcheckLinks
+	backendsvcSpec.HealthChecks = []string{healthcheck.SelfLink}
 
 	key := meta.GlobalKey(backendsvcSpec.Name)
 	backendsvc, err := s.backendservices.Get(ctx, key)
@@ -449,7 +434,7 @@ func (s *Service) createOrGetBackendService(ctx context.Context, lbname string, 
 }
 
 // createOrGetRegionalBackendService is used for internal passthrough load balancers.
-func (s *Service) createOrGetRegionalBackendService(ctx context.Context, lbname string, instancegroups []*compute.InstanceGroup, healthchecks []*compute.HealthCheck) (*compute.BackendService, error) {
+func (s *Service) createOrGetRegionalBackendService(ctx context.Context, lbname string, instancegroups []*compute.InstanceGroup, healthcheck *compute.HealthCheck) (*compute.BackendService, error) {
 	log := log.FromContext(ctx)
 	backends := make([]*compute.Backend, 0, len(instancegroups))
 	for _, group := range instancegroups {
@@ -463,11 +448,7 @@ func (s *Service) createOrGetRegionalBackendService(ctx context.Context, lbname 
 
 	backendsvcSpec := s.scope.BackendServiceSpec(lbname)
 	backendsvcSpec.Backends = backends
-	checks := []string{}
-	for _, healthcheck := range healthchecks {
-		checks = append(checks, healthcheck.SelfLink)
-	}
-	backendsvcSpec.HealthChecks = checks
+	backendsvcSpec.HealthChecks = []string{healthcheck.SelfLink}
 	backendsvcSpec.Region = s.scope.Region()
 	backendsvcSpec.LoadBalancingScheme = string(loadBalanceTrafficInternal)
 	backendsvcSpec.PortName = ""
@@ -536,261 +517,296 @@ func (s *Service) createOrGetTargetTCPProxy(ctx context.Context, service *comput
 }
 
 // createOrGetAddress is used to obtain a Global address.
-func (s *Service) createOrGetAddress(ctx context.Context, lbname string) ([]*compute.Address, error) {
+func (s *Service) createOrGetAddress(ctx context.Context, lbname string) (*compute.Address, error) {
 	log := log.FromContext(ctx)
-	addrSpecs := s.scope.AddressSpecs(lbname)
+	addrSpec := s.scope.AddressSpec(lbname)
 
-	addrs := []*compute.Address{}
-	for _, addrSpec := range addrSpecs {
-		log.V(2).Info("Looking for address", "name", addrSpec.Name)
-		key := meta.GlobalKey(addrSpec.Name)
-		addr, err := s.addresses.Get(ctx, key)
-		if err != nil {
-			if !gcperrors.IsNotFound(err) {
-				log.Error(err, "Error looking for address", "name", addrSpec.Name)
-				return nil, err
-			}
-
-			log.V(2).Info("Creating an address", "name", addrSpec.Name)
-			if err := s.addresses.Insert(ctx, key, addrSpec); err != nil {
-				log.Error(err, "Error creating an address", "name", addrSpec.Name)
-				return nil, err
-			}
-
-			addr, err = s.addresses.Get(ctx, key)
-			if err != nil {
-				return nil, err
-			}
+	log.V(2).Info("Looking for address", "name", addrSpec.Name)
+	key := meta.GlobalKey(addrSpec.Name)
+	addr, err := s.addresses.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for address", "name", addrSpec.Name)
+			return nil, err
 		}
-		addrs = append(addrs, addr)
+
+		log.V(2).Info("Creating an address", "name", addrSpec.Name)
+		if err := s.addresses.Insert(ctx, key, addrSpec); err != nil {
+			log.Error(err, "Error creating an address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		addr, err = s.addresses.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
 	}
-	return addrs, nil
+	return addr, nil
+}
+
+// createOrGetIPv6Address is used to obtain a Global IPv6 address.
+func (s *Service) createOrGetIPv6Address(ctx context.Context, lbname string) (*compute.Address, error) {
+	log := log.FromContext(ctx)
+	addrSpec := s.scope.IPv6AddressSpec(lbname)
+
+	log.V(2).Info("Looking for address", "name", addrSpec.Name)
+	key := meta.GlobalKey(addrSpec.Name)
+	addr, err := s.addresses.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		log.V(2).Info("Creating an address", "name", addrSpec.Name)
+		if err := s.addresses.Insert(ctx, key, addrSpec); err != nil {
+			log.Error(err, "Error creating an address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		addr, err = s.addresses.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return addr, nil
 }
 
 // createOrGetInternalAddress is used to obtain an internal address.
-func (s *Service) createOrGetInternalAddresses(ctx context.Context, lbname string) ([]*compute.Address, error) {
+func (s *Service) createOrGetInternalAddress(ctx context.Context, lbname string) (*compute.Address, error) {
 	log := log.FromContext(ctx)
-	addrSpecs := s.scope.AddressSpecs(lbname)
-	addrs := []*compute.Address{}
-	for _, addrSpec := range addrSpecs {
-		addrSpec.AddressType = string(loadBalanceTrafficInternal)
-		addrSpec.Region = s.scope.Region()
-		subnet, err := s.getSubnet(ctx)
-		if err != nil {
-			log.Error(err, "Error getting subnet for Internal Load Balancer")
+	addrSpec := s.scope.AddressSpec(lbname)
+
+	addrSpec.AddressType = string(loadBalanceTrafficInternal)
+	addrSpec.Region = s.scope.Region()
+	subnet, err := s.getSubnet(ctx)
+	if err != nil {
+		log.Error(err, "Error getting subnet for Internal Load Balancer")
+		return nil, err
+	}
+	lbSpec := s.scope.LoadBalancer()
+	if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.IPAddress != nil {
+		// If an IP address is configured, use it instead of creating a new one.
+		addrSpec.Address = *lbSpec.InternalLoadBalancer.IPAddress
+	}
+	addrSpec.Subnetwork = subnet.SelfLink
+	addrSpec.Purpose = "GCE_ENDPOINT"
+	log.V(2).Info("Looking for internal address", "name", addrSpec.Name)
+	key := meta.RegionalKey(addrSpec.Name, s.scope.Region())
+	addr, err := s.internaladdresses.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for internal address", "name", addrSpec.Name)
 			return nil, err
 		}
-		lbSpec := s.scope.LoadBalancer()
-		if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.IPAddress != nil {
-			// If an IP address is configured, use it instead of creating a new one.
-			addrSpec.Address = *lbSpec.InternalLoadBalancer.IPAddress
+
+		log.V(2).Info("Creating an internal address", "name", addrSpec.Name)
+		if err := s.internaladdresses.Insert(ctx, key, addrSpec); err != nil {
+			log.Error(err, "Error creating an internal address", "name", addrSpec.Name)
+			return nil, err
 		}
-		addrSpec.Subnetwork = subnet.SelfLink
-		addrSpec.Purpose = "GCE_ENDPOINT"
-		log.V(2).Info("Looking for internal address", "name", addrSpec.Name)
-		key := meta.RegionalKey(addrSpec.Name, s.scope.Region())
-		addr, err := s.internaladdresses.Get(ctx, key)
+
+		addr, err = s.internaladdresses.Get(ctx, key)
 		if err != nil {
-			if !gcperrors.IsNotFound(err) {
-				log.Error(err, "Error looking for internal address", "name", addrSpec.Name)
-				return nil, err
-			}
-
-			log.V(2).Info("Creating an internal address", "name", addrSpec.Name)
-			if err := s.internaladdresses.Insert(ctx, key, addrSpec); err != nil {
-				log.Error(err, "Error creating an internal address", "name", addrSpec.Name)
-				return nil, err
-			}
-
-			addr, err = s.internaladdresses.Get(ctx, key)
-			if err != nil {
-				return nil, err
-			}
+			return nil, err
 		}
-		addrs = append(addrs, addr)
 	}
+	return addr, nil
+}
 
-	return addrs, nil
+
+// createOrGetInternalIPv6Address is used to obtain an internal IPv6 address.
+func (s *Service) createOrGetInternalIPv6Address(ctx context.Context, lbname string) (*compute.Address, error) {
+	log := log.FromContext(ctx)
+	addrSpec := s.scope.IPv6AddressSpec(lbname)
+
+	addrSpec.AddressType = string(loadBalanceTrafficInternal)
+	addrSpec.Region = s.scope.Region()
+	subnet, err := s.getSubnet(ctx)
+	if err != nil {
+		log.Error(err, "Error getting subnet for Internal Load Balancer")
+		return nil, err
+	}
+	lbSpec := s.scope.LoadBalancer()
+	if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.IPAddress != nil {
+		// If an IP address is configured, use it instead of creating a new one.
+		addrSpec.Address = *lbSpec.InternalLoadBalancer.IPAddress
+	}
+	addrSpec.Subnetwork = subnet.SelfLink
+	addrSpec.Purpose = "GCE_ENDPOINT"
+	log.V(2).Info("Looking for internal address", "name", addrSpec.Name)
+	key := meta.RegionalKey(addrSpec.Name, s.scope.Region())
+	addr, err := s.internaladdresses.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for internal address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		log.V(2).Info("Creating an internal address", "name", addrSpec.Name)
+		if err := s.internaladdresses.Insert(ctx, key, addrSpec); err != nil {
+			log.Error(err, "Error creating an internal address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		addr, err = s.internaladdresses.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return addr, nil
 }
 
 // createOrGetForwardingRule is used obtain a Global ForwardingRule.
-func (s *Service) createOrGetForwardingRules(ctx context.Context, lbname string, target *compute.TargetTcpProxy, addrs []*compute.Address) ([]*compute.ForwardingRule, error) {
+func (s *Service) createOrGetForwardingRule(ctx context.Context, lbname string, target *compute.TargetTcpProxy, addr *compute.Address) (*compute.ForwardingRule, error) {
 	log := log.FromContext(ctx)
-	specs := s.scope.ForwardingRuleSpecs(lbname)
+	spec := s.scope.ForwardingRuleSpec(lbname)
 
-	forwardingRules := []*compute.ForwardingRule{}
-	for _, spec := range specs {
-		spec.Target = target.SelfLink
-		for _, addr := range addrs {
-			//if (strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) ||
-			//	(!strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && !strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) {
-				spec.IPAddress = addr.SelfLink
-			//}
+	spec.Target = target.SelfLink
+	spec.IPAddress = addr.SelfLink
+
+	key := meta.GlobalKey(spec.Name)
+	log.V(2).Info("Looking for forwardingrule", "name", spec.Name)
+	forwarding, err := s.forwardingrules.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for forwardingrule", "name", spec.Name)
+			return nil, err
 		}
 
-		key := meta.GlobalKey(spec.Name)
-		log.V(2).Info("Looking for forwardingrule", "name", spec.Name)
-		forwarding, err := s.forwardingrules.Get(ctx, key)
+		log.V(2).Info("Creating a forwardingrule", "name", spec.Name)
+		if err := s.forwardingrules.Insert(ctx, key, spec); err != nil {
+			log.Error(err, "Error creating a forwardingrule", "name", spec.Name)
+			return nil, err
+		}
+
+		forwarding, err = s.forwardingrules.Get(ctx, key)
 		if err != nil {
-			if !gcperrors.IsNotFound(err) {
-				log.Error(err, "Error looking for forwardingrule", "name", spec.Name)
-				return nil, err
-			}
-
-			log.V(2).Info("Creating a forwardingrule", "name", spec.Name)
-			if err := s.forwardingrules.Insert(ctx, key, spec); err != nil {
-				log.Error(err, "Error creating a forwardingrule", "name", spec.Name)
-				return nil, err
-			}
-
-			forwarding, err = s.forwardingrules.Get(ctx, key)
-			if err != nil {
-				return nil, err
-			}
+			return nil, err
 		}
-
-		// Labels on ForwardingRules must be added after resource is created
-		labels := s.scope.AdditionalLabels()
-		if !labels.Equals(forwarding.Labels) {
-			setLabelsRequest := &compute.GlobalSetLabelsRequest{
-				LabelFingerprint: forwarding.LabelFingerprint,
-				Labels:           labels,
-			}
-			if err = s.forwardingrules.SetLabels(ctx, key, setLabelsRequest); err != nil {
-				return nil, err
-			}
-		}
-		forwardingRules = append(forwardingRules, forwarding)
 	}
 
-	return forwardingRules, nil
+	// Labels on ForwardingRules must be added after resource is created
+	labels := s.scope.AdditionalLabels()
+	if !labels.Equals(forwarding.Labels) {
+		setLabelsRequest := &compute.GlobalSetLabelsRequest{
+			LabelFingerprint: forwarding.LabelFingerprint,
+			Labels:           labels,
+		}
+		if err = s.forwardingrules.SetLabels(ctx, key, setLabelsRequest); err != nil {
+			return nil, err
+		}
+	}
+
+	return forwarding, nil
 }
 
 // createOrGetRegionalForwardingRule is used to obtain a Regional ForwardingRule.
-func (s *Service) createOrGetRegionalForwardingRules(ctx context.Context, lbname string, backendSvc *compute.BackendService, addrs []*compute.Address) ([]*compute.ForwardingRule, error) {
+func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname string, backendSvc *compute.BackendService, addr *compute.Address) (*compute.ForwardingRule, error) {
 	log := log.FromContext(ctx)
-	specs := s.scope.ForwardingRuleSpecs(lbname)
-	forwardingrules := []*compute.ForwardingRule{}
-	for _, spec := range specs {
-		spec.LoadBalancingScheme = string(loadBalanceTrafficInternal)
-		spec.Region = s.scope.Region()
-		spec.BackendService = backendSvc.SelfLink
-		lbSpec := s.scope.LoadBalancer()
-		if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.InternalAccess == infrav1.InternalAccessGlobal {
-			spec.AllowGlobalAccess = true
-		}
-		// Ports is used instead or PortRange for passthrough Load Balancer
-		// Configure ports for k8s API to match the external API which is the first port of range
-		var ports []string
-		portList := strings.Split(spec.PortRange, "-")
-		ports = append(ports, portList[0])
-		// Also configure ignition port
-		ports = append(ports, "22623")
-		spec.Ports = ports
-		spec.PortRange = ""
-		subnet, err := s.getSubnet(ctx)
-		if err != nil {
-			log.Error(err, "Error getting subnet for regional forwardingrule")
+	spec := s.scope.ForwardingRuleSpec(lbname)
+	spec.LoadBalancingScheme = string(loadBalanceTrafficInternal)
+	spec.Region = s.scope.Region()
+	spec.BackendService = backendSvc.SelfLink
+	lbSpec := s.scope.LoadBalancer()
+	if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.InternalAccess == infrav1.InternalAccessGlobal {
+		spec.AllowGlobalAccess = true
+	}
+	// Ports is used instead or PortRange for passthrough Load Balancer
+	// Configure ports for k8s API to match the external API which is the first port of range
+	var ports []string
+	portList := strings.Split(spec.PortRange, "-")
+	ports = append(ports, portList[0])
+	// Also configure ignition port
+	ports = append(ports, "22623")
+	spec.Ports = ports
+	spec.PortRange = ""
+	subnet, err := s.getSubnet(ctx)
+	if err != nil {
+		log.Error(err, "Error getting subnet for regional forwardingrule")
+		return nil, err
+	}
+	spec.Subnetwork = subnet.SelfLink
+	spec.IPAddress = addr.SelfLink
+
+	key := meta.RegionalKey(spec.Name, s.scope.Region())
+	log.V(2).Info("Looking for regional forwardingrule", "name", spec.Name)
+	forwarding, err := s.regionalforwardingrules.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for regional forwardingrule", "name", spec.Name)
 			return nil, err
 		}
-		spec.Subnetwork = subnet.SelfLink
-		for _, addr := range addrs {
-			//if (strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) ||
-			//	(!strings.HasSuffix(spec.Name, infrav1.DualStackAdditionalResourceSuffix) && !strings.HasSuffix(addr.Name, infrav1.DualStackAdditionalResourceSuffix)) {
-				spec.IPAddress = addr.SelfLink
-			//}
+
+		log.V(2).Info("Creating a regional forwardingrule", "name", spec.Name)
+		if err := s.regionalforwardingrules.Insert(ctx, key, spec); err != nil {
+			log.Error(err, "Error creating a regional forwardingrule", "name", spec.Name)
+			return nil, err
 		}
 
-		key := meta.RegionalKey(spec.Name, s.scope.Region())
-		log.V(2).Info("Looking for regional forwardingrule", "name", spec.Name)
-		forwarding, err := s.regionalforwardingrules.Get(ctx, key)
+		forwarding, err = s.regionalforwardingrules.Get(ctx, key)
 		if err != nil {
-			if !gcperrors.IsNotFound(err) {
-				log.Error(err, "Error looking for regional forwardingrule", "name", spec.Name)
-				return nil, err
-			}
-
-			log.V(2).Info("Creating a regional forwardingrule", "name", spec.Name)
-			if err := s.regionalforwardingrules.Insert(ctx, key, spec); err != nil {
-				log.Error(err, "Error creating a regional forwardingrule", "name", spec.Name)
-				return nil, err
-			}
-
-			forwarding, err = s.regionalforwardingrules.Get(ctx, key)
-			if err != nil {
-				return nil, err
-			}
+			return nil, err
 		}
-
-		// Labels on ForwardingRules must be added after resource is created
-		labels := s.scope.AdditionalLabels()
-		if !labels.Equals(forwarding.Labels) {
-			setLabelsRequest := &compute.RegionSetLabelsRequest{
-				LabelFingerprint: forwarding.LabelFingerprint,
-				Labels:           labels,
-			}
-			if err = s.regionalforwardingrules.SetLabels(ctx, key, setLabelsRequest); err != nil {
-				return nil, err
-			}
-		}
-
-		forwardingrules = append(forwardingrules, forwarding)
 	}
 
-	return forwardingrules, nil
+	// Labels on ForwardingRules must be added after resource is created
+	labels := s.scope.AdditionalLabels()
+	if !labels.Equals(forwarding.Labels) {
+		setLabelsRequest := &compute.RegionSetLabelsRequest{
+			LabelFingerprint: forwarding.LabelFingerprint,
+			Labels:           labels,
+		}
+		if err = s.regionalforwardingrules.SetLabels(ctx, key, setLabelsRequest); err != nil {
+			return nil, err
+		}
+	}
+
+	return forwarding, nil
 }
 
 func (s *Service) deleteForwardingRule(ctx context.Context, lbname string) error {
 	log := log.FromContext(ctx)
-	specs := s.scope.ForwardingRuleSpecs(lbname)
-	for _, spec := range specs {
-		key := meta.GlobalKey(spec.Name)
-		log.V(2).Info("Deleting a forwardingrule", "name", spec.Name)
-		if err := s.forwardingrules.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
-			log.Error(err, "Error updating a forwardingrule", "name", spec.Name)
-			return err
-		}
+	spec := s.scope.ForwardingRuleSpec(lbname)
+	key := meta.GlobalKey(spec.Name)
+	log.V(2).Info("Deleting a forwardingrule", "name", spec.Name)
+	if err := s.forwardingrules.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
+		log.Error(err, "Error updating a forwardingrule", "name", spec.Name)
+		return err
 	}
 	return nil
 }
 
 func (s *Service) deleteRegionalForwardingRule(ctx context.Context, lbname string) error {
 	log := log.FromContext(ctx)
-	specs := s.scope.ForwardingRuleSpecs(lbname)
-	for _, spec := range specs {
-		key := meta.RegionalKey(spec.Name, s.scope.Region())
-		log.V(2).Info("Deleting a regional forwardingrule", "name", spec.Name)
-		if err := s.regionalforwardingrules.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
-			log.Error(err, "Error updating a regional forwardingrule", "name", spec.Name)
-			return err
-		}
+	spec := s.scope.ForwardingRuleSpec(lbname)
+	key := meta.RegionalKey(spec.Name, s.scope.Region())
+	log.V(2).Info("Deleting a regional forwardingrule", "name", spec.Name)
+	if err := s.regionalforwardingrules.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
+		log.Error(err, "Error updating a regional forwardingrule", "name", spec.Name)
+		return err
 	}
-
 	return nil
 }
 
 func (s *Service) deleteAddress(ctx context.Context, lbname string) error {
 	log := log.FromContext(ctx)
-	specs := s.scope.AddressSpecs(lbname)
-	for _, spec := range specs {
-		key := meta.GlobalKey(spec.Name)
-		log.V(2).Info("Deleting a address", "name", spec.Name)
-		if err := s.addresses.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
-			return err
-		}
+	spec := s.scope.AddressSpec(lbname)
+	key := meta.GlobalKey(spec.Name)
+	log.V(2).Info("Deleting a address", "name", spec.Name)
+	if err := s.addresses.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
+		return err
 	}
 	return nil
 }
 
 func (s *Service) deleteInternalAddress(ctx context.Context, lbname string) error {
 	log := log.FromContext(ctx)
-	specs := s.scope.AddressSpecs(lbname)
-	for _, spec := range specs {
-		key := meta.RegionalKey(spec.Name, s.scope.Region())
-		log.V(2).Info("Deleting an internal address", "name", spec.Name)
-		if err := s.internaladdresses.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
-			return err
-		}
+	spec := s.scope.AddressSpec(lbname)
+	key := meta.RegionalKey(spec.Name, s.scope.Region())
+	log.V(2).Info("Deleting an internal address", "name", spec.Name)
+	if err := s.internaladdresses.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
+		return err
 	}
 	return nil
 }
@@ -836,28 +852,24 @@ func (s *Service) deleteRegionalBackendService(ctx context.Context, lbname strin
 
 func (s *Service) deleteHealthCheck(ctx context.Context, lbname string) error {
 	log := log.FromContext(ctx)
-	specs := s.scope.HealthCheckSpecs(lbname)
-	for _, spec := range specs {
-		key := meta.GlobalKey(spec.Name)
-		log.V(2).Info("Deleting a healthcheck", "name", spec.Name)
-		if err := s.healthchecks.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
-			log.Error(err, "Error deleting a healthcheck", "name", spec.Name)
-			return err
-		}
+	spec := s.scope.HealthCheckSpec(lbname)
+	key := meta.GlobalKey(spec.Name)
+	log.V(2).Info("Deleting a healthcheck", "name", spec.Name)
+	if err := s.healthchecks.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
+		log.Error(err, "Error deleting a healthcheck", "name", spec.Name)
+		return err
 	}
 	return nil
 }
 
 func (s *Service) deleteRegionalHealthCheck(ctx context.Context, lbname string) error {
 	log := log.FromContext(ctx)
-	specs := s.scope.HealthCheckSpecs(lbname)
-	for _, spec := range specs {
-		key := meta.RegionalKey(spec.Name, s.scope.Region())
-		log.V(2).Info("Deleting a regional healthcheck", "name", spec.Name)
-		if err := s.regionalhealthchecks.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
-			log.Error(err, "Error deleting a regional healthcheck", "name", spec.Name)
-			return err
-		}
+	spec := s.scope.HealthCheckSpec(lbname)
+	key := meta.RegionalKey(spec.Name, s.scope.Region())
+	log.V(2).Info("Deleting a regional healthcheck", "name", spec.Name)
+	if err := s.regionalhealthchecks.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
+		log.Error(err, "Error deleting a regional healthcheck", "name", spec.Name)
+		return err
 	}
 	return nil
 }

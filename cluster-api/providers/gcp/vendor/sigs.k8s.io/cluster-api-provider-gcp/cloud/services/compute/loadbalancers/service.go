@@ -80,10 +80,11 @@ type subnetsInterface interface {
 // Scope is an interfaces that hold used methods.
 type Scope interface {
 	cloud.Cluster
-	AddressSpecs(name string) []*compute.Address
+	AddressSpec(name string) *compute.Address
+	IPv6AddressSpec(name string) *compute.Address
 	BackendServiceSpec(name string) *compute.BackendService
-	ForwardingRuleSpecs(name string) []*compute.ForwardingRule
-	HealthCheckSpecs(name string) []*compute.HealthCheck
+	ForwardingRuleSpec(name string) *compute.ForwardingRule
+	HealthCheckSpec(name string) *compute.HealthCheck
 	InstanceGroupSpec(zone string) *compute.InstanceGroup
 	TargetTCPProxySpec() *compute.TargetTcpProxy
 	SubnetSpecs() []*compute.Subnetwork

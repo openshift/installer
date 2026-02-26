@@ -351,6 +351,36 @@ func (s *ManagedClusterScope) FirewallRulesSpec() []*compute.Firewall {
 	return firewallRules
 }
 
+// IPv6FirewallRulesSpec returns google compute firewall spec for ipv6 addresses.
+func (s *ManagedClusterScope) IPv6FirewallRulesSpec() []*compute.Firewall {
+	firewallRules := []*compute.Firewall{
+		{
+			Name:    fmt.Sprintf("allow-%s-healthchecks-ipv6", s.Name()),
+			Network: s.NetworkLink(),
+			Allowed: []*compute.FirewallAllowed{
+				{
+					IPProtocol: "TCP",
+					Ports: []string{
+						strconv.FormatInt(6443, 10),
+					},
+				},
+			},
+			Direction: "INGRESS",
+			SourceRanges: []string{
+				// https://docs.cloud.google.com/load-balancing/docs/firewall-rules
+				"2600:2d00:1:b029::/64",
+				"2600:2d00:1:1::/64",
+			},
+			TargetTags: []string{
+				s.Name() + "-control-plane",
+			},
+		},
+	}
+
+	return firewallRules
+}
+
+
 // ANCHOR_END: ClusterFirewallSpec
 
 // PatchObject persists the cluster configuration and status.

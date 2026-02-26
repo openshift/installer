@@ -307,6 +307,7 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			StackType:             stackType,
 		}
 
+		// FIXME: this is something that will be determined based on the type of cluster
 		if s.StackType() == infrav1.DualStackType {
 			subnet.Ipv6AccessType = "EXTERNAL"
 		}
@@ -365,28 +366,55 @@ func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
 	return firewallRules
 }
 
+// IPv6FirewallRulesSpec returns google compute firewall spec for ipv6 addresses.
+func (s *ClusterScope) IPv6FirewallRulesSpec() []*compute.Firewall {
+	firewallRules := []*compute.Firewall{
+		{
+			Name:    fmt.Sprintf("allow-%s-healthchecks-ipv6", s.Name()),
+			Network: s.NetworkLink(),
+			Allowed: []*compute.FirewallAllowed{
+				{
+					IPProtocol: "TCP",
+					Ports: []string{
+						strconv.FormatInt(6443, 10),
+					},
+				},
+			},
+			Direction: "INGRESS",
+			SourceRanges: []string{
+				// https://docs.cloud.google.com/load-balancing/docs/firewall-rules
+				"2600:2d00:1:b029::/64",
+				"2600:2d00:1:1::/64",
+			},
+			TargetTags: []string{
+				s.Name() + "-control-plane",
+			},
+		},
+	}
+
+	return firewallRules
+}
+
 // ANCHOR_END: ClusterFirewallSpec
 
 // ANCHOR: ClusterControlPlaneSpec
 
-// AddressSpecs returns google compute address specs.
-func (s *ClusterScope) AddressSpecs(lbname string) []*compute.Address {
-	specs := []*compute.Address{{
+// AddressSpec returns google compute address specs.
+func (s *ClusterScope) AddressSpec(lbname string) *compute.Address {
+	return &compute.Address{
 		Name:        fmt.Sprintf("%s-%s", s.Name(), lbname),
 		AddressType: "EXTERNAL",
 		IpVersion:   "IPV4",
-	}}
+	}
+}
 
-	//if s.StackType() == infrav1.DualStackType {
-	//	specs = append(specs, &compute.Address{
-	//		Name:             fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
-	//		AddressType:      "EXTERNAL",
-	//		IpVersion:        "IPV6",
-	//		Ipv6EndpointType: "NETLB",
-	//	})
-	//}
-
-	return specs
+func (s *ClusterScope) IPv6AddressSpec(lbname string) *compute.Address {
+	return &compute.Address{
+		Name:             fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
+		AddressType:      "EXTERNAL",
+		IpVersion:        "IPV6",
+		Ipv6EndpointType: "NETLB",
+	}
 }
 
 // BackendServiceSpec returns google compute backend-service spec.
@@ -400,72 +428,38 @@ func (s *ClusterScope) BackendServiceSpec(lbname string) *compute.BackendService
 	}
 }
 
-// ForwardingRuleSpecs returns a list of google compute forwarding-rule spec.
-func (s *ClusterScope) ForwardingRuleSpecs(lbname string) []*compute.ForwardingRule {
+// ForwardingRuleSpec returns a list of google compute forwarding-rule spec.
+func (s *ClusterScope) ForwardingRuleSpec(lbname string) *compute.ForwardingRule {
 	port := int32(443)
 	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
 		port = s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	portRange := fmt.Sprintf("%d-%d", port, port)
 
-	forwardingRules := []*compute.ForwardingRule{
-		{
-			Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
-			IPProtocol:          "TCP",
-			LoadBalancingScheme: "EXTERNAL",
-			PortRange:           portRange,
-			Labels:              s.AdditionalLabels(),
-		},
+	return &compute.ForwardingRule{
+		Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
+		IPProtocol:          "TCP",
+		LoadBalancingScheme: "EXTERNAL",
+		PortRange:           portRange,
+		Labels:              s.AdditionalLabels(),
 	}
-
-	//if s.StackType() == infrav1.DualStackType {
-	//	forwardingRules = append(forwardingRules, &compute.ForwardingRule{
-	//		Name:                fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
-	//		IPProtocol:          "TCP",
-	//		LoadBalancingScheme: "EXTERNAL",
-	//		PortRange:           portRange,
-	//		Labels:              s.AdditionalLabels(),
-	//	})
-	//}
-
-	return forwardingRules
 }
 
 // HealthCheckSpecs returns a list of google compute health-check spec items.
-func (s *ClusterScope) HealthCheckSpecs(lbname string) []*compute.HealthCheck {
-	specs := []*compute.HealthCheck{
-		{
-			Name: fmt.Sprintf("%s-%s", s.Name(), lbname),
-			Type: "HTTPS",
-			HttpsHealthCheck: &compute.HTTPSHealthCheck{
-				Port:              6443,
-				PortSpecification: "USE_FIXED_PORT",
-				RequestPath:       "/readyz",
-			},
-			CheckIntervalSec:   10,
-			TimeoutSec:         5,
-			HealthyThreshold:   5,
-			UnhealthyThreshold: 3,
+func (s *ClusterScope) HealthCheckSpec(lbname string) *compute.HealthCheck {
+	return &compute.HealthCheck{
+		Name: fmt.Sprintf("%s-%s", s.Name(), lbname),
+		Type: "HTTPS",
+		HttpsHealthCheck: &compute.HTTPSHealthCheck{
+			Port:              6443,
+			PortSpecification: "USE_FIXED_PORT",
+			RequestPath:       "/readyz",
 		},
+		CheckIntervalSec:   10,
+		TimeoutSec:         5,
+		HealthyThreshold:   5,
+		UnhealthyThreshold: 3,
 	}
-
-	//if s.StackType() == infrav1.DualStackType {
-	//	specs = append(specs, &compute.HealthCheck{
-	//		Name: fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
-	//		Type: "HTTPS",
-	//		HttpsHealthCheck: &compute.HTTPSHealthCheck{
-	//			Port:              6443,
-	//			PortSpecification: "USE_FIXED_PORT",
-	//			RequestPath:       "/readyz",
-	//		},
-	//		CheckIntervalSec:   10,
-	//		TimeoutSec:         5,
-	//		HealthyThreshold:   5,
-	//		UnhealthyThreshold: 3,
-	//	})
-	//}
-
-	return specs
 }
 
 // InstanceGroupSpec returns google compute instance-group spec.
