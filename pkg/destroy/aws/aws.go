@@ -65,6 +65,7 @@ type ClusterUninstaller struct {
 	Filters        []Filter // filter(s) we will be searching for
 	Logger         logrus.FieldLogger
 	Region         string
+	PartitionID    string
 	ClusterID      string
 	ClusterDomain  string
 	HostedZoneRole string
@@ -89,6 +90,8 @@ const (
 	endpointISOBEast1    = "us-isob-east-1"
 	endpointUSGovEast1   = "us-gov-east-1"
 	endpointUSGovWest1   = "us-gov-west-1"
+
+	endpointEUSCDeEast1 = "eusc-de-east-1"
 
 	// OpenShiftInstallerDestroyerUserAgent is the User Agent key to add to the AWS Destroy API request header.
 	OpenShiftInstallerDestroyerUserAgent = "OpenShift/4.x Destroyer"
@@ -213,6 +216,21 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	}, nil
 }
 
+// GetPartitionID returns the partition ID for the install region.
+func (o *ClusterUninstaller) GetPartitionID(ctx context.Context) (string, error) {
+	if len(o.PartitionID) > 0 {
+		return o.PartitionID, nil
+	}
+
+	partitionID, err := awssession.GetPartitionIDForRegion(ctx, o.Region)
+	if err != nil {
+		return "", err
+	}
+
+	o.PartitionID = partitionID
+	return o.PartitionID, nil
+}
+
 // validate runs before the uninstall process to ensure that
 // all prerequisites are met for a safe destroy.
 func (o *ClusterUninstaller) validate(ctx context.Context) error {
@@ -332,31 +350,54 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 	tagClients := []*resourcegroupstaggingapi.Client{baseTaggingClient}
 
 	if o.HostedZoneRole != "" {
-		cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(endpointUSEast1))
-		if err != nil {
-			return nil, fmt.Errorf("failed to create AWS config for resource tagging client: %w", err)
-		}
+		// We should use the regional STS endpoint instead of the global endpoints
 		stsSvc, err := awssession.NewSTSClient(ctx, awssession.EndpointOptions{
-			Region:    endpointUSEast1,
+			Region:    o.Region,
 			Endpoints: o.endpoints,
 		}, sts.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 		if err != nil {
 			return nil, fmt.Errorf("failed to create STS client: %w", err)
 		}
 
+		partitionID, err := o.GetPartitionID(ctx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get partition ID for region %s: %w", o.Region, err)
+		}
+
+		// This tagging client is specifically for finding route53 zone, so it needs to use the "global" region, depending on the partition ID
+		tagRegion := o.Region
+		switch partitionID {
+		case awssession.AwsEuscPartitionID:
+			// For AWS EU Sovereign Cloud, use "eusc-de-east-1"
+			tagRegion = endpointEUSCDeEast1
+		case awssession.AwsUsGovPartitionID:
+			// For AWS Government Cloud, use "us-gov-west-1"
+			tagRegion = endpointUSGovWest1
+		case awssession.AwsPartitionID:
+			// For AWS standard, use "us-east-1"
+			tagRegion = endpointUSEast1
+		default:
+			// For other partitions, use the install region
+		}
+
+		cfg, err := awssession.GetConfigWithOptions(ctx,
+			configv2.WithRegion(tagRegion),
+			configv2.WithAPIOptions([]func(*middleware.Stack) error{
+				awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
+			}))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create AWS config for resource tagging client: %w", err)
+		}
 		creds := stscreds.NewAssumeRoleProvider(stsSvc, o.HostedZoneRole)
 		cfg.Credentials = awsv2.NewCredentialsCache(creds)
-		// This client is specifically for finding route53 zones,
-		// so it needs to use the global us-east-1 region.
 
-		tagClients = append(tagClients, createResourceTaggingClientWithConfig(cfg, endpointUSEast1, o.endpoints))
+		tagClients = append(tagClients, createResourceTaggingClientWithConfig(cfg, tagRegion, o.endpoints))
 	}
 
 	switch o.Region {
+	case endpointEUSCDeEast1:
 	case endpointCNNorth1, endpointCNNorthWest1:
-		break
 	case endpointISOEast1, endpointISOWest1, endpointISOBEast1:
-		break
 	case endpointUSGovEast1, endpointUSGovWest1:
 		if o.Region != endpointUSGovWest1 {
 			tagClient, err := createResourceTaggingClient(endpointUSGovWest1, o.endpoints)
