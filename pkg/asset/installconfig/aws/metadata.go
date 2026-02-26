@@ -8,7 +8,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
-	"github.com/aws/aws-sdk-go/aws/session"
 
 	typesaws "github.com/openshift/installer/pkg/types/aws"
 )
@@ -17,7 +16,6 @@ import (
 // does not need to be user-supplied (e.g. because it can be retrieved
 // from external APIs).
 type Metadata struct {
-	session           *session.Session
 	availabilityZones []string
 	availableRegions  []string
 	edgeZones         []string
@@ -38,27 +36,6 @@ type Metadata struct {
 // NewMetadata initializes a new Metadata object.
 func NewMetadata(region string, subnets []typesaws.Subnet, services []typesaws.ServiceEndpoint) *Metadata {
 	return &Metadata{Region: region, ProvidedSubnets: subnets, Services: services}
-}
-
-// Session holds an AWS session which can be used for AWS API calls
-// during asset generation.
-func (m *Metadata) Session(ctx context.Context) (*session.Session, error) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
-
-	return m.unlockedSession(ctx)
-}
-
-func (m *Metadata) unlockedSession(ctx context.Context) (*session.Session, error) {
-	if m.session == nil {
-		var err error
-		m.session, err = GetSessionWithOptions(WithRegion(m.Region), WithServiceEndpoints(m.Region, m.Services))
-		if err != nil {
-			return nil, fmt.Errorf("creating AWS session: %w", err)
-		}
-	}
-
-	return m.session, nil
 }
 
 // EC2Client initiates a new EC2 client when one does not already exist, otherwise the existing client
