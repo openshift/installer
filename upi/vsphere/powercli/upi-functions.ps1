@@ -1,5 +1,94 @@
 #!/usr/bin/pwsh
 
+# Assert-NotNullOrEmpty validates that a value is not null or empty, and throws
+# a descriptive error indicating which parameter is missing and what the caller
+# should check to fix it.
+function Assert-NotNullOrEmpty {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$ParameterName,
+        $Value,
+        [string]$Context = ""
+    )
+    if ($null -eq $Value -or ($Value -is [string] -and [string]::IsNullOrWhiteSpace($Value))) {
+        $msg = "Parameter '$ParameterName' is null or empty."
+        if ($Context -ne "") {
+            $msg += " $Context"
+        }
+        throw $msg
+    }
+}
+
+# Assert-FailureDomainFields validates that all required fields in a failure domain
+# object are populated before attempting vSphere operations.
+function Assert-FailureDomainFields {
+    param(
+        [Parameter(Mandatory=$true)]
+        $FailureDomain,
+        [int]$Index = -1
+    )
+    $label = if ($Index -ge 0) { "failure domain [$Index]" } else { "failure domain" }
+    $requiredFields = @("server", "datacenter", "cluster", "datastore", "network")
+    foreach ($field in $requiredFields) {
+        $val = $FailureDomain.$field
+        if ($null -eq $val -or [string]::IsNullOrWhiteSpace($val)) {
+            throw "Required field '$field' is null or empty in $label. Check your failure_domains configuration or variables.ps1. Failure domain value: $($FailureDomain | ConvertTo-Json -Compress)"
+        }
+    }
+}
+
+# Get-VSphereObject wraps common vSphere Get-* cmdlets with error handling that
+# reports which object could not be found and why, instead of a generic
+# "Value cannot be null" error.
+function Get-VSphereObject {
+    param(
+        [Parameter(Mandatory=$true)]
+        [string]$Command,
+        [Parameter(Mandatory=$true)]
+        [string]$Name,
+        [string]$LocationName = "",
+        $Server,
+        [hashtable]$ExtraParams = @{},
+        [string]$Context = ""
+    )
+
+    # Validate inputs before calling the cmdlet
+    Assert-NotNullOrEmpty -ParameterName "Name" -Value $Name -Context "Cannot look up $Command with a null/empty name. $Context"
+    if ($null -eq $Server) {
+        throw "Server is null when attempting '$Command -Name $Name'. Verify that the vCenter connection succeeded and the server value is set. $Context"
+    }
+
+    $params = @{
+        Name = $Name
+        Server = $Server
+    }
+
+    if ($LocationName -ne "" -and $ExtraParams.ContainsKey("Location")) {
+        $params["Location"] = $ExtraParams["Location"]
+        $ExtraParams.Remove("Location")
+    }
+
+    foreach ($key in $ExtraParams.Keys) {
+        $params[$key] = $ExtraParams[$key]
+    }
+
+    try {
+        $result = & $Command @params
+        if ($null -eq $result) {
+            throw "$Command returned null for Name='$Name', Server='$Server'. $Context"
+        }
+        return $result
+    }
+    catch {
+        $errMsg = "$Command failed for Name='$Name'"
+        if ($LocationName -ne "") {
+            $errMsg += ", Location='$LocationName'"
+        }
+        $errMsg += ", Server='$Server'. $Context Original error: $($_.Exception.Message)"
+        throw $errMsg
+    }
+}
+
 function New-OpenShiftVM {
     param(
         [int]$CoresPerSocket = 1, # Default is 1 due to not knowing how many may come in via NumCpu variable
@@ -50,13 +139,27 @@ function New-OpenShiftVM {
     # If storage policy is set, lets pull the mo ref
     if ($NULL -ne $StoragePolicy -and $StoragePolicy -ne "")
     {
-        $storagePolicyRef = Get-SpbmStoragePolicy -Server $Server -Id $StoragePolicy
+        try {
+            $storagePolicyRef = Get-SpbmStoragePolicy -Server $Server -Id $StoragePolicy
+        }
+        catch {
+            throw "Get-SpbmStoragePolicy failed for VM '$Name': Could not find storage policy with Id '$StoragePolicy' on server '$Server'. Verify the storage policy ID is correct. Original error: $($_.Exception.Message)"
+        }
         $args["StoragePolicy"] = $storagePolicyRef
     }
 
     # Clone the virtual machine from the imported template
     # $vm = New-VM -VM $Template -Name $Name -Datastore $Datastore -ResourcePool $ResourcePool #-Location $Folder #-LinkedClone -ReferenceSnapshot $Snapshot
-    $vm = New-VM -Server $Server -VM $Template @args
+    try {
+        $vm = New-VM -Server $Server -VM $Template @args
+    }
+    catch {
+        throw "New-VM failed for VM '$Name': Could not clone from template '$($Template.Name)' on server '$Server'. Verify the template, datastore, resource pool, and folder are all valid. Original error: $($_.Exception.Message)"
+    }
+
+    if ($null -eq $vm) {
+        throw "New-VM returned null for VM '$Name'. The clone operation from template '$($Template.Name)' produced no result. Check vCenter tasks for errors."
+    }
 
     # Assign tag so we can later clean up
     New-TagAssignment -Server $Server -Entity $vm -Tag $Tag > $null
@@ -70,7 +173,19 @@ function New-OpenShiftVM {
     updateDisk -VM $vm -CapacityGB 120
 
     # Configure Network (Assuming template networking may not be correct if shared across clusters)
-    $pg = Get-VirtualPortgroup -Server $Server -Name $Network -VMHost $(Get-VMHost -VM $vm) 2> $null
+    if ($null -eq $Network -or $Network -eq "") {
+        throw "Network (port group) name is null or empty for VM '$Name'. Set the 'network' field in your failure domain or variables.ps1."
+    }
+    try {
+        $vmHostObj = Get-VMHost -VM $vm
+        $pg = Get-VirtualPortgroup -Server $Server -Name $Network -VMHost $vmHostObj 2> $null
+        if ($null -eq $pg) {
+            throw "Port group '$Network' not found on host '$($vmHostObj.Name)'. Available port groups: $((Get-VirtualPortgroup -Server $Server -VMHost $vmHostObj | Select-Object -ExpandProperty Name) -join ', ')"
+        }
+    }
+    catch {
+        throw "Failed to configure network for VM '$Name': Could not find port group '$Network'. Verify the network/portgroup name matches an existing port group on the ESXi host. Original error: $($_.Exception.Message)"
+    }
     $vm | Get-NetworkAdapter -Server $Server | Set-NetworkAdapter -Server $Server -Portgroup $pg -confirm:$false > $null
 
     # Assign advanced settings
@@ -276,11 +391,35 @@ function New-OpenshiftVMs {
             Use-PowerCLIContext -PowerCLIContext $cliContext
 
             $name = "$($metadata.infraID)-$($key)"
+            $nodeContext = "VM '$name': server='$($node.server)', datacenter='$($node.datacenter)', cluster='$($node.cluster)', datastore='$($node.datastore)', network='$($node.network)'. Check your virtualmachines/failure_domains configuration."
             Write-Output "Creating $($name)"
 
-            $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $(Get-Cluster -Name $($node.cluster)) -Server $node.server
-            ##$datastore = Get-Datastore -Name $node.datastore -Server $node.server
-            $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter -Server $node.server
+            # Validate node fields before vSphere lookups
+            Assert-NotNullOrEmpty -ParameterName "node.server" -Value $node.server -Context "Node '$key' has no server set. $nodeContext"
+            Assert-NotNullOrEmpty -ParameterName "node.cluster" -Value $node.cluster -Context "Node '$key' has no cluster set. $nodeContext"
+            Assert-NotNullOrEmpty -ParameterName "node.datastore" -Value $node.datastore -Context "Node '$key' has no datastore set. $nodeContext"
+            Assert-NotNullOrEmpty -ParameterName "node.datacenter" -Value $node.datacenter -Context "Node '$key' has no datacenter set. $nodeContext"
+
+            try {
+                $clusterObj = Get-Cluster -Name $($node.cluster) -Server $node.server
+            }
+            catch {
+                throw "Get-Cluster failed for VM '$name': Could not find cluster '$($node.cluster)' on server '$($node.server)'. $nodeContext Original error: $($_.Exception.Message)"
+            }
+
+            try {
+                $rp = Get-ResourcePool -Name $($metadata.infraID) -Location $clusterObj -Server $node.server
+            }
+            catch {
+                throw "Get-ResourcePool failed for VM '$name': Could not find resource pool '$($metadata.infraID)' in cluster '$($node.cluster)' on server '$($node.server)'. Ensure the resource pool was created during failure domain setup. $nodeContext Original error: $($_.Exception.Message)"
+            }
+
+            try {
+                $datastoreInfo = Get-Datastore -Name $node.datastore -Location $node.datacenter -Server $node.server
+            }
+            catch {
+                throw "Get-Datastore failed for VM '$name': Could not find datastore '$($node.datastore)' in datacenter '$($node.datacenter)' on server '$($node.server)'. $nodeContext Original error: $($_.Exception.Message)"
+            }
 
             # Pull network config for each node
             if ($node.type -eq "master") {
@@ -307,7 +446,11 @@ function New-OpenshiftVMs {
             $network = New-VMNetworkConfig -Server $node.server -Hostname $name -IPAddress $ip -Netmask $netmask -Gateway $gateway -DNS $dns
 
             # Get the content of the ignition file per machine type (bootstrap, master, worker)
-            $bytes = Get-Content -Path "./$($node.type).ign" -AsByteStream
+            $ignPath = "./$($node.type).ign"
+            if (-Not (Test-Path -Path $ignPath)) {
+                throw "Ignition file '$ignPath' not found for VM '$name'. Ensure ignition configs were generated (generateIgnitions step). $nodeContext"
+            }
+            $bytes = Get-Content -Path $ignPath -AsByteStream
             $ignition = [Convert]::ToBase64String($bytes)
 
             # Get correct tag
@@ -315,18 +458,34 @@ function New-OpenshiftVMs {
             $tag = Get-Tag -Server $node.server -Category $tagCategory -Name "$($metadata.infraID)" -ErrorAction continue 2>$null
 
             # Get correct template / folder
-            $dc = Get-Datacenter -Server $node.server -Name $node.datacenter
-            $folder = Get-Folder -Server $node.server -Name $metadata.infraID -Location $dc
-            $template = Get-VM -Server $node.server -Name $vm_template -Location $dc
+            try {
+                $dc = Get-Datacenter -Server $node.server -Name $node.datacenter
+            }
+            catch {
+                throw "Get-Datacenter failed for VM '$name': Could not find datacenter '$($node.datacenter)' on server '$($node.server)'. $nodeContext Original error: $($_.Exception.Message)"
+            }
+
+            try {
+                $folder = Get-Folder -Server $node.server -Name $metadata.infraID -Location $dc
+            }
+            catch {
+                throw "Get-Folder failed for VM '$name': Could not find folder '$($metadata.infraID)' in datacenter '$($node.datacenter)' on server '$($node.server)'. Ensure the folder was created during failure domain setup. $nodeContext Original error: $($_.Exception.Message)"
+            }
+
+            try {
+                $template = Get-VM -Server $node.server -Name $vm_template -Location $dc
+            }
+            catch {
+                throw "Get-VM failed for VM '$name': Could not find VM template '$vm_template' in datacenter '$($node.datacenter)' on server '$($node.server)'. Ensure the OVA template was uploaded. $nodeContext Original error: $($_.Exception.Message)"
+            }
 
             # Clone the virtual machine from the imported template
-            #$vm = New-OpenShiftVM -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -LinkedClone -ReferenceSnapshot $snapshot -IgnitionData $ignition -Tag $tag -Networking $network -NumCPU $numCPU -MemoryMB $memory
-            $vm = New-OpenShiftVM -Server $node.server -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -SecureBoot $secureboot -StoragePolicy $storagepolicy -NumCPU $numCPU -MemoryMB $memory -CoresPerSocket $coresPerSocket
-
-            # Assign tag so we can later clean up
-            # New-TagAssignment -Entity $vm -Tag $tag
-            # New-AdvancedSetting -Entity $vm -name "guestinfo.ignition.config.data" -value $ignition -confirm:$false -Force > $null
-            # New-AdvancedSetting -Entity $vm -name "guestinfo.hostname" -value $name -Confirm:$false -Force > $null
+            try {
+                $vm = New-OpenShiftVM -Server $node.server -Template $template -Name $name -ResourcePool $rp -Datastore $datastoreInfo -Location $folder -IgnitionData $ignition -Tag $tag -Networking $network -Network $node.network -SecureBoot $secureboot -StoragePolicy $storagepolicy -NumCPU $numCPU -MemoryMB $memory -CoresPerSocket $coresPerSocket
+            }
+            catch {
+                throw "New-OpenShiftVM failed for VM '$name'. $nodeContext Original error: $($_.Exception.Message)"
+            }
 
             if ($node.type -eq "master" -And $delayVMStart) {
                 # To give bootstrap some time to start, lets wait 2 minutes
