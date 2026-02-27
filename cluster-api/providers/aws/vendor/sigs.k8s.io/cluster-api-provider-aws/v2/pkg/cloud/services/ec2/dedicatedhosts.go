@@ -223,7 +223,7 @@ func (s *Service) convertToHostInfo(host types.Host) *infrav1.DedicatedHostInfo 
 		instanceCount = math.MaxInt32
 	}
 	// bounds check ensures instanceCount <= math.MaxInt32, preventing integer overflow
-	usedCapacity := int32(instanceCount) //nolint:gosec
+	usedCapacity := int32(instanceCount)
 	hostInfo.AvailableCapacity = hostInfo.TotalCapacity - usedCapacity
 
 	// Convert tags

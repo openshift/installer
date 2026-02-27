@@ -111,7 +111,16 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		WriteAzureNodePool(object.azureNodePool, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8] && object.kubeletConfigs != nil
+	present_ = len(object.fieldSet_) > 8 && object.fieldSet_[8]
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("image_type")
+		stream.WriteString(string(object.imageType))
+		count++
+	}
+	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9] && object.kubeletConfigs != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -120,7 +129,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		WriteStringList(object.kubeletConfigs, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 9 && object.fieldSet_[9] && object.labels != nil
+	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10] && object.labels != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -149,7 +158,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		}
 		count++
 	}
-	present_ = len(object.fieldSet_) > 10 && object.fieldSet_[10] && object.managementUpgrade != nil
+	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11] && object.managementUpgrade != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -158,7 +167,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		WriteNodePoolManagementUpgrade(object.managementUpgrade, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 11 && object.fieldSet_[11] && object.nodeDrainGracePeriod != nil
+	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12] && object.nodeDrainGracePeriod != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -167,7 +176,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		WriteValue(object.nodeDrainGracePeriod, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 12 && object.fieldSet_[12]
+	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -176,7 +185,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		stream.WriteInt(object.replicas)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 13 && object.fieldSet_[13] && object.status != nil
+	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14] && object.status != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -185,7 +194,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		WriteNodePoolStatus(object.status, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 14 && object.fieldSet_[14]
+	present_ = len(object.fieldSet_) > 15 && object.fieldSet_[15]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -194,7 +203,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		stream.WriteString(object.subnet)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 15 && object.fieldSet_[15] && object.taints != nil
+	present_ = len(object.fieldSet_) > 16 && object.fieldSet_[16] && object.taints != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -203,7 +212,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		WriteTaintList(object.taints, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 16 && object.fieldSet_[16] && object.tuningConfigs != nil
+	present_ = len(object.fieldSet_) > 17 && object.fieldSet_[17] && object.tuningConfigs != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -212,7 +221,7 @@ func WriteNodePool(object *NodePool, stream *jsoniter.Stream) {
 		WriteStringList(object.tuningConfigs, stream)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 17 && object.fieldSet_[17] && object.version != nil
+	present_ = len(object.fieldSet_) > 18 && object.fieldSet_[18] && object.version != nil
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -238,7 +247,7 @@ func UnmarshalNodePool(source interface{}) (object *NodePool, err error) {
 // ReadNodePool reads a value of the 'node_pool' type from the given iterator.
 func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 	object := &NodePool{
-		fieldSet_: make([]bool, 18),
+		fieldSet_: make([]bool, 19),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -277,10 +286,15 @@ func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 			value := ReadAzureNodePool(iterator)
 			object.azureNodePool = value
 			object.fieldSet_[7] = true
+		case "image_type":
+			text := iterator.ReadString()
+			value := ImageType(text)
+			object.imageType = value
+			object.fieldSet_[8] = true
 		case "kubelet_configs":
 			value := ReadStringList(iterator)
 			object.kubeletConfigs = value
-			object.fieldSet_[8] = true
+			object.fieldSet_[9] = true
 		case "labels":
 			value := map[string]string{}
 			for {
@@ -292,39 +306,39 @@ func ReadNodePool(iterator *jsoniter.Iterator) *NodePool {
 				value[key] = item
 			}
 			object.labels = value
-			object.fieldSet_[9] = true
+			object.fieldSet_[10] = true
 		case "management_upgrade":
 			value := ReadNodePoolManagementUpgrade(iterator)
 			object.managementUpgrade = value
-			object.fieldSet_[10] = true
+			object.fieldSet_[11] = true
 		case "node_drain_grace_period":
 			value := ReadValue(iterator)
 			object.nodeDrainGracePeriod = value
-			object.fieldSet_[11] = true
+			object.fieldSet_[12] = true
 		case "replicas":
 			value := iterator.ReadInt()
 			object.replicas = value
-			object.fieldSet_[12] = true
+			object.fieldSet_[13] = true
 		case "status":
 			value := ReadNodePoolStatus(iterator)
 			object.status = value
-			object.fieldSet_[13] = true
+			object.fieldSet_[14] = true
 		case "subnet":
 			value := iterator.ReadString()
 			object.subnet = value
-			object.fieldSet_[14] = true
+			object.fieldSet_[15] = true
 		case "taints":
 			value := ReadTaintList(iterator)
 			object.taints = value
-			object.fieldSet_[15] = true
+			object.fieldSet_[16] = true
 		case "tuning_configs":
 			value := ReadStringList(iterator)
 			object.tuningConfigs = value
-			object.fieldSet_[16] = true
+			object.fieldSet_[17] = true
 		case "version":
 			value := ReadVersion(iterator)
 			object.version = value
-			object.fieldSet_[17] = true
+			object.fieldSet_[18] = true
 		default:
 			iterator.ReadAny()
 		}

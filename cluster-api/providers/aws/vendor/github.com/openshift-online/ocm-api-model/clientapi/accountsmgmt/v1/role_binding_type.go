@@ -42,6 +42,8 @@ type RoleBinding struct {
 	href           string
 	account        *Account
 	accountID      string
+	accountGroup   *AccountGroup
+	accountGroupID string
 	createdAt      time.Time
 	managedBy      string
 	organization   *Organization
@@ -160,10 +162,48 @@ func (o *RoleBinding) GetAccountID() (value string, ok bool) {
 	return
 }
 
+// AccountGroup returns the value of the 'account_group' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+func (o *RoleBinding) AccountGroup() *AccountGroup {
+	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
+		return o.accountGroup
+	}
+	return nil
+}
+
+// GetAccountGroup returns the value of the 'account_group' attribute and
+// a flag indicating if the attribute has a value.
+func (o *RoleBinding) GetAccountGroup() (value *AccountGroup, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
+	if ok {
+		value = o.accountGroup
+	}
+	return
+}
+
+// AccountGroupID returns the value of the 'account_group_ID' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+func (o *RoleBinding) AccountGroupID() string {
+	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
+		return o.accountGroupID
+	}
+	return ""
+}
+
+// GetAccountGroupID returns the value of the 'account_group_ID' attribute and
+// a flag indicating if the attribute has a value.
+func (o *RoleBinding) GetAccountGroupID() (value string, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
+	if ok {
+		value = o.accountGroupID
+	}
+	return
+}
+
 // ConfigManaged returns the value of the 'config_managed' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) ConfigManaged() bool {
-	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
+	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
 		return o.configManaged
 	}
 	return false
@@ -172,7 +212,7 @@ func (o *RoleBinding) ConfigManaged() bool {
 // GetConfigManaged returns the value of the 'config_managed' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetConfigManaged() (value bool, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
+	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
 	if ok {
 		value = o.configManaged
 	}
@@ -182,7 +222,7 @@ func (o *RoleBinding) GetConfigManaged() (value bool, ok bool) {
 // CreatedAt returns the value of the 'created_at' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) CreatedAt() time.Time {
-	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
+	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
 		return o.createdAt
 	}
 	return time.Time{}
@@ -191,7 +231,7 @@ func (o *RoleBinding) CreatedAt() time.Time {
 // GetCreatedAt returns the value of the 'created_at' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetCreatedAt() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
+	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
 	if ok {
 		value = o.createdAt
 	}
@@ -201,7 +241,7 @@ func (o *RoleBinding) GetCreatedAt() (value time.Time, ok bool) {
 // ManagedBy returns the value of the 'managed_by' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) ManagedBy() string {
-	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
+	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
 		return o.managedBy
 	}
 	return ""
@@ -210,7 +250,7 @@ func (o *RoleBinding) ManagedBy() string {
 // GetManagedBy returns the value of the 'managed_by' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetManagedBy() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
+	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
 	if ok {
 		value = o.managedBy
 	}
@@ -220,7 +260,7 @@ func (o *RoleBinding) GetManagedBy() (value string, ok bool) {
 // Organization returns the value of the 'organization' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) Organization() *Organization {
-	if o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8] {
+	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
 		return o.organization
 	}
 	return nil
@@ -229,7 +269,7 @@ func (o *RoleBinding) Organization() *Organization {
 // GetOrganization returns the value of the 'organization' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetOrganization() (value *Organization, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 8 && o.fieldSet_[8]
+	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
 	if ok {
 		value = o.organization
 	}
@@ -239,7 +279,7 @@ func (o *RoleBinding) GetOrganization() (value *Organization, ok bool) {
 // OrganizationID returns the value of the 'organization_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) OrganizationID() string {
-	if o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9] {
+	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
 		return o.organizationID
 	}
 	return ""
@@ -248,7 +288,7 @@ func (o *RoleBinding) OrganizationID() string {
 // GetOrganizationID returns the value of the 'organization_ID' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetOrganizationID() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 9 && o.fieldSet_[9]
+	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
 	if ok {
 		value = o.organizationID
 	}
@@ -258,7 +298,7 @@ func (o *RoleBinding) GetOrganizationID() (value string, ok bool) {
 // Role returns the value of the 'role' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) Role() *Role {
-	if o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10] {
+	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
 		return o.role
 	}
 	return nil
@@ -267,7 +307,7 @@ func (o *RoleBinding) Role() *Role {
 // GetRole returns the value of the 'role' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetRole() (value *Role, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 10 && o.fieldSet_[10]
+	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
 	if ok {
 		value = o.role
 	}
@@ -277,7 +317,7 @@ func (o *RoleBinding) GetRole() (value *Role, ok bool) {
 // RoleID returns the value of the 'role_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) RoleID() string {
-	if o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11] {
+	if o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13] {
 		return o.roleID
 	}
 	return ""
@@ -286,7 +326,7 @@ func (o *RoleBinding) RoleID() string {
 // GetRoleID returns the value of the 'role_ID' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetRoleID() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 11 && o.fieldSet_[11]
+	ok = o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13]
 	if ok {
 		value = o.roleID
 	}
@@ -296,7 +336,7 @@ func (o *RoleBinding) GetRoleID() (value string, ok bool) {
 // Subscription returns the value of the 'subscription' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) Subscription() *Subscription {
-	if o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12] {
+	if o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14] {
 		return o.subscription
 	}
 	return nil
@@ -305,7 +345,7 @@ func (o *RoleBinding) Subscription() *Subscription {
 // GetSubscription returns the value of the 'subscription' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetSubscription() (value *Subscription, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 12 && o.fieldSet_[12]
+	ok = o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14]
 	if ok {
 		value = o.subscription
 	}
@@ -315,7 +355,7 @@ func (o *RoleBinding) GetSubscription() (value *Subscription, ok bool) {
 // SubscriptionID returns the value of the 'subscription_ID' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) SubscriptionID() string {
-	if o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13] {
+	if o != nil && len(o.fieldSet_) > 15 && o.fieldSet_[15] {
 		return o.subscriptionID
 	}
 	return ""
@@ -324,7 +364,7 @@ func (o *RoleBinding) SubscriptionID() string {
 // GetSubscriptionID returns the value of the 'subscription_ID' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetSubscriptionID() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 13 && o.fieldSet_[13]
+	ok = o != nil && len(o.fieldSet_) > 15 && o.fieldSet_[15]
 	if ok {
 		value = o.subscriptionID
 	}
@@ -334,7 +374,7 @@ func (o *RoleBinding) GetSubscriptionID() (value string, ok bool) {
 // Type returns the value of the 'type' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) Type() string {
-	if o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14] {
+	if o != nil && len(o.fieldSet_) > 16 && o.fieldSet_[16] {
 		return o.type_
 	}
 	return ""
@@ -343,7 +383,7 @@ func (o *RoleBinding) Type() string {
 // GetType returns the value of the 'type' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetType() (value string, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 14 && o.fieldSet_[14]
+	ok = o != nil && len(o.fieldSet_) > 16 && o.fieldSet_[16]
 	if ok {
 		value = o.type_
 	}
@@ -353,7 +393,7 @@ func (o *RoleBinding) GetType() (value string, ok bool) {
 // UpdatedAt returns the value of the 'updated_at' attribute, or
 // the zero value of the type if the attribute doesn't have a value.
 func (o *RoleBinding) UpdatedAt() time.Time {
-	if o != nil && len(o.fieldSet_) > 15 && o.fieldSet_[15] {
+	if o != nil && len(o.fieldSet_) > 17 && o.fieldSet_[17] {
 		return o.updatedAt
 	}
 	return time.Time{}
@@ -362,7 +402,7 @@ func (o *RoleBinding) UpdatedAt() time.Time {
 // GetUpdatedAt returns the value of the 'updated_at' attribute and
 // a flag indicating if the attribute has a value.
 func (o *RoleBinding) GetUpdatedAt() (value time.Time, ok bool) {
-	ok = o != nil && len(o.fieldSet_) > 15 && o.fieldSet_[15]
+	ok = o != nil && len(o.fieldSet_) > 17 && o.fieldSet_[17]
 	if ok {
 		value = o.updatedAt
 	}

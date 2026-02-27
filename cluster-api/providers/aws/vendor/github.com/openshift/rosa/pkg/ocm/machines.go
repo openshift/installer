@@ -19,7 +19,9 @@ package ocm
 import (
 	"errors"
 	"fmt"
+	"strings"
 
+	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 	amsv1 "github.com/openshift-online/ocm-sdk-go/accountsmgmt/v1"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 
@@ -246,11 +248,33 @@ func (mtl *MachineTypeList) UpdateAvailableQuota(quotaCosts *amsv1.QuotaCostList
 	}
 }
 
-func (mtl *MachineTypeList) GetAvailableIDs(multiAZ bool) (machineTypeList []string) {
+func (mtl *MachineTypeList) GetAvailableIDs(multiAZ bool) *MachineTypeList {
 	list := mtl.Filter(func(mt *MachineType) bool {
 		return mt.Available && mt.HasQuota(multiAZ)
 	})
-	return list.IDs()
+	return &list
+}
+
+func (mtl *MachineTypeList) GetWinLi(winLi string) *MachineTypeList {
+	if !strings.EqualFold(winLi, string(v1.ImageTypeWindows)) {
+		return mtl
+	}
+
+	list := mtl.Filter(func(mt *MachineType) bool {
+		if mt.MachineType == nil {
+			return false
+		}
+		features, ok := mt.MachineType.GetFeatures()
+		if !ok {
+			return false
+		}
+		winLi, ok := features.GetWinLI()
+		if ok {
+			return winLi
+		}
+		return false
+	})
+	return &list
 }
 
 // Validate AWS machine type is available with enough quota in the list
@@ -265,7 +289,7 @@ func (mtl *MachineTypeList) ValidateMachineType(machineType string, multiAZ bool
 	}
 
 	if !v.HasQuota(multiAZ) {
-		err := fmt.Errorf("Insufficient quota for instance type: %s", machineType)
+		err := fmt.Errorf("insufficient quota for instance type: %s", machineType)
 		return err
 	}
 

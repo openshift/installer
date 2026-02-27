@@ -140,7 +140,7 @@ type JwsAlgorithm interface {
 // JwcAlgorithm is a contract for implementing compression algorithm
 type JwcAlgorithm interface {
 	Compress(plainText []byte) []byte
-	Decompress(compressedText []byte) []byte
+	Decompress(compressedText []byte) ([]byte, error)
 	Name() string
 }
 
@@ -427,7 +427,9 @@ func decrypt(parts [][]byte, key interface{}) (plainText []byte, headers map[str
 							return nil, nil, errors.New(fmt.Sprintf("jwt.decrypt(): Unknown compression algorithm '%v'", zip))
 						}
 
-						plainBytes = zipAlg.Decompress(plainBytes)
+						if plainBytes, err = zipAlg.Decompress(plainBytes); err != nil {
+							return nil, nil, err
+						}
 					}
 
 					return plainBytes, jwtHeader, nil

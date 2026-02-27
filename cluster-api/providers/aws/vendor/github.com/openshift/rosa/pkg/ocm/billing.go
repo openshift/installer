@@ -43,10 +43,10 @@ func (c *Client) GetBillingAccounts() ([]*v1.CloudAccount, error) {
 	}
 
 	if len(billingAccounts) == 0 {
-		return billingAccounts, errors.New("No valid billing account associated." +
+		return billingAccounts, errors.New("no valid billing account associated." +
 			" Go to https://console.aws.amazon.com/rosa/home#/get-started" +
 			" to enable ROSA with HCP for your intended billing account." +
-			" You must have a valid billing account associated to continue.")
+			" You must have a valid billing account associated to continue")
 	}
 
 	return billingAccounts, nil
@@ -101,10 +101,10 @@ func IsValidAWSAccount(account string) bool {
 
 func ValidateBillingAccount(billingAccount string) error {
 	if billingAccount == "" {
-		return fmt.Errorf("A billing account number is required")
+		return fmt.Errorf("a billing account number is required")
 	}
 	if !IsValidAWSAccount(billingAccount) {
-		return fmt.Errorf("Provided billing account number %s is not valid. "+
+		return fmt.Errorf("provided billing account number %s is not valid. "+
 			"Rerun the command with a valid billing account number", billingAccount)
 	}
 	return nil

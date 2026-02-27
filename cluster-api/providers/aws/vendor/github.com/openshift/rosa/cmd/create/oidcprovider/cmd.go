@@ -186,7 +186,7 @@ func run(cmd *cobra.Command, argv []string) {
 		if clusterKey != "" {
 			confirmPromptMessage = fmt.Sprintf("Create the OIDC provider for cluster '%s'?", clusterKey)
 		}
-		if !confirm.Prompt(true, confirmPromptMessage) {
+		if !confirm.Prompt(true, "%s", confirmPromptMessage) {
 			os.Exit(0)
 		}
 		if clusterId == "" && clusterKey != "" {
@@ -232,7 +232,7 @@ func CreateOIDCProvider(r *rosa.Runtime, oidcConfigId string, clusterId string, 
 	args.oidcConfigId = oidcConfigId
 	oidcConfig, err := r.OCMClient.GetOidcConfig(oidcConfigId)
 	if err != nil {
-		return fmt.Errorf("There was a problem retrieving OIDC Config '%s': %v", oidcConfigId, err)
+		return fmt.Errorf("there was a problem retrieving OIDC Config '%s': %v", oidcConfigId, err)
 	}
 	oidcEndpointURL := oidcConfig.IssuerUrl()
 	return createProvider(r, oidcEndpointURL, clusterId, isProgrammaticallyCalled)

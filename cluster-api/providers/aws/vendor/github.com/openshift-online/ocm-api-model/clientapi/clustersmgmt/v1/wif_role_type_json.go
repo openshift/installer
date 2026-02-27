@@ -60,7 +60,16 @@ func WriteWifRole(object *WifRole, stream *jsoniter.Stream) {
 		stream.WriteBool(object.predefined)
 		count++
 	}
-	present_ = len(object.fieldSet_) > 2 && object.fieldSet_[2]
+	present_ = len(object.fieldSet_) > 2 && object.fieldSet_[2] && object.resourceBindings != nil
+	if present_ {
+		if count > 0 {
+			stream.WriteMore()
+		}
+		stream.WriteObjectField("resource_bindings")
+		WriteWifResourceBindingList(object.resourceBindings, stream)
+		count++
+	}
+	present_ = len(object.fieldSet_) > 3 && object.fieldSet_[3]
 	if present_ {
 		if count > 0 {
 			stream.WriteMore()
@@ -86,7 +95,7 @@ func UnmarshalWifRole(source interface{}) (object *WifRole, err error) {
 // ReadWifRole reads a value of the 'wif_role' type from the given iterator.
 func ReadWifRole(iterator *jsoniter.Iterator) *WifRole {
 	object := &WifRole{
-		fieldSet_: make([]bool, 3),
+		fieldSet_: make([]bool, 4),
 	}
 	for {
 		field := iterator.ReadObject()
@@ -102,10 +111,14 @@ func ReadWifRole(iterator *jsoniter.Iterator) *WifRole {
 			value := iterator.ReadBool()
 			object.predefined = value
 			object.fieldSet_[1] = true
+		case "resource_bindings":
+			value := ReadWifResourceBindingList(iterator)
+			object.resourceBindings = value
+			object.fieldSet_[2] = true
 		case "role_id":
 			value := iterator.ReadString()
 			object.roleId = value
-			object.fieldSet_[2] = true
+			object.fieldSet_[3] = true
 		default:
 			iterator.ReadAny()
 		}

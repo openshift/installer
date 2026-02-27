@@ -123,7 +123,7 @@ func (c *Client) GetMissingGateAgreementsHypershift(
 			// return original error if invaild version gate detected
 			if len(gates) > 0 && gates[0].ID() == "" {
 				errType := errors.ErrorType(response.Error().Status())
-				return []*cmv1.VersionGate{}, errType.Set(errors.Errorf(response.Error().Reason()))
+				return []*cmv1.VersionGate{}, errType.Set(errors.Errorf("%v", response.Error().Reason()))
 			}
 			return gates, nil
 		}
@@ -155,7 +155,7 @@ func (c *Client) GetMissingGateAgreementsClassic(
 			// return original error if invaild version gate detected
 			if len(gates) > 0 && gates[0].ID() == "" {
 				errType := errors.ErrorType(response.Error().Status())
-				return []*cmv1.VersionGate{}, errType.Set(errors.Errorf(response.Error().Reason()))
+				return []*cmv1.VersionGate{}, errType.Set(errors.Errorf("%v", response.Error().Reason()))
 			}
 			return gates, nil
 		}

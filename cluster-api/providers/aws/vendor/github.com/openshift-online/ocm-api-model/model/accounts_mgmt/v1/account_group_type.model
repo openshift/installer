@@ -1,0 +1,35 @@
+/*
+Copyright (c) 2025 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+class AccountGroup {
+  CreatedAt Date
+  UpdatedAt Date
+
+  // An optional field for the Platform RBAC's identifier for this account group.
+  // Used when the group is managed by an external RBAC service to track the
+  // corresponding ID in that system.
+  ExternalID String
+
+  Name String
+  Description String
+  OrganizationID String
+
+  // Indicates which system manages this account group
+  // Can be either:
+  // RBAC - Group managed by remote RBAC service, synchronized by job
+  // OCM - Group managed by OCM's APIs directly
+  ManagedBy AccountGroupManagedBy
+}

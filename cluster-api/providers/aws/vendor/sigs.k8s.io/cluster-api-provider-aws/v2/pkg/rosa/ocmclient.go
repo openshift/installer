@@ -59,6 +59,10 @@ type OCMClient interface {
 	UpdateNodePool(clusterID string, nodePool *v1.NodePool) (*v1.NodePool, error)
 	UpdateCluster(clusterKey string, creator *aws.Creator, config ocm.Spec) error
 	ValidateHypershiftVersion(versionRawID string, channelGroup string) (bool, error)
+	SetLogForwarder(clusterID string, logForwarder *v1.LogForwarder) (*v1.LogForwarder, error)
+	UpdateLogForwarder(logForwarder *v1.LogForwarder, logForwarderID string, clusterID string) error
+	DeleteLogForwarder(clusterID string, logForwarderID string) error
+	GetLogForwarders(clusterID string) ([]*v1.LogForwarder, error)
 }
 
 func (c *ocmclient) AckVersionGate(clusterID string, gateID string) error {
@@ -152,6 +156,22 @@ func (c *ocmclient) UpdateNodePool(clusterID string, nodePool *v1.NodePool) (*v1
 
 func (c *ocmclient) ValidateHypershiftVersion(versionRawID string, channelGroup string) (bool, error) {
 	return c.ocmClient.ValidateHypershiftVersion(versionRawID, channelGroup)
+}
+
+func (c *ocmclient) SetLogForwarder(clusterID string, logForwarder *v1.LogForwarder) (*v1.LogForwarder, error) {
+	return c.ocmClient.SetLogForwarder(clusterID, logForwarder)
+}
+
+func (c *ocmclient) UpdateLogForwarder(logForwarder *v1.LogForwarder, logForwarderID string, clusterID string) error {
+	return c.ocmClient.UpdateLogForwarder(logForwarder, logForwarderID, clusterID)
+}
+
+func (c *ocmclient) DeleteLogForwarder(clusterID string, logForwarderID string) error {
+	return c.ocmClient.DeleteLogForwarder(clusterID, logForwarderID)
+}
+
+func (c *ocmclient) GetLogForwarders(clusterID string) ([]*v1.LogForwarder, error) {
+	return c.ocmClient.GetLogForwarders(clusterID)
 }
 
 // NewMockOCMClient creates a new empty ocm.Client without any real connection.

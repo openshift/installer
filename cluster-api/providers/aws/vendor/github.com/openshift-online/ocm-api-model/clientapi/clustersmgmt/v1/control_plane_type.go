@@ -23,8 +23,9 @@ package v1 // github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v
 //
 // Representation of a Control Plane
 type ControlPlane struct {
-	fieldSet_ []bool
-	backup    *Backup
+	fieldSet_     []bool
+	backup        *Backup
+	logForwarders *LogForwarderList
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -59,6 +60,31 @@ func (o *ControlPlane) GetBackup() (value *Backup, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 0 && o.fieldSet_[0]
 	if ok {
 		value = o.backup
+	}
+	return
+}
+
+// LogForwarders returns the value of the 'log_forwarders' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// Control plane log forwarders configuration.
+// This can be set during cluster creation to configure control plane log forwarders.
+func (o *ControlPlane) LogForwarders() *LogForwarderList {
+	if o != nil && len(o.fieldSet_) > 1 && o.fieldSet_[1] {
+		return o.logForwarders
+	}
+	return nil
+}
+
+// GetLogForwarders returns the value of the 'log_forwarders' attribute and
+// a flag indicating if the attribute has a value.
+//
+// Control plane log forwarders configuration.
+// This can be set during cluster creation to configure control plane log forwarders.
+func (o *ControlPlane) GetLogForwarders() (value *LogForwarderList, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 1 && o.fieldSet_[1]
+	if ok {
+		value = o.logForwarders
 	}
 	return
 }

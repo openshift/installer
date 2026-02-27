@@ -136,4 +136,9 @@ resource Root {
 	locator RegistryAllowlists {
 		target RegistryAllowlists
 	}
+
+	// Reference to log forwarding related resources.
+	locator LogForwarding {
+		target LogForwarding
+	}
 }

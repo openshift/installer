@@ -66,7 +66,7 @@ func (o *DNS) Empty() bool {
 // this:
 //
 // ```http
-// GET /api/clusters_mgmt/v1/clusters/123 HTTP/1.1
+// GET /api/aro_hcp/v1alpha1/clusters/123 HTTP/1.1
 // ```
 //
 // That will return a response like this, including the `api.url` attribute:
@@ -76,7 +76,7 @@ func (o *DNS) Empty() bool {
 //	{
 //	    "kind": "Cluster",
 //	    "id": "123",
-//	    "href": "/api/clusters_mgmt/v1/clusters/123",
+//	    "href": "/api/aro_hcp/v1alpha1/clusters/123",
 //	        "api": {
 //	        "url": "https://mycluster-api.example.com:6443"
 //	    },
@@ -120,7 +120,7 @@ func (o *DNS) BaseDomain() string {
 // this:
 //
 // ```http
-// GET /api/clusters_mgmt/v1/clusters/123 HTTP/1.1
+// GET /api/aro_hcp/v1alpha1/clusters/123 HTTP/1.1
 // ```
 //
 // That will return a response like this, including the `api.url` attribute:
@@ -130,7 +130,7 @@ func (o *DNS) BaseDomain() string {
 //	{
 //	    "kind": "Cluster",
 //	    "id": "123",
-//	    "href": "/api/clusters_mgmt/v1/clusters/123",
+//	    "href": "/api/aro_hcp/v1alpha1/clusters/123",
 //	        "api": {
 //	        "url": "https://mycluster-api.example.com:6443"
 //	    },

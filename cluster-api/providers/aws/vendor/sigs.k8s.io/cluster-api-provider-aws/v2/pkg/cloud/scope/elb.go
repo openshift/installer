@@ -39,10 +39,12 @@ type ELBScope interface {
 	VPC() *infrav1.VPCSpec
 
 	// ControlPlaneLoadBalancer returns the AWSLoadBalancerSpec
+	//
 	// Deprecated: Use ControlPlaneLoadBalancers()
 	ControlPlaneLoadBalancer() *infrav1.AWSLoadBalancerSpec
 
 	// ControlPlaneLoadBalancerScheme returns the Classic ELB scheme (public or internal facing)
+	//
 	// Deprecated: This method is going to be removed in a future release. Use LoadBalancer.Scheme.
 	ControlPlaneLoadBalancerScheme() infrav1.ELBScheme
 

@@ -19,8 +19,6 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-
 // MachineTypeKind is the name of the type used to represent objects
 // of type 'machine_type'.
 const MachineTypeKind = "MachineType"
@@ -43,7 +41,7 @@ type MachineType struct {
 	cpu           *Value
 	architecture  ProcessorType
 	category      MachineTypeCategory
-	cloudProvider *v1.CloudProvider
+	cloudProvider *CloudProvider
 	genericName   string
 	memory        *Value
 	name          string
@@ -214,7 +212,7 @@ func (o *MachineType) GetCategory() (value MachineTypeCategory, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Link to the cloud provider that the machine type belongs to.
-func (o *MachineType) CloudProvider() *v1.CloudProvider {
+func (o *MachineType) CloudProvider() *CloudProvider {
 	if o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7] {
 		return o.cloudProvider
 	}
@@ -225,7 +223,7 @@ func (o *MachineType) CloudProvider() *v1.CloudProvider {
 // a flag indicating if the attribute has a value.
 //
 // Link to the cloud provider that the machine type belongs to.
-func (o *MachineType) GetCloudProvider() (value *v1.CloudProvider, ok bool) {
+func (o *MachineType) GetCloudProvider() (value *CloudProvider, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 7 && o.fieldSet_[7]
 	if ok {
 		value = o.cloudProvider

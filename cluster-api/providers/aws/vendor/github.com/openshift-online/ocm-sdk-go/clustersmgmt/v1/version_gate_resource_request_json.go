@@ -35,3 +35,11 @@ func readVersionGateGetResponse(response *VersionGateGetResponse, reader io.Read
 	response.body, err = UnmarshalVersionGate(reader)
 	return err
 }
+func writeVersionGateUpdateRequest(request *VersionGateUpdateRequest, writer io.Writer) error {
+	return MarshalVersionGate(request.body, writer)
+}
+func readVersionGateUpdateResponse(response *VersionGateUpdateResponse, reader io.Reader) error {
+	var err error
+	response.body, err = UnmarshalVersionGate(reader)
+	return err
+}

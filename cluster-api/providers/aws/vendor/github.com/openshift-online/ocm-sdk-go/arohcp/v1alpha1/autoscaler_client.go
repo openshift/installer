@@ -34,7 +34,7 @@ import (
 
 // AutoscalerClient is the client of the 'autoscaler' resource.
 //
-// Manages a specific cluster autoscaler.
+// Manages global autoscaler configurations for a cluster.
 type AutoscalerClient struct {
 	transport http.RoundTripper
 	path      string
@@ -52,7 +52,7 @@ func NewAutoscalerClient(transport http.RoundTripper, path string) *AutoscalerCl
 
 // Get creates a request for the 'get' method.
 //
-// Retrieves the details of the cluster autoscaler.
+// Retrieves the autoscaler of a cluster.
 func (c *AutoscalerClient) Get() *AutoscalerGetRequest {
 	return &AutoscalerGetRequest{
 		transport: c.transport,

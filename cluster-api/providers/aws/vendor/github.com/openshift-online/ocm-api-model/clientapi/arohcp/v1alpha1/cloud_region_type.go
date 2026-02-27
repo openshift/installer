@@ -19,8 +19,6 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-
 // CloudRegionKind is the name of the type used to represent objects
 // of type 'cloud_region'.
 const CloudRegionKind = "CloudRegion"
@@ -42,7 +40,7 @@ type CloudRegion struct {
 	href               string
 	kmsLocationID      string
 	kmsLocationName    string
-	cloudProvider      *v1.CloudProvider
+	cloudProvider      *CloudProvider
 	displayName        string
 	name               string
 	ccsOnly            bool
@@ -198,7 +196,7 @@ func (o *CloudRegion) GetKMSLocationName() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Link to the cloud provider that the region belongs to.
-func (o *CloudRegion) CloudProvider() *v1.CloudProvider {
+func (o *CloudRegion) CloudProvider() *CloudProvider {
 	if o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6] {
 		return o.cloudProvider
 	}
@@ -209,7 +207,7 @@ func (o *CloudRegion) CloudProvider() *v1.CloudProvider {
 // a flag indicating if the attribute has a value.
 //
 // Link to the cloud provider that the region belongs to.
-func (o *CloudRegion) GetCloudProvider() (value *v1.CloudProvider, ok bool) {
+func (o *CloudRegion) GetCloudProvider() (value *CloudProvider, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 6 && o.fieldSet_[6]
 	if ok {
 		value = o.cloudProvider

@@ -44,7 +44,7 @@ func GetAddonArgument(param asv1.AddonParameter, dflt string) (string, error) {
 				}
 				if isValid, err := regexp.MatchString(param.Validation(), strAns); err != nil || !isValid {
 					if param.ValidationErrMsg() != "" {
-						return fmt.Errorf(param.ValidationErrMsg())
+						return fmt.Errorf("%s", param.ValidationErrMsg())
 					}
 					return fmt.Errorf("expected %q to match /%s/", strAns, param.Validation())
 				}
@@ -106,7 +106,7 @@ func GetAddonArgument(param asv1.AddonParameter, dflt string) (string, error) {
 
 	// If the parameter type wasn't handled in the above switch statement
 	// then this parameter type is not supported by interactive mode yet.
-	return "", fmt.Errorf("The parameter '%s' does not support interactive mode", param.ID())
+	return "", fmt.Errorf("the parameter '%s' does not support interactive mode", param.ID())
 }
 
 func getOptionNames(param asv1.AddonParameter) []string {

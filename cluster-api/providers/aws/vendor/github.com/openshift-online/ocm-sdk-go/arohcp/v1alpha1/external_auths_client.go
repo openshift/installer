@@ -34,7 +34,7 @@ import (
 
 // ExternalAuthsClient is the client of the 'external_auths' resource.
 //
-// Manages the collection of external authentication providers defined for an ARO HCP cluster.
+// Manages the collection of external authentication defined for a ARO HCP cluster.
 type ExternalAuthsClient struct {
 	transport http.RoundTripper
 	path      string
@@ -52,7 +52,7 @@ func NewExternalAuthsClient(transport http.RoundTripper, path string) *ExternalA
 
 // Add creates a request for the 'async_add' method.
 //
-// Adds a new external authentication provider to the cluster.
+// Adds a new authentication to the cluster.
 func (c *ExternalAuthsClient) Add() *ExternalAuthsAddRequest {
 	return &ExternalAuthsAddRequest{
 		transport: c.transport,
@@ -70,7 +70,7 @@ func (c *ExternalAuthsClient) List() *ExternalAuthsListRequest {
 
 // ExternalAuth returns the target 'external_auth' resource for the given identifier.
 //
-// Reference to the resource that manages a specific external authentication provider.
+// Reference to the service that manages a specific external authentication.
 func (c *ExternalAuthsClient) ExternalAuth(id string) *ExternalAuthClient {
 	return NewExternalAuthClient(
 		c.transport,
@@ -108,7 +108,7 @@ func (r *ExternalAuthsAddRequest) Impersonate(user string) *ExternalAuthsAddRequ
 
 // Body sets the value of the 'body' parameter.
 //
-// Description of the external authentication provider.
+// Description of the external authentication.
 func (r *ExternalAuthsAddRequest) Body(value *ExternalAuth) *ExternalAuthsAddRequest {
 	r.body = value
 	return r
@@ -207,7 +207,7 @@ func (r *ExternalAuthsAddResponse) Error() *errors.Error {
 
 // Body returns the value of the 'body' parameter.
 //
-// Description of the external authentication provider.
+// Description of the external authentication.
 func (r *ExternalAuthsAddResponse) Body() *ExternalAuth {
 	if r == nil {
 		return nil
@@ -218,7 +218,7 @@ func (r *ExternalAuthsAddResponse) Body() *ExternalAuth {
 // GetBody returns the value of the 'body' parameter and
 // a flag indicating if the parameter has a value.
 //
-// Description of the external authentication provider.
+// Description of the external authentication.
 func (r *ExternalAuthsAddResponse) GetBody() (value *ExternalAuth, ok bool) {
 	ok = r != nil && r.body != nil
 	if ok {
@@ -368,7 +368,7 @@ func (r *ExternalAuthsListResponse) Error() *errors.Error {
 
 // Items returns the value of the 'items' parameter.
 //
-// Retrieved list of external authentication providers.
+// Retrieved list of external authentications.
 func (r *ExternalAuthsListResponse) Items() *ExternalAuthList {
 	if r == nil {
 		return nil
@@ -379,7 +379,7 @@ func (r *ExternalAuthsListResponse) Items() *ExternalAuthList {
 // GetItems returns the value of the 'items' parameter and
 // a flag indicating if the parameter has a value.
 //
-// Retrieved list of external authentication providers.
+// Retrieved list of external authentications.
 func (r *ExternalAuthsListResponse) GetItems() (value *ExternalAuthList, ok bool) {
 	ok = r != nil && r.items != nil
 	if ok {

@@ -19,16 +19,12 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import (
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-)
-
 // Details for `htpasswd` identity providers.
 type HTPasswdIdentityProviderBuilder struct {
 	fieldSet_ []bool
 	password  string
 	username  string
-	users     *v1.HTPasswdUserListBuilder
+	users     *HTPasswdUserListBuilder
 }
 
 // NewHTPasswdIdentityProvider creates a new builder of 'HT_passwd_identity_provider' objects.
@@ -72,7 +68,7 @@ func (b *HTPasswdIdentityProviderBuilder) Username(value string) *HTPasswdIdenti
 }
 
 // Users sets the value of the 'users' attribute to the given values.
-func (b *HTPasswdIdentityProviderBuilder) Users(value *v1.HTPasswdUserListBuilder) *HTPasswdIdentityProviderBuilder {
+func (b *HTPasswdIdentityProviderBuilder) Users(value *HTPasswdUserListBuilder) *HTPasswdIdentityProviderBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 3)
 	}
@@ -93,7 +89,7 @@ func (b *HTPasswdIdentityProviderBuilder) Copy(object *HTPasswdIdentityProvider)
 	b.password = object.password
 	b.username = object.username
 	if object.users != nil {
-		b.users = v1.NewHTPasswdUserList().Copy(object.users)
+		b.users = NewHTPasswdUserList().Copy(object.users)
 	} else {
 		b.users = nil
 	}
