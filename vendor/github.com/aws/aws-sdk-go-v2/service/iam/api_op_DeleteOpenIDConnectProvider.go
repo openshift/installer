@@ -37,7 +37,9 @@ type DeleteOpenIDConnectProviderInput struct {
 
 	// The Amazon Resource Name (ARN) of the IAM OpenID Connect provider resource
 	// object to delete. You can get a list of OpenID Connect provider resource ARNs by
-	// using the ListOpenIDConnectProvidersoperation.
+	// using the [ListOpenIDConnectProviders]operation.
+	//
+	// [ListOpenIDConnectProviders]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListOpenIDConnectProviders.html
 	//
 	// This member is required.
 	OpenIDConnectProviderArn *string
@@ -95,6 +97,9 @@ func (c *Client) addOperationDeleteOpenIDConnectProviderMiddlewares(stack *middl
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -111,6 +116,9 @@ func (c *Client) addOperationDeleteOpenIDConnectProviderMiddlewares(stack *middl
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDeleteOpenIDConnectProviderValidationMiddleware(stack); err != nil {
@@ -132,6 +140,15 @@ func (c *Client) addOperationDeleteOpenIDConnectProviderMiddlewares(stack *middl
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

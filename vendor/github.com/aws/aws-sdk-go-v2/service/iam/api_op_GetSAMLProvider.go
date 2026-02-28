@@ -49,14 +49,25 @@ type GetSAMLProviderInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetSAMLProvider request.
+// Contains the response to a successful [GetSAMLProvider] request.
+//
+// [GetSAMLProvider]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetSAMLProvider.html
 type GetSAMLProviderOutput struct {
+
+	// Specifies the encryption setting for the SAML provider.
+	AssertionEncryptionMode types.AssertionEncryptionModeType
 
 	// The date and time when the SAML provider was created.
 	CreateDate *time.Time
 
+	// The private key metadata for the SAML provider.
+	PrivateKeyList []types.SAMLPrivateKey
+
 	// The XML metadata document that includes information about an identity provider.
 	SAMLMetadataDocument *string
+
+	// The unique identifier assigned to the SAML provider.
+	SAMLProviderUUID *string
 
 	// A list of tags that are attached to the specified IAM SAML provider. The
 	// returned list of tags is sorted by tag key. For more information about tagging,
@@ -117,6 +128,9 @@ func (c *Client) addOperationGetSAMLProviderMiddlewares(stack *middleware.Stack,
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -133,6 +147,9 @@ func (c *Client) addOperationGetSAMLProviderMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpGetSAMLProviderValidationMiddleware(stack); err != nil {
@@ -154,6 +171,15 @@ func (c *Client) addOperationGetSAMLProviderMiddlewares(stack *middleware.Stack,
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

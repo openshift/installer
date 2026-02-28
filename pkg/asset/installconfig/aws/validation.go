@@ -15,7 +15,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/iam"
 	"github.com/aws/aws-sdk-go-v2/service/route53"
 	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
-	"github.com/aws/aws-sdk-go/aws/endpoints"
 	"github.com/sirupsen/logrus"
 	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -168,7 +167,7 @@ func validateAMI(ctx context.Context, meta *Metadata, config *types.InstallConfi
 		if err != nil {
 			return field.ErrorList{field.InternalError(field.NewPath("platform", "aws", "region"), fmt.Errorf("failed to resolve ec2 endpoint"))}
 		}
-		if defaultEndpoint.PartitionID == endpoints.AwsPartitionID {
+		if defaultEndpoint.PartitionID == awstypes.AwsPartitionID {
 			return nil
 		}
 	}

@@ -9,8 +9,12 @@ import (
 
 // Information about an action.
 //
-// Each rule must include exactly one of the following types of actions: forward ,
+// Each rule must include exactly one of the following routing actions: forward ,
 // fixed-response , or redirect , and it must be the last action to be performed.
+//
+// Optionally, a rule for an HTTPS listener can also include one of the following
+// user authentication actions: authenticate-oidc , authenticate-cognito , or
+// jwt-validation .
 type Action struct {
 
 	// The type of action.
@@ -30,12 +34,17 @@ type Action struct {
 	// custom HTTP response. Specify only when Type is fixed-response .
 	FixedResponseConfig *FixedResponseActionConfig
 
-	// Information for creating an action that distributes requests among one or more
-	// target groups. For Network Load Balancers, you can specify a single target
-	// group. Specify only when Type is forward . If you specify both ForwardConfig
-	// and TargetGroupArn , you can specify only one target group using ForwardConfig
-	// and it must be the same target group specified in TargetGroupArn .
+	// Information for creating an action that distributes requests among multiple
+	// target groups. Specify only when Type is forward .
+	//
+	// If you specify both ForwardConfig and TargetGroupArn , you can specify only one
+	// target group using ForwardConfig and it must be the same target group specified
+	// in TargetGroupArn .
 	ForwardConfig *ForwardActionConfig
+
+	// [HTTPS listeners] Information for validating JWT access tokens in client
+	// requests. Specify only when Type is jwt-validation .
+	JwtValidationConfig *JwtValidationActionConfig
 
 	// The order for the action. This value is required for rules with multiple
 	// actions. The action with the lowest value for order is performed first.
@@ -46,8 +55,8 @@ type Action struct {
 	RedirectConfig *RedirectActionConfig
 
 	// The Amazon Resource Name (ARN) of the target group. Specify only when Type is
-	// forward and you want to route to a single target group. To route to one or more
-	// target groups, use ForwardConfig instead.
+	// forward and you want to route to a single target group. To route to multiple
+	// target groups, you must use ForwardConfig instead.
 	TargetGroupArn *string
 
 	noSmithyDocumentSerde
@@ -316,8 +325,7 @@ type ForwardActionConfig struct {
 	// The target group stickiness for the rule.
 	TargetGroupStickinessConfig *TargetGroupStickinessConfig
 
-	// The target groups. For Network Load Balancers, you can specify a single target
-	// group.
+	// The target groups.
 	TargetGroups []TargetGroupTuple
 
 	noSmithyDocumentSerde
@@ -326,15 +334,31 @@ type ForwardActionConfig struct {
 // Information about a host header condition.
 type HostHeaderConditionConfig struct {
 
-	// The host names. The maximum size of each name is 128 characters. The comparison
-	// is case insensitive. The following wildcard characters are supported: * (matches
-	// 0 or more characters) and ? (matches exactly 1 character). You must include at
-	// least one "." character. You can include only alphabetical characters after the
-	// final "." character.
+	// The regular expressions to compare against the host header. The maximum length
+	// of each string is 128 characters.
+	RegexValues []string
+
+	// The host names. The maximum length of each string is 128 characters. The
+	// comparison is case insensitive. The following wildcard characters are supported:
+	// * (matches 0 or more characters) and ? (matches exactly 1 character). You must
+	// include at least one "." character. You can include only alphabetical characters
+	// after the final "." character.
 	//
 	// If you specify multiple strings, the condition is satisfied if one of the
 	// strings matches the host name.
 	Values []string
+
+	noSmithyDocumentSerde
+}
+
+// Information about a host header rewrite transform. This transform matches a
+// pattern in the host header in an HTTP request and replaces it with the specified
+// string.
+type HostHeaderRewriteConfig struct {
+
+	// The host header rewrite transform. Each transform consists of a regular
+	// expression to match and a replacement string.
+	Rewrites []RewriteConfig
 
 	noSmithyDocumentSerde
 }
@@ -345,7 +369,7 @@ type HostHeaderConditionConfig struct {
 // header fields.
 type HttpHeaderConditionConfig struct {
 
-	// The name of the HTTP header field. The maximum size is 40 characters. The
+	// The name of the HTTP header field. The maximum length is 40 characters. The
 	// header name is case insensitive. The allowed characters are specified by RFC
 	// 7230. Wildcards are not supported.
 	//
@@ -355,7 +379,11 @@ type HttpHeaderConditionConfig struct {
 	// [host condition]: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-listeners.html#host-conditions
 	HttpHeaderName *string
 
-	// The strings to compare against the value of the HTTP header. The maximum size
+	// The regular expression to compare against the HTTP header. The maximum length
+	// of each string is 128 characters.
+	RegexValues []string
+
+	// The strings to compare against the value of the HTTP header. The maximum length
 	// of each string is 128 characters. The comparison strings are case insensitive.
 	// The following wildcard characters are supported: * (matches 0 or more
 	// characters) and ? (matches exactly 1 character).
@@ -379,10 +407,10 @@ type HttpHeaderConditionConfig struct {
 // [HTTP Method Registry]: https://www.iana.org/assignments/http-methods/http-methods.xhtml
 type HttpRequestMethodConditionConfig struct {
 
-	// The name of the request method. The maximum size is 40 characters. The allowed
-	// characters are A-Z, hyphen (-), and underscore (_). The comparison is case
-	// sensitive. Wildcards are not supported; therefore, the method name must be an
-	// exact match.
+	// The name of the request method. The maximum length is 40 characters. The
+	// allowed characters are A-Z, hyphen (-), and underscore (_). The comparison is
+	// case sensitive. Wildcards are not supported; therefore, the method name must be
+	// an exact match.
 	//
 	// If you specify multiple strings, the condition is satisfied if one of the
 	// strings matches the HTTP request method. We recommend that you route GET and
@@ -399,6 +427,54 @@ type IpamPools struct {
 
 	// The ID of the IPv4 IPAM pool.
 	Ipv4IpamPoolId *string
+
+	noSmithyDocumentSerde
+}
+
+// Information about an additional claim to validate.
+type JwtValidationActionAdditionalClaim struct {
+
+	// The format of the claim value.
+	//
+	// This member is required.
+	Format JwtValidationActionAdditionalClaimFormatEnum
+
+	// The name of the claim. You can't specify exp , iss , nbf , or iat because we
+	// validate them by default.
+	//
+	// This member is required.
+	Name *string
+
+	// The claim value. The maximum size of the list is 10. Each value can be up to
+	// 256 characters in length. If the format is space-separated-values , the values
+	// can't include spaces.
+	//
+	// This member is required.
+	Values []string
+
+	noSmithyDocumentSerde
+}
+
+// Information about a JSON Web Token (JWT) validation action.
+type JwtValidationActionConfig struct {
+
+	// The issuer of the JWT. The maximum length is 256 characters.
+	//
+	// This member is required.
+	Issuer *string
+
+	// The JSON Web Key Set (JWKS) endpoint. This endpoint contains JSON Web Keys
+	// (JWK) that are used to validate signatures from the provider.
+	//
+	// This must be a full URL, including the HTTPS protocol, the domain, and the
+	// path. The maximum length is 256 characters.
+	//
+	// This member is required.
+	JwksEndpoint *string
+
+	// Additional claims to validate. The maximum size of the list is 10. We validate
+	// the exp , iss , nbf , and iat claims by default.
+	AdditionalClaims []JwtValidationActionAdditionalClaim
 
 	noSmithyDocumentSerde
 }
@@ -422,43 +498,7 @@ type Limit struct {
 	// The maximum value of the limit.
 	Max *string
 
-	// The name of the limit. The possible values are:
-	//
-	//   - application-load-balancers
-	//
-	//   - condition-values-per-alb-rule
-	//
-	//   - condition-wildcards-per-alb-rule
-	//
-	//   - gateway-load-balancers
-	//
-	//   - gateway-load-balancers-per-vpc
-	//
-	//   - geneve-target-groups
-	//
-	//   - listeners-per-application-load-balancer
-	//
-	//   - listeners-per-network-load-balancer
-	//
-	//   - network-load-balancers
-	//
-	//   - rules-per-application-load-balancer
-	//
-	//   - target-groups
-	//
-	//   - target-groups-per-action-on-application-load-balancer
-	//
-	//   - target-groups-per-action-on-network-load-balancer
-	//
-	//   - target-groups-per-application-load-balancer
-	//
-	//   - targets-per-application-load-balancer
-	//
-	//   - targets-per-availability-zone-per-gateway-load-balancer
-	//
-	//   - targets-per-availability-zone-per-network-load-balancer
-	//
-	//   - targets-per-network-load-balancer
+	// The name of the limit.
 	Name *string
 
 	noSmithyDocumentSerde
@@ -736,6 +776,17 @@ type LoadBalancerAttribute struct {
 	//   - connection_logs.s3.prefix - The prefix for the location in the S3 bucket for
 	//   the connection logs.
 	//
+	//   - health_check_logs.s3.enabled - Indicates whether health check logs are
+	//   enabled. The value is true or false . The default is false .
+	//
+	//   - health_check_logs.s3.bucket - The name of the S3 bucket for the health check
+	//   logs. This attribute is required if health check logs are enabled. The bucket
+	//   must exist in the same region as the load balancer and have a bucket policy that
+	//   grants Elastic Load Balancing permissions to write to the bucket.
+	//
+	//   - health_check_logs.s3.prefix - The prefix for the location in the S3 bucket
+	//   for the health check logs.
+	//
 	//   - routing.http.desync_mitigation_mode - Determines how the load balancer
 	//   handles requests that might pose a security risk to your application. The
 	//   possible values are monitor , defensive , and strictest . The default is
@@ -779,10 +830,12 @@ type LoadBalancerAttribute struct {
 	//   - If the value is remove , the Application Load Balancer removes the
 	//   X-Forwarded-For header in the HTTP request before it sends it to targets.
 	//
-	//   - routing.http2.enabled - Indicates whether HTTP/2 is enabled. The possible
-	//   values are true and false . The default is true . Elastic Load Balancing
-	//   requires that message header names contain only alphanumeric characters and
-	//   hyphens.
+	//   - routing.http2.enabled - Indicates whether clients can connect to the load
+	//   balancer using HTTP/2. If true , clients can connect using HTTP/2 or HTTP/1.1.
+	//   However, all client requests are subject to the stricter HTTP/2 header
+	//   validation rules. For example, message header names must contain only
+	//   alphanumeric characters and hyphens. If false , clients must connect using
+	//   HTTP/1.1. The default is true .
 	//
 	//   - waf.fail_open.enabled - Indicates whether to allow a WAF-enabled load
 	//   balancer to route requests to targets if it is unable to forward the request to
@@ -885,8 +938,12 @@ type MutualAuthenticationAttributes struct {
 // Information about a path pattern condition.
 type PathPatternConditionConfig struct {
 
-	// The path patterns to compare against the request URL. The maximum size of each
-	// string is 128 characters. The comparison is case sensitive. The following
+	// The regular expressions to compare against the request URL. The maximum length
+	// of each string is 128 characters.
+	RegexValues []string
+
+	// The path patterns to compare against the request URL. The maximum length of
+	// each string is 128 characters. The comparison is case sensitive. The following
 	// wildcard characters are supported: * (matches 0 or more characters) and ?
 	// (matches exactly 1 character).
 	//
@@ -908,11 +965,12 @@ type PathPatternConditionConfig struct {
 // characters are specified by RFC 3986. Any character can be percentage encoded.
 type QueryStringConditionConfig struct {
 
-	// The key/value pairs or values to find in the query string. The maximum size of
-	// each string is 128 characters. The comparison is case insensitive. The following
-	// wildcard characters are supported: * (matches 0 or more characters) and ?
-	// (matches exactly 1 character). To search for a literal '*' or '?' character in a
-	// query string, you must escape these characters in Values using a '\' character.
+	// The key/value pairs or values to find in the query string. The maximum length
+	// of each string is 128 characters. The comparison is case insensitive. The
+	// following wildcard characters are supported: * (matches 0 or more characters)
+	// and ? (matches exactly 1 character). To search for a literal '*' or '?'
+	// character in a query string, you must escape these characters in Values using a
+	// '\' character.
 	//
 	// If you specify multiple key/value pairs or values, the condition is satisfied
 	// if one of them is found in the query string.
@@ -1004,6 +1062,26 @@ type RevocationContent struct {
 	noSmithyDocumentSerde
 }
 
+// Information about a rewrite transform. This transform matches a pattern and
+// replaces it with the specified string.
+type RewriteConfig struct {
+
+	// The regular expression to match in the input string. The maximum length of the
+	// string is 1,024 characters.
+	//
+	// This member is required.
+	Regex *string
+
+	// The replacement string to use when rewriting the matched input. The maximum
+	// length of the string is 1,024 characters. You can specify capture groups in the
+	// regular expression (for example, $1 and $2).
+	//
+	// This member is required.
+	Replace *string
+
+	noSmithyDocumentSerde
+}
+
 // Information about a rule.
 type Rule struct {
 
@@ -1025,6 +1103,9 @@ type Rule struct {
 
 	// The Amazon Resource Name (ARN) of the rule.
 	RuleArn *string
+
+	// The transforms for the rule.
+	Transforms []RuleTransform
 
 	noSmithyDocumentSerde
 }
@@ -1076,6 +1157,11 @@ type RuleCondition struct {
 	// query-string .
 	QueryStringConfig *QueryStringConditionConfig
 
+	// The regular expressions to match against the condition field. The maximum
+	// length of each string is 128 characters. Specify only when Field is http-header
+	// , host-header , or path-pattern .
+	RegexValues []string
+
 	// Information for a source IP condition. Specify only when Field is source-ip .
 	SourceIpConfig *SourceIpConditionConfig
 
@@ -1123,6 +1209,30 @@ type RulePriorityPair struct {
 
 	// The Amazon Resource Name (ARN) of the rule.
 	RuleArn *string
+
+	noSmithyDocumentSerde
+}
+
+// Information about a transform to apply to requests that match a rule.
+// Transforms are applied to requests before they are sent to targets.
+type RuleTransform struct {
+
+	// The type of transform.
+	//
+	//   - host-header-rewrite - Rewrite the host header.
+	//
+	//   - url-rewrite - Rewrite the request URL.
+	//
+	// This member is required.
+	Type TransformTypeEnum
+
+	// Information about a host header rewrite transform. This transform modifies the
+	// host header in an HTTP request. Specify only when Type is host-header-rewrite .
+	HostHeaderRewriteConfig *HostHeaderRewriteConfig
+
+	// Information about a URL rewrite transform. This transform modifies the request
+	// URL. Specify only when Type is url-rewrite .
+	UrlRewriteConfig *UrlRewriteConfig
 
 	noSmithyDocumentSerde
 }
@@ -1261,6 +1371,15 @@ type TargetDescription struct {
 	// function.
 	Port *int32
 
+	// The server ID for the targets. This value is required if the protocol is QUIC
+	// or TCP_QUIC and can't be used with other protocols.
+	//
+	// The ID consists of the 0x prefix followed by 16 hexadecimal characters. Any
+	// letters must be lowercase. The value must be unique at the listener level. You
+	// can't modify the server ID for a registered target. You must deregister the
+	// target and then provide a new server ID when you register the target again.
+	QuicServerId *string
+
 	noSmithyDocumentSerde
 }
 
@@ -1313,6 +1432,10 @@ type TargetGroup struct {
 	// [HTTP/HTTPS protocol] The protocol version. The possible values are GRPC , HTTP1
 	// , and HTTP2 .
 	ProtocolVersion *string
+
+	// The port on which the target control agent and application load balancer
+	// exchange management traffic for the target optimizer feature.
+	TargetControlPort *int32
 
 	// The Amazon Resource Name (ARN) of the target group.
 	TargetGroupArn *string
@@ -1492,9 +1615,10 @@ type TargetGroupAttribute struct {
 // Information about the target group stickiness for a rule.
 type TargetGroupStickinessConfig struct {
 
-	// The time period, in seconds, during which requests from a client should be
-	// routed to the same target group. The range is 1-604800 seconds (7 days). You
-	// must specify this value when enabling target group stickiness.
+	// [Application Load Balancers] The time period, in seconds, during which requests
+	// from a client should be routed to the same target group. The range is 1-604800
+	// seconds (7 days). You must specify this value when enabling target group
+	// stickiness.
 	DurationSeconds *int32
 
 	// Indicates whether target group stickiness is enabled.
@@ -1540,17 +1664,14 @@ type TargetHealth struct {
 	// values:
 	//
 	//   - Target.ResponseCodeMismatch - The health checks did not return an expected
-	//   HTTP code. Applies only to Application Load Balancers and Gateway Load
-	//   Balancers.
+	//   HTTP code.
 	//
-	//   - Target.Timeout - The health check requests timed out. Applies only to
-	//   Application Load Balancers and Gateway Load Balancers.
+	//   - Target.Timeout - The health check requests timed out.
 	//
 	//   - Target.FailedHealthChecks - The load balancer received an error while
 	//   establishing a connection to the target or the target response was malformed.
 	//
 	//   - Elb.InternalError - The health checks failed due to an internal error.
-	//   Applies only to Application Load Balancers.
 	//
 	// If the target state is unused , the reason code can be one of the following
 	// values:
@@ -1572,11 +1693,9 @@ type TargetHealth struct {
 	//
 	// If the target state is unavailable , the reason code can be the following value:
 	//
-	//   - Target.HealthCheckDisabled - Health checks are disabled for the target
-	//   group. Applies only to Application Load Balancers.
+	//   - Target.HealthCheckDisabled - Health checks are disabled for the target group.
 	//
 	//   - Elb.InternalError - Target health is unavailable due to an internal error.
-	//   Applies only to Network Load Balancers.
 	Reason TargetHealthReasonEnum
 
 	// The state of the target.
@@ -1654,6 +1773,17 @@ type TrustStoreRevocation struct {
 
 	// The Amazon Resource Name (ARN) of the trust store.
 	TrustStoreArn *string
+
+	noSmithyDocumentSerde
+}
+
+// Information about a URL rewrite transform. This transform matches a pattern in
+// the request URL and replaces it with the specified string.
+type UrlRewriteConfig struct {
+
+	// The URL rewrite transform to apply to the request. The transform consists of a
+	// regular expression to match and a replacement string.
+	Rewrites []RewriteConfig
 
 	noSmithyDocumentSerde
 }

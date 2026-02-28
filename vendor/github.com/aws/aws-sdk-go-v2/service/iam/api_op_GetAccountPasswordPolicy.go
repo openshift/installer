@@ -36,7 +36,9 @@ type GetAccountPasswordPolicyInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful GetAccountPasswordPolicy request.
+// Contains the response to a successful [GetAccountPasswordPolicy] request.
+//
+// [GetAccountPasswordPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_GetAccountPasswordPolicy.html
 type GetAccountPasswordPolicyOutput struct {
 
 	// A structure that contains details about the account's password policy.
@@ -93,6 +95,9 @@ func (c *Client) addOperationGetAccountPasswordPolicyMiddlewares(stack *middlewa
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -111,6 +116,9 @@ func (c *Client) addOperationGetAccountPasswordPolicyMiddlewares(stack *middlewa
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opGetAccountPasswordPolicy(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -127,6 +135,15 @@ func (c *Client) addOperationGetAccountPasswordPolicyMiddlewares(stack *middlewa
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil
