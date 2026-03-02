@@ -11,7 +11,9 @@ import (
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	agentpkg "github.com/openshift/installer/pkg/agent"
+	agentasset "github.com/openshift/installer/pkg/asset/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	assetstore "github.com/openshift/installer/pkg/asset/store"
 )
 
 // NewWaitForCmd create the commands for waiting the completion of the agent based cluster installation.
@@ -110,7 +112,26 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				handleBootstrapError(ctx, cluster.API.Kube.Config, cluster, err)
 			}
 
-			if err = command.WaitForInstallComplete(ctx, cluster.API.Kube.Config, command.WaitOptions{}); err != nil {
+			assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
+			if err != nil {
+				logrus.Error(err)
+				logrus.Exit(command.ExitCodeInstallFailed)
+			}
+
+			// Load install-config to check if FIPS verification is needed
+			var fipsEnabled bool
+			if installConfigAsset, err := assetStore.Load(&agentasset.OptionalInstallConfig{}); err == nil && installConfigAsset != nil {
+				ic := installConfigAsset.(*agentasset.OptionalInstallConfig)
+				if ic.Config != nil {
+					fipsEnabled = ic.Config.FIPS
+				}
+			}
+
+			options := command.WaitOptions{
+				VerifyFIPS: fipsEnabled,
+			}
+
+			if err = command.WaitForInstallComplete(ctx, cluster.API.Kube.Config, options); err != nil {
 				logrus.Error(err)
 				err2 := command.LogClusterOperatorConditions(ctx, cluster.API.Kube.Config)
 				if err2 != nil {
