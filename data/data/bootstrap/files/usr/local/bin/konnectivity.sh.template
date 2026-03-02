@@ -44,6 +44,7 @@ konnectivity_manifests() {
         record_service_stage_start "konnectivity-agent-manifest"
         echo "Creating Konnectivity agent manifests..."
 
+        export KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
         KONNECTIVITY_CERT_DIR=/opt/openshift/tls/konnectivity
 
         cp /opt/openshift/konnectivity-namespace.yaml manifests/konnectivity-namespace.yaml
