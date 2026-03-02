@@ -28,6 +28,7 @@ import (
 	configclient "github.com/openshift/client-go/config/clientset/versioned"
 	configinformers "github.com/openshift/client-go/config/informers/externalversions"
 	configlisters "github.com/openshift/client-go/config/listers/config/v1"
+	machineconfigclient "github.com/openshift/client-go/machineconfiguration/clientset/versioned"
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
@@ -62,6 +63,52 @@ var SkipPasswordPrintFlag bool
 type WaitOptions struct {
 	// ExtendTimeoutForBaremetal extends the initialization timeout for baremetal platforms.
 	ExtendTimeoutForBaremetal bool
+	// VerifyFIPS verifies that FIPS mode is enabled on the cluster before completing.
+	VerifyFIPS bool
+}
+
+// verifyFIPSEnabled checks that the cluster has FIPS enabled by querying
+// the rendered MachineConfigs for both worker and master pools.
+// Returns an error if verification fails.
+func verifyFIPSEnabled(ctx context.Context, config *rest.Config) error {
+	// Create MachineConfig client
+	mcClient, err := machineconfigclient.NewForConfig(config)
+	if err != nil {
+		return errors.Wrap(err, "failed to create machine config client")
+	}
+
+	// Check both worker and master pools
+	pools := []string{"worker", "master"}
+	for _, poolName := range pools {
+		// Get the MachineConfigPool to find the rendered config
+		pool, err := mcClient.MachineconfigurationV1().MachineConfigPools().Get(ctx, poolName, metav1.GetOptions{})
+		if err != nil {
+			if apierrors.IsNotFound(err) {
+				return fmt.Errorf("FIPS was enabled in install-config but %s MachineConfigPool not found", poolName)
+			}
+			return errors.Wrapf(err, "failed to retrieve %s MachineConfigPool", poolName)
+		}
+
+		// Get the rendered MachineConfig from the pool's status
+		renderedConfigName := pool.Status.Configuration.Name
+		if renderedConfigName == "" {
+			return fmt.Errorf("FIPS was enabled in install-config but %s MachineConfigPool has no rendered configuration yet", poolName)
+		}
+
+		renderedConfig, err := mcClient.MachineconfigurationV1().MachineConfigs().Get(ctx, renderedConfigName, metav1.GetOptions{})
+		if err != nil {
+			return errors.Wrapf(err, "failed to retrieve rendered MachineConfig %s for %s pool", renderedConfigName, poolName)
+		}
+
+		if !renderedConfig.Spec.FIPS {
+			return fmt.Errorf("FIPS was enabled in install-config but rendered MachineConfig %s for %s pool has FIPS=false", renderedConfigName, poolName)
+		}
+
+		logrus.Debugf("Verified FIPS mode is enabled on %s pool (rendered config: %s)", poolName, renderedConfigName)
+	}
+
+	logrus.Info("Verified FIPS mode is enabled on cluster")
+	return nil
 }
 
 // WaitForInstallComplete waits for cluster to complete installation, checks for operator stability
@@ -77,6 +124,12 @@ func WaitForInstallComplete(ctx context.Context, config *rest.Config, options Wa
 
 	if err := waitForStableOperators(ctx, config); err != nil {
 		return err
+	}
+
+	if options.VerifyFIPS {
+		if err := verifyFIPSEnabled(ctx, config); err != nil {
+			return err
+		}
 	}
 
 	consoleURL, err := getConsole(ctx, config)

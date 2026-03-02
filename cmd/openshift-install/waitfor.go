@@ -19,7 +19,9 @@ import (
 
 // getWaitOptionsFromInstallConfig constructs WaitOptions from an InstallConfig.
 func getWaitOptionsFromInstallConfig(ic *types.InstallConfig) command.WaitOptions {
-	options := command.WaitOptions{}
+	options := command.WaitOptions{
+		VerifyFIPS: false, // IPI/UPI installer doesn't verify FIPS
+	}
 	if ic != nil {
 		options.ExtendTimeoutForBaremetal = ic.Platform.Name() == baremetal.Name
 	}
