@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: konnectivity-agent
+  namespace: openshift-bootstrap-konnectivity
+  labels:
+    app: konnectivity-agent
+    openshift.io/bootstrap-only: "true"
+spec:
+  selector:
+    matchLabels:
+      app: konnectivity-agent
+  updateStrategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 10%
+  template:
+    metadata:
+      labels:
+        app: konnectivity-agent
+    spec:
+      hostNetwork: true
+      dnsPolicy: Default
+      priorityClassName: system-node-critical
+      tolerations:
+      - operator: Exists
+      containers:
+      - name: konnectivity-agent
+        image: ${KONNECTIVITY_IMAGE}
+        command:
+        - /usr/bin/proxy-agent
+        args:
+        - --logtostderr=true
+        - --ca-cert=/etc/konnectivity/ca.crt
+        - --agent-cert=/etc/konnectivity/tls.crt
+        - --agent-key=/etc/konnectivity/tls.key
+        - --proxy-server-host=${BOOTSTRAP_NODE_IP}
+        - --proxy-server-port=8091
+        - --health-server-port=2041
+        - --agent-identifiers=default-route=true
+        - --keepalive-time=30s
+        - --probe-interval=5s
+        - --sync-interval=5s
+        - --sync-interval-cap=30s
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 2041
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        volumeMounts:
+        - name: konnectivity-certs
+          mountPath: /etc/konnectivity
+          readOnly: true
+      volumes:
+      - name: konnectivity-certs
+        secret:
+          secretName: konnectivity-agent-certs

@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: konnectivity-server
+  namespace: kube-system
+  labels:
+    app: konnectivity-server
+spec:
+  hostNetwork: true
+  priorityClassName: system-node-critical
+  containers:
+  - name: konnectivity-server
+    image: ${KONNECTIVITY_IMAGE}
+    command:
+    - /usr/bin/proxy-server
+    args:
+    - --logtostderr=true
+    - --cluster-cert=/etc/konnectivity/server.crt
+    - --cluster-key=/etc/konnectivity/server.key
+    - --cluster-ca-cert=/etc/konnectivity/ca.crt
+    - --uds-name=/etc/kubernetes/bootstrap-configs/konnectivity-server.socket
+    - --server-port=0
+    - --agent-port=8091
+    - --health-port=2041
+    - --mode=http-connect
+    - --proxy-strategies=destHost,defaultRoute
+    - --keepalive-time=30s
+    - --frontend-keepalive-time=30s
+    livenessProbe:
+      httpGet:
+        path: /healthz
+        port: 2041
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    volumeMounts:
+    - name: config-dir
+      mountPath: /etc/kubernetes/bootstrap-configs
+    - name: konnectivity-certs
+      mountPath: /etc/konnectivity
+      readOnly: true
+  volumes:
+  - name: config-dir
+    hostPath:
+      path: /etc/kubernetes/bootstrap-configs
+      type: DirectoryOrCreate
+  - name: konnectivity-certs
+    hostPath:
+      path: /opt/openshift/tls/konnectivity
+      type: Directory

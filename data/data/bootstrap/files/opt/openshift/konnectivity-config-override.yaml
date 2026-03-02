@@ -1,0 +1,5 @@
+apiVersion: kubecontrolplane.config.openshift.io/v1
+kind: KubeAPIServerConfig
+apiServerArguments:
+  egress-selector-config-file:
+  - "/etc/kubernetes/config/egress-selector-config.yaml"
