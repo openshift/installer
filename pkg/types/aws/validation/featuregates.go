@@ -12,7 +12,7 @@ import (
 // GatedFeatures determines all of the install config fields that should
 // be validated to ensure that the proper featuregate is enabled when the field is used.
 func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeature {
-	return []featuregates.GatedInstallConfigFeature{
+	gatedFeatures := []featuregates.GatedInstallConfigFeature{
 		{
 			FeatureGateName: features.FeatureGateAWSClusterHostedDNSInstall,
 			Condition:       c.AWS.UserProvisionedDNS == dns.UserProvisionedDNSEnabled,
@@ -24,4 +24,18 @@ func GatedFeatures(c *types.InstallConfig) []featuregates.GatedInstallConfigFeat
 			Field:           field.NewPath("platform", "aws", "ipFamily"),
 		},
 	}
+
+	// Check if any compute pool has dedicated hosts configured
+	for idx, compute := range c.Compute {
+		if compute.Platform.AWS != nil && compute.Platform.AWS.HostPlacement != nil {
+			gatedFeatures = append(gatedFeatures, featuregates.GatedInstallConfigFeature{
+				FeatureGateName: features.FeatureGateAWSDedicatedHosts,
+				Condition:       true,
+				Field:           field.NewPath("compute").Index(idx).Child("platform", "aws", "hostPlacement"),
+			})
+			break // Only need to add the feature gate once
+		}
+	}
+
+	return gatedFeatures
 }
