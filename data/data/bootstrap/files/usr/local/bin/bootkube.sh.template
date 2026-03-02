@@ -10,6 +10,8 @@ set -euoE pipefail ## -E option will cause functions to inherit trap
 . /usr/local/bin/bootstrap-cluster-gather.sh
 # shellcheck source=bootstrap-verify-api-server-urls.sh
 . /usr/local/bin/bootstrap-verify-api-server-urls.sh
+# shellcheck source=konnectivity.sh.template
+. /usr/local/bin/konnectivity.sh
 
 mkdir --parents /etc/kubernetes/{manifests,bootstrap-configs,bootstrap-manifests}
 
@@ -245,6 +247,8 @@ then
     record_service_stage_success
 fi
 
+konnectivity_setup
+
 if [ ! -f kube-apiserver-bootstrap.done ]
 then
     record_service_stage_start "kube-apiserver-bootstrap"
@@ -269,9 +273,12 @@ then
 		--infra-config-file=/assets/manifests/cluster-infrastructure-02-config.yml \
 		--rendered-manifest-files=/assets/manifests \
 		--payload-version=$VERSION \
-		--operand-kubernetes-version="${KUBERNETES_VERSION}"
+		--operand-kubernetes-version="${KUBERNETES_VERSION}" \
+		--config-override-files=/assets/konnectivity-config-override.yaml
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
+	# Copy egress selector config to bootstrap-configs where KAS can read it
+	cp /opt/openshift/egress-selector-config.yaml /etc/kubernetes/bootstrap-configs/egress-selector-config.yaml
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-apiserver-bootstrap/manifests/* manifests/
 
@@ -566,6 +573,8 @@ then
     record_service_stage_success
 fi
 
+konnectivity_manifests
+
 REQUIRED_PODS="openshift-kube-apiserver/kube-apiserver,openshift-kube-scheduler/openshift-kube-scheduler,openshift-kube-controller-manager/kube-controller-manager,openshift-cluster-version/cluster-version-operator"
 if [ "$BOOTSTRAP_INPLACE" = true ]
 then
@@ -650,6 +659,8 @@ if [ ! -f api-int-dns-check.done ]; then
     touch api-int-dns-check.done
   fi
 fi
+
+konnectivity_cleanup
 
 # Workaround for https://github.com/opencontainers/runc/pull/1807
 touch /opt/openshift/.bootkube.done
