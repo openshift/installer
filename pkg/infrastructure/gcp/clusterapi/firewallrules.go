@@ -58,6 +58,12 @@ func getControlPlanePorts() []*compute.FirewallAllowed {
 				"10259", // Kube scheduler
 			},
 		},
+		{
+			IPProtocol: "tcp",
+			Ports: []string{
+				"8091", // Konnectivity
+			},
+		},
 	}
 }
 
