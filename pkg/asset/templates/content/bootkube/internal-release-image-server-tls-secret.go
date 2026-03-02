@@ -43,7 +43,7 @@ func (t *InternalReleaseImageTLSSecret) Generate(_ context.Context, dependencies
 
 	dependencies.Get(installConfig, iri)
 
-	if !installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateNoRegistryClusterInstall) {
+	if !installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
 		return nil
 	}
 

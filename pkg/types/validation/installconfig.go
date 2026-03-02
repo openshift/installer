@@ -150,7 +150,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 
 	if c.Arbiter != nil {
-		if c.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
+		if c.Enabled(features.FeatureGateHighlyAvailableArbiter) {
 			allErrs = append(allErrs, validateArbiter(&c.Platform, c.Arbiter, c.ControlPlane, field.NewPath("arbiter"))...)
 		} else {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("arbiter"), fmt.Sprintf("%s feature must be enabled in order to use arbiter cluster deployment", features.FeatureGateHighlyAvailableArbiter)))

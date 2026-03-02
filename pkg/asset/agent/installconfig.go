@@ -258,7 +258,7 @@ func (a *OptionalInstallConfig) validateTNAConfiguration(installConfig *types.In
 	}
 	// At this point we know: 2 replicas + arbiter configured
 	// Check if TNA feature gate is enabled
-	if !installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
+	if !installConfig.Enabled(features.FeatureGateHighlyAvailableArbiter) {
 		fieldPath := field.NewPath("arbiter")
 		allErrs = append(allErrs, field.Invalid(fieldPath, "configured",
 			"arbiter configuration requires FeatureGateHighlyAvailableArbiter to be enabled"))
@@ -278,7 +278,7 @@ func (a *OptionalInstallConfig) validateTNFConfiguration(installConfig *types.In
 
 	// At this point we know: 2 replicas + fencing configured
 	// Check if TNF feature gate is enabled
-	if !installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
+	if !installConfig.Enabled(features.FeatureGateDualReplica) {
 		fieldPath := field.NewPath("controlPlane", "fencing")
 		allErrs = append(allErrs, field.Invalid(fieldPath, "configured",
 			"fencing configuration requires FeatureGateDualReplica to be enabled"))
@@ -303,10 +303,10 @@ func (a *OptionalInstallConfig) validateControlPlaneConfiguration(installConfig 
 		if *installConfig.ControlPlane.Replicas < 1 || *installConfig.ControlPlane.Replicas > 5 {
 			fieldPath = field.NewPath("controlPlane", "replicas")
 			supportedControlPlaneRange := []string{"3", "1", "4", "5"}
-			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
+			if installConfig.Enabled(features.FeatureGateHighlyAvailableArbiter) {
 				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with arbiter)")
 			}
-			if installConfig.EnabledFeatureGates().Enabled(features.FeatureGateDualReplica) {
+			if installConfig.Enabled(features.FeatureGateDualReplica) {
 				supportedControlPlaneRange = append(supportedControlPlaneRange, "2 (with fencing)")
 			}
 			allErrs = append(allErrs, field.NotSupported(fieldPath, installConfig.ControlPlane.Replicas, supportedControlPlaneRange))

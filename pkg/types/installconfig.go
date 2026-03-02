@@ -632,6 +632,11 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 	return fg
 }
 
+// Enabled returns true if the given feature gate is enabled in the current feature sets.
+func (c *InstallConfig) Enabled(key configv1.FeatureGateName) bool {
+	return c.EnabledFeatureGates().Enabled(key)
+}
+
 // PublicAPI indicates whether the API load balancer should be public
 // by inspecting the cluster and operator publishing strategies.
 func (c *InstallConfig) PublicAPI() bool {

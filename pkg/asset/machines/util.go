@@ -41,7 +41,7 @@ func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, disk
 
 	switch ic.Platform.Name() {
 	case azuretypes.Name:
-		if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateAzureMultiDisk) {
+		if installConfig.Config.Enabled(features.FeatureGateAzureMultiDisk) {
 			if azureDataDisk, ok := dataDisk.(v1beta1.DataDisk); ok {
 				device := fmt.Sprintf("/dev/disk/azure/scsi1/lun%d", *azureDataDisk.Lun)
 				diskSetupIgn, err := machineconfig.ForDiskSetup(role, device, label, path, diskSetup.Type)
@@ -53,7 +53,7 @@ func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, disk
 			return nil, errors.Errorf("unsupported azure data disk type")
 		}
 	case vspheretypes.Name:
-		if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateVSphereMultiDisk) {
+		if installConfig.Config.Enabled(features.FeatureGateVSphereMultiDisk) {
 			if vsphereDataDisk, ok := dataDisk.(vsphere.DiskInfo); ok {
 				// We need to find the index of the datadisk in the array.  Each disk is added in order to the VM so
 				// we'll map to that location.  First disk is OS disk so add 1 to index for scsi location

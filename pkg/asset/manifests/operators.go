@@ -229,7 +229,7 @@ func (m *Manifests) generateBootKubeManifests(dependencies asset.Parents) []*ass
 		}
 	}
 
-	if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateNoRegistryClusterInstall) {
+	if installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
 		iri := &manifests.InternalReleaseImage{}
 		dependencies.Get(iri)
 
