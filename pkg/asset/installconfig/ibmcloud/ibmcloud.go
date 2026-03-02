@@ -96,7 +96,7 @@ func selectRegion(regions map[string]string) (string, error) {
 			Prompt: &survey.Select{
 				Message: "Region",
 				Help:    "The IBM Cloud region to be used for installation.",
-				Default: fmt.Sprintf("%s (%s)", defaultRegion, regions[defaultRegion]),
+				Default: defaultRegion,
 				Options: longRegions,
 			},
 			Validate: survey.ComposeValidators(survey.Required, func(ans interface{}) error {
