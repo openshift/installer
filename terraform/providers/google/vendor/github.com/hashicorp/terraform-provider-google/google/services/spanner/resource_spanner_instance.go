@@ -142,8 +142,6 @@ unique per project and between 4 and 30 characters in length.`,
 				Description: `A unique identifier for the instance, which cannot be changed after
 the instance is created. The name must be between 6 and 30 characters
 in length.
-
-
 If not provided, a random string starting with 'tf-' will be selected.`,
 			},
 			"autoscaling_config": {
@@ -156,6 +154,60 @@ the instance.`,
 				MaxItems: 1,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
+						"asymmetric_autoscaling_options": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `Asymmetric autoscaling options for specific replicas.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"overrides": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: `A nested object resource`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"autoscaling_limits": {
+													Type:        schema.TypeList,
+													Required:    true,
+													Description: `A nested object resource`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"max_nodes": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: `The maximum number of nodes for this specific replica.`,
+															},
+															"min_nodes": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: `The minimum number of nodes for this specific replica.`,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									"replica_selection": {
+										Type:        schema.TypeList,
+										Required:    true,
+										Description: `A nested object resource`,
+										MaxItems:    1,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"location": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: `The location of the replica to apply asymmetric autoscaling options.`,
+												},
+											},
+										},
+									},
+								},
+							},
+						},
 						"autoscaling_limits": {
 							Type:     schema.TypeList,
 							Optional: true,
@@ -231,6 +283,13 @@ This number is on a scale from 0 (no utilization) to 100 (full utilization).`,
 				},
 				ExactlyOneOf: []string{"num_nodes", "processing_units", "autoscaling_config"},
 			},
+			"edition": {
+				Type:         schema.TypeString,
+				Computed:     true,
+				Optional:     true,
+				ValidateFunc: verify.ValidateEnum([]string{"EDITION_UNSPECIFIED", "STANDARD", "ENTERPRISE", "ENTERPRISE_PLUS", ""}),
+				Description:  `The edition selected for this instance. Different editions provide different capabilities at different price points. Possible values: ["EDITION_UNSPECIFIED", "STANDARD", "ENTERPRISE", "ENTERPRISE_PLUS"]`,
+			},
 			"labels": {
 				Type:     schema.TypeMap,
 				Optional: true,
@@ -279,9 +338,9 @@ or node_count must be present in terraform.`,
 			"force_destroy": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
 				Description: `When deleting a spanner instance, this boolean option will delete all backups of this instance.
 This must be set to true if you created a backup manually in the console.`,
+				Default: false,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -337,6 +396,12 @@ func resourceSpannerInstanceCreate(d *schema.ResourceData, meta interface{}) err
 		return err
 	} else if v, ok := d.GetOkExists("autoscaling_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(autoscalingConfigProp)) && (ok || !reflect.DeepEqual(v, autoscalingConfigProp)) {
 		obj["autoscalingConfig"] = autoscalingConfigProp
+	}
+	editionProp, err := expandSpannerInstanceEdition(d.Get("edition"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("edition"); !tpgresource.IsEmptyValue(reflect.ValueOf(editionProp)) && (ok || !reflect.DeepEqual(v, editionProp)) {
+		obj["edition"] = editionProp
 	}
 	labelsProp, err := expandSpannerInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
@@ -517,6 +582,9 @@ func resourceSpannerInstanceRead(d *schema.ResourceData, meta interface{}) error
 	if err := d.Set("autoscaling_config", flattenSpannerInstanceAutoscalingConfig(res["autoscalingConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("edition", flattenSpannerInstanceEdition(res["edition"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 	if err := d.Set("terraform_labels", flattenSpannerInstanceTerraformLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -566,6 +634,12 @@ func resourceSpannerInstanceUpdate(d *schema.ResourceData, meta interface{}) err
 		return err
 	} else if v, ok := d.GetOkExists("autoscaling_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, autoscalingConfigProp)) {
 		obj["autoscalingConfig"] = autoscalingConfigProp
+	}
+	editionProp, err := expandSpannerInstanceEdition(d.Get("edition"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("edition"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, editionProp)) {
+		obj["edition"] = editionProp
 	}
 	labelsProp, err := expandSpannerInstanceEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
@@ -809,6 +883,8 @@ func flattenSpannerInstanceAutoscalingConfig(v interface{}, d *schema.ResourceDa
 		flattenSpannerInstanceAutoscalingConfigAutoscalingLimits(original["autoscalingLimits"], d, config)
 	transformed["autoscaling_targets"] =
 		flattenSpannerInstanceAutoscalingConfigAutoscalingTargets(original["autoscalingTargets"], d, config)
+	transformed["asymmetric_autoscaling_options"] =
+		flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptions(original["asymmetricAutoscalingOptions"], d, config)
 	return []interface{}{transformed}
 }
 func flattenSpannerInstanceAutoscalingConfigAutoscalingLimits(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -947,6 +1023,108 @@ func flattenSpannerInstanceAutoscalingConfigAutoscalingTargetsStorageUtilization
 	return v // let terraform core handle it otherwise
 }
 
+func flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"replica_selection": flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsReplicaSelection(original["replicaSelection"], d, config),
+			"overrides":         flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverrides(original["overrides"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsReplicaSelection(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["location"] =
+		flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsReplicaSelectionLocation(original["location"], d, config)
+	return []interface{}{transformed}
+}
+func flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsReplicaSelectionLocation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverrides(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["autoscaling_limits"] =
+		flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimits(original["autoscalingLimits"], d, config)
+	return []interface{}{transformed}
+}
+func flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimits(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["min_nodes"] =
+		flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimitsMinNodes(original["minNodes"], d, config)
+	transformed["max_nodes"] =
+		flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimitsMaxNodes(original["maxNodes"], d, config)
+	return []interface{}{transformed}
+}
+func flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimitsMinNodes(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimitsMaxNodes(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenSpannerInstanceEdition(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenSpannerInstanceTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -1017,6 +1195,13 @@ func expandSpannerInstanceAutoscalingConfig(v interface{}, d tpgresource.Terrafo
 		return nil, err
 	} else if val := reflect.ValueOf(transformedAutoscalingTargets); val.IsValid() && !tpgresource.IsEmptyValue(val) {
 		transformed["autoscalingTargets"] = transformedAutoscalingTargets
+	}
+
+	transformedAsymmetricAutoscalingOptions, err := expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptions(original["asymmetric_autoscaling_options"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAsymmetricAutoscalingOptions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["asymmetricAutoscalingOptions"] = transformedAsymmetricAutoscalingOptions
 	}
 
 	return transformed, nil
@@ -1112,6 +1297,115 @@ func expandSpannerInstanceAutoscalingConfigAutoscalingTargetsStorageUtilizationP
 	return v, nil
 }
 
+func expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedReplicaSelection, err := expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsReplicaSelection(original["replica_selection"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedReplicaSelection); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["replicaSelection"] = transformedReplicaSelection
+		}
+
+		transformedOverrides, err := expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverrides(original["overrides"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedOverrides); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["overrides"] = transformedOverrides
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsReplicaSelection(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedLocation, err := expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsReplicaSelectionLocation(original["location"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedLocation); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["location"] = transformedLocation
+	}
+
+	return transformed, nil
+}
+
+func expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsReplicaSelectionLocation(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverrides(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAutoscalingLimits, err := expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimits(original["autoscaling_limits"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAutoscalingLimits); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["autoscalingLimits"] = transformedAutoscalingLimits
+	}
+
+	return transformed, nil
+}
+
+func expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimits(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedMinNodes, err := expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimitsMinNodes(original["min_nodes"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMinNodes); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["minNodes"] = transformedMinNodes
+	}
+
+	transformedMaxNodes, err := expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimitsMaxNodes(original["max_nodes"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMaxNodes); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["maxNodes"] = transformedMaxNodes
+	}
+
+	return transformed, nil
+}
+
+func expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimitsMinNodes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandSpannerInstanceAutoscalingConfigAsymmetricAutoscalingOptionsOverridesAutoscalingLimitsMaxNodes(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandSpannerInstanceEdition(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandSpannerInstanceEffectiveLabels(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]string, error) {
 	if v == nil {
 		return map[string]string{}, nil
@@ -1151,6 +1445,9 @@ func resourceSpannerInstanceUpdateEncoder(d *schema.ResourceData, meta interface
 	newObj := make(map[string]interface{})
 	newObj["instance"] = obj
 	updateMask := make([]string, 0)
+	if d.HasChange("edition") {
+		updateMask = append(updateMask, "edition")
+	}
 	if d.HasChange("num_nodes") {
 		updateMask = append(updateMask, "nodeCount")
 	}
@@ -1187,6 +1484,9 @@ func resourceSpannerInstanceUpdateEncoder(d *schema.ResourceData, meta interface
 			}
 			if d.HasChange("autoscaling_config.0.autoscaling_targets.0.storage_utilization_percent") {
 				updateMask = append(updateMask, "autoscalingConfig.autoscalingTargets.storageUtilizationPercent")
+			}
+			if d.HasChange("autoscaling_config.0.asymmetric_autoscaling_options") {
+				updateMask = append(updateMask, "autoscalingConfig.asymmetricAutoscalingOptions")
 			}
 		}
 	}

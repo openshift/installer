@@ -82,6 +82,7 @@ type TargetGke struct {
 	empty      bool    `json:"-"`
 	Cluster    *string `json:"cluster"`
 	InternalIP *bool   `json:"internalIP"`
+	ProxyUrl   *string `json:"proxyUrl"`
 }
 
 type jsonTargetGke TargetGke
@@ -102,6 +103,8 @@ func (r *TargetGke) UnmarshalJSON(data []byte) error {
 		r.Cluster = res.Cluster
 
 		r.InternalIP = res.InternalIP
+
+		r.ProxyUrl = res.ProxyUrl
 
 	}
 	return nil

@@ -123,7 +123,6 @@ func modifyNotebooksInstanceState(config *transport_tpg.Config, d *schema.Resour
 	}
 	return res, nil
 }
-
 func waitForNotebooksOperation(config *transport_tpg.Config, d *schema.ResourceData, project string, billingProject string, userAgent string, response map[string]interface{}) error {
 	var opRes map[string]interface{}
 	err := NotebooksOperationWaitTimeWithResponse(
@@ -566,8 +565,8 @@ the population of this value.`,
 			"desired_state": {
 				Type:        schema.TypeString,
 				Optional:    true,
-				Default:     "ACTIVE",
 				Description: `Desired state of the Notebook Instance. Set this field to 'ACTIVE' to start the Instance, and 'STOPPED' to stop the Instance.`,
+				Default:     "ACTIVE",
 			},
 			"project": {
 				Type:     schema.TypeString,

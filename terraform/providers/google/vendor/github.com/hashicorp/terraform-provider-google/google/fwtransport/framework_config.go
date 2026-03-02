@@ -34,6 +34,18 @@ import (
 )
 
 type FrameworkProviderConfig struct {
+	// Temporary, as we'll replace use of FrameworkProviderConfig with transport_tpg.Config soon
+	// transport_tpg.Config has a the fields below, hence these changes are needed
+	Credentials                               types.String
+	AccessToken                               types.String
+	ImpersonateServiceAccount                 types.String
+	ImpersonateServiceAccountDelegates        types.List
+	RequestReason                             types.String
+	RequestTimeout                            types.String
+	AddTerraformAttributionLabel              types.Bool
+	TerraformAttributionLabelAdditionStrategy types.String
+	// End temporary
+
 	BillingProject             types.String
 	Client                     *http.Client
 	Context                    context.Context
@@ -49,6 +61,7 @@ type FrameworkProviderConfig struct {
 	UniverseDomain             types.String
 	UserAgent                  string
 	UserProjectOverride        types.Bool
+	DefaultLabels              types.Map
 
 	// paths for client setup
 	AccessApprovalBasePath           string
@@ -99,7 +112,6 @@ type FrameworkProviderConfig struct {
 	DataplexBasePath                 string
 	DataprocBasePath                 string
 	DataprocMetastoreBasePath        string
-	DatastoreBasePath                string
 	DatastreamBasePath               string
 	DeploymentManagerBasePath        string
 	DialogflowBasePath               string
@@ -139,16 +151,19 @@ type FrameworkProviderConfig struct {
 	NetworkSecurityBasePath          string
 	NetworkServicesBasePath          string
 	NotebooksBasePath                string
+	OracleDatabaseBasePath           string
 	OrgPolicyBasePath                string
 	OSConfigBasePath                 string
 	OSLoginBasePath                  string
 	PrivatecaBasePath                string
+	PrivilegedAccessManagerBasePath  string
 	PublicCABasePath                 string
 	PubsubBasePath                   string
 	PubsubLiteBasePath               string
 	RedisBasePath                    string
 	ResourceManagerBasePath          string
 	SecretManagerBasePath            string
+	SecretManagerRegionalBasePath    string
 	SecureSourceManagerBasePath      string
 	SecurityCenterBasePath           string
 	SecurityCenterManagementBasePath string
@@ -157,6 +172,7 @@ type FrameworkProviderConfig struct {
 	ServiceManagementBasePath        string
 	ServiceNetworkingBasePath        string
 	ServiceUsageBasePath             string
+	SiteVerificationBasePath         string
 	SourceRepoBasePath               string
 	SpannerBasePath                  string
 	SQLBasePath                      string
@@ -165,6 +181,7 @@ type FrameworkProviderConfig struct {
 	StorageTransferBasePath          string
 	TagsBasePath                     string
 	TPUBasePath                      string
+	TranscoderBasePath               string
 	VertexAIBasePath                 string
 	VmwareengineBasePath             string
 	VPCAccessBasePath                string
@@ -257,7 +274,6 @@ func (p *FrameworkProviderConfig) LoadAndValidateFramework(ctx context.Context, 
 	p.DataplexBasePath = data.DataplexCustomEndpoint.ValueString()
 	p.DataprocBasePath = data.DataprocCustomEndpoint.ValueString()
 	p.DataprocMetastoreBasePath = data.DataprocMetastoreCustomEndpoint.ValueString()
-	p.DatastoreBasePath = data.DatastoreCustomEndpoint.ValueString()
 	p.DatastreamBasePath = data.DatastreamCustomEndpoint.ValueString()
 	p.DeploymentManagerBasePath = data.DeploymentManagerCustomEndpoint.ValueString()
 	p.DialogflowBasePath = data.DialogflowCustomEndpoint.ValueString()
@@ -297,16 +313,19 @@ func (p *FrameworkProviderConfig) LoadAndValidateFramework(ctx context.Context, 
 	p.NetworkSecurityBasePath = data.NetworkSecurityCustomEndpoint.ValueString()
 	p.NetworkServicesBasePath = data.NetworkServicesCustomEndpoint.ValueString()
 	p.NotebooksBasePath = data.NotebooksCustomEndpoint.ValueString()
+	p.OracleDatabaseBasePath = data.OracleDatabaseCustomEndpoint.ValueString()
 	p.OrgPolicyBasePath = data.OrgPolicyCustomEndpoint.ValueString()
 	p.OSConfigBasePath = data.OSConfigCustomEndpoint.ValueString()
 	p.OSLoginBasePath = data.OSLoginCustomEndpoint.ValueString()
 	p.PrivatecaBasePath = data.PrivatecaCustomEndpoint.ValueString()
+	p.PrivilegedAccessManagerBasePath = data.PrivilegedAccessManagerCustomEndpoint.ValueString()
 	p.PublicCABasePath = data.PublicCACustomEndpoint.ValueString()
 	p.PubsubBasePath = data.PubsubCustomEndpoint.ValueString()
 	p.PubsubLiteBasePath = data.PubsubLiteCustomEndpoint.ValueString()
 	p.RedisBasePath = data.RedisCustomEndpoint.ValueString()
 	p.ResourceManagerBasePath = data.ResourceManagerCustomEndpoint.ValueString()
 	p.SecretManagerBasePath = data.SecretManagerCustomEndpoint.ValueString()
+	p.SecretManagerRegionalBasePath = data.SecretManagerRegionalCustomEndpoint.ValueString()
 	p.SecureSourceManagerBasePath = data.SecureSourceManagerCustomEndpoint.ValueString()
 	p.SecurityCenterBasePath = data.SecurityCenterCustomEndpoint.ValueString()
 	p.SecurityCenterManagementBasePath = data.SecurityCenterManagementCustomEndpoint.ValueString()
@@ -315,6 +334,7 @@ func (p *FrameworkProviderConfig) LoadAndValidateFramework(ctx context.Context, 
 	p.ServiceManagementBasePath = data.ServiceManagementCustomEndpoint.ValueString()
 	p.ServiceNetworkingBasePath = data.ServiceNetworkingCustomEndpoint.ValueString()
 	p.ServiceUsageBasePath = data.ServiceUsageCustomEndpoint.ValueString()
+	p.SiteVerificationBasePath = data.SiteVerificationCustomEndpoint.ValueString()
 	p.SourceRepoBasePath = data.SourceRepoCustomEndpoint.ValueString()
 	p.SpannerBasePath = data.SpannerCustomEndpoint.ValueString()
 	p.SQLBasePath = data.SQLCustomEndpoint.ValueString()
@@ -323,21 +343,35 @@ func (p *FrameworkProviderConfig) LoadAndValidateFramework(ctx context.Context, 
 	p.StorageTransferBasePath = data.StorageTransferCustomEndpoint.ValueString()
 	p.TagsBasePath = data.TagsCustomEndpoint.ValueString()
 	p.TPUBasePath = data.TPUCustomEndpoint.ValueString()
+	p.TranscoderBasePath = data.TranscoderCustomEndpoint.ValueString()
 	p.VertexAIBasePath = data.VertexAICustomEndpoint.ValueString()
 	p.VmwareengineBasePath = data.VmwareengineCustomEndpoint.ValueString()
 	p.VPCAccessBasePath = data.VPCAccessCustomEndpoint.ValueString()
 	p.WorkbenchBasePath = data.WorkbenchCustomEndpoint.ValueString()
 	p.WorkflowsBasePath = data.WorkflowsCustomEndpoint.ValueString()
 
+	// Temporary
+	p.Credentials = data.Credentials
+	p.AccessToken = data.AccessToken
+	p.ImpersonateServiceAccount = data.ImpersonateServiceAccount
+	p.ImpersonateServiceAccountDelegates = data.ImpersonateServiceAccountDelegates
+	p.RequestReason = data.RequestReason
+	p.RequestTimeout = data.RequestTimeout
+	p.AddTerraformAttributionLabel = data.AddTerraformAttributionLabel
+	p.TerraformAttributionLabelAdditionStrategy = data.TerraformAttributionLabelAdditionStrategy
+	// End temporary
+
+	// Copy values from the ProviderModel struct containing data about the provider configuration (present only when responsing to ConfigureProvider rpc calls)
+	// to the FrameworkProviderConfig struct that will be passed and available to all resources/data sources
 	p.Context = ctx
 	p.BillingProject = data.BillingProject
+	p.DefaultLabels = data.DefaultLabels
 	p.Project = data.Project
 	p.Region = GetRegionFromRegionSelfLink(data.Region)
 	p.Scopes = data.Scopes
 	p.Zone = data.Zone
 	p.UserProjectOverride = data.UserProjectOverride
 	p.PollInterval = 10 * time.Second
-	p.Project = data.Project
 	p.UniverseDomain = data.UniverseDomain
 	p.RequestBatcherServiceUsage = transport_tpg.NewRequestBatcher("Service Usage", ctx, batchingConfig)
 	p.RequestBatcherIam = transport_tpg.NewRequestBatcher("IAM", ctx, batchingConfig)
@@ -839,14 +873,6 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 			data.DataprocMetastoreCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
-	if data.DatastoreCustomEndpoint.IsNull() {
-		customEndpoint := transport_tpg.MultiEnvDefault([]string{
-			"GOOGLE_DATASTORE_CUSTOM_ENDPOINT",
-		}, transport_tpg.DefaultBasePaths[transport_tpg.DatastoreBasePathKey])
-		if customEndpoint != nil {
-			data.DatastoreCustomEndpoint = types.StringValue(customEndpoint.(string))
-		}
-	}
 	if data.DatastreamCustomEndpoint.IsNull() {
 		customEndpoint := transport_tpg.MultiEnvDefault([]string{
 			"GOOGLE_DATASTREAM_CUSTOM_ENDPOINT",
@@ -1159,6 +1185,14 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 			data.NotebooksCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
+	if data.OracleDatabaseCustomEndpoint.IsNull() {
+		customEndpoint := transport_tpg.MultiEnvDefault([]string{
+			"GOOGLE_ORACLE_DATABASE_CUSTOM_ENDPOINT",
+		}, transport_tpg.DefaultBasePaths[transport_tpg.OracleDatabaseBasePathKey])
+		if customEndpoint != nil {
+			data.OracleDatabaseCustomEndpoint = types.StringValue(customEndpoint.(string))
+		}
+	}
 	if data.OrgPolicyCustomEndpoint.IsNull() {
 		customEndpoint := transport_tpg.MultiEnvDefault([]string{
 			"GOOGLE_ORG_POLICY_CUSTOM_ENDPOINT",
@@ -1189,6 +1223,14 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 		}, transport_tpg.DefaultBasePaths[transport_tpg.PrivatecaBasePathKey])
 		if customEndpoint != nil {
 			data.PrivatecaCustomEndpoint = types.StringValue(customEndpoint.(string))
+		}
+	}
+	if data.PrivilegedAccessManagerCustomEndpoint.IsNull() {
+		customEndpoint := transport_tpg.MultiEnvDefault([]string{
+			"GOOGLE_PRIVILEGED_ACCESS_MANAGER_CUSTOM_ENDPOINT",
+		}, transport_tpg.DefaultBasePaths[transport_tpg.PrivilegedAccessManagerBasePathKey])
+		if customEndpoint != nil {
+			data.PrivilegedAccessManagerCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
 	if data.PublicCACustomEndpoint.IsNull() {
@@ -1237,6 +1279,14 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 		}, transport_tpg.DefaultBasePaths[transport_tpg.SecretManagerBasePathKey])
 		if customEndpoint != nil {
 			data.SecretManagerCustomEndpoint = types.StringValue(customEndpoint.(string))
+		}
+	}
+	if data.SecretManagerRegionalCustomEndpoint.IsNull() {
+		customEndpoint := transport_tpg.MultiEnvDefault([]string{
+			"GOOGLE_SECRET_MANAGER_REGIONAL_CUSTOM_ENDPOINT",
+		}, transport_tpg.DefaultBasePaths[transport_tpg.SecretManagerRegionalBasePathKey])
+		if customEndpoint != nil {
+			data.SecretManagerRegionalCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
 	if data.SecureSourceManagerCustomEndpoint.IsNull() {
@@ -1303,6 +1353,14 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 			data.ServiceUsageCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
+	if data.SiteVerificationCustomEndpoint.IsNull() {
+		customEndpoint := transport_tpg.MultiEnvDefault([]string{
+			"GOOGLE_SITE_VERIFICATION_CUSTOM_ENDPOINT",
+		}, transport_tpg.DefaultBasePaths[transport_tpg.SiteVerificationBasePathKey])
+		if customEndpoint != nil {
+			data.SiteVerificationCustomEndpoint = types.StringValue(customEndpoint.(string))
+		}
+	}
 	if data.SourceRepoCustomEndpoint.IsNull() {
 		customEndpoint := transport_tpg.MultiEnvDefault([]string{
 			"GOOGLE_SOURCE_REPO_CUSTOM_ENDPOINT",
@@ -1365,6 +1423,14 @@ func (p *FrameworkProviderConfig) HandleDefaults(ctx context.Context, data *fwmo
 		}, transport_tpg.DefaultBasePaths[transport_tpg.TPUBasePathKey])
 		if customEndpoint != nil {
 			data.TPUCustomEndpoint = types.StringValue(customEndpoint.(string))
+		}
+	}
+	if data.TranscoderCustomEndpoint.IsNull() {
+		customEndpoint := transport_tpg.MultiEnvDefault([]string{
+			"GOOGLE_TRANSCODER_CUSTOM_ENDPOINT",
+		}, transport_tpg.DefaultBasePaths[transport_tpg.TranscoderBasePathKey])
+		if customEndpoint != nil {
+			data.TranscoderCustomEndpoint = types.StringValue(customEndpoint.(string))
 		}
 	}
 	if data.VertexAICustomEndpoint.IsNull() {
@@ -1779,6 +1845,10 @@ func GetCredentials(ctx context.Context, data fwmodels.ProviderModel, initialCre
 		contents, _, err := verify.PathOrContents(data.Credentials.ValueString())
 		if err != nil {
 			diags.AddError(fmt.Sprintf("error loading credentials: %s", err), err.Error())
+			return googleoauth.Credentials{}
+		}
+		if len(contents) == 0 {
+			diags.AddError("error loading credentials", "provided credentials are empty")
 			return googleoauth.Credentials{}
 		}
 

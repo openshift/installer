@@ -361,6 +361,44 @@ components:
             optimistic concurrency control. May be sent on update and delete requests
             to ensure the client has an up-to-date value before proceeding.
           x-kubernetes-immutable: true
+        kubeletConfig:
+          type: object
+          x-dcl-go-name: KubeletConfig
+          x-dcl-go-type: NodePoolKubeletConfig
+          description: The kubelet configuration for the node pool.
+          x-kubernetes-immutable: true
+          x-dcl-server-default: true
+          properties:
+            cpuCfsQuota:
+              type: boolean
+              x-dcl-go-name: CpuCfsQuota
+              description: Whether or not to enable CPU CFS quota. Defaults to true.
+              x-kubernetes-immutable: true
+              x-dcl-server-default: true
+            cpuCfsQuotaPeriod:
+              type: string
+              x-dcl-go-name: CpuCfsQuotaPeriod
+              description: Optional. The CPU CFS quota period to use for the node.
+                Defaults to "100ms".
+              x-kubernetes-immutable: true
+            cpuManagerPolicy:
+              type: string
+              x-dcl-go-name: CpuManagerPolicy
+              x-dcl-go-type: NodePoolKubeletConfigCpuManagerPolicyEnum
+              description: The CpuManagerPolicy to use for the node. Defaults to "none".
+              x-kubernetes-immutable: true
+              x-dcl-server-default: true
+              enum:
+              - none
+              - static
+            podPidsLimit:
+              type: integer
+              format: int64
+              x-dcl-go-name: PodPidsLimit
+              description: Optional. The maximum number of PIDs in each pod running
+                on the node. The limit scales automatically based on underlying machine
+                size if left unset.
+              x-kubernetes-immutable: true
         location:
           type: string
           x-dcl-go-name: Location

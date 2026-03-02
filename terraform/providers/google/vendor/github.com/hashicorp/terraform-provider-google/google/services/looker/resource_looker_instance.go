@@ -248,6 +248,11 @@ a year.`,
 					},
 				},
 			},
+			"fips_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `FIPS 140-2 Encryption enablement for Looker (Google Cloud Core).`,
+			},
 			"maintenance_window": {
 				Type:     schema.TypeList,
 				Optional: true,
@@ -349,6 +354,58 @@ disrupt service.`,
 				Description: `Whether private IP is enabled on the Looker instance.`,
 				Default:     false,
 			},
+			"psc_config": {
+				Type:        schema.TypeList,
+				Optional:    true,
+				Description: `Information for Private Service Connect (PSC) setup for a Looker instance.`,
+				MaxItems:    1,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"allowed_vpcs": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `List of VPCs that are allowed ingress into the Looker instance.`,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
+						"service_attachments": {
+							Type:        schema.TypeList,
+							Optional:    true,
+							Description: `List of egress service attachment configurations.`,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"local_fqdn": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `Fully qualified domain name that will be used in the private DNS record created for the service attachment.`,
+									},
+									"target_service_attachment_uri": {
+										Type:        schema.TypeString,
+										Optional:    true,
+										Description: `URI of the service attachment to connect to.`,
+									},
+									"connection_status": {
+										Type:        schema.TypeString,
+										Computed:    true,
+										Description: `Status of the service attachment connection.`,
+									},
+								},
+							},
+						},
+						"looker_service_attachment_uri": {
+							Type:        schema.TypeString,
+							Computed:    true,
+							Description: `URI of the Looker service attachment.`,
+						},
+					},
+				},
+			},
+			"psc_enabled": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `Whether Public Service Connect (PSC) is enabled on the Looker instance`,
+			},
 			"public_ip_enabled": {
 				Type:        schema.TypeBool,
 				Optional:    true,
@@ -439,6 +496,15 @@ accurate to nanoseconds.`,
 				Description: `The time the instance was updated in RFC3339 UTC "Zulu" format,
 accurate to nanoseconds.`,
 			},
+			"deletion_policy": {
+				Type:     schema.TypeString,
+				Optional: true,
+				Description: `Policy to determine if the cluster should be deleted forcefully.
+If setting deletion_policy = "FORCE", the Looker instance will be deleted regardless
+of its nested resources. If set to "DEFAULT", Looker instances that still have
+nested resources will return an error. Possible values: DEFAULT, FORCE`,
+				Default: "DEFAULT",
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -482,6 +548,12 @@ func resourceLookerInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("encryption_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(encryptionConfigProp)) && (ok || !reflect.DeepEqual(v, encryptionConfigProp)) {
 		obj["encryptionConfig"] = encryptionConfigProp
 	}
+	fipsEnabledProp, err := expandLookerInstanceFipsEnabled(d.Get("fips_enabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("fips_enabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(fipsEnabledProp)) && (ok || !reflect.DeepEqual(v, fipsEnabledProp)) {
+		obj["fipsEnabled"] = fipsEnabledProp
+	}
 	maintenanceWindowProp, err := expandLookerInstanceMaintenanceWindow(d.Get("maintenance_window"), d, config)
 	if err != nil {
 		return err
@@ -505,6 +577,18 @@ func resourceLookerInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	} else if v, ok := d.GetOkExists("private_ip_enabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(privateIpEnabledProp)) && (ok || !reflect.DeepEqual(v, privateIpEnabledProp)) {
 		obj["privateIpEnabled"] = privateIpEnabledProp
+	}
+	pscConfigProp, err := expandLookerInstancePscConfig(d.Get("psc_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("psc_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(pscConfigProp)) && (ok || !reflect.DeepEqual(v, pscConfigProp)) {
+		obj["pscConfig"] = pscConfigProp
+	}
+	pscEnabledProp, err := expandLookerInstancePscEnabled(d.Get("psc_enabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("psc_enabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(pscEnabledProp)) && (ok || !reflect.DeepEqual(v, pscEnabledProp)) {
+		obj["pscEnabled"] = pscEnabledProp
 	}
 	publicIpEnabledProp, err := expandLookerInstancePublicIpEnabled(d.Get("public_ip_enabled"), d, config)
 	if err != nil {
@@ -637,6 +721,12 @@ func resourceLookerInstanceRead(d *schema.ResourceData, meta interface{}) error 
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("LookerInstance %q", d.Id()))
 	}
 
+	// Explicitly set virtual fields to default values if unset
+	if _, ok := d.GetOkExists("deletion_policy"); !ok {
+		if err := d.Set("deletion_policy", "DEFAULT"); err != nil {
+			return fmt.Errorf("Error setting deletion_policy: %s", err)
+		}
+	}
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -659,6 +749,9 @@ func resourceLookerInstanceRead(d *schema.ResourceData, meta interface{}) error 
 	if err := d.Set("encryption_config", flattenLookerInstanceEncryptionConfig(res["encryptionConfig"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
+	if err := d.Set("fips_enabled", flattenLookerInstanceFipsEnabled(res["fipsEnabled"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
 	if err := d.Set("ingress_private_ip", flattenLookerInstanceIngressPrivateIp(res["ingressPrivateIp"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
@@ -678,6 +771,12 @@ func resourceLookerInstanceRead(d *schema.ResourceData, meta interface{}) error 
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("private_ip_enabled", flattenLookerInstancePrivateIpEnabled(res["privateIpEnabled"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("psc_config", flattenLookerInstancePscConfig(res["pscConfig"], d, config)); err != nil {
+		return fmt.Errorf("Error reading Instance: %s", err)
+	}
+	if err := d.Set("psc_enabled", flattenLookerInstancePscEnabled(res["pscEnabled"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Instance: %s", err)
 	}
 	if err := d.Set("public_ip_enabled", flattenLookerInstancePublicIpEnabled(res["publicIpEnabled"], d, config)); err != nil {
@@ -739,6 +838,12 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 	} else if v, ok := d.GetOkExists("encryption_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, encryptionConfigProp)) {
 		obj["encryptionConfig"] = encryptionConfigProp
 	}
+	fipsEnabledProp, err := expandLookerInstanceFipsEnabled(d.Get("fips_enabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("fips_enabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, fipsEnabledProp)) {
+		obj["fipsEnabled"] = fipsEnabledProp
+	}
 	maintenanceWindowProp, err := expandLookerInstanceMaintenanceWindow(d.Get("maintenance_window"), d, config)
 	if err != nil {
 		return err
@@ -756,6 +861,18 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 		return err
 	} else if v, ok := d.GetOkExists("private_ip_enabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, privateIpEnabledProp)) {
 		obj["privateIpEnabled"] = privateIpEnabledProp
+	}
+	pscConfigProp, err := expandLookerInstancePscConfig(d.Get("psc_config"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("psc_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, pscConfigProp)) {
+		obj["pscConfig"] = pscConfigProp
+	}
+	pscEnabledProp, err := expandLookerInstancePscEnabled(d.Get("psc_enabled"), d, config)
+	if err != nil {
+		return err
+	} else if v, ok := d.GetOkExists("psc_enabled"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, pscEnabledProp)) {
+		obj["pscEnabled"] = pscEnabledProp
 	}
 	publicIpEnabledProp, err := expandLookerInstancePublicIpEnabled(d.Get("public_ip_enabled"), d, config)
 	if err != nil {
@@ -807,6 +924,10 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 		updateMask = append(updateMask, "encryptionConfig")
 	}
 
+	if d.HasChange("fips_enabled") {
+		updateMask = append(updateMask, "fipsEnabled")
+	}
+
 	if d.HasChange("maintenance_window") {
 		updateMask = append(updateMask, "maintenanceWindow")
 	}
@@ -817,6 +938,15 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 
 	if d.HasChange("private_ip_enabled") {
 		updateMask = append(updateMask, "privateIpEnabled")
+	}
+
+	if d.HasChange("psc_config") {
+		updateMask = append(updateMask, "psc_config.allowed_vpcs",
+			"psc_config.service_attachments")
+	}
+
+	if d.HasChange("psc_enabled") {
+		updateMask = append(updateMask, "pscEnabled")
 	}
 
 	if d.HasChange("public_ip_enabled") {
@@ -906,6 +1036,10 @@ func resourceLookerInstanceDelete(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	headers := make(http.Header)
+	// Forcefully delete the Looker instance
+	if deletionPolicy := d.Get("deletion_policy"); deletionPolicy == "FORCE" {
+		url = url + "?force=True"
+	}
 
 	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
@@ -952,6 +1086,11 @@ func resourceLookerInstanceImport(d *schema.ResourceData, meta interface{}) ([]*
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	// Explicitly set virtual fields to default values on import
+	if err := d.Set("deletion_policy", "DEFAULT"); err != nil {
+		return nil, fmt.Errorf("Error setting deletion_policy: %s", err)
+	}
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -1254,6 +1393,10 @@ func flattenLookerInstanceEncryptionConfigKmsKeyNameVersion(v interface{}, d *sc
 	return v
 }
 
+func flattenLookerInstanceFipsEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
 func flattenLookerInstanceIngressPrivateIp(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -1381,6 +1524,67 @@ func flattenLookerInstancePlatformEdition(v interface{}, d *schema.ResourceData,
 }
 
 func flattenLookerInstancePrivateIpEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenLookerInstancePscConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["allowed_vpcs"] =
+		flattenLookerInstancePscConfigAllowedVpcs(original["allowedVpcs"], d, config)
+	transformed["looker_service_attachment_uri"] =
+		flattenLookerInstancePscConfigLookerServiceAttachmentUri(original["lookerServiceAttachmentUri"], d, config)
+	transformed["service_attachments"] =
+		flattenLookerInstancePscConfigServiceAttachments(original["serviceAttachments"], d, config)
+	return []interface{}{transformed}
+}
+func flattenLookerInstancePscConfigAllowedVpcs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenLookerInstancePscConfigLookerServiceAttachmentUri(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenLookerInstancePscConfigServiceAttachments(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.([]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		original := raw.(map[string]interface{})
+		if len(original) < 1 {
+			// Do not include empty json objects coming back from the api
+			continue
+		}
+		transformed = append(transformed, map[string]interface{}{
+			"connection_status":             flattenLookerInstancePscConfigServiceAttachmentsConnectionStatus(original["connectionStatus"], d, config),
+			"local_fqdn":                    flattenLookerInstancePscConfigServiceAttachmentsLocalFqdn(original["localFqdn"], d, config),
+			"target_service_attachment_uri": flattenLookerInstancePscConfigServiceAttachmentsTargetServiceAttachmentUri(original["targetServiceAttachmentUri"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenLookerInstancePscConfigServiceAttachmentsConnectionStatus(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenLookerInstancePscConfigServiceAttachmentsLocalFqdn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenLookerInstancePscConfigServiceAttachmentsTargetServiceAttachmentUri(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenLookerInstancePscEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1738,6 +1942,10 @@ func expandLookerInstanceEncryptionConfigKmsKeyNameVersion(v interface{}, d tpgr
 	return v, nil
 }
 
+func expandLookerInstanceFipsEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
 func expandLookerInstanceMaintenanceWindow(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	l := v.([]interface{})
 	if len(l) == 0 || l[0] == nil {
@@ -1863,6 +2071,99 @@ func expandLookerInstancePlatformEdition(v interface{}, d tpgresource.TerraformR
 }
 
 func expandLookerInstancePrivateIpEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandLookerInstancePscConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAllowedVpcs, err := expandLookerInstancePscConfigAllowedVpcs(original["allowed_vpcs"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAllowedVpcs); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["allowedVpcs"] = transformedAllowedVpcs
+	}
+
+	transformedLookerServiceAttachmentUri, err := expandLookerInstancePscConfigLookerServiceAttachmentUri(original["looker_service_attachment_uri"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedLookerServiceAttachmentUri); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["lookerServiceAttachmentUri"] = transformedLookerServiceAttachmentUri
+	}
+
+	transformedServiceAttachments, err := expandLookerInstancePscConfigServiceAttachments(original["service_attachments"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedServiceAttachments); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["serviceAttachments"] = transformedServiceAttachments
+	}
+
+	return transformed, nil
+}
+
+func expandLookerInstancePscConfigAllowedVpcs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandLookerInstancePscConfigLookerServiceAttachmentUri(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandLookerInstancePscConfigServiceAttachments(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	req := make([]interface{}, 0, len(l))
+	for _, raw := range l {
+		if raw == nil {
+			continue
+		}
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedConnectionStatus, err := expandLookerInstancePscConfigServiceAttachmentsConnectionStatus(original["connection_status"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedConnectionStatus); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["connectionStatus"] = transformedConnectionStatus
+		}
+
+		transformedLocalFqdn, err := expandLookerInstancePscConfigServiceAttachmentsLocalFqdn(original["local_fqdn"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedLocalFqdn); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["localFqdn"] = transformedLocalFqdn
+		}
+
+		transformedTargetServiceAttachmentUri, err := expandLookerInstancePscConfigServiceAttachmentsTargetServiceAttachmentUri(original["target_service_attachment_uri"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedTargetServiceAttachmentUri); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["targetServiceAttachmentUri"] = transformedTargetServiceAttachmentUri
+		}
+
+		req = append(req, transformed)
+	}
+	return req, nil
+}
+
+func expandLookerInstancePscConfigServiceAttachmentsConnectionStatus(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandLookerInstancePscConfigServiceAttachmentsLocalFqdn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandLookerInstancePscConfigServiceAttachmentsTargetServiceAttachmentUri(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandLookerInstancePscEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

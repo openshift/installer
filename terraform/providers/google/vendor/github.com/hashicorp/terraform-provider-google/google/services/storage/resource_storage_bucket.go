@@ -49,12 +49,22 @@ func ResourceStorageBucket() *schema.Resource {
 			Read:   schema.DefaultTimeout(4 * time.Minute),
 		},
 
-		SchemaVersion: 1,
+		SchemaVersion: 3,
 		StateUpgraders: []schema.StateUpgrader{
 			{
 				Type:    resourceStorageBucketV0().CoreConfigSchema().ImpliedType(),
 				Upgrade: ResourceStorageBucketStateUpgradeV0,
 				Version: 0,
+			},
+			{
+				Type:    resourceStorageBucketV1().CoreConfigSchema().ImpliedType(),
+				Upgrade: ResourceStorageBucketStateUpgradeV1,
+				Version: 1,
+			},
+			{
+				Type:    resourceStorageBucketV2().CoreConfigSchema().ImpliedType(),
+				Upgrade: ResourceStorageBucketStateUpgradeV2,
+				Version: 2,
 			},
 		},
 
@@ -228,11 +238,6 @@ func ResourceStorageBucket() *schema.Resource {
 										Optional:    true,
 										Description: `Creation date of an object in RFC 3339 (e.g. 2017-06-13) to satisfy this condition.`,
 									},
-									"no_age": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Description: `While set true, age value will be omitted.Required to set true when age is unset in the config file.`,
-									},
 									"with_state": {
 										Type:         schema.TypeString,
 										Computed:     true,
@@ -262,6 +267,11 @@ func ResourceStorageBucket() *schema.Resource {
 										Optional:    true,
 										Elem:        &schema.Schema{Type: schema.TypeString},
 										Description: `One or more matching name suffixes to satisfy this condition.`,
+									},
+									"send_age_if_zero": {
+										Type:        schema.TypeBool,
+										Optional:    true,
+										Description: `While set true, age value will be sent in the request even for zero value of the field. This field is only useful for setting 0 value to the age field. It can be used alone or together with age.`,
 									},
 									"send_days_since_noncurrent_time_if_zero": {
 										Type:        schema.TypeBool,
@@ -541,6 +551,24 @@ func ResourceStorageBucket() *schema.Resource {
 					},
 				},
 			},
+			"hierarchical_namespace": {
+				Type:             schema.TypeList,
+				MaxItems:         1,
+				Optional:         true,
+				ForceNew:         true,
+				DiffSuppressFunc: hierachicalNamespaceDiffSuppress,
+				Description:      `The bucket's HNS configuration, which defines bucket can organize folders in logical file system structure.`,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"enabled": {
+							Type:        schema.TypeBool,
+							Required:    true,
+							ForceNew:    true,
+							Description: `Set this field true to organize bucket with logical file system structure.`,
+						},
+					},
+				},
+			},
 		},
 		UseJSONNumber: true,
 	}
@@ -688,6 +716,10 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 		sb.SoftDeletePolicy = expandBucketSoftDeletePolicy(v.([]interface{}))
 	}
 
+	if v, ok := d.GetOk("hierarchical_namespace"); ok {
+		sb.HierarchicalNamespace = expandBucketHierachicalNamespace(v.([]interface{}))
+	}
+
 	var res *storage.Bucket
 
 	err = transport_tpg.Retry(transport_tpg.RetryOptions{
@@ -699,7 +731,8 @@ func resourceStorageBucketCreate(d *schema.ResourceData, meta interface{}) error
 			res, err = insertCall.Do()
 			return err
 		},
-		Timeout: d.Timeout(schema.TimeoutCreate),
+		Timeout:              d.Timeout(schema.TimeoutCreate),
+		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429RetryableQuotaError},
 	})
 
 	if err != nil {
@@ -930,18 +963,9 @@ func resourceStorageBucketRead(d *schema.ResourceData, meta interface{}) error {
 	// Get the bucket and acl
 	bucket := d.Get("name").(string)
 
-	var res *storage.Bucket
 	// There seems to be some eventual consistency errors in some cases, so we want to check a few times
 	// to make sure it exists before moving on
-	err = transport_tpg.Retry(transport_tpg.RetryOptions{
-		RetryFunc: func() (operr error) {
-			var retryErr error
-			res, retryErr = config.NewStorageClient(userAgent).Buckets.Get(bucket).Do()
-			return retryErr
-		},
-		Timeout:              d.Timeout(schema.TimeoutRead),
-		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsNotFoundRetryableError("bucket read")},
-	})
+	res, err := config.NewStorageClient(userAgent).Buckets.Get(bucket).Do()
 
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("Storage Bucket %q", d.Get("name").(string)))
@@ -1285,6 +1309,38 @@ func flattenBucketSoftDeletePolicy(softDeletePolicy *storage.BucketSoftDeletePol
 	return policies
 }
 
+func expandBucketHierachicalNamespace(configured interface{}) *storage.BucketHierarchicalNamespace {
+	configuredHierachicalNamespace := configured.([]interface{})
+	if len(configuredHierachicalNamespace) == 0 {
+		return nil
+	}
+	configuredHierachicalNamespacePolicy := configuredHierachicalNamespace[0].(map[string]interface{})
+	hierachicalNamespacePolicy := &storage.BucketHierarchicalNamespace{
+		Enabled: (configuredHierachicalNamespacePolicy["enabled"].(bool)),
+	}
+	hierachicalNamespacePolicy.ForceSendFields = append(hierachicalNamespacePolicy.ForceSendFields, "Enabled")
+	return hierachicalNamespacePolicy
+}
+
+func flattenBucketHierarchicalNamespacePolicy(hierachicalNamespacePolicy *storage.BucketHierarchicalNamespace) []map[string]interface{} {
+	policies := make([]map[string]interface{}, 0, 1)
+	if hierachicalNamespacePolicy == nil {
+		// a null object returned from the API is equivalent to a block with enabled = false
+		// to handle this consistently, always write a null response as a hydrated block with false
+		defaultPolicy := map[string]interface{}{
+			"enabled": false,
+		}
+
+		policies = append(policies, defaultPolicy)
+		return policies
+	}
+	policy := map[string]interface{}{
+		"enabled": hierachicalNamespacePolicy.Enabled,
+	}
+	policies = append(policies, policy)
+	return policies
+}
+
 func expandBucketVersioning(configured interface{}) *storage.BucketVersioning {
 	versionings := configured.([]interface{})
 	if len(versionings) == 0 {
@@ -1397,13 +1453,19 @@ func flattenBucketLifecycleRuleCondition(index int, d *schema.ResourceData, cond
 			ruleCondition["with_state"] = "ARCHIVED"
 		}
 	}
-	// setting no_age value from state config since it is terraform only variable and not getting value from backend.
+	// Setting the lifecycle condition virtual fields from the state file if they
+	// are already present otherwise setting them to individual default values.
 	if v, ok := d.GetOk(fmt.Sprintf("lifecycle_rule.%d.condition", index)); ok {
 		state_condition := v.(*schema.Set).List()[0].(map[string]interface{})
-		ruleCondition["no_age"] = state_condition["no_age"].(bool)
 		ruleCondition["send_days_since_noncurrent_time_if_zero"] = state_condition["send_days_since_noncurrent_time_if_zero"].(bool)
 		ruleCondition["send_days_since_custom_time_if_zero"] = state_condition["send_days_since_custom_time_if_zero"].(bool)
 		ruleCondition["send_num_newer_versions_if_zero"] = state_condition["send_num_newer_versions_if_zero"].(bool)
+		ruleCondition["send_age_if_zero"] = state_condition["send_age_if_zero"].(bool)
+	} else {
+		ruleCondition["send_age_if_zero"] = false
+		ruleCondition["send_days_since_noncurrent_time_if_zero"] = false
+		ruleCondition["send_days_since_custom_time_if_zero"] = false
+		ruleCondition["send_num_newer_versions_if_zero"] = false
 	}
 
 	return ruleCondition
@@ -1553,13 +1615,10 @@ func expandStorageBucketLifecycleRuleCondition(v interface{}) (*storage.BucketLi
 
 	condition := conditions[0].(map[string]interface{})
 	transformed := &storage.BucketLifecycleRuleCondition{}
-	// Setting high precedence of no_age over age when both used together.
-	// Only sets age value when no_age is not present or no_age is present and has false value
-	if v, ok := condition["no_age"]; !ok || !(v.(bool)) {
-		if v, ok := condition["age"]; ok {
-			age := int64(v.(int))
+	if v, ok := condition["age"]; ok {
+		age := int64(v.(int))
+		if u, ok := condition["send_age_if_zero"]; age > 0 || (ok && u.(bool)) {
 			transformed.Age = &age
-			transformed.ForceSendFields = append(transformed.ForceSendFields, "Age")
 		}
 	}
 
@@ -1670,12 +1729,8 @@ func resourceGCSBucketLifecycleRuleConditionHash(v interface{}) int {
 	var buf bytes.Buffer
 	m := v.(map[string]interface{})
 
-	if v, ok := m["no_age"]; ok && v.(bool) {
-		buf.WriteString(fmt.Sprintf("%t-", v.(bool)))
-	} else {
-		if v, ok := m["age"]; ok {
-			buf.WriteString(fmt.Sprintf("%d-", v.(int)))
-		}
+	if v, ok := m["age"]; ok {
+		buf.WriteString(fmt.Sprintf("%d-", v.(int)))
 	}
 
 	if v, ok := m["days_since_custom_time"]; ok {
@@ -1717,6 +1772,10 @@ func resourceGCSBucketLifecycleRuleConditionHash(v interface{}) int {
 
 	if v, ok := m["num_newer_versions"]; ok {
 		buf.WriteString(fmt.Sprintf("%d-", v.(int)))
+	}
+
+	if v, ok := m["send_age_if_zero"]; ok {
+		buf.WriteString(fmt.Sprintf("%t-", v.(bool)))
 	}
 
 	if v, ok := m["send_days_since_noncurrent_time_if_zero"]; ok {
@@ -1841,8 +1900,7 @@ func setStorageBucket(d *schema.ResourceData, config *transport_tpg.Config, res 
 	if err := d.Set("autoclass", flattenBucketAutoclass(res.Autoclass)); err != nil {
 		return fmt.Errorf("Error setting autoclass: %s", err)
 	}
-	// lifecycle_rule contains terraform only variable no_age.
-	// Passing config("d") to flattener function to set no_age separately.
+	// Passing config("d") to flattener function to set virtual fields separately.
 	if err := d.Set("lifecycle_rule", flattenBucketLifecycle(d, res.Lifecycle)); err != nil {
 		return fmt.Errorf("Error setting lifecycle_rule: %s", err)
 	}
@@ -1874,6 +1932,9 @@ func setStorageBucket(d *schema.ResourceData, config *transport_tpg.Config, res 
 	if err := d.Set("soft_delete_policy", flattenBucketSoftDeletePolicy(res.SoftDeletePolicy)); err != nil {
 		return fmt.Errorf("Error setting soft_delete_policy: %s", err)
 	}
+	if err := d.Set("hierarchical_namespace", flattenBucketHierarchicalNamespacePolicy(res.HierarchicalNamespace)); err != nil {
+		return fmt.Errorf("Error setting hierarchical namespace: %s", err)
+	}
 	if res.IamConfiguration != nil && res.IamConfiguration.UniformBucketLevelAccess != nil {
 		if err := d.Set("uniform_bucket_level_access", res.IamConfiguration.UniformBucketLevelAccess.Enabled); err != nil {
 			return fmt.Errorf("Error setting uniform_bucket_level_access: %s", err)
@@ -1902,4 +1963,15 @@ func setStorageBucket(d *schema.ResourceData, config *transport_tpg.Config, res 
 
 	d.SetId(res.Id)
 	return nil
+}
+
+func hierachicalNamespaceDiffSuppress(k, old, new string, r *schema.ResourceData) bool {
+	if k == "hierarchical_namespace.#" && old == "1" && new == "0" {
+		o, _ := r.GetChange("hierarchical_namespace.0.enabled")
+		if !o.(bool) {
+			return true
+		}
+	}
+
+	return false
 }

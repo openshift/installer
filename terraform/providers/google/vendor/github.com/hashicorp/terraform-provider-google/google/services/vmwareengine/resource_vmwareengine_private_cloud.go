@@ -27,17 +27,91 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"google.golang.org/api/googleapi"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	transport_tpg "github.com/hashicorp/terraform-provider-google/google/transport"
 	"github.com/hashicorp/terraform-provider-google/google/verify"
 )
 
-func vmwareenginePrivateCloudStandardTypeDiffSuppressFunc(_, old, new string, _ *schema.ResourceData) bool {
+func vmwareenginePrivateCloudStandardTypeDiffSuppressFunc(_, old, new string, d *schema.ResourceData) bool {
 	if (old == "STANDARD" && new == "") || (old == "" && new == "STANDARD") {
 		return true
 	}
+	if isMultiNodePrivateCloud(d) && old == "TIME_LIMITED" && new == "STANDARD" {
+		log.Printf("[DEBUG] Multinode Private Cloud found, facilitating TYPE change to STANDARD")
+		return true
+	}
 	return false
+}
+
+func isMultiNodePrivateCloud(d *schema.ResourceData) bool {
+	nodeConfigMap := d.Get("management_cluster.0.node_type_configs").(*schema.Set).List()
+	totalNodeCount := 0
+	for _, nodeConfig := range nodeConfigMap {
+		configMap, ok := nodeConfig.(map[string]interface{})
+		if !ok {
+			log.Printf("[DEBUG] Invalid node configuration format for private cloud.")
+			continue
+		}
+		nodeCount, ok := configMap["node_count"].(int)
+		if !ok {
+			log.Printf("[DEBUG] Invalid node_count format for private cloud.")
+			continue
+		}
+		totalNodeCount += nodeCount
+	}
+	log.Printf("[DEBUG] The node count of the private cloud is found to be %v nodes.", totalNodeCount)
+	if totalNodeCount > 2 {
+		return true
+	}
+	return false
+}
+
+func isPrivateCloudInDeletedState(config *transport_tpg.Config, d *schema.ResourceData, billingProject string, userAgent string) (bool, error) {
+	baseurl, err := tpgresource.ReplaceVars(d, config, "{{VmwareengineBasePath}}projects/{{project}}/locations/{{location}}/privateClouds/{{name}}")
+	if err != nil {
+		return false, err
+	}
+	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+		Config:    config,
+		Method:    "GET",
+		Project:   billingProject,
+		RawURL:    baseurl,
+		UserAgent: userAgent,
+	})
+	if err != nil {
+		if gerr, ok := err.(*googleapi.Error); ok && gerr.Code == 404 {
+			log.Printf("[DEBUG] No existing private cloud found")
+			return false, nil
+		}
+		return false, err
+	}
+	// if resource exists but is marked for deletion
+	v, ok := res["state"]
+	if ok && v.(string) == "DELETED" {
+		log.Printf("[DEBUG] The Private cloud exists and is marked for deletion.")
+		return true, nil
+	}
+	return false, nil
+}
+
+// Check if private cloud is absent or if it exists in a deleted state.
+func pollCheckForPrivateCloudAbsence(resp map[string]interface{}, respErr error) transport_tpg.PollResult {
+	if respErr != nil {
+		if transport_tpg.IsGoogleApiErrorWithCode(respErr, 404) {
+			return transport_tpg.SuccessPollResult()
+		}
+		return transport_tpg.ErrorPollResult(respErr)
+	}
+	// if resource exists but is marked for deletion
+	log.Printf("[DEBUG] Fetching state of the private cloud.")
+	v, ok := resp["state"]
+	if ok && v.(string) == "DELETED" {
+		log.Printf("[DEBUG] The Private cloud has been successfully marked for delayed deletion.")
+		return transport_tpg.SuccessPollResult()
+	}
+	return transport_tpg.PendingStatusPollResult("found")
 }
 
 func ResourceVmwareenginePrivateCloud() *schema.Resource {
@@ -84,6 +158,132 @@ func ResourceVmwareenginePrivateCloud() *schema.Resource {
   * Ends with a non-hyphen character
   * Not formatted as a UUID
   * Complies with RFC 1034 (https://datatracker.ietf.org/doc/html/rfc1034) (section 3.5)`,
+						},
+						"autoscaling_settings": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Description: `Configuration of the autoscaling applied to this cluster
+Private cloud must have a minimum of 3 nodes to add autoscale settings`,
+							MaxItems: 1,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"autoscaling_policies": {
+										Type:     schema.TypeSet,
+										Required: true,
+										Description: `The map with autoscaling policies applied to the cluster.
+The key is the identifier of the policy.
+It must meet the following requirements:
+ * Only contains 1-63 alphanumeric characters and hyphens
+ * Begins with an alphabetical character
+ * Ends with a non-hyphen character
+ * Not formatted as a UUID
+ * Complies with [RFC 1034](https://datatracker.ietf.org/doc/html/rfc1034) (section 3.5)
+
+Currently the map must contain only one element
+that describes the autoscaling policy for compute nodes.`,
+										Elem: &schema.Resource{
+											Schema: map[string]*schema.Schema{
+												"autoscale_policy_id": {
+													Type:     schema.TypeString,
+													Required: true,
+												},
+												"node_type_id": {
+													Type:        schema.TypeString,
+													Required:    true,
+													Description: `The canonical identifier of the node type to add or remove.`,
+												},
+												"scale_out_size": {
+													Type:     schema.TypeInt,
+													Required: true,
+													Description: `Number of nodes to add to a cluster during a scale-out operation.
+Must be divisible by 2 for stretched clusters.`,
+												},
+												"consumed_memory_thresholds": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Utilization thresholds pertaining to amount of consumed memory.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"scale_in": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: `The utilization triggering the scale-in operation in percent.`,
+															},
+															"scale_out": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: `The utilization triggering the scale-out operation in percent.`,
+															},
+														},
+													},
+												},
+												"cpu_thresholds": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Utilization thresholds pertaining to CPU utilization.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"scale_in": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: `The utilization triggering the scale-in operation in percent.`,
+															},
+															"scale_out": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: `The utilization triggering the scale-out operation in percent.`,
+															},
+														},
+													},
+												},
+												"storage_thresholds": {
+													Type:        schema.TypeList,
+													Optional:    true,
+													Description: `Utilization thresholds pertaining to amount of consumed storage.`,
+													MaxItems:    1,
+													Elem: &schema.Resource{
+														Schema: map[string]*schema.Schema{
+															"scale_in": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: `The utilization triggering the scale-in operation in percent.`,
+															},
+															"scale_out": {
+																Type:        schema.TypeInt,
+																Required:    true,
+																Description: `The utilization triggering the scale-out operation in percent.`,
+															},
+														},
+													},
+												},
+											},
+										},
+									},
+									"cool_down_period": {
+										Type:     schema.TypeString,
+										Optional: true,
+										Description: `The minimum duration between consecutive autoscale operations.
+It starts once addition or removal of nodes is fully completed.
+Minimum cool down period is 30m.
+Cool down period must be in whole minutes (for example, 30m, 31m, 50m).
+Mandatory for successful addition of autoscaling settings in cluster.`,
+									},
+									"max_cluster_node_count": {
+										Type:     schema.TypeInt,
+										Optional: true,
+										Description: `Maximum number of nodes of any type in a cluster.
+Mandatory for successful addition of autoscaling settings in cluster.`,
+									},
+									"min_cluster_node_count": {
+										Type:     schema.TypeInt,
+										Optional: true,
+										Description: `Minimum number of nodes of any type in a cluster.
+Mandatory for successful addition of autoscaling settings in cluster.`,
+									},
+								},
+							},
 						},
 						"node_type_configs": {
 							Type:     schema.TypeSet,
@@ -299,6 +499,16 @@ the form: projects/{project_number}/locations/{location}/vmwareEngineNetworks/{v
 					},
 				},
 			},
+			"deletion_delay_hours": {
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Description: `The number of hours to delay this request. You can set this value to an hour between 0 to 8, where setting it to 0 starts the deletion request immediately. If no value is set, a default value is set at the API Level.`,
+			},
+			"send_deletion_delay_hours_if_zero": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `While set true, deletion_delay_hours value will be sent in the request even for zero value of the field. This field is only useful for setting 0 value to the deletion_delay_hours field. It can be used both alone and together with deletion_delay_hours.`,
+			},
 			"project": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -363,6 +573,21 @@ func resourceVmwareenginePrivateCloudCreate(d *schema.ResourceData, meta interfa
 	}
 
 	headers := make(http.Header)
+	// Check if the project exists in a deleted state
+	pcMarkedForDeletion, err := isPrivateCloudInDeletedState(config, d, billingProject, userAgent)
+	if err != nil {
+		return fmt.Errorf("Error checking if Private Cloud exists and is marked for deletion: %s", err)
+	}
+	if pcMarkedForDeletion {
+		log.Printf("[DEBUG] Private Cloud exists and is marked for deletion. Triggering UNDELETE of the Private Cloud.\n")
+		url, err = tpgresource.ReplaceVars(d, config, "{{VmwareengineBasePath}}projects/{{project}}/locations/{{location}}/privateClouds/{{name}}:undelete")
+		if err != nil {
+			return err
+		}
+		obj = make(map[string]interface{})
+	} else {
+		log.Printf("[DEBUG] Private Cloud is not found to be marked for deletion. Triggering CREATE of the Private Cloud.\n")
+	}
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -393,6 +618,61 @@ func resourceVmwareenginePrivateCloudCreate(d *schema.ResourceData, meta interfa
 		// The resource didn't actually create
 		d.SetId("")
 		return fmt.Errorf("Error waiting to create PrivateCloud: %s", err)
+	}
+
+	mgmtClusterProp, err := expandVmwareenginePrivateCloudManagementCluster(d.Get("management_cluster"), d, config)
+	if v, ok := d.GetOkExists("management_cluster"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, mgmtClusterProp)) {
+		obj["managementCluster"] = mgmtClusterProp
+	}
+
+	mgmtMap := mgmtClusterProp.(map[string]interface{})
+	parentUrl, err := tpgresource.ReplaceVars(d, config, "{{VmwareengineBasePath}}projects/{{project}}/locations/{{location}}/privateClouds/{{name}}")
+	if err != nil {
+		return err
+	}
+
+	clusterUrl := fmt.Sprintf("%s/clusters/%s", parentUrl, mgmtMap["clusterId"])
+	clusterUpdateMask := []string{}
+	clusterObj := make(map[string]interface{})
+
+	if v, ok := d.GetOkExists("management_cluster"); !tpgresource.IsEmptyValue(reflect.ValueOf(mgmtClusterProp)) && (ok || !reflect.DeepEqual(v, mgmtClusterProp)) {
+		clusterObj["autoscalingSettings"] = mgmtMap["autoscalingSettings"]
+	}
+
+	if d.HasChange("management_cluster") {
+		clusterUpdateMask = append(clusterUpdateMask, "autoscalingSettings")
+	}
+
+	clusterPatchUrl, err := transport_tpg.AddQueryParams(clusterUrl, map[string]string{"updateMask": strings.Join(clusterUpdateMask, ",")})
+	if err != nil {
+		return err
+	}
+
+	// check if there is anything to update to avoid API call if not required.
+	if len(clusterUpdateMask) > 0 {
+		res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
+			Config:    config,
+			Method:    "PATCH",
+			Project:   billingProject,
+			RawURL:    clusterPatchUrl,
+			UserAgent: userAgent,
+			Body:      clusterObj,
+			Timeout:   d.Timeout(schema.TimeoutUpdate),
+		})
+
+		if err != nil {
+			return fmt.Errorf("Error updating magament cluster %q: %s", d.Id(), err)
+		} else {
+			log.Printf("[DEBUG] Finished updating magament cluster %q: %#v", d.Id(), res)
+		}
+
+		err = VmwareengineOperationWaitTime(
+			config, res, project, "Updating Managment Cluster", userAgent,
+			d.Timeout(schema.TimeoutUpdate))
+
+		if err != nil {
+			return err
+		}
 	}
 
 	log.Printf("[DEBUG] Finished creating PrivateCloud %q: %#v", d.Id(), res)
@@ -451,6 +731,7 @@ func resourceVmwareenginePrivateCloudRead(d *schema.ResourceData, meta interface
 		return nil
 	}
 
+	// Explicitly set virtual fields to default values if unset
 	if err := d.Set("project", project); err != nil {
 		return fmt.Errorf("Error reading PrivateCloud: %s", err)
 	}
@@ -573,10 +854,12 @@ func resourceVmwareenginePrivateCloudUpdate(d *schema.ResourceData, meta interfa
 
 	if v, ok := d.GetOkExists("management_cluster"); !tpgresource.IsEmptyValue(reflect.ValueOf(mgmtClusterProp)) && (ok || !reflect.DeepEqual(v, mgmtClusterProp)) {
 		clusterObj["nodeTypeConfigs"] = mgmtMap["nodeTypeConfigs"]
+		clusterObj["autoscalingSettings"] = mgmtMap["autoscalingSettings"]
 	}
 
 	if d.HasChange("management_cluster") {
 		clusterUpdateMask = append(clusterUpdateMask, "nodeTypeConfigs.*.nodeCount")
+		clusterUpdateMask = append(clusterUpdateMask, "autoscalingSettings")
 	}
 
 	clusterPatchUrl, err := transport_tpg.AddQueryParams(clusterUrl, map[string]string{"updateMask": strings.Join(clusterUpdateMask, ",")})
@@ -628,7 +911,7 @@ func resourceVmwareenginePrivateCloudDelete(d *schema.ResourceData, meta interfa
 	}
 	billingProject = project
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{VmwareengineBasePath}}projects/{{project}}/locations/{{location}}/privateClouds/{{name}}?delay_hours=0")
+	url, err := tpgresource.ReplaceVars(d, config, "{{VmwareengineBasePath}}projects/{{project}}/locations/{{location}}/privateClouds/{{name}}")
 	if err != nil {
 		return err
 	}
@@ -641,6 +924,14 @@ func resourceVmwareenginePrivateCloudDelete(d *schema.ResourceData, meta interfa
 	}
 
 	headers := make(http.Header)
+	// Delay deletion of the Private Cloud if delationDelayHours value is set
+	delationDelayHours := d.Get("deletion_delay_hours").(int)
+	if delationDelayHours > 0 || (delationDelayHours == 0 && d.Get("send_deletion_delay_hours_if_zero").(bool) == true) {
+		log.Printf("[DEBUG] Triggering delete of the Private Cloud with a delay of %v hours.\n", delationDelayHours)
+		url = url + "?delay_hours=" + fmt.Sprintf("%v", delationDelayHours)
+	} else {
+		log.Printf("[DEBUG] No deletion delay provided, triggering DELETE API without setting delay hours.\n")
+	}
 
 	log.Printf("[DEBUG] Deleting PrivateCloud %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
@@ -700,7 +991,7 @@ func resourceVmwareenginePrivateCloudDelete(d *schema.ResourceData, meta interfa
 		}
 	}
 
-	err = transport_tpg.PollingWaitTime(privateCloudPollRead(d, meta), transport_tpg.PollCheckForAbsence, "Deleting PrivateCloud", d.Timeout(schema.TimeoutDelete), 10)
+	err = transport_tpg.PollingWaitTime(privateCloudPollRead(d, meta), pollCheckForPrivateCloudAbsence, "Deleting PrivateCloud", d.Timeout(schema.TimeoutDelete), 10)
 	if err != nil {
 		return fmt.Errorf("Error waiting to delete PrivateCloud: %s", err)
 	}
@@ -725,6 +1016,8 @@ func resourceVmwareenginePrivateCloudImport(d *schema.ResourceData, meta interfa
 		return nil, fmt.Errorf("Error constructing id: %s", err)
 	}
 	d.SetId(id)
+
+	// Explicitly set virtual fields to default values on import
 
 	return []*schema.ResourceData{d}, nil
 }
@@ -810,6 +1103,8 @@ func flattenVmwareenginePrivateCloudManagementCluster(v interface{}, d *schema.R
 		flattenVmwareenginePrivateCloudManagementClusterNodeTypeConfigs(original["nodeTypeConfigs"], d, config)
 	transformed["stretched_cluster_config"] =
 		flattenVmwareenginePrivateCloudManagementClusterStretchedClusterConfig(original["stretchedClusterConfig"], d, config)
+	transformed["autoscaling_settings"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettings(original["autoscalingSettings"], d, config)
 	return []interface{}{transformed}
 }
 func flattenVmwareenginePrivateCloudManagementClusterClusterId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -886,6 +1181,250 @@ func flattenVmwareenginePrivateCloudManagementClusterStretchedClusterConfigPrefe
 }
 
 func flattenVmwareenginePrivateCloudManagementClusterStretchedClusterConfigSecondaryLocation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettings(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["autoscaling_policies"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPolicies(original["autoscalingPolicies"], d, config)
+	transformed["min_cluster_node_count"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsMinClusterNodeCount(original["minClusterNodeCount"], d, config)
+	transformed["max_cluster_node_count"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsMaxClusterNodeCount(original["maxClusterNodeCount"], d, config)
+	transformed["cool_down_period"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsCoolDownPeriod(original["coolDownPeriod"], d, config)
+	return []interface{}{transformed}
+}
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPolicies(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return v
+	}
+	l := v.(map[string]interface{})
+	transformed := make([]interface{}, 0, len(l))
+	for k, raw := range l {
+		original := raw.(map[string]interface{})
+		transformed = append(transformed, map[string]interface{}{
+			"autoscale_policy_id":        k,
+			"node_type_id":               flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesNodeTypeId(original["nodeTypeId"], d, config),
+			"scale_out_size":             flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesScaleOutSize(original["scaleOutSize"], d, config),
+			"cpu_thresholds":             flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholds(original["cpuThresholds"], d, config),
+			"consumed_memory_thresholds": flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholds(original["consumedMemoryThresholds"], d, config),
+			"storage_thresholds":         flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholds(original["storageThresholds"], d, config),
+		})
+	}
+	return transformed
+}
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesNodeTypeId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesScaleOutSize(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["scale_out"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholdsScaleOut(original["scaleOut"], d, config)
+	transformed["scale_in"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholdsScaleIn(original["scaleIn"], d, config)
+	return []interface{}{transformed}
+}
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholdsScaleOut(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholdsScaleIn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["scale_out"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholdsScaleOut(original["scaleOut"], d, config)
+	transformed["scale_in"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholdsScaleIn(original["scaleIn"], d, config)
+	return []interface{}{transformed}
+}
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholdsScaleOut(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholdsScaleIn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	if v == nil {
+		return nil
+	}
+	original := v.(map[string]interface{})
+	if len(original) == 0 {
+		return nil
+	}
+	transformed := make(map[string]interface{})
+	transformed["scale_out"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholdsScaleOut(original["scaleOut"], d, config)
+	transformed["scale_in"] =
+		flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholdsScaleIn(original["scaleIn"], d, config)
+	return []interface{}{transformed}
+}
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholdsScaleOut(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholdsScaleIn(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsMinClusterNodeCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsMaxClusterNodeCount(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	// Handles the string fixed64 format
+	if strVal, ok := v.(string); ok {
+		if intVal, err := tpgresource.StringToFixed64(strVal); err == nil {
+			return intVal
+		}
+	}
+
+	// number values are represented as float64
+	if floatVal, ok := v.(float64); ok {
+		intVal := int(floatVal)
+		return intVal
+	}
+
+	return v // let terraform core handle it otherwise
+}
+
+func flattenVmwareenginePrivateCloudManagementClusterAutoscalingSettingsCoolDownPeriod(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1095,6 +1634,13 @@ func expandVmwareenginePrivateCloudManagementCluster(v interface{}, d tpgresourc
 		transformed["stretchedClusterConfig"] = transformedStretchedClusterConfig
 	}
 
+	transformedAutoscalingSettings, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettings(original["autoscaling_settings"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAutoscalingSettings); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["autoscalingSettings"] = transformedAutoscalingSettings
+	}
+
 	return transformed, nil
 }
 
@@ -1173,6 +1719,221 @@ func expandVmwareenginePrivateCloudManagementClusterStretchedClusterConfigPrefer
 }
 
 func expandVmwareenginePrivateCloudManagementClusterStretchedClusterConfigSecondaryLocation(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettings(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedAutoscalingPolicies, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPolicies(original["autoscaling_policies"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedAutoscalingPolicies); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["autoscalingPolicies"] = transformedAutoscalingPolicies
+	}
+
+	transformedMinClusterNodeCount, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsMinClusterNodeCount(original["min_cluster_node_count"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMinClusterNodeCount); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["minClusterNodeCount"] = transformedMinClusterNodeCount
+	}
+
+	transformedMaxClusterNodeCount, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsMaxClusterNodeCount(original["max_cluster_node_count"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedMaxClusterNodeCount); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["maxClusterNodeCount"] = transformedMaxClusterNodeCount
+	}
+
+	transformedCoolDownPeriod, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsCoolDownPeriod(original["cool_down_period"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedCoolDownPeriod); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["coolDownPeriod"] = transformedCoolDownPeriod
+	}
+
+	return transformed, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPolicies(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (map[string]interface{}, error) {
+	if v == nil {
+		return map[string]interface{}{}, nil
+	}
+	m := make(map[string]interface{})
+	for _, raw := range v.(*schema.Set).List() {
+		original := raw.(map[string]interface{})
+		transformed := make(map[string]interface{})
+
+		transformedNodeTypeId, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesNodeTypeId(original["node_type_id"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedNodeTypeId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["nodeTypeId"] = transformedNodeTypeId
+		}
+
+		transformedScaleOutSize, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesScaleOutSize(original["scale_out_size"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedScaleOutSize); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["scaleOutSize"] = transformedScaleOutSize
+		}
+
+		transformedCpuThresholds, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholds(original["cpu_thresholds"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedCpuThresholds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["cpuThresholds"] = transformedCpuThresholds
+		}
+
+		transformedConsumedMemoryThresholds, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholds(original["consumed_memory_thresholds"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedConsumedMemoryThresholds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["consumedMemoryThresholds"] = transformedConsumedMemoryThresholds
+		}
+
+		transformedStorageThresholds, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholds(original["storage_thresholds"], d, config)
+		if err != nil {
+			return nil, err
+		} else if val := reflect.ValueOf(transformedStorageThresholds); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+			transformed["storageThresholds"] = transformedStorageThresholds
+		}
+
+		transformedAutoscalePolicyId, err := tpgresource.ExpandString(original["autoscale_policy_id"], d, config)
+		if err != nil {
+			return nil, err
+		}
+		m[transformedAutoscalePolicyId] = transformed
+	}
+	return m, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesNodeTypeId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesScaleOutSize(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholds(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedScaleOut, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholdsScaleOut(original["scale_out"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedScaleOut); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["scaleOut"] = transformedScaleOut
+	}
+
+	transformedScaleIn, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholdsScaleIn(original["scale_in"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedScaleIn); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["scaleIn"] = transformedScaleIn
+	}
+
+	return transformed, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholdsScaleOut(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesCpuThresholdsScaleIn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholds(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedScaleOut, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholdsScaleOut(original["scale_out"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedScaleOut); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["scaleOut"] = transformedScaleOut
+	}
+
+	transformedScaleIn, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholdsScaleIn(original["scale_in"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedScaleIn); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["scaleIn"] = transformedScaleIn
+	}
+
+	return transformed, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholdsScaleOut(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesConsumedMemoryThresholdsScaleIn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholds(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	l := v.([]interface{})
+	if len(l) == 0 || l[0] == nil {
+		return nil, nil
+	}
+	raw := l[0]
+	original := raw.(map[string]interface{})
+	transformed := make(map[string]interface{})
+
+	transformedScaleOut, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholdsScaleOut(original["scale_out"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedScaleOut); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["scaleOut"] = transformedScaleOut
+	}
+
+	transformedScaleIn, err := expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholdsScaleIn(original["scale_in"], d, config)
+	if err != nil {
+		return nil, err
+	} else if val := reflect.ValueOf(transformedScaleIn); val.IsValid() && !tpgresource.IsEmptyValue(val) {
+		transformed["scaleIn"] = transformedScaleIn
+	}
+
+	return transformed, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholdsScaleOut(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsAutoscalingPoliciesStorageThresholdsScaleIn(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsMinClusterNodeCount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsMaxClusterNodeCount(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
+	return v, nil
+}
+
+func expandVmwareenginePrivateCloudManagementClusterAutoscalingSettingsCoolDownPeriod(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

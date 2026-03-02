@@ -537,6 +537,13 @@ components:
                                         x-dcl-go-name: HttpRoute
                                         description: Required. Name of the Gateway
                                           API HTTPRoute.
+                                      podSelectorLabel:
+                                        type: string
+                                        x-dcl-go-name: PodSelectorLabel
+                                        description: Optional. The label to use when
+                                          selecting Pods for the Deployment and Service
+                                          resources. This label must already be present
+                                          in both resources.
                                       routeUpdateWaitTime:
                                         type: string
                                         x-dcl-go-name: RouteUpdateWaitTime
@@ -585,6 +592,13 @@ components:
                                           the number of total Pods used for the deployment
                                           strategy to the number of Pods the Deployment
                                           has on the cluster.
+                                      podSelectorLabel:
+                                        type: string
+                                        x-dcl-go-name: PodSelectorLabel
+                                        description: Optional. The label to use when
+                                          selecting Pods for the Deployment resource.
+                                          This label must already be present in the
+                                          Deployment.
                                       service:
                                         type: string
                                         x-dcl-go-name: Service

@@ -31,6 +31,7 @@ type Workload struct {
 	ComplianceRegime               *WorkloadComplianceRegimeEnum    `json:"complianceRegime"`
 	CreateTime                     *string                          `json:"createTime"`
 	BillingAccount                 *string                          `json:"billingAccount"`
+	PartnerServicesBillingAccount  *string                          `json:"partnerServicesBillingAccount"`
 	Labels                         map[string]string                `json:"labels"`
 	ProvisionedResourcesParent     *string                          `json:"provisionedResourcesParent"`
 	KmsSettings                    *WorkloadKmsSettings             `json:"kmsSettings"`
@@ -42,6 +43,7 @@ type Workload struct {
 	CompliantButDisallowedServices []string                         `json:"compliantButDisallowedServices"`
 	Partner                        *WorkloadPartnerEnum             `json:"partner"`
 	PartnerPermissions             *WorkloadPartnerPermissions      `json:"partnerPermissions"`
+	WorkloadOptions                *WorkloadWorkloadOptions         `json:"workloadOptions"`
 	EkmProvisioningResponse        *WorkloadEkmProvisioningResponse `json:"ekmProvisioningResponse"`
 	ViolationNotificationsEnabled  *bool                            `json:"violationNotificationsEnabled"`
 	Organization                   *string                          `json:"organization"`
@@ -94,7 +96,7 @@ func (v WorkloadComplianceRegimeEnum) Validate() error {
 		// Empty enum is okay.
 		return nil
 	}
-	for _, s := range []string{"COMPLIANCE_REGIME_UNSPECIFIED", "IL4", "CJIS", "FEDRAMP_HIGH", "FEDRAMP_MODERATE", "US_REGIONAL_ACCESS", "HIPAA", "HITRUST", "EU_REGIONS_AND_SUPPORT", "CA_REGIONS_AND_SUPPORT", "ITAR", "AU_REGIONS_AND_US_SUPPORT", "ASSURED_WORKLOADS_FOR_PARTNERS", "ISR_REGIONS", "ISR_REGIONS_AND_SUPPORT", "CA_PROTECTED_B", "IL5", "IL2", "JP_REGIONS_AND_SUPPORT"} {
+	for _, s := range []string{"COMPLIANCE_REGIME_UNSPECIFIED", "IL4", "CJIS", "FEDRAMP_HIGH", "FEDRAMP_MODERATE", "US_REGIONAL_ACCESS", "HIPAA", "HITRUST", "EU_REGIONS_AND_SUPPORT", "CA_REGIONS_AND_SUPPORT", "ITAR", "AU_REGIONS_AND_US_SUPPORT", "ASSURED_WORKLOADS_FOR_PARTNERS", "ISR_REGIONS", "ISR_REGIONS_AND_SUPPORT", "CA_PROTECTED_B", "IL5", "IL2", "JP_REGIONS_AND_SUPPORT", "KSA_REGIONS_AND_SUPPORT_WITH_SOVEREIGNTY_CONTROLS", "REGIONAL_CONTROLS", "HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS", "HEALTHCARE_AND_LIFE_SCIENCES_CONTROLS_WITH_US_SUPPORT"} {
 		if string(v) == s {
 			return nil
 		}
@@ -229,13 +231,40 @@ func (v WorkloadPartnerEnum) Validate() error {
 		// Empty enum is okay.
 		return nil
 	}
-	for _, s := range []string{"PARTNER_UNSPECIFIED", "LOCAL_CONTROLS_BY_S3NS", "SOVEREIGN_CONTROLS_BY_T_SYSTEMS", "SOVEREIGN_CONTROLS_BY_SIA_MINSAIT", "SOVEREIGN_CONTROLS_BY_PSN"} {
+	for _, s := range []string{"PARTNER_UNSPECIFIED", "LOCAL_CONTROLS_BY_S3NS", "SOVEREIGN_CONTROLS_BY_T_SYSTEMS", "SOVEREIGN_CONTROLS_BY_SIA_MINSAIT", "SOVEREIGN_CONTROLS_BY_PSN", "SOVEREIGN_CONTROLS_BY_CNTXT", "SOVEREIGN_CONTROLS_BY_CNTXT_NO_EKM"} {
 		if string(v) == s {
 			return nil
 		}
 	}
 	return &dcl.EnumInvalidError{
 		Enum:  "WorkloadPartnerEnum",
+		Value: string(v),
+		Valid: []string{},
+	}
+}
+
+// The enum WorkloadWorkloadOptionsKajEnrollmentTypeEnum.
+type WorkloadWorkloadOptionsKajEnrollmentTypeEnum string
+
+// WorkloadWorkloadOptionsKajEnrollmentTypeEnumRef returns a *WorkloadWorkloadOptionsKajEnrollmentTypeEnum with the value of string s
+// If the empty string is provided, nil is returned.
+func WorkloadWorkloadOptionsKajEnrollmentTypeEnumRef(s string) *WorkloadWorkloadOptionsKajEnrollmentTypeEnum {
+	v := WorkloadWorkloadOptionsKajEnrollmentTypeEnum(s)
+	return &v
+}
+
+func (v WorkloadWorkloadOptionsKajEnrollmentTypeEnum) Validate() error {
+	if string(v) == "" {
+		// Empty enum is okay.
+		return nil
+	}
+	for _, s := range []string{"KAJ_ENROLLMENT_TYPE_UNSPECIFIED", "FULL_KAJ", "EKM_ONLY", "KEY_ACCESS_TRANSPARENCY_OFF"} {
+		if string(v) == s {
+			return nil
+		}
+	}
+	return &dcl.EnumInvalidError{
+		Enum:  "WorkloadWorkloadOptionsKajEnrollmentTypeEnum",
 		Value: string(v),
 		Valid: []string{},
 	}
@@ -622,6 +651,52 @@ func (r *WorkloadPartnerPermissions) HashCode() string {
 	return fmt.Sprintf("%x", hash)
 }
 
+type WorkloadWorkloadOptions struct {
+	empty             bool                                          `json:"-"`
+	KajEnrollmentType *WorkloadWorkloadOptionsKajEnrollmentTypeEnum `json:"kajEnrollmentType"`
+}
+
+type jsonWorkloadWorkloadOptions WorkloadWorkloadOptions
+
+func (r *WorkloadWorkloadOptions) UnmarshalJSON(data []byte) error {
+	var res jsonWorkloadWorkloadOptions
+	if err := json.Unmarshal(data, &res); err != nil {
+		return err
+	}
+
+	var m map[string]interface{}
+	json.Unmarshal(data, &m)
+
+	if len(m) == 0 {
+		*r = *EmptyWorkloadWorkloadOptions
+	} else {
+
+		r.KajEnrollmentType = res.KajEnrollmentType
+
+	}
+	return nil
+}
+
+// This object is used to assert a desired state where this WorkloadWorkloadOptions is
+// empty. Go lacks global const objects, but this object should be treated
+// as one. Modifying this object will have undesirable results.
+var EmptyWorkloadWorkloadOptions *WorkloadWorkloadOptions = &WorkloadWorkloadOptions{empty: true}
+
+func (r *WorkloadWorkloadOptions) Empty() bool {
+	return r.empty
+}
+
+func (r *WorkloadWorkloadOptions) String() string {
+	return dcl.SprintResource(r)
+}
+
+func (r *WorkloadWorkloadOptions) HashCode() string {
+	// Placeholder for a more complex hash method that handles ordering, etc
+	// Hash resource body for easy comparison later
+	hash := sha256.Sum256([]byte(r.String()))
+	return fmt.Sprintf("%x", hash)
+}
+
 type WorkloadEkmProvisioningResponse struct {
 	empty                       bool                                                            `json:"-"`
 	EkmProvisioningState        *WorkloadEkmProvisioningResponseEkmProvisioningStateEnum        `json:"ekmProvisioningState"`
@@ -696,6 +771,7 @@ func (r *Workload) ID() (string, error) {
 		"compliance_regime":                 dcl.ValueOrEmptyString(nr.ComplianceRegime),
 		"create_time":                       dcl.ValueOrEmptyString(nr.CreateTime),
 		"billing_account":                   dcl.ValueOrEmptyString(nr.BillingAccount),
+		"partner_services_billing_account":  dcl.ValueOrEmptyString(nr.PartnerServicesBillingAccount),
 		"labels":                            dcl.ValueOrEmptyString(nr.Labels),
 		"provisioned_resources_parent":      dcl.ValueOrEmptyString(nr.ProvisionedResourcesParent),
 		"kms_settings":                      dcl.ValueOrEmptyString(nr.KmsSettings),
@@ -707,6 +783,7 @@ func (r *Workload) ID() (string, error) {
 		"compliant_but_disallowed_services": dcl.ValueOrEmptyString(nr.CompliantButDisallowedServices),
 		"partner":                           dcl.ValueOrEmptyString(nr.Partner),
 		"partner_permissions":               dcl.ValueOrEmptyString(nr.PartnerPermissions),
+		"workload_options":                  dcl.ValueOrEmptyString(nr.WorkloadOptions),
 		"ekm_provisioning_response":         dcl.ValueOrEmptyString(nr.EkmProvisioningResponse),
 		"violation_notifications_enabled":   dcl.ValueOrEmptyString(nr.ViolationNotificationsEnabled),
 		"organization":                      dcl.ValueOrEmptyString(nr.Organization),

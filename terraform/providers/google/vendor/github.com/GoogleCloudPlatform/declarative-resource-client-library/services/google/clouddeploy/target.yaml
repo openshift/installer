@@ -245,6 +245,11 @@ components:
                 is the private IP address for clusters with private control-plane
                 endpoints and the public IP address otherwise. Only specify this option
                 when `cluster` is a [private GKE cluster](https://cloud.google.com/kubernetes-engine/docs/concepts/private-cluster-concept).
+            proxyUrl:
+              type: string
+              x-dcl-go-name: ProxyUrl
+              description: Optional. If set, used to configure a [proxy](https://kubernetes.io/docs/concepts/configuration/organize-cluster-access-kubeconfig/#proxy)
+                to the Kubernetes server.
         labels:
           type: object
           additionalProperties:

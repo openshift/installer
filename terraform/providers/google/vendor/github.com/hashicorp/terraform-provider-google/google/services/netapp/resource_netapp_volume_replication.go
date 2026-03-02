@@ -34,7 +34,7 @@ import (
 )
 
 // Custom function to wait for mirrorState target states
-func NetAppVolumeReplicationWaitForMirror(d *schema.ResourceData, meta interface{}, targetState string) error {
+func NetappVolumeReplicationWaitForMirror(d *schema.ResourceData, meta interface{}, targetState string) error {
 	config := meta.(*transport_tpg.Config)
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
 	if err != nil {
@@ -279,12 +279,12 @@ data in relation to the source volume data.`,
 						"total_transfer_duration": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: `Total time taken so far during current transfer.`,
+							Description: `Cumulative time taken across all transfers for the replication relationship.`,
 						},
 						"transfer_bytes": {
 							Type:        schema.TypeString,
 							Computed:    true,
-							Description: `Number of bytes transferred so far in current transfer.`,
+							Description: `Cumulative bytes transferred so far for the replication relationship.`,
 						},
 						"update_time": {
 							Type:        schema.TypeString,
@@ -297,7 +297,6 @@ data in relation to the source volume data.`,
 			"delete_destination_volume": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
 				Description: `A destination volume is created as part of replication creation. The destination volume will not became
 under Terraform management unless you import it manually. If you delete the replication, this volume
 will remain.
@@ -305,32 +304,33 @@ Setting this parameter to true will delete the *current* destination volume when
 replication. If you reversed the replication direction, this will be your former source volume!
 For production use, it is recommended to keep this parameter false to avoid accidental volume
 deletion. Handle with care. Default is false.`,
+				Default: false,
 			},
 			"replication_enabled": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  true,
 				Description: `Set to false to stop/break the mirror. Stopping the mirror makes the destination volume read-write
 and act independently from the source volume.
 Set to true to enable/resume the mirror. WARNING: Resuming a mirror overwrites any changes
 done to the destination volume with the content of the source volume.`,
+				Default: true,
 			},
 			"force_stopping": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
 				Description: `Only replications with mirror_state=MIRRORED can be stopped. A replication in mirror_state=TRANSFERRING
 currently receives an update and stopping the update might be undesirable. Set this parameter to true
 to stop anyway. All data transferred to the destination will be discarded and content of destination
 volume will remain at the state of the last successful update. Default is false.`,
+				Default: false,
 			},
 			"wait_for_mirror": {
 				Type:     schema.TypeBool,
 				Optional: true,
-				Default:  false,
 				Description: `Replication resource state is independent of mirror_state. With enough data, it can take many hours
 for mirror_state to reach MIRRORED. If you want Terraform to wait for the mirror to finish on
 create/stop/resume operations, set this parameter to true. Default is false.`,
+				Default: false,
 			},
 			"project": {
 				Type:     schema.TypeString,
@@ -429,7 +429,7 @@ func resourceNetappVolumeReplicationCreate(d *schema.ResourceData, meta interfac
 
 	if d.Get("wait_for_mirror").(bool) == true {
 		// Wait for mirrorState=MIRRORED before treating the resource as created
-		err = NetAppVolumeReplicationWaitForMirror(d, meta, "MIRRORED")
+		err = NetappVolumeReplicationWaitForMirror(d, meta, "MIRRORED")
 		if err != nil {
 			return fmt.Errorf("Error waiting for volume replication to reach mirror_state==MIRRORED: %s", err)
 		}
@@ -737,7 +737,7 @@ func resourceNetappVolumeReplicationUpdate(d *schema.ResourceData, meta interfac
 
 		// If user specified to wait for mirror operations, wait to reach target state
 		if d.Get("wait_for_mirror").(bool) == true {
-			err = NetAppVolumeReplicationWaitForMirror(d, meta, targetState)
+			err = NetappVolumeReplicationWaitForMirror(d, meta, targetState)
 			if err != nil {
 				return fmt.Errorf("Error waiting for volume replication to reach mirror_state==%s: %s", targetState, err)
 			}
