@@ -9,7 +9,7 @@ import (
 
 // determineTopologies determines the Infrastructure CR's
 // infrastructureTopology and controlPlaneTopology given an install config file
-func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) {
+func determineTopologies(installConfig *types.InstallConfig, mastersSchedulable bool) (controlPlaneTopology configv1.TopologyMode, infrastructureTopology configv1.TopologyMode) {
 	controlPlaneReplicas := ptr.Deref(installConfig.ControlPlane.Replicas, 3)
 	switch controlPlaneReplicas {
 	case 1:
@@ -29,17 +29,16 @@ func determineTopologies(installConfig *types.InstallConfig) (controlPlaneTopolo
 		numOfWorkers += ptr.Deref(mp.Replicas, 0)
 	}
 
-	switch numOfWorkers {
-	case 0:
-		// Two node deployments with 0 workers mean that the control plane nodes are treated as workers
-		// in that situation we have decided that it is appropriate to set the infrastructureTopology to HA.
-		// All other configuration for different worker count are respected with the original intention.
-		if controlPlaneTopology == configv1.DualReplicaTopologyMode || controlPlaneTopology == configv1.HighlyAvailableArbiterMode {
-			infrastructureTopology = configv1.HighlyAvailableTopologyMode
-		} else {
-			infrastructureTopology = controlPlaneTopology
-		}
-	case 1:
+	switch {
+	case numOfWorkers == 0 && controlPlaneTopology == configv1.DualReplicaTopologyMode:
+		infrastructureTopology = configv1.HighlyAvailableTopologyMode
+	case numOfWorkers == 0 && controlPlaneTopology == configv1.HighlyAvailableArbiterMode:
+		infrastructureTopology = configv1.HighlyAvailableTopologyMode
+	case numOfWorkers == 0:
+		infrastructureTopology = controlPlaneTopology
+	case numOfWorkers == 1 && mastersSchedulable:
+		infrastructureTopology = configv1.HighlyAvailableTopologyMode
+	case numOfWorkers == 1:
 		infrastructureTopology = configv1.SingleReplicaTopologyMode
 	default:
 		infrastructureTopology = configv1.HighlyAvailableTopologyMode

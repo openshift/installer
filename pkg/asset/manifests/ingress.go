@@ -79,7 +79,8 @@ func (ing *Ingress) Generate(_ context.Context, dependencies asset.Parents) erro
 }
 
 func (ing *Ingress) generateClusterConfig(config *types.InstallConfig) ([]byte, error) {
-	controlPlaneTopology, _ := determineTopologies(config)
+	// mastersSchedulable doesn't affect controlPlaneTopology determination, so we pass false
+	controlPlaneTopology, _ := determineTopologies(config, false)
 
 	isSingleControlPlaneNode := controlPlaneTopology == configv1.SingleReplicaTopologyMode
 

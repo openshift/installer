@@ -284,6 +284,15 @@ func TestGenerateInfrastructure(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			// Generate Scheduler asset
+			scheduler := &Scheduler{}
+			schedulerParents := asset.Parents{}
+			schedulerParents.Add(installconfig.MakeAsset(tc.installConfig))
+			err := scheduler.Generate(context.Background(), schedulerParents)
+			if !assert.NoError(t, err, "failed to generate scheduler") {
+				return
+			}
+
 			parents := asset.Parents{}
 			parents.Add(
 				&installconfig.ClusterID{
@@ -293,9 +302,10 @@ func TestGenerateInfrastructure(t *testing.T) {
 				installconfig.MakeAsset(tc.installConfig),
 				&CloudProviderConfig{},
 				&AdditionalTrustBundleConfig{},
+				scheduler,
 			)
 			infraAsset := &Infrastructure{}
-			err := infraAsset.Generate(context.Background(), parents)
+			err = infraAsset.Generate(context.Background(), parents)
 			if !assert.NoError(t, err, "failed to generate asset") {
 				return
 			}
