@@ -191,38 +191,58 @@ type CreateRecordInput struct {
 	ZoneID string
 	// ID of the Hosted Zone for Alias record.
 	AliasZoneID string
+	// Whether to also include an AAAA record.
+	EnableAAAA bool
 }
 
 // CreateOrUpdateRecord Creates or Updates the Route53 Record for the cluster endpoint.
 func (c *Route53Client) CreateOrUpdateRecord(ctx context.Context, in *CreateRecordInput) error {
-	recordSet := &route53types.ResourceRecordSet{
-		Name: aws.String(in.Name),
-	}
+	recordSets := []*route53types.ResourceRecordSet{}
+
 	if cnameRegions.Has(in.Region) {
-		recordSet.Type = route53types.RRTypeCname
-		recordSet.TTL = aws.Int64(10)
-		recordSet.ResourceRecords = []route53types.ResourceRecord{
-			{Value: aws.String(in.DNSTarget)},
-		}
+		recordSets = append(recordSets, &route53types.ResourceRecordSet{
+			Name: aws.String(in.Name),
+			Type: route53types.RRTypeCname,
+			TTL:  aws.Int64(10),
+			ResourceRecords: []route53types.ResourceRecord{
+				{Value: aws.String(in.DNSTarget)},
+			},
+		})
 	} else {
-		recordSet.Type = route53types.RRTypeA
-		recordSet.AliasTarget = &route53types.AliasTarget{
-			DNSName:              aws.String(in.DNSTarget),
-			HostedZoneId:         aws.String(in.AliasZoneID),
-			EvaluateTargetHealth: false,
+		recordSets = append(recordSets, &route53types.ResourceRecordSet{
+			Name: aws.String(in.Name),
+			Type: route53types.RRTypeA,
+			AliasTarget: &route53types.AliasTarget{
+				DNSName:              aws.String(in.DNSTarget),
+				HostedZoneId:         aws.String(in.AliasZoneID),
+				EvaluateTargetHealth: false,
+			},
+		})
+
+		if in.EnableAAAA {
+			recordSets = append(recordSets, &route53types.ResourceRecordSet{
+				Name: aws.String(in.Name),
+				Type: route53types.RRTypeAaaa,
+				AliasTarget: &route53types.AliasTarget{
+					DNSName:              aws.String(in.DNSTarget),
+					HostedZoneId:         aws.String(in.AliasZoneID),
+					EvaluateTargetHealth: false,
+				},
+			})
 		}
 	}
+
 	input := &route53.ChangeResourceRecordSetsInput{
 		HostedZoneId: aws.String(in.ZoneID),
 		ChangeBatch: &route53types.ChangeBatch{
 			Comment: aws.String(fmt.Sprintf("Creating record %s", in.Name)),
-			Changes: []route53types.Change{
-				{
-					Action:            route53types.ChangeActionUpsert,
-					ResourceRecordSet: recordSet,
-				},
-			},
 		},
+	}
+	for _, recordSet := range recordSets {
+		input.ChangeBatch.Changes = append(input.ChangeBatch.Changes, route53types.Change{
+			Action:            route53types.ChangeActionUpsert,
+			ResourceRecordSet: recordSet,
+		})
 	}
 
 	_, err := c.client.ChangeResourceRecordSets(ctx, input)

@@ -179,6 +179,8 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	apiName := fmt.Sprintf("api.%s.", in.InstallConfig.Config.ClusterDomain())
 	apiIntName := fmt.Sprintf("api-int.%s.", in.InstallConfig.Config.ClusterDomain())
 
+	enableAAAA := in.InstallConfig.Config.AWS.IPFamily.DualStackEnabled()
+
 	// Create api record in public zone
 	if in.InstallConfig.Config.PublicAPI() {
 		zone, err := publicHzClient.GetBaseDomain(ctx, in.InstallConfig.Config.BaseDomain)
@@ -198,6 +200,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			DNSTarget:   pubLB.DNSName,
 			ZoneID:      *zone.Id,
 			AliasZoneID: aliasZoneID,
+			EnableAAAA:  enableAAAA,
 		}); err != nil {
 			return fmt.Errorf("failed to create records for api in public zone: %w", err)
 		}
@@ -216,6 +219,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
 		ZoneID:      phzID,
 		AliasZoneID: aliasZoneID,
+		EnableAAAA:  enableAAAA,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api in private zone: %w", err)
 	}
@@ -228,6 +232,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
 		ZoneID:      phzID,
 		AliasZoneID: aliasZoneID,
+		EnableAAAA:  enableAAAA,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
