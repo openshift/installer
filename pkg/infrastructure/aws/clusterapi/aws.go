@@ -92,7 +92,10 @@ func (*Provider) PreProvision(ctx context.Context, in clusterapi.PreProvisionInp
 // infrastructure CR. The infrastructure CR is updated and added to the ignition files. CAPA creates a
 // bucket for ignition, and this ignition data will be placed in the bucket.
 func (p Provider) Ignition(ctx context.Context, in clusterapi.IgnitionInput) ([]*corev1.Secret, error) {
-	ignOutput, err := editIgnition(ctx, in)
+	ignOutput, err := clusterapi.ApplyIgnitionEdits(ctx, in,
+		editIgnitionForCustomDNS,
+		editIgnitionForDualStack,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to edit bootstrap master or worker ignition: %w", err)
 	}
