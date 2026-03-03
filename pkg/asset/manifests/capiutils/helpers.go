@@ -1,6 +1,8 @@
 package capiutils
 
 import (
+	netutils "k8s.io/utils/net"
+
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/ipnet"
 )
@@ -50,4 +52,26 @@ func CIDRsToString(cidrs []ipnet.IPNet) []string {
 		cidrStrings = append(cidrStrings, cidr.String())
 	}
 	return cidrStrings
+}
+
+// GetIPv4CIDRs returns only IPNets of IPv4 family.
+func GetIPv4CIDRs(cidrs []ipnet.IPNet) []ipnet.IPNet {
+	var ipv4Nets []ipnet.IPNet
+	for _, ipnet := range cidrs {
+		if netutils.IsIPv4CIDR(&ipnet.IPNet) {
+			ipv4Nets = append(ipv4Nets, ipnet)
+		}
+	}
+	return ipv4Nets
+}
+
+// GetIPv6CIDRs returns only IPNets of IPv6 family.
+func GetIPv6CIDRs(cidrs []ipnet.IPNet) []ipnet.IPNet {
+	var ipv6Nets []ipnet.IPNet
+	for _, ipnet := range cidrs {
+		if netutils.IsIPv6CIDR(&ipnet.IPNet) {
+			ipv6Nets = append(ipv6Nets, ipnet)
+		}
+	}
+	return ipv6Nets
 }

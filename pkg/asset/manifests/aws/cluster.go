@@ -36,8 +36,6 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 
 	var sshRuleCidrs []ipnet.IPNet
 	if !ic.Config.PublicAPI() {
-		// If the installer provisions the VPC, the VPC IPv6 CIDR is not available in advance to be provided in the machine network entries.
-		// Thus, we need to add VPC IPv6 CIDR to this field after the network infrastructure is ready.
 		sshRuleCidrs = capiutils.MachineCIDRsFromInstallConfig(ic)
 	} else {
 		sshRuleCidrs = []ipnet.IPNet{*capiutils.AnyIPv4CidrBlock}
@@ -162,8 +160,7 @@ func GenerateClusterAssets(ic *installconfig.InstallConfig, clusterID *installco
 						IPv6CidrBlocks: capiutils.CIDRsToString(capiutils.GetIPv6CIDRs(sshRuleCidrs)),
 					},
 				},
-				// If the installer provisions the VPC, the VPC IPv6 CIDR is not available in advance to be provided in the machine network entries.
-				// Thus, we need to add VPC IPv6 CIDR to this field after the network infrastructure is ready.
+				// If the installer provisions the VPC, VPC IPv6 CIDR is unknown at install time and added after infraReady
 				NodePortIngressRuleCidrBlocks: capiutils.CIDRsToString(capiutils.MachineCIDRsFromInstallConfig(ic)),
 			},
 			S3Bucket: &capa.S3Bucket{

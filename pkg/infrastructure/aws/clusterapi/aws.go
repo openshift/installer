@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -130,10 +131,20 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		vpcID = id
 	}
 
-	clientset := awsconfig.NewRoute53Clientset(awsconfig.EndpointOptions{
-		Region:    in.InstallConfig.AWS.Region,
-		Endpoints: in.InstallConfig.AWS.Services,
-	})
+	enableIPv6 := in.InstallConfig.Config.AWS.IPFamily.DualStackEnabled()
+
+	// dualstack: add VPC IPv6 CIDR to node port and SSH ingress rules when the installer provisions the VPC
+	// because the VPC IPv6 CIDR is not known at install time.
+	if enableIPv6 {
+		machineCIDRs := capiutils.MachineCIDRsFromInstallConfig(in.InstallConfig)
+		if len(capiutils.GetIPv6CIDRs(machineCIDRs)) == 0 {
+			if err := updateNodePortIngressRules(ctx, in.Client, in.InstallConfig, in.InfraID); err != nil {
+				return fmt.Errorf("failed to update node port ingress rules with VPC IPv6 CIDR: %w", err)
+			}
+		}
+		// If the machine network entries contain IPv6 CIDRs, the users must have added them manually for BYO subnets.
+		// In this case, those CIDRs are already passed to the security group rules.
+	}
 
 	// The user has selected to provision their own DNS solution. Skip the creation of the
 	// Hosted Zone(s) and the records for those zones.
@@ -141,6 +152,11 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		logrus.Debugf("User Provisioned DNS enabled, skipping dns record creation")
 		return nil
 	}
+
+	clientset := awsconfig.NewRoute53Clientset(awsconfig.EndpointOptions{
+		Region:    in.InstallConfig.AWS.Region,
+		Endpoints: in.InstallConfig.AWS.Services,
+	})
 
 	logrus.Infoln("Creating Route53 records for control plane load balancer")
 
@@ -179,8 +195,6 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 	apiName := fmt.Sprintf("api.%s.", in.InstallConfig.Config.ClusterDomain())
 	apiIntName := fmt.Sprintf("api-int.%s.", in.InstallConfig.Config.ClusterDomain())
 
-	enableAAAA := in.InstallConfig.Config.AWS.IPFamily.DualStackEnabled()
-
 	// Create api record in public zone
 	if in.InstallConfig.Config.PublicAPI() {
 		zone, err := publicHzClient.GetBaseDomain(ctx, in.InstallConfig.Config.BaseDomain)
@@ -200,7 +214,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 			DNSTarget:   pubLB.DNSName,
 			ZoneID:      *zone.Id,
 			AliasZoneID: aliasZoneID,
-			EnableAAAA:  enableAAAA,
+			EnableAAAA:  enableIPv6,
 		}); err != nil {
 			return fmt.Errorf("failed to create records for api in public zone: %w", err)
 		}
@@ -219,7 +233,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
 		ZoneID:      phzID,
 		AliasZoneID: aliasZoneID,
-		EnableAAAA:  enableAAAA,
+		EnableAAAA:  enableIPv6,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api in private zone: %w", err)
 	}
@@ -232,7 +246,7 @@ func (*Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput) 
 		DNSTarget:   awsCluster.Spec.ControlPlaneEndpoint.Host,
 		ZoneID:      phzID,
 		AliasZoneID: aliasZoneID,
-		EnableAAAA:  enableAAAA,
+		EnableAAAA:  enableIPv6,
 	}); err != nil {
 		return fmt.Errorf("failed to create records for api-int in private zone: %w", err)
 	}
@@ -313,6 +327,137 @@ func getHostedZoneIDForNLB(ctx context.Context, ic *installconfig.InstallConfig,
 	}
 
 	return "", errNotFound
+}
+
+// securityGroupUpdateFunc updates the AWSCluster spec to add VPC IPv6 CIDR to a security group rule.
+// Returns true if an update was made.
+type securityGroupUpdateFunc func(*capa.AWSCluster, string) bool
+
+// securityGroupVerifyFunc verifies that a security group rule with IPv6 CIDR exists in AWS.
+type securityGroupVerifyFunc func(context.Context, *ec2.Client, string, string) (bool, error)
+
+// updateSecurityGroupWithVPCIPv6 is a generic function to update security group rules with VPC IPv6 CIDR.
+func updateSecurityGroupWithVPCIPv6(ctx context.Context, cl k8sClient.Client, ic *installconfig.InstallConfig, infraID string, sgRole capa.SecurityGroupRole, ruleName string, updateSpecFn securityGroupUpdateFunc, verifyAWSFn securityGroupVerifyFunc) error {
+	ec2Client, err := ic.AWS.EC2Client(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to create ec2 client: %w", err)
+	}
+
+	timeout := 15 * time.Minute
+	startTime := time.Now()
+	untilTime := startTime.Add(timeout)
+	timezone, _ := untilTime.Zone()
+	logrus.Debugf("Waiting up to %v (until %v %s) for %s rule to be updated with VPC IPv6 CIDR...", timeout, untilTime.Format(time.Kitchen), timezone, ruleName)
+
+	if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+		func(ctx context.Context) (bool, error) {
+			key := k8sClient.ObjectKey{
+				Name:      infraID,
+				Namespace: capiutils.Namespace,
+			}
+			awsCluster := &capa.AWSCluster{}
+			if err := cl.Get(ctx, key, awsCluster); err != nil {
+				return false, fmt.Errorf("failed to get AWSCluster: %w", err)
+			}
+
+			vpcSpec := awsCluster.Spec.NetworkSpec.VPC
+			if vpcSpec.IPv6 == nil || vpcSpec.IPv6.CidrBlock == "" {
+				return false, fmt.Errorf("VPC does not have an IPv6 CIDR to update %s rule", ruleName)
+			}
+
+			vpcIPv6CIDR := vpcSpec.IPv6.CidrBlock
+
+			// Get the security group ID
+			sg := awsCluster.Status.Network.SecurityGroups[sgRole]
+			if len(sg.ID) == 0 {
+				return false, fmt.Errorf("%s security group id is not populated in AWSCluster status", sgRole)
+			}
+
+			// Update the spec using the provided function
+			if updateSpecFn(awsCluster, vpcIPv6CIDR) {
+				// Update the AWSCluster resource
+				if err := cl.Update(ctx, awsCluster); err != nil {
+					// If the cluster object has been modified between Get and Update, k8s client will refuse to update it.
+					// In that case, we need to retry.
+					if k8serrors.IsConflict(err) {
+						logrus.Debugf("AWSCluster update conflict during %s rule update: %v", ruleName, err)
+						return false, nil
+					}
+					return false, fmt.Errorf("failed to update AWSCluster with VPC IPv6 CIDR: %w", err)
+				}
+				logrus.Infof("Updated AWSCluster %s rule with VPC IPv6 CIDR %s", ruleName, vpcIPv6CIDR)
+			}
+
+			// Verify the rule exists in AWS
+			return verifyAWSFn(ctx, ec2Client, sg.ID, vpcIPv6CIDR)
+		},
+	); err != nil {
+		if wait.Interrupted(err) {
+			return fmt.Errorf("%s rule was not updated within %v: %w", ruleName, timeout, err)
+		}
+		return fmt.Errorf("unable to update %s rule: %w", ruleName, err)
+	}
+
+	logrus.Debugf("Completed updating %s rule with VPC IPv6 CIDR after %v", ruleName, time.Since(startTime))
+	return nil
+}
+
+// updateNodePortIngressRules updates the NodePortIngressRuleCidrBlocks to include the VPC IPv6 CIDR if any.
+// This is necessary because the VPC IPv6 CIDR is not known at install time when the installer provisions the VPC.
+func updateNodePortIngressRules(ctx context.Context, cl k8sClient.Client, ic *installconfig.InstallConfig, infraID string) error {
+	return updateSecurityGroupWithVPCIPv6(
+		ctx, cl, ic, infraID,
+		capa.SecurityGroupNode,
+		"Node Port ingress",
+		func(awsCluster *capa.AWSCluster, vpcIPv6CIDR string) bool {
+			if slices.Contains(awsCluster.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks, vpcIPv6CIDR) {
+				logrus.Debugf("VPC IPv6 CIDR %s already in node port ingress rules", vpcIPv6CIDR)
+				return false
+			}
+			awsCluster.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks = append(
+				awsCluster.Spec.NetworkSpec.NodePortIngressRuleCidrBlocks,
+				vpcIPv6CIDR,
+			)
+			return true
+		},
+		isNodePortRulePresentWithIPv6CIDR,
+	)
+}
+
+// isNodePortRulePresentWithIPv6CIDR checks that the node port IPv6 ingress rule has been created in the security group.
+func isNodePortRulePresentWithIPv6CIDR(ctx context.Context, client *ec2.Client, sgID string, ipv6CIDR string) (bool, error) {
+	sgs, err := awsconfig.DescribeSecurityGroups(ctx, client, []string{sgID})
+	if err != nil {
+		return false, fmt.Errorf("failed to get security group: %w", err)
+	}
+
+	if len(sgs) != 1 {
+		ids := []string{}
+		for _, sg := range sgs {
+			ids = append(ids, *sg.GroupId)
+		}
+		return false, fmt.Errorf("expected exactly one security group with id %s, but got %v", sgID, ids)
+	}
+
+	sg := sgs[0]
+	for _, rule := range sg.IpPermissions {
+		fromPort := ptr.Deref(rule.FromPort, 0)
+		toPort := ptr.Deref(rule.ToPort, 0)
+
+		// Look for node port rules (30000-32767) with the provided IPv6 CIDR
+		// See: https://github.com/kubernetes-sigs/cluster-api-provider-aws/blob/a681199f101756fd608d7148aa504d1def016e21/pkg/cloud/services/securitygroup/securitygroups.go#L656-L677
+		if fromPort == 30000 && toPort == 32767 {
+			for _, ipv6Range := range rule.Ipv6Ranges {
+				if aws.ToString(ipv6Range.CidrIpv6) == ipv6CIDR {
+					logrus.Debugf("Found node port ingress rule with IPv6 CIDR %s", ipv6CIDR)
+					return true, nil
+				}
+			}
+		}
+	}
+
+	logrus.Debugf("Node port ingress rule with IPv6 CIDR %s not found yet. Still waiting for creation...", ipv6CIDR)
+	return false, nil
 }
 
 // DestroyBootstrap removes aws bootstrap resources not handled
@@ -433,10 +578,19 @@ func isSSHRuleGone(ctx context.Context, client *ec2.Client, sgID string) (bool, 
 		if ptr.Deref(rule.ToPort, 0) != 22 {
 			continue
 		}
+		// Check IPv4 rules
 		for _, source := range rule.IpRanges {
 			if source.CidrIp != nil && *source.CidrIp == "0.0.0.0/0" {
 				ruleDesc := ptr.Deref(source.Description, "[no description]")
 				logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIp)
+				return false, nil
+			}
+		}
+		// Check IPv6 rules
+		for _, source := range rule.Ipv6Ranges {
+			if source.CidrIpv6 != nil && *source.CidrIpv6 == "::/0" {
+				ruleDesc := ptr.Deref(source.Description, "[no description]")
+				logrus.Debugf("Found ingress rule %s with source cidr %s. Still waiting for deletion...", ruleDesc, *source.CidrIpv6)
 				return false, nil
 			}
 		}
