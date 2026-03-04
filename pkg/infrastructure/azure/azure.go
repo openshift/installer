@@ -578,6 +578,42 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 		if err != nil {
 			return fmt.Errorf("failed to associate inbound nat rule to interface: %w", err)
 		}
+
+		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+			frontendIPv6ConfigName := "public-lb-ip-v6"
+			sshRuleNameV6 := fmt.Sprintf("%s_ssh_in_v6", in.InfraID)
+			frontendIPv6ConfigID := fmt.Sprintf("/subscriptions/%s/resourceGroups/%s/providers/Microsoft.Network/loadBalancers/%s/frontendIPConfigurations/%s",
+				subscriptionID,
+				p.ResourceGroupName,
+				loadBalancerName,
+				frontendIPv6ConfigName,
+			)
+
+			inboundNatRuleV6, err := addInboundNatRuleToLoadBalancer(ctx, &inboundNatRuleInput{
+				resourceGroupName:    p.ResourceGroupName,
+				loadBalancerName:     loadBalancerName,
+				frontendIPConfigID:   frontendIPv6ConfigID,
+				inboundNatRuleName:   sshRuleNameV6,
+				inboundNatRulePort:   22,
+				networkClientFactory: p.NetworkClientFactory,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to create IPv6 SSH inbound nat rule: %w", err)
+			}
+			_, err = associateInboundNatRuleToInterface(ctx, &inboundNatRuleInput{
+				resourceGroupName:    p.ResourceGroupName,
+				loadBalancerName:     loadBalancerName,
+				bootstrapNicName:     fmt.Sprintf("%s-bootstrap-nic", in.InfraID),
+				frontendIPConfigID:   frontendIPv6ConfigID,
+				inboundNatRuleID:     *inboundNatRuleV6.ID,
+				inboundNatRuleName:   sshRuleNameV6,
+				inboundNatRulePort:   22,
+				networkClientFactory: p.NetworkClientFactory,
+			})
+			if err != nil {
+				return fmt.Errorf("failed to associate IPv6 SSH inbound nat rule to interface: %w", err)
+			}
+		}
 	}
 
 	return nil
