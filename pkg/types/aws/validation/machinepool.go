@@ -17,7 +17,7 @@ var (
 		types.ArchitectureARM64: true,
 	}
 
-	// validArchitectureValues lists the supported arches for AWS
+	// validArchitectureValues lists the supported arches for AWS.
 	validArchitectureValues = func() []string {
 		v := make([]string, 0, len(validArchitectures))
 		for m := range validArchitectures {
@@ -38,6 +38,15 @@ var (
 // https://docs.aws.amazon.com/vpc/latest/userguide/amazon-vpc-limits.html
 // We set a user limit of 10 and reserve 6 for use by OpenShift.
 const maxUserSecurityGroupsCount = 10
+
+// maxIopsThroughputRatio is the minimum allowed ratio of IOPS to throughput (MiBps) for gp3 volumes.
+// AWS constraint: throughput (MiBps) / iops <= 0.25 (maximum 0.25 MiBps per iops) --> iops / throughput (MiBps) >= 4
+// This constant is used for integer comparison to avoid floating point precision issues.
+const maxIopsThroughputRatio = 4
+
+// gp3DefaultIOPS is the default IOPS value for gp3 volumes when not explicitly set.
+// According to AWS documentation, gp3 volumes have a baseline of 3,000 IOPS.
+const gp3DefaultIOPS int32 = 3000
 
 // ValidateMachinePool checks that the specified machine pool is valid.
 func ValidateMachinePool(platform *aws.Platform, p *aws.MachinePool, fldPath *field.Path) field.ErrorList {
@@ -129,6 +138,31 @@ func validateThroughput(p *aws.MachinePool, fldPath *field.Path) field.ErrorList
 	case "gp3":
 		if throughput < 125 || throughput > 2000 {
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("throughput"), throughput, "throughput must be between 125 MiB/s and 2000 MiB/s"))
+			return allErrs
+		}
+		// AWS constraint: throughput (MiBps) / iops <= 0.25 (maximum 0.25 MiBps per iops)
+		// When iops is 0 or omitted, AWS defaults to 3000 iops
+		// Validate that the throughput/iops ratio does not exceed the maximum allowed ratio
+		iops := int32(p.EC2RootVolume.IOPS)
+		if iops == 0 {
+			// Use AWS default of 3000 iops when iops is not set
+			iops = gp3DefaultIOPS
+		}
+		// Use integer comparison to avoid floating point precision issues
+		// throughput / iops <= 0.25 is equivalent to throughput * maxIopsThroughputRatio <= iops
+		if throughput*maxIopsThroughputRatio > iops {
+			// Calculate minimum required iops: iops >= throughput / 0.25
+			// Round up to nearest 100 for safety
+			calculatedIOPS := ((throughput * maxIopsThroughputRatio) + 99) / 100 * 100
+			// According to AWS documentation, gp3 volumes have a baseline of 3,000 IOPS
+			minIOPS := max(calculatedIOPS, gp3DefaultIOPS)
+			// Calculate ratio for error message display
+			ratio := float32(throughput) / float32(iops)
+			allErrs = append(allErrs, field.Invalid(
+				fldPath.Child("throughput"),
+				throughput,
+				fmt.Sprintf("throughput (MiBps) to iops ratio of %.6f is too high; maximum is %.6f MiBps per iops. When iops is not set, AWS defaults to %d iops. Please set iops to at least %d to satisfy the constraint", ratio, 1.0/maxIopsThroughputRatio, gp3DefaultIOPS, minIOPS),
+			))
 		}
 	default:
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("throughput"), throughput, fmt.Sprintf("throughput not supported for type %s", volumeType)))
