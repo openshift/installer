@@ -1,106 +1,106 @@
 {
   "stream": "rhcos-4.20",
   "metadata": {
-    "last-modified": "2026-01-22T18:58:40Z",
-    "generator": "plume cosa2stream a1f5da7"
+    "last-modified": "2026-03-04T15:09:24Z",
+    "generator": "plume cosa2stream 6c82fcc"
   },
   "architectures": {
     "aarch64": {
       "artifacts": {
         "aws": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "vmdk.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-aws.aarch64.vmdk.gz",
-                "sha256": "b95c60406e3e38c67d17a128cad71015ba8be59ca3dea3dc604255cc56773a3c",
-                "uncompressed-sha256": "4d0d7e281dd1150d6984f1530ea0743fcabccb9e0ef6a815b998681203dc8ffe"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-aws.aarch64.vmdk.gz",
+                "sha256": "769577717dcb21ec61c2ac81804a94fff699c1595556b01863978420023b7658",
+                "uncompressed-sha256": "1d5fcd2ddaf658b19ea90f8d7c7d0793785a3153b5074424feca18a50d1fb21c"
               }
             }
           }
         },
         "azure": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "vhd.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-azure.aarch64.vhd.gz",
-                "sha256": "70ebc9f36757915d7eefff246e643402e1cb45d956e1fc156799e1afb1fdfe95",
-                "uncompressed-sha256": "031699eb003025d8e33759b7a49f75ec3827802132e658413197abce41f44a2a"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-azure.aarch64.vhd.gz",
+                "sha256": "bb449eaf52e76e8b74288923b71b980254a2f03aebdbf43bac5790f114b30d01",
+                "uncompressed-sha256": "9eb378777b0fb643768fb9a5c7ff9dd2dc8b204a4c519c74768c181c7d630add"
               }
             }
           }
         },
         "gcp": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "tar.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-gcp.aarch64.tar.gz",
-                "sha256": "b4419ff654ca3693b384da953720661ecbb529ab08d579bb0e1591164b369041"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-gcp.aarch64.tar.gz",
+                "sha256": "adc3eed0541da6ba0269019813ab30b3eb92c316ab550c124e5f4dbb530243b6"
               }
             }
           }
         },
         "metal": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "4k.raw.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-metal4k.aarch64.raw.gz",
-                "sha256": "4d5b04b6541a8483bb0f034306a9c4fa04b0a14a1110665d9006bc94b30cf3ee",
-                "uncompressed-sha256": "2ef965ba5fe4d077fd9a450538b1e7faf0b56761274f0878ca5b25989f2d00a4"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-metal4k.aarch64.raw.gz",
+                "sha256": "3f04014d68747b9a0274b2a5634d2c40b9be928740ad73456da3eb7c33252330",
+                "uncompressed-sha256": "f62254fcf3710f6f4b21c9dc77a8bc078ac57423697727ee29af178341aead41"
               }
             },
             "iso": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-live-iso.aarch64.iso",
-                "sha256": "d6a4b1b842b1d9d9ed9609719aea46c3ee1b9a7580638e03ee6ec10f1bb35afd"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-live-iso.aarch64.iso",
+                "sha256": "eb72c22cdbd88e84dd7a203d7b0853c64896cc734e0c1ead3a1effb27363ed7e"
               }
             },
             "pxe": {
               "kernel": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-live-kernel.aarch64",
-                "sha256": "4d721d8bbeabf442911edffc91de576d23cb4b33aa6eee162ae59b4a296f70ad"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-live-kernel.aarch64",
+                "sha256": "e83078bdc8719bf8e5203601e4abda73c44fc4de2ddabdb22c9b7fe76985299f"
               },
               "initramfs": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-live-initramfs.aarch64.img",
-                "sha256": "c3e80b60851ce631308fd00ee2b6a2319b26ab8ecdbf580d00c0f86a4b69391b"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-live-initramfs.aarch64.img",
+                "sha256": "5755048d3e78026d84005388a650715483c3e74280536c68ea3bd07b04d5c57f"
               },
               "rootfs": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-live-rootfs.aarch64.img",
-                "sha256": "01d687b0baf40dcbb2683c5ad102a5ac75944fd63ac1f35262a69b66e8aabe94"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-live-rootfs.aarch64.img",
+                "sha256": "d52db346d1cf18bb1481110611a38d63a4374dd71baee904d0cf1694bd7be3e5"
               }
             },
             "raw.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-metal.aarch64.raw.gz",
-                "sha256": "58b8a8195432100fdd8b8b97004a282d73223224002eb8a56a21fa2d093cf70c",
-                "uncompressed-sha256": "17513a8f18509ce992a5d5e31ebb6c7be432162269e0d98928fb693cf90e5066"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-metal.aarch64.raw.gz",
+                "sha256": "c7cd43207d9ef68e36bfddc9a31b32c66a8d30405df4eba91f75b2e20d97be93",
+                "uncompressed-sha256": "cf6557e8fda8c165bdb67b925ac8615b22b1a34be4fc7333d5dbdc8463339c82"
               }
             }
           }
         },
         "openstack": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-openstack.aarch64.qcow2.gz",
-                "sha256": "09fe8194eb8ef39f81bada1a47419d41136f08145a47a517b5c3525ad9f3eecd",
-                "uncompressed-sha256": "0a5c7e68ecd2f7d9af204b0f351724b02ae91954d6a7ba70005284f88faf45e9"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-openstack.aarch64.qcow2.gz",
+                "sha256": "55af23a355d5fbe08b7450cab35a0babbe8f0b532ed82adb5f792e4a74d5b995",
+                "uncompressed-sha256": "5775af90d2d632baa5ccafbfb73f128f3279010898d77d95f3660fcec21e47b9"
               }
             }
           }
         },
         "qemu": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/aarch64/rhcos-9.6.20260112-0-qemu.aarch64.qcow2.gz",
-                "sha256": "ff403aa4721fabb80519ac51c6a0d76abdb4d2d3434f7f28993e8d1f22de02b4",
-                "uncompressed-sha256": "0eafbd83f1d98d7b094fc8742d623163bf61fff9ab79cce02ace4447d1c659d8"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/aarch64/rhcos-9.6.20260217-1-qemu.aarch64.qcow2.gz",
+                "sha256": "c60cd090e738333a0a946992398573ad49a8db6fc226576ed0602dec8b70a85a",
+                "uncompressed-sha256": "ffc2f0ccd1ee5b893f48a7c30c537ef2c6d2680b5904cd8d58730f9cf947defe"
               }
             }
           }
@@ -110,237 +110,237 @@
         "aws": {
           "regions": {
             "af-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-047a9bf27c7448475"
+              "release": "9.6.20260217-1",
+              "image": "ami-0536d0824c43b377d"
             },
             "ap-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-057fc4518e613e0e7"
+              "release": "9.6.20260217-1",
+              "image": "ami-000342c5112bddf68"
             },
             "ap-east-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-01a49ace97bb5804c"
+              "release": "9.6.20260217-1",
+              "image": "ami-0135df22e19eefd46"
             },
             "ap-northeast-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-02a3eb8a029fc6a91"
+              "release": "9.6.20260217-1",
+              "image": "ami-073d6c9cb6ba2e80b"
             },
             "ap-northeast-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0fa3e446c3007f39e"
+              "release": "9.6.20260217-1",
+              "image": "ami-0f043300ad145b5e8"
             },
             "ap-northeast-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-00b7abd2378a23c3d"
+              "release": "9.6.20260217-1",
+              "image": "ami-04b1e01f266ed1d0a"
             },
             "ap-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0b75a0095e400b302"
+              "release": "9.6.20260217-1",
+              "image": "ami-0b2ea1b7e98ce2924"
             },
             "ap-south-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0cac0742eaf194409"
+              "release": "9.6.20260217-1",
+              "image": "ami-078f70526e8482eef"
             },
             "ap-southeast-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0268f6527bccf84c6"
+              "release": "9.6.20260217-1",
+              "image": "ami-04a9cc35d5d212aff"
             },
             "ap-southeast-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0ed85c100ca774a06"
+              "release": "9.6.20260217-1",
+              "image": "ami-0e4d99749233db0ce"
             },
             "ap-southeast-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0c2766bed8642ec80"
+              "release": "9.6.20260217-1",
+              "image": "ami-0b2c070ed37c6c773"
             },
             "ap-southeast-4": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0568a9d7812d8306c"
+              "release": "9.6.20260217-1",
+              "image": "ami-0b147be7fe543d60b"
             },
             "ap-southeast-5": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0b24c5cec9d22bc4b"
+              "release": "9.6.20260217-1",
+              "image": "ami-0758d0bb6ba551dda"
             },
             "ap-southeast-6": {
-              "release": "9.6.20260112-0",
-              "image": "ami-023dae7837b26b43e"
+              "release": "9.6.20260217-1",
+              "image": "ami-0b9be34d2235d970d"
             },
             "ap-southeast-7": {
-              "release": "9.6.20260112-0",
-              "image": "ami-00147afa35f18c612"
+              "release": "9.6.20260217-1",
+              "image": "ami-05315c2fddf8693cd"
             },
             "ca-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-088bb0be24ee36810"
+              "release": "9.6.20260217-1",
+              "image": "ami-0f8fc587bdad77687"
             },
             "ca-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0cd2bd65b0d629cf3"
+              "release": "9.6.20260217-1",
+              "image": "ami-03c13ed77386363ee"
             },
             "eu-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0db9ba4e39c2eaba5"
+              "release": "9.6.20260217-1",
+              "image": "ami-01a43bf9927a93b3a"
             },
             "eu-central-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-01a7ded1f488310ae"
+              "release": "9.6.20260217-1",
+              "image": "ami-0a7866ea5f8b6b4f5"
             },
             "eu-north-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-01744b2421a2a7528"
+              "release": "9.6.20260217-1",
+              "image": "ami-0beb76bb7824a0d5e"
             },
             "eu-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0eaab2e9dd28dc852"
+              "release": "9.6.20260217-1",
+              "image": "ami-084bc745a2438f746"
             },
             "eu-south-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0dad11fecc11e858b"
+              "release": "9.6.20260217-1",
+              "image": "ami-002ed50c65288eb81"
             },
             "eu-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-00cb7a4812319b46a"
+              "release": "9.6.20260217-1",
+              "image": "ami-0cdfd198102367d3f"
             },
             "eu-west-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-08bbe5267ab44c03b"
+              "release": "9.6.20260217-1",
+              "image": "ami-0af949d860d437407"
             },
             "eu-west-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0d89f0bf3a03d4d8c"
+              "release": "9.6.20260217-1",
+              "image": "ami-0a869063701e9fec1"
             },
             "il-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0e2fa5fb90bfe56d9"
+              "release": "9.6.20260217-1",
+              "image": "ami-0a04d894ab736f382"
             },
             "me-central-1": {
               "release": "9.6.20260112-0",
               "image": "ami-0d48a47b22126286b"
             },
             "me-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-07373c702177ea4f6"
+              "release": "9.6.20260217-1",
+              "image": "ami-0f632c3b57e5ac5d1"
             },
             "mx-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-003e58022c051040e"
+              "release": "9.6.20260217-1",
+              "image": "ami-02a63e9fc5e3b6a7b"
             },
             "sa-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-085479db4c7de2f61"
+              "release": "9.6.20260217-1",
+              "image": "ami-069bf63f12cabf768"
             },
             "us-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0f684b45a6e89dce2"
+              "release": "9.6.20260217-1",
+              "image": "ami-0305a169f602a17ce"
             },
             "us-east-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-08066b4a2c0a88670"
+              "release": "9.6.20260217-1",
+              "image": "ami-0b09416406227ac63"
             },
             "us-gov-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-076caa125c9655f61"
+              "release": "9.6.20260217-1",
+              "image": "ami-02ea44877ce9b2bdd"
             },
             "us-gov-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-028f2a6bc11075e78"
+              "release": "9.6.20260217-1",
+              "image": "ami-0d8e9bcb9f25384c0"
             },
             "us-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0614efde957eed218"
+              "release": "9.6.20260217-1",
+              "image": "ami-0b167bfc32a9a510c"
             },
             "us-west-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-018e1c615c4bfffd6"
+              "release": "9.6.20260217-1",
+              "image": "ami-0ec286172087497ea"
             }
           }
         },
         "gcp": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "project": "rhcos-cloud",
-          "name": "rhcos-9-6-20260112-0-gcp-aarch64"
+          "name": "rhcos-9-6-20260217-1-gcp-aarch64"
         }
       },
       "rhel-coreos-extensions": {
         "azure-disk": {
-          "release": "9.6.20260112-0",
-          "url": "https://rhcos.blob.core.windows.net/imagebucket/rhcos-9.6.20260112-0-azure.aarch64.vhd"
+          "release": "9.6.20260217-1",
+          "url": "https://rhcos.blob.core.windows.net/imagebucket/rhcos-9.6.20260217-1-azure.aarch64.vhd"
         }
       }
     },
     "ppc64le": {
       "artifacts": {
         "metal": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "4k.raw.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-metal4k.ppc64le.raw.gz",
-                "sha256": "c6373678ae50079866255fe287d41f332bc7b2b1e0b883a5aa788843406ea0e4",
-                "uncompressed-sha256": "53945b63b4816fd10b25a3202fc7eda27a9dbb4f4894ae64c05642b053b357c3"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-metal4k.ppc64le.raw.gz",
+                "sha256": "2804a8e882d04080c1f1eda89ed1f7dfb4619f2da58688797534dcb305a4d526",
+                "uncompressed-sha256": "6995273a321aa6646a13fab85795f837267f9d2aa10767b255de3e99c59f02e0"
               }
             },
             "iso": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-live-iso.ppc64le.iso",
-                "sha256": "8b12cb78860ae19cb1a4d01e2299450dbbb33035e36182c0bb51e0213db89cc3"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-live-iso.ppc64le.iso",
+                "sha256": "f74bd433a005af37990001f281218fd0852de9c976f3458b8e3b48af5af358c0"
               }
             },
             "pxe": {
               "kernel": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-live-kernel.ppc64le",
-                "sha256": "12532e1a5a61a0c19cf9f434b60033115f3a908a42dc04879bf0f3d5cce27c31"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-live-kernel.ppc64le",
+                "sha256": "8367b82ae1ec95797251025618c7a806db051a068e44ff3a482873ab48f7de9e"
               },
               "initramfs": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-live-initramfs.ppc64le.img",
-                "sha256": "8307239a773e1c4a763ca089267fc059bc39ceb57c9690bb45a28c91d789c8aa"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-live-initramfs.ppc64le.img",
+                "sha256": "af460a95a7e510534d5ed9ea20778022f387dfeba262149b4c947187ecd63e09"
               },
               "rootfs": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-live-rootfs.ppc64le.img",
-                "sha256": "5a5e8f415220d34c2b1eb55df831da131ffa5779d55c1309ea656cff527fbef8"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-live-rootfs.ppc64le.img",
+                "sha256": "b74eca8fbbc88b809b08564da27f2e56d9cd3b22780e4064006b07a6cb696c4e"
               }
             },
             "raw.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-metal.ppc64le.raw.gz",
-                "sha256": "24de943d2e4bd3ce4229e279c70a7809b9cc4f72a20f330ce01c346100fbf9b5",
-                "uncompressed-sha256": "9b8f824c923ba77fc492632f0f8474a99d02bb6a21d077ef7d103d49930b0e01"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-metal.ppc64le.raw.gz",
+                "sha256": "df59fcefa877c6af3f9b60a4197301f1a82076a2850928c6c49bffee793340f8",
+                "uncompressed-sha256": "0b7ee4eb101721a7d044d3786086b525b0195b8b0364499e3d2ce543a51859b6"
               }
             }
           }
         },
         "openstack": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-openstack.ppc64le.qcow2.gz",
-                "sha256": "5d40d24450fb5020ebb0d14841f51c9ae33f110d3d4f189c08197253246734e1",
-                "uncompressed-sha256": "cfbe766947e8971076302e5c0cd0fecd42cc39344b1db4a27b35a9dfb347ff8c"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-openstack.ppc64le.qcow2.gz",
+                "sha256": "fa935723832de2b98b6e60b9452d64e2cad4f4a045160c9e756fd50150fe7e97",
+                "uncompressed-sha256": "4691f412546d2c3bacfdb06c19f908da3094b9b4a15d167853d8cb085f40033a"
               }
             }
           }
         },
         "powervs": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "ova.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-powervs.ppc64le.ova.gz",
-                "sha256": "3cdf40e3fbc48956314ab4289f70f7b79f6caa3feeba34dc5d16fa4ec26fa4c6",
-                "uncompressed-sha256": "09310bc2febdd356d352add8da061e2d5bafa589b943dadff76ebcfa5fa1c9be"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-powervs.ppc64le.ova.gz",
+                "sha256": "f320093f1e049fd10b7304eb84986a3987f8f78135a11ba86fee911a9b141733",
+                "uncompressed-sha256": "abc8de0555a3a84e33615d52d9389e4496280b956bd21662af90e5648e9d95ef"
               }
             }
           }
         },
         "qemu": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/ppc64le/rhcos-9.6.20260112-0-qemu.ppc64le.qcow2.gz",
-                "sha256": "c40645f0c8a11ffd1a2f86e9a4aa69940dbdafeec71f5d78478c61dc9d90cb86",
-                "uncompressed-sha256": "7bf5a577668a2031499ebd0ecd310984081fbd49ea743c070c28050b12bec587"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/ppc64le/rhcos-9.6.20260217-1-qemu.ppc64le.qcow2.gz",
+                "sha256": "52b0439626dd9d8d33e97b09973105eab985b42dd35c491ab24d646fd8246fb4",
+                "uncompressed-sha256": "1abfc064be30e8192a87390936950d8421820db3e9aaba421ef11abbb6978678"
               }
             }
           }
@@ -350,64 +350,64 @@
         "powervs": {
           "regions": {
             "au-syd": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-au-syd",
-              "url": "https://s3.au-syd.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-au-syd/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.au-syd.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-au-syd/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "br-sao": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-br-sao",
-              "url": "https://s3.br-sao.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-br-sao/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.br-sao.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-br-sao/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "ca-tor": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-ca-tor",
-              "url": "https://s3.ca-tor.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-ca-tor/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.ca-tor.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-ca-tor/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "eu-de": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-eu-de",
-              "url": "https://s3.eu-de.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-eu-de/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.eu-de.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-eu-de/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "eu-es": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-eu-es",
-              "url": "https://s3.eu-es.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-eu-es/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.eu-es.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-eu-es/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "eu-gb": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-eu-gb",
-              "url": "https://s3.eu-gb.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-eu-gb/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.eu-gb.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-eu-gb/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "jp-osa": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-jp-osa",
-              "url": "https://s3.jp-osa.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-jp-osa/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.jp-osa.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-jp-osa/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "jp-tok": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-jp-tok",
-              "url": "https://s3.jp-tok.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-jp-tok/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.jp-tok.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-jp-tok/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "us-east": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-us-east",
-              "url": "https://s3.us-east.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-us-east/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.us-east.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-us-east/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             },
             "us-south": {
-              "release": "9.6.20260112-0",
-              "object": "rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz",
+              "release": "9.6.20260217-1",
+              "object": "rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz",
               "bucket": "rhcos-powervs-images-us-south",
-              "url": "https://s3.us-south.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-us-south/rhcos-9-6-20260112-0-ppc64le-powervs.ova.gz"
+              "url": "https://s3.us-south.cloud-object-storage.appdomain.cloud/rhcos-powervs-images-us-south/rhcos-9-6-20260217-1-ppc64le-powervs.ova.gz"
             }
           }
         }
@@ -416,99 +416,99 @@
     "s390x": {
       "artifacts": {
         "ibmcloud": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-ibmcloud.s390x.qcow2.gz",
-                "sha256": "d84761ecfe674bf5b4c44509a97487c9c1bc6c7f8df48039a7daf95af9273554",
-                "uncompressed-sha256": "9a284c106cf95b87a71221f321a57e0fe615fd659606162db63250cb7958ebb3"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-ibmcloud.s390x.qcow2.gz",
+                "sha256": "cab45137bc2aff9733b02df9f6c84d14874c69c1070f7edcd69b6e2ed58d3801",
+                "uncompressed-sha256": "74412d3c7c68233b0fa3477be57451670f370e29df444553a13e603ce26f78ff"
               }
             }
           }
         },
         "kubevirt": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "ociarchive": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-kubevirt.s390x.ociarchive",
-                "sha256": "6bfaf4b0a1664273f7b6bc9581c354c8e64d4697ecbba5fe9655f7c09dafcf97"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-kubevirt.s390x.ociarchive",
+                "sha256": "eccac2e29eccdf318824518c41306edfeb0e4fdf127a4904bc07d9c72523fe1b"
               }
             }
           }
         },
         "metal": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "4k.raw.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-metal4k.s390x.raw.gz",
-                "sha256": "5bc270b1760dda76287648414be8132a55947e65874376f21620b650015ecee9",
-                "uncompressed-sha256": "05355de4410b726e4d7c71c8f36e27e63630a66fe7ddf9c7992240c73a054019"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-metal4k.s390x.raw.gz",
+                "sha256": "0effb1e592e0e4df62b30759dbad75634eb0808e3a41f42051f8a7e1a6b84431",
+                "uncompressed-sha256": "0d19738541e8c40cdb6587526b93fdc3fc90033cc0f062b59c1391d165670e52"
               }
             },
             "iso": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-live-iso.s390x.iso",
-                "sha256": "b560bf3ee9cdb98f2c4a4991aa60e3ca1ca50c167858acfccaccab97ed53979d"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-live-iso.s390x.iso",
+                "sha256": "c6db81b28eee8567353f9ea2c46c800ee9f2b752e6be2f236ed152fdd14616b0"
               }
             },
             "pxe": {
               "kernel": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-live-kernel.s390x",
-                "sha256": "d661dfdaca9ba453f4034c36afee2b35af426e877a7e2f6b296ffa9dd862c7c5"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-live-kernel.s390x",
+                "sha256": "c1982f893e95133d17f4e5890e2c70b6db99bb0911ff1874ab6175bc966e9bdf"
               },
               "initramfs": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-live-initramfs.s390x.img",
-                "sha256": "8f54c7daa04dd32e993680ca52a377d4e0adb31295ef3a2bba827c1e27ce3b61"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-live-initramfs.s390x.img",
+                "sha256": "d9e6540613436a3fb09858ea4cc60d57294195d41bbf9a63e52e443dea87f356"
               },
               "rootfs": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-live-rootfs.s390x.img",
-                "sha256": "4c6a795e7a826d4981725c152273860a217a9c1a6a17bdaaee1aaac41a1240f0"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-live-rootfs.s390x.img",
+                "sha256": "314d1742899f63a4b49a3eccb25e6144d2475f9cc3afcb6112991cedf33d2313"
               }
             },
             "raw.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-metal.s390x.raw.gz",
-                "sha256": "f278dafc38fb75b2e9d1cc12deecf7ffe8d4f616af1e8277166db473918487a8",
-                "uncompressed-sha256": "a9694983c4d2772ffb6ac9be66694c1b13a17caef1baed8a10556f38f23cc4c0"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-metal.s390x.raw.gz",
+                "sha256": "da21639a94e19539aa5fab8ccb84d39a6e103076705a9e1537b9fa802ea495db",
+                "uncompressed-sha256": "a699295c122e347350d505f0afcf64c0e6824afefda921c1eedac28bfe898af0"
               }
             }
           }
         },
         "openstack": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-openstack.s390x.qcow2.gz",
-                "sha256": "c14e46868cdc65282cacc1b61f99104a5dfdfafee797137e425cdcbbcf7a36a8",
-                "uncompressed-sha256": "8a43e78ef12d912a7946754dbd86de0c36fe889bbb09a965dda056dcf1a82bfe"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-openstack.s390x.qcow2.gz",
+                "sha256": "09ecbb282db85a0e33800345aceaebbdbc934b362f0d098108676832316128aa",
+                "uncompressed-sha256": "ff96f9ad817c184765a4923f40d80aae37c75d0c12216658c0442d655ba89076"
               }
             }
           }
         },
         "qemu": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-qemu.s390x.qcow2.gz",
-                "sha256": "f3e3b32e4e9b252ed7ef0bb1cfed9ec68811a7f95581b059c16969b2c5d5607b",
-                "uncompressed-sha256": "057d4640e246d79da9b609d8b1eee0988883190e0bf553ac413663368fe6c6e7"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-qemu.s390x.qcow2.gz",
+                "sha256": "8cee5655df5faa92dc718e653ff438f0b50e98e717080ff824d4f97e30230052",
+                "uncompressed-sha256": "1a53d52d311e4f4d729ada03456a7027233048eb1cc85087bdcc1f660481bf51"
               }
             }
           }
         },
         "qemu-secex": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/s390x/rhcos-9.6.20260112-0-qemu-secex.s390x.qcow2.gz",
-                "sha256": "e16fabf161af56ec57b468d9225d7911a09d3fbc300374de44a6d3805b0cabca",
-                "uncompressed-sha256": "7f82223d066fde5fe8bad728056d06000ff53bcf155efeb4a65cf2741ef6a155"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/s390x/rhcos-9.6.20260217-1-qemu-secex.s390x.qcow2.gz",
+                "sha256": "e7c3b03cdf467505e8db1e315a007cf49312ea5fc59169b25eb46105512eab1e",
+                "uncompressed-sha256": "07f84e463820fb63b3174bcf182149f444f9ad55b76e017147ffea232acca82d"
               }
             }
           }
@@ -516,165 +516,165 @@
       },
       "images": {
         "kubevirt": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev:rhel-9.6-coreos-kubevirt",
-          "digest-ref": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a9c0ac5839602712f04acf3e56ad4244929eb75a8af8042c650f26832d919cd0"
+          "digest-ref": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:e6ee2013a0042fd64912db4c960c94cfa439f01e8beaf4aeff96e26fe9057699"
         }
       }
     },
     "x86_64": {
       "artifacts": {
         "aws": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "vmdk.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-aws.x86_64.vmdk.gz",
-                "sha256": "b8345d4c935198da9501b676e473e30fcfb42db52012e64e6f062cf96abc478d",
-                "uncompressed-sha256": "7691a752da0346f2c83795fc4f3cd852e76f70c3bc35072277503f742b6488f4"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-aws.x86_64.vmdk.gz",
+                "sha256": "cef15eccd33dbc670ae816deec956e34307c56376625cd17443631a324cdd9e4",
+                "uncompressed-sha256": "5640d3ac8480a5b14048c6f93e9dd98a2d8aee59b6c6901767c32eb92fb4a9a7"
               }
             }
           }
         },
         "azure": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "vhd.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-azure.x86_64.vhd.gz",
-                "sha256": "133af83220812c826e00dcbdaba7b275450b30df6d156ad83c486183bb7cca9b",
-                "uncompressed-sha256": "82848c5cb772ff7770c84fbfb6f867de649edae7554549979e1df5d577406c10"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-azure.x86_64.vhd.gz",
+                "sha256": "cc41cb24d40b821ab21a1943018193dbed6b4cf2ee5c02ec767f1b50e37332e9",
+                "uncompressed-sha256": "14046168c6eb348e15edcd96859c5835783d15dcece220fbb81bf6159f13138d"
               }
             }
           }
         },
         "azurestack": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "vhd.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-azurestack.x86_64.vhd.gz",
-                "sha256": "cd9c871ea568bf9935df462907d948fc4858f2f5d743e1db00a58d53cee84ad6",
-                "uncompressed-sha256": "cb324549e965f24bffdb24b3a0ff8977c6742c13311c27ed64e81d89e0465804"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-azurestack.x86_64.vhd.gz",
+                "sha256": "cd16cb1c8f6b910823c24eec94407abffbec448549907f1b67bee7f347f7b179",
+                "uncompressed-sha256": "2618e5c2517bfd1c0021db15e3c582ec11600b92cedcd3dc7acda0f0edd513c1"
               }
             }
           }
         },
         "gcp": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "tar.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-gcp.x86_64.tar.gz",
-                "sha256": "d7e7584d2c67be10e8a5ba5991fc165b9373a8f815ef914de7818c92eb0dfbcb"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-gcp.x86_64.tar.gz",
+                "sha256": "482ecf8c75ee353023449da31bb0293482048efd6a3edcfc0e48763bd9bae71c"
               }
             }
           }
         },
         "ibmcloud": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-ibmcloud.x86_64.qcow2.gz",
-                "sha256": "5d3af2b804bb504eca846cb68e8eeb4e238b9e7bbc946b61530cc94bb22020bb",
-                "uncompressed-sha256": "13530b9d091f215768108afd705ed608288528557b4490cefe2de4f93587d181"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-ibmcloud.x86_64.qcow2.gz",
+                "sha256": "d3a1f18829aa56e073c80cf276b087ecc4cfa5ea2173cc91edca7298be239342",
+                "uncompressed-sha256": "ab8b5925283b343647a2eebfe363a368591e6549ee22f829b324a537080323a1"
               }
             }
           }
         },
         "kubevirt": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "ociarchive": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-kubevirt.x86_64.ociarchive",
-                "sha256": "d3c503871f5c4df5232fc263e097cd38c5fd771eafe60fb7698ed50f18b59f48"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-kubevirt.x86_64.ociarchive",
+                "sha256": "4581b508e5c652d75498473de7b80d0fa96738a52d7c9b7948f318dd20801026"
               }
             }
           }
         },
         "metal": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "4k.raw.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-metal4k.x86_64.raw.gz",
-                "sha256": "9fd91192c2340ce13359390c239b72c3838e622694e8c593f7706a183cae937f",
-                "uncompressed-sha256": "b1eab66fefb8e36a0076cf002089f3f39f459a8f4a85cac9f1a51f7e7e5f1736"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-metal4k.x86_64.raw.gz",
+                "sha256": "07003c3d1c6c71b9584b6ce79b86645c1bad4a214a8e0e674cdae2a10186023b",
+                "uncompressed-sha256": "b8f710af3fb387ba544d0f7b0b48b4f192810783b3470fbe675c16daad1049e5"
               }
             },
             "iso": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-live-iso.x86_64.iso",
-                "sha256": "57789e69a859a0c528a9dba7ed688ca964e97c649bcb22ba90e3267bac59b809"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-live-iso.x86_64.iso",
+                "sha256": "a400ff19d2b8aedacc4c60a4ec24538ed1eb6b50c2ee2f5a98f5448d313a90ca"
               }
             },
             "pxe": {
               "kernel": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-live-kernel.x86_64",
-                "sha256": "7a46dc1b8ad1a5fd18fa04c46309b3ed4aa61dc15ea61140184b139d2cdd0f4c"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-live-kernel.x86_64",
+                "sha256": "51d6dba5b889b7c91a13694c2cc5301b318c0995f58dcc06ef8a2ba984acc5ee"
               },
               "initramfs": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-live-initramfs.x86_64.img",
-                "sha256": "e15adc5fd5cedb978cfa77bff201c3b3ce0e699b033596b84f384c6a4a1951e0"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-live-initramfs.x86_64.img",
+                "sha256": "771cc6318c2acf9428c40dc34edd7b5c5b526615bb3527c384aa3c38a3178470"
               },
               "rootfs": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-live-rootfs.x86_64.img",
-                "sha256": "91efe20b6ac88529da16e26b656ecd76b07e2c24e1f083420f93f2ef3a5450fd"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-live-rootfs.x86_64.img",
+                "sha256": "b4bc064b764f9c947d9776eacd52de92c7f7871e63f175aec916ae81af08466e"
               }
             },
             "raw.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-metal.x86_64.raw.gz",
-                "sha256": "5b752c3cc37adb2c253eaab08883bc225bddfd2ae1eab74b16d42256697d2eb9",
-                "uncompressed-sha256": "20f4c71ae31f1cb7411e3792dc1f741296c31c1233a2bb20bf804c677a72621d"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-metal.x86_64.raw.gz",
+                "sha256": "7a756ab6bbba8833f13b88a17d0af302631b132796c9371e78d9c086d415098e",
+                "uncompressed-sha256": "71a2ec9a506cc4d0703352f279918e1f463f26504366e6d994ec31de8b4fd22c"
               }
             }
           }
         },
         "nutanix": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-nutanix.x86_64.qcow2",
-                "sha256": "28d3e8b18e2efcd991ae94c0a5357f60d3fb4d6631db22e58b387299af653f2f"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-nutanix.x86_64.qcow2",
+                "sha256": "9dc0622cd87709672f49ac6872c74031e69154e85b0e260a8e866e796fb23d4a"
               }
             }
           }
         },
         "openstack": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-openstack.x86_64.qcow2.gz",
-                "sha256": "c4fa865022270cdcd2725fbab79dfc007dd05e95142541c34e283963467f0404",
-                "uncompressed-sha256": "9a46df0801998d788a4de84f60c5841b72566a8e0f1ed6d264d9a3d54c2f77f5"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-openstack.x86_64.qcow2.gz",
+                "sha256": "635972d97eea9f339a729de3599c347a55973a19bd2cc54acc24fec1f6109908",
+                "uncompressed-sha256": "31ef7c8d9e7003682f4f4b1e19b4f8afd81524f877135e8543b1263a2b941501"
               }
             }
           }
         },
         "qemu": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "qcow2.gz": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-qemu.x86_64.qcow2.gz",
-                "sha256": "076fd5ae97d4e4fc25a701e941b201d7f443da1cc9ae0419057f6985978e14d9",
-                "uncompressed-sha256": "8c9515f868a7afaafb5f5d70b81dc87958b25a386c4e1b6f5778eb2b6727e1c0"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-qemu.x86_64.qcow2.gz",
+                "sha256": "1cb50352750fdd58242b0c1d4f609879a36cb536185f27e185f5c020718727d0",
+                "uncompressed-sha256": "739c3c8e6442adca9011d4a83f53df1abbcb234becf50fad15f9939f18d11bdb"
               }
             }
           }
         },
         "vmware": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "formats": {
             "ova": {
               "disk": {
-                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260112-0/x86_64/rhcos-9.6.20260112-0-vmware.x86_64.ova",
-                "sha256": "5ab31b2a174fc345ed8075f7c282f168ff86f388f35071be3a2b3d16994dda1d"
+                "location": "https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6/builds/9.6.20260217-1/x86_64/rhcos-9.6.20260217-1-vmware.x86_64.ova",
+                "sha256": "bb0a8f98e3c92e8d543f1e3a6fa013f1393bdb4b7d502fdb41e226dfd7d8a6f9"
               }
             }
           }
@@ -684,306 +684,306 @@
         "aws": {
           "regions": {
             "af-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0fd0c820ea9c05888"
+              "release": "9.6.20260217-1",
+              "image": "ami-03a73b9caf983d755"
             },
             "ap-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0047a1fdd4844608d"
+              "release": "9.6.20260217-1",
+              "image": "ami-08722b5ad1b171da7"
             },
             "ap-east-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0b5c724cf40784def"
+              "release": "9.6.20260217-1",
+              "image": "ami-0069df2d1a4a27459"
             },
             "ap-northeast-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0c144ed9a6c7b1c5b"
+              "release": "9.6.20260217-1",
+              "image": "ami-076651ce9dde9c263"
             },
             "ap-northeast-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-04c75dcb69da9704b"
+              "release": "9.6.20260217-1",
+              "image": "ami-0c48c65f578368449"
             },
             "ap-northeast-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-028a26fbc22b95470"
+              "release": "9.6.20260217-1",
+              "image": "ami-01c5068babb32d9b2"
             },
             "ap-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-04a266a067396c6b2"
+              "release": "9.6.20260217-1",
+              "image": "ami-0ae12bcb5bcaddcc7"
             },
             "ap-south-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0d0e4d9fd6230a686"
+              "release": "9.6.20260217-1",
+              "image": "ami-055d0f3ea4c45c91c"
             },
             "ap-southeast-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-039ca2cb0afd8c275"
+              "release": "9.6.20260217-1",
+              "image": "ami-048402f0c181077a5"
             },
             "ap-southeast-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0b4c8eb083314dcbf"
+              "release": "9.6.20260217-1",
+              "image": "ami-089cf2e44a2b8ae58"
             },
             "ap-southeast-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-04675f1b0e889c289"
+              "release": "9.6.20260217-1",
+              "image": "ami-069df33ee927e1bfb"
             },
             "ap-southeast-4": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0d7cd25aa1c2710b2"
+              "release": "9.6.20260217-1",
+              "image": "ami-0ab82ae2ddd7415f3"
             },
             "ap-southeast-5": {
-              "release": "9.6.20260112-0",
-              "image": "ami-044f6be5ddc9043c1"
+              "release": "9.6.20260217-1",
+              "image": "ami-0078086bf9e9b462d"
             },
             "ap-southeast-6": {
-              "release": "9.6.20260112-0",
-              "image": "ami-06ca6a39e6b6bdaaa"
+              "release": "9.6.20260217-1",
+              "image": "ami-0f242bc9e3d4cf104"
             },
             "ap-southeast-7": {
-              "release": "9.6.20260112-0",
-              "image": "ami-005fd8e544fb4fb71"
+              "release": "9.6.20260217-1",
+              "image": "ami-0831e0f5094c280d8"
             },
             "ca-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0f63d94711c4c3663"
+              "release": "9.6.20260217-1",
+              "image": "ami-0172652ecf50f0b04"
             },
             "ca-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0cb8e17a3153ba5b3"
+              "release": "9.6.20260217-1",
+              "image": "ami-019f6a028193d06ae"
             },
             "eu-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0e1d89645676202af"
+              "release": "9.6.20260217-1",
+              "image": "ami-09f57b39f5b80dd6d"
             },
             "eu-central-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0de1744ca27e964ce"
+              "release": "9.6.20260217-1",
+              "image": "ami-0d5a9d2a414c6cf1c"
             },
             "eu-north-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0183001bfd7b04a74"
+              "release": "9.6.20260217-1",
+              "image": "ami-0abf8de92084d7f0a"
             },
             "eu-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-03937ceb129e80f21"
+              "release": "9.6.20260217-1",
+              "image": "ami-01deef6bf93dbac53"
             },
             "eu-south-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0903153a907ee1c14"
+              "release": "9.6.20260217-1",
+              "image": "ami-0f69423fe4d4ba9de"
             },
             "eu-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0c03cca2c3178b22a"
+              "release": "9.6.20260217-1",
+              "image": "ami-030e56dccfda9ecc4"
             },
             "eu-west-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-03721e932164062f0"
+              "release": "9.6.20260217-1",
+              "image": "ami-06ace9dd6a22866a1"
             },
             "eu-west-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0dc4ac6e428d0793d"
+              "release": "9.6.20260217-1",
+              "image": "ami-0b3fb6db7d1ac3b26"
             },
             "il-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-060ecb2bc2fa9a26d"
+              "release": "9.6.20260217-1",
+              "image": "ami-0a392f4b1a455fa9d"
             },
             "me-central-1": {
               "release": "9.6.20260112-0",
               "image": "ami-0262e74400e67e377"
             },
             "me-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0bd9fd38420abcef7"
+              "release": "9.6.20260217-1",
+              "image": "ami-05e4b10f053646f0a"
             },
             "mx-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0411309bf22fb1139"
+              "release": "9.6.20260217-1",
+              "image": "ami-03de8ab9ab5adc337"
             },
             "sa-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-06b01b6460947cd34"
+              "release": "9.6.20260217-1",
+              "image": "ami-05613baf881000f4f"
             },
             "us-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0e0850e74100f0f31"
+              "release": "9.6.20260217-1",
+              "image": "ami-081de8a3a5826a7d1"
             },
             "us-east-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0fd7c367ed8a90d52"
+              "release": "9.6.20260217-1",
+              "image": "ami-021a620474c1cd2fe"
             },
             "us-gov-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0b84ed8e08d76c662"
+              "release": "9.6.20260217-1",
+              "image": "ami-0bfd005b37b740046"
             },
             "us-gov-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-04474fd6b98762a98"
+              "release": "9.6.20260217-1",
+              "image": "ami-06f6886b07c8a865e"
             },
             "us-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-07680a1b8de089d13"
+              "release": "9.6.20260217-1",
+              "image": "ami-0d2dfbc8081c4cf49"
             },
             "us-west-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-02822b9d01e073e65"
+              "release": "9.6.20260217-1",
+              "image": "ami-0c7c6b8489d0dd1c4"
             }
           }
         },
         "gcp": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "project": "rhcos-cloud",
-          "name": "rhcos-9-6-20260112-0-gcp-x86-64"
+          "name": "rhcos-9-6-20260217-1-gcp-x86-64"
         },
         "kubevirt": {
-          "release": "9.6.20260112-0",
+          "release": "9.6.20260217-1",
           "image": "quay.io/openshift-release-dev/ocp-v4.0-art-dev:rhel-9.6-coreos-kubevirt",
-          "digest-ref": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:a5dee9d25842875fe246c633fc6f0d05093fe8d9441acd2559a7ba3d74dd0b47"
+          "digest-ref": "quay.io/openshift-release-dev/ocp-v4.0-art-dev@sha256:154c14897fa1ebc55011c7944f1bfcd0a2bbf5f16e2499d38a0508d15dbbc9c0"
         }
       },
       "rhel-coreos-extensions": {
         "aws-winli": {
           "regions": {
             "af-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0e845ff8f43225df7"
+              "release": "9.6.20260217-1",
+              "image": "ami-019a3e4a4b8e856a9"
             },
             "ap-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0028d62ce151cb1f1"
+              "release": "9.6.20260217-1",
+              "image": "ami-0c905b6d56a9b19dd"
             },
             "ap-east-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-05db797d370786c2c"
+              "release": "9.6.20260217-1",
+              "image": "ami-0a32c5eb46efbf00e"
             },
             "ap-northeast-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0f23efddf2ba41f5a"
+              "release": "9.6.20260217-1",
+              "image": "ami-0b7e83332b0cdcd7e"
             },
             "ap-northeast-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0570e9cfb088e1cf0"
+              "release": "9.6.20260217-1",
+              "image": "ami-050318718af0f5a8f"
             },
             "ap-northeast-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-05cd3ce55a1f00a2b"
+              "release": "9.6.20260217-1",
+              "image": "ami-055301e48a3f74da2"
             },
             "ap-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-04687750801886a46"
+              "release": "9.6.20260217-1",
+              "image": "ami-03a4024d8e3511dff"
             },
             "ap-south-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0d9c31d261926bc88"
+              "release": "9.6.20260217-1",
+              "image": "ami-04d4794df74945f7c"
             },
             "ap-southeast-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-08950fa455701f288"
+              "release": "9.6.20260217-1",
+              "image": "ami-05b76e0a91eda2cd1"
             },
             "ap-southeast-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0d869f95d599ce4a4"
+              "release": "9.6.20260217-1",
+              "image": "ami-0a88acb35339a052c"
             },
             "ap-southeast-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-089cc33bc4f453a4f"
+              "release": "9.6.20260217-1",
+              "image": "ami-0fd150d8904e97bde"
             },
             "ap-southeast-4": {
-              "release": "9.6.20260112-0",
-              "image": "ami-01c3b55a857ad1db3"
+              "release": "9.6.20260217-1",
+              "image": "ami-0ef213576c8b4505d"
             },
             "ap-southeast-5": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0f872380c3a5cd4b2"
+              "release": "9.6.20260217-1",
+              "image": "ami-04a778986bdb7939e"
             },
             "ap-southeast-6": {
-              "release": "9.6.20260112-0",
-              "image": "ami-01e1ea8f4552f5d49"
+              "release": "9.6.20260217-1",
+              "image": "ami-014549668437cd365"
             },
             "ap-southeast-7": {
-              "release": "9.6.20260112-0",
-              "image": "ami-05df0807fa938c2ac"
+              "release": "9.6.20260217-1",
+              "image": "ami-073d44bf4e441ea86"
             },
             "ca-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-040c20d38a56a878d"
+              "release": "9.6.20260217-1",
+              "image": "ami-0f2ef6e1b4fc962e3"
             },
             "ca-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-038ce19f4290ced4c"
+              "release": "9.6.20260217-1",
+              "image": "ami-02137e274185b1e84"
             },
             "eu-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-08fc4dcec9ef85a97"
+              "release": "9.6.20260217-1",
+              "image": "ami-038a0ac7be335fe7e"
             },
             "eu-central-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-05b83dea4f866fe0d"
+              "release": "9.6.20260217-1",
+              "image": "ami-0e1a11968ec7595e4"
             },
             "eu-north-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0d5a963b3ec3f6f06"
+              "release": "9.6.20260217-1",
+              "image": "ami-07dd04d9f1888350d"
             },
             "eu-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0cae26f807e55cec2"
+              "release": "9.6.20260217-1",
+              "image": "ami-043dfe965ee2bc7f3"
             },
             "eu-south-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0c62d29b1c87b080d"
+              "release": "9.6.20260217-1",
+              "image": "ami-046ffcc3ac07ef306"
             },
             "eu-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0b6f85f496fb5d5a4"
+              "release": "9.6.20260217-1",
+              "image": "ami-098910c9bd4bb5e27"
             },
             "eu-west-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0e0bd2ecbbdc04568"
+              "release": "9.6.20260217-1",
+              "image": "ami-00c5d924490d5b534"
             },
             "eu-west-3": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0bd0a6b691937ab01"
+              "release": "9.6.20260217-1",
+              "image": "ami-0005b2b99a4f5faee"
             },
             "il-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0a2e8cab5b17d37a7"
+              "release": "9.6.20260217-1",
+              "image": "ami-0de82af6d0ca3faf5"
             },
             "me-central-1": {
               "release": "9.6.20260112-0",
               "image": "ami-03335cd0583f09a92"
             },
             "me-south-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-05c93b2ffa2819119"
+              "release": "9.6.20260217-1",
+              "image": "ami-06988cdc661755ed4"
             },
             "mx-central-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-010e028e80d902a46"
+              "release": "9.6.20260217-1",
+              "image": "ami-06321bba3af7dc2a9"
             },
             "sa-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0b4752c7b345e3de3"
+              "release": "9.6.20260217-1",
+              "image": "ami-01e38058e3fc50a28"
             },
             "us-east-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0ff533915c03fd5c4"
+              "release": "9.6.20260217-1",
+              "image": "ami-04f6d5fde1e53b94c"
             },
             "us-east-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0c7461830f8ce2661"
+              "release": "9.6.20260217-1",
+              "image": "ami-02e03fda4de7ea68b"
             },
             "us-west-1": {
-              "release": "9.6.20260112-0",
-              "image": "ami-02dabe38e11e0be40"
+              "release": "9.6.20260217-1",
+              "image": "ami-0076da74b040d8a3f"
             },
             "us-west-2": {
-              "release": "9.6.20260112-0",
-              "image": "ami-0676d90a27bb5de59"
+              "release": "9.6.20260217-1",
+              "image": "ami-07b78179411af8bb8"
             }
           }
         },
         "azure-disk": {
-          "release": "9.6.20260112-0",
-          "url": "https://rhcos.blob.core.windows.net/imagebucket/rhcos-9.6.20260112-0-azure.x86_64.vhd"
+          "release": "9.6.20260217-1",
+          "url": "https://rhcos.blob.core.windows.net/imagebucket/rhcos-9.6.20260217-1-azure.x86_64.vhd"
         }
       }
     }
