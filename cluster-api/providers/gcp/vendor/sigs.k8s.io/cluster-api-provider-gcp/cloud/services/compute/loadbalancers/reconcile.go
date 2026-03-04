@@ -285,6 +285,21 @@ func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, l
 	}
 	s.scope.Network().APIInternalForwardingRule = ptr.To[string](forwardingrule.SelfLink)
 
+	if s.scope.StackType() == infrav1.DualStackType {
+		// FIXME: this ip address will need to be provided back in the status
+		ipv6Addr, err := s.createOrGetInternalIPv6Address(ctx, name)
+		if err != nil {
+			return err
+		}
+
+		// FIXME: This should be saved to
+		// s.scope.Network().APIServerIPv6ForwardingRule
+		_, err = s.createOrGetRegionalForwardingRule(ctx, fmt.Sprintf("%s-ipv6", name), backendsvc, ipv6Addr)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -548,6 +563,9 @@ func (s *Service) createOrGetAddress(ctx context.Context, lbname string) (*compu
 func (s *Service) createOrGetIPv6Address(ctx context.Context, lbname string) (*compute.Address, error) {
 	log := log.FromContext(ctx)
 	addrSpec := s.scope.IPv6AddressSpec(lbname)
+	// When the IPv6EndpointType is set, the address is interpretted as EXTERNAL no
+	// matter what the AddressType is set to.
+	addrSpec.Ipv6EndpointType = "NETLB"
 
 	log.V(2).Info("Looking for address", "name", addrSpec.Name)
 	key := meta.GlobalKey(addrSpec.Name)
@@ -627,13 +645,12 @@ func (s *Service) createOrGetInternalIPv6Address(ctx context.Context, lbname str
 		log.Error(err, "Error getting subnet for Internal Load Balancer")
 		return nil, err
 	}
-	lbSpec := s.scope.LoadBalancer()
-	if lbSpec.InternalLoadBalancer != nil && lbSpec.InternalLoadBalancer.IPAddress != nil {
-		// If an IP address is configured, use it instead of creating a new one.
-		addrSpec.Address = *lbSpec.InternalLoadBalancer.IPAddress
-	}
+
 	addrSpec.Subnetwork = subnet.SelfLink
 	addrSpec.Purpose = "GCE_ENDPOINT"
+
+	log.V(2).Info(fmt.Sprintf("Address info: %q", addrSpec), "name", addrSpec.Name)
+
 	log.V(2).Info("Looking for internal address", "name", addrSpec.Name)
 	key := meta.RegionalKey(addrSpec.Name, s.scope.Region())
 	addr, err := s.internaladdresses.Get(ctx, key)
@@ -728,6 +745,9 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 	}
 	spec.Subnetwork = subnet.SelfLink
 	spec.IPAddress = addr.SelfLink
+	// FIXME: Is this good for both IPv4 and IPv6 ?
+	spec.IpVersion = addr.IpVersion
+
 
 	key := meta.RegionalKey(spec.Name, s.scope.Region())
 	log.V(2).Info("Looking for regional forwardingrule", "name", spec.Name)
@@ -737,6 +757,8 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 			log.Error(err, "Error looking for regional forwardingrule", "name", spec.Name)
 			return nil, err
 		}
+
+		log.V(2).Info(fmt.Sprintf("Forwarding Rule: %q", spec), "name", spec.Name)
 
 		log.V(2).Info("Creating a regional forwardingrule", "name", spec.Name)
 		if err := s.regionalforwardingrules.Insert(ctx, key, spec); err != nil {

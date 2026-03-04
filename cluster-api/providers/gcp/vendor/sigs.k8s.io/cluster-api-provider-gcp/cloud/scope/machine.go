@@ -331,6 +331,8 @@ func InstanceNetworkInterfaceSpec(cluster cloud.ClusterGetter, publicIP *bool, s
 		Network: path.Join("projects", cluster.NetworkProject(), "global", "networks", cluster.NetworkName()),
 	}
 
+	ipv6AccessType := "INTERNAL"
+
 	if publicIP != nil && *publicIP {
 		networkInterface.AccessConfigs = []*compute.AccessConfig{
 			{
@@ -338,8 +340,14 @@ func InstanceNetworkInterfaceSpec(cluster cloud.ClusterGetter, publicIP *bool, s
 				Name: "External NAT",
 			},
 		}
-
+		// FIXME: For now we cannot assign the IPv6AccessConfigs. The bootstrap node is the only one on our side
+		// that would be using this, but others may have different configurations.
+		// Issue: We set the subnets to internal so this external configuration will fail. The subnets (IPv6) are set
+		// to internal so that the internal load balancer address creation will complete.
+		// What we see: Error 400: Invalid value for field 'resource.networkInterfaces[0].ipv6AccessConfigs': ''.
+		//				IPv6 access config is not supported for this network interface.
 		//if cluster.StackType() == infrav1.DualStackType {
+		//	ipv6AccessType = "EXTERNAL"
 		//	networkInterface.Ipv6AccessConfigs = []*compute.AccessConfig{
 		//		{
 		//			Type: "DIRECT_IPV6",
@@ -349,14 +357,11 @@ func InstanceNetworkInterfaceSpec(cluster cloud.ClusterGetter, publicIP *bool, s
 		//}
 	}
 
-	//if cluster.StackType() == infrav1.DualStackType {
-	//	accessType := "INTERNAL"
-	//	if publicIP != nil && *publicIP {
-	//		accessType = "EXTERNAL"
-	//	}
-	//	networkInterface.Ipv6AccessType = accessType
-	//	networkInterface.Ipv6Address = cluster.Ipv6Address()
-	//}
+	if cluster.StackType() == infrav1.DualStackType {
+		networkInterface.Ipv6AccessType = ipv6AccessType
+		networkInterface.Ipv6Address = cluster.Ipv6Address()
+		networkInterface.StackType = "IPV4_IPV6"
+	}
 
 	if subnet != nil {
 		networkInterface.Subnetwork = path.Join("projects", cluster.NetworkProject(), "regions", cluster.Region(), "subnetworks", *subnet)

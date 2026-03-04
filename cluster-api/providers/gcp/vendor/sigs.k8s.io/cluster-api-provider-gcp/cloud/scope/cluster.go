@@ -257,6 +257,10 @@ func (s *ClusterScope) NetworkSpec() *compute.Network {
 		Mtu:                   s.NetworkMtu(),
 	}
 
+	if s.StackType() == infrav1.DualStackType {
+		network.EnableUlaInternalIpv6 = true
+	}
+
 	return network
 }
 
@@ -307,9 +311,8 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			StackType:             stackType,
 		}
 
-		// FIXME: this is something that will be determined based on the type of cluster
 		if s.StackType() == infrav1.DualStackType {
-			subnet.Ipv6AccessType = "EXTERNAL"
+			subnet.Ipv6AccessType = "INTERNAL"
 		}
 
 		subnets = append(subnets, subnet)
@@ -413,7 +416,6 @@ func (s *ClusterScope) IPv6AddressSpec(lbname string) *compute.Address {
 		Name:             fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
 		AddressType:      "EXTERNAL",
 		IpVersion:        "IPV6",
-		Ipv6EndpointType: "NETLB",
 	}
 }
 
