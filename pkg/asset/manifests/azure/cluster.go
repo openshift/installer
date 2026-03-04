@@ -266,15 +266,21 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 		Spec: capz.AzureClusterIdentitySpec{
 			AllowedNamespaces: &capz.AllowedNamespaces{}, // Allow all namespaces.
-			ClientID:          session.Credentials.ClientID,
 			TenantID:          session.Credentials.TenantID,
 		},
 	}
 
 	switch session.AuthType {
 	case azic.ManagedIdentityAuth:
+		// Only set ClientID if it's provided (user-assigned managed identity).
+		// For system-assigned managed identity, ClientID is empty and CAPZ will
+		// use the identity automatically assigned to the VM.
+		if session.Credentials.ClientID != "" {
+			id.Spec.ClientID = session.Credentials.ClientID
+		}
 		id.Spec.Type = capz.UserAssignedMSI
 	case azic.ClientSecretAuth:
+		id.Spec.ClientID = session.Credentials.ClientID
 		id.Spec.Type = capz.ServicePrincipal
 		azureClientSecret := &corev1.Secret{
 			ObjectMeta: metav1.ObjectMeta{
@@ -296,6 +302,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Namespace: azureClientSecret.Namespace,
 		}
 	case azic.ClientCertificateAuth:
+		id.Spec.ClientID = session.Credentials.ClientID
 		id.Spec.Type = capz.ServicePrincipalCertificate
 		id.Spec.CertPath = session.Credentials.ClientCertificatePath
 	}
