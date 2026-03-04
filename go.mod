@@ -81,6 +81,7 @@ require (
 	github.com/jongio/azidext/go/azidext v0.5.0
 	github.com/k-orc/openstack-resource-controller/v2 v2.3.0
 	github.com/kdomanski/iso9660 v0.2.1
+	github.com/klauspost/compress v1.18.4
 	github.com/metal3-io/baremetal-operator/apis v0.4.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
 	github.com/microsoft/kiota-authentication-azure-go v1.3.0
