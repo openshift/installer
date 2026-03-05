@@ -1,13 +1,12 @@
 [Unit]
 Description=Restart sshd after initial boot (OCPBUGS-77255 workaround)
 Documentation=https://issues.redhat.com/browse/OCPBUGS-77255
-After=sshd.service
+After=node-image-overlay.service
 ConditionPathExists=!/run/restart-sshd-workaround
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
-ExecStartPre=/bin/sleep 10
 ExecStart=/bin/touch /run/restart-sshd-workaround
 ExecStart=/bin/systemctl try-restart sshd.service
 
