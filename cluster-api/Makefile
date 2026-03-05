@@ -30,7 +30,7 @@ $(GO_BUILD_TARGETS): go-build.%: bin/$(TARGET_OS_ARCH)/cluster-api-provider-%
 $(PROVIDER_TARGETS): bin/$(TARGET_OS_ARCH)/cluster-api-provider-%: providers/%/go.mod
 	cd providers/$*; \
 	if [ -f main.go ]; then path="."; else path=./vendor/`grep _ tools.go|awk '{ print $$2 }'|sed 's|"||g'`; fi; \
-	go build -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../../bin/$(TARGET_OS_ARCH)/cluster-api-provider-$* "$$path";
+	go build $(GOBUILDFLAGS) -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../../bin/$(TARGET_OS_ARCH)/cluster-api-provider-$* "$$path";
 
 .PHONY: go-build-cluster-api
 go-build-cluster-api: bin/$(TARGET_OS_ARCH)/cluster-api
@@ -41,7 +41,7 @@ go-mod-tidy-vendor-cluster-api:
 
 bin/$(TARGET_OS_ARCH)/cluster-api: cluster-api/go.mod
 	cd cluster-api; \
-	go build -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../bin/$(TARGET_OS_ARCH)/cluster-api ./vendor/sigs.k8s.io/cluster-api
+	go build $(GOBUILDFLAGS) -gcflags $(GCFLAGS) -ldflags $(LDFLAGS) -o ../bin/$(TARGET_OS_ARCH)/cluster-api ./vendor/sigs.k8s.io/cluster-api
 
 .PHONY: go-clean
 go-clean: go-clean-providers go-clean-cluster-api

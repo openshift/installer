@@ -9,18 +9,34 @@ ENVTEST_K8S_VERSION="1.32.0"
 ENVTEST_ARCH=$(go env GOOS)-$(go env GOARCH)
 
 copy_cluster_api_to_mirror() {
+  ZIPFLAGS="-j1"
+
   mkdir -p "${CLUSTER_API_BIN_DIR}"
   mkdir -p "${CLUSTER_API_MIRROR_DIR}"
 
-  # Clean the mirror, but preserve the README file.
-  rm -rf "${CLUSTER_API_MIRROR_DIR:?}/*.zip"
+  # If the archive exists, just update it with any changes
+  if [ -f "${CLUSTER_API_MIRROR_DIR}/cluster-api.zip" ]; then
+    ZIPFLAGS="${ZIPFLAGS} -u"
+  fi
 
   if test "${SKIP_ENVTEST}" != y; then
     sync_envtest
   fi
 
+  set +e
+
   # Zip every binary in the folder into a single zip file.
-  zip -j1 "${CLUSTER_API_MIRROR_DIR}/cluster-api.zip" "${CLUSTER_API_BIN_DIR}"/*
+  # shellcheck disable=SC2086
+  zip ${ZIPFLAGS} "${CLUSTER_API_MIRROR_DIR}/cluster-api.zip" "${CLUSTER_API_BIN_DIR}"/*
+  RET=$?
+
+  # Nothing to do
+  if [ "${RET}" = "12" ]; then
+          return 0
+  fi
+
+  set -e
+  return ${RET}
 }
 
 sync_envtest() {

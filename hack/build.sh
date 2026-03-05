@@ -20,8 +20,20 @@ fi
 export CGO_ENABLED=0
 MODE="${MODE:-release}"
 
+# if -j [::numeric::] is in MAKEFLAGS, parse it out and pass it along to go build
+MAKEJOBS="$(echo "'${MAKEFLAGS}'" | sed -nE 's|.*-j\s+?([1-9]+).*|\1|p')"
+# shellcheck disable=SC2086
+if [ -n "${MAKEJOBS}" ] && [ ${MAKEJOBS} -gt 0 ]; then
+        GOBUILDFLAGS="${GOBUILDFLAGS} -p ${MAKEJOBS}"
+fi
+
+# pass along to any forked processes (sub make files and go build processes)
+export GOBUILDFLAGS
+export MAKEFLAGS
+
 # build cluster-api binaries
-make -C cluster-api all
+# shellcheck disable=SC2086
+make ${MAKEFLAGS} -C cluster-api all
 copy_cluster_api_to_mirror
 
 GIT_COMMIT="${SOURCE_GIT_COMMIT:-$(git rev-parse --verify 'HEAD^{commit}')}"
@@ -60,4 +72,4 @@ fi
 echo "building openshift-install"
 
 # shellcheck disable=SC2086
-go build ${GOFLAGS} -gcflags "${GCFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
+go build ${GOBUILDFLAGS} ${GOFLAGS} -gcflags "${GCFLAGS}" -ldflags "${LDFLAGS}" -tags "${TAGS}" -o "${OUTPUT}" ./cmd/openshift-install
