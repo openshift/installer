@@ -13,6 +13,9 @@
 <!-- join kubernetes slack channel for cluster-api-azure-provider -->
 <a href="https://kubernetes.slack.com/messages/CEX9HENG7">
 <img src="https://img.shields.io/badge/join%20slack-%23cluster--api--azure-brightgreen"></a>
+<!-- deepwiki link for cluster-api-provider-azure -->
+<a href="https://deepwiki.com/kubernetes-sigs/cluster-api-provider-azure">
+<img src="https://deepwiki.com/badge.svg"></a>
 </p>
 
 ------

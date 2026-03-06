@@ -56,7 +56,7 @@ func (s *VnetPeeringSpec) OwnerResourceName() string {
 }
 
 // Parameters returns the parameters for the virtual network peering.
-func (s *VnetPeeringSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
+func (s *VnetPeeringSpec) Parameters(_ context.Context, existing any) (params any, err error) {
 	if existing != nil {
 		if _, ok := existing.(armnetwork.VirtualNetworkPeering); !ok {
 			return nil, errors.Errorf("%T is not an armnetwork.VnetPeering", existing)

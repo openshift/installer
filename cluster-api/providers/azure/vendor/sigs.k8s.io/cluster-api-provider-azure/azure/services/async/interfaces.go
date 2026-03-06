@@ -32,7 +32,7 @@ type FutureScope interface {
 
 // Getter gets a resource.
 type Getter interface {
-	Get(ctx context.Context, spec azure.ResourceSpecGetter) (result interface{}, err error)
+	Get(ctx context.Context, spec azure.ResourceSpecGetter) (result any, err error)
 }
 
 // TagsGetter is an interface that can get a tags resource.
@@ -43,7 +43,7 @@ type TagsGetter interface {
 // Creator creates or updates a resource asynchronously.
 type Creator[T any] interface {
 	Getter
-	CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters interface{}) (result interface{}, poller *runtime.Poller[T], err error)
+	CreateOrUpdateAsync(ctx context.Context, spec azure.ResourceSpecGetter, resumeToken string, parameters any) (result any, poller *runtime.Poller[T], err error)
 }
 
 // Deleter deletes a resource asynchronously.
@@ -53,6 +53,6 @@ type Deleter[T any] interface {
 
 // Reconciler reconciles a resource.
 type Reconciler interface {
-	CreateOrUpdateResource(ctx context.Context, spec azure.ResourceSpecGetter, serviceName string) (result interface{}, err error)
+	CreateOrUpdateResource(ctx context.Context, spec azure.ResourceSpecGetter, serviceName string) (result any, err error)
 	DeleteResource(ctx context.Context, spec azure.ResourceSpecGetter, serviceName string) (err error)
 }

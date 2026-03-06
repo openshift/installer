@@ -35,20 +35,20 @@ type (
 
 	// Cacher describes a basic cache.
 	Cacher interface {
-		Get(key interface{}) (value interface{}, ok bool)
-		Add(key interface{}, value interface{}) (evicted bool)
-		Remove(key interface{}) (ok bool)
+		Get(key any) (value any, ok bool)
+		Add(key any, value any) (evicted bool)
+		Remove(key any) (ok bool)
 	}
 
 	// PeekingCacher describes a basic cache with the ability to peek.
 	PeekingCacher interface {
 		Cacher
-		Peek(key interface{}) (value interface{}, expiration time.Time, ok bool)
+		Peek(key any) (value any, expiration time.Time, ok bool)
 	}
 
 	timeToLiveItem struct {
 		LastTouch time.Time
-		Value     interface{}
+		Value     any
 	}
 )
 
@@ -71,7 +71,7 @@ func newCache(timeToLive time.Duration, cache Cacher) (PeekingCacher, error) {
 }
 
 // Get returns a value and a bool indicating the value was found for a given key.
-func (ttlCache *Cache) Get(key interface{}) (value interface{}, ok bool) {
+func (ttlCache *Cache) Get(key any) (value any, ok bool) {
 	ttlItem, ok := ttlCache.peekItem(key)
 	if !ok {
 		return nil, false
@@ -82,7 +82,7 @@ func (ttlCache *Cache) Get(key interface{}) (value interface{}, ok bool) {
 }
 
 // Add will add a value for a given key.
-func (ttlCache *Cache) Add(key interface{}, val interface{}) bool {
+func (ttlCache *Cache) Add(key any, val any) bool {
 	ttlCache.mu.Lock()
 	defer ttlCache.mu.Unlock()
 
@@ -93,7 +93,7 @@ func (ttlCache *Cache) Add(key interface{}, val interface{}) bool {
 }
 
 // Peek will fetch an item from the cache, but will not update the expiration time.
-func (ttlCache *Cache) Peek(key interface{}) (value interface{}, expiration time.Time, ok bool) {
+func (ttlCache *Cache) Peek(key any) (value any, expiration time.Time, ok bool) {
 	ttlItem, ok := ttlCache.peekItem(key)
 	if !ok {
 		return nil, time.Time{}, false
@@ -103,7 +103,7 @@ func (ttlCache *Cache) Peek(key interface{}) (value interface{}, expiration time
 	return ttlItem.Value, expirationTime, true
 }
 
-func (ttlCache *Cache) peekItem(key interface{}) (value *timeToLiveItem, ok bool) {
+func (ttlCache *Cache) peekItem(key any) (value *timeToLiveItem, ok bool) {
 	ttlCache.mu.Lock()
 	defer ttlCache.mu.Unlock()
 

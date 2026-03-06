@@ -305,12 +305,34 @@ func (az *Cloud) keepSharedProbe(
 	}
 
 	if lb.Properties != nil && lb.Properties.Probes != nil {
-		for _, probe := range lb.Properties.Probes {
+		for i, probe := range lb.Properties.Probes {
 			if strings.EqualFold(ptr.Deref(probe.Name, ""), consts.SharedProbeName) {
 				if !az.useSharedLoadBalancerHealthProbeMode() {
 					shouldConsiderRemoveSharedProbe = true
 				}
 				if probe.Properties != nil && probe.Properties.LoadBalancingRules != nil {
+					// Check if there's only one rule referencing this probe
+					if len(probe.Properties.LoadBalancingRules) == 1 {
+						ruleName, err := getLastSegment(*probe.Properties.LoadBalancingRules[0].ID, "/")
+						if err != nil {
+							klog.Errorf("failed to parse load balancing rule name %s attached to health probe %s",
+								*probe.Properties.LoadBalancingRules[0].ID, *probe.ID)
+						} else {
+							// If the service owns the rule and is now a local service,
+							// it means the service was switched from Cluster to Local
+							if az.serviceOwnsRule(service, ruleName) && isLocalService(service) {
+								klog.V(2).Infof("service %s has switched from Cluster to Local, removing shared probe",
+									getServiceName(service))
+								// Remove the shared probe from the load balancer directly
+								if lb.Properties != nil && lb.Properties.Probes != nil && i < len(lb.Properties.Probes) {
+									lb.Properties.Probes = append(lb.Properties.Probes[:i], lb.Properties.Probes[i+1:]...)
+								}
+								return expectedProbes, nil
+							}
+						}
+					}
+
+					// Check other services referencing the probe
 					for _, rule := range probe.Properties.LoadBalancingRules {
 						ruleName, err := getLastSegment(*rule.ID, "/")
 						if err != nil {

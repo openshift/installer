@@ -50,7 +50,7 @@ func (s RecordSpec) ResourceGroupName() string {
 }
 
 // Parameters returns the parameters for a record set.
-func (s RecordSpec) Parameters(_ context.Context, existing interface{}) (params interface{}, err error) {
+func (s RecordSpec) Parameters(_ context.Context, existing any) (params any, err error) {
 	if existing != nil {
 		if _, ok := existing.(armprivatedns.RecordSet); !ok {
 			return nil, errors.Errorf("%T is not an armprivatedns.RecordSet", existing)
