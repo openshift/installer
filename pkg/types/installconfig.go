@@ -9,7 +9,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
-	features "github.com/openshift/api/features"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -624,14 +623,18 @@ func (c *InstallConfig) EnabledFeatureGates() featuregates.FeatureGate {
 		customFS = featuregates.GenerateCustomFeatures(c.FeatureGates)
 	}
 
-	clusterProfile := GetClusterProfileName()
-	featureSets, ok := features.AllFeatureSets()[clusterProfile]
+	featureSets, ok := FeatureSetsForProfile()
 	if !ok {
-		logrus.Warnf("no feature sets for cluster profile %q", clusterProfile)
+		logrus.Warnf("no feature sets for cluster profile %q", GetClusterProfileName())
 	}
 	fg := featuregates.FeatureGateFromFeatureSets(featureSets, c.FeatureSet, customFS)
 
 	return fg
+}
+
+// Enabled returns true if the given feature gate is enabled in the current feature sets.
+func (c *InstallConfig) Enabled(key configv1.FeatureGateName) bool {
+	return c.EnabledFeatureGates().Enabled(key)
 }
 
 // PublicAPI indicates whether the API load balancer should be public

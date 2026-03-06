@@ -388,7 +388,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				machineConfigs = append(machineConfigs, ignRoutes)
 			}
 		}
-		if installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateMultiDiskSetup) {
+		if installConfig.Config.Enabled(features.FeatureGateMultiDiskSetup) {
 			for i, diskSetup := range pool.DiskSetup {
 				var dataDisk any
 				var diskName string

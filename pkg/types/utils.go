@@ -43,6 +43,23 @@ func MachineNetworksToCIDRs(nets []MachineNetworkEntry) []configv1.CIDR {
 	return res
 }
 
+// openshiftMajorVersion is the major version of OpenShift that this installer targets.
+// This is used when looking up feature sets from the API.
+const openshiftMajorVersion uint64 = 4
+
+// FeatureSetsForProfile returns the feature sets for the current cluster profile
+// and OpenShift major version.
+func FeatureSetsForProfile() (map[configv1.FeatureSet]*features.FeatureGateEnabledDisabled, bool) {
+	clusterProfile := GetClusterProfileName()
+	allSets := features.AllFeatureSets()
+	versionSets, ok := allSets[openshiftMajorVersion]
+	if !ok {
+		return nil, false
+	}
+	profileSets, ok := versionSets[clusterProfile]
+	return profileSets, ok
+}
+
 // GetClusterProfileName utility method to retrieve the cluster profile setting.  This is used
 // when dealing with openshift api to get FeatureSets.
 func GetClusterProfileName() features.ClusterProfileName {

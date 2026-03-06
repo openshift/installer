@@ -40,7 +40,7 @@ func (a *IRICertKey) Generate(ctx context.Context, dependencies asset.Parents) e
 	iri := &manifests.InternalReleaseImage{}
 	dependencies.Get(ca, installConfig, iri)
 
-	if !installConfig.Config.EnabledFeatureGates().Enabled(features.FeatureGateNoRegistryClusterInstall) {
+	if !installConfig.Config.Enabled(features.FeatureGateNoRegistryClusterInstall) {
 		return nil
 	}
 

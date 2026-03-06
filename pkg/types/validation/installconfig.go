@@ -150,7 +150,7 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 	}
 
 	if c.Arbiter != nil {
-		if c.EnabledFeatureGates().Enabled(features.FeatureGateHighlyAvailableArbiter) {
+		if c.Enabled(features.FeatureGateHighlyAvailableArbiter) {
 			allErrs = append(allErrs, validateArbiter(&c.Platform, c.Arbiter, c.ControlPlane, field.NewPath("arbiter"))...)
 		} else {
 			allErrs = append(allErrs, field.Forbidden(field.NewPath("arbiter"), fmt.Sprintf("%s feature must be enabled in order to use arbiter cluster deployment", features.FeatureGateHighlyAvailableArbiter)))
@@ -1570,15 +1570,14 @@ func validateAdditionalCABundlePolicy(c *types.InstallConfig) error {
 func ValidateFeatureSet(c *types.InstallConfig) field.ErrorList {
 	allErrs := field.ErrorList{}
 
-	clusterProfile := types.GetClusterProfileName()
-	featureSets, ok := features.AllFeatureSets()[clusterProfile]
+	featureSets, ok := types.FeatureSetsForProfile()
 	if !ok {
-		logrus.Warnf("no feature sets for cluster profile %q", clusterProfile)
+		logrus.Warnf("no feature sets for cluster profile %q", types.GetClusterProfileName())
 	}
 	if _, ok := featureSets[c.FeatureSet]; c.FeatureSet != configv1.CustomNoUpgrade && !ok {
 		sortedFeatureSets := func() []string {
 			v := []string{}
-			for n := range features.AllFeatureSets()[clusterProfile] {
+			for n := range featureSets {
 				v = append(v, string(n))
 			}
 			// Add CustomNoUpgrade since it is not part of features sets for profiles
