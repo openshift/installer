@@ -10,9 +10,21 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/openshift/installer/cmd/openshift-install/command"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 	assetstore "github.com/openshift/installer/pkg/asset/store"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/types"
+	"github.com/openshift/installer/pkg/types/baremetal"
 )
+
+// getWaitOptionsFromInstallConfig constructs WaitOptions from an InstallConfig.
+func getWaitOptionsFromInstallConfig(ic *types.InstallConfig) command.WaitOptions {
+	options := command.WaitOptions{}
+	if ic != nil {
+		options.ExtendTimeoutForBaremetal = ic.Platform.Name() == baremetal.Name
+	}
+	return options
+}
 
 func newWaitForCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -92,7 +104,15 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				logrus.Exit(command.ExitCodeInstallFailed)
 			}
 
-			err = command.WaitForInstallComplete(ctx, config, assetStore)
+			// Load install-config to determine wait options
+			var ic *types.InstallConfig
+			if installConfigAsset, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfigAsset != nil {
+				ic = installConfigAsset.(*installconfig.InstallConfig).Config
+			}
+
+			options := getWaitOptionsFromInstallConfig(ic)
+
+			err = command.WaitForInstallComplete(ctx, config, options)
 			if err != nil {
 				if err2 := command.LogClusterOperatorConditions(ctx, config); err2 != nil {
 					logrus.Error("Attempted to gather ClusterOperator status after wait failure: ", err2)

@@ -31,9 +31,7 @@ import (
 	routeclient "github.com/openshift/client-go/route/clientset/versioned"
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
-	"github.com/openshift/installer/pkg/asset/installconfig"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
-	"github.com/openshift/installer/pkg/types/baremetal"
 	cov1helpers "github.com/openshift/library-go/pkg/config/clusteroperator/v1helpers"
 	"github.com/openshift/library-go/pkg/route/routeapihelpers"
 )
@@ -60,10 +58,16 @@ const (
 // SkipPasswordPrintFlag when true means do not print the generated user password.
 var SkipPasswordPrintFlag bool
 
+// WaitOptions contains options for WaitForInstallComplete.
+type WaitOptions struct {
+	// ExtendTimeoutForBaremetal extends the initialization timeout for baremetal platforms.
+	ExtendTimeoutForBaremetal bool
+}
+
 // WaitForInstallComplete waits for cluster to complete installation, checks for operator stability
 // and logs cluster information when successful.
-func WaitForInstallComplete(ctx context.Context, config *rest.Config, assetstore asset.Store) error {
-	if err := waitForInitializedCluster(ctx, config, assetstore); err != nil {
+func WaitForInstallComplete(ctx context.Context, config *rest.Config, options WaitOptions) error {
+	if err := waitForInitializedCluster(ctx, config, options.ExtendTimeoutForBaremetal); err != nil {
 		return err
 	}
 
@@ -85,15 +89,13 @@ func WaitForInstallComplete(ctx context.Context, config *rest.Config, assetstore
 
 // waitForInitializedCluster watches the ClusterVersion waiting for confirmation
 // that the cluster has been initialized.
-func waitForInitializedCluster(ctx context.Context, config *rest.Config, assetstore asset.Store) error {
+func waitForInitializedCluster(ctx context.Context, config *rest.Config, extendTimeoutForBaremetal bool) error {
 	// TODO revert this value back to 30 minutes.  It's currently at the end of 4.6 and we're trying to see if the
 	timeout := 40 * time.Minute
 
 	// Wait longer for baremetal, due to length of time it takes to boot
-	if installConfig, err := assetstore.Load(&installconfig.InstallConfig{}); err == nil && installConfig != nil {
-		if installConfig.(*installconfig.InstallConfig).Config.Platform.Name() == baremetal.Name {
-			timeout = 60 * time.Minute
-		}
+	if extendTimeoutForBaremetal {
+		timeout = 60 * time.Minute
 	}
 
 	untilTime := time.Now().Add(timeout)
