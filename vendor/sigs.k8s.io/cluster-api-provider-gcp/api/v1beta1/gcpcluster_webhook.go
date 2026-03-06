@@ -116,6 +116,36 @@ func (*gcpClusterWebhook) ValidateUpdate(_ context.Context, oldObj, newObj runti
 		)
 	}
 
+	for i, firewallRule := range c.Spec.Network.Firewall.FirewallRules {
+		for j, allowRule := range firewallRule.Allowed {
+			if allowRule.IPProtocol != FirewallProtocolTCP && allowRule.IPProtocol != FirewallProtocolUDP &&
+				len(allowRule.Ports) > 0 {
+				allErrs = append(allErrs,
+					field.Invalid(field.NewPath("spec", "Network", "Firewall",
+						fmt.Sprintf("FirewallRules[%d]", i), fmt.Sprintf("Allowed[%d]", j),
+					),
+						allowRule.Ports,
+						"field should not exist unless IPProtocol is TCP or UDP"),
+				)
+			}
+		}
+	}
+
+	for i, firewallRule := range c.Spec.Network.Firewall.FirewallRules {
+		for j, denyRule := range firewallRule.Denied {
+			if denyRule.IPProtocol != FirewallProtocolTCP && denyRule.IPProtocol != FirewallProtocolUDP &&
+				len(denyRule.Ports) > 0 {
+				allErrs = append(allErrs,
+					field.Invalid(field.NewPath("spec", "Network", "Firewall",
+						fmt.Sprintf("FirewallRules[%d]", i), fmt.Sprintf("Denied[%d]", j),
+					),
+						denyRule.Ports,
+						"field should not exist unless IPProtocol is TCP or UDP"),
+				)
+			}
+		}
+	}
+
 	if len(allErrs) == 0 {
 		return nil, nil
 	}

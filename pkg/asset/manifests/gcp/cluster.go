@@ -25,9 +25,13 @@ import (
 	"github.com/openshift/installer/pkg/types/gcp"
 )
 
-// InstanceGroupRoleTag is the tag used in the instance
-// group name to maintain compatibility between MAPI & CAPI.
-const InstanceGroupRoleTag = "master"
+const (
+	// InstanceGroupRoleTag is the tag used in the instance
+	// group name to maintain compatibility between MAPI & CAPI.
+	InstanceGroupRoleTag = "master"
+
+	resourceDescription = "Created By OpenShift Installer"
+)
 
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
@@ -133,9 +137,13 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		capgLoadBalancerType = capg.Internal
 	}
 
-	firewallRulesManagementPolicy := capg.RulesManagementManaged
-	if installConfig.Config.GCP.FirewallRulesManagement == gcp.UnmanagedFirewallRules {
-		firewallRulesManagementPolicy = capg.RulesManagementUnmanaged
+	firewallRules := []capg.FirewallRule{}
+	managementPolicy := capg.RulesManagementUnmanaged
+	if installConfig.Config.GCP.FirewallRulesManagement != gcp.UnmanagedFirewallRules {
+		managementPolicy = capg.RulesManagementManaged
+
+		firewallRules = append(firewallRules, createBootstrapFirewallRuleForCAPG(installConfig, clusterID)...)
+		firewallRules = append(firewallRules, createFirewallRulesForCAPG(installConfig, clusterID)...)
 	}
 
 	gcpCluster := &capg.GCPCluster{
@@ -148,13 +156,12 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			Region:               installConfig.Config.GCP.Region,
 			ControlPlaneEndpoint: clusterv1.APIEndpoint{Port: 6443},
 			Network: capg.NetworkSpec{
-				// TODO: Need a network project for installs where the network resources will exist in another
-				// project such as shared vpc installs
 				Name:                  ptr.To(networkName),
 				Subnets:               subnets,
 				AutoCreateSubnetworks: ptr.To(autoCreateSubnets),
 				Firewall: capg.FirewallSpec{
-					DefaultRulesManagement: firewallRulesManagementPolicy,
+					DefaultRulesManagement: managementPolicy,
+					FirewallRules:          firewallRules,
 				},
 			},
 			AdditionalLabels: labels,
@@ -279,4 +286,180 @@ func GetTagsFromInstallConfig(installConfig *installconfig.InstallConfig) []capg
 	}
 
 	return tags
+}
+
+func createFirewallRulesForCAPG(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) []capg.FirewallRule {
+	firewallRules := []capg.FirewallRule{}
+	workerTag := fmt.Sprintf("%s-worker", clusterID.InfraID)
+	masterTag := fmt.Sprintf("%s-control-plane", clusterID.InfraID)
+
+	// control-plane rules are needed for worker<->master communication for worker provisioning
+	firewallRules = append(firewallRules, capg.FirewallRule{
+		Name:         fmt.Sprintf("%s-control-plane", clusterID.InfraID),
+		SourceRanges: []string{},
+		TargetTags:   []string{masterTag},
+		SourceTags:   []string{workerTag, masterTag},
+		Direction:    capg.FirewallRuleDirectionIngress,
+		Description:  resourceDescription,
+		Priority:     1000,
+		Allowed: []capg.FirewallDescriptor{
+			{
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"22623"}, // Ignition
+			}, {
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"10257"}, // Kube manager
+			}, {
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"10259"}, // Kube scheduler
+			},
+		},
+	})
+
+	// etcd are needed for master communication for etcd nodes
+	firewallRules = append(firewallRules, capg.FirewallRule{
+		Name:         fmt.Sprintf("%s-etcd", clusterID.InfraID),
+		SourceRanges: []string{},
+		TargetTags:   []string{masterTag},
+		SourceTags:   []string{masterTag},
+		Direction:    capg.FirewallRuleDirectionIngress,
+		Description:  resourceDescription,
+		Priority:     1000,
+		Allowed: []capg.FirewallDescriptor{
+			{
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"2379-2380"},
+			},
+		},
+	})
+
+	// Add a single firewall rule to allow the Google Cloud Engine health checks to access all of the services.
+	// This rule enables the ingress load balancers to determine the health status of their instances.
+	healthCheckSrcRanges := []string{"35.191.0.0/16", "130.211.0.0/22"}
+	if installConfig.Config.Publish == types.InternalPublishingStrategy {
+		healthCheckSrcRanges = append(healthCheckSrcRanges, []string{"209.85.152.0/22", "209.85.204.0/22"}...)
+	}
+	firewallRules = append(firewallRules, capg.FirewallRule{
+		Name:         fmt.Sprintf("%s-health-checks", clusterID.InfraID),
+		SourceRanges: healthCheckSrcRanges,
+		TargetTags:   []string{masterTag},
+		SourceTags:   []string{},
+		Direction:    capg.FirewallRuleDirectionIngress,
+		Description:  resourceDescription,
+		Priority:     1000,
+		Allowed: []capg.FirewallDescriptor{
+			{
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"6080", "6443", "22624"},
+			},
+		},
+	})
+
+	// internal-cluster rules are needed for worker<->master communication for k8s nodes
+	firewallRules = append(firewallRules, capg.FirewallRule{
+		Name:         fmt.Sprintf("%s-internal-cluster", clusterID.InfraID),
+		SourceRanges: []string{},
+		TargetTags:   []string{workerTag, masterTag},
+		SourceTags:   []string{workerTag, masterTag},
+		Direction:    capg.FirewallRuleDirectionIngress,
+		Description:  resourceDescription,
+		Priority:     1000,
+		Allowed: []capg.FirewallDescriptor{
+			{
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"30000-32767"}, // k8s NodePorts
+			}, {
+				IPProtocol: capg.FirewallProtocolUDP,
+				Ports:      []string{"30000-32767"}, // k8s NodePorts
+			}, {
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"9000-9999"}, // host-level services
+			}, {
+				IPProtocol: capg.FirewallProtocolUDP,
+				Ports:      []string{"9000-9999"}, // host-level services
+			}, {
+				IPProtocol: capg.FirewallProtocolUDP,
+				Ports:      []string{"4789", "6081"}, // VXLAN and GENEVE
+			}, {
+				IPProtocol: capg.FirewallProtocolUDP,
+				Ports:      []string{"500", "4500"}, // IKE and IKE(NAT-T)
+			}, {
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"10250"}, // kubelet secure
+			}, {
+				IPProtocol: capg.FirewallProtocolESP,
+			},
+		},
+	})
+
+	// api rules are needed to access the kube-apiserver on master nodes
+	machineCIDR := installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+	apiSrcRanges := []string{}
+	if !installConfig.Config.PublicAPI() {
+		// For Internal, limit the source to the machineCIDR
+		apiSrcRanges = append(apiSrcRanges, machineCIDR)
+	}
+	firewallRules = append(firewallRules, capg.FirewallRule{
+		Name:        fmt.Sprintf("%s-api", clusterID.InfraID),
+		Direction:   capg.FirewallRuleDirectionIngress,
+		Description: resourceDescription,
+		Allowed: []capg.FirewallDescriptor{
+			{
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"6443"}, // kube-apiserver
+			},
+		},
+		TargetTags:   []string{masterTag},
+		SourceRanges: apiSrcRanges,
+	})
+
+	// internal-network rules are used to access ssh and icmp over the machine network
+	firewallRules = append(firewallRules, capg.FirewallRule{
+		Name:         fmt.Sprintf("%s-internal-network", clusterID.InfraID),
+		SourceRanges: []string{machineCIDR},
+		TargetTags:   []string{workerTag, masterTag},
+		SourceTags:   []string{},
+		Description:  resourceDescription,
+		Direction:    capg.FirewallRuleDirectionIngress,
+		Priority:     1000,
+		Allowed: []capg.FirewallDescriptor{
+			{
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"22"}, // SSH
+			}, {
+				IPProtocol: capg.FirewallProtocolICMP,
+			},
+		},
+	})
+
+	return firewallRules
+}
+
+func createBootstrapFirewallRuleForCAPG(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) []capg.FirewallRule {
+	bootstrapTag := fmt.Sprintf("%s-control-plane", clusterID.InfraID)
+	sourceRanges := []string{}
+	if installConfig.Config.Publish == types.ExternalPublishingStrategy {
+		sourceRanges = append(sourceRanges, []string{"0.0.0.0/0"}...)
+	} else {
+		machineCIDR := installConfig.Config.Networking.MachineNetwork[0].CIDR.String()
+		sourceRanges = append(sourceRanges, []string{machineCIDR}...)
+	}
+
+	return []capg.FirewallRule{{
+		Name:         fmt.Sprintf("%s-bootstrap-in-ssh", clusterID.InfraID),
+		SourceTags:   []string{},
+		TargetTags:   []string{bootstrapTag},
+		SourceRanges: sourceRanges,
+		Description:  resourceDescription,
+		Direction:    capg.FirewallRuleDirectionIngress,
+		Priority:     1000,
+		Allowed: []capg.FirewallDescriptor{
+			{
+				IPProtocol: capg.FirewallProtocolTCP,
+				Ports:      []string{"22"}, // SSH
+			}, {
+				IPProtocol: capg.FirewallProtocolICMP,
+			},
+		},
+	}}
 }

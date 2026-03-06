@@ -114,6 +114,11 @@ const (
 
 	// InternalRoleTagValue describes the value for the internal role.
 	InternalRoleTagValue = "api-internal"
+
+	// ConfigHashKey holds the full hash of the desired state of a resource.
+	// Note that label values are limited to 63 characters in GCP, so we can use
+	// base32 encoding if we want to store a full sha256 hash.
+	ConfigHashKey = NameGCPProviderPrefix + "config-hash"
 )
 
 // ClusterTagKey generates the key for resources associated with a cluster.

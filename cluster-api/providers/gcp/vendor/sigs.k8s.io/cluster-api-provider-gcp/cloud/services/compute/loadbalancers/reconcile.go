@@ -254,11 +254,7 @@ func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, l
 
 func (s *Service) createOrGetInstanceGroups(ctx context.Context) ([]*compute.InstanceGroup, error) {
 	log := log.FromContext(ctx)
-	fd := s.scope.FailureDomains()
-	zones := make([]string, 0, len(fd))
-	for zone := range fd {
-		zones = append(zones, zone)
-	}
+	zones := s.scope.FailureDomains()
 
 	groups := make([]*compute.InstanceGroup, 0, len(zones))
 	groupsMap := s.scope.Network().APIServerInstanceGroups
