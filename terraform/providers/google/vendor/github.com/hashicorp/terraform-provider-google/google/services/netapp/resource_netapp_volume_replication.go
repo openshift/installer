@@ -20,7 +20,6 @@ package netapp
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -395,7 +394,6 @@ func resourceNetappVolumeReplicationCreate(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -404,7 +402,6 @@ func resourceNetappVolumeReplicationCreate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating VolumeReplication: %s", err)
@@ -465,14 +462,12 @@ func resourceNetappVolumeReplicationRead(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("NetappVolumeReplication %q", d.Id()))
@@ -596,7 +591,6 @@ func resourceNetappVolumeReplicationUpdate(d *schema.ResourceData, meta interfac
 	}
 
 	log.Printf("[DEBUG] Updating VolumeReplication %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("replication_schedule") {
@@ -636,7 +630,6 @@ func resourceNetappVolumeReplicationUpdate(d *schema.ResourceData, meta interfac
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -773,7 +766,6 @@ func resourceNetappVolumeReplicationDelete(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	// A replication can only be deleted if mirrorState==STOPPED
 	// We are about to delete the replication and need to stop the mirror before.
 	// FYI: Stopping a PREPARING mirror currently doesn't work. User have to wait until
@@ -817,7 +809,6 @@ func resourceNetappVolumeReplicationDelete(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "VolumeReplication")

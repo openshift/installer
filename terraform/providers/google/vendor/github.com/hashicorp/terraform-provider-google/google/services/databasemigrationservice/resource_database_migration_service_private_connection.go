@@ -20,7 +20,6 @@ package databasemigrationservice
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -208,7 +207,6 @@ func resourceDatabaseMigrationServicePrivateConnectionCreate(d *schema.ResourceD
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -217,7 +215,6 @@ func resourceDatabaseMigrationServicePrivateConnectionCreate(d *schema.ResourceD
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating PrivateConnection: %s", err)
@@ -270,14 +267,12 @@ func resourceDatabaseMigrationServicePrivateConnectionRead(d *schema.ResourceDat
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DatabaseMigrationServicePrivateConnection %q", d.Id()))
@@ -347,8 +342,6 @@ func resourceDatabaseMigrationServicePrivateConnectionDelete(d *schema.ResourceD
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting PrivateConnection %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -358,7 +351,6 @@ func resourceDatabaseMigrationServicePrivateConnectionDelete(d *schema.ResourceD
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "PrivateConnection")

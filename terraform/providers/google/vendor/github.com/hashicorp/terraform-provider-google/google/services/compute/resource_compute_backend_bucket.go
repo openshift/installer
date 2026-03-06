@@ -20,7 +20,6 @@ package compute
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -340,7 +339,6 @@ func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -349,7 +347,6 @@ func resourceComputeBackendBucketCreate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating BackendBucket: %s", err)
@@ -422,14 +419,12 @@ func resourceComputeBackendBucketRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeBackendBucket %q", d.Id()))
@@ -549,7 +544,6 @@ func resourceComputeBackendBucketUpdate(d *schema.ResourceData, meta interface{}
 	}
 
 	log.Printf("[DEBUG] Updating BackendBucket %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -564,7 +558,6 @@ func resourceComputeBackendBucketUpdate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -630,8 +623,6 @@ func resourceComputeBackendBucketDelete(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting BackendBucket %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -641,7 +632,6 @@ func resourceComputeBackendBucketDelete(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "BackendBucket")

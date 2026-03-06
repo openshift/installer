@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -199,8 +198,7 @@ of valid format: 1st,3rd monday of month 15:30, every wed,fri of jan,
 jun 13:15, and first sunday of quarter 00:00. See more explanation
 about the format here:
 https://cloud.google.com/appengine/docs/flexible/python/scheduling-jobs-with-cron-yaml#the_schedule_format
-NOTE: The minimum interval time between recurring transfers depends
-on the data source; refer to the documentation for your data source.`,
+NOTE: the granularity should be at least 8 hours, or less frequent.`,
 			},
 			"schedule_options": {
 				Type:        schema.TypeList,
@@ -384,7 +382,6 @@ func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -393,7 +390,6 @@ func resourceBigqueryDataTransferConfigCreate(d *schema.ResourceData, meta inter
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IamMemberMissing},
 	})
 	if err != nil {
@@ -458,14 +454,12 @@ func resourceBigqueryDataTransferConfigRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IamMemberMissing},
 	})
 	if err != nil {
@@ -607,7 +601,6 @@ func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta inter
 	}
 
 	log.Printf("[DEBUG] Updating Config %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 	if v, ok := d.GetOk("service_account_name"); ok {
 		if v != nil && d.HasChange("service_account_name") {
@@ -662,7 +655,6 @@ func resourceBigqueryDataTransferConfigUpdate(d *schema.ResourceData, meta inter
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutUpdate),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IamMemberMissing},
 	})
 
@@ -702,8 +694,6 @@ func resourceBigqueryDataTransferConfigDelete(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Config %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
@@ -713,7 +703,6 @@ func resourceBigqueryDataTransferConfigDelete(d *schema.ResourceData, meta inter
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IamMemberMissing},
 	})
 	if err != nil {

@@ -20,12 +20,11 @@ package clouddomains
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 
 	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
@@ -35,17 +34,17 @@ import (
 // waitForRegistrationActive waits for a registration to leave the
 // "REGISTRATION_PENDING" state and become "ACTIVE" or any other state.
 func waitForRegistrationActive(d *schema.ResourceData, config *transport_tpg.Config, timeout time.Duration) error {
-	return retry.Retry(timeout, func() *retry.RetryError {
+	return resource.Retry(timeout, func() *resource.RetryError {
 		if err := resourceClouddomainsRegistrationRead(d, config); err != nil {
-			return retry.NonRetryableError(err)
+			return resource.NonRetryableError(err)
 		}
 
 		name := d.Get("name").(string)
 		state := d.Get("state").(string)
 		if state == "REGISTRATION_PENDING" {
-			return retry.RetryableError(fmt.Errorf("Registration %q has state %q.", name, state))
+			return resource.RetryableError(fmt.Errorf("Registration %q has state %q.", name, state))
 		} else if state == "REGISTRATION_FAILED" {
-			return retry.NonRetryableError(fmt.Errorf("Registration %q has failed with state %q.", name, state))
+			return resource.NonRetryableError(fmt.Errorf("Registration %q has failed with state %q.", name, state))
 		} else {
 			log.Printf("[DEBUG] Registration %q has state %q.", name, state)
 			return nil
@@ -762,7 +761,6 @@ func resourceClouddomainsRegistrationCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -771,7 +769,6 @@ func resourceClouddomainsRegistrationCreate(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Registration: %s", err)
@@ -828,14 +825,12 @@ func resourceClouddomainsRegistrationRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ClouddomainsRegistration %q", d.Id()))

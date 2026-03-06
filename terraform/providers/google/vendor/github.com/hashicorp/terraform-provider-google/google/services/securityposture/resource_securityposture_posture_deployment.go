@@ -20,7 +20,6 @@ package securityposture
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -196,7 +195,6 @@ func resourceSecurityposturePostureDeploymentCreate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -205,7 +203,6 @@ func resourceSecurityposturePostureDeploymentCreate(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating PostureDeployment: %s", err)
@@ -252,14 +249,12 @@ func resourceSecurityposturePostureDeploymentRead(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SecurityposturePostureDeployment %q", d.Id()))
@@ -343,7 +338,6 @@ func resourceSecurityposturePostureDeploymentUpdate(d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] Updating PostureDeployment %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("posture_id") {
@@ -379,7 +373,6 @@ func resourceSecurityposturePostureDeploymentUpdate(d *schema.ResourceData, meta
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -421,8 +414,6 @@ func resourceSecurityposturePostureDeploymentDelete(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting PostureDeployment %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -432,7 +423,6 @@ func resourceSecurityposturePostureDeploymentDelete(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "PostureDeployment")

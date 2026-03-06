@@ -20,7 +20,6 @@ package datastream
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -81,13 +80,6 @@ func ResourceDatastreamConnectionProfile() *schema.Resource {
 					Schema: map[string]*schema.Schema{},
 				},
 				ExactlyOneOf: []string{"oracle_profile", "gcs_profile", "mysql_profile", "bigquery_profile", "postgresql_profile"},
-			},
-			"create_without_validation": {
-				Type:        schema.TypeBool,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `Create the connection profile without validating it.`,
-				Default:     false,
 			},
 			"forward_ssh_connectivity": {
 				Type:        schema.TypeList,
@@ -437,7 +429,7 @@ func resourceDatastreamConnectionProfileCreate(d *schema.ResourceData, meta inte
 		obj["labels"] = labelsProp
 	}
 
-	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/connectionProfiles?connectionProfileId={{connection_profile_id}}&force={{create_without_validation}}")
+	url, err := tpgresource.ReplaceVars(d, config, "{{DatastreamBasePath}}projects/{{project}}/locations/{{location}}/connectionProfiles?connectionProfileId={{connection_profile_id}}")
 	if err != nil {
 		return err
 	}
@@ -456,7 +448,6 @@ func resourceDatastreamConnectionProfileCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -465,7 +456,6 @@ func resourceDatastreamConnectionProfileCreate(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ConnectionProfile: %s", err)
@@ -532,14 +522,12 @@ func resourceDatastreamConnectionProfileRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DatastreamConnectionProfile %q", d.Id()))
@@ -666,7 +654,6 @@ func resourceDatastreamConnectionProfileUpdate(d *schema.ResourceData, meta inte
 	}
 
 	log.Printf("[DEBUG] Updating ConnectionProfile %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -726,7 +713,6 @@ func resourceDatastreamConnectionProfileUpdate(d *schema.ResourceData, meta inte
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -774,8 +760,6 @@ func resourceDatastreamConnectionProfileDelete(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting ConnectionProfile %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -785,7 +769,6 @@ func resourceDatastreamConnectionProfileDelete(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ConnectionProfile")

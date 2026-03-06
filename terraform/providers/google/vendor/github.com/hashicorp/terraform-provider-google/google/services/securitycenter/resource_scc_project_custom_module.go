@@ -20,7 +20,6 @@ package securitycenter
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -303,7 +302,6 @@ func resourceSecurityCenterProjectCustomModuleCreate(d *schema.ResourceData, met
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -312,7 +310,6 @@ func resourceSecurityCenterProjectCustomModuleCreate(d *schema.ResourceData, met
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ProjectCustomModule: %s", err)
@@ -358,14 +355,12 @@ func resourceSecurityCenterProjectCustomModuleRead(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SecurityCenterProjectCustomModule %q", d.Id()))
@@ -442,7 +437,6 @@ func resourceSecurityCenterProjectCustomModuleUpdate(d *schema.ResourceData, met
 	}
 
 	log.Printf("[DEBUG] Updating ProjectCustomModule %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("enablement_state") {
@@ -474,7 +468,6 @@ func resourceSecurityCenterProjectCustomModuleUpdate(d *schema.ResourceData, met
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -522,8 +515,6 @@ func resourceSecurityCenterProjectCustomModuleDelete(d *schema.ResourceData, met
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting ProjectCustomModule %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -533,7 +524,6 @@ func resourceSecurityCenterProjectCustomModuleDelete(d *schema.ResourceData, met
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ProjectCustomModule")

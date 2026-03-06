@@ -20,7 +20,6 @@ package vmwareengine
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -241,7 +240,6 @@ func resourceVmwareengineExternalAccessRuleCreate(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -250,7 +248,6 @@ func resourceVmwareengineExternalAccessRuleCreate(d *schema.ResourceData, meta i
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ExternalAccessRule: %s", err)
@@ -297,14 +294,12 @@ func resourceVmwareengineExternalAccessRuleRead(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("VmwareengineExternalAccessRule %q", d.Id()))
@@ -416,7 +411,6 @@ func resourceVmwareengineExternalAccessRuleUpdate(d *schema.ResourceData, meta i
 	}
 
 	log.Printf("[DEBUG] Updating ExternalAccessRule %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("description") {
@@ -472,7 +466,6 @@ func resourceVmwareengineExternalAccessRuleUpdate(d *schema.ResourceData, meta i
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -515,8 +508,6 @@ func resourceVmwareengineExternalAccessRuleDelete(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting ExternalAccessRule %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -526,7 +517,6 @@ func resourceVmwareengineExternalAccessRuleDelete(d *schema.ResourceData, meta i
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ExternalAccessRule")

@@ -20,7 +20,6 @@ package netapp
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -94,14 +93,6 @@ A five-character random ID is generated automatically, for example, -6f9a, and a
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: `Username for the Active Directory account with permissions to create the compute account within the specified organizational unit.`,
-			},
-			"administrators": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: `Domain user accounts to be added to the local Administrators group of the SMB service. Comma-separated list of domain users or groups. The Domain Admin group is automatically added when the service joins your domain as a hidden group.`,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
 			},
 			"aes_encryption": {
 				Type:        schema.TypeBool,
@@ -280,12 +271,6 @@ func resourceNetappactiveDirectoryCreate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("backup_operators"); !tpgresource.IsEmptyValue(reflect.ValueOf(backupOperatorsProp)) && (ok || !reflect.DeepEqual(v, backupOperatorsProp)) {
 		obj["backupOperators"] = backupOperatorsProp
 	}
-	administratorsProp, err := expandNetappactiveDirectoryAdministrators(d.Get("administrators"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("administrators"); !tpgresource.IsEmptyValue(reflect.ValueOf(administratorsProp)) && (ok || !reflect.DeepEqual(v, administratorsProp)) {
-		obj["administrators"] = administratorsProp
-	}
 	securityOperatorsProp, err := expandNetappactiveDirectorySecurityOperators(d.Get("security_operators"), d, config)
 	if err != nil {
 		return err
@@ -354,7 +339,6 @@ func resourceNetappactiveDirectoryCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -363,7 +347,6 @@ func resourceNetappactiveDirectoryCreate(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating activeDirectory: %s", err)
@@ -416,14 +399,12 @@ func resourceNetappactiveDirectoryRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("NetappactiveDirectory %q", d.Id()))
@@ -461,9 +442,6 @@ func resourceNetappactiveDirectoryRead(d *schema.ResourceData, meta interface{})
 		return fmt.Errorf("Error reading activeDirectory: %s", err)
 	}
 	if err := d.Set("backup_operators", flattenNetappactiveDirectoryBackupOperators(res["backupOperators"], d, config)); err != nil {
-		return fmt.Errorf("Error reading activeDirectory: %s", err)
-	}
-	if err := d.Set("administrators", flattenNetappactiveDirectoryAdministrators(res["administrators"], d, config)); err != nil {
 		return fmt.Errorf("Error reading activeDirectory: %s", err)
 	}
 	if err := d.Set("security_operators", flattenNetappactiveDirectorySecurityOperators(res["securityOperators"], d, config)); err != nil {
@@ -573,12 +551,6 @@ func resourceNetappactiveDirectoryUpdate(d *schema.ResourceData, meta interface{
 	} else if v, ok := d.GetOkExists("backup_operators"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, backupOperatorsProp)) {
 		obj["backupOperators"] = backupOperatorsProp
 	}
-	administratorsProp, err := expandNetappactiveDirectoryAdministrators(d.Get("administrators"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("administrators"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, administratorsProp)) {
-		obj["administrators"] = administratorsProp
-	}
 	securityOperatorsProp, err := expandNetappactiveDirectorySecurityOperators(d.Get("security_operators"), d, config)
 	if err != nil {
 		return err
@@ -634,7 +606,6 @@ func resourceNetappactiveDirectoryUpdate(d *schema.ResourceData, meta interface{
 	}
 
 	log.Printf("[DEBUG] Updating activeDirectory %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("domain") {
@@ -671,10 +642,6 @@ func resourceNetappactiveDirectoryUpdate(d *schema.ResourceData, meta interface{
 
 	if d.HasChange("backup_operators") {
 		updateMask = append(updateMask, "backupOperators")
-	}
-
-	if d.HasChange("administrators") {
-		updateMask = append(updateMask, "administrators")
 	}
 
 	if d.HasChange("security_operators") {
@@ -730,7 +697,6 @@ func resourceNetappactiveDirectoryUpdate(d *schema.ResourceData, meta interface{
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -778,8 +744,6 @@ func resourceNetappactiveDirectoryDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting activeDirectory %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -789,7 +753,6 @@ func resourceNetappactiveDirectoryDelete(d *schema.ResourceData, meta interface{
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "activeDirectory")
@@ -864,10 +827,6 @@ func flattenNetappactiveDirectoryUsername(v interface{}, d *schema.ResourceData,
 }
 
 func flattenNetappactiveDirectoryBackupOperators(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenNetappactiveDirectoryAdministrators(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -970,10 +929,6 @@ func expandNetappactiveDirectoryPassword(v interface{}, d tpgresource.TerraformR
 }
 
 func expandNetappactiveDirectoryBackupOperators(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandNetappactiveDirectoryAdministrators(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

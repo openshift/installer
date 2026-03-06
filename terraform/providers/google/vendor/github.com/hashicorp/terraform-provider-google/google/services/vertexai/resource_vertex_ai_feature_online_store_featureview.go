@@ -20,7 +20,6 @@ package vertexai
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -119,11 +118,6 @@ func ResourceVertexAIFeatureOnlineStoreFeatureview() *schema.Resource {
 									},
 								},
 							},
-						},
-						"project_number": {
-							Type:        schema.TypeString,
-							Optional:    true,
-							Description: `The project number of the parent project of the feature Groups.`,
 						},
 					},
 				},
@@ -249,7 +243,6 @@ func resourceVertexAIFeatureOnlineStoreFeatureviewCreate(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -258,7 +251,6 @@ func resourceVertexAIFeatureOnlineStoreFeatureviewCreate(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating FeatureOnlineStoreFeatureview: %s", err)
@@ -321,14 +313,12 @@ func resourceVertexAIFeatureOnlineStoreFeatureviewRead(d *schema.ResourceData, m
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("VertexAIFeatureOnlineStoreFeatureview %q", d.Id()))
@@ -413,7 +403,6 @@ func resourceVertexAIFeatureOnlineStoreFeatureviewUpdate(d *schema.ResourceData,
 	}
 
 	log.Printf("[DEBUG] Updating FeatureOnlineStoreFeatureview %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("sync_config") {
@@ -453,7 +442,6 @@ func resourceVertexAIFeatureOnlineStoreFeatureviewUpdate(d *schema.ResourceData,
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -494,8 +482,6 @@ func resourceVertexAIFeatureOnlineStoreFeatureviewDelete(d *schema.ResourceData,
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting FeatureOnlineStoreFeatureview %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -505,7 +491,6 @@ func resourceVertexAIFeatureOnlineStoreFeatureviewDelete(d *schema.ResourceData,
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "FeatureOnlineStoreFeatureview")
@@ -618,8 +603,6 @@ func flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySource(v interfa
 	transformed := make(map[string]interface{})
 	transformed["feature_groups"] =
 		flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceFeatureGroups(original["featureGroups"], d, config)
-	transformed["project_number"] =
-		flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceProjectNumber(original["projectNumber"], d, config)
 	return []interface{}{transformed}
 }
 func flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceFeatureGroups(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -647,10 +630,6 @@ func flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceFeatureGro
 
 func flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceFeatureGroupsFeatureIds(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
-}
-
-func flattenVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceProjectNumber(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return d.Get("feature_registry_source.0.project_number")
 }
 
 func flattenVertexAIFeatureOnlineStoreFeatureviewTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -745,13 +724,6 @@ func expandVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySource(v interfac
 		transformed["featureGroups"] = transformedFeatureGroups
 	}
 
-	transformedProjectNumber, err := expandVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceProjectNumber(original["project_number"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedProjectNumber); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["projectNumber"] = transformedProjectNumber
-	}
-
 	return transformed, nil
 }
 
@@ -789,10 +761,6 @@ func expandVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceFeatureGrou
 }
 
 func expandVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceFeatureGroupsFeatureIds(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandVertexAIFeatureOnlineStoreFeatureviewFeatureRegistrySourceProjectNumber(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

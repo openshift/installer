@@ -20,7 +20,6 @@ package firebaseappcheck
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -150,7 +149,6 @@ func resourceFirebaseAppCheckServiceConfigCreate(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PATCH",
@@ -159,7 +157,6 @@ func resourceFirebaseAppCheckServiceConfigCreate(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ServiceConfig: %s", err)
@@ -205,14 +202,12 @@ func resourceFirebaseAppCheckServiceConfigRead(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("FirebaseAppCheckServiceConfig %q", d.Id()))
@@ -261,7 +256,6 @@ func resourceFirebaseAppCheckServiceConfigUpdate(d *schema.ResourceData, meta in
 	}
 
 	log.Printf("[DEBUG] Updating ServiceConfig %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("enforcement_mode") {
@@ -289,7 +283,6 @@ func resourceFirebaseAppCheckServiceConfigUpdate(d *schema.ResourceData, meta in
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -330,8 +323,6 @@ func resourceFirebaseAppCheckServiceConfigDelete(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting ServiceConfig %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -341,7 +332,6 @@ func resourceFirebaseAppCheckServiceConfigDelete(d *schema.ResourceData, meta in
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ServiceConfig")

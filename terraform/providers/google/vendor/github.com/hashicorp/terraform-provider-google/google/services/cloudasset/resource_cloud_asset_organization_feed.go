@@ -20,7 +20,6 @@ package cloudasset
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -233,8 +232,6 @@ func resourceCloudAssetOrganizationFeedCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	// Send the project ID in the X-Goog-User-Project header.
 	origUserProjectOverride := config.UserProjectOverride
 	config.UserProjectOverride = true
@@ -246,7 +243,6 @@ func resourceCloudAssetOrganizationFeedCreate(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating OrganizationFeed: %s", err)
@@ -293,14 +289,12 @@ func resourceCloudAssetOrganizationFeedRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("CloudAssetOrganizationFeed %q", d.Id()))
@@ -380,7 +374,6 @@ func resourceCloudAssetOrganizationFeedUpdate(d *schema.ResourceData, meta inter
 	}
 
 	log.Printf("[DEBUG] Updating OrganizationFeed %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("asset_names") {
@@ -427,7 +420,6 @@ func resourceCloudAssetOrganizationFeedUpdate(d *schema.ResourceData, meta inter
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -465,8 +457,6 @@ func resourceCloudAssetOrganizationFeedDelete(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting OrganizationFeed %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -476,7 +466,6 @@ func resourceCloudAssetOrganizationFeedDelete(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "OrganizationFeed")

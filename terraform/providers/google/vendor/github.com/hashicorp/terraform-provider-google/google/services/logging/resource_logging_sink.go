@@ -7,12 +7,9 @@ import (
 	"strings"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-provider-google/google/tpgresource"
 	"google.golang.org/api/logging/v2"
 )
-
-func OptionalSurroundingSpacesSuppress(k, old, new string, d *schema.ResourceData) bool {
-	return strings.TrimSpace(old) == strings.TrimSpace(new)
-}
 
 func resourceLoggingSinkSchema() map[string]*schema.Schema {
 	return map[string]*schema.Schema{
@@ -32,7 +29,7 @@ func resourceLoggingSinkSchema() map[string]*schema.Schema {
 		"filter": {
 			Type:             schema.TypeString,
 			Optional:         true,
-			DiffSuppressFunc: OptionalSurroundingSpacesSuppress,
+			DiffSuppressFunc: tpgresource.OptionalSurroundingSpacesSuppress,
 			Description:      `The filter to apply when exporting logs. Only log entries that match the filter are exported.`,
 		},
 
@@ -180,12 +177,6 @@ func expandResourceLoggingSinkForUpdate(d *schema.ResourceData) (sink *logging.L
 	if d.HasChange("bigquery_options") {
 		sink.BigqueryOptions = expandLoggingSinkBigqueryOptions(d.Get("bigquery_options"))
 		updateFields = append(updateFields, "bigqueryOptions")
-	}
-	if d.HasChange("include_children") {
-		updateFields = append(updateFields, "includeChildren")
-	}
-	if d.HasChange("intercept_children") {
-		updateFields = append(updateFields, "interceptChildren")
 	}
 	updateMask = strings.Join(updateFields, ",")
 	return

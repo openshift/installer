@@ -19,15 +19,6 @@ func SetAnnotationsDiff(_ context.Context, d *schema.ResourceDiff, meta interfac
 		return fmt.Errorf("`effective_annotations` field is not present in the resource schema.")
 	}
 
-	// If "annotations" field is computed, set "effective_annotations" to computed.
-	// https://github.com/hashicorp/terraform-provider-google/issues/16217
-	if !d.GetRawPlan().GetAttr("annotations").IsWhollyKnown() {
-		if err := d.SetNewComputed("effective_annotations"); err != nil {
-			return fmt.Errorf("error setting effective_annotations to computed: %w", err)
-		}
-		return nil
-	}
-
 	o, n := d.GetChange("annotations")
 	effectiveAnnotations := d.Get("effective_annotations").(map[string]interface{})
 
@@ -51,17 +42,6 @@ func SetAnnotationsDiff(_ context.Context, d *schema.ResourceDiff, meta interfac
 func SetMetadataAnnotationsDiff(_ context.Context, d *schema.ResourceDiff, meta interface{}) error {
 	l := d.Get("metadata").([]interface{})
 	if len(l) == 0 || l[0] == nil {
-		return nil
-	}
-
-	// Fix the bug that the computed and nested "annotations" field disappears from the terraform plan.
-	// https://github.com/hashicorp/terraform-provider-google/issues/17756
-	// The bug is introduced by SetNew on "metadata" field with the object including "effective_annotations".
-	// "effective_annotations" cannot be set directly due to a bug that SetNew doesn't work on nested fields
-	// in terraform sdk.
-	// https://github.com/hashicorp/terraform-plugin-sdk/issues/459
-	values := d.GetRawPlan().GetAttr("metadata").AsValueSlice()
-	if len(values) > 0 && !values[0].GetAttr("annotations").IsWhollyKnown() {
 		return nil
 	}
 

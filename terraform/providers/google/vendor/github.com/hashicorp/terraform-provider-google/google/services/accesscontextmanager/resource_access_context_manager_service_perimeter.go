@@ -20,7 +20,6 @@ package accesscontextmanager
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -147,9 +146,10 @@ a perimeter bridge.`,
 												"identities": {
 													Type:     schema.TypeSet,
 													Optional: true,
-													Description: `A list of identities that are allowed access through this 'EgressPolicy'.
-Should be in the format of email address. The email address should
-represent individual user or service account only.`,
+													Description: `'A list of identities that are allowed access through this 'EgressPolicy'.
+To specify an identity or identity group, use the IAM v1
+format specified [here](https://cloud.google.com/iam/docs/principal-identifiers.md#v1).
+The following prefixes are supprted: user, group, serviceAccount, principal, and principalSet.'`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
@@ -286,9 +286,10 @@ to apply.`,
 												"identities": {
 													Type:     schema.TypeSet,
 													Optional: true,
-													Description: `A list of identities that are allowed access through this ingress policy.
-Should be in the format of email address. The email address should represent
-individual user or service account only.`,
+													Description: `'A list of identities that are allowed access through this 'IngressPolicy'.
+To specify an identity or identity group, use the IAM v1
+format specified [here](https://cloud.google.com/iam/docs/principal-identifiers.md#v1).
+The following prefixes are supprted: user, group, serviceAccount, principal, and principalSet.'`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
@@ -511,9 +512,10 @@ a perimeter bridge.`,
 												"identities": {
 													Type:     schema.TypeSet,
 													Optional: true,
-													Description: `A list of identities that are allowed access through this 'EgressPolicy'.
-Should be in the format of email address. The email address should
-represent individual user or service account only.`,
+													Description: `'A list of identities that are allowed access through this 'EgressPolicy'.
+To specify an identity or identity group, use the IAM v1
+format specified [here](https://cloud.google.com/iam/docs/principal-identifiers.md#v1).
+The following prefixes are supprted: user, group, serviceAccount, principal, and principalSet.'`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
@@ -650,9 +652,10 @@ to apply.`,
 												"identities": {
 													Type:     schema.TypeSet,
 													Optional: true,
-													Description: `A list of identities that are allowed access through this ingress policy.
-Should be in the format of email address. The email address should represent
-individual user or service account only.`,
+													Description: `'A list of identities that are allowed access through this 'IngressPolicy'.
+To specify an identity or identity group, use the IAM v1
+format specified [here](https://cloud.google.com/iam/docs/principal-identifiers.md#v1).
+The following prefixes are supprted: user, group, serviceAccount, principal, and principalSet.'`,
 													Elem: &schema.Schema{
 														Type: schema.TypeString,
 													},
@@ -938,7 +941,6 @@ func resourceAccessContextManagerServicePerimeterCreate(d *schema.ResourceData, 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -947,7 +949,6 @@ func resourceAccessContextManagerServicePerimeterCreate(d *schema.ResourceData, 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ServicePerimeter: %s", err)
@@ -1008,14 +1009,12 @@ func resourceAccessContextManagerServicePerimeterRead(d *schema.ResourceData, me
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerServicePerimeter %q", d.Id()))
@@ -1111,7 +1110,6 @@ func resourceAccessContextManagerServicePerimeterUpdate(d *schema.ResourceData, 
 	}
 
 	log.Printf("[DEBUG] Updating ServicePerimeter %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("title") {
@@ -1155,7 +1153,6 @@ func resourceAccessContextManagerServicePerimeterUpdate(d *schema.ResourceData, 
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -1204,8 +1201,6 @@ func resourceAccessContextManagerServicePerimeterDelete(d *schema.ResourceData, 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting ServicePerimeter %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -1215,7 +1210,6 @@ func resourceAccessContextManagerServicePerimeterDelete(d *schema.ResourceData, 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "ServicePerimeter")

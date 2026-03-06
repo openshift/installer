@@ -20,7 +20,6 @@ package bigquerydatapolicy
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -88,17 +87,9 @@ func ResourceBigqueryDatapolicyDataPolicy() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"predefined_expression": {
 							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: verify.ValidateEnum([]string{"SHA256", "ALWAYS_NULL", "DEFAULT_MASKING_VALUE", "LAST_FOUR_CHARACTERS", "FIRST_FOUR_CHARACTERS", "EMAIL_MASK", "DATE_YEAR_MASK", ""}),
+							Required:     true,
+							ValidateFunc: verify.ValidateEnum([]string{"SHA256", "ALWAYS_NULL", "DEFAULT_MASKING_VALUE", "LAST_FOUR_CHARACTERS", "FIRST_FOUR_CHARACTERS", "EMAIL_MASK", "DATE_YEAR_MASK"}),
 							Description:  `The available masking rules. Learn more here: https://cloud.google.com/bigquery/docs/column-data-masking-intro#masking_options. Possible values: ["SHA256", "ALWAYS_NULL", "DEFAULT_MASKING_VALUE", "LAST_FOUR_CHARACTERS", "FIRST_FOUR_CHARACTERS", "EMAIL_MASK", "DATE_YEAR_MASK"]`,
-							ExactlyOneOf: []string{"data_masking_policy.0.predefined_expression", "data_masking_policy.0.routine"},
-						},
-						"routine": {
-							Type:             schema.TypeString,
-							Optional:         true,
-							DiffSuppressFunc: tpgresource.ProjectNumberDiffSuppress,
-							Description:      `The name of the BigQuery routine that contains the custom masking routine, in the format of projects/{projectNumber}/datasets/{dataset_id}/routines/{routine_id}.`,
-							ExactlyOneOf:     []string{"data_masking_policy.0.predefined_expression", "data_masking_policy.0.routine"},
 						},
 					},
 				},
@@ -171,7 +162,6 @@ func resourceBigqueryDatapolicyDataPolicyCreate(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -180,7 +170,6 @@ func resourceBigqueryDatapolicyDataPolicyCreate(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating DataPolicy: %s", err)
@@ -226,14 +215,12 @@ func resourceBigqueryDatapolicyDataPolicyRead(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("BigqueryDatapolicyDataPolicy %q", d.Id()))
@@ -303,7 +290,6 @@ func resourceBigqueryDatapolicyDataPolicyUpdate(d *schema.ResourceData, meta int
 	}
 
 	log.Printf("[DEBUG] Updating DataPolicy %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("policy_tag") {
@@ -339,7 +325,6 @@ func resourceBigqueryDatapolicyDataPolicyUpdate(d *schema.ResourceData, meta int
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -380,8 +365,6 @@ func resourceBigqueryDatapolicyDataPolicyDelete(d *schema.ResourceData, meta int
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting DataPolicy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -391,7 +374,6 @@ func resourceBigqueryDatapolicyDataPolicyDelete(d *schema.ResourceData, meta int
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "DataPolicy")
@@ -448,15 +430,9 @@ func flattenBigqueryDatapolicyDataPolicyDataMaskingPolicy(v interface{}, d *sche
 	transformed := make(map[string]interface{})
 	transformed["predefined_expression"] =
 		flattenBigqueryDatapolicyDataPolicyDataMaskingPolicyPredefinedExpression(original["predefinedExpression"], d, config)
-	transformed["routine"] =
-		flattenBigqueryDatapolicyDataPolicyDataMaskingPolicyRoutine(original["routine"], d, config)
 	return []interface{}{transformed}
 }
 func flattenBigqueryDatapolicyDataPolicyDataMaskingPolicyPredefinedExpression(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenBigqueryDatapolicyDataPolicyDataMaskingPolicyRoutine(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -488,20 +464,9 @@ func expandBigqueryDatapolicyDataPolicyDataMaskingPolicy(v interface{}, d tpgres
 		transformed["predefinedExpression"] = transformedPredefinedExpression
 	}
 
-	transformedRoutine, err := expandBigqueryDatapolicyDataPolicyDataMaskingPolicyRoutine(original["routine"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedRoutine); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["routine"] = transformedRoutine
-	}
-
 	return transformed, nil
 }
 
 func expandBigqueryDatapolicyDataPolicyDataMaskingPolicyPredefinedExpression(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandBigqueryDatapolicyDataPolicyDataMaskingPolicyRoutine(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }

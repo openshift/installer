@@ -20,7 +20,6 @@ package iam2
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -185,7 +184,6 @@ func resourceIAM2AccessBoundaryPolicyCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -194,7 +192,6 @@ func resourceIAM2AccessBoundaryPolicyCreate(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating AccessBoundaryPolicy: %s", err)
@@ -241,14 +238,12 @@ func resourceIAM2AccessBoundaryPolicyRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("IAM2AccessBoundaryPolicy %q", d.Id()))
@@ -302,7 +297,6 @@ func resourceIAM2AccessBoundaryPolicyUpdate(d *schema.ResourceData, meta interfa
 	}
 
 	log.Printf("[DEBUG] Updating AccessBoundaryPolicy %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -317,7 +311,6 @@ func resourceIAM2AccessBoundaryPolicyUpdate(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -358,8 +351,6 @@ func resourceIAM2AccessBoundaryPolicyDelete(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting AccessBoundaryPolicy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -369,7 +360,6 @@ func resourceIAM2AccessBoundaryPolicyDelete(d *schema.ResourceData, meta interfa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "AccessBoundaryPolicy")

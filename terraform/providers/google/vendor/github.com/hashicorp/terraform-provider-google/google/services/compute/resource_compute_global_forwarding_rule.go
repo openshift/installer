@@ -20,7 +20,6 @@ package compute
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -89,6 +88,7 @@ The forwarded traffic must be of a type appropriate to the target object.
   *  'vpc-sc' - [ APIs that support VPC Service Controls](https://cloud.google.com/vpc-service-controls/docs/supported-products).
   *  'all-apis' - [All supported Google APIs](https://cloud.google.com/vpc/docs/private-service-connect#supported-apis).
 
+
 For Private Service Connect forwarding rules that forward traffic to managed services, the target must be a service attachment.`,
 			},
 			"ip_address": {
@@ -96,7 +96,7 @@ For Private Service Connect forwarding rules that forward traffic to managed ser
 				Computed:         true,
 				Optional:         true,
 				ForceNew:         true,
-				DiffSuppressFunc: InternalIpDiffSuppress,
+				DiffSuppressFunc: tpgresource.InternalIpDiffSuppress,
 				Description: `IP address for which this forwarding rule accepts traffic. When a client
 sends traffic to this IP address, the forwarding rule directs the traffic
 to the referenced 'target'.
@@ -109,6 +109,7 @@ required under the following circumstances:
 'IPAddress' should be set to '0.0.0.0'.
 * When the 'target' is a Private Service Connect Google APIs
 bundle, you must specify an 'IPAddress'.
+
 
 Otherwise, you can optionally specify an IP address that references an
 existing static (reserved) IP address resource. When omitted, Google Cloud
@@ -126,6 +127,7 @@ forwarding rule:
   * 'regions/region/addresses/address-name'
   * 'global/addresses/address-name'
   * 'address-name'
+
 
 The forwarding rule's 'target',
 and in most cases, also the 'loadBalancingScheme', determine the
@@ -284,7 +286,7 @@ APIs, a network must be provided.`,
 				Type:             schema.TypeString,
 				Optional:         true,
 				ForceNew:         true,
-				DiffSuppressFunc: PortRangeDiffSuppress,
+				DiffSuppressFunc: tpgresource.PortRangeDiffSuppress,
 				Description: `The 'portRange' field has the following limitations:
 * It requires that the forwarding rule 'IPProtocol' be TCP, UDP, or SCTP,
 and
@@ -533,7 +535,6 @@ func resourceComputeGlobalForwardingRuleCreate(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -542,7 +543,6 @@ func resourceComputeGlobalForwardingRuleCreate(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating GlobalForwardingRule: %s", err)
@@ -655,14 +655,12 @@ func resourceComputeGlobalForwardingRuleRead(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ComputeGlobalForwardingRule %q", d.Id()))
@@ -777,8 +775,6 @@ func resourceComputeGlobalForwardingRuleUpdate(d *schema.ResourceData, meta inte
 			return err
 		}
 
-		headers := make(http.Header)
-
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -792,7 +788,6 @@ func resourceComputeGlobalForwardingRuleUpdate(d *schema.ResourceData, meta inte
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating GlobalForwardingRule %q: %s", d.Id(), err)
@@ -822,8 +817,6 @@ func resourceComputeGlobalForwardingRuleUpdate(d *schema.ResourceData, meta inte
 			return err
 		}
 
-		headers := make(http.Header)
-
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -837,7 +830,6 @@ func resourceComputeGlobalForwardingRuleUpdate(d *schema.ResourceData, meta inte
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating GlobalForwardingRule %q: %s", d.Id(), err)
@@ -885,8 +877,6 @@ func resourceComputeGlobalForwardingRuleDelete(d *schema.ResourceData, meta inte
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting GlobalForwardingRule %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -896,7 +886,6 @@ func resourceComputeGlobalForwardingRuleDelete(d *schema.ResourceData, meta inte
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "GlobalForwardingRule")

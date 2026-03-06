@@ -21,7 +21,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"time"
@@ -289,7 +288,6 @@ func resourceBinaryAuthorizationPolicyCreate(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PUT",
@@ -298,7 +296,6 @@ func resourceBinaryAuthorizationPolicyCreate(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Policy: %s", err)
@@ -341,14 +338,12 @@ func resourceBinaryAuthorizationPolicyRead(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("BinaryAuthorizationPolicy %q", d.Id()))
@@ -430,7 +425,6 @@ func resourceBinaryAuthorizationPolicyUpdate(d *schema.ResourceData, meta interf
 	}
 
 	log.Printf("[DEBUG] Updating Policy %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -445,7 +439,6 @@ func resourceBinaryAuthorizationPolicyUpdate(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -484,7 +477,6 @@ func resourceBinaryAuthorizationPolicyDelete(d *schema.ResourceData, meta interf
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	obj = DefaultBinaryAuthorizationPolicy(d.Get("project").(string))
 
 	log.Printf("[DEBUG] Deleting Policy %q", d.Id())
@@ -496,7 +488,6 @@ func resourceBinaryAuthorizationPolicyDelete(d *schema.ResourceData, meta interf
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Policy")

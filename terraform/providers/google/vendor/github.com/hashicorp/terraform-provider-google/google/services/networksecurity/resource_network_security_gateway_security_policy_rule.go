@@ -20,7 +20,6 @@ package networksecurity
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -211,7 +210,6 @@ func resourceNetworkSecurityGatewaySecurityPolicyRuleCreate(d *schema.ResourceDa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -220,7 +218,6 @@ func resourceNetworkSecurityGatewaySecurityPolicyRuleCreate(d *schema.ResourceDa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating GatewaySecurityPolicyRule: %s", err)
@@ -273,14 +270,12 @@ func resourceNetworkSecurityGatewaySecurityPolicyRuleRead(d *schema.ResourceData
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("NetworkSecurityGatewaySecurityPolicyRule %q", d.Id()))
@@ -389,7 +384,6 @@ func resourceNetworkSecurityGatewaySecurityPolicyRuleUpdate(d *schema.ResourceDa
 	}
 
 	log.Printf("[DEBUG] Updating GatewaySecurityPolicyRule %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("enabled") {
@@ -441,7 +435,6 @@ func resourceNetworkSecurityGatewaySecurityPolicyRuleUpdate(d *schema.ResourceDa
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -489,8 +482,6 @@ func resourceNetworkSecurityGatewaySecurityPolicyRuleDelete(d *schema.ResourceDa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting GatewaySecurityPolicyRule %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -500,7 +491,6 @@ func resourceNetworkSecurityGatewaySecurityPolicyRuleDelete(d *schema.ResourceDa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "GatewaySecurityPolicyRule")

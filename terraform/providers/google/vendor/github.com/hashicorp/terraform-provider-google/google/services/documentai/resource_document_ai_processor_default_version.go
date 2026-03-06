@@ -20,7 +20,6 @@ package documentai
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -100,7 +99,6 @@ func resourceDocumentAIProcessorDefaultVersionCreate(d *schema.ResourceData, met
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	if strings.Contains(url, "https://-") {
 		location := tpgresource.GetRegionFromRegionalSelfLink(url)
 		url = strings.TrimPrefix(url, "https://")
@@ -114,7 +112,6 @@ func resourceDocumentAIProcessorDefaultVersionCreate(d *schema.ResourceData, met
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating ProcessorDefaultVersion: %s", err)
@@ -151,7 +148,6 @@ func resourceDocumentAIProcessorDefaultVersionRead(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	if strings.Contains(url, "https://-") {
 		location := tpgresource.GetRegionFromRegionalSelfLink(url)
 		url = strings.TrimPrefix(url, "https://")
@@ -163,7 +159,6 @@ func resourceDocumentAIProcessorDefaultVersionRead(d *schema.ResourceData, meta 
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DocumentAIProcessorDefaultVersion %q", d.Id()))

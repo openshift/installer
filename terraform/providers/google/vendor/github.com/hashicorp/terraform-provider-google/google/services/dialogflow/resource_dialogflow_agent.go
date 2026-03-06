@@ -20,7 +20,6 @@ package dialogflow
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -253,7 +252,6 @@ func resourceDialogflowAgentCreate(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -262,7 +260,6 @@ func resourceDialogflowAgentCreate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Agent: %s", err)
@@ -305,14 +302,12 @@ func resourceDialogflowAgentRead(d *schema.ResourceData, meta interface{}) error
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DialogflowAgent %q", d.Id()))
@@ -445,7 +440,6 @@ func resourceDialogflowAgentUpdate(d *schema.ResourceData, meta interface{}) err
 	}
 
 	log.Printf("[DEBUG] Updating Agent %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -460,7 +454,6 @@ func resourceDialogflowAgentUpdate(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -499,8 +492,6 @@ func resourceDialogflowAgentDelete(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Agent %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -510,7 +501,6 @@ func resourceDialogflowAgentDelete(d *schema.ResourceData, meta interface{}) err
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Agent")

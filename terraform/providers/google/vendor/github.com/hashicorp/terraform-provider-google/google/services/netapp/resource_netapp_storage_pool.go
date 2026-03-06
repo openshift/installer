@@ -20,7 +20,6 @@ package netapp
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -65,13 +64,13 @@ func ResourceNetappstoragePool() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: `Name of the location. For zonal Flex pools specify a zone name, in all other cases a region name.`,
+				Description: `Name of the location. Usually a region name, expect for some STANDARD service level pools which require a zone name.`,
 			},
 			"name": {
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
-				Description: `The resource name of the storage pool. Needs to be unique per location/region.`,
+				Description: `The resource name of the storage pool. Needs to be unique per location.`,
 			},
 			"network": {
 				Type:             schema.TypeString,
@@ -84,8 +83,8 @@ func ResourceNetappstoragePool() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: verify.ValidateEnum([]string{"PREMIUM", "EXTREME", "STANDARD", "FLEX"}),
-				Description:  `Service level of the storage pool. Possible values: ["PREMIUM", "EXTREME", "STANDARD", "FLEX"]`,
+				ValidateFunc: verify.ValidateEnum([]string{"PREMIUM", "EXTREME", "STANDARD"}),
+				Description:  `Service level of the storage pool. Possible values: ["PREMIUM", "EXTREME", "STANDARD"]`,
 			},
 			"active_directory": {
 				Type:     schema.TypeString,
@@ -237,7 +236,6 @@ func resourceNetappstoragePoolCreate(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -246,7 +244,6 @@ func resourceNetappstoragePoolCreate(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating storagePool: %s", err)
@@ -299,14 +296,12 @@ func resourceNetappstoragePoolRead(d *schema.ResourceData, meta interface{}) err
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("NetappstoragePool %q", d.Id()))
@@ -406,7 +401,6 @@ func resourceNetappstoragePoolUpdate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	log.Printf("[DEBUG] Updating storagePool %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("capacity_gib") {
@@ -430,71 +424,6 @@ func resourceNetappstoragePoolUpdate(d *schema.ResourceData, meta interface{}) e
 	if err != nil {
 		return err
 	}
-	// detect manual zone switches for service level FLEX
-
-	if d.Get("service_level").(string) == "FLEX" {
-		// Check if this is zonal or regional Flex. Only continue for regional pool
-		_, hasZone := d.GetOk("zone")
-		_, hasReplicaZone := d.GetOk("replica_zone")
-		if hasZone && hasReplicaZone {
-			// For a zone switch, user needs to swap zone and replica_zone. Other changes are not allowed
-			if d.HasChange("zone") && d.HasChange("replica_zone") {
-				oldZone, newZone := d.GetChange("zone")
-				oldReplicaZone, newReplicaZone := d.GetChange("replica_zone")
-				if newZone == oldReplicaZone && newReplicaZone == oldZone {
-					rawurl, err := tpgresource.ReplaceVars(d, config, "{{NetappBasePath}}projects/{{project}}/locations/{{location}}/storagePools/{{name}}:switch")
-					if err != nil {
-						return err
-					}
-
-					reso, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
-						Config:    config,
-						Method:    "POST",
-						Project:   billingProject,
-						RawURL:    rawurl,
-						UserAgent: userAgent,
-						Timeout:   d.Timeout(schema.TimeoutUpdate),
-					})
-					if err != nil {
-						return fmt.Errorf("Error switching active zone for pool: %s, %v", d.Id(), err)
-					}
-
-					err = NetappOperationWaitTime(
-						config, reso, project, "Switching active pool zone", userAgent,
-						d.Timeout(schema.TimeoutUpdate))
-					if err != nil {
-						return err
-					}
-
-					//remove zone and replicaZone from updateMask
-					n := 0
-					for _, v := range updateMask {
-						if v != "zone" && v != "replicaZone" {
-							updateMask[n] = v
-							n++
-						}
-					}
-					updateMask = updateMask[:n]
-
-					// delete from payload too
-					delete(obj, "zone")
-					delete(obj, "replicaZone")
-
-					// PATCH URL was already build prior to this code. We need to rebuild it to catch our changes
-					url, err = tpgresource.ReplaceVars(d, config, "{{NetappBasePath}}projects/{{project}}/locations/{{location}}/storagePools/{{name}}")
-					if err != nil {
-						return err
-					}
-					url, err = transport_tpg.AddQueryParams(url, map[string]string{"updateMask": strings.Join(updateMask, ",")})
-					if err != nil {
-						return err
-					}
-				} else {
-					return fmt.Errorf("Incorrect zone change for pool: %s. Supported zone, replica_zone are : %s, %s", d.Id(), oldZone, oldReplicaZone)
-				}
-			}
-		}
-	}
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -511,7 +440,6 @@ func resourceNetappstoragePoolUpdate(d *schema.ResourceData, meta interface{}) e
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -559,8 +487,6 @@ func resourceNetappstoragePoolDelete(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting storagePool %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -570,7 +496,6 @@ func resourceNetappstoragePoolDelete(d *schema.ResourceData, meta interface{}) e
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "storagePool")

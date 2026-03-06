@@ -20,7 +20,6 @@ package osconfig
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -1038,7 +1037,6 @@ func resourceOSConfigPatchDeploymentCreate(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -1047,7 +1045,6 @@ func resourceOSConfigPatchDeploymentCreate(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating PatchDeployment: %s", err)
@@ -1111,14 +1108,12 @@ func resourceOSConfigPatchDeploymentRead(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("OSConfigPatchDeployment %q", d.Id()))
@@ -1204,8 +1199,6 @@ func resourceOSConfigPatchDeploymentDelete(d *schema.ResourceData, meta interfac
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting PatchDeployment %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -1215,7 +1208,6 @@ func resourceOSConfigPatchDeploymentDelete(d *schema.ResourceData, meta interfac
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "PatchDeployment")

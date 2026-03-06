@@ -20,7 +20,6 @@ package firestore
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -200,7 +199,6 @@ func resourceFirestoreFieldCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "PATCH",
@@ -209,7 +207,6 @@ func resourceFirestoreFieldCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.FirestoreField409RetryUnderlyingDataChanged},
 	})
 	if err != nil {
@@ -277,14 +274,12 @@ func resourceFirestoreFieldRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.FirestoreField409RetryUnderlyingDataChanged},
 	})
 	if err != nil {
@@ -348,7 +343,6 @@ func resourceFirestoreFieldUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	log.Printf("[DEBUG] Updating Field %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("index_config") {
@@ -380,7 +374,6 @@ func resourceFirestoreFieldUpdate(d *schema.ResourceData, meta interface{}) erro
 			UserAgent:            userAgent,
 			Body:                 obj,
 			Timeout:              d.Timeout(schema.TimeoutUpdate),
-			Headers:              headers,
 			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.FirestoreField409RetryUnderlyingDataChanged},
 		})
 

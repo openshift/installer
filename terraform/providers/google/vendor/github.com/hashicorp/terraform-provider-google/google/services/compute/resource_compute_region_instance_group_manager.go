@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -289,8 +289,8 @@ func ResourceComputeRegionInstanceGroupManager() *schema.Resource {
 						"minimal_action": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "REFRESH", "RESTART", "REPLACE"}, false),
-							Description:  `Minimal action to be taken on an instance. You can specify either NONE to forbid any actions, REFRESH to update without stopping instances, RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a REFRESH, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.`,
+							ValidateFunc: validation.StringInSlice([]string{"REFRESH", "RESTART", "REPLACE"}, false),
+							Description:  `Minimal action to be taken on an instance. You can specify either REFRESH to update without stopping instances, RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a REFRESH, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.`,
 						},
 
 						"most_disruptive_allowed_action": {
@@ -481,11 +481,6 @@ func ResourceComputeRegionInstanceGroupManager() *schema.Resource {
 										Computed:    true,
 										Description: `A bit indicating whether this configuration has been applied to all managed instances in the group.`,
 									},
-									"current_revision": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `Current all-instances configuration revision. This value is in RFC3339 text format.`,
-									},
 								},
 							},
 						},
@@ -503,7 +498,7 @@ func ResourceComputeRegionInstanceGroupManager() *schema.Resource {
 									"per_instance_configs": {
 										Type:        schema.TypeList,
 										Computed:    true,
-										Description: `Status of per-instance configs on the instances.`,
+										Description: `Status of per-instance configs on the instance.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"all_effective": {
@@ -591,7 +586,7 @@ func resourceComputeRegionInstanceGroupManagerCreate(d *schema.ResourceData, met
 
 func computeRIGMWaitForInstanceStatus(d *schema.ResourceData, meta interface{}) error {
 	waitForUpdates := d.Get("wait_for_instances_status").(string) == "UPDATED"
-	conf := retry.StateChangeConf{
+	conf := resource.StateChangeConf{
 		Pending: []string{"creating", "error", "updating per instance configs", "reaching version target", "updating all instances config"},
 		Target:  []string{"created"},
 		Refresh: waitForInstancesRefreshFunc(getRegionalManager, waitForUpdates, d, meta),
@@ -633,7 +628,7 @@ func getRegionalManager(d *schema.ResourceData, meta interface{}) (*compute.Inst
 	return manager, nil
 }
 
-func waitForInstancesRefreshFunc(f getInstanceManagerFunc, waitForUpdates bool, d *schema.ResourceData, meta interface{}) retry.StateRefreshFunc {
+func waitForInstancesRefreshFunc(f getInstanceManagerFunc, waitForUpdates bool, d *schema.ResourceData, meta interface{}) resource.StateRefreshFunc {
 	return func() (interface{}, string, error) {
 		m, err := f(d, meta)
 		if err != nil {

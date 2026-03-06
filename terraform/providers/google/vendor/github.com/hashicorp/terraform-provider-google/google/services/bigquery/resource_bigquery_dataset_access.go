@@ -20,7 +20,6 @@ package bigquery
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -471,7 +470,6 @@ func resourceBigQueryDatasetAccessCreate(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "PATCH",
@@ -480,7 +478,6 @@ func resourceBigQueryDatasetAccessCreate(d *schema.ResourceData, meta interface{
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsBigqueryIAMQuotaError},
 	})
 	if err != nil {
@@ -552,14 +549,12 @@ func resourceBigQueryDatasetAccessRead(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsBigqueryIAMQuotaError},
 	})
 	if err != nil {
@@ -652,8 +647,6 @@ func resourceBigQueryDatasetAccessDelete(d *schema.ResourceData, meta interface{
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting DatasetAccess %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
@@ -663,7 +656,6 @@ func resourceBigQueryDatasetAccessDelete(d *schema.ResourceData, meta interface{
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsBigqueryIAMQuotaError},
 	})
 	if err != nil {

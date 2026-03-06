@@ -20,7 +20,6 @@ package monitoring
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -183,7 +182,6 @@ func resourceMonitoringGenericServiceCreate(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -192,7 +190,6 @@ func resourceMonitoringGenericServiceCreate(d *schema.ResourceData, meta interfa
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {
@@ -239,14 +236,12 @@ func resourceMonitoringGenericServiceRead(d *schema.ResourceData, meta interface
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {
@@ -311,7 +306,6 @@ func resourceMonitoringGenericServiceUpdate(d *schema.ResourceData, meta interfa
 	}
 
 	log.Printf("[DEBUG] Updating GenericService %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -343,7 +337,6 @@ func resourceMonitoringGenericServiceUpdate(d *schema.ResourceData, meta interfa
 			UserAgent:            userAgent,
 			Body:                 obj,
 			Timeout:              d.Timeout(schema.TimeoutUpdate),
-			Headers:              headers,
 			ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 		})
 
@@ -385,8 +378,6 @@ func resourceMonitoringGenericServiceDelete(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting GenericService %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
@@ -396,7 +387,6 @@ func resourceMonitoringGenericServiceDelete(d *schema.ResourceData, meta interfa
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
-		Headers:              headers,
 		ErrorRetryPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.IsMonitoringConcurrentEditError},
 	})
 	if err != nil {

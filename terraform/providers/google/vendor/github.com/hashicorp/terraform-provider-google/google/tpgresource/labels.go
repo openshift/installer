@@ -71,19 +71,6 @@ func SetLabelsDiff(_ context.Context, d *schema.ResourceDiff, meta interface{}) 
 		return fmt.Errorf("`effective_labels` field is not present in the resource schema.")
 	}
 
-	// If "labels" field is computed, set "terraform_labels" and "effective_labels" to computed.
-	// https://github.com/hashicorp/terraform-provider-google/issues/16217
-	if !d.GetRawPlan().GetAttr("labels").IsWhollyKnown() {
-		if err := d.SetNewComputed("terraform_labels"); err != nil {
-			return fmt.Errorf("error setting terraform_labels to computed: %w", err)
-		}
-
-		if err := d.SetNewComputed("effective_labels"); err != nil {
-			return fmt.Errorf("error setting effective_labels to computed: %w", err)
-		}
-		return nil
-	}
-
 	config := meta.(*transport_tpg.Config)
 
 	// Merge provider default labels with the user defined labels in the resource to get terraform managed labels
@@ -136,17 +123,6 @@ func SetLabelsDiff(_ context.Context, d *schema.ResourceDiff, meta interface{}) 
 func SetMetadataLabelsDiff(_ context.Context, d *schema.ResourceDiff, meta interface{}) error {
 	l := d.Get("metadata").([]interface{})
 	if len(l) == 0 || l[0] == nil {
-		return nil
-	}
-
-	// Fix the bug that the computed and nested "labels" field disappears from the terraform plan.
-	// https://github.com/hashicorp/terraform-provider-google/issues/17756
-	// The bug is introduced by SetNew on "metadata" field with the object including terraform_labels and effective_labels.
-	// "terraform_labels" and "effective_labels" cannot be set directly due to a bug that SetNew doesn't work on nested fields
-	// in terraform sdk.
-	// https://github.com/hashicorp/terraform-plugin-sdk/issues/459
-	values := d.GetRawPlan().GetAttr("metadata").AsValueSlice()
-	if len(values) > 0 && !values[0].GetAttr("labels").IsWhollyKnown() {
 		return nil
 	}
 

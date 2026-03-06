@@ -69,6 +69,12 @@ var GKEHubFeatureEndpointEntry = &schema.Schema{
 	Optional: true,
 }
 
+var OrgPolicyEndpointEntryKey = "org_policy_custom_endpoint"
+var OrgPolicyEndpointEntry = &schema.Schema{
+	Type:     schema.TypeString,
+	Optional: true,
+}
+
 var RecaptchaEnterpriseEndpointEntryKey = "recaptcha_enterprise_custom_endpoint"
 var RecaptchaEnterpriseEndpointEntry = &schema.Schema{
 	Type:     schema.TypeString,
@@ -83,6 +89,7 @@ type DCLConfig struct {
 	EventarcBasePath             string
 	FirebaserulesBasePath        string
 	GKEHubFeatureBasePath        string
+	OrgPolicyBasePath            string
 	RecaptchaEnterpriseBasePath  string
 }
 
@@ -94,6 +101,7 @@ func ConfigureDCLProvider(provider *schema.Provider) {
 	provider.Schema[EventarcEndpointEntryKey] = EventarcEndpointEntry
 	provider.Schema[FirebaserulesEndpointEntryKey] = FirebaserulesEndpointEntry
 	provider.Schema[GKEHubFeatureEndpointEntryKey] = GKEHubFeatureEndpointEntry
+	provider.Schema[OrgPolicyEndpointEntryKey] = OrgPolicyEndpointEntry
 	provider.Schema[RecaptchaEnterpriseEndpointEntryKey] = RecaptchaEnterpriseEndpointEntry
 }
 
@@ -131,6 +139,11 @@ func HandleDCLCustomEndpointDefaults(d *schema.ResourceData) {
 	if d.Get(GKEHubFeatureEndpointEntryKey) == "" {
 		d.Set(GKEHubFeatureEndpointEntryKey, MultiEnvDefault([]string{
 			"GOOGLE_GKEHUB_FEATURE_CUSTOM_ENDPOINT",
+		}, ""))
+	}
+	if d.Get(OrgPolicyEndpointEntryKey) == "" {
+		d.Set(OrgPolicyEndpointEntryKey, MultiEnvDefault([]string{
+			"GOOGLE_ORG_POLICY_CUSTOM_ENDPOINT",
 		}, ""))
 	}
 	if d.Get(RecaptchaEnterpriseEndpointEntryKey) == "" {
@@ -184,6 +197,12 @@ func ConfigureDCLCustomEndpointAttributesFramework(frameworkSchema *framework_sc
 			CustomEndpointValidator(),
 		},
 	}
+	frameworkSchema.Attributes["org_policy_custom_endpoint"] = framework_schema.StringAttribute{
+		Optional: true,
+		Validators: []validator.String{
+			CustomEndpointValidator(),
+		},
+	}
 	frameworkSchema.Attributes["recaptcha_enterprise_custom_endpoint"] = framework_schema.StringAttribute{
 		Optional: true,
 		Validators: []validator.String{
@@ -193,15 +212,15 @@ func ConfigureDCLCustomEndpointAttributesFramework(frameworkSchema *framework_sc
 }
 
 func ProviderDCLConfigure(d *schema.ResourceData, config *Config) interface{} {
-	// networkConnectivity uses mmv1 basePath, assuredworkloads has a location variable in the basepath, can't be defined here.
-	config.ApikeysBasePath = "https://apikeys.googleapis.com/v2/"
+	config.ApikeysBasePath = d.Get(ApikeysEndpointEntryKey).(string)
 	config.AssuredWorkloadsBasePath = d.Get(AssuredWorkloadsEndpointEntryKey).(string)
-	config.CloudBuildWorkerPoolBasePath = "https://cloudbuild.googleapis.com/v1/"
-	config.CloudResourceManagerBasePath = "https://cloudresourcemanager.googleapis.com/"
-	config.EventarcBasePath = "https://eventarc.googleapis.com/v1/"
-	config.FirebaserulesBasePath = "https://firebaserules.googleapis.com/v1/"
-	config.GKEHubFeatureBasePath = "https://gkehub.googleapis.com/v1beta1/"
-	config.RecaptchaEnterpriseBasePath = "https://recaptchaenterprise.googleapis.com/v1/"
-
+	config.CloudBuildWorkerPoolBasePath = d.Get(CloudBuildWorkerPoolEndpointEntryKey).(string)
+	config.CloudResourceManagerBasePath = d.Get(CloudResourceManagerEndpointEntryKey).(string)
+	config.EventarcBasePath = d.Get(EventarcEndpointEntryKey).(string)
+	config.FirebaserulesBasePath = d.Get(FirebaserulesEndpointEntryKey).(string)
+	config.GKEHubFeatureBasePath = d.Get(GKEHubFeatureEndpointEntryKey).(string)
+	config.OrgPolicyBasePath = d.Get(OrgPolicyEndpointEntryKey).(string)
+	config.RecaptchaEnterpriseBasePath = d.Get(RecaptchaEnterpriseEndpointEntryKey).(string)
+	config.CloudBuildWorkerPoolBasePath = d.Get(CloudBuildWorkerPoolEndpointEntryKey).(string)
 	return config
 }
