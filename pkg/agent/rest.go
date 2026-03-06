@@ -14,12 +14,12 @@ import (
 	"github.com/openshift/assisted-service/client/events"
 	"github.com/openshift/assisted-service/client/installer"
 	"github.com/openshift/assisted-service/models"
+	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/agent/agentconfig"
 	"github.com/openshift/installer/pkg/asset/agent/gencrypto"
 	"github.com/openshift/installer/pkg/asset/agent/image"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/installconfig"
-	assetstore "github.com/openshift/installer/pkg/asset/store"
 	"github.com/openshift/installer/pkg/types/agent"
 )
 
@@ -60,17 +60,12 @@ func NewNodeZeroRestClient(ctx context.Context, rendezvousIP, sshKey, watcherAut
 	return restClient
 }
 
-// FindRendezvouIPAndSSHKeyFromAssetStore returns the rendezvousIP and public ssh key.
-func FindRendezvouIPAndSSHKeyFromAssetStore(assetDir string) (string, string, error) {
+// FindRendezvousIPAndSSHKeyFromAssetStore returns the rendezvousIP and public ssh key.
+func FindRendezvousIPAndSSHKeyFromAssetStore(assetStore asset.Store) (string, string, error) {
 	agentConfigAsset := &agentconfig.AgentConfig{}
 	agentManifestsAsset := &manifests.AgentManifests{}
 	installConfigAsset := &installconfig.InstallConfig{}
 	agentHostsAsset := &agentconfig.AgentHosts{}
-
-	assetStore, err := assetstore.NewStore(assetDir)
-	if err != nil {
-		return "", "", errors.Wrap(err, "failed to create asset store")
-	}
 
 	agentConfig, agentConfigError := assetStore.Load(agentConfigAsset)
 	agentManifests, manifestError := assetStore.Load(agentManifestsAsset)
@@ -120,13 +115,8 @@ func FindRendezvouIPAndSSHKeyFromAssetStore(assetDir string) (string, string, er
 }
 
 // FindAuthTokenFromAssetStore returns the auth token from asset store.
-func FindAuthTokenFromAssetStore(assetDir string) (string, error) {
+func FindAuthTokenFromAssetStore(assetStore asset.Store) (string, error) {
 	authConfigAsset := &gencrypto.AuthConfig{}
-
-	assetStore, err := assetstore.NewStore(assetDir)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to create asset store")
-	}
 
 	authConfig, authConfigError := assetStore.Load(authConfigAsset)
 

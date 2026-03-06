@@ -54,7 +54,7 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			assetDir := cmd.Flags().Lookup("dir").Value.String()
+			assetDir := command.RootOpts.Dir
 			logrus.Debugf("asset directory: %s", assetDir)
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
@@ -62,13 +62,18 @@ func newWaitForBootstrapCompleteCmd() *cobra.Command {
 
 			kubeconfigPath := filepath.Join(assetDir, "auth", "kubeconfig")
 
-			rendezvousIP, sshKey, err := agentpkg.FindRendezvouIPAndSSHKeyFromAssetStore(assetDir)
+			assetStore, err := assetstore.NewStore(assetDir)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+
+			rendezvousIP, sshKey, err := agentpkg.FindRendezvousIPAndSSHKeyFromAssetStore(assetStore)
 			if err != nil {
 				logrus.Fatal(err)
 			}
 
 			ctx := context.Background()
-			cluster, err := agentpkg.NewCluster(ctx, assetDir, rendezvousIP, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeInstall)
+			cluster, err := agentpkg.NewCluster(ctx, assetStore, rendezvousIP, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeInstall)
 			if err != nil {
 				logrus.Exit(command.ExitCodeBootstrapFailed)
 			}
@@ -89,7 +94,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 			cleanup := command.SetupFileHook(command.RootOpts.Dir)
 			defer cleanup()
 
-			assetDir := cmd.Flags().Lookup("dir").Value.String()
+			assetDir := command.RootOpts.Dir
 			logrus.Debugf("asset directory: %s", assetDir)
 			if len(assetDir) == 0 {
 				logrus.Fatal("No cluster installation directory found")
@@ -97,25 +102,24 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 
 			kubeconfigPath := filepath.Join(assetDir, "auth", "kubeconfig")
 
-			rendezvousIP, sshKey, err := agentpkg.FindRendezvouIPAndSSHKeyFromAssetStore(assetDir)
+			assetStore, err := assetstore.NewStore(assetDir)
+			if err != nil {
+				logrus.Fatal(err)
+			}
+
+			rendezvousIP, sshKey, err := agentpkg.FindRendezvousIPAndSSHKeyFromAssetStore(assetStore)
 			if err != nil {
 				logrus.Fatal(err)
 			}
 
 			ctx := context.Background()
-			cluster, err := agentpkg.NewCluster(ctx, assetDir, rendezvousIP, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeInstall)
+			cluster, err := agentpkg.NewCluster(ctx, assetStore, rendezvousIP, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeInstall)
 			if err != nil {
 				logrus.Exit(command.ExitCodeBootstrapFailed)
 			}
 
 			if err := agentpkg.WaitForBootstrapComplete(cluster); err != nil {
 				handleBootstrapError(ctx, cluster.API.Kube.Config, cluster, err)
-			}
-
-			assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
-			if err != nil {
-				logrus.Error(err)
-				logrus.Exit(command.ExitCodeInstallFailed)
 			}
 
 			// Load install-config to check if FIPS verification is needed
