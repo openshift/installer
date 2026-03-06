@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -53,11 +54,15 @@ func (m *DisasterRecovery) validateAsynchronousReplication(formats strfmt.Regist
 
 	if m.AsynchronousReplication != nil {
 		if err := m.AsynchronousReplication.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("asynchronousReplication")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("asynchronousReplication")
 			}
+
 			return err
 		}
 	}
@@ -72,11 +77,15 @@ func (m *DisasterRecovery) validateSynchronousReplication(formats strfmt.Registr
 
 	if m.SynchronousReplication != nil {
 		if err := m.SynchronousReplication.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("synchronousReplication")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("synchronousReplication")
 			}
+
 			return err
 		}
 	}
@@ -107,11 +116,15 @@ func (m *DisasterRecovery) contextValidateAsynchronousReplication(ctx context.Co
 	if m.AsynchronousReplication != nil {
 
 		if err := m.AsynchronousReplication.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("asynchronousReplication")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("asynchronousReplication")
 			}
+
 			return err
 		}
 	}
@@ -128,11 +141,15 @@ func (m *DisasterRecovery) contextValidateSynchronousReplication(ctx context.Con
 		}
 
 		if err := m.SynchronousReplication.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("synchronousReplication")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("synchronousReplication")
 			}
+
 			return err
 		}
 	}

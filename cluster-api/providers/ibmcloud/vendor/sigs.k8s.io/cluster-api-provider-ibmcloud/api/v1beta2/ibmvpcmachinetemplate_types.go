@@ -65,5 +65,5 @@ type IBMVPCMachineTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&IBMVPCMachineTemplate{}, &IBMVPCMachineTemplateList{})
+	objectTypes = append(objectTypes, &IBMVPCMachineTemplate{}, &IBMVPCMachineTemplateList{})
 }

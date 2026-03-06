@@ -40,7 +40,7 @@ func (m *VolumeGroupActionStart) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var volumeGroupActionStartTypeSourcePropEnum []interface{}
+var volumeGroupActionStartTypeSourcePropEnum []any
 
 func init() {
 	var res []string

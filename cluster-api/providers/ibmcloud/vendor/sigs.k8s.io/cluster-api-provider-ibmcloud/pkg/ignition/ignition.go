@@ -214,7 +214,7 @@ type Passwd struct {
 
 // PasswdGroup holds the PasswdGroup specific information.
 type PasswdGroup struct {
-	Gid          *int   `json:"gid,omitempty"` //nolint:stylecheck
+	Gid          *int   `json:"gid,omitempty"` //nolint:staticcheck
 	Name         string `json:"name"`
 	PasswordHash string `json:"passwordHash,omitempty"`
 	System       bool   `json:"system,omitempty"`

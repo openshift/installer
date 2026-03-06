@@ -20,7 +20,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	capiv1beta1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck
 )
 
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
@@ -164,7 +164,7 @@ type IBMPowerVSMachineStatus struct {
 
 	// Conditions defines current service state of the IBMPowerVSMachine.
 	// +optional
-	Conditions capiv1beta1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 
 	// Region specifies the Power VS Service instance region.
 	Region *string `json:"region,omitempty"`
@@ -194,12 +194,12 @@ type IBMPowerVSMachine struct {
 }
 
 // GetConditions returns the observations of the operational state of the IBMPowerVSMachine resource.
-func (r *IBMPowerVSMachine) GetConditions() capiv1beta1.Conditions {
+func (r *IBMPowerVSMachine) GetConditions() clusterv1beta1.Conditions {
 	return r.Status.Conditions
 }
 
-// SetConditions sets the underlying service state of the IBMPowerVSMachine to the predescribed clusterv1.Conditions.
-func (r *IBMPowerVSMachine) SetConditions(conditions capiv1beta1.Conditions) {
+// SetConditions sets the underlying service state of the IBMPowerVSMachine to the predescribed clusterv1beta1.Conditions.
+func (r *IBMPowerVSMachine) SetConditions(conditions clusterv1beta1.Conditions) {
 	r.Status.Conditions = conditions
 }
 

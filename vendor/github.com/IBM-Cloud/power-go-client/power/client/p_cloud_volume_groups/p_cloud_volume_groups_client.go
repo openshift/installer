@@ -85,7 +85,7 @@ PcloudVolumegroupsActionPost performs an action on a volume group
 Corresponding actions are 'start', 'stop', 'reset'
 */
 func (a *Client) PcloudVolumegroupsActionPost(params *PcloudVolumegroupsActionPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsActionPostAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsActionPostParams()
 	}
@@ -105,17 +105,22 @@ func (a *Client) PcloudVolumegroupsActionPost(params *PcloudVolumegroupsActionPo
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsActionPostAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.action.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -124,7 +129,7 @@ func (a *Client) PcloudVolumegroupsActionPost(params *PcloudVolumegroupsActionPo
 PcloudVolumegroupsDelete deletes a cloud instance volume group
 */
 func (a *Client) PcloudVolumegroupsDelete(params *PcloudVolumegroupsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsDeleteAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsDeleteParams()
 	}
@@ -144,17 +149,22 @@ func (a *Client) PcloudVolumegroupsDelete(params *PcloudVolumegroupsDeleteParams
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsDeleteAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -163,7 +173,7 @@ func (a *Client) PcloudVolumegroupsDelete(params *PcloudVolumegroupsDeleteParams
 PcloudVolumegroupsGet gets volume group
 */
 func (a *Client) PcloudVolumegroupsGet(params *PcloudVolumegroupsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsGetParams()
 	}
@@ -183,17 +193,22 @@ func (a *Client) PcloudVolumegroupsGet(params *PcloudVolumegroupsGetParams, auth
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -202,7 +217,7 @@ func (a *Client) PcloudVolumegroupsGet(params *PcloudVolumegroupsGetParams, auth
 PcloudVolumegroupsGetDetails gets volume group details
 */
 func (a *Client) PcloudVolumegroupsGetDetails(params *PcloudVolumegroupsGetDetailsParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetDetailsOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsGetDetailsParams()
 	}
@@ -222,17 +237,22 @@ func (a *Client) PcloudVolumegroupsGetDetails(params *PcloudVolumegroupsGetDetai
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsGetDetailsOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.getDetails: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -241,7 +261,7 @@ func (a *Client) PcloudVolumegroupsGetDetails(params *PcloudVolumegroupsGetDetai
 PcloudVolumegroupsGetall gets all volume groups
 */
 func (a *Client) PcloudVolumegroupsGetall(params *PcloudVolumegroupsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsGetallParams()
 	}
@@ -261,17 +281,22 @@ func (a *Client) PcloudVolumegroupsGetall(params *PcloudVolumegroupsGetallParams
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -280,7 +305,7 @@ func (a *Client) PcloudVolumegroupsGetall(params *PcloudVolumegroupsGetallParams
 PcloudVolumegroupsGetallDetails gets all volume groups with details
 */
 func (a *Client) PcloudVolumegroupsGetallDetails(params *PcloudVolumegroupsGetallDetailsParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsGetallDetailsOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsGetallDetailsParams()
 	}
@@ -300,17 +325,22 @@ func (a *Client) PcloudVolumegroupsGetallDetails(params *PcloudVolumegroupsGetal
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsGetallDetailsOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.getallDetails: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -319,7 +349,7 @@ func (a *Client) PcloudVolumegroupsGetallDetails(params *PcloudVolumegroupsGetal
 PcloudVolumegroupsPost creates a new volume group
 */
 func (a *Client) PcloudVolumegroupsPost(params *PcloudVolumegroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsPostAccepted, *PcloudVolumegroupsPostPartialContent, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsPostParams()
 	}
@@ -339,18 +369,22 @@ func (a *Client) PcloudVolumegroupsPost(params *PcloudVolumegroupsPostParams, au
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, nil, err
 	}
+
+	// several success responses have to be checked
 	switch value := result.(type) {
 	case *PcloudVolumegroupsPostAccepted:
 		return value, nil, nil
 	case *PcloudVolumegroupsPostPartialContent:
 		return nil, value, nil
 	}
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for p_cloud_volume_groups: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -359,7 +393,7 @@ func (a *Client) PcloudVolumegroupsPost(params *PcloudVolumegroupsPostParams, au
 PcloudVolumegroupsPut updates the volume group
 */
 func (a *Client) PcloudVolumegroupsPut(params *PcloudVolumegroupsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsPutAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsPutParams()
 	}
@@ -379,17 +413,22 @@ func (a *Client) PcloudVolumegroupsPut(params *PcloudVolumegroupsPutParams, auth
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsPutAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -398,7 +437,7 @@ func (a *Client) PcloudVolumegroupsPut(params *PcloudVolumegroupsPutParams, auth
 PcloudVolumegroupsRemoteCopyRelationshipsGet gets remote copy relationships of the volume belonging to volume group
 */
 func (a *Client) PcloudVolumegroupsRemoteCopyRelationshipsGet(params *PcloudVolumegroupsRemoteCopyRelationshipsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsRemoteCopyRelationshipsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsRemoteCopyRelationshipsGetParams()
 	}
@@ -418,17 +457,22 @@ func (a *Client) PcloudVolumegroupsRemoteCopyRelationshipsGet(params *PcloudVolu
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsRemoteCopyRelationshipsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.remoteCopyRelationships.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -437,7 +481,7 @@ func (a *Client) PcloudVolumegroupsRemoteCopyRelationshipsGet(params *PcloudVolu
 PcloudVolumegroupsStorageDetailsGet gets storage details of volume group
 */
 func (a *Client) PcloudVolumegroupsStorageDetailsGet(params *PcloudVolumegroupsStorageDetailsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVolumegroupsStorageDetailsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVolumegroupsStorageDetailsGetParams()
 	}
@@ -457,17 +501,22 @@ func (a *Client) PcloudVolumegroupsStorageDetailsGet(params *PcloudVolumegroupsS
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVolumegroupsStorageDetailsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.volumegroups.storageDetails.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

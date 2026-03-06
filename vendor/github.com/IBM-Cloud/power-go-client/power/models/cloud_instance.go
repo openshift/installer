@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -149,11 +150,15 @@ func (m *CloudInstance) validateLimits(formats strfmt.Registry) error {
 
 	if m.Limits != nil {
 		if err := m.Limits.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("limits")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("limits")
 			}
+
 			return err
 		}
 	}
@@ -192,11 +197,15 @@ func (m *CloudInstance) validatePvmInstances(formats strfmt.Registry) error {
 
 		if m.PvmInstances[i] != nil {
 			if err := m.PvmInstances[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -232,11 +241,15 @@ func (m *CloudInstance) validateUsage(formats strfmt.Registry) error {
 
 	if m.Usage != nil {
 		if err := m.Usage.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("usage")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("usage")
 			}
+
 			return err
 		}
 	}
@@ -271,11 +284,15 @@ func (m *CloudInstance) contextValidateLimits(ctx context.Context, formats strfm
 	if m.Limits != nil {
 
 		if err := m.Limits.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("limits")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("limits")
 			}
+
 			return err
 		}
 	}
@@ -294,11 +311,15 @@ func (m *CloudInstance) contextValidatePvmInstances(ctx context.Context, formats
 			}
 
 			if err := m.PvmInstances[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("pvmInstances" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -313,11 +334,15 @@ func (m *CloudInstance) contextValidateUsage(ctx context.Context, formats strfmt
 	if m.Usage != nil {
 
 		if err := m.Usage.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("usage")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("usage")
 			}
+
 			return err
 		}
 	}

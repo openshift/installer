@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -31,6 +32,9 @@ type NetworkUpdate struct {
 
 	// Replaces the current DNS Servers
 	DNSServers []string `json:"dnsServers"`
+
+	// network will support DHCP
+	EnableDHCP *bool `json:"enableDHCP,omitempty"`
 
 	// Replaces the current Gateway IP Address
 	Gateway *string `json:"gateway,omitempty"`
@@ -64,7 +68,7 @@ func (m *NetworkUpdate) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var networkUpdateTypeAdvertisePropEnum []interface{}
+var networkUpdateTypeAdvertisePropEnum []any
 
 func init() {
 	var res []string
@@ -106,7 +110,7 @@ func (m *NetworkUpdate) validateAdvertise(formats strfmt.Registry) error {
 	return nil
 }
 
-var networkUpdateTypeArpBroadcastPropEnum []interface{}
+var networkUpdateTypeArpBroadcastPropEnum []any
 
 func init() {
 	var res []string
@@ -160,11 +164,15 @@ func (m *NetworkUpdate) validateIPAddressRanges(formats strfmt.Registry) error {
 
 		if m.IPAddressRanges[i] != nil {
 			if err := m.IPAddressRanges[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -199,11 +207,15 @@ func (m *NetworkUpdate) contextValidateIPAddressRanges(ctx context.Context, form
 			}
 
 			if err := m.IPAddressRanges[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

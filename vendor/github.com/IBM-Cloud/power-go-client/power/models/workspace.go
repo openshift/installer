@@ -8,6 +8,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -105,11 +106,15 @@ func (m *Workspace) validateDetails(formats strfmt.Registry) error {
 
 	if m.Details != nil {
 		if err := m.Details.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("details")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("details")
 			}
+
 			return err
 		}
 	}
@@ -134,11 +139,15 @@ func (m *Workspace) validateLocation(formats strfmt.Registry) error {
 
 	if m.Location != nil {
 		if err := m.Location.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("location")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("location")
 			}
+
 			return err
 		}
 	}
@@ -164,7 +173,7 @@ func (m *Workspace) validateStatus(formats strfmt.Registry) error {
 	return nil
 }
 
-var workspaceTypeTypePropEnum []interface{}
+var workspaceTypeTypePropEnum []any
 
 func init() {
 	var res []string
@@ -230,11 +239,15 @@ func (m *Workspace) contextValidateDetails(ctx context.Context, formats strfmt.R
 	if m.Details != nil {
 
 		if err := m.Details.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("details")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("details")
 			}
+
 			return err
 		}
 	}
@@ -247,11 +260,15 @@ func (m *Workspace) contextValidateLocation(ctx context.Context, formats strfmt.
 	if m.Location != nil {
 
 		if err := m.Location.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("location")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("location")
 			}
+
 			return err
 		}
 	}

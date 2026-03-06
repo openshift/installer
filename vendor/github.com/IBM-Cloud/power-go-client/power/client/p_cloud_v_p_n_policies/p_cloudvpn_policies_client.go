@@ -85,7 +85,7 @@ PcloudIkepoliciesDelete deletes i k e policy
 Delete an IKE Policy (by its unique identifier)
 */
 func (a *Client) PcloudIkepoliciesDelete(params *PcloudIkepoliciesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIkepoliciesDeleteOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIkepoliciesDeleteParams()
 	}
@@ -105,17 +105,22 @@ func (a *Client) PcloudIkepoliciesDelete(params *PcloudIkepoliciesDeleteParams, 
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIkepoliciesDeleteOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ikepolicies.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -126,7 +131,7 @@ PcloudIkepoliciesGet gets the specified i k e policy
 Get an IKE Policy (by its unique identifier)
 */
 func (a *Client) PcloudIkepoliciesGet(params *PcloudIkepoliciesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIkepoliciesGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIkepoliciesGetParams()
 	}
@@ -146,17 +151,22 @@ func (a *Client) PcloudIkepoliciesGet(params *PcloudIkepoliciesGetParams, authIn
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIkepoliciesGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ikepolicies.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -167,7 +177,7 @@ PcloudIkepoliciesGetall gets all i k e policies
 List all IKE Policies with all attributes
 */
 func (a *Client) PcloudIkepoliciesGetall(params *PcloudIkepoliciesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIkepoliciesGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIkepoliciesGetallParams()
 	}
@@ -187,17 +197,22 @@ func (a *Client) PcloudIkepoliciesGetall(params *PcloudIkepoliciesGetallParams, 
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIkepoliciesGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ikepolicies.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -208,7 +223,7 @@ PcloudIkepoliciesPost adds i k e policy
 Add a new IKE Policy
 */
 func (a *Client) PcloudIkepoliciesPost(params *PcloudIkepoliciesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIkepoliciesPostOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIkepoliciesPostParams()
 	}
@@ -228,17 +243,22 @@ func (a *Client) PcloudIkepoliciesPost(params *PcloudIkepoliciesPostParams, auth
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIkepoliciesPostOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ikepolicies.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -249,7 +269,7 @@ PcloudIkepoliciesPut updates i k e policy
 update an IKE Policy (by its unique identifier)
 */
 func (a *Client) PcloudIkepoliciesPut(params *PcloudIkepoliciesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIkepoliciesPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIkepoliciesPutParams()
 	}
@@ -269,17 +289,22 @@ func (a *Client) PcloudIkepoliciesPut(params *PcloudIkepoliciesPutParams, authIn
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIkepoliciesPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ikepolicies.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -290,7 +315,7 @@ PcloudIpsecpoliciesDelete deletes IP sec policy
 Delete an IPSec Policy (by its unique identifier)
 */
 func (a *Client) PcloudIpsecpoliciesDelete(params *PcloudIpsecpoliciesDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIpsecpoliciesDeleteOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIpsecpoliciesDeleteParams()
 	}
@@ -310,17 +335,22 @@ func (a *Client) PcloudIpsecpoliciesDelete(params *PcloudIpsecpoliciesDeletePara
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIpsecpoliciesDeleteOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ipsecpolicies.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -331,7 +361,7 @@ PcloudIpsecpoliciesGet gets the specified IP sec policy
 Get an IPSec Policy (by its unique identifier)
 */
 func (a *Client) PcloudIpsecpoliciesGet(params *PcloudIpsecpoliciesGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIpsecpoliciesGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIpsecpoliciesGetParams()
 	}
@@ -351,17 +381,22 @@ func (a *Client) PcloudIpsecpoliciesGet(params *PcloudIpsecpoliciesGetParams, au
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIpsecpoliciesGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ipsecpolicies.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -372,7 +407,7 @@ PcloudIpsecpoliciesGetall gets all IP sec policies
 Get all IPSec Policies with all their attributes
 */
 func (a *Client) PcloudIpsecpoliciesGetall(params *PcloudIpsecpoliciesGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIpsecpoliciesGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIpsecpoliciesGetallParams()
 	}
@@ -392,17 +427,22 @@ func (a *Client) PcloudIpsecpoliciesGetall(params *PcloudIpsecpoliciesGetallPara
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIpsecpoliciesGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ipsecpolicies.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -413,7 +453,7 @@ PcloudIpsecpoliciesPost adds IP sec policy
 Add a new IPSec Policy
 */
 func (a *Client) PcloudIpsecpoliciesPost(params *PcloudIpsecpoliciesPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIpsecpoliciesPostOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIpsecpoliciesPostParams()
 	}
@@ -433,17 +473,22 @@ func (a *Client) PcloudIpsecpoliciesPost(params *PcloudIpsecpoliciesPostParams, 
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIpsecpoliciesPostOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ipsecpolicies.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -454,7 +499,7 @@ PcloudIpsecpoliciesPut updates IP sec policy
 update an IPSec Policy
 */
 func (a *Client) PcloudIpsecpoliciesPut(params *PcloudIpsecpoliciesPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudIpsecpoliciesPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudIpsecpoliciesPutParams()
 	}
@@ -474,17 +519,22 @@ func (a *Client) PcloudIpsecpoliciesPut(params *PcloudIpsecpoliciesPutParams, au
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudIpsecpoliciesPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.ipsecpolicies.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

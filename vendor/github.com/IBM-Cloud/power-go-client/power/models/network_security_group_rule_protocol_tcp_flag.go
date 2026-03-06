@@ -39,7 +39,7 @@ func (m *NetworkSecurityGroupRuleProtocolTCPFlag) Validate(formats strfmt.Regist
 	return nil
 }
 
-var networkSecurityGroupRuleProtocolTcpFlagTypeFlagPropEnum []interface{}
+var networkSecurityGroupRuleProtocolTcpFlagTypeFlagPropEnum []any
 
 func init() {
 	var res []string

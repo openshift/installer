@@ -7,11 +7,14 @@ package models
 
 import (
 	"context"
+	"encoding/json"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // NetworkUpdate network update
@@ -19,8 +22,19 @@ import (
 // swagger:model NetworkUpdate
 type NetworkUpdate struct {
 
+	// Indicates if the network is advertised externally of the workspace to PER and\or peer networks
+	// Enum: ["enable","disable"]
+	Advertise string `json:"advertise,omitempty"`
+
+	// Indicates if the ARP broadcast is enabled
+	// Enum: ["enable","disable"]
+	ArpBroadcast string `json:"arpBroadcast,omitempty"`
+
 	// Replaces the current DNS Servers
 	DNSServers []string `json:"dnsServers"`
+
+	// network will support DHCP
+	EnableDHCP *bool `json:"enableDHCP,omitempty"`
 
 	// Replaces the current Gateway IP Address
 	Gateway *string `json:"gateway,omitempty"`
@@ -36,6 +50,14 @@ type NetworkUpdate struct {
 func (m *NetworkUpdate) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateAdvertise(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateArpBroadcast(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateIPAddressRanges(formats); err != nil {
 		res = append(res, err)
 	}
@@ -43,6 +65,90 @@ func (m *NetworkUpdate) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+var networkUpdateTypeAdvertisePropEnum []any
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["enable","disable"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		networkUpdateTypeAdvertisePropEnum = append(networkUpdateTypeAdvertisePropEnum, v)
+	}
+}
+
+const (
+
+	// NetworkUpdateAdvertiseEnable captures enum value "enable"
+	NetworkUpdateAdvertiseEnable string = "enable"
+
+	// NetworkUpdateAdvertiseDisable captures enum value "disable"
+	NetworkUpdateAdvertiseDisable string = "disable"
+)
+
+// prop value enum
+func (m *NetworkUpdate) validateAdvertiseEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, networkUpdateTypeAdvertisePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *NetworkUpdate) validateAdvertise(formats strfmt.Registry) error {
+	if swag.IsZero(m.Advertise) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateAdvertiseEnum("advertise", "body", m.Advertise); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var networkUpdateTypeArpBroadcastPropEnum []any
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["enable","disable"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		networkUpdateTypeArpBroadcastPropEnum = append(networkUpdateTypeArpBroadcastPropEnum, v)
+	}
+}
+
+const (
+
+	// NetworkUpdateArpBroadcastEnable captures enum value "enable"
+	NetworkUpdateArpBroadcastEnable string = "enable"
+
+	// NetworkUpdateArpBroadcastDisable captures enum value "disable"
+	NetworkUpdateArpBroadcastDisable string = "disable"
+)
+
+// prop value enum
+func (m *NetworkUpdate) validateArpBroadcastEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, networkUpdateTypeArpBroadcastPropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *NetworkUpdate) validateArpBroadcast(formats strfmt.Registry) error {
+	if swag.IsZero(m.ArpBroadcast) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateArpBroadcastEnum("arpBroadcast", "body", m.ArpBroadcast); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -58,11 +164,15 @@ func (m *NetworkUpdate) validateIPAddressRanges(formats strfmt.Registry) error {
 
 		if m.IPAddressRanges[i] != nil {
 			if err := m.IPAddressRanges[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -97,11 +207,15 @@ func (m *NetworkUpdate) contextValidateIPAddressRanges(ctx context.Context, form
 			}
 
 			if err := m.IPAddressRanges[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("ipAddressRanges" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

@@ -39,7 +39,7 @@ func (m *CloudInitialization) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var cloudInitializationTypeVirtualOpticalDevicePropEnum []interface{}
+var cloudInitializationTypeVirtualOpticalDevicePropEnum []any
 
 func init() {
 	var res []string
