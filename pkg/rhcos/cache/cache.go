@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/h2non/filetype/matchers"
+	"github.com/klauspost/compress/zstd"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/thedevsaddam/retry"
@@ -82,7 +83,7 @@ func GetCacheDir(dataType, applicationName string) (string, error) {
 }
 
 // cacheFile puts data in the cache.
-func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err error) {
+func cacheFile(reader io.Reader, filePath string, sha256Checksum string, sourceName string) (err error) {
 	logrus.Debugf("Unpacking file into %q...", filePath)
 
 	flockPath := fmt.Sprintf("%s.lock", filePath)
@@ -140,10 +141,11 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 	// Detect whether we know how to decompress the file
 	// See http://golang.org/pkg/net/http/#DetectContentType for why we use 512
 	buf := make([]byte, 512)
-	_, err = reader.Read(buf)
+	n, err := io.ReadAtLeast(reader, buf, 1)
 	if err != nil {
 		return err
 	}
+	buf = buf[:n]
 
 	reader = io.MultiReader(bytes.NewReader(buf), reader)
 	switch {
@@ -162,6 +164,14 @@ func cacheFile(reader io.Reader, filePath string, sha256Checksum string) (err er
 			return err
 		}
 		reader = uncompressor
+	case strings.HasSuffix(sourceName, ".zst"):
+		logrus.Debug("decompressing the image archive as zstd")
+		uncompressor, err := zstd.NewReader(reader)
+		if err != nil {
+			return err
+		}
+		defer uncompressor.Close()
+		reader = uncompressor.IOReadCloser()
 	default:
 		// No need for an interposer otherwise
 		logrus.Debug("no known archive format detected for image, assuming no decompression necessary")
@@ -212,7 +222,7 @@ type urlWithIntegrity struct {
 
 func (u *urlWithIntegrity) uncompressedName() string {
 	n := filepath.Base(u.location.Path)
-	return strings.TrimSuffix(strings.TrimSuffix(n, ".gz"), ".xz")
+	return strings.TrimSuffix(strings.TrimSuffix(strings.TrimSuffix(n, ".gz"), ".xz"), ".zst")
 }
 
 // download obtains a file from a given URL, puts it in the cache folder, defined by dataType parameter,
@@ -251,7 +261,7 @@ func (u *urlWithIntegrity) download(dataType, applicationName string) (string, e
 		}
 
 		filePath = filepath.Join(cacheDir, fileName)
-		return cacheFile(resp.Body, filePath, u.uncompressedSHA256)
+		return cacheFile(resp.Body, filePath, u.uncompressedSHA256, filepath.Base(u.location.Path))
 	})
 	if err != nil {
 		return "", err
