@@ -4,12 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"google.golang.org/api/googleapi"
+	"k8s.io/apimachinery/pkg/util/wait"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/api/option"
 	corev1 "k8s.io/api/core/v1"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
 	capg "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -277,24 +281,112 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 		return nil
 	}
 
+	gcpCluster := &capg.GCPCluster{}
+	key := client.ObjectKey{
+		Name:      in.Metadata.InfraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := in.Client.Get(ctx, key, gcpCluster); err != nil {
+		return fmt.Errorf("failed to get GCPCluster: %w", err)
+	}
+
 	projectID := in.Metadata.GCP.ProjectID
 	if in.Metadata.GCP.NetworkProjectID != "" {
 		projectID = in.Metadata.GCP.NetworkProjectID
 	}
-	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID, in.Metadata.GCP.Endpoint); err != nil {
-		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
+	bootstrapFirewallName := fmt.Sprintf("%s-bootstrap-in-ssh", in.Metadata.InfraID)
+
+	timeout := 15 * time.Minute
+	startTime := time.Now()
+	untilTime := startTime.Add(timeout)
+	timezone, _ := untilTime.Zone()
+	logrus.Debugf("Waiting up to %v (until %v %s) for bootstrap SSH rule to be destroyed...", timeout, untilTime.Format(time.Kitchen), timezone)
+	if err := wait.PollUntilContextTimeout(ctx, 15*time.Second, timeout, true,
+		func(ctx context.Context) (bool, error) {
+			if err := removeFirewallRuleFromSpec(ctx, in.Client, in.Metadata.InfraID, bootstrapFirewallName); err != nil {
+				// If the cluster object has been modified between Get and Update, k8s client will refuse to update it.
+				// In that case, we need to retry.
+				if k8serrors.IsConflict(err) {
+					logrus.Debugf("GCPCluster update conflict during SSH rule removal: %v", err)
+					return false, nil
+				}
+				return true, fmt.Errorf("failed to remove bootstrap SSH rule: %w", err)
+			}
+			return isFirewallRuleGone(ctx, projectID, bootstrapFirewallName, in.Metadata.GCP.Endpoint)
+		},
+	); err != nil {
+		if wait.Interrupted(err) {
+			return fmt.Errorf("bootstrap ssh rule was not removed within %v: %w", timeout, err)
+		}
+		return fmt.Errorf("unable to remove bootstrap ssh rule: %w", err)
+	}
+	logrus.Debugf("Completed removing bootstrap SSH rule after %v", time.Since(startTime))
+
+	//if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID, in.Metadata.GCP.Endpoint); err != nil {
+	//	return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
+	//}
+
+	return nil
+}
+
+// removeSSHRule removes the SSH rule for accessing the bootstrap node
+// by removing the rule from the cluster spec and updating the object.
+func removeFirewallRuleFromSpec(ctx context.Context, cl client.Client, infraID, firewallRuleName string) error {
+	gcpCluster := &capg.GCPCluster{}
+	key := client.ObjectKey{
+		Name:      infraID,
+		Namespace: capiutils.Namespace,
+	}
+	if err := cl.Get(ctx, key, gcpCluster); err != nil {
+		return fmt.Errorf("failed to get GCPCluster: %w", err)
 	}
 
-	if in.Metadata.GCP.NetworkProjectID == "" {
-		// Remove the overly permissive firewall rules created by CAPG that are redundant with those created by installer
-		// These are not created in a shared VPC installation
-		logrus.Infof("Removing firewall rules created by cluster-api-provider-gcp")
-		if err := removeCAPGFirewallRules(ctx, in.Metadata.InfraID, in.Metadata.GCP.ProjectID, in.Metadata.GCP.Endpoint); err != nil {
-			return fmt.Errorf("failed to remove firewall rules created by cluster-api-provider-gcp: %w", err)
+	firewallRuleFound := false
+	firewallRules := []capg.FirewallRule{}
+	for _, rule := range gcpCluster.Spec.Network.Firewall.FirewallRules {
+		logrus.Warnf("Found firewall rule %s in GCP Cluster %s", rule.Name, infraID)
+		if rule.Name == firewallRuleName {
+			firewallRuleFound = true
+			continue
 		}
+		firewallRules = append(firewallRules, rule)
+	}
+
+	// The spec has not been updated yet
+	if firewallRuleFound {
+		logrus.Debugf("Setting firewall rules and updating ...")
+		gcpCluster.Spec.Network.Firewall.FirewallRules = firewallRules
+		if err := cl.Update(ctx, gcpCluster); err != nil {
+			return fmt.Errorf("failed to update GCPCluster during bootstrap destroy: %w", err)
+		}
+		logrus.Debug("Updated GCPCluster to remove bootstrap SSH rule")
 	}
 
 	return nil
+}
+
+func isFirewallRuleGone(ctx context.Context, projectID, firewallRuleName string, endpoint *gcptypes.PSCEndpoint) (bool, error) {
+	computeOpts := []option.ClientOption{}
+	if gcptypes.ShouldUseEndpointForInstaller(endpoint) {
+		computeOpts = append(computeOpts, icgcp.CreateEndpointOption(endpoint.Name, icgcp.ServiceNameGCPCompute))
+	}
+	computeClient, err := icgcp.GetComputeService(ctx, computeOpts...)
+	if err != nil {
+		return false, fmt.Errorf("failed to create compute client: %w", err)
+	}
+
+	logrus.Debugf("Searching for firewall rule %s", firewallRuleName)
+	// Call Get to check if the rule exists
+	_, err = computeClient.Firewalls.Get(projectID, firewallRuleName).Context(ctx).Do()
+	if err != nil {
+		if gErr, ok := err.(*googleapi.Error); ok && gErr.Code == 404 {
+			logrus.Debugf("Firewall rule %s does not exist.", firewallRuleName)
+			return true, nil
+		} else {
+			return false, err
+		}
+	}
+	return false, nil
 }
 
 // PostProvision should be called to add or update and GCP resources after provisioning has completed.
