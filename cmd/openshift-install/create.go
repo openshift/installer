@@ -36,6 +36,7 @@ import (
 	targetassets "github.com/openshift/installer/pkg/asset/targets"
 	destroybootstrap "github.com/openshift/installer/pkg/destroy/bootstrap"
 	timer "github.com/openshift/installer/pkg/metrics/timer"
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/baremetal"
@@ -211,7 +212,15 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 		logrus.Exit(command.ExitCodeInstallFailed)
 	}
 
-	err = command.WaitForInstallComplete(ctx, config, assetStore)
+	// Load install-config to determine wait options
+	var ic *types.InstallConfig
+	if installConfigAsset, err := assetStore.Load(&installconfig.InstallConfig{}); err == nil && installConfigAsset != nil {
+		ic = installConfigAsset.(*installconfig.InstallConfig).Config
+	}
+
+	options := getWaitOptionsFromInstallConfig(ic)
+
+	err = command.WaitForInstallComplete(ctx, config, options)
 	if err != nil {
 		if err2 := command.LogClusterOperatorConditions(ctx, config); err2 != nil {
 			logrus.Error("Attempted to gather ClusterOperator status after installation failure: ", err2)

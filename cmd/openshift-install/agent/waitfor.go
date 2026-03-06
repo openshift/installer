@@ -12,7 +12,6 @@ import (
 	"github.com/openshift/installer/cmd/openshift-install/command"
 	agentpkg "github.com/openshift/installer/pkg/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
-	assetstore "github.com/openshift/installer/pkg/asset/store"
 )
 
 // NewWaitForCmd create the commands for waiting the completion of the agent based cluster installation.
@@ -111,13 +110,7 @@ func newWaitForInstallCompleteCmd() *cobra.Command {
 				handleBootstrapError(ctx, cluster.API.Kube.Config, cluster, err)
 			}
 
-			assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
-			if err != nil {
-				logrus.Error(err)
-				logrus.Exit(command.ExitCodeInstallFailed)
-			}
-
-			if err = command.WaitForInstallComplete(ctx, cluster.API.Kube.Config, assetStore); err != nil {
+			if err = command.WaitForInstallComplete(ctx, cluster.API.Kube.Config, command.WaitOptions{}); err != nil {
 				logrus.Error(err)
 				err2 := command.LogClusterOperatorConditions(ctx, cluster.API.Kube.Config)
 				if err2 != nil {
