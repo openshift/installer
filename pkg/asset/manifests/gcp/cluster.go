@@ -138,10 +138,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	firewallRules := []capg.FirewallRule{}
-	managementPolicy := capg.RulesManagementUnmanaged
 	if installConfig.Config.GCP.FirewallRulesManagement != gcp.UnmanagedFirewallRules {
-		managementPolicy = capg.RulesManagementManaged
-
 		firewallRules = append(firewallRules, createBootstrapFirewallRuleForCAPG(installConfig, clusterID)...)
 		firewallRules = append(firewallRules, createFirewallRulesForCAPG(installConfig, clusterID)...)
 	}
@@ -160,7 +157,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Subnets:               subnets,
 				AutoCreateSubnetworks: ptr.To(autoCreateSubnets),
 				Firewall: capg.FirewallSpec{
-					DefaultRulesManagement: managementPolicy,
+					// The CAPG firewall rules will always be unmanaged. This indicates that the
+					// two rules will not be created. The install-config value does not change
+					// this value, it only changes whether we provide firewall rules for
+					// CAPG to create.
+					DefaultRulesManagement: capg.RulesManagementUnmanaged,
 					FirewallRules:          firewallRules,
 				},
 			},

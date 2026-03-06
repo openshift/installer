@@ -32,7 +32,7 @@ var _ clusterapi.PreProvider = (*Provider)(nil)
 var _ clusterapi.IgnitionProvider = (*Provider)(nil)
 var _ clusterapi.InfraReadyProvider = (*Provider)(nil)
 var _ clusterapi.PostProvider = (*Provider)(nil)
-var _ clusterapi.BootstrapDestroyer = (*Provider)(nil)
+var _ clusterapi.PostDestroyer = (*Provider)(nil)
 
 // Name returns the name for the platform.
 func (p Provider) Name() string {
@@ -256,8 +256,10 @@ func (p Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput)
 	return nil
 }
 
-// DestroyBootstrap destroys the temporary bootstrap resources.
-func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapDestroyInput) error {
+// PostDestroy destroys the temporary bootstrap resources after they are no longer needed. The
+// resources will remain until the cluster-api controllers have shutdown to ensure that the
+// resources are not re-created by the CAPG reconciler.
+func (p Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerInput) error {
 	logrus.Warnf("Destroying GCP Bootstrap Resources")
 	storageOpts := []option.ClientOption{}
 	endpoint := in.Metadata.GCP.Endpoint
@@ -283,15 +285,6 @@ func (p Provider) DestroyBootstrap(ctx context.Context, in clusterapi.BootstrapD
 	}
 	if err := removeBootstrapFirewallRules(ctx, in.Metadata.InfraID, projectID, in.Metadata.GCP.Endpoint); err != nil {
 		return fmt.Errorf("failed to remove bootstrap firewall rules: %w", err)
-	}
-
-	if in.Metadata.GCP.NetworkProjectID == "" {
-		// Remove the overly permissive firewall rules created by CAPG that are redundant with those created by installer
-		// These are not created in a shared VPC installation
-		logrus.Infof("Removing firewall rules created by cluster-api-provider-gcp")
-		if err := removeCAPGFirewallRules(ctx, in.Metadata.InfraID, in.Metadata.GCP.ProjectID, in.Metadata.GCP.Endpoint); err != nil {
-			return fmt.Errorf("failed to remove firewall rules created by cluster-api-provider-gcp: %w", err)
-		}
 	}
 
 	return nil

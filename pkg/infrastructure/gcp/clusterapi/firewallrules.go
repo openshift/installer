@@ -43,23 +43,3 @@ func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string
 	firewallName := fmt.Sprintf("%s-bootstrap-in-ssh", infraID)
 	return deleteFirewallRule(ctx, svc, firewallName, projectID)
 }
-
-// removeCAPGFirewallRules removes the overly permissive firewall rules created by cluster-api-provider-gcp.
-func removeCAPGFirewallRules(ctx context.Context, infraID, projectID string, endpoint *gcptypes.PSCEndpoint) error {
-	opts := []option.ClientOption{option.WithScopes(compute.CloudPlatformScope)}
-	if gcptypes.ShouldUseEndpointForInstaller(endpoint) {
-		opts = append(opts, gcpconfig.CreateEndpointOption(endpoint.Name, gcpconfig.ServiceNameGCPCompute))
-	}
-	svc, err := gcpconfig.GetComputeService(ctx, opts...)
-	if err != nil {
-		return err
-	}
-
-	firewallName := fmt.Sprintf("allow-%s-cluster", infraID)
-	if err := deleteFirewallRule(ctx, svc, firewallName, projectID); err != nil {
-		return err
-	}
-
-	firewallName = fmt.Sprintf("allow-%s-healthchecks", infraID)
-	return deleteFirewallRule(ctx, svc, firewallName, projectID)
-}
