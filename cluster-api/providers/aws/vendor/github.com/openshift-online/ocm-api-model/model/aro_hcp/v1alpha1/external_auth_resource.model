@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024 Red Hat, Inc.
+Copyright (c) 2025 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,21 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Manages a specific external authentication provider for an ARO HCP cluster.
+// Manages a specific external authentication.
 resource ExternalAuth {
-    // Retrieves the details of an external authentication provider.
-    method Get {
-        out Body ExternalAuth
-    }
+	// Retrieves the details of an external authentication.
+	method Get {
+		out Body ExternalAuth
+	}
 
-    // Updates the external authentication provider.
-    @go(name="Update")
-    method AsyncUpdate {
-        in out Body ExternalAuth
-    }
+	// Updates the external authentication.
+	@go(name="Update")
+	method AsyncUpdate {
+		in out Body ExternalAuth
+	}
 
-    // Deletes the external authentication provider.
-    @go(name="Delete")
-    method AsyncDelete {
-    }
+	// Deletes the external authentication.
+	@go(name="Delete")
+	method AsyncDelete {
+
+	}
 }

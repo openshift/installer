@@ -189,11 +189,11 @@ func NodegroupUpdateconfigToSDK(updateConfig *expinfrav1.UpdateConfig) (*ekstype
 
 	converted := &ekstypes.NodegroupUpdateConfig{}
 	if updateConfig.MaxUnavailable != nil {
-		//nolint:gosec,G115 // Added golint exception as there is a kubebuilder validation configured
+		//nolint:G115 // Added golint exception as there is a kubebuilder validation configured
 		converted.MaxUnavailable = aws.Int32(int32(*updateConfig.MaxUnavailable))
 	}
 	if updateConfig.MaxUnavailablePercentage != nil {
-		//nolint:gosec,G115 // Added golint exception as there is a kubebuilder validation configured
+		//nolint:G115 // Added golint exception as there is a kubebuilder validation configured
 		converted.MaxUnavailablePercentage = aws.Int32(int32(*updateConfig.MaxUnavailablePercentage))
 	}
 

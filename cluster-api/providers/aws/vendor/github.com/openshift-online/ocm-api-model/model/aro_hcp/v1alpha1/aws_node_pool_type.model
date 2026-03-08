@@ -1,0 +1,54 @@
+/*
+Copyright (c) 2022 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// Representation of aws node pool specific parameters.
+class AWSNodePool {
+    // InstanceType is an ec2 instance type for node instances (e.g. m5.large).
+    InstanceType String
+
+    // InstanceProfile is the AWS EC2 instance profile, which is a container for an IAM role that the EC2 instance uses.
+    InstanceProfile String
+
+    // Optional keys and values that the installer will add as tags to all AWS resources it creates.
+    //
+    // AWS tags must conform to the following standards:
+    // - Each resource may have a maximum of 25 tags
+    // - Tags beginning with "aws:" are reserved for system use and may not be set
+    // - Tag keys may be between 1 and 128 characters in length
+    // - Tag values may be between 0 and 256 characters in length
+    // - Tags may only contain letters, numbers, spaces, and the following characters: [_ . : / = + - @]
+    Tags [String]String
+
+    // Associates nodepool subnets with AWS Outposts.
+    SubnetOutposts [String]String
+
+    // Associates nodepool availability zones with zone types (e.g. wavelength, local).
+    AvailabilityZoneTypes [String]String
+
+    // Additional AWS Security Groups to be added node pool.
+    AdditionalSecurityGroupIds []String
+
+    // Which Ec2MetadataHttpTokens to use for metadata service interaction options for EC2 instances
+    @json(name = "ec2_metadata_http_tokens")
+    Ec2MetadataHttpTokens Ec2MetadataHttpTokens    
+    
+    // AWS Volume specification to be used to set custom worker disk size
+    RootVolume AWSVolume
+
+    // If present it defines the AWS Capacity Reservation used for this NodePool
+    @json(name = "capacity_reservation")
+    CapacityReservation AWSCapacityReservation
+}

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2024 Red Hat, Inc.
+Copyright (c) 2025 Red Hat, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,32 +14,33 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-// Manages the collection of external authentication providers defined for an ARO HCP cluster.
+// Manages the collection of external authentication defined for a ARO HCP cluster.
 resource ExternalAuths {
-  method List {
-    // Index of the requested page, where one corresponds to the first page.
-    in out Page Integer = 1
+	method List {
+		// Index of the requested page, where one corresponds to the first page.
+		in out Page Integer = 1
 
-    // Number of items contained in the returned page.
-    in out Size Integer = 100
+		// Number of items contained in the returned page.
+		in out Size Integer = 100
 
-    // Total number of items of the collection.
-    out Total Integer
+		// Total number of items of the collection.
+		out Total Integer
 
-    // Retrieved list of external authentication providers.
-    out Items []ExternalAuth
-  }
+		// Retrieved list of external authentications.
+		out Items []ExternalAuth
+		}
 
-  // Adds a new external authentication provider to the cluster.
-  @go(name="Add")
-  method AsyncAdd {
-    // Description of the external authentication provider.
-    in out Body ExternalAuth
-  }
+		// Adds a new authentication to the cluster.
+		@go(name="Add")
+		method AsyncAdd {
 
-  // Reference to the resource that manages a specific external authentication provider.
-  locator ExternalAuth {
-    target ExternalAuth
-    variable ID
-  }
+		// Description of the external authentication.
+		in out Body ExternalAuth
+	}
+
+	// Reference to the service that manages a specific external authentication.
+	locator ExternalAuth {
+		target ExternalAuth
+		variable ID
+	}
 }

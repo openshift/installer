@@ -96,7 +96,9 @@ type ListEntitiesForPolicyInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful ListEntitiesForPolicy request.
+// Contains the response to a successful [ListEntitiesForPolicy] request.
+//
+// [ListEntitiesForPolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListEntitiesForPolicy.html
 type ListEntitiesForPolicyOutput struct {
 
 	// A flag that indicates whether there are more items to return. If your results
@@ -169,6 +171,9 @@ func (c *Client) addOperationListEntitiesForPolicyMiddlewares(stack *middleware.
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -185,6 +190,9 @@ func (c *Client) addOperationListEntitiesForPolicyMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpListEntitiesForPolicyValidationMiddleware(stack); err != nil {
@@ -206,6 +214,15 @@ func (c *Client) addOperationListEntitiesForPolicyMiddlewares(stack *middleware.
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

@@ -271,6 +271,52 @@ type RosaControlPlaneSpec struct { //nolint: maligned
 	// for the ROSA HCP cluster.
 	// +optional
 	ROSANetworkRef *corev1.LocalObjectReference `json:"rosaNetworkRef,omitempty"`
+
+	// cloudWatchlogForwarder set the cloudWatch log forward config for applications and groupVersions.
+	// +optional
+	CloudWatchLogForwarder *CloudWatchLogForwarderConfig `json:"cloudWatchlogForwarder,omitempty"`
+
+	// s3LogForwarder set the AWS S3 log forward config for applications and groupVersions.
+	// +optional
+	S3LogForwarder *S3LogForwarderConfig `json:"s3LogForwarder,omitempty"`
+}
+
+// CloudWatchLogForwarderConfig present the cloudWatch log forward config for applications and groupVersions.
+type CloudWatchLogForwarderConfig struct {
+	// applications list included in the groupLog Ids ex; for groupLog api allowed applications as audit-webhook.
+	// +optional
+	Applications []string `json:"applications,omitempty"`
+
+	// groupLogIDs is list of available groupLog Ids ex; api, authentication, controller manager, scheduler
+	// +optional
+	GroupLogIDs []string `json:"groupLogIDs,omitempty"`
+
+	// cloudWatchLogRoleArn is the ARN of the IAM CloudWatch role for log distribution.
+	// +optional
+	CloudWatchLogRoleArn string `json:"cloudWatchLogRoleArn,omitempty"`
+
+	// cloudWatchLogGroupName is the name of the CloudWatch log group.
+	// +optional
+	CloudWatchLogGroupName string `json:"cloudWatchLogGroupName,omitempty"`
+}
+
+// S3LogForwarderConfig present the AWS S3 log forward config for applications and groupVersions.
+type S3LogForwarderConfig struct {
+	// applications list included in the groupLog Ids ex; for groupLog api allowed applications as audit-webhook.
+	// +optional
+	Applications []string `json:"applications,omitempty"`
+
+	// groupLogIDs is list of available groupLog Ids ex; api, authentication, controller manager, scheduler
+	// +optional
+	GroupLogIDs []string `json:"groupLogIDs,omitempty"`
+
+	// s3ConfigBucketName is the name of the S3 bucket
+	// +optional
+	S3ConfigBucketName string `json:"s3ConfigBucketName,omitempty"`
+
+	// s3ConfigBucketPrefix is the prefix to use for objects stored in the S3 bucket.
+	// +optional
+	S3ConfigBucketPrefix string `json:"s3ConfigBucketPrefix,omitempty"`
 }
 
 // AutoNode set the AutoNode mode and AutoNode role ARN.
@@ -397,7 +443,7 @@ type DefaultMachinePoolSpec struct {
 
 // AutoScaling specifies scaling options.
 type AutoScaling struct {
-	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Minimum=0
 	MinReplicas int `json:"minReplicas,omitempty"`
 	// +kubebuilder:validation:Minimum=1
 	MaxReplicas int `json:"maxReplicas,omitempty"`

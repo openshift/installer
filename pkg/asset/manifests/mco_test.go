@@ -12,7 +12,9 @@ import (
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	"github.com/openshift/installer/pkg/types/gcp"
+	"github.com/openshift/installer/pkg/types/vsphere"
 )
 
 func TestGenerateMCO(t *testing.T) {
@@ -48,6 +50,31 @@ func TestGenerateMCO(t *testing.T) {
 		{
 			name:          "gcp with a custom compute image disables mco management",
 			installConfig: icBuild.build(icBuild.withGCPComputeAMI()),
+			expectedMCO:   mcoBuild.build(mcoBuild.withComputeBootImageMgmtDisabled()),
+		},
+		{
+			name:          "vanilla azure produces no mco cfg",
+			installConfig: icBuild.build(icBuild.forAzure()),
+			expectedMCO:   nil,
+		},
+		{
+			name:          "azure with a custom compute image disables mco management",
+			installConfig: icBuild.build(icBuild.withAzureComputeOSImage()),
+			expectedMCO:   mcoBuild.build(mcoBuild.withComputeBootImageMgmtDisabled()),
+		},
+		{
+			name:          "vanilla vsphere produces no mco cfg",
+			installConfig: icBuild.build(icBuild.forVSphere()),
+			expectedMCO:   nil,
+		},
+		{
+			name:          "vsphere with a custom cluster OS image disables mco management",
+			installConfig: icBuild.build(icBuild.withVSphereClusterOSImage()),
+			expectedMCO:   mcoBuild.build(mcoBuild.withComputeBootImageMgmtDisabled()),
+		},
+		{
+			name:          "vsphere with a failuredomain template disables mco management",
+			installConfig: icBuild.build(icBuild.withVSphereFailureDomainTemplate()),
 			expectedMCO:   mcoBuild.build(mcoBuild.withComputeBootImageMgmtDisabled()),
 		},
 	}
@@ -164,6 +191,46 @@ func (b icBuildNamespace) withGCPComputeAMI() icOption {
 							Project: "myMostFavoriteProject",
 						},
 					},
+				},
+			},
+		}
+	}
+}
+
+func (b icBuildNamespace) withAzureComputeOSImage() icOption {
+	return func(ic *types.InstallConfig) {
+		b.forAzure()(ic)
+		ic.Compute = []types.MachinePool{
+			{
+				Platform: types.MachinePoolPlatform{
+					Azure: &azuretypes.MachinePool{
+						OSImage: azuretypes.OSImage{
+							Publisher: "RedHat",
+							Offer:     "rhcos",
+							SKU:       "rhcos",
+							Version:   "latest",
+						},
+					},
+				},
+			},
+		}
+	}
+}
+
+func (b icBuildNamespace) withVSphereClusterOSImage() icOption {
+	return func(ic *types.InstallConfig) {
+		b.forVSphere()(ic)
+		ic.VSphere.ClusterOSImage = "https://example.com/rhcos.ova"
+	}
+}
+
+func (b icBuildNamespace) withVSphereFailureDomainTemplate() icOption {
+	return func(ic *types.InstallConfig) {
+		b.forVSphere()(ic)
+		ic.VSphere.FailureDomains = []vsphere.FailureDomain{
+			{
+				Topology: vsphere.Topology{
+					Template: "rhcos-template",
 				},
 			},
 		}

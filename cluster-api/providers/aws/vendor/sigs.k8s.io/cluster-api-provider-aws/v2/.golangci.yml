@@ -298,6 +298,38 @@ linters:
         # This rule warns when initialism, variable or package naming conventions are not followed.
         text: "var-naming: don't use underscores in Go names"
       - linters:
+          - revive
+        path: 'exp/utils/*'
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        path: 'cmd/clusterawsadm/cmd/ami/common'
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        path: 'cmd/clusterawsadm/cmd/util'
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        path: 'pkg/utils'
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        path: 'pkg/cloud/services/common/'
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        path: 'test/e2e/shared/'
+        text: 'var-naming: avoid meaningless package names'
+      - linters:
+          - revive
+        text: 'avoid package names that conflict with Go standard library package names'
+        path: 'pkg/internal/bytes/'
+      - linters:
+          - revive
+        text: 'avoid package names that conflict with Go standard library package names'
+        path: 'pkg/hash/'
+      - linters:
           - unparam
         text: always receives
       - path: _test\.go
@@ -330,6 +362,9 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019: "sigs.k8s.io/cluster-api/(.*)" is deprecated: This package is deprecated and is going to be removed when support for v1beta1 will be dropped.'
+      - linters:
+          - staticcheck
+        text: "s.scope.ControlPlaneLoadBalancer is deprecated"
     paths:
       - third_party$
       - builtin$

@@ -158,7 +158,9 @@ type UploadServerCertificateInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful UploadServerCertificate request.
+// Contains the response to a successful [UploadServerCertificate] request.
+//
+// [UploadServerCertificate]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_UploadServerCertificate.html
 type UploadServerCertificateOutput struct {
 
 	// The meta information of the uploaded server certificate without its certificate
@@ -221,6 +223,9 @@ func (c *Client) addOperationUploadServerCertificateMiddlewares(stack *middlewar
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -237,6 +242,9 @@ func (c *Client) addOperationUploadServerCertificateMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpUploadServerCertificateValidationMiddleware(stack); err != nil {
@@ -258,6 +266,15 @@ func (c *Client) addOperationUploadServerCertificateMiddlewares(stack *middlewar
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

@@ -47,6 +47,8 @@ import (
 // record set in the list whose name is greater than or equal to Name , and whose
 // type is greater than or equal to Type .
 //
+// Type is only used to sort between records with the same record Name.
+//
 // # Resource record sets that are PENDING
 //
 // This action returns the most current version of the records. This includes
@@ -255,6 +257,9 @@ func (c *Client) addOperationListResourceRecordSetsMiddlewares(stack *middleware
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = addOpListResourceRecordSetsValidationMiddleware(stack); err != nil {
 		return err
 	}
@@ -279,16 +284,13 @@ func (c *Client) addOperationListResourceRecordSetsMiddlewares(stack *middleware
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeStart(stack); err != nil {
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanInitializeEnd(stack); err != nil {
+	if err = addInterceptAttempt(stack, options); err != nil {
 		return err
 	}
-	if err = addSpanBuildRequestStart(stack); err != nil {
-		return err
-	}
-	if err = addSpanBuildRequestEnd(stack); err != nil {
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

@@ -3618,6 +3618,13 @@ func awsAwsquery_serializeDocumentAction(v *types.Action, value query.Value) err
 		}
 	}
 
+	if v.JwtValidationConfig != nil {
+		objectKey := object.Key("JwtValidationConfig")
+		if err := awsAwsquery_serializeDocumentJwtValidationActionConfig(v.JwtValidationConfig, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.Order != nil {
 		objectKey := object.Key("Order")
 		objectKey.Integer(*v.Order)
@@ -3897,9 +3904,30 @@ func awsAwsquery_serializeDocumentHostHeaderConditionConfig(v *types.HostHeaderC
 	object := value.Object()
 	_ = object
 
+	if v.RegexValues != nil {
+		objectKey := object.Key("RegexValues")
+		if err := awsAwsquery_serializeDocumentListOfString(v.RegexValues, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.Values != nil {
 		objectKey := object.Key("Values")
 		if err := awsAwsquery_serializeDocumentListOfString(v.Values, objectKey); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func awsAwsquery_serializeDocumentHostHeaderRewriteConfig(v *types.HostHeaderRewriteConfig, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.Rewrites != nil {
+		objectKey := object.Key("Rewrites")
+		if err := awsAwsquery_serializeDocumentRewriteConfigList(v.Rewrites, objectKey); err != nil {
 			return err
 		}
 	}
@@ -3914,6 +3942,13 @@ func awsAwsquery_serializeDocumentHttpHeaderConditionConfig(v *types.HttpHeaderC
 	if v.HttpHeaderName != nil {
 		objectKey := object.Key("HttpHeaderName")
 		objectKey.String(*v.HttpHeaderName)
+	}
+
+	if v.RegexValues != nil {
+		objectKey := object.Key("RegexValues")
+		if err := awsAwsquery_serializeDocumentListOfString(v.RegexValues, objectKey); err != nil {
+			return err
+		}
 	}
 
 	if v.Values != nil {
@@ -3947,6 +3982,76 @@ func awsAwsquery_serializeDocumentIpamPools(v *types.IpamPools, value query.Valu
 	if v.Ipv4IpamPoolId != nil {
 		objectKey := object.Key("Ipv4IpamPoolId")
 		objectKey.String(*v.Ipv4IpamPoolId)
+	}
+
+	return nil
+}
+
+func awsAwsquery_serializeDocumentJwtValidationActionAdditionalClaim(v *types.JwtValidationActionAdditionalClaim, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if len(v.Format) > 0 {
+		objectKey := object.Key("Format")
+		objectKey.String(string(v.Format))
+	}
+
+	if v.Name != nil {
+		objectKey := object.Key("Name")
+		objectKey.String(*v.Name)
+	}
+
+	if v.Values != nil {
+		objectKey := object.Key("Values")
+		if err := awsAwsquery_serializeDocumentJwtValidationActionAdditionalClaimValues(v.Values, objectKey); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func awsAwsquery_serializeDocumentJwtValidationActionAdditionalClaims(v []types.JwtValidationActionAdditionalClaim, value query.Value) error {
+	array := value.Array("member")
+
+	for i := range v {
+		av := array.Value()
+		if err := awsAwsquery_serializeDocumentJwtValidationActionAdditionalClaim(&v[i], av); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func awsAwsquery_serializeDocumentJwtValidationActionAdditionalClaimValues(v []string, value query.Value) error {
+	array := value.Array("member")
+
+	for i := range v {
+		av := array.Value()
+		av.String(v[i])
+	}
+	return nil
+}
+
+func awsAwsquery_serializeDocumentJwtValidationActionConfig(v *types.JwtValidationActionConfig, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.AdditionalClaims != nil {
+		objectKey := object.Key("AdditionalClaims")
+		if err := awsAwsquery_serializeDocumentJwtValidationActionAdditionalClaims(v.AdditionalClaims, objectKey); err != nil {
+			return err
+		}
+	}
+
+	if v.Issuer != nil {
+		objectKey := object.Key("Issuer")
+		objectKey.String(*v.Issuer)
+	}
+
+	if v.JwksEndpoint != nil {
+		objectKey := object.Key("JwksEndpoint")
+		objectKey.String(*v.JwksEndpoint)
 	}
 
 	return nil
@@ -4125,6 +4230,13 @@ func awsAwsquery_serializeDocumentPathPatternConditionConfig(v *types.PathPatter
 	object := value.Object()
 	_ = object
 
+	if v.RegexValues != nil {
+		objectKey := object.Key("RegexValues")
+		if err := awsAwsquery_serializeDocumentListOfString(v.RegexValues, objectKey); err != nil {
+			return err
+		}
+	}
+
 	if v.Values != nil {
 		objectKey := object.Key("Values")
 		if err := awsAwsquery_serializeDocumentListOfString(v.Values, objectKey); err != nil {
@@ -4284,6 +4396,35 @@ func awsAwsquery_serializeDocumentRevocationIds(v []int64, value query.Value) er
 	return nil
 }
 
+func awsAwsquery_serializeDocumentRewriteConfig(v *types.RewriteConfig, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.Regex != nil {
+		objectKey := object.Key("Regex")
+		objectKey.String(*v.Regex)
+	}
+
+	if v.Replace != nil {
+		objectKey := object.Key("Replace")
+		objectKey.String(*v.Replace)
+	}
+
+	return nil
+}
+
+func awsAwsquery_serializeDocumentRewriteConfigList(v []types.RewriteConfig, value query.Value) error {
+	array := value.Array("member")
+
+	for i := range v {
+		av := array.Value()
+		if err := awsAwsquery_serializeDocumentRewriteConfig(&v[i], av); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func awsAwsquery_serializeDocumentRuleArns(v []string, value query.Value) error {
 	array := value.Array("member")
 
@@ -4334,6 +4475,13 @@ func awsAwsquery_serializeDocumentRuleCondition(v *types.RuleCondition, value qu
 	if v.QueryStringConfig != nil {
 		objectKey := object.Key("QueryStringConfig")
 		if err := awsAwsquery_serializeDocumentQueryStringConditionConfig(v.QueryStringConfig, objectKey); err != nil {
+			return err
+		}
+	}
+
+	if v.RegexValues != nil {
+		objectKey := object.Key("RegexValues")
+		if err := awsAwsquery_serializeDocumentListOfString(v.RegexValues, objectKey); err != nil {
 			return err
 		}
 	}
@@ -4393,6 +4541,44 @@ func awsAwsquery_serializeDocumentRulePriorityPair(v *types.RulePriorityPair, va
 		objectKey.String(*v.RuleArn)
 	}
 
+	return nil
+}
+
+func awsAwsquery_serializeDocumentRuleTransform(v *types.RuleTransform, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.HostHeaderRewriteConfig != nil {
+		objectKey := object.Key("HostHeaderRewriteConfig")
+		if err := awsAwsquery_serializeDocumentHostHeaderRewriteConfig(v.HostHeaderRewriteConfig, objectKey); err != nil {
+			return err
+		}
+	}
+
+	if len(v.Type) > 0 {
+		objectKey := object.Key("Type")
+		objectKey.String(string(v.Type))
+	}
+
+	if v.UrlRewriteConfig != nil {
+		objectKey := object.Key("UrlRewriteConfig")
+		if err := awsAwsquery_serializeDocumentUrlRewriteConfig(v.UrlRewriteConfig, objectKey); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func awsAwsquery_serializeDocumentRuleTransformList(v []types.RuleTransform, value query.Value) error {
+	array := value.Array("member")
+
+	for i := range v {
+		av := array.Value()
+		if err := awsAwsquery_serializeDocumentRuleTransform(&v[i], av); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -4542,6 +4728,11 @@ func awsAwsquery_serializeDocumentTargetDescription(v *types.TargetDescription, 
 		objectKey.Integer(*v.Port)
 	}
 
+	if v.QuicServerId != nil {
+		objectKey := object.Key("QuicServerId")
+		objectKey.String(*v.QuicServerId)
+	}
+
 	return nil
 }
 
@@ -4669,6 +4860,20 @@ func awsAwsquery_serializeDocumentTrustStoreNames(v []string, value query.Value)
 		av := array.Value()
 		av.String(v[i])
 	}
+	return nil
+}
+
+func awsAwsquery_serializeDocumentUrlRewriteConfig(v *types.UrlRewriteConfig, value query.Value) error {
+	object := value.Object()
+	_ = object
+
+	if v.Rewrites != nil {
+		objectKey := object.Key("Rewrites")
+		if err := awsAwsquery_serializeDocumentRewriteConfigList(v.Rewrites, objectKey); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -4900,6 +5105,13 @@ func awsAwsquery_serializeOpDocumentCreateRuleInput(v *CreateRuleInput, value qu
 		}
 	}
 
+	if v.Transforms != nil {
+		objectKey := object.Key("Transforms")
+		if err := awsAwsquery_serializeDocumentRuleTransformList(v.Transforms, objectKey); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -4979,6 +5191,11 @@ func awsAwsquery_serializeOpDocumentCreateTargetGroupInput(v *CreateTargetGroupI
 		if err := awsAwsquery_serializeDocumentTagList(v.Tags, objectKey); err != nil {
 			return err
 		}
+	}
+
+	if v.TargetControlPort != nil {
+		objectKey := object.Key("TargetControlPort")
+		objectKey.Integer(*v.TargetControlPort)
 	}
 
 	if len(v.TargetType) > 0 {
@@ -5694,9 +5911,21 @@ func awsAwsquery_serializeOpDocumentModifyRuleInput(v *ModifyRuleInput, value qu
 		}
 	}
 
+	if v.ResetTransforms != nil {
+		objectKey := object.Key("ResetTransforms")
+		objectKey.Boolean(*v.ResetTransforms)
+	}
+
 	if v.RuleArn != nil {
 		objectKey := object.Key("RuleArn")
 		objectKey.String(*v.RuleArn)
+	}
+
+	if v.Transforms != nil {
+		objectKey := object.Key("Transforms")
+		if err := awsAwsquery_serializeDocumentRuleTransformList(v.Transforms, objectKey); err != nil {
+			return err
+		}
 	}
 
 	return nil

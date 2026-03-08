@@ -19,16 +19,12 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import (
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-)
-
 // Representation of cluster external configuration.
 type ExternalConfigurationBuilder struct {
 	fieldSet_ []bool
-	labels    *v1.LabelListBuilder
-	manifests *v1.ManifestListBuilder
-	syncsets  *v1.SyncsetListBuilder
+	labels    *LabelListBuilder
+	manifests *ManifestListBuilder
+	syncsets  *SyncsetListBuilder
 }
 
 // NewExternalConfiguration creates a new builder of 'external_configuration' objects.
@@ -52,7 +48,7 @@ func (b *ExternalConfigurationBuilder) Empty() bool {
 }
 
 // Labels sets the value of the 'labels' attribute to the given values.
-func (b *ExternalConfigurationBuilder) Labels(value *v1.LabelListBuilder) *ExternalConfigurationBuilder {
+func (b *ExternalConfigurationBuilder) Labels(value *LabelListBuilder) *ExternalConfigurationBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 3)
 	}
@@ -62,7 +58,7 @@ func (b *ExternalConfigurationBuilder) Labels(value *v1.LabelListBuilder) *Exter
 }
 
 // Manifests sets the value of the 'manifests' attribute to the given values.
-func (b *ExternalConfigurationBuilder) Manifests(value *v1.ManifestListBuilder) *ExternalConfigurationBuilder {
+func (b *ExternalConfigurationBuilder) Manifests(value *ManifestListBuilder) *ExternalConfigurationBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 3)
 	}
@@ -72,7 +68,7 @@ func (b *ExternalConfigurationBuilder) Manifests(value *v1.ManifestListBuilder) 
 }
 
 // Syncsets sets the value of the 'syncsets' attribute to the given values.
-func (b *ExternalConfigurationBuilder) Syncsets(value *v1.SyncsetListBuilder) *ExternalConfigurationBuilder {
+func (b *ExternalConfigurationBuilder) Syncsets(value *SyncsetListBuilder) *ExternalConfigurationBuilder {
 	if len(b.fieldSet_) == 0 {
 		b.fieldSet_ = make([]bool, 3)
 	}
@@ -91,17 +87,17 @@ func (b *ExternalConfigurationBuilder) Copy(object *ExternalConfiguration) *Exte
 		copy(b.fieldSet_, object.fieldSet_)
 	}
 	if object.labels != nil {
-		b.labels = v1.NewLabelList().Copy(object.labels)
+		b.labels = NewLabelList().Copy(object.labels)
 	} else {
 		b.labels = nil
 	}
 	if object.manifests != nil {
-		b.manifests = v1.NewManifestList().Copy(object.manifests)
+		b.manifests = NewManifestList().Copy(object.manifests)
 	} else {
 		b.manifests = nil
 	}
 	if object.syncsets != nil {
-		b.syncsets = v1.NewSyncsetList().Copy(object.syncsets)
+		b.syncsets = NewSyncsetList().Copy(object.syncsets)
 	} else {
 		b.syncsets = nil
 	}

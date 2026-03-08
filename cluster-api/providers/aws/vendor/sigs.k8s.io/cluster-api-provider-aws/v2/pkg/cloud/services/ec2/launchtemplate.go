@@ -926,10 +926,14 @@ func (s *Service) SDKToLaunchTemplate(d types.LaunchTemplateVersion) (*expinfrav
 			HTTPPutResponseHopLimit: utils.ToInt64Value(v.MetadataOptions.HttpPutResponseHopLimit),
 			HTTPTokens:              infrav1.HTTPTokensState(string(v.MetadataOptions.HttpTokens)),
 			HTTPEndpoint:            infrav1.InstanceMetadataEndpointStateEnabled,
+			HTTPProtocolIPv6:        infrav1.InstanceMetadataEndpointStateDisabled,
 			InstanceMetadataTags:    infrav1.InstanceMetadataEndpointStateDisabled,
 		}
 		if v.MetadataOptions.HttpEndpoint == types.LaunchTemplateInstanceMetadataEndpointStateDisabled {
 			i.InstanceMetadataOptions.HTTPEndpoint = infrav1.InstanceMetadataEndpointStateDisabled
+		}
+		if v.MetadataOptions.HttpProtocolIpv6 == types.LaunchTemplateInstanceMetadataProtocolIpv6Enabled {
+			i.InstanceMetadataOptions.HTTPProtocolIPv6 = infrav1.InstanceMetadataEndpointStateEnabled
 		}
 		if v.MetadataOptions.InstanceMetadataTags == types.LaunchTemplateInstanceMetadataTagsStateEnabled {
 			i.InstanceMetadataOptions.InstanceMetadataTags = infrav1.InstanceMetadataEndpointStateEnabled

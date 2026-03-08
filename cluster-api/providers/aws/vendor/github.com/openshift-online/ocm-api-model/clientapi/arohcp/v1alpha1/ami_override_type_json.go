@@ -23,7 +23,6 @@ import (
 	"io"
 
 	jsoniter "github.com/json-iterator/go"
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-api-model/clientapi/helpers"
 )
 
@@ -81,7 +80,7 @@ func WriteAMIOverride(object *AMIOverride, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("product")
-		v1.WriteProduct(object.product, stream)
+		WriteProduct(object.product, stream)
 		count++
 	}
 	present_ = len(object.fieldSet_) > 5 && object.fieldSet_[5] && object.region != nil
@@ -90,7 +89,7 @@ func WriteAMIOverride(object *AMIOverride, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("region")
-		v1.WriteCloudRegion(object.region, stream)
+		WriteCloudRegion(object.region, stream)
 	}
 	stream.WriteObjectEnd()
 }
@@ -134,11 +133,11 @@ func ReadAMIOverride(iterator *jsoniter.Iterator) *AMIOverride {
 			object.ami = value
 			object.fieldSet_[3] = true
 		case "product":
-			value := v1.ReadProduct(iterator)
+			value := ReadProduct(iterator)
 			object.product = value
 			object.fieldSet_[4] = true
 		case "region":
-			value := v1.ReadCloudRegion(iterator)
+			value := ReadCloudRegion(iterator)
 			object.region = value
 			object.fieldSet_[5] = true
 		default:

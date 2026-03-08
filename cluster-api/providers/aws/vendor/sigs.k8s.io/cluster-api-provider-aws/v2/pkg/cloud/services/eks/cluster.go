@@ -128,6 +128,10 @@ func (s *Service) reconcileCluster(ctx context.Context) error {
 		return errors.Wrap(err, "failed reconciling access config")
 	}
 
+	if err := s.reconcileAccessEntries(ctx); err != nil {
+		return errors.Wrap(err, "failed reconciling access entries")
+	}
+
 	if err := s.reconcileLogging(ctx, cluster.Logging); err != nil {
 		return errors.Wrap(err, "failed reconciling logging")
 	}

@@ -13,8 +13,9 @@ import (
 // Removes the specified managed policy from the specified role.
 //
 // A role can also have inline policies embedded with it. To delete an inline
-// policy, use DeleteRolePolicy. For information about policies, see [Managed policies and inline policies] in the IAM User Guide.
+// policy, use [DeleteRolePolicy]. For information about policies, see [Managed policies and inline policies] in the IAM User Guide.
 //
+// [DeleteRolePolicy]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_DeleteRolePolicy.html
 // [Managed policies and inline policies]: https://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html
 func (c *Client) DetachRolePolicy(ctx context.Context, params *DetachRolePolicyInput, optFns ...func(*Options)) (*DetachRolePolicyOutput, error) {
 	if params == nil {
@@ -107,6 +108,9 @@ func (c *Client) addOperationDetachRolePolicyMiddlewares(stack *middleware.Stack
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -123,6 +127,9 @@ func (c *Client) addOperationDetachRolePolicyMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addUserAgentRetryMode(stack, options); err != nil {
+		return err
+	}
+	if err = addCredentialSource(stack, options); err != nil {
 		return err
 	}
 	if err = addOpDetachRolePolicyValidationMiddleware(stack); err != nil {
@@ -144,6 +151,15 @@ func (c *Client) addOperationDetachRolePolicyMiddlewares(stack *middleware.Stack
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

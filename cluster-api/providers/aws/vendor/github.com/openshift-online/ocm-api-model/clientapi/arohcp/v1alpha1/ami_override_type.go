@@ -19,10 +19,6 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import (
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-)
-
 // AMIOverrideKind is the name of the type used to represent objects
 // of type 'AMI_override'.
 const AMIOverrideKind = "AMIOverride"
@@ -43,8 +39,8 @@ type AMIOverride struct {
 	id        string
 	href      string
 	ami       string
-	product   *v1.Product
-	region    *v1.CloudRegion
+	product   *Product
+	region    *CloudRegion
 }
 
 // Kind returns the name of the type of the object.
@@ -141,7 +137,7 @@ func (o *AMIOverride) GetAMI() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Link to the product type.
-func (o *AMIOverride) Product() *v1.Product {
+func (o *AMIOverride) Product() *Product {
 	if o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4] {
 		return o.product
 	}
@@ -152,7 +148,7 @@ func (o *AMIOverride) Product() *v1.Product {
 // a flag indicating if the attribute has a value.
 //
 // Link to the product type.
-func (o *AMIOverride) GetProduct() (value *v1.Product, ok bool) {
+func (o *AMIOverride) GetProduct() (value *Product, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 4 && o.fieldSet_[4]
 	if ok {
 		value = o.product
@@ -164,7 +160,7 @@ func (o *AMIOverride) GetProduct() (value *v1.Product, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Link to the cloud provider region.
-func (o *AMIOverride) Region() *v1.CloudRegion {
+func (o *AMIOverride) Region() *CloudRegion {
 	if o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5] {
 		return o.region
 	}
@@ -175,7 +171,7 @@ func (o *AMIOverride) Region() *v1.CloudRegion {
 // a flag indicating if the attribute has a value.
 //
 // Link to the cloud provider region.
-func (o *AMIOverride) GetRegion() (value *v1.CloudRegion, ok bool) {
+func (o *AMIOverride) GetRegion() (value *CloudRegion, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 5 && o.fieldSet_[5]
 	if ok {
 		value = o.region

@@ -26,6 +26,7 @@ type AWSCapacityReservation struct {
 	fieldSet_  []bool
 	id         string
 	marketType MarketType
+	preference CapacityReservationPreference
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -89,6 +90,39 @@ func (o *AWSCapacityReservation) GetMarketType() (value MarketType, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 1 && o.fieldSet_[1]
 	if ok {
 		value = o.marketType
+	}
+	return
+}
+
+// Preference returns the value of the 'preference' attribute, or
+// the zero value of the type if the attribute doesn't have a value.
+//
+// preference specifies how capacity reservations should be used with this NodePool
+// "none": EC2 instances in this NodePool should never make use of capacity reservations. Note that this value cannot
+// be specified if a capacity reservation Id is also specified
+// "capacity-reservations-only": EC2 instances in this NodePool should only run in a capacity reservation
+// "open": EC2 instances in this NodePool should run in an Open capacity reservation if available, otherwise run on demand.
+// Note that this value cannot be specified if a capacity reservation Id is also specified
+func (o *AWSCapacityReservation) Preference() CapacityReservationPreference {
+	if o != nil && len(o.fieldSet_) > 2 && o.fieldSet_[2] {
+		return o.preference
+	}
+	return CapacityReservationPreference("")
+}
+
+// GetPreference returns the value of the 'preference' attribute and
+// a flag indicating if the attribute has a value.
+//
+// preference specifies how capacity reservations should be used with this NodePool
+// "none": EC2 instances in this NodePool should never make use of capacity reservations. Note that this value cannot
+// be specified if a capacity reservation Id is also specified
+// "capacity-reservations-only": EC2 instances in this NodePool should only run in a capacity reservation
+// "open": EC2 instances in this NodePool should run in an Open capacity reservation if available, otherwise run on demand.
+// Note that this value cannot be specified if a capacity reservation Id is also specified
+func (o *AWSCapacityReservation) GetPreference() (value CapacityReservationPreference, ok bool) {
+	ok = o != nil && len(o.fieldSet_) > 2 && o.fieldSet_[2]
+	if ok {
+		value = o.preference
 	}
 	return
 }

@@ -28,6 +28,7 @@ type NodePoolBuilder struct {
 	autoscaling          *NodePoolAutoscalingBuilder
 	availabilityZone     string
 	azureNodePool        *AzureNodePoolBuilder
+	imageType            ImageType
 	kubeletConfigs       []string
 	labels               map[string]string
 	managementUpgrade    *NodePoolManagementUpgradeBuilder
@@ -44,14 +45,14 @@ type NodePoolBuilder struct {
 // NewNodePool creates a new builder of 'node_pool' objects.
 func NewNodePool() *NodePoolBuilder {
 	return &NodePoolBuilder{
-		fieldSet_: make([]bool, 18),
+		fieldSet_: make([]bool, 19),
 	}
 }
 
 // Link sets the flag that indicates if this is a link.
 func (b *NodePoolBuilder) Link(value bool) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.fieldSet_[0] = true
 	return b
@@ -60,7 +61,7 @@ func (b *NodePoolBuilder) Link(value bool) *NodePoolBuilder {
 // ID sets the identifier of the object.
 func (b *NodePoolBuilder) ID(value string) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.id = value
 	b.fieldSet_[1] = true
@@ -70,7 +71,7 @@ func (b *NodePoolBuilder) ID(value string) *NodePoolBuilder {
 // HREF sets the link to the object.
 func (b *NodePoolBuilder) HREF(value string) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.href = value
 	b.fieldSet_[2] = true
@@ -96,7 +97,7 @@ func (b *NodePoolBuilder) Empty() bool {
 // Representation of aws node pool specific parameters.
 func (b *NodePoolBuilder) AWSNodePool(value *AWSNodePoolBuilder) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.awsNodePool = value
 	if value != nil {
@@ -110,7 +111,7 @@ func (b *NodePoolBuilder) AWSNodePool(value *AWSNodePoolBuilder) *NodePoolBuilde
 // AutoRepair sets the value of the 'auto_repair' attribute to the given value.
 func (b *NodePoolBuilder) AutoRepair(value bool) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.autoRepair = value
 	b.fieldSet_[4] = true
@@ -122,7 +123,7 @@ func (b *NodePoolBuilder) AutoRepair(value bool) *NodePoolBuilder {
 // Representation of a autoscaling in a node pool.
 func (b *NodePoolBuilder) Autoscaling(value *NodePoolAutoscalingBuilder) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.autoscaling = value
 	if value != nil {
@@ -136,7 +137,7 @@ func (b *NodePoolBuilder) Autoscaling(value *NodePoolAutoscalingBuilder) *NodePo
 // AvailabilityZone sets the value of the 'availability_zone' attribute to the given value.
 func (b *NodePoolBuilder) AvailabilityZone(value string) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.availabilityZone = value
 	b.fieldSet_[6] = true
@@ -148,7 +149,7 @@ func (b *NodePoolBuilder) AvailabilityZone(value string) *NodePoolBuilder {
 // Representation of azure node pool specific parameters.
 func (b *NodePoolBuilder) AzureNodePool(value *AzureNodePoolBuilder) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.azureNodePool = value
 	if value != nil {
@@ -159,27 +160,39 @@ func (b *NodePoolBuilder) AzureNodePool(value *AzureNodePoolBuilder) *NodePoolBu
 	return b
 }
 
+// ImageType sets the value of the 'image_type' attribute to the given value.
+//
+// Image Type (AMI) to use for running the associated NodePool
+func (b *NodePoolBuilder) ImageType(value ImageType) *NodePoolBuilder {
+	if len(b.fieldSet_) == 0 {
+		b.fieldSet_ = make([]bool, 19)
+	}
+	b.imageType = value
+	b.fieldSet_[8] = true
+	return b
+}
+
 // KubeletConfigs sets the value of the 'kubelet_configs' attribute to the given values.
 func (b *NodePoolBuilder) KubeletConfigs(values ...string) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.kubeletConfigs = make([]string, len(values))
 	copy(b.kubeletConfigs, values)
-	b.fieldSet_[8] = true
+	b.fieldSet_[9] = true
 	return b
 }
 
 // Labels sets the value of the 'labels' attribute to the given value.
 func (b *NodePoolBuilder) Labels(value map[string]string) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.labels = value
 	if value != nil {
-		b.fieldSet_[9] = true
+		b.fieldSet_[10] = true
 	} else {
-		b.fieldSet_[9] = false
+		b.fieldSet_[10] = false
 	}
 	return b
 }
@@ -189,13 +202,13 @@ func (b *NodePoolBuilder) Labels(value map[string]string) *NodePoolBuilder {
 // Representation of node pool management.
 func (b *NodePoolBuilder) ManagementUpgrade(value *NodePoolManagementUpgradeBuilder) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.managementUpgrade = value
 	if value != nil {
-		b.fieldSet_[10] = true
+		b.fieldSet_[11] = true
 	} else {
-		b.fieldSet_[10] = false
+		b.fieldSet_[11] = false
 	}
 	return b
 }
@@ -222,13 +235,13 @@ func (b *NodePoolBuilder) ManagementUpgrade(value *NodePoolManagementUpgradeBuil
 // - 1 PiB = 2^50 bytes
 func (b *NodePoolBuilder) NodeDrainGracePeriod(value *ValueBuilder) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.nodeDrainGracePeriod = value
 	if value != nil {
-		b.fieldSet_[11] = true
+		b.fieldSet_[12] = true
 	} else {
-		b.fieldSet_[11] = false
+		b.fieldSet_[12] = false
 	}
 	return b
 }
@@ -236,10 +249,10 @@ func (b *NodePoolBuilder) NodeDrainGracePeriod(value *ValueBuilder) *NodePoolBui
 // Replicas sets the value of the 'replicas' attribute to the given value.
 func (b *NodePoolBuilder) Replicas(value int) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.replicas = value
-	b.fieldSet_[12] = true
+	b.fieldSet_[13] = true
 	return b
 }
 
@@ -248,13 +261,13 @@ func (b *NodePoolBuilder) Replicas(value int) *NodePoolBuilder {
 // Representation of the status of a node pool.
 func (b *NodePoolBuilder) Status(value *NodePoolStatusBuilder) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.status = value
 	if value != nil {
-		b.fieldSet_[13] = true
+		b.fieldSet_[14] = true
 	} else {
-		b.fieldSet_[13] = false
+		b.fieldSet_[14] = false
 	}
 	return b
 }
@@ -262,32 +275,32 @@ func (b *NodePoolBuilder) Status(value *NodePoolStatusBuilder) *NodePoolBuilder 
 // Subnet sets the value of the 'subnet' attribute to the given value.
 func (b *NodePoolBuilder) Subnet(value string) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.subnet = value
-	b.fieldSet_[14] = true
+	b.fieldSet_[15] = true
 	return b
 }
 
 // Taints sets the value of the 'taints' attribute to the given values.
 func (b *NodePoolBuilder) Taints(values ...*TaintBuilder) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.taints = make([]*TaintBuilder, len(values))
 	copy(b.taints, values)
-	b.fieldSet_[15] = true
+	b.fieldSet_[16] = true
 	return b
 }
 
 // TuningConfigs sets the value of the 'tuning_configs' attribute to the given values.
 func (b *NodePoolBuilder) TuningConfigs(values ...string) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.tuningConfigs = make([]string, len(values))
 	copy(b.tuningConfigs, values)
-	b.fieldSet_[16] = true
+	b.fieldSet_[17] = true
 	return b
 }
 
@@ -296,13 +309,13 @@ func (b *NodePoolBuilder) TuningConfigs(values ...string) *NodePoolBuilder {
 // Representation of an _OpenShift_ version.
 func (b *NodePoolBuilder) Version(value *VersionBuilder) *NodePoolBuilder {
 	if len(b.fieldSet_) == 0 {
-		b.fieldSet_ = make([]bool, 18)
+		b.fieldSet_ = make([]bool, 19)
 	}
 	b.version = value
 	if value != nil {
-		b.fieldSet_[17] = true
+		b.fieldSet_[18] = true
 	} else {
-		b.fieldSet_[17] = false
+		b.fieldSet_[18] = false
 	}
 	return b
 }
@@ -335,6 +348,7 @@ func (b *NodePoolBuilder) Copy(object *NodePool) *NodePoolBuilder {
 	} else {
 		b.azureNodePool = nil
 	}
+	b.imageType = object.imageType
 	if object.kubeletConfigs != nil {
 		b.kubeletConfigs = make([]string, len(object.kubeletConfigs))
 		copy(b.kubeletConfigs, object.kubeletConfigs)
@@ -417,6 +431,7 @@ func (b *NodePoolBuilder) Build() (object *NodePool, err error) {
 			return
 		}
 	}
+	object.imageType = b.imageType
 	if b.kubeletConfigs != nil {
 		object.kubeletConfigs = make([]string, len(b.kubeletConfigs))
 		copy(object.kubeletConfigs, b.kubeletConfigs)

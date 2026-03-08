@@ -44,6 +44,7 @@ type SGScope interface {
 	Bastion() *infrav1.Bastion
 
 	// ControlPlaneLoadBalancer returns the load balancer settings that are requested.
+	//
 	// Deprecated: Use ControlPlaneLoadBalancers()
 	ControlPlaneLoadBalancer() *infrav1.AWSLoadBalancerSpec
 
@@ -64,5 +65,5 @@ type SGScope interface {
 	ControlPlaneLoadBalancers() []*infrav1.AWSLoadBalancerSpec
 
 	// NodePortIngressRuleCidrBlocks returns the CIDR blocks for the node NodePort ingress rules.
-	NodePortIngressRuleCidrBlocks() []string
+	NodePortIngressRuleCidrBlocks() infrav1.CidrBlocks
 }

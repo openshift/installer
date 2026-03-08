@@ -65,7 +65,9 @@ type ListGroupsInput struct {
 	noSmithyDocumentSerde
 }
 
-// Contains the response to a successful ListGroups request.
+// Contains the response to a successful [ListGroups] request.
+//
+// [ListGroups]: https://docs.aws.amazon.com/IAM/latest/APIReference/API_ListGroups.html
 type ListGroupsOutput struct {
 
 	// A list of groups.
@@ -134,6 +136,9 @@ func (c *Client) addOperationListGroupsMiddlewares(stack *middleware.Stack, opti
 	if err = addRecordResponseTiming(stack); err != nil {
 		return err
 	}
+	if err = addSpanRetryLoop(stack, options); err != nil {
+		return err
+	}
 	if err = addClientUserAgent(stack, options); err != nil {
 		return err
 	}
@@ -152,6 +157,9 @@ func (c *Client) addOperationListGroupsMiddlewares(stack *middleware.Stack, opti
 	if err = addUserAgentRetryMode(stack, options); err != nil {
 		return err
 	}
+	if err = addCredentialSource(stack, options); err != nil {
+		return err
+	}
 	if err = stack.Initialize.Add(newServiceMetadataMiddleware_opListGroups(options.Region), middleware.Before); err != nil {
 		return err
 	}
@@ -168,6 +176,15 @@ func (c *Client) addOperationListGroupsMiddlewares(stack *middleware.Stack, opti
 		return err
 	}
 	if err = addDisableHTTPSMiddleware(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptBeforeRetryLoop(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptAttempt(stack, options); err != nil {
+		return err
+	}
+	if err = addInterceptors(stack, options); err != nil {
 		return err
 	}
 	return nil

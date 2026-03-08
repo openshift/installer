@@ -1241,6 +1241,7 @@ func autoConvert_v1beta2_AWSLoadBalancerSpec_To_v1beta1_AWSLoadBalancerSpec(in *
 	// WARNING: in.LoadBalancerType requires manual conversion: does not exist in peer-type
 	// WARNING: in.DisableHostsRewrite requires manual conversion: does not exist in peer-type
 	// WARNING: in.PreserveClientIP requires manual conversion: does not exist in peer-type
+	// WARNING: in.TargetGroupIPType requires manual conversion: does not exist in peer-type
 	return nil
 }
 
@@ -1416,6 +1417,7 @@ func autoConvert_v1beta2_AWSMachineSpec_To_v1beta1_AWSMachineSpec(in *v1beta2.AW
 	out.NonRootVolumes = *(*[]Volume)(unsafe.Pointer(&in.NonRootVolumes))
 	out.NetworkInterfaces = *(*[]string)(unsafe.Pointer(&in.NetworkInterfaces))
 	// WARNING: in.NetworkInterfaceType requires manual conversion: does not exist in peer-type
+	// WARNING: in.AssignPrimaryIPv6 requires manual conversion: does not exist in peer-type
 	out.UncompressedUserData = (*bool)(unsafe.Pointer(in.UncompressedUserData))
 	if err := Convert_v1beta2_CloudInit_To_v1beta1_CloudInit(&in.CloudInit, &out.CloudInit, s); err != nil {
 		return err
@@ -1683,7 +1685,7 @@ func Convert_v1beta2_AllowedNamespaces_To_v1beta1_AllowedNamespaces(in *v1beta2.
 func autoConvert_v1beta1_Bastion_To_v1beta2_Bastion(in *Bastion, out *v1beta2.Bastion, s conversion.Scope) error {
 	out.Enabled = in.Enabled
 	out.DisableIngressRules = in.DisableIngressRules
-	out.AllowedCIDRBlocks = *(*[]string)(unsafe.Pointer(&in.AllowedCIDRBlocks))
+	out.AllowedCIDRBlocks = *(*v1beta2.CidrBlocks)(unsafe.Pointer(&in.AllowedCIDRBlocks))
 	out.InstanceType = in.InstanceType
 	out.AMI = in.AMI
 	return nil
@@ -2018,6 +2020,7 @@ func autoConvert_v1beta2_Instance_To_v1beta1_Instance(in *v1beta2.Instance, out 
 	out.IAMProfile = in.IAMProfile
 	out.Addresses = *(*[]corev1beta1.MachineAddress)(unsafe.Pointer(&in.Addresses))
 	out.PrivateIP = (*string)(unsafe.Pointer(in.PrivateIP))
+	// WARNING: in.IPv6Address requires manual conversion: does not exist in peer-type
 	out.PublicIP = (*string)(unsafe.Pointer(in.PublicIP))
 	out.ENASupport = (*bool)(unsafe.Pointer(in.ENASupport))
 	out.EBSOptimized = (*bool)(unsafe.Pointer(in.EBSOptimized))
@@ -2025,6 +2028,7 @@ func autoConvert_v1beta2_Instance_To_v1beta1_Instance(in *v1beta2.Instance, out 
 	out.NonRootVolumes = *(*[]Volume)(unsafe.Pointer(&in.NonRootVolumes))
 	out.NetworkInterfaces = *(*[]string)(unsafe.Pointer(&in.NetworkInterfaces))
 	// WARNING: in.NetworkInterfaceType requires manual conversion: does not exist in peer-type
+	// WARNING: in.AssignPrimaryIPv6 requires manual conversion: does not exist in peer-type
 	out.Tags = *(*map[string]string)(unsafe.Pointer(&in.Tags))
 	out.AvailabilityZone = in.AvailabilityZone
 	out.SpotMarketOptions = (*SpotMarketOptions)(unsafe.Pointer(in.SpotMarketOptions))

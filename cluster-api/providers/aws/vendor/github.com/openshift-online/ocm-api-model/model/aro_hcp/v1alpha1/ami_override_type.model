@@ -1,0 +1,27 @@
+/*
+Copyright (c) 2023 Red Hat, Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+// AMIOverride specifies what Amazon Machine Image should be used for a particular product and region.
+class AMIOverride {
+    // Link to the product type.
+    link Product Product
+
+    // Link to the cloud provider region.
+    link Region CloudRegion
+
+    // AMI is the id of the Amazon Machine Image.
+    AMI String
+}

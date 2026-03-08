@@ -878,17 +878,33 @@ func TestIncludesAssumeRole(t *testing.T) {
 
 func TestIncludesWavelengthZones(t *testing.T) {
 	t.Run("Should be true when edge compute specified with WL zones", func(t *testing.T) {
-		ic := validBYOSubnetsInstallConfig()
-		ic.Compute = append(ic.Compute, types.MachinePool{
-			Name: "edge",
-			Platform: types.MachinePoolPlatform{
-				AWS: &aws.MachinePool{
-					Zones: []string{"us-west-2-pdx-1a", "us-west-2-wl1-sea-wlz-1"},
+		t.Run("with common wavelength zone format", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.Compute = append(ic.Compute, types.MachinePool{
+				Name: "edge",
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						Zones: []string{"us-west-2-pdx-1a", "us-west-2-wl1-sea-wlz-1"},
+					},
 				},
-			},
+			})
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionCarrierGateway)
 		})
-		requiredPerms := RequiredPermissionGroups(ic)
-		assert.Contains(t, requiredPerms, PermissionCarrierGateway)
+		// OCPBUGS-77355: for example, us-east-1-foe-wlz-1a
+		t.Run("with irregular wavelength zone format", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.Compute = append(ic.Compute, types.MachinePool{
+				Name: "edge",
+				Platform: types.MachinePoolPlatform{
+					AWS: &aws.MachinePool{
+						Zones: []string{"us-west-2-pdx-1a", "us-east-1-foe-wlz-1a", "eu-west-3-cmn-wlz-1a"},
+					},
+				},
+			})
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionCarrierGateway)
+		})
 	})
 	t.Run("Should be false when", func(t *testing.T) {
 		t.Run("edge compute specified without WL zones", func(t *testing.T) {

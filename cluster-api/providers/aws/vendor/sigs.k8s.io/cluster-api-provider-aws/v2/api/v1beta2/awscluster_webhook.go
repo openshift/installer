@@ -238,6 +238,14 @@ func (r *AWSCluster) validateControlPlaneLoadBalancerUpdate(oldlb, newlb *AWSLoa
 				)
 			}
 		}
+
+		// TargetGroupIPType is immutable after creation.
+		if !cmp.Equal(oldlb.TargetGroupIPType, newlb.TargetGroupIPType) {
+			allErrs = append(allErrs,
+				field.Forbidden(field.NewPath("spec", "controlPlaneLoadBalancer", "targetGroupIPType"),
+					"field is immutable and cannot be changed after target group creation"),
+			)
+		}
 	}
 
 	return allErrs
@@ -301,16 +309,35 @@ func (r *AWSCluster) validateSSHKeyName() field.ErrorList {
 
 func (r *AWSCluster) validateNetwork() field.ErrorList {
 	var allErrs field.ErrorList
-	if r.Spec.NetworkSpec.VPC.IsIPv6Enabled() {
-		allErrs = append(allErrs, field.Invalid(field.NewPath("ipv6"), r.Spec.NetworkSpec.VPC.IPv6, "IPv6 cannot be used with unmanaged clusters at this time."))
-	}
-	for _, subnet := range r.Spec.NetworkSpec.Subnets {
-		if subnet.IsIPv6 || subnet.IPv6CidrBlock != "" {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("subnets"), r.Spec.NetworkSpec.Subnets, "IPv6 cannot be used with unmanaged clusters at this time."))
+
+	vpcSpec := r.Spec.NetworkSpec.VPC
+	vpcField := field.NewPath("spec", "network", "vpc")
+	if vpcSpec.CidrBlock != "" {
+		if _, _, err := net.ParseCIDR(vpcSpec.CidrBlock); err != nil {
+			allErrs = append(allErrs, field.Invalid(vpcField.Child("cidrBlock"), vpcSpec.CidrBlock, "VPC CIDR block is invalid"))
 		}
+	}
+	if vpcSpec.IPv6 != nil && vpcSpec.IPv6.CidrBlock != "" {
+		if _, _, err := net.ParseCIDR(vpcSpec.IPv6.CidrBlock); err != nil {
+			allErrs = append(allErrs, field.Invalid(vpcField.Child("ipv6", "cidrBlock"), vpcSpec.IPv6.CidrBlock, "VPC IPv6 CIDR block is invalid"))
+		}
+	}
+
+	subnetField := field.NewPath("spec", "network", "subnets")
+	for i, subnet := range r.Spec.NetworkSpec.Subnets {
 		if subnet.ZoneType != nil && subnet.IsEdge() {
 			if subnet.ParentZoneName == nil {
-				allErrs = append(allErrs, field.Invalid(field.NewPath("subnets"), r.Spec.NetworkSpec.Subnets, "ParentZoneName must be set when ZoneType is 'local-zone'."))
+				allErrs = append(allErrs, field.Invalid(subnetField.Index(i).Child("parentZoneName"), subnet.ParentZoneName, "ParentZoneName must be set when ZoneType is 'local-zone' or 'wavelength-zone."))
+			}
+		}
+		if subnet.CidrBlock != "" {
+			if _, _, err := net.ParseCIDR(subnet.CidrBlock); err != nil {
+				allErrs = append(allErrs, field.Invalid(subnetField.Index(i).Child("cidrBlock"), subnet.CidrBlock, "subnet CIDR block is invalid"))
+			}
+		}
+		if subnet.IPv6CidrBlock != "" {
+			if _, _, err := net.ParseCIDR(subnet.IPv6CidrBlock); err != nil {
+				allErrs = append(allErrs, field.Invalid(subnetField.Index(i).Child("ipv6CidrBlock"), subnet.IPv6CidrBlock, "subnet IPv6 CIDR block is invalid"))
 			}
 		}
 	}
@@ -350,9 +377,14 @@ func (r *AWSCluster) validateNetwork() field.ErrorList {
 
 	secondaryCidrBlocks := r.Spec.NetworkSpec.VPC.SecondaryCidrBlocks
 	secondaryCidrBlocksField := field.NewPath("spec", "network", "vpc", "secondaryCidrBlocks")
-	for _, cidrBlock := range secondaryCidrBlocks {
+	for i, cidrBlock := range secondaryCidrBlocks {
 		if r.Spec.NetworkSpec.VPC.CidrBlock != "" && r.Spec.NetworkSpec.VPC.CidrBlock == cidrBlock.IPv4CidrBlock {
 			allErrs = append(allErrs, field.Invalid(secondaryCidrBlocksField, secondaryCidrBlocks, fmt.Sprintf("AWSCluster.spec.network.vpc.secondaryCidrBlocks must not contain the primary AWSCluster.spec.network.vpc.cidrBlock %v", r.Spec.NetworkSpec.VPC.CidrBlock)))
+		}
+		if cidrBlock.IPv4CidrBlock != "" {
+			if _, _, err := net.ParseCIDR(cidrBlock.IPv4CidrBlock); err != nil {
+				allErrs = append(allErrs, field.Invalid(secondaryCidrBlocksField.Index(i).Child("ipv4CidrBlock"), cidrBlock.IPv4CidrBlock, "secondary VPC CIDR block is invalid"))
+			}
 		}
 	}
 
@@ -363,15 +395,71 @@ func (r *AWSCluster) validateControlPlaneLBs() (admission.Warnings, field.ErrorL
 	var allErrs field.ErrorList
 	var allWarnings admission.Warnings
 
-	if r.Spec.ControlPlaneLoadBalancer != nil && r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeClassic {
-		allWarnings = append(allWarnings, fmt.Sprintf(warningClassicELB, "primary control plane"))
+	if r.Spec.ControlPlaneLoadBalancer != nil {
+		if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeClassic {
+			allWarnings = append(allWarnings, fmt.Sprintf(warningClassicELB, "primary control plane"))
 
-		if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol == nil {
-			allWarnings = append(allWarnings, warningHealthCheckProtocolNotSet)
+			if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol == nil {
+				allWarnings = append(allWarnings, warningHealthCheckProtocolNotSet)
+			}
+
+			if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol != nil && *r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol == ELBProtocolSSL {
+				allWarnings = append(allWarnings, "loadbalancer is using a classic elb with SSL health check, this causes issues with ciper suites with kubernetes v1.30+")
+			}
 		}
 
-		if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol != nil && *r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol == ELBProtocolSSL {
-			allWarnings = append(allWarnings, "loadbalancer is using a classic elb with SSL health check, this causes issues with ciper suites with kubernetes v1.30+")
+		// Validate the control plane load balancers settings (e.g. SG ingress rules, target groups)
+		basePath := field.NewPath("spec", "controlPlaneLoadBalancer")
+		if r.Spec.ControlPlaneLoadBalancer.TargetGroupIPType != nil {
+			allErrs = append(allErrs, r.validateTargetGroupIPType(basePath.Child("targetGroupIPType"), r.Spec.ControlPlaneLoadBalancer.TargetGroupIPType, r.Spec.ControlPlaneLoadBalancer)...)
+		}
+		for i, listener := range r.Spec.ControlPlaneLoadBalancer.AdditionalListeners {
+			if listener.TargetGroupIPType != nil {
+				allErrs = append(allErrs, r.validateTargetGroupIPType(basePath.Child("additionalListeners").Index(i).Child("targetGroupIPType"), listener.TargetGroupIPType, r.Spec.ControlPlaneLoadBalancer)...)
+			}
+		}
+		allErrs = append(allErrs, r.validateIngressRules(basePath.Child("ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules)...)
+
+		if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeDisabled {
+			if r.Spec.ControlPlaneLoadBalancer.Name != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "name"), r.Spec.ControlPlaneLoadBalancer.Name, "cannot configure a name if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if r.Spec.ControlPlaneLoadBalancer.CrossZoneLoadBalancing {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "crossZoneLoadBalancing"), r.Spec.ControlPlaneLoadBalancer.CrossZoneLoadBalancing, "cross-zone load balancing cannot be set if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if len(r.Spec.ControlPlaneLoadBalancer.Subnets) > 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "subnets"), r.Spec.ControlPlaneLoadBalancer.Subnets, "subnets cannot be set if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "healthCheckProtocol"), r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol, "healthcheck protocol cannot be set if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if len(r.Spec.ControlPlaneLoadBalancer.AdditionalSecurityGroups) > 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "additionalSecurityGroups"), r.Spec.ControlPlaneLoadBalancer.AdditionalSecurityGroups, "additional Security Groups cannot be set if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if len(r.Spec.ControlPlaneLoadBalancer.AdditionalListeners) > 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "additionalListeners"), r.Spec.ControlPlaneLoadBalancer.AdditionalListeners, "cannot set additional listeners if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if len(r.Spec.ControlPlaneLoadBalancer.IngressRules) > 0 {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "ingress rules cannot be set if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if r.Spec.ControlPlaneLoadBalancer.PreserveClientIP {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "preserveClientIP"), r.Spec.ControlPlaneLoadBalancer.PreserveClientIP, "cannot preserve client IP if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if r.Spec.ControlPlaneLoadBalancer.DisableHostsRewrite {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "disableHostsRewrite"), r.Spec.ControlPlaneLoadBalancer.DisableHostsRewrite, "cannot disable hosts rewrite if the LoadBalancer reconciliation is disabled"))
+			}
+
+			if r.Spec.ControlPlaneLoadBalancer.TargetGroupIPType != nil {
+				allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "targetGroupIPType"), r.Spec.ControlPlaneLoadBalancer.TargetGroupIPType, "cannot set target group IP type if the LoadBalancer reconciliation is disabled"))
+			}
 		}
 	}
 
@@ -396,53 +484,19 @@ func (r *AWSCluster) validateControlPlaneLBs() (admission.Warnings, field.ErrorL
 		if r.Spec.SecondaryControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeClassic {
 			allWarnings = append(allWarnings, fmt.Sprintf(warningClassicELB, "secondary control plane"))
 		}
-	}
 
-	// Additional listeners are only supported for NLBs.
-	// Validate the control plane load balancers.
-	if r.Spec.ControlPlaneLoadBalancer != nil {
-		allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules)...)
-	}
-	if r.Spec.SecondaryControlPlaneLoadBalancer != nil {
-		allErrs = append(allErrs, r.validateIngressRules(field.NewPath("spec", "secondaryControlPlaneLoadBalancer", "ingressRules"), r.Spec.SecondaryControlPlaneLoadBalancer.IngressRules)...)
-	}
-
-	if r.Spec.ControlPlaneLoadBalancer.LoadBalancerType == LoadBalancerTypeDisabled {
-		if r.Spec.ControlPlaneLoadBalancer.Name != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "name"), r.Spec.ControlPlaneLoadBalancer.Name, "cannot configure a name if the LoadBalancer reconciliation is disabled"))
+		// Validate the control plane load balancers settings (e.g. SG ingress rules, target groups)
+		basePath := field.NewPath("spec", "secondaryControlPlaneLoadBalancer")
+		if r.Spec.SecondaryControlPlaneLoadBalancer.TargetGroupIPType != nil {
+			allErrs = append(allErrs, r.validateTargetGroupIPType(basePath.Child("targetGroupIPType"), r.Spec.SecondaryControlPlaneLoadBalancer.TargetGroupIPType, r.Spec.SecondaryControlPlaneLoadBalancer)...)
 		}
-
-		if r.Spec.ControlPlaneLoadBalancer.CrossZoneLoadBalancing {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "crossZoneLoadBalancing"), r.Spec.ControlPlaneLoadBalancer.CrossZoneLoadBalancing, "cross-zone load balancing cannot be set if the LoadBalancer reconciliation is disabled"))
+		// Additional listeners are only supported for NLBs.
+		for i, listener := range r.Spec.SecondaryControlPlaneLoadBalancer.AdditionalListeners {
+			if listener.TargetGroupIPType != nil {
+				allErrs = append(allErrs, r.validateTargetGroupIPType(basePath.Child("additionalListeners").Index(i).Child("targetGroupIPType"), listener.TargetGroupIPType, r.Spec.SecondaryControlPlaneLoadBalancer)...)
+			}
 		}
-
-		if len(r.Spec.ControlPlaneLoadBalancer.Subnets) > 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "subnets"), r.Spec.ControlPlaneLoadBalancer.Subnets, "subnets cannot be set if the LoadBalancer reconciliation is disabled"))
-		}
-
-		if r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol != nil {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "healthCheckProtocol"), r.Spec.ControlPlaneLoadBalancer.HealthCheckProtocol, "healthcheck protocol cannot be set if the LoadBalancer reconciliation is disabled"))
-		}
-
-		if len(r.Spec.ControlPlaneLoadBalancer.AdditionalSecurityGroups) > 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "additionalSecurityGroups"), r.Spec.ControlPlaneLoadBalancer.AdditionalSecurityGroups, "additional Security Groups cannot be set if the LoadBalancer reconciliation is disabled"))
-		}
-
-		if len(r.Spec.ControlPlaneLoadBalancer.AdditionalListeners) > 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "additionalListeners"), r.Spec.ControlPlaneLoadBalancer.AdditionalListeners, "cannot set additional listeners if the LoadBalancer reconciliation is disabled"))
-		}
-
-		if len(r.Spec.ControlPlaneLoadBalancer.IngressRules) > 0 {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "ingressRules"), r.Spec.ControlPlaneLoadBalancer.IngressRules, "ingress rules cannot be set if the LoadBalancer reconciliation is disabled"))
-		}
-
-		if r.Spec.ControlPlaneLoadBalancer.PreserveClientIP {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "preserveClientIP"), r.Spec.ControlPlaneLoadBalancer.PreserveClientIP, "cannot preserve client IP if the LoadBalancer reconciliation is disabled"))
-		}
-
-		if r.Spec.ControlPlaneLoadBalancer.DisableHostsRewrite {
-			allErrs = append(allErrs, field.Invalid(field.NewPath("spec", "controlPlaneLoadBalancer", "disableHostsRewrite"), r.Spec.ControlPlaneLoadBalancer.DisableHostsRewrite, "cannot disable hosts rewrite if the LoadBalancer reconciliation is disabled"))
-		}
+		allErrs = append(allErrs, r.validateIngressRules(basePath.Child("ingressRules"), r.Spec.SecondaryControlPlaneLoadBalancer.IngressRules)...)
 	}
 
 	return allWarnings, allErrs
@@ -462,5 +516,22 @@ func (r *AWSCluster) validateIngressRules(path *field.Path, rules []IngressRule)
 			}
 		}
 	}
+	return allErrs
+}
+
+// validateTargetGroupIPType validates that the target group IP type is compatible
+// with the load balancer type and VPC configuration.
+func (r *AWSCluster) validateTargetGroupIPType(path *field.Path, targetGroupIPType *TargetGroupIPType, lbSpec *AWSLoadBalancerSpec) field.ErrorList {
+	var allErrs field.ErrorList
+
+	if targetGroupIPType != nil {
+		if lbSpec.LoadBalancerType == LoadBalancerTypeClassic {
+			allErrs = append(allErrs, field.Invalid(path, targetGroupIPType, "targetGroupIPType cannot be used with classic load balancer types"))
+		}
+		if TargetGroupIPTypeIPv6.Equals(targetGroupIPType) && !r.Spec.NetworkSpec.VPC.IsIPv6Enabled() {
+			allErrs = append(allErrs, field.Invalid(path, targetGroupIPType, "targetGroupIPType IPv6 requires IPv6 to be enabled on the VPC. Set spec.network.vpc.ipv6 to enable IPv6"))
+		}
+	}
+
 	return allErrs
 }

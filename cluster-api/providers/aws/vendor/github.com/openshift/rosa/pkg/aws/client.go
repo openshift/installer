@@ -223,7 +223,8 @@ type Client interface {
 	ListPolicyVersions(policyArn string) ([]PolicyVersion, error)
 	GetCallerIdentity() (*sts.GetCallerIdentityOutput, error)
 	CheckIfMachinePoolHasDedicatedHost(instanceIDs []string) (bool, error)
-	CreateStackWithParamsTags(ctx context.Context, cfTemplateBody, stackName string, stackParams, stackTags map[string]string) (*string, error)
+	CreateStackWithParamsTags(ctx context.Context, cfTemplateBody, stackName string,
+		stackParams, stackTags map[string]string) (*string, error)
 	GetCFStack(ctx context.Context, stackName string) (*cftypes.Stack, error)
 	DescribeCFStackResources(ctx context.Context, stackName string) (*[]cftypes.StackResource, error)
 	DeleteCFStack(ctx context.Context, stackName string) error
@@ -559,7 +560,7 @@ func (c *awsClient) FetchPublicSubnetMap(subnets []ec2types.Subnet) (map[string]
 		}
 		if routeTablesResp == nil {
 			return mapSubnetIdToPublic, fmt.Errorf(
-				"No route table found for associated subnets '%s'",
+				"no route table found for associated subnets '%s'",
 				helper.SliceToSortedString(aws.ToStringSlice(subnetIds)),
 			)
 		}
@@ -823,7 +824,7 @@ func (c *awsClient) ValidateCredentials() (bool, error) {
 	_, err := c.stsClient.GetCallerIdentity(context.Background(), &sts.GetCallerIdentityInput{})
 	if err != nil {
 		if strings.Contains(fmt.Sprintf("%s", err), "InvalidClientTokenId") {
-			awsErr := fmt.Errorf("Invalid AWS Credentials: %s.\n For help configuring your credentials, see %s",
+			awsErr := fmt.Errorf("invalid AWS Credentials: %s.\n For help configuring your credentials, see %s",
 				err,
 				"https://docs.openshift.com/rosa/rosa_install_access_delete_clusters/rosa_getting_started_iam/"+
 					"rosa-config-aws-account.html#rosa-configuring-aws-account_rosa-config-aws-account")
@@ -1137,7 +1138,7 @@ func (c *awsClient) GetAvailabilityZoneType(availabilityZoneName string) (string
 		return "", err
 	}
 	if len(availabilityZones.AvailabilityZones) < 1 {
-		return "", fmt.Errorf("Failed to find availability zone '%s'", availabilityZoneName)
+		return "", fmt.Errorf("failed to find availability zone '%s'", availabilityZoneName)
 	}
 	return aws.ToString(availabilityZones.AvailabilityZones[0].ZoneType), nil
 }
@@ -1435,7 +1436,8 @@ func (c *awsClient) ListServiceAccountRoles(clusterName string) ([]iamtypes.Role
 			}
 
 			for _, tag := range listTagsResult.Tags {
-				if aws.ToString(tag.Key) == iamserviceaccount.RoleTypeTagKey && aws.ToString(tag.Value) == iamserviceaccount.ServiceAccountRoleType {
+				if aws.ToString(tag.Key) == iamserviceaccount.RoleTypeTagKey &&
+					aws.ToString(tag.Value) == iamserviceaccount.ServiceAccountRoleType {
 					isServiceAccountRole = true
 				}
 				if aws.ToString(tag.Key) == iamserviceaccount.ClusterTagKey && aws.ToString(tag.Value) == clusterName {
@@ -1460,7 +1462,8 @@ func (c *awsClient) ListServiceAccountRoles(clusterName string) ([]iamtypes.Role
 }
 
 // GetServiceAccountRoleDetails gets detailed information about a service account role using existing methods
-func (c *awsClient) GetServiceAccountRoleDetails(roleName string) (*iamtypes.Role, []iamtypes.AttachedPolicy, []string, error) {
+func (c *awsClient) GetServiceAccountRoleDetails(roleName string) (
+	*iamtypes.Role, []iamtypes.AttachedPolicy, []string, error) {
 	// Use existing GetRoleByName method
 	role, err := c.GetRoleByName(roleName)
 	if err != nil {
@@ -1468,9 +1471,10 @@ func (c *awsClient) GetServiceAccountRoleDetails(roleName string) (*iamtypes.Rol
 	}
 
 	// Get attached managed policies
-	listAttachedPoliciesResult, err := c.iamClient.ListAttachedRolePolicies(context.Background(), &iam.ListAttachedRolePoliciesInput{
-		RoleName: aws.String(roleName),
-	})
+	listAttachedPoliciesResult, err := c.iamClient.ListAttachedRolePolicies(context.Background(),
+		&iam.ListAttachedRolePoliciesInput{
+			RoleName: aws.String(roleName),
+		})
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("failed to list attached policies for role %s: %w", roleName, err)
 	}

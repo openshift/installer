@@ -71,6 +71,26 @@ func (c *OrganizationClient) Update() *OrganizationUpdateRequest {
 	}
 }
 
+// AccountGroupAssignments returns the target 'account_group_assignments' resource.
+//
+// Reference to the service that manages the account group assignments for this organization.
+func (c *OrganizationClient) AccountGroupAssignments() *AccountGroupAssignmentsClient {
+	return NewAccountGroupAssignmentsClient(
+		c.transport,
+		path.Join(c.path, "account_group_assignments"),
+	)
+}
+
+// AccountGroups returns the target 'account_groups' resource.
+//
+// Reference to the service that manages the account groups for this organization.
+func (c *OrganizationClient) AccountGroups() *AccountGroupsClient {
+	return NewAccountGroupsClient(
+		c.transport,
+		path.Join(c.path, "account_groups"),
+	)
+}
+
 // Labels returns the target 'generic_labels' resource.
 //
 // Reference to the list of labels of a specific organization.

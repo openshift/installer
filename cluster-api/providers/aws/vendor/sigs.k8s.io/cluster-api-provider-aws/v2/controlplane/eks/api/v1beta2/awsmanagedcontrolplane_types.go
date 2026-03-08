@@ -196,6 +196,11 @@ type AWSManagedControlPlaneSpec struct { //nolint: maligned
 	// +optional
 	AccessConfig *AccessConfig `json:"accessConfig,omitempty"`
 
+	// AccessEntries specifies the access entries for the cluster
+	// Access entries require AuthenticationMode to be either "api" or "api_and_config_map"
+	// +optional
+	AccessEntries []AccessEntry `json:"accessEntries,omitempty"`
+
 	// VpcCni is used to set configuration options for the VPC CNI plugin
 	// +optional
 	VpcCni VpcCni `json:"vpcCni,omitempty"`
@@ -274,6 +279,59 @@ type AccessConfig struct {
 	// ignored when updating existing clusters. Defaults to true.
 	// +kubebuilder:default=true
 	BootstrapClusterCreatorAdminPermissions *bool `json:"bootstrapClusterCreatorAdminPermissions,omitempty"`
+}
+
+// AccessEntry represents an AWS EKS access entry for IAM principals
+type AccessEntry struct {
+	// PrincipalARN is the Amazon Resource Name (ARN) of the IAM principal
+	// +kubebuilder:validation:Required
+	PrincipalARN string `json:"principalARN"`
+
+	// Type is the type of access entry. Defaults to standard if not specified.
+	// +kubebuilder:default=standard
+	// +kubebuilder:validation:Enum=standard;ec2_linux;ec2_windows;fargate_linux;ec2;hybrid_linux;hyperpod_linux
+	// +optional
+	Type AccessEntryType `json:"type,omitempty"`
+
+	// KubernetesGroups represents the Kubernetes groups for the access entry
+	// Cannot be specified if Type is "ec2_linux" or "ec2_windows"
+	// +optional
+	KubernetesGroups []string `json:"kubernetesGroups,omitempty"`
+
+	// Username is the username for the access entry
+	// +optional
+	Username string `json:"username,omitempty"`
+
+	// AccessPolicies specifies the policies to associate with this access entry
+	// Cannot be specified if Type is "ec2_linux" or "ec2_windows"
+	// +optional
+	// +kubebuilder:validation:MaxItems=20
+	AccessPolicies []AccessPolicyReference `json:"accessPolicies,omitempty"`
+}
+
+// AccessPolicyReference represents a reference to an AWS EKS access policy
+type AccessPolicyReference struct {
+	// PolicyARN is the Amazon Resource Name (ARN) of the access policy
+	// +kubebuilder:validation:Required
+	PolicyARN string `json:"policyARN"`
+
+	// AccessScope specifies the scope for the policy
+	// +kubebuilder:validation:Required
+	AccessScope AccessScope `json:"accessScope"`
+}
+
+// AccessScope represents the scope for an access policy
+type AccessScope struct {
+	// Type is the type of access scope. Defaults to "cluster".
+	// +kubebuilder:validation:Enum=cluster;namespace
+	// +kubebuilder:default=cluster
+	Type AccessScopeType `json:"type"`
+
+	// Namespaces are the namespaces for the access scope
+	// Only valid when Type is namespace
+	// +optional
+	// +kubebuilder:validation:MinItems=1
+	Namespaces []string `json:"namespaces,omitempty"`
 }
 
 // EncryptionConfig specifies the encryption configuration for the EKS clsuter.

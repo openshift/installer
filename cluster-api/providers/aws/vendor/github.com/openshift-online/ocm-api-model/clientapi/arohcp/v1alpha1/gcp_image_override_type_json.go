@@ -23,7 +23,6 @@ import (
 	"io"
 
 	jsoniter "github.com/json-iterator/go"
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-api-model/clientapi/helpers"
 )
 
@@ -72,7 +71,7 @@ func WriteGCPImageOverride(object *GCPImageOverride, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("billing_model")
-		v1.WriteBillingModelItem(object.billingModel, stream)
+		WriteBillingModelItem(object.billingModel, stream)
 		count++
 	}
 	present_ = len(object.fieldSet_) > 4 && object.fieldSet_[4]
@@ -90,7 +89,7 @@ func WriteGCPImageOverride(object *GCPImageOverride, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("product")
-		v1.WriteProduct(object.product, stream)
+		WriteProduct(object.product, stream)
 		count++
 	}
 	present_ = len(object.fieldSet_) > 6 && object.fieldSet_[6]
@@ -139,7 +138,7 @@ func ReadGCPImageOverride(iterator *jsoniter.Iterator) *GCPImageOverride {
 			object.href = iterator.ReadString()
 			object.fieldSet_[2] = true
 		case "billing_model":
-			value := v1.ReadBillingModelItem(iterator)
+			value := ReadBillingModelItem(iterator)
 			object.billingModel = value
 			object.fieldSet_[3] = true
 		case "image_id":
@@ -147,7 +146,7 @@ func ReadGCPImageOverride(iterator *jsoniter.Iterator) *GCPImageOverride {
 			object.imageID = value
 			object.fieldSet_[4] = true
 		case "product":
-			value := v1.ReadProduct(iterator)
+			value := ReadProduct(iterator)
 			object.product = value
 			object.fieldSet_[5] = true
 		case "project_id":

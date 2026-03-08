@@ -72,10 +72,16 @@ type RosaMachinePoolSpec struct {
 	// +optional
 	AutoRepair bool `json:"autoRepair,omitempty"`
 
-	// InstanceType specifies the AWS instance type
+	// InstanceType specifies the AWS instance type, for example `r5.xlarge`. Instance type ref; https://aws.amazon.com/ec2/instance-types/
 	//
 	// +kubebuilder:validation:Required
 	InstanceType string `json:"instanceType"`
+
+	// ImageType is the AMI (Amazon Machine Image) to use for running the associated NodePool (i.e. Windows or Default/Linux).
+	//
+	// +kubebuilder:validation:Enum=Windows;Default
+	// +optional
+	ImageType string `json:"imageType,omitempty"`
 
 	// Autoscaling specifies auto scaling behaviour for this MachinePool.
 	// required if Replicas is not configured

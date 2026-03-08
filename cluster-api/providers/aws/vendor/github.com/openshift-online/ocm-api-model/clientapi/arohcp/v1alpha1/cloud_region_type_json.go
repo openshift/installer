@@ -23,7 +23,6 @@ import (
 	"io"
 
 	jsoniter "github.com/json-iterator/go"
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
 	"github.com/openshift-online/ocm-api-model/clientapi/helpers"
 )
 
@@ -99,7 +98,7 @@ func WriteCloudRegion(object *CloudRegion, stream *jsoniter.Stream) {
 			stream.WriteMore()
 		}
 		stream.WriteObjectField("cloud_provider")
-		v1.WriteCloudProvider(object.cloudProvider, stream)
+		WriteCloudProvider(object.cloudProvider, stream)
 		count++
 	}
 	present_ = len(object.fieldSet_) > 7 && object.fieldSet_[7]
@@ -205,7 +204,7 @@ func ReadCloudRegion(iterator *jsoniter.Iterator) *CloudRegion {
 			object.kmsLocationName = value
 			object.fieldSet_[5] = true
 		case "cloud_provider":
-			value := v1.ReadCloudProvider(iterator)
+			value := ReadCloudProvider(iterator)
 			object.cloudProvider = value
 			object.fieldSet_[6] = true
 		case "display_name":

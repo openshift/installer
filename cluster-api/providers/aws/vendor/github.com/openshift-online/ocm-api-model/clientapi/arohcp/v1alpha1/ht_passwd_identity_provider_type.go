@@ -19,10 +19,6 @@ limitations under the License.
 
 package v1alpha1 // github.com/openshift-online/ocm-api-model/clientapi/arohcp/v1alpha1
 
-import (
-	v1 "github.com/openshift-online/ocm-api-model/clientapi/clustersmgmt/v1"
-)
-
 // HTPasswdIdentityProvider represents the values of the 'HT_passwd_identity_provider' type.
 //
 // Details for `htpasswd` identity providers.
@@ -30,7 +26,7 @@ type HTPasswdIdentityProvider struct {
 	fieldSet_ []bool
 	password  string
 	username  string
-	users     *v1.HTPasswdUserList
+	users     *HTPasswdUserList
 }
 
 // Empty returns true if the object is empty, i.e. no attribute has a value.
@@ -96,7 +92,7 @@ func (o *HTPasswdIdentityProvider) GetUsername() (value string, ok bool) {
 // the zero value of the type if the attribute doesn't have a value.
 //
 // Link to the collection of _HTPasswd_ users.
-func (o *HTPasswdIdentityProvider) Users() *v1.HTPasswdUserList {
+func (o *HTPasswdIdentityProvider) Users() *HTPasswdUserList {
 	if o != nil && len(o.fieldSet_) > 2 && o.fieldSet_[2] {
 		return o.users
 	}
@@ -107,7 +103,7 @@ func (o *HTPasswdIdentityProvider) Users() *v1.HTPasswdUserList {
 // a flag indicating if the attribute has a value.
 //
 // Link to the collection of _HTPasswd_ users.
-func (o *HTPasswdIdentityProvider) GetUsers() (value *v1.HTPasswdUserList, ok bool) {
+func (o *HTPasswdIdentityProvider) GetUsers() (value *HTPasswdUserList, ok bool) {
 	ok = o != nil && len(o.fieldSet_) > 2 && o.fieldSet_[2]
 	if ok {
 		value = o.users

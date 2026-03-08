@@ -34,6 +34,7 @@ import (
 	idputils "github.com/openshift-online/ocm-common/pkg/idp/utils"
 	cmv1 "github.com/openshift-online/ocm-sdk-go/clustersmgmt/v1"
 	rosaaws "github.com/openshift/rosa/pkg/aws"
+	"github.com/openshift/rosa/pkg/logforwarding"
 	"github.com/openshift/rosa/pkg/ocm"
 	"github.com/zgalor/weberr"
 	corev1 "k8s.io/api/core/v1"
@@ -275,6 +276,10 @@ func (r *ROSAControlPlaneReconciler) reconcileNormal(ctx context.Context, rosaSc
 			}
 			rosaScope.ControlPlane.Spec.ControlPlaneEndpoint = *apiEndpoint
 
+			if err := r.reconcileLogForwarders(rosaScope, ocmClient, cluster); err != nil {
+				return ctrl.Result{RequeueAfter: time.Second * 60}, fmt.Errorf("failed to reconcile logForwarders: %w", err)
+			}
+
 			if err := r.updateOCMCluster(rosaScope, ocmClient, cluster, creator); err != nil {
 				return ctrl.Result{}, fmt.Errorf("failed to update rosa control plane: %w", err)
 			}
@@ -507,6 +512,117 @@ func (r *ROSAControlPlaneReconciler) deleteMachinePools(ctx context.Context, ros
 	return allMachinePoolDeleted, nil
 }
 
+func (r *ROSAControlPlaneReconciler) reconcileLogForwarders(rosaScope *scope.ROSAControlPlaneScope, ocmClient rosa.OCMClient, cluster *cmv1.Cluster) error {
+	rosaScope.Info("reconcile logForwarders")
+
+	// Existing cloudWatch logForwarderID and s3 logForwarderID
+	cwlogForwarderID, s3logForwarderID, err := findExistingLogForwarders(ocmClient, cluster.ID())
+	if err != nil {
+		return err
+	}
+
+	cwlogForwarder, s3logForwarder, err := buildlogForwarders(rosaScope.ControlPlane.Spec.CloudWatchLogForwarder, rosaScope.ControlPlane.Spec.S3LogForwarder)
+	if err != nil {
+		return err
+	}
+
+	// ROSA-HCP allows 1 CloudWatch logForwarder per cluster
+	if err = r.reconcileLogForwarder(rosaScope, cwlogForwarder, ocmClient, cluster.ID(), cwlogForwarderID); err != nil {
+		return err
+	}
+
+	// ROSA-HCP allows 1 S3 logForwarder per cluster.
+	return r.reconcileLogForwarder(rosaScope, s3logForwarder, ocmClient, cluster.ID(), s3logForwarderID)
+}
+
+func (r *ROSAControlPlaneReconciler) reconcileLogForwarder(rosaScope *scope.ROSAControlPlaneScope, logForward *cmv1.LogForwarder, ocmClient rosa.OCMClient, clusterID string, logForwardID string) error {
+	// Delete logForward
+	if logForward == nil && logForwardID != "" {
+		rosaScope.Info(fmt.Sprintf("Delete logForwarder logForwarderID %s clusterID %s", logForwardID, clusterID))
+		return ocmClient.DeleteLogForwarder(clusterID, logForwardID)
+	}
+
+	// Create logForward
+	if logForward != nil && logForwardID == "" {
+		rosaScope.Info(fmt.Sprintf("Create logForwarder clusterID %s", clusterID))
+		_, err := ocmClient.SetLogForwarder(clusterID, logForward)
+		return err
+	}
+
+	// Update logForward
+	if logForward != nil && logForwardID != "" {
+		rosaScope.Info(fmt.Sprintf("Update logForwarder logForwarderID %s clusterID %s", logForwardID, clusterID))
+		return ocmClient.UpdateLogForwarder(logForward, logForwardID, clusterID)
+	}
+
+	return nil
+}
+
+func buildlogForwarders(cwlogForwarderConfig *rosacontrolplanev1.CloudWatchLogForwarderConfig, s3logForwarderConfig *rosacontrolplanev1.S3LogForwarderConfig) (cwlogForwarder *cmv1.LogForwarder, s3logForwarder *cmv1.LogForwarder, err error) {
+	if cwlogForwarderConfig != nil {
+		logForwardbldr := cmv1.NewLogForwarder()
+
+		logForwardbldr.Cloudwatch(cmv1.NewLogForwarderCloudWatchConfig().
+			LogDistributionRoleArn(cwlogForwarderConfig.CloudWatchLogRoleArn).
+			LogGroupName(cwlogForwarderConfig.CloudWatchLogGroupName))
+		logForwardbldr.Applications(cwlogForwarderConfig.Applications...)
+
+		if len(cwlogForwarderConfig.GroupLogIDs) > 0 {
+			logForwardbldr.Groups(buildGroups(cwlogForwarderConfig.GroupLogIDs)...)
+		}
+
+		if cwlogForwarder, err = logForwardbldr.Build(); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	if s3logForwarderConfig != nil {
+		logForwardbldr := cmv1.NewLogForwarder()
+
+		logForwardbldr.S3(cmv1.NewLogForwarderS3Config().
+			BucketName(s3logForwarderConfig.S3ConfigBucketName).
+			BucketPrefix(s3logForwarderConfig.S3ConfigBucketPrefix))
+		logForwardbldr.Applications(s3logForwarderConfig.Applications...)
+
+		if len(s3logForwarderConfig.GroupLogIDs) > 0 {
+			logForwardbldr.Groups(buildGroups(s3logForwarderConfig.GroupLogIDs)...)
+		}
+
+		if s3logForwarder, err = logForwardbldr.Build(); err != nil {
+			return nil, nil, err
+		}
+	}
+
+	return cwlogForwarder, s3logForwarder, nil
+}
+
+func findExistingLogForwarders(ocmClient rosa.OCMClient, clusterID string) (cwLogForwarderID string, s3LogForwarderID string, err error) {
+	existingLogForwarders, err := ocmClient.GetLogForwarders(clusterID)
+	if err != nil {
+		return cwLogForwarderID, s3LogForwarderID, err
+	}
+	// ROSA-HCP allows 1 CloudWatch logForwarder AND 1 S3 logForwarder per cluster
+	for _, logForwarder := range existingLogForwarders {
+		switch {
+		case logForwarder.Cloudwatch() != nil:
+			cwLogForwarderID = logForwarder.ID()
+		case logForwarder.S3() != nil:
+			s3LogForwarderID = logForwarder.ID()
+		}
+	}
+
+	return cwLogForwarderID, s3LogForwarderID, nil
+}
+
+// buildGroups converts a slice of group IDs into LogForwarderGroupBuilder objects.
+func buildGroups(ids []string) []*cmv1.LogForwarderGroupBuilder {
+	groups := make([]*cmv1.LogForwarderGroupBuilder, 0)
+	for _, id := range ids {
+		groups = append(groups, cmv1.NewLogForwarderGroup().ID(id))
+	}
+	return groups
+}
+
 func (r *ROSAControlPlaneReconciler) reconcileClusterVersion(rosaScope *scope.ROSAControlPlaneScope, ocmClient rosa.OCMClient, cluster *cmv1.Cluster) error {
 	version := rosaScope.ControlPlane.Spec.Version
 	if version == rosa.RawVersionID(cluster.Version()) {
@@ -642,19 +758,22 @@ func (r *ROSAControlPlaneReconciler) updateOCMClusterSpec(rosaControlPlane *rosa
 		updated = true
 	}
 
-	channelGroup := string(rosaControlPlane.Spec.ChannelGroup)
-	if ocmClusterSpec.ChannelGroup != channelGroup {
-		ocmClusterSpec.ChannelGroup = channelGroup
-		updated = true
+	if rosaControlPlane.Spec.ChannelGroup != "" {
+		channelGroup := string(rosaControlPlane.Spec.ChannelGroup)
+		if cluster.Version() == nil || cluster.Version().ChannelGroup() != channelGroup {
+			ocmClusterSpec.ChannelGroup = channelGroup
+			updated = true
+		}
 	}
 
 	if rosaControlPlane.Spec.AutoNode != nil {
-		if !strings.EqualFold(ocmClusterSpec.AutoNodeMode, string(rosaControlPlane.Spec.AutoNode.Mode)) {
-			ocmClusterSpec.AutoNodeMode = strings.ToLower(string(rosaControlPlane.Spec.AutoNode.Mode))
+		autoNodeMode := strings.ToLower(string(rosaControlPlane.Spec.AutoNode.Mode))
+		if cluster.AutoNode() == nil || cluster.AutoNode().Mode() != autoNodeMode {
+			ocmClusterSpec.AutoNodeMode = autoNodeMode
 			updated = true
 		}
 
-		if ocmClusterSpec.AutoNodeRoleARN != rosaControlPlane.Spec.AutoNode.RoleARN {
+		if cluster.AWS().AutoNode() == nil || cluster.AWS().AutoNode().RoleArn() != rosaControlPlane.Spec.AutoNode.RoleARN {
 			ocmClusterSpec.AutoNodeRoleARN = rosaControlPlane.Spec.AutoNode.RoleARN
 			updated = true
 		}
@@ -1153,6 +1272,25 @@ func buildOCMClusterSpec(controlPlaneSpec rosacontrolplanev1.RosaControlPlaneSpe
 		ocmClusterSpec.AutoNodeRoleARN = controlPlaneSpec.AutoNode.RoleARN
 	}
 
+	// Set CloudWatchLogForward
+	if controlPlaneSpec.CloudWatchLogForwarder != nil {
+		ocmClusterSpec.CloudWatchLogForwarder = &logforwarding.CloudWatchLogForwarderConfig{
+			Applications:           controlPlaneSpec.CloudWatchLogForwarder.Applications,
+			CloudWatchLogRoleArn:   controlPlaneSpec.CloudWatchLogForwarder.CloudWatchLogRoleArn,
+			CloudWatchLogGroupName: controlPlaneSpec.CloudWatchLogForwarder.CloudWatchLogGroupName,
+			GroupsLogVersions:      controlPlaneSpec.CloudWatchLogForwarder.GroupLogIDs,
+		}
+	}
+
+	// Set S3LogForward
+	if controlPlaneSpec.S3LogForwarder != nil {
+		ocmClusterSpec.S3LogForwarder = &logforwarding.S3LogForwarderConfig{
+			Applications:         controlPlaneSpec.S3LogForwarder.Applications,
+			GroupsLogVersions:    controlPlaneSpec.S3LogForwarder.GroupLogIDs,
+			S3ConfigBucketName:   controlPlaneSpec.S3LogForwarder.S3ConfigBucketName,
+			S3ConfigBucketPrefix: controlPlaneSpec.S3LogForwarder.S3ConfigBucketPrefix,
+		}
+	}
 	return ocmClusterSpec, nil
 }
 

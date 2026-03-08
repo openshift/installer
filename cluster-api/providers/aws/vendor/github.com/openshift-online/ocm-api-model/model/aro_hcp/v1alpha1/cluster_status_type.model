@@ -14,6 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-@ref(path = "/clusters_mgmt/v1/cluster_status")
+// Detailed status of a cluster.
 class ClusterStatus {
+	// The overall state of the cluster.
+	State ClusterState
+
+	// Detailed description of the cluster status.
+	Description String
+
+	// DNSReady from Provisioner
+	DNSReady Boolean
+
+	// OIDCReady from user configuration.
+	OIDCReady Boolean
+
+	// Provisioning Error Message
+	ProvisionErrorMessage   String
+
+	// Provisioning Error Code
+	ProvisionErrorCode String
+
+	// Configuration mode
+	ConfigurationMode ClusterConfigurationMode
+
+	// Limited Support Reason Count
+	LimitedSupportReasonCount Integer
+
+    // Current Replicas available for a Hosted Cluster
+    CurrentCompute Integer
 }
