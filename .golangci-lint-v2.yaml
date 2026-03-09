@@ -19,7 +19,6 @@ linters:
   - importas
   - misspell
   - nakedret
-  - prealloc
   - predeclared
   - revive
   - staticcheck
