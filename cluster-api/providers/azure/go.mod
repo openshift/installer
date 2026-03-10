@@ -141,7 +141,7 @@ require (
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
-replace sigs.k8s.io/cluster-api-provider-azure => github.com/patrickdillon/cluster-api-provider-azure v0.1.0-alpha.3.0.20260306204353-01cae4f061b6
+replace sigs.k8s.io/cluster-api-provider-azure => /Users/padillon/go/src/github.com/kubernetes-sigs/cluster-api-provider-azure
 
 // Workaround for prometheus/common v0.66.0+ breaking change that causes panic
 // in cluster-api test framework's TextParser usage. Pin prometheus dependencies
