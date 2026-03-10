@@ -32,7 +32,7 @@ require (
 	github.com/IBM/keyprotect-go-client v0.12.2
 	github.com/IBM/networking-go-sdk v0.51.11
 	github.com/IBM/platform-services-go-sdk v0.86.1
-	github.com/IBM/vpc-go-sdk v0.71.1
+	github.com/IBM/vpc-go-sdk v0.71.2
 	github.com/apparentlymart/go-cidr v1.1.0
 	github.com/awalterschulze/gographviz v0.0.0-20190522210029-fa59802746ab
 	github.com/cavaliercoder/go-cpio v0.0.0-20180626203310-925f9528c45e
