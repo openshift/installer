@@ -10,6 +10,8 @@ import (
 type Interface interface {
 	// Backups returns a BackupInformer.
 	Backups() BackupInformer
+	// CRIOCredentialProviderConfigs returns a CRIOCredentialProviderConfigInformer.
+	CRIOCredentialProviderConfigs() CRIOCredentialProviderConfigInformer
 	// ClusterImagePolicies returns a ClusterImagePolicyInformer.
 	ClusterImagePolicies() ClusterImagePolicyInformer
 	// ClusterMonitorings returns a ClusterMonitoringInformer.
@@ -18,6 +20,8 @@ type Interface interface {
 	ImagePolicies() ImagePolicyInformer
 	// InsightsDataGathers returns a InsightsDataGatherInformer.
 	InsightsDataGathers() InsightsDataGatherInformer
+	// PKIs returns a PKIInformer.
+	PKIs() PKIInformer
 }
 
 type version struct {
@@ -34,6 +38,11 @@ func New(f internalinterfaces.SharedInformerFactory, namespace string, tweakList
 // Backups returns a BackupInformer.
 func (v *version) Backups() BackupInformer {
 	return &backupInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// CRIOCredentialProviderConfigs returns a CRIOCredentialProviderConfigInformer.
+func (v *version) CRIOCredentialProviderConfigs() CRIOCredentialProviderConfigInformer {
+	return &cRIOCredentialProviderConfigInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }
 
 // ClusterImagePolicies returns a ClusterImagePolicyInformer.
@@ -54,4 +63,9 @@ func (v *version) ImagePolicies() ImagePolicyInformer {
 // InsightsDataGathers returns a InsightsDataGatherInformer.
 func (v *version) InsightsDataGathers() InsightsDataGatherInformer {
 	return &insightsDataGatherInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
+}
+
+// PKIs returns a PKIInformer.
+func (v *version) PKIs() PKIInformer {
+	return &pKIInformer{factory: v.factory, tweakListOptions: v.tweakListOptions}
 }

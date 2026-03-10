@@ -16,6 +16,10 @@ func (c *FakeConfigV1alpha1) Backups() v1alpha1.BackupInterface {
 	return newFakeBackups(c)
 }
 
+func (c *FakeConfigV1alpha1) CRIOCredentialProviderConfigs() v1alpha1.CRIOCredentialProviderConfigInterface {
+	return newFakeCRIOCredentialProviderConfigs(c)
+}
+
 func (c *FakeConfigV1alpha1) ClusterImagePolicies() v1alpha1.ClusterImagePolicyInterface {
 	return newFakeClusterImagePolicies(c)
 }
@@ -30,6 +34,10 @@ func (c *FakeConfigV1alpha1) ImagePolicies(namespace string) v1alpha1.ImagePolic
 
 func (c *FakeConfigV1alpha1) InsightsDataGathers() v1alpha1.InsightsDataGatherInterface {
 	return newFakeInsightsDataGathers(c)
+}
+
+func (c *FakeConfigV1alpha1) PKIs() v1alpha1.PKIInterface {
+	return newFakePKIs(c)
 }
 
 // RESTClient returns a RESTClient that is used to communicate
