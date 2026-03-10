@@ -523,11 +523,6 @@ func warnUnusedConfig(installConfig *types.InstallConfig) {
 			fieldPath := bmPath.Child("defaultMachinePlatform")
 			logrus.Warnf("%s: %s is ignored", fieldPath, baremetal.DefaultMachinePlatform)
 		}
-		if baremetal.BootstrapOSImage != "" {
-			fieldPath := bmPath.Child("bootstrapOSImage")
-			logrus.Debugf("%s: %s is ignored", fieldPath, baremetal.BootstrapOSImage)
-		}
-		// ClusterOSImage is ignored even in IPI now, so we probably don't need to check it at all.
 
 		if baremetal.BootstrapExternalStaticIP != "" {
 			fieldPath := bmPath.Child("bootstrapExternalStaticIP")

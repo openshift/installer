@@ -53,9 +53,6 @@ type TemplateData struct {
 	// BaremetalIntrospectionEndpointOverride contains the url for the baremetal introspection endpoint
 	BaremetalIntrospectionEndpointOverride string
 
-	// ClusterOSImage contains 4 URLs to download RHCOS live iso, kernel, rootfs and initramfs
-	ClusterOSImage string
-
 	// API VIP for use by ironic during bootstrap.
 	APIVIPs []string
 
@@ -230,7 +227,6 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 
 	templateData.IronicUsername = ironicUsername
 	templateData.IronicPassword = ironicPassword
-	templateData.ClusterOSImage = config.ClusterOSImage
 
 	return &templateData
 }

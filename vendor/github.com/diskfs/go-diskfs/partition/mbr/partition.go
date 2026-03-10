@@ -27,6 +27,8 @@ type Partition struct {
 	// we need this for calculations
 	logicalSectorSize  int
 	physicalSectorSize int
+	// partitionUUID is set when retrieving partitions from a Table
+	partitionUUID string
 }
 
 // PartitionEqualBytes compares if the bytes for 2 partitions are equal, ignoring CHS start and end
@@ -46,7 +48,7 @@ func PartitionEqualBytes(b1, b2 []byte) bool {
 		bytes.Equal(b1[12:16], b2[12:16])
 }
 
-// Equal compares if another partition is equal to this one, ignoring CHS start and end
+// Equal compares if another partition is equal to this one, ignoring the UUID and CHS start and end
 func (p *Partition) Equal(p2 *Partition) bool {
 	if p2 == nil {
 		return false
@@ -203,4 +205,10 @@ func (p *Partition) sectorSizes() (physical, logical int) {
 		logical = logicalSectorSize
 	}
 	return physical, logical
+}
+
+// UUID returns the partitions UUID. For MBR based partition tables this is the
+// partition table UUID with the partition number as a suffix.
+func (p *Partition) UUID() string {
+	return p.partitionUUID
 }
