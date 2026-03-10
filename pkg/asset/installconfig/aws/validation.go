@@ -41,6 +41,12 @@ var computeReq = resourceRequirements{
 	minimumMemory: 8192,
 }
 
+const (
+	subnetTypePrivate = "private"
+	subnetTypePublic  = "public"
+	subnetTypeEdge    = "edge"
+)
+
 // Validate executes platform-specific validation.
 func Validate(ctx context.Context, meta *Metadata, config *types.InstallConfig) error {
 	allErrs := field.ErrorList{}
@@ -336,9 +342,9 @@ func validateSubnets(ctx context.Context, meta *Metadata, fldPath *field.Path, c
 		allErrs = append(allErrs, validateSubnetRoles(fldPath, subnetsWithRole, subnetDataGroups, config)...)
 	} else {
 		allErrs = append(allErrs, validateUntaggedSubnets(ctx, fldPath, meta, subnetDataGroups)...)
-		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Private, "private")...)
-		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Public, "public")...)
-		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, "edge")...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Private, subnetTypePrivate)...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Public, subnetTypePublic)...)
+		allErrs = append(allErrs, validateDuplicateSubnetZones(fldPath, subnetDataGroups.Edge, subnetTypeEdge)...)
 	}
 
 	privateZones := sets.New[string]()
@@ -699,9 +705,9 @@ func validateSubnetRoles(fldPath *field.Path, subnetsWithRole map[awstypes.Subne
 		}
 
 		if ingressSubnet.Public != config.PublicIngress() {
-			subnetType := "private"
+			subnetType := subnetTypePrivate
 			if ingressSubnet.Public {
-				subnetType = "public"
+				subnetType = subnetTypePublic
 			}
 			allErrs = append(allErrs, field.Invalid(fldPath.Index(ingressSubnet.Idx), ingressSubnet.ID,
 				fmt.Sprintf("subnet %s has role %s and is %s, which is not allowed when publish is set to %s", ingressSubnet.ID, awstypes.IngressControllerLBSubnetRole, subnetType, config.Publish)))
