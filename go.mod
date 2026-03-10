@@ -1,8 +1,6 @@
 module github.com/openshift/installer
 
-go 1.24.0
-
-toolchain go1.24.5
+go 1.25.0
 
 require (
 	cloud.google.com/go/kms v1.22.0
@@ -73,12 +71,12 @@ require (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.0
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.38.2
-	github.com/openshift/api v0.0.0-20260228183123-9b2ee997d297
+	github.com/openshift/api v0.0.0-20260306002634-d3bbdada155c
 	github.com/openshift/assisted-image-service v0.0.0-20250917153356-4ca9ff81f712
 	github.com/openshift/assisted-service/api v0.0.0
 	github.com/openshift/assisted-service/client v0.0.0
 	github.com/openshift/assisted-service/models v0.0.0
-	github.com/openshift/client-go v0.0.0-20260108185524-48f4ccfc4e13
+	github.com/openshift/client-go v0.0.0-20260306160707-3935d929fc7d
 	github.com/openshift/cloud-credential-operator v0.0.0-20250925191450-a3e50aeacc55
 	github.com/openshift/cluster-api-provider-baremetal v0.0.0-20220408122422-7a548effc26e
 	github.com/openshift/cluster-api-provider-libvirt v0.2.1-0.20230308152226-83c0473d4429
@@ -116,12 +114,12 @@ require (
 	google.golang.org/grpc v1.76.0
 	gopkg.in/ini.v1 v1.67.0
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.34.1
+	k8s.io/api v0.35.1
 	k8s.io/apiextensions-apiserver v0.34.1
-	k8s.io/apimachinery v0.34.1
-	k8s.io/client-go v0.34.1
+	k8s.io/apimachinery v0.35.1
+	k8s.io/client-go v0.35.1
 	k8s.io/cloud-provider-vsphere v1.32.2
-	k8s.io/code-generator v0.34.1
+	k8s.io/code-generator v0.35.1
 	k8s.io/klog v1.0.0
 	k8s.io/klog/v2 v2.130.1
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4
@@ -135,7 +133,7 @@ require (
 	sigs.k8s.io/cluster-api-provider-vsphere v1.14.0
 	sigs.k8s.io/controller-runtime v0.22.4
 	sigs.k8s.io/controller-tools v0.19.0
-	sigs.k8s.io/json v0.0.0-20241014173422-cfa47c3a1cc8
+	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730
 	sigs.k8s.io/yaml v1.6.0
 )
 
@@ -340,7 +338,7 @@ require (
 	google.golang.org/genproto v0.0.0-20250707201910-8d1bb00bc6a7 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251029180050-ab9386a59fda // indirect
 	google.golang.org/protobuf v1.36.10 // indirect
-	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
+	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/gcfg.v1 v1.2.3 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
@@ -350,8 +348,8 @@ require (
 	k8s.io/cli-runtime v0.34.1 // indirect
 	k8s.io/cluster-bootstrap v0.33.3 // indirect
 	k8s.io/component-base v0.34.1 // indirect
-	k8s.io/gengo/v2 v2.0.0-20250604051438-85fd79dbfd9f // indirect
-	k8s.io/kube-openapi v0.0.0-20250710124328-f3f2b991d03b // indirect
+	k8s.io/gengo/v2 v2.0.0-20250922181213-ec3ebc5fd46b // indirect
+	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	k8s.io/kubectl v0.34.1 // indirect
 	sigs.k8s.io/kustomize/api v0.20.1 // indirect
 	sigs.k8s.io/kustomize/kyaml v0.20.1 // indirect
