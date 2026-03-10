@@ -190,7 +190,7 @@ func (o *ClusterUninstaller) listDHCPNetworksByName() ([]string, error) {
 }
 
 // extractNetworkIDFromError extracts network ID from error message if present.
-// Error format: "network xxx-xxx-xxxxx still attached to pvm-instances"
+// Error format: "network xxx-xxx-xxxxx still attached to pvm-instances."
 func extractNetworkIDFromError(err error) string {
 	if err == nil {
 		return ""
@@ -241,8 +241,7 @@ func isDHCPNetworkAttachedError(err error) bool {
 	errStr := err.Error()
 	return strings.Contains(errStr, "still attached to pvm-instances") ||
 		strings.Contains(errStr, "still attached to") ||
-		strings.Contains(errStr, "pcloudDhcpDeleteBadRequest") ||
-		strings.Contains(errStr, "400")
+		strings.Contains(errStr, "pcloudDhcpDeleteBadRequest")
 }
 
 // destroyDHCPNetwork deletes a PowerVS DHCP network.
@@ -295,9 +294,9 @@ func (o *ClusterUninstaller) destroyDHCPNetwork(item cloudResource) error {
 				}
 				// Return error to trigger retry after NIC deletion
 				return fmt.Errorf("DHCP server deletion blocked by attached network interfaces: %w", err)
-			} else {
-				o.Logger.Warnf("Could not determine network ID for DHCP subnet %q to delete network interfaces", item.name)
 			}
+			o.Logger.Warnf("Could not determine network ID for DHCP subnet %q to delete network interfaces", item.name)
+
 		}
 		o.Logger.Infof("Error: o.dhcpClient.Delete: %q", err)
 		return err

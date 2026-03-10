@@ -2,6 +2,7 @@ package powervs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"strings"
@@ -58,20 +59,21 @@ func (o *ClusterUninstaller) deleteNetworkInterfaces(subnetID string) error {
 		return fmt.Errorf("failed to list network interfaces: %w", err)
 	}
 
+	var deleteErrs []error
 	for _, nic := range interfaces.Interfaces {
 		if nic.ID != nil {
 			o.Logger.Debugf("Deleting network interface %q from subnet %q", *nic.ID, subnetID)
 			if err := o.networkClient.DeleteNetworkInterface(subnetID, *nic.ID); err != nil {
 				o.Logger.Warnf("Failed to delete network interface %q: %v", *nic.ID, err)
-				// Continue trying to delete other interfaces
+				deleteErrs = append(deleteErrs, fmt.Errorf("failed to delete network interface %q: %w", *nic.ID, err))
 			}
 		}
 	}
 
-	return nil
+	return errors.Join(deleteErrs...)
 }
 
-// isNetworkInterfaceError checks if an error indicates network interfaces are blocking deletion. (i.e 409 Conflict)
+// isNetworkInterfaceError checks if an error indicates network interfaces are blocking deletion. (i.e 409 Conflict).
 func isNetworkInterfaceError(err error) bool {
 	if err == nil {
 		return false
@@ -79,7 +81,7 @@ func isNetworkInterfaceError(err error) bool {
 	errStr := err.Error()
 	return strings.Contains(errStr, "one or more network interfaces have an IP allocation") ||
 		strings.Contains(errStr, "status 409") ||
-		strings.Contains(errStr, "409")
+		strings.Contains(errStr, "409 Conflict")
 }
 
 func (o *ClusterUninstaller) deletePowerSubnet(item cloudResource) error {
