@@ -10,6 +10,7 @@ import (
 	"k8s.io/utils/ptr"
 	"sigs.k8s.io/yaml"
 
+	configv1 "github.com/openshift/api/config/v1"
 	hiveext "github.com/openshift/assisted-service/api/hiveextension/v1beta1"
 	"github.com/openshift/assisted-service/api/v1beta1"
 	hivev1 "github.com/openshift/hive/apis/hive/v1"
@@ -601,6 +602,15 @@ func getInValidAgentHostsConfig() *agentconfig.AgentHosts {
 			},
 		},
 	}
+}
+
+// getValidOptionalInstallConfigWithUserManagedLB returns a valid optional install config with UserManaged load balancer.
+func getValidOptionalInstallConfigWithUserManagedLB() *agent.OptionalInstallConfig {
+	installConfig := getValidOptionalInstallConfig()
+	installConfig.Config.Platform.BareMetal.LoadBalancer = &configv1.BareMetalPlatformLoadBalancer{
+		Type: configv1.LoadBalancerTypeUserManaged,
+	}
+	return installConfig
 }
 
 func getGoodACIDualStack() *hiveext.AgentClusterInstall {
