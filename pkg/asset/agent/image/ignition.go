@@ -7,8 +7,10 @@ import (
 	"fmt"
 	"html/template"
 	"net"
+	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/coreos/ignition/v2/config/util"
@@ -85,6 +87,7 @@ type agentTemplateData struct {
 	TokenExpiry               string
 	AuthType                  string
 	CaBundleMount             string
+	DisableImagePolicy        bool
 }
 
 // Name returns the human-friendly name of the asset.
@@ -415,6 +418,24 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 	return nil
 }
 
+// shouldDisableImagePolicy checks the OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY
+// environment variable and returns true only if it's explicitly set to a boolean true value.
+// This experimental flag allows bypassing image policy validation for testing purposes.
+func shouldDisableImagePolicy() bool {
+	val, ok := os.LookupEnv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY")
+	if !ok {
+		return false
+	}
+	parsed, err := strconv.ParseBool(val)
+	if err != nil {
+		return false
+	}
+	if parsed {
+		logrus.Warn("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY is set to true, will pass to assisted-service container")
+	}
+	return parsed
+}
+
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries,
 	imageTypeISO, infraEnvID, publicKey, authType, agentAuthToken, userAuthToken, watcherAuthToken, tokenExpiry, caBundleMount string,
 	haveMirrorConfig bool,
@@ -444,6 +465,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 		WatcherAuthToken:          watcherAuthToken,
 		TokenExpiry:               tokenExpiry,
 		CaBundleMount:             caBundleMount,
+		DisableImagePolicy:        shouldDisableImagePolicy(),
 	}
 }
 

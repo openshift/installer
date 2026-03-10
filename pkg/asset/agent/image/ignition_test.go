@@ -44,6 +44,17 @@ import (
 // func TestIgnition_Generate(t *testing.T) {}
 
 func TestIgnition_getTemplateData(t *testing.T) {
+	// Save and unset the environment variable to ensure test isolation
+	originalValue, originalSet := os.LookupEnv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY")
+	os.Unsetenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY")
+	defer func() {
+		if originalSet {
+			os.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY", originalValue)
+		} else {
+			os.Unsetenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY")
+		}
+	}()
+
 	clusterImageSet := &hivev1.ClusterImageSet{
 		ObjectMeta: metav1.ObjectMeta{
 			Name: "openshift-v4.10.0",
@@ -119,7 +130,94 @@ func TestIgnition_getTemplateData(t *testing.T) {
 	assert.Equal(t, agentAuthToken, templateData.AgentAuthToken)
 	assert.Equal(t, userAuthToken, templateData.UserAuthToken)
 	assert.Equal(t, watcherAuthToken, templateData.WatcherAuthToken)
+	assert.Equal(t, false, templateData.DisableImagePolicy) // Should be false when env var is unset
+}
 
+func TestIgnition_shouldDisableImagePolicy(t *testing.T) {
+	cases := []struct {
+		name     string
+		envValue string
+		envSet   bool
+		expected bool
+	}{
+		{
+			name:     "env-not-set",
+			envSet:   false,
+			expected: false,
+		},
+		{
+			name:     "env-set-to-true",
+			envValue: "true",
+			envSet:   true,
+			expected: true,
+		},
+		{
+			name:     "env-set-to-false",
+			envValue: "false",
+			envSet:   true,
+			expected: false,
+		},
+		{
+			name:     "env-set-to-1",
+			envValue: "1",
+			envSet:   true,
+			expected: true,
+		},
+		{
+			name:     "env-set-to-0",
+			envValue: "0",
+			envSet:   true,
+			expected: false,
+		},
+		{
+			name:     "env-set-to-uppercase-TRUE",
+			envValue: "TRUE",
+			envSet:   true,
+			expected: true,
+		},
+		{
+			name:     "env-set-to-uppercase-FALSE",
+			envValue: "FALSE",
+			envSet:   true,
+			expected: false,
+		},
+		{
+			name:     "env-set-to-invalid-value",
+			envValue: "invalid",
+			envSet:   true,
+			expected: false,
+		},
+		{
+			name:     "env-set-to-empty-string",
+			envValue: "",
+			envSet:   true,
+			expected: false,
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			// Save original env var state
+			originalValue, originalSet := os.LookupEnv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY")
+			defer func() {
+				if originalSet {
+					os.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY", originalValue)
+				} else {
+					os.Unsetenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY")
+				}
+			}()
+
+			// Set up test environment
+			if tc.envSet {
+				os.Setenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY", tc.envValue)
+			} else {
+				os.Unsetenv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY")
+			}
+
+			result := shouldDisableImagePolicy()
+			assert.Equal(t, tc.expected, result)
+		})
+	}
 }
 
 func TestIgnition_getRendezvousHostEnv(t *testing.T) {
