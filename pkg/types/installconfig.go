@@ -426,12 +426,12 @@ type Networking struct {
 	// pod network when NetworkType is set to OVNKubernetes.
 	OVNKubernetesConfig *OVNKubernetesConfig `json:"ovnKubernetesConfig,omitempty"`
 
-	// ObservabilityEnabled is an optional field that enables network observability
+	// InstallNetworkObservability is an optional field that enables network observability
 	// when set to true.  If the field is omitted or set to false, it does nothing.
 	// The type is *bool so that if this field isn't there, it can be set to true.
 	//
 	// +optional
-	ObservabilityEnabled *bool `json:"observabilityEnabled,omitempty"`
+	InstallNetworkObservability *bool `json:"installNetworkObservability,omitempty"`
 
 	// Deprecated types, scheduled to be removed
 

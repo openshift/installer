@@ -81,7 +81,7 @@ func (no *Networking) Generate(_ context.Context, dependencies asset.Parents) er
 	}
 
 	// Set observabilityEnabled if it's true in the install config
-	if netConfig.ObservabilityEnabled != nil && *netConfig.ObservabilityEnabled {
+	if netConfig.InstallNetworkObservability != nil && *netConfig.InstallNetworkObservability {
 		networkSpec.ObservabilityEnabled = true
 	}
 

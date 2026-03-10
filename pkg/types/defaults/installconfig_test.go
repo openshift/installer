@@ -20,7 +20,7 @@ import (
 )
 
 func defaultInstallConfig() *types.InstallConfig {
-	observabilityEnabled := true
+	installNetworkObservability := true
 	return &types.InstallConfig{
 		AdditionalTrustBundlePolicy: defaultAdditionalTrustBundlePolicy(),
 		Networking: &types.Networking{
@@ -35,7 +35,7 @@ func defaultInstallConfig() *types.InstallConfig {
 					HostPrefix: int32(defaultHostPrefix),
 				},
 			},
-			ObservabilityEnabled: &observabilityEnabled,
+			InstallNetworkObservability: &installNetworkObservability,
 		},
 		ControlPlane: defaultMachinePool("master"),
 		Compute:      []types.MachinePool{*defaultMachinePool("worker")},
@@ -288,10 +288,10 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			}(),
 		},
 		{
-			name: "ObservabilityEnabled nil",
+			name: "InstallNetworkObservability nil",
 			config: &types.InstallConfig{
 				Networking: &types.Networking{
-					ObservabilityEnabled: nil,
+					InstallNetworkObservability: nil,
 				},
 			},
 			expected: func() *types.InstallConfig {
@@ -300,16 +300,16 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			}(),
 		},
 		{
-			name: "ObservabilityEnabled false",
+			name: "InstallNetworkObservability false",
 			config: &types.InstallConfig{
 				Networking: &types.Networking{
-					ObservabilityEnabled: func() *bool { b := false; return &b }(),
+					InstallNetworkObservability: func() *bool { b := false; return &b }(),
 				},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				observabilityEnabled := false
-				c.Networking.ObservabilityEnabled = &observabilityEnabled
+				installNetworkObservability := false
+				c.Networking.InstallNetworkObservability = &installNetworkObservability
 				return c
 			}(),
 		},

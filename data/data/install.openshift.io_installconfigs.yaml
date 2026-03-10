@@ -4791,6 +4791,12 @@ spec:
                   - cidr
                   type: object
                 type: array
+              installNetworkObservability:
+                description: |-
+                  InstallNetworkObservability is an optional field that enables network observability
+                  when set to true.  If the field is omitted or set to false, it does nothing.
+                  The type is *bool so that if this field isn't there, it can be set to true.
+                type: boolean
               machineCIDR:
                 description: |-
                   Deprecated way to configure an IP address pool for machines.
