@@ -449,10 +449,16 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 				allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 			}
 
-			// dual-stack: the instance type must support IPv6 networking
 			if platform.IPFamily.DualStackEnabled() {
+				// The instance type must support IPv6 networking
 				if !typeMeta.Networking.IPv6Supported {
 					errMsg := fmt.Sprintf("instance type %s does not support IPv6 networking", pool.InstanceType)
+					allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
+				}
+
+				// The instance type must be Nitro-based to enable IPv6 IMDS endpoint
+				if typeMeta.Hypervisor != string(ec2types.InstanceTypeHypervisorNitro) {
+					errMsg := fmt.Sprintf("instance type %s is not Nitro-based", pool.InstanceType)
 					allErrs = append(allErrs, field.Invalid(fldPath.Child("type"), pool.InstanceType, errMsg))
 				}
 			}
