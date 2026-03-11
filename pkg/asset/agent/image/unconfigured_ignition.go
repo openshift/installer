@@ -161,6 +161,7 @@ func (a *UnconfiguredIgnition) Generate(ctx context.Context, dependencies asset.
 		OSImage:                   osImage,
 		Proxy:                     infraEnv.Spec.Proxy,
 		AuthType:                  "none",
+		DisableImagePolicy:        shouldDisableImagePolicy(),
 	}
 
 	enabledServices := getDefaultEnabledServices()
