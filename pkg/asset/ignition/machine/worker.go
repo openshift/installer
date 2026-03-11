@@ -31,7 +31,6 @@ func (a *Worker) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&tls.RootCA{},
-		&ignition.ConfidentialClusterConfig{},
 	}
 }
 
@@ -42,11 +41,6 @@ func (a *Worker) Generate(_ context.Context, dependencies asset.Parents) error {
 	dependencies.Get(installConfig, rootCA)
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "worker")
-
-	// Apply confidential cluster configuration if provided
-	confidentialClusterConfig := &ignition.ConfidentialClusterConfig{}
-	dependencies.Get(confidentialClusterConfig)
-	confidentialClusterConfig.ApplyToConfig(a.Config, "worker")
 
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {

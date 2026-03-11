@@ -33,7 +33,6 @@ func (a *Master) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&tls.RootCA{},
-		&ignition.ConfidentialClusterConfig{},
 	}
 }
 
@@ -44,11 +43,6 @@ func (a *Master) Generate(_ context.Context, dependencies asset.Parents) error {
 	dependencies.Get(installConfig, rootCA)
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "master")
-
-	// Apply confidential cluster configuration if provided
-	confidentialClusterConfig := &ignition.ConfidentialClusterConfig{}
-	dependencies.Get(confidentialClusterConfig)
-	confidentialClusterConfig.ApplyToConfig(a.Config, "master")
 
 	if installConfig.Config.Platform.Name() == azure.Name {
 		logrus.Debugf("Adding /var partition to skip CoreOS growfs step")

@@ -280,6 +280,10 @@ func ValidateInstallConfig(c *types.InstallConfig, usingAgentMethod bool) field.
 		}
 	}
 
+	if c.ConfidentialCluster != nil {
+		allErrs = append(allErrs, validateConfidentialCluster(c.ConfidentialCluster, &c.Platform, field.NewPath("confidentialCluster"))...)
+	}
+
 	allErrs = append(allErrs, ValidateFeatureSet(c)...)
 	allErrs = append(allErrs, validateOSImageStream(c)...)
 
@@ -1901,4 +1905,23 @@ func extractRegistryHost(repository string) (string, error) {
 		return "", err
 	}
 	return dockerref.Domain(ref), nil
+}
+
+func validateConfidentialCluster(cc *types.ConfidentialCluster, platform *types.Platform, fldPath *field.Path) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	supportedPlatforms := []string{"azure"}
+	if !slices.Contains(supportedPlatforms, platform.Name()) {
+		allErrs = append(allErrs, field.Invalid(field.NewPath("platform"), platform.Name(), fmt.Sprintf("confidential cluster with remote attestation is only supported on these platforms: %s", strings.Join(supportedPlatforms, ", "))))
+	}
+
+	if cc.IgnitionClevisPinTrustee == "" {
+		allErrs = append(allErrs, field.Required(fldPath.Child("ignitionClevisPinTrustee"), "ignitionClevisPinTrustee is required if confidentialCluster is set"))
+	} else {
+		// TODO: restrict to "https" only once TLS is supported by the Trustee operator
+		// (tracked in https://github.com/trusted-execution-clusters/operator/pull/196)
+		allErrs = append(allErrs, validateURI(cc.IgnitionClevisPinTrustee, fldPath.Child("ignitionClevisPinTrustee"), []string{"http", "https"})...)
+	}
+
+	return allErrs
 }

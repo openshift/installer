@@ -3043,6 +3043,61 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: "Unsupported OS Image Stream. Supported values are: rhel-9, rhel-10",
 		},
+		{
+			name: "invalid unsupported platform for ConfidentialCluster",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					AWS: validAWSPlatform(),
+				}
+				c.ConfidentialCluster = &types.ConfidentialCluster{
+					IgnitionClevisPinTrustee: "http://10.73.210.28:8000/ignition-clevis-pin-trustee",
+				}
+				return c
+			}(),
+			expectedError: "platform: Invalid value: \"aws\": confidential cluster with remote attestation is only supported on these platforms: azure",
+		},
+		{
+			name: "invalid empty IgnitionClevisPinTrustee in ConfidentialCluster",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ConfidentialCluster = &types.ConfidentialCluster{
+					IgnitionClevisPinTrustee: "",
+				}
+				return c
+			}(),
+			expectedError: "confidentialCluster.ignitionClevisPinTrustee: Invalid value: \"\": ignitionClevisPinTrustee is required if confidentialCluster is set",
+		},
+		{
+			name: "invalid IgnitionClevisPinTrustee in ConfidentialCluster",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ConfidentialCluster = &types.ConfidentialCluster{
+					IgnitionClevisPinTrustee: "abcde",
+				}
+				return c
+			}(),
+			expectedError: "confidentialCluster.ignitionClevisPinTrustee: Invalid value: \"abcde\": parse \"abcde\": invalid URI for request",
+		},
+		{
+			name: "valid IgnitionClevisPinTrustee in ConfidentialCluster",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.Platform = types.Platform{
+					Azure: validAzurePlatform(),
+				}
+				c.ConfidentialCluster = &types.ConfidentialCluster{
+					IgnitionClevisPinTrustee: "http://10.73.210.28:8000/ignition-clevis-pin-trustee",
+				}
+				return c
+			}(),
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
