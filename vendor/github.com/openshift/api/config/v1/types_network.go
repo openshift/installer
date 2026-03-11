@@ -86,6 +86,13 @@ type NetworkSpec struct {
 	//
 	// +optional
 	NetworkDiagnostics NetworkDiagnostics `json:"networkDiagnostics"`
+
+	// installNetworkObservability is an optional field that enables network observability
+	// when omitted or set to enable.  If the field is set to disable, it does nothing.
+	// Valid values are "", "Enable", "Disable".
+	// +kubebuilder:validation:Enum:="";Enable;Disable
+	// +optional
+	InstallNetworkObservability *string `json:"installNetworkObservability,omitempty"`
 }
 
 // NetworkStatus is the current network configuration.
