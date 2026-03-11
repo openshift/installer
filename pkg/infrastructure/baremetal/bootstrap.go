@@ -10,7 +10,7 @@ import (
 	"os"
 	"strings"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/sirupsen/logrus"
 	"libvirt.org/go/libvirtxml"

@@ -6,8 +6,8 @@ import (
 	"fmt"
 
 	"github.com/coreos/ignition/v2/config/merge"
-	"github.com/coreos/ignition/v2/config/v3_2"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	v3_6 "github.com/coreos/ignition/v2/config/v3_6"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/ignition"
@@ -159,7 +159,7 @@ func (i *Ignition) Generate(_ context.Context, dependencies asset.Parents) error
 }
 
 func setIgnitionConfigOverride(config *igntypes.Config, override string) error {
-	ignitionConfigOverride, _, err := v3_2.Parse([]byte(override))
+	ignitionConfigOverride, _, err := v3_6.Parse([]byte(override))
 	if err != nil {
 		return fmt.Errorf("failed to parse ignition config override: %w", err)
 	}

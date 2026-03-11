@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"os"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/pkg/errors"
 
 	"github.com/openshift/installer/pkg/asset"
@@ -31,6 +31,7 @@ func (a *Worker) Dependencies() []asset.Asset {
 	return []asset.Asset{
 		&installconfig.InstallConfig{},
 		&tls.RootCA{},
+		&ignition.ConfidentialClusterConfig{},
 	}
 }
 
@@ -41,6 +42,11 @@ func (a *Worker) Generate(_ context.Context, dependencies asset.Parents) error {
 	dependencies.Get(installConfig, rootCA)
 
 	a.Config = pointerIgnitionConfig(installConfig.Config, rootCA.Cert(), "worker")
+
+	// Apply confidential cluster configuration if provided
+	confidentialClusterConfig := &ignition.ConfidentialClusterConfig{}
+	dependencies.Get(confidentialClusterConfig)
+	confidentialClusterConfig.ApplyToConfig(a.Config, "worker")
 
 	data, err := ignition.Marshal(a.Config)
 	if err != nil {

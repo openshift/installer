@@ -17,7 +17,7 @@ import (
 
 	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	ignutil "github.com/coreos/ignition/v2/config/util"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
@@ -176,6 +176,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&tls.BMCVerifyCA{},
 		&releaseimage.Image{},
 		new(rhcos.Image),
+		&ignition.ConfidentialClusterConfig{},
 	}
 }
 
@@ -191,6 +192,11 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 			Version: igntypes.MaxVersion.String(),
 		},
 	}
+
+	// Apply confidential cluster configuration if provided
+	confidentialClusterConfig := &ignition.ConfidentialClusterConfig{}
+	dependencies.Get(confidentialClusterConfig)
+	confidentialClusterConfig.ApplyToConfig(a.Config, "bootstrap")
 
 	if err := AddStorageFiles(a.Config, "/", "bootstrap/files", templateData); err != nil {
 		return err

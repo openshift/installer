@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/containers/image/v5/pkg/sysregistriesv2"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/pelletier/go-toml"
 	"github.com/stretchr/testify/assert"
 	"github.com/vincent-petithory/dataurl"

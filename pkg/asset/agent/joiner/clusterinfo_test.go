@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
