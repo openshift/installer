@@ -9,7 +9,7 @@ linters:
   - dogsled
   - errcheck
   - errchkjson
-  - exportloopref
+  - copyloopvar
   - gci
   - goconst
   - gocritic
@@ -208,7 +208,7 @@ issues:
 
 run:
   go: "1.23"
-  timeout: 10m
+  timeout: 20m
   build-tags:
   - tools
   - e2e

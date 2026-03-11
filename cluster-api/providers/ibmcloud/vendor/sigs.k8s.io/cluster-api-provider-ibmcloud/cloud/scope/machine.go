@@ -427,7 +427,7 @@ func (m *MachineScope) volumeToVPCVolumeAttachment(volume *infrav1beta2.VPCVolum
 	}
 
 	if volume.Name != "" {
-		bootVolume.Volume.Name = core.StringPtr(volume.Name)
+		bootVolume.Name = core.StringPtr(volume.Name)
 	}
 
 	if volume.Profile != "" {

@@ -58,5 +58,5 @@ type IBMVPCClusterTemplateResource struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&IBMVPCClusterTemplate{}, &IBMVPCClusterTemplateList{})
+	objectTypes = append(objectTypes, &IBMVPCClusterTemplate{}, &IBMVPCClusterTemplateList{})
 }

@@ -40,6 +40,7 @@ COPY controllers/ controllers/
 COPY cloud/ cloud/
 COPY pkg/ pkg/
 COPY util/ util/
+COPY internal/ internal/
 
 # Build
 ARG TARGETOS

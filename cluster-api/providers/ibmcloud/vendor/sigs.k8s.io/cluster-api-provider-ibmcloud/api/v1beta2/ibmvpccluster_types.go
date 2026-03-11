@@ -385,10 +385,6 @@ type IBMVPCClusterList struct {
 	Items           []IBMVPCCluster `json:"items"`
 }
 
-func init() {
-	SchemeBuilder.Register(&IBMVPCCluster{}, &IBMVPCClusterList{})
-}
-
 // GetConditions returns the observations of the operational state of the IBMVPCCluster resource.
 func (r *IBMVPCCluster) GetConditions() capiv1beta1.Conditions {
 	return r.Status.Conditions
@@ -397,4 +393,8 @@ func (r *IBMVPCCluster) GetConditions() capiv1beta1.Conditions {
 // SetConditions sets the underlying service state of the IBMVPCCluster to the predescribed clusterv1.Conditions.
 func (r *IBMVPCCluster) SetConditions(conditions capiv1beta1.Conditions) {
 	r.Status.Conditions = conditions
+}
+
+func init() {
+	objectTypes = append(objectTypes, &IBMVPCCluster{}, &IBMVPCClusterList{})
 }

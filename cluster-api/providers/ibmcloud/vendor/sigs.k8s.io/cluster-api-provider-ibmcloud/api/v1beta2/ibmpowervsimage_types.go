@@ -62,7 +62,7 @@ type IBMPowerVSImageSpec struct {
 
 	// Type of storage, storage pool with the most available space will be selected.
 	// +kubebuilder:default=tier1
-	// +kubebuilder:validation:Enum=tier1;tier3
+	// +kubebuilder:validation:Enum=tier0;tier1;tier3
 	// +optional
 	StorageType string `json:"storageType,omitempty"`
 
@@ -131,5 +131,5 @@ type IBMPowerVSImageList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&IBMPowerVSImage{}, &IBMPowerVSImageList{})
+	objectTypes = append(objectTypes, &IBMPowerVSImage{}, &IBMPowerVSImageList{})
 }

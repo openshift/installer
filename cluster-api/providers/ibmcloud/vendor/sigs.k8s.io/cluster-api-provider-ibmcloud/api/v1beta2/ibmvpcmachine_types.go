@@ -212,5 +212,5 @@ type IBMVPCMachineList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&IBMVPCMachine{}, &IBMVPCMachineList{})
+	objectTypes = append(objectTypes, &IBMVPCMachine{}, &IBMVPCMachineList{})
 }
