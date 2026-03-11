@@ -79,7 +79,9 @@ func (a AddressFamilySubnets) GetIPv4Subnets() []*net.IPNet {
 	var ipv4Subnets []*net.IPNet
 	for _, ipv4Subnet := range a.addressFamilySubnets {
 		if ipv4Subnet.IPv4Subnet != nil {
-			ipv4Subnets = append(ipv4Subnets, ipv4Subnet.IPv4Subnet)
+			tmp := new(AddressFamilySubnet)
+			ipv4Subnet.DeepCopyInto(tmp)
+			ipv4Subnets = append(ipv4Subnets, tmp.IPv4Subnet)
 		}
 	}
 	return ipv4Subnets
@@ -90,7 +92,9 @@ func (a AddressFamilySubnets) GetIPv6Subnets() []*net.IPNet {
 	var ipv6Subnets []*net.IPNet
 	for _, ipv6Subnet := range a.addressFamilySubnets {
 		if ipv6Subnet.IPv6Subnet != nil {
-			ipv6Subnets = append(ipv6Subnets, ipv6Subnet.IPv6Subnet)
+			tmp := new(AddressFamilySubnet)
+			ipv6Subnet.DeepCopyInto(tmp)
+			ipv6Subnets = append(ipv6Subnets, tmp.IPv6Subnet)
 		}
 	}
 	return ipv6Subnets
@@ -99,7 +103,9 @@ func (a AddressFamilySubnets) GetIPv6Subnets() []*net.IPNet {
 // GetControlPlaneSubnet returns the control plane subnet.
 func (a AddressFamilySubnets) GetControlPlaneSubnet() AddressFamilySubnet {
 	if a.length > 0 {
-		return a.addressFamilySubnets[0]
+		tmp := new(AddressFamilySubnet)
+		a.addressFamilySubnets[0].DeepCopyInto(tmp)
+		return *tmp
 	}
 	return AddressFamilySubnet{}
 }
@@ -174,7 +180,9 @@ func (a AddressFamilySubnets) GetComputeSubnets() []AddressFamilySubnet {
 
 	for _, addressFamilySubnet := range a.addressFamilySubnets {
 		if addressFamilySubnet.SubnetRole != nil && *addressFamilySubnet.SubnetRole == capz.SubnetNode {
-			computeSubnets = append(computeSubnets, addressFamilySubnet)
+			tmp := new(AddressFamilySubnet)
+			addressFamilySubnet.DeepCopyInto(tmp)
+			computeSubnets = append(computeSubnets, *tmp)
 		}
 	}
 
@@ -188,7 +196,9 @@ func (a AddressFamilySubnets) GetIPv4ComputeSubnets() []*net.IPNet {
 	var ipv4ComputeSubnets []*net.IPNet
 	for _, ipv4ComputeSubnet := range computeSubnets {
 		if ipv4ComputeSubnet.IPv4Subnet != nil {
-			ipv4ComputeSubnets = append(ipv4ComputeSubnets, ipv4ComputeSubnet.IPv4Subnet)
+			tmp := new(AddressFamilySubnet)
+			ipv4ComputeSubnet.DeepCopyInto(tmp)
+			ipv4ComputeSubnets = append(ipv4ComputeSubnets, tmp.IPv4Subnet)
 		}
 	}
 
@@ -202,7 +212,9 @@ func (a AddressFamilySubnets) GetIPv6ComputeSubnets() []*net.IPNet {
 	var ipv6ComputeSubnets []*net.IPNet
 	for _, ipv6ComputeSubnet := range computeSubnets {
 		if ipv6ComputeSubnet.IPv6Subnet != nil {
-			ipv6ComputeSubnets = append(ipv6ComputeSubnets, ipv6ComputeSubnet.IPv6Subnet)
+			tmp := new(AddressFamilySubnet)
+			ipv6ComputeSubnet.DeepCopyInto(tmp)
+			ipv6ComputeSubnets = append(ipv6ComputeSubnets, tmp.IPv6Subnet)
 		}
 	}
 
@@ -215,7 +227,9 @@ func (a AddressFamilySubnets) GetAdditionalSubnets() []AddressFamilySubnet {
 
 	for _, addressFamilySubnet := range a.addressFamilySubnets {
 		if addressFamilySubnet.SubnetRole == nil {
-			additionalSubnets = append(additionalSubnets, addressFamilySubnet)
+			tmp := new(AddressFamilySubnet)
+			addressFamilySubnet.DeepCopyInto(tmp)
+			additionalSubnets = append(additionalSubnets, *tmp)
 		}
 	}
 
@@ -229,7 +243,9 @@ func (a AddressFamilySubnets) GetIPv4AdditionalSubnets() []*net.IPNet {
 	var ipv4Subnets []*net.IPNet
 	for _, ipv4Subnet := range additionalSubnets {
 		if ipv4Subnet.IPv4Subnet != nil {
-			ipv4Subnets = append(ipv4Subnets, ipv4Subnet.IPv4Subnet)
+			tmp := new(AddressFamilySubnet)
+			ipv4Subnet.DeepCopyInto(tmp)
+			ipv4Subnets = append(ipv4Subnets, tmp.IPv4Subnet)
 		}
 	}
 
@@ -243,7 +259,9 @@ func (a AddressFamilySubnets) GetIPv6AdditionalSubnets() []*net.IPNet {
 	var ipv6Subnets []*net.IPNet
 	for _, ipv6Subnet := range additionalSubnets {
 		if ipv6Subnet.IPv6Subnet != nil {
-			ipv6Subnets = append(ipv6Subnets, ipv6Subnet.IPv6Subnet)
+			tmp := new(AddressFamilySubnet)
+			ipv6Subnet.DeepCopyInto(tmp)
+			ipv6Subnets = append(ipv6Subnets, tmp.IPv6Subnet)
 		}
 	}
 
