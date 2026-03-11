@@ -427,11 +427,12 @@ type Networking struct {
 	OVNKubernetesConfig *OVNKubernetesConfig `json:"ovnKubernetesConfig,omitempty"`
 
 	// InstallNetworkObservability is an optional field that enables network observability
-	// when set to true.  If the field is omitted or set to false, it does nothing.
-	// The type is *bool so that if this field isn't there, it can be set to true.
+	// when omitted or set to "Enable". If the field is set to "Disable", it does nothing.
+	// Valid values are "", "Enable", "Disable".
 	//
+	// +kubebuilder:validation:Enum="";Enable;Disable
 	// +optional
-	InstallNetworkObservability *bool `json:"installNetworkObservability,omitempty"`
+	InstallNetworkObservability *string `json:"installNetworkObservability,omitempty"`
 
 	// Deprecated types, scheduled to be removed
 

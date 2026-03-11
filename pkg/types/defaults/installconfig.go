@@ -59,7 +59,7 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 		}
 	}
 	if c.Networking.InstallNetworkObservability == nil {
-		installNetworkObservability := true
+		installNetworkObservability := "Enable"
 		c.Networking.InstallNetworkObservability = &installNetworkObservability
 	}
 

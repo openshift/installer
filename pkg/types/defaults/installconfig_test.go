@@ -20,7 +20,7 @@ import (
 )
 
 func defaultInstallConfig() *types.InstallConfig {
-	installNetworkObservability := true
+	installNetworkObservability := "Enable"
 	return &types.InstallConfig{
 		AdditionalTrustBundlePolicy: defaultAdditionalTrustBundlePolicy(),
 		Networking: &types.Networking{
@@ -300,15 +300,15 @@ func TestSetInstallConfigDefaults(t *testing.T) {
 			}(),
 		},
 		{
-			name: "InstallNetworkObservability false",
+			name: "InstallNetworkObservability Disable",
 			config: &types.InstallConfig{
 				Networking: &types.Networking{
-					InstallNetworkObservability: func() *bool { b := false; return &b }(),
+					InstallNetworkObservability: func() *string { s := "Disable"; return &s }(),
 				},
 			},
 			expected: func() *types.InstallConfig {
 				c := defaultInstallConfig()
-				installNetworkObservability := false
+				installNetworkObservability := "Disable"
 				c.Networking.InstallNetworkObservability = &installNetworkObservability
 				return c
 			}(),
