@@ -655,6 +655,11 @@ func (in *Networking) DeepCopyInto(out *Networking) {
 		*out = new(OVNKubernetesConfig)
 		(*in).DeepCopyInto(*out)
 	}
+	if in.InstallNetworkObservability != nil {
+		in, out := &in.InstallNetworkObservability, &out.InstallNetworkObservability
+		*out = new(string)
+		**out = **in
+	}
 	if in.DeprecatedMachineCIDR != nil {
 		in, out := &in.DeprecatedMachineCIDR, &out.DeprecatedMachineCIDR
 		*out = (*in).DeepCopy()

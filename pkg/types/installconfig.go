@@ -426,6 +426,14 @@ type Networking struct {
 	// pod network when NetworkType is set to OVNKubernetes.
 	OVNKubernetesConfig *OVNKubernetesConfig `json:"ovnKubernetesConfig,omitempty"`
 
+	// InstallNetworkObservability is an optional field that enables network observability
+	// when omitted or set to "Enable". If the field is set to "Disable", it does nothing.
+	// Valid values are "", "Enable", "Disable".
+	//
+	// +kubebuilder:validation:Enum="";Enable;Disable
+	// +optional
+	InstallNetworkObservability *string `json:"installNetworkObservability,omitempty"`
+
 	// Deprecated types, scheduled to be removed
 
 	// Deprecated way to configure an IP address pool for machines.

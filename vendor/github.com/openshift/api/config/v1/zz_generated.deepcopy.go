@@ -4302,6 +4302,11 @@ func (in *NetworkSpec) DeepCopyInto(out *NetworkSpec) {
 		(*in).DeepCopyInto(*out)
 	}
 	in.NetworkDiagnostics.DeepCopyInto(&out.NetworkDiagnostics)
+	if in.InstallNetworkObservability != nil {
+		in, out := &in.InstallNetworkObservability, &out.InstallNetworkObservability
+		*out = new(string)
+		**out = **in
+	}
 	return
 }
 

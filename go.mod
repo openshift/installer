@@ -389,3 +389,5 @@ replace (
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix => github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.2-0.20251007022949-442bc2ebe286
 	sigs.k8s.io/cluster-api-provider-azure => github.com/mboersma/cluster-api-provider-azure v0.3.1-0.20251030205607-3161b9cc8d3e
 )
+
+replace github.com/openshift/api v0.0.0-20260228183123-9b2ee997d297 => github.com/OlivierCazade/api v0.0.0-20260310172058-df85794acda8

@@ -58,6 +58,10 @@ func SetInstallConfigDefaults(c *types.InstallConfig) {
 			},
 		}
 	}
+	if c.Networking.InstallNetworkObservability == nil {
+		installNetworkObservability := "Enable"
+		c.Networking.InstallNetworkObservability = &installNetworkObservability
+	}
 
 	if c.Publish == "" {
 		c.Publish = types.ExternalPublishingStrategy
