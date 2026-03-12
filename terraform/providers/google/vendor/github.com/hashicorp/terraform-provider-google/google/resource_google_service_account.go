@@ -7,6 +7,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iam/v1"
 )
 
@@ -69,6 +70,11 @@ func ResourceGoogleServiceAccount() *schema.Resource {
 				ForceNew:    true,
 				Description: `The ID of the project that the service account will be created in. Defaults to the provider project configuration.`,
 			},
+			"create_ignore_already_exists": {
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Description: `If set to true, skip service account creation if existing object already exists with the same email. Useful when running multiple concurrent builds with same service account name.`,
+			},
 			"member": {
 				Type:        schema.TypeString,
 				Computed:    true,
@@ -104,33 +110,54 @@ func resourceGoogleServiceAccountCreate(d *schema.ResourceData, meta interface{}
 		ServiceAccount: sa,
 	}
 
-	sa, err = config.NewIamClient(userAgent).Projects.ServiceAccounts.Create("projects/"+project, r).Do()
+	iamClient := config.NewIamClient(userAgent)
+	sa, err = iamClient.Projects.ServiceAccounts.Create("projects/"+project, r).Do()
 	if err != nil {
-		return fmt.Errorf("Error creating service account: %s", err)
+		gerr, ok := err.(*googleapi.Error)
+		alreadyExists := ok && gerr.Code == 409 && d.Get("create_ignore_already_exists").(bool)
+		if alreadyExists {
+			fullServiceAccountName := fmt.Sprintf("projects/%s/serviceAccounts/%s@%s.iam.gserviceaccount.com", project, aid, project)
+			err = RetryTimeDuration(func() (operr error) {
+				sa, operr = iamClient.Projects.ServiceAccounts.Get(fullServiceAccountName).Do()
+				if operr != nil {
+					return operr
+				}
+
+				d.SetId(sa.Name)
+				return populateResourceData(d, sa)
+			}, d.Timeout(schema.TimeoutCreate), isNotFoundRetryableError("service account creation"))
+
+			return nil
+		} else {
+			return fmt.Errorf("Error creating service account: %s", err)
+		}
 	}
 
 	d.SetId(sa.Name)
-
-	err = RetryTimeDuration(func() (operr error) {
-		_, saerr := config.NewIamClient(userAgent).Projects.ServiceAccounts.Get(d.Id()).Do()
-		return saerr
-	}, d.Timeout(schema.TimeoutCreate), isNotFoundRetryableError("service account creation"))
-
-	if err != nil {
-		return fmt.Errorf("Error reading service account after creation: %s", err)
-	}
+	populateResourceData(d, sa)
 
 	// We poll until the resource is found due to eventual consistency issue
-	// on part of the api https://cloud.google.com/iam/docs/overview#consistency
-	err = PollingWaitTime(resourceServiceAccountPollRead(d, meta), PollCheckForExistence, "Creating Service Account", d.Timeout(schema.TimeoutCreate), 1)
+	// on part of the api https://cloud.google.com/iam/docs/overview#consistency.
+	// Wait for at least 3 successful responses in a row to ensure result is consistent.
+	// IAM API returns 403 when the queried SA is not found, so we must ignore both 404 & 403 errors
+	PollingWaitTime(
+		resourceServiceAccountPollRead(d, meta),
+		PollCheckForExistence,
+		"Creating Service Account",
+		d.Timeout(schema.TimeoutCreate),
+		3, // Number of consecutive occurrences.
+	)
 
-	if err != nil {
-		return err
-	}
+	// We can't guarantee complete consistency even after polling,
+	// so sleep for some additional time to reduce the likelihood of
+	// eventual consistency failures.
+	time.Sleep(10 * time.Second)
 
-	return resourceGoogleServiceAccountRead(d, meta)
+	return nil
 }
 
+// PollReadFunc for checking Service Account existence.
+// If resourceData is not nil, it will be updated with the response.
 func resourceServiceAccountPollRead(d *schema.ResourceData, meta interface{}) PollReadFunc {
 	return func() (map[string]interface{}, error) {
 		config := meta.(*Config)
@@ -162,6 +189,10 @@ func resourceGoogleServiceAccountRead(d *schema.ResourceData, meta interface{}) 
 		return handleNotFoundError(err, d, fmt.Sprintf("Service Account %q", d.Id()))
 	}
 
+	return populateResourceData(d, sa)
+}
+
+func populateResourceData(d *schema.ResourceData, sa *iam.ServiceAccount) error {
 	if err := d.Set("email", sa.Email); err != nil {
 		return fmt.Errorf("Error setting email: %s", err)
 	}

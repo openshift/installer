@@ -102,5 +102,5 @@ replace golang.org/x/text => golang.org/x/text v0.3.7
 // https://issues.redhat.com/browse/OCPBUGS-5667
 replace github.com/Masterminds/goutils => github.com/Masterminds/goutils v1.1.1
 
-// https://issues.redhat.com/browse/OCPBUGS-66250
-replace github.com/hashicorp/terraform-provider-google v1.20.1-0.20211220202130-c575d59d1cdf => github.com/openshift/terraform-providers-terraform-provider-google v0.0.0-20251201175940-2adc9d854545
+// https://issues.redhat.com/browse/OCPBUGS-78352
+replace github.com/hashicorp/terraform-provider-google v1.20.1-0.20211220202130-c575d59d1cdf => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132813-0e67eab55529
