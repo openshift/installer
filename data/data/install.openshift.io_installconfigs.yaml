@@ -6107,6 +6107,16 @@ spec:
                     description: ProvisioningNetworkCIDR defines the network to use
                       for provisioning.
                     type: string
+                  provisioningNetworkGateway:
+                    description: |-
+                      ProvisioningNetworkGateway is the IP address of the default gateway
+                      for the provisioning network. This gateway is provided to baremetal
+                      hosts via DHCP to enable routing to external networks during
+                      introspection and provisioning. This field is only honored when
+                      provisioningNetwork is set to Managed (installer-managed DHCP).
+                      It is ignored when provisioningNetwork is Unmanaged or Disabled.
+                    format: ip
+                    type: string
                   provisioningNetworkInterface:
                     description: |-
                       ProvisioningNetworkInterface is the name of the network interface on a control plane

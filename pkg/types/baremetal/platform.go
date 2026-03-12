@@ -166,6 +166,17 @@ type Platform struct {
 	// +optional
 	ProvisioningDHCPRange string `json:"provisioningDHCPRange,omitempty"`
 
+	// ProvisioningNetworkGateway is the IP address of the default gateway
+	// for the provisioning network. This gateway is provided to baremetal
+	// hosts via DHCP to enable routing to external networks during
+	// introspection and provisioning. This field is only honored when
+	// provisioningNetwork is set to Managed (installer-managed DHCP).
+	// It is ignored when provisioningNetwork is Unmanaged or Disabled.
+	//
+	// +kubebuilder:validation:Format=ip
+	// +optional
+	ProvisioningNetworkGateway string `json:"provisioningNetworkGateway,omitempty"`
+
 	// Hosts is the information needed to create the objects in Ironic.
 	Hosts []*Host `json:"hosts"`
 

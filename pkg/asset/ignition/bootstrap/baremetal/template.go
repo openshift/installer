@@ -37,6 +37,9 @@ type TemplateData struct {
 	// should be blank.
 	ProvisioningDHCPRange string
 
+	// ProvisioningNetworkGateway is the IP address of the default gateway for the provisioning network.
+	ProvisioningNetworkGateway string
+
 	// ProvisioningDHCPAllowList contains a space-separated list of all of the control plane's boot
 	// MAC addresses. Requests to bootstrap DHCP from other hosts will be ignored.
 	ProvisioningDHCPAllowList string
@@ -194,6 +197,7 @@ func GetTemplateData(config *baremetal.Platform, networks []types.MachineNetwork
 	switch config.ProvisioningNetwork {
 	case baremetal.ManagedProvisioningNetwork:
 		cidr, _ := config.ProvisioningNetworkCIDR.Mask.Size()
+		templateData.ProvisioningNetworkGateway = config.ProvisioningNetworkGateway
 		// When provisioning network is managed, we set a DHCP range including
 		// netmask for dnsmasq.
 		templateData.ProvisioningDHCPRange = fmt.Sprintf("%s,%d", config.ProvisioningDHCPRange, cidr)
