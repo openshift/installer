@@ -337,7 +337,7 @@ github.com/hashicorp/terraform-plugin-sdk/v2/internal/tfdiags
 github.com/hashicorp/terraform-plugin-sdk/v2/meta
 github.com/hashicorp/terraform-plugin-sdk/v2/plugin
 github.com/hashicorp/terraform-plugin-sdk/v2/terraform
-# github.com/hashicorp/terraform-provider-google v1.20.1-0.20211220202130-c575d59d1cdf => github.com/openshift/terraform-providers-terraform-provider-google v0.0.0-20251201175940-2adc9d854545
+# github.com/hashicorp/terraform-provider-google v1.20.1-0.20211220202130-c575d59d1cdf => github.com/openshift/terraform-providers-terraform-provider-google v1.20.1-0.20260224132813-0e67eab55529
 ## explicit; go 1.18
 github.com/hashicorp/terraform-provider-google
 github.com/hashicorp/terraform-provider-google/google
