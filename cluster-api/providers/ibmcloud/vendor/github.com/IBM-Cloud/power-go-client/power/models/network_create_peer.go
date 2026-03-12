@@ -7,21 +7,20 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
-// NetworkCreatePeer network create peer
+// NetworkCreatePeer [DEPRECATED]
 //
 // swagger:model NetworkCreatePeer
 type NetworkCreatePeer struct {
 
 	// ID of the network peer
-	// Required: true
-	ID *string `json:"id"`
+	ID string `json:"id,omitempty"`
 
 	// network address translation
 	NetworkAddressTranslation *NetworkAddressTranslation `json:"networkAddressTranslation,omitempty"`
@@ -33,10 +32,6 @@ type NetworkCreatePeer struct {
 // Validate validates this network create peer
 func (m *NetworkCreatePeer) Validate(formats strfmt.Registry) error {
 	var res []error
-
-	if err := m.validateID(formats); err != nil {
-		res = append(res, err)
-	}
 
 	if err := m.validateNetworkAddressTranslation(formats); err != nil {
 		res = append(res, err)
@@ -52,15 +47,6 @@ func (m *NetworkCreatePeer) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *NetworkCreatePeer) validateID(formats strfmt.Registry) error {
-
-	if err := validate.Required("id", "body", m.ID); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *NetworkCreatePeer) validateNetworkAddressTranslation(formats strfmt.Registry) error {
 	if swag.IsZero(m.NetworkAddressTranslation) { // not required
 		return nil
@@ -68,11 +54,15 @@ func (m *NetworkCreatePeer) validateNetworkAddressTranslation(formats strfmt.Reg
 
 	if m.NetworkAddressTranslation != nil {
 		if err := m.NetworkAddressTranslation.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("networkAddressTranslation")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("networkAddressTranslation")
 			}
+
 			return err
 		}
 	}
@@ -86,11 +76,15 @@ func (m *NetworkCreatePeer) validateType(formats strfmt.Registry) error {
 	}
 
 	if err := m.Type.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("type")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("type")
 		}
+
 		return err
 	}
 
@@ -124,11 +118,15 @@ func (m *NetworkCreatePeer) contextValidateNetworkAddressTranslation(ctx context
 		}
 
 		if err := m.NetworkAddressTranslation.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("networkAddressTranslation")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("networkAddressTranslation")
 			}
+
 			return err
 		}
 	}
@@ -143,11 +141,15 @@ func (m *NetworkCreatePeer) contextValidateType(ctx context.Context, formats str
 	}
 
 	if err := m.Type.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("type")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("type")
 		}
+
 		return err
 	}
 

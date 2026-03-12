@@ -25,7 +25,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 )
 
 type patchType string
@@ -42,11 +42,6 @@ var (
 		"metadata":   true,
 	}
 )
-
-func unstructuredHasStatus(u *unstructured.Unstructured) bool {
-	_, ok := u.Object["status"]
-	return ok
-}
 
 // toUnstructured converts an object to Unstructured.
 // We have to pass in a gvk as we can't rely on GVK being set in a runtime.Object.

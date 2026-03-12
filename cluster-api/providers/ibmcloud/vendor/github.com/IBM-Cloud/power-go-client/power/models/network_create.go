@@ -25,6 +25,14 @@ type NetworkCreate struct {
 	// access config
 	AccessConfig AccessConfig `json:"accessConfig,omitempty"`
 
+	// Indicates if the network is advertised externally of the workspace to PER and\or peer networks
+	// Enum: ["enable","disable"]
+	Advertise *string `json:"advertise,omitempty"`
+
+	// Indicates if ARP broadcast is enabled
+	// Enum: ["enable","disable"]
+	ArpBroadcast *string `json:"arpBroadcast,omitempty"`
+
 	// Network in CIDR notation (192.168.0.0/24)
 	Cidr string `json:"cidr,omitempty"`
 
@@ -46,12 +54,14 @@ type NetworkCreate struct {
 	Mtu *int64 `json:"mtu,omitempty"`
 
 	// Network Name
+	// Max Length: 128
+	// Pattern: ^[a-zA-Z0-9-_][a-zA-Z0-9-_]*$
 	Name string `json:"name,omitempty"`
 
 	// Network Peer information
 	Peer *NetworkCreatePeer `json:"peer,omitempty"`
 
-	// Type of Network - 'vlan' (private network) 'pub-vlan' (public network) 'dhcp-vlan' (for satellite locations only)
+	// Type of Network - 'vlan' (private network), 'pub-vlan' (public network), 'dhcp-vlan'[DEPRECATED]
 	// Required: true
 	// Enum: ["vlan","pub-vlan","dhcp-vlan"]
 	Type *string `json:"type"`
@@ -68,11 +78,23 @@ func (m *NetworkCreate) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateAdvertise(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateArpBroadcast(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateIPAddressRanges(formats); err != nil {
 		res = append(res, err)
 	}
 
 	if err := m.validateMtu(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateName(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -105,6 +127,90 @@ func (m *NetworkCreate) validateAccessConfig(formats strfmt.Registry) error {
 		} else if ce, ok := err.(*errors.CompositeError); ok {
 			return ce.ValidateName("accessConfig")
 		}
+		return err
+	}
+
+	return nil
+}
+
+var networkCreateTypeAdvertisePropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["enable","disable"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		networkCreateTypeAdvertisePropEnum = append(networkCreateTypeAdvertisePropEnum, v)
+	}
+}
+
+const (
+
+	// NetworkCreateAdvertiseEnable captures enum value "enable"
+	NetworkCreateAdvertiseEnable string = "enable"
+
+	// NetworkCreateAdvertiseDisable captures enum value "disable"
+	NetworkCreateAdvertiseDisable string = "disable"
+)
+
+// prop value enum
+func (m *NetworkCreate) validateAdvertiseEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, networkCreateTypeAdvertisePropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *NetworkCreate) validateAdvertise(formats strfmt.Registry) error {
+	if swag.IsZero(m.Advertise) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateAdvertiseEnum("advertise", "body", *m.Advertise); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+var networkCreateTypeArpBroadcastPropEnum []interface{}
+
+func init() {
+	var res []string
+	if err := json.Unmarshal([]byte(`["enable","disable"]`), &res); err != nil {
+		panic(err)
+	}
+	for _, v := range res {
+		networkCreateTypeArpBroadcastPropEnum = append(networkCreateTypeArpBroadcastPropEnum, v)
+	}
+}
+
+const (
+
+	// NetworkCreateArpBroadcastEnable captures enum value "enable"
+	NetworkCreateArpBroadcastEnable string = "enable"
+
+	// NetworkCreateArpBroadcastDisable captures enum value "disable"
+	NetworkCreateArpBroadcastDisable string = "disable"
+)
+
+// prop value enum
+func (m *NetworkCreate) validateArpBroadcastEnum(path, location string, value string) error {
+	if err := validate.EnumCase(path, location, value, networkCreateTypeArpBroadcastPropEnum, true); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (m *NetworkCreate) validateArpBroadcast(formats strfmt.Registry) error {
+	if swag.IsZero(m.ArpBroadcast) { // not required
+		return nil
+	}
+
+	// value enum
+	if err := m.validateArpBroadcastEnum("arpBroadcast", "body", *m.ArpBroadcast); err != nil {
 		return err
 	}
 
@@ -147,6 +253,22 @@ func (m *NetworkCreate) validateMtu(formats strfmt.Registry) error {
 	}
 
 	if err := validate.MaximumInt("mtu", "body", *m.Mtu, 9000, false); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *NetworkCreate) validateName(formats strfmt.Registry) error {
+	if swag.IsZero(m.Name) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("name", "body", m.Name, 128); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("name", "body", m.Name, `^[a-zA-Z0-9-_][a-zA-Z0-9-_]*$`); err != nil {
 		return err
 	}
 

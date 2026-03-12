@@ -21,6 +21,9 @@ type HostPut struct {
 
 	// Name of the host chosen by the user
 	// Required: true
+	// Max Length: 32
+	// Min Length: 2
+	// Pattern: ^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,30}[A-Za-z0-9])?$
 	DisplayName *string `json:"displayName"`
 }
 
@@ -41,6 +44,18 @@ func (m *HostPut) Validate(formats strfmt.Registry) error {
 func (m *HostPut) validateDisplayName(formats strfmt.Registry) error {
 
 	if err := validate.Required("displayName", "body", m.DisplayName); err != nil {
+		return err
+	}
+
+	if err := validate.MinLength("displayName", "body", *m.DisplayName, 2); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("displayName", "body", *m.DisplayName, 32); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("displayName", "body", *m.DisplayName, `^[A-Za-z0-9](?:[A-Za-z0-9_-]{0,30}[A-Za-z0-9])?$`); err != nil {
 		return err
 	}
 

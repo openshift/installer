@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -54,11 +55,15 @@ func (m *CapabilitiesDetails) validateDisasterRecovery(formats strfmt.Registry) 
 
 	if m.DisasterRecovery != nil {
 		if err := m.DisasterRecovery.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("disasterRecovery")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("disasterRecovery")
 			}
+
 			return err
 		}
 	}
@@ -74,11 +79,15 @@ func (m *CapabilitiesDetails) validateSupportedSystems(formats strfmt.Registry) 
 
 	if m.SupportedSystems != nil {
 		if err := m.SupportedSystems.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("supportedSystems")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("supportedSystems")
 			}
+
 			return err
 		}
 	}
@@ -109,11 +118,15 @@ func (m *CapabilitiesDetails) contextValidateDisasterRecovery(ctx context.Contex
 	if m.DisasterRecovery != nil {
 
 		if err := m.DisasterRecovery.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("disasterRecovery")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("disasterRecovery")
 			}
+
 			return err
 		}
 	}
@@ -126,11 +139,15 @@ func (m *CapabilitiesDetails) contextValidateSupportedSystems(ctx context.Contex
 	if m.SupportedSystems != nil {
 
 		if err := m.SupportedSystems.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("supportedSystems")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("supportedSystems")
 			}
+
 			return err
 		}
 	}

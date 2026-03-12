@@ -67,7 +67,7 @@ type ClientService interface {
 InternalV1OperationsNetworksecuritygroupsDelete deletes a network security group c r n
 */
 func (a *Client) InternalV1OperationsNetworksecuritygroupsDelete(params *InternalV1OperationsNetworksecuritygroupsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1OperationsNetworksecuritygroupsDeleteNoContent, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewInternalV1OperationsNetworksecuritygroupsDeleteParams()
 	}
@@ -87,17 +87,22 @@ func (a *Client) InternalV1OperationsNetworksecuritygroupsDelete(params *Interna
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*InternalV1OperationsNetworksecuritygroupsDeleteNoContent)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for internal.v1.operations.networksecuritygroups.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -106,7 +111,7 @@ func (a *Client) InternalV1OperationsNetworksecuritygroupsDelete(params *Interna
 InternalV1OperationsNetworksecuritygroupsPost creates a c r n for a network security group
 */
 func (a *Client) InternalV1OperationsNetworksecuritygroupsPost(params *InternalV1OperationsNetworksecuritygroupsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*InternalV1OperationsNetworksecuritygroupsPostCreated, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewInternalV1OperationsNetworksecuritygroupsPostParams()
 	}
@@ -126,17 +131,22 @@ func (a *Client) InternalV1OperationsNetworksecuritygroupsPost(params *InternalV
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*InternalV1OperationsNetworksecuritygroupsPostCreated)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for internal.v1.operations.networksecuritygroups.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

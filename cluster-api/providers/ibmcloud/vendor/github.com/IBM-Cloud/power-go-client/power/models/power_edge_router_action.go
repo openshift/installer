@@ -40,7 +40,7 @@ func (m *PowerEdgeRouterAction) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var powerEdgeRouterActionTypeActionPropEnum []interface{}
+var powerEdgeRouterActionTypeActionPropEnum []any
 
 func init() {
 	var res []string

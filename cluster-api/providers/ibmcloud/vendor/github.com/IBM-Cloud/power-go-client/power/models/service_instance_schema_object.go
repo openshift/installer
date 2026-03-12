@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -50,11 +51,15 @@ func (m *ServiceInstanceSchemaObject) validateCreate(formats strfmt.Registry) er
 
 	if m.Create != nil {
 		if err := m.Create.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("create")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("create")
 			}
+
 			return err
 		}
 	}
@@ -69,11 +74,15 @@ func (m *ServiceInstanceSchemaObject) validateUpdate(formats strfmt.Registry) er
 
 	if m.Update != nil {
 		if err := m.Update.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("update")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("update")
 			}
+
 			return err
 		}
 	}
@@ -108,11 +117,15 @@ func (m *ServiceInstanceSchemaObject) contextValidateCreate(ctx context.Context,
 		}
 
 		if err := m.Create.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("create")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("create")
 			}
+
 			return err
 		}
 	}
@@ -129,11 +142,15 @@ func (m *ServiceInstanceSchemaObject) contextValidateUpdate(ctx context.Context,
 		}
 
 		if err := m.Update.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
+			ve := new(errors.Validation)
+			if stderrors.As(err, &ve) {
 				return ve.ValidateName("update")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
+			}
+			ce := new(errors.CompositeError)
+			if stderrors.As(err, &ce) {
 				return ce.ValidateName("update")
 			}
+
 			return err
 		}
 	}

@@ -62,7 +62,7 @@ func (m *DeadPeerDetection) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var deadPeerDetectionTypeActionPropEnum []interface{}
+var deadPeerDetectionTypeActionPropEnum []any
 
 func init() {
 	var res []string

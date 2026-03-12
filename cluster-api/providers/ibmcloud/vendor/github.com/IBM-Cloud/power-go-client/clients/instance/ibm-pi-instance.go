@@ -56,7 +56,7 @@ func (f *IBMPIInstanceClient) GetAll() (*models.PVMInstances, error) {
 func (f *IBMPIInstanceClient) Create(body *models.PVMInstanceCreate) (*models.PVMInstanceList, error) {
 	// Check for satellite differences in this endpoint
 	if f.session.IsOnPrem() && (body.DeploymentTarget != nil || body.DeploymentType != "") {
-		return nil, fmt.Errorf("deployment target and deployment type parameters are not supported in satellite location")
+		return nil, fmt.Errorf("deployment target and deployment type parameters are not supported in on-prem location")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesPostParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).
@@ -105,7 +105,7 @@ func (f *IBMPIInstanceClient) DeleteWithBody(id string, body *models.PVMInstance
 func (f *IBMPIInstanceClient) Update(id string, body *models.PVMInstanceUpdate) (*models.PVMInstanceUpdateResponse, error) {
 	// Check for satellite differences in this endpoint
 	if f.session.IsOnPrem() && body.SapProfileID != "" {
-		return nil, fmt.Errorf("sap profile id parameter is not supported in satellite location")
+		return nil, fmt.Errorf("sap profile id parameter is not supported in on-prem location")
 	}
 	params := p_cloud_p_vm_instances.NewPcloudPvminstancesPutParams().
 		WithContext(f.ctx).WithTimeout(helpers.PICreateTimeOut).

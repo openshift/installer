@@ -87,7 +87,7 @@ PcloudVpnconnectionsDelete deletes v p n connection
 Delete VPN Connection (by its identifier)
 */
 func (a *Client) PcloudVpnconnectionsDelete(params *PcloudVpnconnectionsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsDeleteAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsDeleteParams()
 	}
@@ -107,17 +107,22 @@ func (a *Client) PcloudVpnconnectionsDelete(params *PcloudVpnconnectionsDeletePa
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsDeleteAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -128,7 +133,7 @@ PcloudVpnconnectionsGet gets v p n connection
 Get a VPN Connection
 */
 func (a *Client) PcloudVpnconnectionsGet(params *PcloudVpnconnectionsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsGetParams()
 	}
@@ -148,17 +153,22 @@ func (a *Client) PcloudVpnconnectionsGet(params *PcloudVpnconnectionsGetParams, 
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -169,7 +179,7 @@ PcloudVpnconnectionsGetall gets all v p n connections
 Get all VPN Connections
 */
 func (a *Client) PcloudVpnconnectionsGetall(params *PcloudVpnconnectionsGetallParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsGetallOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsGetallParams()
 	}
@@ -189,17 +199,22 @@ func (a *Client) PcloudVpnconnectionsGetall(params *PcloudVpnconnectionsGetallPa
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsGetallOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.getall: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -210,7 +225,7 @@ PcloudVpnconnectionsNetworksDelete detaches network
 Detach network from a specific VPN Connection
 */
 func (a *Client) PcloudVpnconnectionsNetworksDelete(params *PcloudVpnconnectionsNetworksDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsNetworksDeleteAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsNetworksDeleteParams()
 	}
@@ -230,17 +245,22 @@ func (a *Client) PcloudVpnconnectionsNetworksDelete(params *PcloudVpnconnections
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsNetworksDeleteAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.networks.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -251,7 +271,7 @@ PcloudVpnconnectionsNetworksGet gets attached networks
 Get a list of network IDs attached to a VPN Connection
 */
 func (a *Client) PcloudVpnconnectionsNetworksGet(params *PcloudVpnconnectionsNetworksGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsNetworksGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsNetworksGetParams()
 	}
@@ -271,17 +291,22 @@ func (a *Client) PcloudVpnconnectionsNetworksGet(params *PcloudVpnconnectionsNet
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsNetworksGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.networks.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -292,7 +317,7 @@ PcloudVpnconnectionsNetworksPut attaches network
 Attach a network to a VPN Connection
 */
 func (a *Client) PcloudVpnconnectionsNetworksPut(params *PcloudVpnconnectionsNetworksPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsNetworksPutAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsNetworksPutParams()
 	}
@@ -312,17 +337,22 @@ func (a *Client) PcloudVpnconnectionsNetworksPut(params *PcloudVpnconnectionsNet
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsNetworksPutAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.networks.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -333,7 +363,7 @@ PcloudVpnconnectionsPeersubnetsDelete detaches peer subnet
 Detach peer subnet from a VPN Connection
 */
 func (a *Client) PcloudVpnconnectionsPeersubnetsDelete(params *PcloudVpnconnectionsPeersubnetsDeleteParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsPeersubnetsDeleteOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsPeersubnetsDeleteParams()
 	}
@@ -353,17 +383,22 @@ func (a *Client) PcloudVpnconnectionsPeersubnetsDelete(params *PcloudVpnconnecti
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsPeersubnetsDeleteOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.peersubnets.delete: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -374,7 +409,7 @@ PcloudVpnconnectionsPeersubnetsGet gets peer subnets
 Get a list of peer subnets attached to a specific VPN Connection
 */
 func (a *Client) PcloudVpnconnectionsPeersubnetsGet(params *PcloudVpnconnectionsPeersubnetsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsPeersubnetsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsPeersubnetsGetParams()
 	}
@@ -394,17 +429,22 @@ func (a *Client) PcloudVpnconnectionsPeersubnetsGet(params *PcloudVpnconnections
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsPeersubnetsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.peersubnets.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -415,7 +455,7 @@ PcloudVpnconnectionsPeersubnetsPut attaches peer subnet
 Attach peer subnet to a VPN Connection
 */
 func (a *Client) PcloudVpnconnectionsPeersubnetsPut(params *PcloudVpnconnectionsPeersubnetsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsPeersubnetsPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsPeersubnetsPutParams()
 	}
@@ -435,17 +475,22 @@ func (a *Client) PcloudVpnconnectionsPeersubnetsPut(params *PcloudVpnconnections
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsPeersubnetsPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.peersubnets.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -456,7 +501,7 @@ PcloudVpnconnectionsPost creates v p n connection
 Create a new VPN Connection
 */
 func (a *Client) PcloudVpnconnectionsPost(params *PcloudVpnconnectionsPostParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsPostAccepted, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsPostParams()
 	}
@@ -476,17 +521,22 @@ func (a *Client) PcloudVpnconnectionsPost(params *PcloudVpnconnectionsPostParams
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsPostAccepted)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.post: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -497,7 +547,7 @@ PcloudVpnconnectionsPut updates v p n connection
 update a VPN Connection (by its identifier)
 */
 func (a *Client) PcloudVpnconnectionsPut(params *PcloudVpnconnectionsPutParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudVpnconnectionsPutOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudVpnconnectionsPutParams()
 	}
@@ -517,17 +567,22 @@ func (a *Client) PcloudVpnconnectionsPut(params *PcloudVpnconnectionsPutParams, 
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudVpnconnectionsPutOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.vpnconnections.put: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

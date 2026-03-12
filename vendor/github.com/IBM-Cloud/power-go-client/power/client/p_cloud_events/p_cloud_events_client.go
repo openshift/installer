@@ -67,7 +67,7 @@ type ClientService interface {
 PcloudEventsGet gets a single event
 */
 func (a *Client) PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudEventsGetOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudEventsGetParams()
 	}
@@ -87,17 +87,22 @@ func (a *Client) PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudEventsGetOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.events.get: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
@@ -106,7 +111,7 @@ func (a *Client) PcloudEventsGet(params *PcloudEventsGetParams, authInfo runtime
 PcloudEventsGetquery gets events from this cloud instance since a specific timestamp
 */
 func (a *Client) PcloudEventsGetquery(params *PcloudEventsGetqueryParams, authInfo runtime.ClientAuthInfoWriter, opts ...ClientOption) (*PcloudEventsGetqueryOK, error) {
-	// TODO: Validate the params before sending
+	// NOTE: parameters are not validated before sending
 	if params == nil {
 		params = NewPcloudEventsGetqueryParams()
 	}
@@ -126,17 +131,22 @@ func (a *Client) PcloudEventsGetquery(params *PcloudEventsGetqueryParams, authIn
 	for _, opt := range opts {
 		opt(op)
 	}
-
 	result, err := a.transport.Submit(op)
 	if err != nil {
 		return nil, err
 	}
+
+	// only one success response has to be checked
 	success, ok := result.(*PcloudEventsGetqueryOK)
 	if ok {
 		return success, nil
 	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+
+	// unexpected success response.
+
+	// no default response is defined.
+	//
+	// safeguard: normally, in the absence of a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for pcloud.events.getquery: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }

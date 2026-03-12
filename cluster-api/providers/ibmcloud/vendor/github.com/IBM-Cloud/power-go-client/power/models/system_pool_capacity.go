@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 	"strconv"
 
 	"github.com/go-openapi/errors"
@@ -116,11 +117,15 @@ func (m *SystemPoolCapacity) validateSystems(formats strfmt.Registry) error {
 
 		if m.Systems[i] != nil {
 			if err := m.Systems[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("systems" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("systems" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}
@@ -191,11 +196,15 @@ func (m *SystemPoolCapacity) contextValidateSystems(ctx context.Context, formats
 			}
 
 			if err := m.Systems[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
+				ve := new(errors.Validation)
+				if stderrors.As(err, &ve) {
 					return ve.ValidateName("systems" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
+				}
+				ce := new(errors.CompositeError)
+				if stderrors.As(err, &ce) {
 					return ce.ValidateName("systems" + "." + strconv.Itoa(i))
 				}
+
 				return err
 			}
 		}

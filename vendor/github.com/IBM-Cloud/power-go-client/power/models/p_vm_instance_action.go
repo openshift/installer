@@ -20,9 +20,9 @@ import (
 // swagger:model PVMInstanceAction
 type PVMInstanceAction struct {
 
-	// Name of the action to take; can be start, stop, hard-reboot, soft-reboot, immediate-shutdown, reset-state, dhcp-ip-sync (on-prem only)
+	// Name of the action to take; can be 'dhcp-ip-sync' (on-prem only), 'dumprestart', 'hard-reboot', 'immediate-shutdown', 'reset-state', 'soft-reboot', 'start', 'stop'
 	// Required: true
-	// Enum: ["start","stop","immediate-shutdown","hard-reboot","soft-reboot","reset-state","dhcp-ip-sync"]
+	// Enum: ["dhcp-ip-sync","dumprestart","hard-reboot","immediate-shutdown","reset-state","soft-reboot","start","stop"]
 	Action *string `json:"action"`
 }
 
@@ -40,11 +40,11 @@ func (m *PVMInstanceAction) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-var pVmInstanceActionTypeActionPropEnum []interface{}
+var pVmInstanceActionTypeActionPropEnum []any
 
 func init() {
 	var res []string
-	if err := json.Unmarshal([]byte(`["start","stop","immediate-shutdown","hard-reboot","soft-reboot","reset-state","dhcp-ip-sync"]`), &res); err != nil {
+	if err := json.Unmarshal([]byte(`["dhcp-ip-sync","dumprestart","hard-reboot","immediate-shutdown","reset-state","soft-reboot","start","stop"]`), &res); err != nil {
 		panic(err)
 	}
 	for _, v := range res {
@@ -54,26 +54,29 @@ func init() {
 
 const (
 
+	// PVMInstanceActionActionDhcpDashIPDashSync captures enum value "dhcp-ip-sync"
+	PVMInstanceActionActionDhcpDashIPDashSync string = "dhcp-ip-sync"
+
+	// PVMInstanceActionActionDumprestart captures enum value "dumprestart"
+	PVMInstanceActionActionDumprestart string = "dumprestart"
+
+	// PVMInstanceActionActionHardDashReboot captures enum value "hard-reboot"
+	PVMInstanceActionActionHardDashReboot string = "hard-reboot"
+
+	// PVMInstanceActionActionImmediateDashShutdown captures enum value "immediate-shutdown"
+	PVMInstanceActionActionImmediateDashShutdown string = "immediate-shutdown"
+
+	// PVMInstanceActionActionResetDashState captures enum value "reset-state"
+	PVMInstanceActionActionResetDashState string = "reset-state"
+
+	// PVMInstanceActionActionSoftDashReboot captures enum value "soft-reboot"
+	PVMInstanceActionActionSoftDashReboot string = "soft-reboot"
+
 	// PVMInstanceActionActionStart captures enum value "start"
 	PVMInstanceActionActionStart string = "start"
 
 	// PVMInstanceActionActionStop captures enum value "stop"
 	PVMInstanceActionActionStop string = "stop"
-
-	// PVMInstanceActionActionImmediateDashShutdown captures enum value "immediate-shutdown"
-	PVMInstanceActionActionImmediateDashShutdown string = "immediate-shutdown"
-
-	// PVMInstanceActionActionHardDashReboot captures enum value "hard-reboot"
-	PVMInstanceActionActionHardDashReboot string = "hard-reboot"
-
-	// PVMInstanceActionActionSoftDashReboot captures enum value "soft-reboot"
-	PVMInstanceActionActionSoftDashReboot string = "soft-reboot"
-
-	// PVMInstanceActionActionResetDashState captures enum value "reset-state"
-	PVMInstanceActionActionResetDashState string = "reset-state"
-
-	// PVMInstanceActionActionDhcpDashIPDashSync captures enum value "dhcp-ip-sync"
-	PVMInstanceActionActionDhcpDashIPDashSync string = "dhcp-ip-sync"
 )
 
 // prop value enum

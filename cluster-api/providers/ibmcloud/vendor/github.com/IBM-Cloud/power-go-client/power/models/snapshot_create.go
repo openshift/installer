@@ -7,6 +7,7 @@ package models
 
 import (
 	"context"
+	stderrors "errors"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
@@ -20,10 +21,13 @@ import (
 type SnapshotCreate struct {
 
 	// Description of the PVM instance snapshot
+	// Max Length: 255
 	Description string `json:"description,omitempty"`
 
 	// Name of the PVM instance snapshot to create
 	// Required: true
+	// Max Length: 120
+	// Pattern: ^[a-zA-Z0-9_.-]+$
 	Name *string `json:"name"`
 
 	// user tags
@@ -36,6 +40,10 @@ type SnapshotCreate struct {
 // Validate validates this snapshot create
 func (m *SnapshotCreate) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateDescription(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateName(formats); err != nil {
 		res = append(res, err)
@@ -51,9 +59,29 @@ func (m *SnapshotCreate) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *SnapshotCreate) validateDescription(formats strfmt.Registry) error {
+	if swag.IsZero(m.Description) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("description", "body", m.Description, 255); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *SnapshotCreate) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	if err := validate.MaxLength("name", "body", *m.Name, 120); err != nil {
+		return err
+	}
+
+	if err := validate.Pattern("name", "body", *m.Name, `^[a-zA-Z0-9_.-]+$`); err != nil {
 		return err
 	}
 
@@ -66,11 +94,15 @@ func (m *SnapshotCreate) validateUserTags(formats strfmt.Registry) error {
 	}
 
 	if err := m.UserTags.Validate(formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 
@@ -94,11 +126,15 @@ func (m *SnapshotCreate) ContextValidate(ctx context.Context, formats strfmt.Reg
 func (m *SnapshotCreate) contextValidateUserTags(ctx context.Context, formats strfmt.Registry) error {
 
 	if err := m.UserTags.ContextValidate(ctx, formats); err != nil {
-		if ve, ok := err.(*errors.Validation); ok {
+		ve := new(errors.Validation)
+		if stderrors.As(err, &ve) {
 			return ve.ValidateName("userTags")
-		} else if ce, ok := err.(*errors.CompositeError); ok {
+		}
+		ce := new(errors.CompositeError)
+		if stderrors.As(err, &ce) {
 			return ce.ValidateName("userTags")
 		}
+
 		return err
 	}
 

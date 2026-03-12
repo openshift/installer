@@ -23,7 +23,7 @@ func NewIBMPIVpnConnectionClient(ctx context.Context, sess *ibmpisession.IBMPISe
 	}
 }
 
-// Get a VPN Connection
+// Deprecated Get a VPN Connection
 func (f *IBMPIVpnConnectionClient) Get(id string) (*models.VPNConnection, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -41,12 +41,12 @@ func (f *IBMPIVpnConnectionClient) Get(id string) (*models.VPNConnection, error)
 	return resp.Payload, nil
 }
 
-// Create a VPN Connection
+// Deprecated Create a VPN Connection
 func (f *IBMPIVpnConnectionClient) Create(body *models.VPNConnectionCreate) (*models.VPNConnectionCreateResponse, error) {
 	return nil, fmt.Errorf("Create VPN Connection is no longer supported")
 }
 
-// Update a VPN Connection
+// Deprecated Update a VPN Connection
 func (f *IBMPIVpnConnectionClient) Update(id string, body *models.VPNConnectionUpdate) (*models.VPNConnection, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -65,7 +65,7 @@ func (f *IBMPIVpnConnectionClient) Update(id string, body *models.VPNConnectionU
 	return nil, fmt.Errorf("failed to Update VPN Connection %s", id)
 }
 
-// Get All VPN Connections
+// Deprecated Get All VPN Connections
 func (f *IBMPIVpnConnectionClient) GetAll() (*models.VPNConnections, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -83,7 +83,7 @@ func (f *IBMPIVpnConnectionClient) GetAll() (*models.VPNConnections, error) {
 	return resp.Payload, nil
 }
 
-// Delete a VPN Connection
+// Deprecated Delete a VPN Connection
 func (f *IBMPIVpnConnectionClient) Delete(id string) (*models.JobReference, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -101,7 +101,7 @@ func (f *IBMPIVpnConnectionClient) Delete(id string) (*models.JobReference, erro
 	return nil, nil
 }
 
-// Get a VPN Connection's Network
+// Deprecated Get a VPN Connection's Network
 func (f *IBMPIVpnConnectionClient) GetNetwork(id string) (*models.NetworkIDs, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -119,7 +119,7 @@ func (f *IBMPIVpnConnectionClient) GetNetwork(id string) (*models.NetworkIDs, er
 	return resp.Payload, nil
 }
 
-// Attach a Network to a VPN Connection
+// Deprecated Attach a Network to a VPN Connection
 func (f *IBMPIVpnConnectionClient) AddNetwork(id, networkID string) (*models.JobReference, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -138,7 +138,7 @@ func (f *IBMPIVpnConnectionClient) AddNetwork(id, networkID string) (*models.Job
 	return nil, nil
 }
 
-// Detach a Network from a VPN Connection
+// Deprecated Detach a Network from a VPN Connection
 func (f *IBMPIVpnConnectionClient) DeleteNetwork(id, networkID string) (*models.JobReference, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -157,7 +157,7 @@ func (f *IBMPIVpnConnectionClient) DeleteNetwork(id, networkID string) (*models.
 	return nil, nil
 }
 
-// Get a VPN Connection's Subnet
+// Deprecated Get a VPN Connection's Subnet
 func (f *IBMPIVpnConnectionClient) GetSubnet(id string) (*models.PeerSubnets, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -175,7 +175,7 @@ func (f *IBMPIVpnConnectionClient) GetSubnet(id string) (*models.PeerSubnets, er
 	return resp.Payload, nil
 }
 
-// Attach a Subnet to a VPN Connection
+// Deprecated Attach a Subnet to a VPN Connection
 func (f *IBMPIVpnConnectionClient) AddSubnet(id, subnet string) (*models.PeerSubnets, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
@@ -194,7 +194,7 @@ func (f *IBMPIVpnConnectionClient) AddSubnet(id, subnet string) (*models.PeerSub
 	return resp.Payload, nil
 }
 
-// Detach a Subnet from a VPN Connection
+// Deprecated Detach a Subnet from a VPN Connection
 func (f *IBMPIVpnConnectionClient) DeleteSubnet(id, subnet string) (*models.PeerSubnets, error) {
 	if f.session.IsOnPrem() {
 		return nil, fmt.Errorf(helpers.NotOnPremSupported)
