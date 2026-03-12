@@ -7,14 +7,15 @@ import (
 	"fmt"
 	"html/template"
 	"net"
+	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/coreos/ignition/v2/config/util"
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/coreos/stream-metadata-go/arch"
-	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
@@ -35,6 +36,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/ignition"
 	"github.com/openshift/installer/pkg/asset/ignition/bootstrap"
 	"github.com/openshift/installer/pkg/asset/password"
+	"github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/agent"
@@ -85,6 +87,7 @@ type agentTemplateData struct {
 	TokenExpiry               string
 	AuthType                  string
 	CaBundleMount             string
+	DisableImagePolicy        bool
 }
 
 // Name returns the human-friendly name of the asset.
@@ -127,6 +130,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	authConfig := &gencrypto.AuthConfig{}
 	infraEnvAsset := &common.InfraEnvID{}
 	dependencies.Get(agentManifests, agentConfigAsset, agentHostsAsset, extraManifests, fencingCredentials, authConfig, agentWorkflow, infraEnvAsset)
+	clusterInfo := &joiner.ClusterInfo{}
 
 	if err := workflowreport.GetReport(ctx).Stage(workflow.StageIgnition); err != nil {
 		return err
@@ -163,7 +167,6 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	enabledServices := getDefaultEnabledServices()
 	openshiftVersion := ""
 	var err error
-	var streamGetter CoreOSBuildFetcher
 
 	switch agentWorkflow.Workflow {
 	case workflow.AgentWorkflowTypeInstall:
@@ -191,10 +194,8 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 		if err != nil {
 			return err
 		}
-		streamGetter = DefaultCoreOSStreamGetter
 
 	case workflow.AgentWorkflowTypeAddNodes:
-		clusterInfo := &joiner.ClusterInfo{}
 		addNodesConfig := &joiner.AddNodesConfig{}
 		importClusterConfig := &joiner.ImportClusterConfig{}
 		dependencies.Get(clusterInfo, addNodesConfig, importClusterConfig)
@@ -221,9 +222,6 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 
 		// Version matches the source cluster one
 		openshiftVersion = clusterInfo.Version
-		streamGetter = func(ctx context.Context) (*stream.Stream, error) {
-			return clusterInfo.OSImage, nil
-		}
 		// If defined, add the ignition endpoints
 		if err := addDay2ClusterConfigFiles(&config, *clusterInfo, *importClusterConfig); err != nil {
 			return err
@@ -272,7 +270,7 @@ func (a *Ignition) Generate(ctx context.Context, dependencies asset.Parents) err
 	infraEnvID := infraEnvAsset.ID
 	logrus.Debug("Generated random infra-env id ", infraEnvID)
 
-	osImage, err := getOSImagesInfo(archName, openshiftVersion, streamGetter)
+	osImage, err := getOSImagesInfo(ctx, archName, openshiftVersion, customStreamGetter(agentWorkflow, clusterInfo))
 	if err != nil {
 		return err
 	}
@@ -420,6 +418,24 @@ func addBootstrapScripts(config *igntypes.Config, releaseImage string) (err erro
 	return nil
 }
 
+// shouldDisableImagePolicy checks the OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY
+// environment variable and returns true only if it's explicitly set to a boolean true value.
+// This experimental flag allows bypassing image policy validation for testing purposes.
+func shouldDisableImagePolicy() bool {
+	val, ok := os.LookupEnv("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY")
+	if !ok {
+		return false
+	}
+	parsed, err := strconv.ParseBool(val)
+	if err != nil {
+		return false
+	}
+	if parsed {
+		logrus.Warn("OPENSHIFT_INSTALL_EXPERIMENTAL_DISABLE_IMAGE_POLICY is set to true, will pass to assisted-service container")
+	}
+	return parsed
+}
+
 func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseImageMirror, publicContainerRegistries,
 	imageTypeISO, infraEnvID, publicKey, authType, agentAuthToken, userAuthToken, watcherAuthToken, tokenExpiry, caBundleMount string,
 	haveMirrorConfig bool,
@@ -449,6 +465,7 @@ func getTemplateData(name, pullSecret, releaseImageList, releaseImage, releaseIm
 		WatcherAuthToken:          watcherAuthToken,
 		TokenExpiry:               tokenExpiry,
 		CaBundleMount:             caBundleMount,
+		DisableImagePolicy:        shouldDisableImagePolicy(),
 	}
 }
 
@@ -731,26 +748,17 @@ func addExtraManifests(config *igntypes.Config, extraManifests *manifests.ExtraM
 	return nil
 }
 
-func getOSImagesInfo(cpuArch string, openshiftVersion string, streamGetter CoreOSBuildFetcher) (*models.OsImage, error) {
-	st, err := streamGetter(context.Background())
-	if err != nil {
-		return nil, err
-	}
-
+func getOSImagesInfo(ctx context.Context, cpuArch string, openshiftVersion string, streamGetter rhcos.CoreOSBuildFetcher) (*models.OsImage, error) {
 	osImage := &models.OsImage{
 		CPUArchitecture: &cpuArch,
 	}
 	osImage.OpenshiftVersion = &openshiftVersion
 
-	streamArch, err := st.GetArchitecture(cpuArch)
+	artifacts, err := rhcos.GetMetalArtifact(ctx, cpuArch, streamGetter)
 	if err != nil {
 		return nil, err
 	}
 
-	artifacts, ok := streamArch.Artifacts["metal"]
-	if !ok {
-		return nil, fmt.Errorf("failed to retrieve coreos metal info for architecture %s", cpuArch)
-	}
 	osImage.Version = &artifacts.Release
 
 	isoFormat, ok := artifacts.Formats["iso"]
