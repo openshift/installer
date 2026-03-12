@@ -2,6 +2,7 @@ package manifests
 
 import (
 	"context"
+	"os"
 	"path"
 
 	"github.com/pkg/errors"
@@ -21,7 +22,8 @@ var (
 
 // Scheduler generates the cluster-scheduler-*.yml files.
 type Scheduler struct {
-	FileList []*asset.File
+	FileList           []*asset.File
+	MastersSchedulable bool
 }
 
 var _ asset.WritableAsset = (*Scheduler)(nil)
@@ -86,6 +88,7 @@ func (s *Scheduler) Generate(_ context.Context, dependencies asset.Parents) erro
 			Data:     configData,
 		},
 	}
+	s.MastersSchedulable = config.Spec.MastersSchedulable
 
 	return nil
 }
@@ -95,7 +98,23 @@ func (s *Scheduler) Files() []*asset.File {
 	return s.FileList
 }
 
-// Load returns false since this asset is not written to disk by the installer.
+// Load loads the Scheduler manifest from disk if it exists.
 func (s *Scheduler) Load(f asset.FileFetcher) (bool, error) {
-	return false, nil
+	file, err := f.FetchByName(SchedulerCfgFilename)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false, nil
+		}
+		return false, err
+	}
+
+	config := &configv1.Scheduler{}
+	if err := yaml.Unmarshal(file.Data, config); err != nil {
+		return false, errors.Wrapf(err, "failed to unmarshal %s", SchedulerCfgFilename)
+	}
+
+	s.FileList = []*asset.File{file}
+	s.MastersSchedulable = config.Spec.MastersSchedulable
+
+	return true, nil
 }
