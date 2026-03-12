@@ -5,11 +5,12 @@ package compute
 import (
 	"fmt"
 	"log"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -224,8 +225,8 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 						"minimal_action": {
 							Type:         schema.TypeString,
 							Required:     true,
-							ValidateFunc: validation.StringInSlice([]string{"NONE", "REFRESH", "RESTART", "REPLACE"}, false),
-							Description:  `Minimal action to be taken on an instance. You can specify either NONE to forbid any actions, REFRESH to update without stopping instances, RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a REFRESH, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.`,
+							ValidateFunc: validation.StringInSlice([]string{"REFRESH", "RESTART", "REPLACE"}, false),
+							Description:  `Minimal action to be taken on an instance. You can specify either REFRESH to update without stopping instances, RESTART to restart existing instances or REPLACE to delete and create new instances from the target template. If you specify a REFRESH, the Updater will attempt to perform that action only. However, if the Updater determines that the minimal action you specify is not enough to perform the update, it might perform a more disruptive action.`,
 						},
 
 						"most_disruptive_allowed_action": {
@@ -453,11 +454,6 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 										Computed:    true,
 										Description: `A bit indicating whether this configuration has been applied to all managed instances in the group.`,
 									},
-									"current_revision": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Description: `Current all-instances configuration revision. This value is in RFC3339 text format.`,
-									},
 								},
 							},
 						},
@@ -475,7 +471,7 @@ func ResourceComputeInstanceGroupManager() *schema.Resource {
 									"per_instance_configs": {
 										Type:        schema.TypeList,
 										Computed:    true,
-										Description: `Status of per-instance configs on the instances.`,
+										Description: `Status of per-instance configs on the instance.`,
 										Elem: &schema.Resource{
 											Schema: map[string]*schema.Schema{
 												"all_effective": {
@@ -721,8 +717,8 @@ func resourceComputeInstanceGroupManagerRead(d *schema.ResourceData, meta interf
 			Name: operation,
 			Zone: zone,
 		}
-		if err := d.Set("operation", ""); err != nil {
-			return fmt.Errorf("Error unsetting operation: %s", err)
+		if err := d.Set("operation", op.Name); err != nil {
+			return fmt.Errorf("Error setting operation: %s", err)
 		}
 		err = ComputeOperationWaitTime(config, op, project, "Creating InstanceGroupManager", userAgent, d.Timeout(schema.TimeoutCreate))
 		if err != nil {
@@ -1029,7 +1025,7 @@ func resourceComputeInstanceGroupManagerDelete(d *schema.ResourceData, meta inte
 
 func computeIGMWaitForInstanceStatus(d *schema.ResourceData, meta interface{}) error {
 	waitForUpdates := d.Get("wait_for_instances_status").(string) == "UPDATED"
-	conf := retry.StateChangeConf{
+	conf := resource.StateChangeConf{
 		Pending: []string{"creating", "error", "updating per instance configs", "reaching version target", "updating all instances config"},
 		Target:  []string{"created"},
 		Refresh: waitForInstancesRefreshFunc(getManager, waitForUpdates, d, meta),
@@ -1288,29 +1284,54 @@ func flattenStatefulPolicyStatefulExternalIps(d *schema.ResourceData, statefulPo
 }
 
 func flattenStatefulPolicyStatefulIps(d *schema.ResourceData, ipfieldName string, ips map[string]compute.StatefulPolicyPreservedStateNetworkIp) []map[string]interface{} {
+
 	// statefulPolicy.PreservedState.ExternalIPs and statefulPolicy.PreservedState.InternalIPs are affected by API-side reordering
 	// of external/internal IPs, where ordering is done by the interface_name value.
-	// Below we reorder the IPs to match the order in the config.
+	// Below we intend to reorder the IPs to match the order in the config.
 	// Also, data is converted from a map (client library's statefulPolicy.PreservedState.ExternalIPs, or .InternalIPs) to a slice (stored in state).
 	// Any IPs found from the API response that aren't in the config are appended to the end of the slice.
-	configData := []map[string]interface{}{}
-	for _, item := range d.Get(ipfieldName).([]interface{}) {
-		configData = append(configData, item.(map[string]interface{}))
+
+	configIpOrder := d.Get(ipfieldName).([]interface{})
+	order := map[string]int{} // record map of interface name to index
+	for i, el := range configIpOrder {
+		ip := el.(map[string]interface{})
+		interfaceName := ip["interface_name"].(string)
+		order[interfaceName] = i
 	}
-	apiData := []map[string]interface{}{}
+
+	orderedResult := make([]map[string]interface{}, len(configIpOrder))
+	unexpectedIps := []map[string]interface{}{}
 	for interfaceName, ip := range ips {
 		data := map[string]interface{}{
 			"interface_name": interfaceName,
 			"delete_rule":    ip.AutoDelete,
 		}
-		apiData = append(apiData, data)
+
+		index, found := order[interfaceName]
+		if !found {
+			unexpectedIps = append(unexpectedIps, data)
+			continue
+		}
+		orderedResult[index] = data // Put elements from API response in order that matches the config
 	}
-	sorted, err := tpgresource.SortMapsByConfigOrder(configData, apiData, "interface_name")
-	if err != nil {
-		log.Printf("[ERROR] Could not sort API response for %s: %s", ipfieldName, err)
-		return apiData
+	sort.Slice(unexpectedIps, func(i, j int) bool {
+		return unexpectedIps[i]["interface_name"].(string) < unexpectedIps[j]["interface_name"].(string)
+	})
+
+	// Remove any nils from the ordered list. This can occur if the API doesn't include an interface present in the config.
+	finalResult := []map[string]interface{}{}
+	for _, item := range orderedResult {
+		if item != nil {
+			finalResult = append(finalResult, item)
+		}
 	}
-	return sorted
+
+	if len(unexpectedIps) > 0 {
+		// Additional IPs returned from API but not in the config are appended to the end of the slice
+		finalResult = append(finalResult, unexpectedIps...)
+	}
+
+	return finalResult
 }
 
 func flattenUpdatePolicy(updatePolicy *compute.InstanceGroupManagerUpdatePolicy) []map[string]interface{} {
@@ -1452,8 +1473,7 @@ func flattenStatusVersionTarget(versionTarget *compute.InstanceGroupManagerStatu
 func flattenStatusAllInstancesConfig(allInstancesConfig *compute.InstanceGroupManagerStatusAllInstancesConfig) []map[string]interface{} {
 	results := []map[string]interface{}{}
 	data := map[string]interface{}{
-		"effective":        allInstancesConfig.Effective,
-		"current_revision": allInstancesConfig.CurrentRevision,
+		"effective": allInstancesConfig.Effective,
 	}
 	results = append(results, data)
 	return results

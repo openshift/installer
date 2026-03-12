@@ -20,7 +20,6 @@ package datacatalog
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -152,7 +151,6 @@ func resourceDataCatalogTaxonomyCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -161,7 +159,6 @@ func resourceDataCatalogTaxonomyCreate(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Taxonomy: %s", err)
@@ -207,14 +204,12 @@ func resourceDataCatalogTaxonomyRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DataCatalogTaxonomy %q", d.Id()))
@@ -281,7 +276,6 @@ func resourceDataCatalogTaxonomyUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	log.Printf("[DEBUG] Updating Taxonomy %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -317,7 +311,6 @@ func resourceDataCatalogTaxonomyUpdate(d *schema.ResourceData, meta interface{})
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -358,8 +351,6 @@ func resourceDataCatalogTaxonomyDelete(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Taxonomy %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -369,7 +360,6 @@ func resourceDataCatalogTaxonomyDelete(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Taxonomy")

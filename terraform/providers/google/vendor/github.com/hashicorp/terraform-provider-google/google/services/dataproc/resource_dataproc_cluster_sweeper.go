@@ -68,7 +68,7 @@ func testSweepDataprocCluster(region string) error {
 		return nil
 	}
 
-	resourceList, ok := res["clusters"]
+	resourceList, ok := res["policies"]
 	if !ok {
 		log.Printf("[INFO][SWEEPER_LOG] Nothing found in response.")
 		return nil

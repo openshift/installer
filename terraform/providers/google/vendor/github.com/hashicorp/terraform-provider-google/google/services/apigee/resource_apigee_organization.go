@@ -20,7 +20,6 @@ package apigee
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -62,20 +61,6 @@ func ResourceApigeeOrganization() *schema.Resource {
 				ForceNew:    true,
 				Description: `Primary GCP region for analytics data storage. For valid values, see [Create an Apigee organization](https://cloud.google.com/apigee/docs/api-platform/get-started/create-org).`,
 			},
-			"api_consumer_data_encryption_key_name": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				ForceNew:    true,
-				Description: `Cloud KMS key name used for encrypting API consumer data.`,
-			},
-			"api_consumer_data_location": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Description: `This field is needed only for customers using non-default data residency regions.
-Apigee stores some control plane data only in single region.
-This field determines which single region Apigee should use.`,
-			},
 			"authorized_network": {
 				Type:     schema.TypeString,
 				Optional: true,
@@ -89,13 +74,6 @@ Valid only when 'RuntimeType' is set to CLOUD. The value can be updated only whe
 				Optional:    true,
 				ForceNew:    true,
 				Description: `Billing type of the Apigee organization. See [Apigee pricing](https://cloud.google.com/apigee/pricing).`,
-			},
-			"control_plane_encryption_key_name": {
-				Type:     schema.TypeString,
-				Optional: true,
-				ForceNew: true,
-				Description: `Cloud KMS key name used for encrypting control plane data that is stored in a multi region.
-Only used for the data residency region "US" or "EU".`,
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -226,24 +204,6 @@ func resourceApigeeOrganizationCreate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("analytics_region"); !tpgresource.IsEmptyValue(reflect.ValueOf(analyticsRegionProp)) && (ok || !reflect.DeepEqual(v, analyticsRegionProp)) {
 		obj["analyticsRegion"] = analyticsRegionProp
 	}
-	apiConsumerDataLocationProp, err := expandApigeeOrganizationApiConsumerDataLocation(d.Get("api_consumer_data_location"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("api_consumer_data_location"); !tpgresource.IsEmptyValue(reflect.ValueOf(apiConsumerDataLocationProp)) && (ok || !reflect.DeepEqual(v, apiConsumerDataLocationProp)) {
-		obj["apiConsumerDataLocation"] = apiConsumerDataLocationProp
-	}
-	apiConsumerDataEncryptionKeyNameProp, err := expandApigeeOrganizationApiConsumerDataEncryptionKeyName(d.Get("api_consumer_data_encryption_key_name"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("api_consumer_data_encryption_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(apiConsumerDataEncryptionKeyNameProp)) && (ok || !reflect.DeepEqual(v, apiConsumerDataEncryptionKeyNameProp)) {
-		obj["apiConsumerDataEncryptionKeyName"] = apiConsumerDataEncryptionKeyNameProp
-	}
-	controlPlaneEncryptionKeyNameProp, err := expandApigeeOrganizationControlPlaneEncryptionKeyName(d.Get("control_plane_encryption_key_name"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("control_plane_encryption_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(controlPlaneEncryptionKeyNameProp)) && (ok || !reflect.DeepEqual(v, controlPlaneEncryptionKeyNameProp)) {
-		obj["controlPlaneEncryptionKeyName"] = controlPlaneEncryptionKeyNameProp
-	}
 	authorizedNetworkProp, err := expandApigeeOrganizationAuthorizedNetwork(d.Get("authorized_network"), d, config)
 	if err != nil {
 		return err
@@ -299,7 +259,6 @@ func resourceApigeeOrganizationCreate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -308,7 +267,6 @@ func resourceApigeeOrganizationCreate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Organization: %s", err)
@@ -369,14 +327,12 @@ func resourceApigeeOrganizationRead(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ApigeeOrganization %q", d.Id()))
@@ -392,15 +348,6 @@ func resourceApigeeOrganizationRead(d *schema.ResourceData, meta interface{}) er
 		return fmt.Errorf("Error reading Organization: %s", err)
 	}
 	if err := d.Set("analytics_region", flattenApigeeOrganizationAnalyticsRegion(res["analyticsRegion"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Organization: %s", err)
-	}
-	if err := d.Set("api_consumer_data_location", flattenApigeeOrganizationApiConsumerDataLocation(res["apiConsumerDataLocation"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Organization: %s", err)
-	}
-	if err := d.Set("api_consumer_data_encryption_key_name", flattenApigeeOrganizationApiConsumerDataEncryptionKeyName(res["apiConsumerDataEncryptionKeyName"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Organization: %s", err)
-	}
-	if err := d.Set("control_plane_encryption_key_name", flattenApigeeOrganizationControlPlaneEncryptionKeyName(res["controlPlaneEncryptionKeyName"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Organization: %s", err)
 	}
 	if err := d.Set("authorized_network", flattenApigeeOrganizationAuthorizedNetwork(res["authorizedNetwork"], d, config)); err != nil {
@@ -462,24 +409,6 @@ func resourceApigeeOrganizationUpdate(d *schema.ResourceData, meta interface{}) 
 	} else if v, ok := d.GetOkExists("analytics_region"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, analyticsRegionProp)) {
 		obj["analyticsRegion"] = analyticsRegionProp
 	}
-	apiConsumerDataLocationProp, err := expandApigeeOrganizationApiConsumerDataLocation(d.Get("api_consumer_data_location"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("api_consumer_data_location"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, apiConsumerDataLocationProp)) {
-		obj["apiConsumerDataLocation"] = apiConsumerDataLocationProp
-	}
-	apiConsumerDataEncryptionKeyNameProp, err := expandApigeeOrganizationApiConsumerDataEncryptionKeyName(d.Get("api_consumer_data_encryption_key_name"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("api_consumer_data_encryption_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, apiConsumerDataEncryptionKeyNameProp)) {
-		obj["apiConsumerDataEncryptionKeyName"] = apiConsumerDataEncryptionKeyNameProp
-	}
-	controlPlaneEncryptionKeyNameProp, err := expandApigeeOrganizationControlPlaneEncryptionKeyName(d.Get("control_plane_encryption_key_name"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("control_plane_encryption_key_name"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, controlPlaneEncryptionKeyNameProp)) {
-		obj["controlPlaneEncryptionKeyName"] = controlPlaneEncryptionKeyNameProp
-	}
 	authorizedNetworkProp, err := expandApigeeOrganizationAuthorizedNetwork(d.Get("authorized_network"), d, config)
 	if err != nil {
 		return err
@@ -528,7 +457,6 @@ func resourceApigeeOrganizationUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	log.Printf("[DEBUG] Updating Organization %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -543,7 +471,6 @@ func resourceApigeeOrganizationUpdate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -584,8 +511,6 @@ func resourceApigeeOrganizationDelete(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Organization %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -595,7 +520,6 @@ func resourceApigeeOrganizationDelete(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Organization")
@@ -664,18 +588,6 @@ func flattenApigeeOrganizationAnalyticsRegion(v interface{}, d *schema.ResourceD
 	return v
 }
 
-func flattenApigeeOrganizationApiConsumerDataLocation(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenApigeeOrganizationApiConsumerDataEncryptionKeyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenApigeeOrganizationControlPlaneEncryptionKeyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func flattenApigeeOrganizationAuthorizedNetwork(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
@@ -722,28 +634,26 @@ func flattenApigeeOrganizationPropertiesProperty(v interface{}, d *schema.Resour
 		return v
 	}
 	l := v.([]interface{})
-	apiData := make([]map[string]interface{}, 0, len(l))
+	transformed := make([]interface{}, 0, len(l))
 	for _, raw := range l {
 		original := raw.(map[string]interface{})
 		if len(original) < 1 {
 			// Do not include empty json objects coming back from the api
 			continue
 		}
-		apiData = append(apiData, map[string]interface{}{
-			"name":  original["name"],
-			"value": original["value"],
+		transformed = append(transformed, map[string]interface{}{
+			"name":  flattenApigeeOrganizationPropertiesPropertyName(original["name"], d, config),
+			"value": flattenApigeeOrganizationPropertiesPropertyValue(original["value"], d, config),
 		})
 	}
-	configData := []map[string]interface{}{}
-	for _, item := range d.Get("properties.0.property").([]interface{}) {
-		configData = append(configData, item.(map[string]interface{}))
-	}
-	sorted, err := tpgresource.SortMapsByConfigOrder(configData, apiData, "name")
-	if err != nil {
-		log.Printf("[ERROR] Could not support API response for properties.0.property: %s", err)
-		return apiData
-	}
-	return sorted
+	return transformed
+}
+func flattenApigeeOrganizationPropertiesPropertyName(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
+}
+
+func flattenApigeeOrganizationPropertiesPropertyValue(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
+	return v
 }
 
 func flattenApigeeOrganizationApigeeProjectId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -759,18 +669,6 @@ func expandApigeeOrganizationDescription(v interface{}, d tpgresource.TerraformR
 }
 
 func expandApigeeOrganizationAnalyticsRegion(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandApigeeOrganizationApiConsumerDataLocation(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandApigeeOrganizationApiConsumerDataEncryptionKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandApigeeOrganizationControlPlaneEncryptionKeyName(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

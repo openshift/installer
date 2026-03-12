@@ -20,7 +20,6 @@ package looker
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -60,7 +59,7 @@ func ResourceLookerInstance() *schema.Resource {
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
-				ValidateFunc: verify.ValidateRegexp(`^[a-z][a-z0-9-]{0,61}[a-z0-9]$`),
+				ValidateFunc: verify.ValidateRegexp(`^[a-z][a-z0-9-]{0,39}[a-z0-9]$`),
 				Description:  `The ID of the instance or a fully qualified identifier for the instance.`,
 			},
 			"admin_settings": {
@@ -336,8 +335,8 @@ disrupt service.`,
 				ForceNew:     true,
 				ValidateFunc: verify.ValidateEnum([]string{"LOOKER_CORE_TRIAL", "LOOKER_CORE_STANDARD", "LOOKER_CORE_STANDARD_ANNUAL", "LOOKER_CORE_ENTERPRISE_ANNUAL", "LOOKER_CORE_EMBED_ANNUAL", ""}),
 				Description: `Platform editions for a Looker instance. Each edition maps to a set of instance features, like its size. Must be one of these values:
-- LOOKER_CORE_TRIAL: trial instance (Currently Unavailable)
-- LOOKER_CORE_STANDARD: pay as you go standard instance (Currently Unavailable)
+- LOOKER_CORE_TRIAL: trial instance
+- LOOKER_CORE_STANDARD: pay as you go standard instance
 - LOOKER_CORE_STANDARD_ANNUAL: subscription standard instance
 - LOOKER_CORE_ENTERPRISE_ANNUAL: subscription enterprise instance
 - LOOKER_CORE_EMBED_ANNUAL: subscription embed instance Default value: "LOOKER_CORE_TRIAL" Possible values: ["LOOKER_CORE_TRIAL", "LOOKER_CORE_STANDARD", "LOOKER_CORE_STANDARD_ANNUAL", "LOOKER_CORE_ENTERPRISE_ANNUAL", "LOOKER_CORE_EMBED_ANNUAL"]`,
@@ -550,7 +549,6 @@ func resourceLookerInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "POST",
@@ -559,7 +557,6 @@ func resourceLookerInstanceCreate(d *schema.ResourceData, meta interface{}) erro
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutCreate),
-		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {
@@ -623,14 +620,12 @@ func resourceLookerInstanceRead(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
 		Method:               "GET",
 		Project:              billingProject,
 		RawURL:               url,
 		UserAgent:            userAgent,
-		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {
@@ -788,7 +783,6 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 	}
 
 	log.Printf("[DEBUG] Updating Instance %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("admin_settings") {
@@ -856,7 +850,6 @@ func resourceLookerInstanceUpdate(d *schema.ResourceData, meta interface{}) erro
 			UserAgent:            userAgent,
 			Body:                 obj,
 			Timeout:              d.Timeout(schema.TimeoutUpdate),
-			Headers:              headers,
 			ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 		})
 
@@ -905,8 +898,6 @@ func resourceLookerInstanceDelete(d *schema.ResourceData, meta interface{}) erro
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Instance %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:               config,
@@ -916,7 +907,6 @@ func resourceLookerInstanceDelete(d *schema.ResourceData, meta interface{}) erro
 		UserAgent:            userAgent,
 		Body:                 obj,
 		Timeout:              d.Timeout(schema.TimeoutDelete),
-		Headers:              headers,
 		ErrorAbortPredicates: []transport_tpg.RetryErrorPredicateFunc{transport_tpg.Is429QuotaError},
 	})
 	if err != nil {

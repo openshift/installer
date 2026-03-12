@@ -20,7 +20,6 @@ package edgecontainer
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -405,47 +404,6 @@ start time.`,
 								},
 							},
 						},
-						"maintenance_exclusions": {
-							Type:     schema.TypeList,
-							Optional: true,
-							Description: `Exclusions to automatic maintenance. Non-emergency maintenance should not occur
-in these windows. Each exclusion has a unique name and may be active or expired.
-The max number of maintenance exclusions allowed at a given time is 3.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"id": {
-										Type:        schema.TypeString,
-										Computed:    true,
-										Optional:    true,
-										Description: `A unique (per cluster) id for the window.`,
-									},
-									"window": {
-										Type:        schema.TypeList,
-										Computed:    true,
-										Optional:    true,
-										Description: `Represents an arbitrary window of time.`,
-										MaxItems:    1,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"end_time": {
-													Type:     schema.TypeString,
-													Computed: true,
-													Optional: true,
-													Description: `The time that the window ends. The end time must take place after the
-start time.`,
-												},
-												"start_time": {
-													Type:        schema.TypeString,
-													Computed:    true,
-													Optional:    true,
-													Description: `The time that the window first starts.`,
-												},
-											},
-										},
-									},
-								},
-							},
-						},
 					},
 				},
 			},
@@ -729,7 +687,6 @@ func resourceEdgecontainerClusterCreate(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -738,7 +695,6 @@ func resourceEdgecontainerClusterCreate(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Cluster: %s", err)
@@ -791,14 +747,12 @@ func resourceEdgecontainerClusterRead(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("EdgecontainerCluster %q", d.Id()))
@@ -958,7 +912,6 @@ func resourceEdgecontainerClusterUpdate(d *schema.ResourceData, meta interface{}
 	}
 
 	log.Printf("[DEBUG] Updating Cluster %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("networking") {
@@ -1018,7 +971,6 @@ func resourceEdgecontainerClusterUpdate(d *schema.ResourceData, meta interface{}
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -1052,8 +1004,6 @@ func resourceEdgecontainerClusterUpdate(d *schema.ResourceData, meta interface{}
 			return err
 		}
 
-		headers := make(http.Header)
-
 		// err == nil indicates that the billing_project value was found
 		if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 			billingProject = bp
@@ -1067,7 +1017,6 @@ func resourceEdgecontainerClusterUpdate(d *schema.ResourceData, meta interface{}
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 		if err != nil {
 			return fmt.Errorf("Error updating Cluster %q: %s", d.Id(), err)
@@ -1115,8 +1064,6 @@ func resourceEdgecontainerClusterDelete(d *schema.ResourceData, meta interface{}
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Cluster %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -1126,7 +1073,6 @@ func resourceEdgecontainerClusterDelete(d *schema.ResourceData, meta interface{}
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Cluster")
@@ -1334,8 +1280,6 @@ func flattenEdgecontainerClusterMaintenancePolicy(v interface{}, d *schema.Resou
 	transformed := make(map[string]interface{})
 	transformed["window"] =
 		flattenEdgecontainerClusterMaintenancePolicyWindow(original["window"], d, config)
-	transformed["maintenance_exclusions"] =
-		flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusions(original["maintenanceExclusions"], d, config)
 	return []interface{}{transformed}
 }
 func flattenEdgecontainerClusterMaintenancePolicyWindow(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
@@ -1390,52 +1334,6 @@ func flattenEdgecontainerClusterMaintenancePolicyWindowRecurringWindowWindowEndT
 }
 
 func flattenEdgecontainerClusterMaintenancePolicyWindowRecurringWindowRecurrence(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusions(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
-			continue
-		}
-		transformed = append(transformed, map[string]interface{}{
-			"window": flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindow(original["window"], d, config),
-			"id":     flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsId(original["id"], d, config),
-		})
-	}
-	return transformed
-}
-func flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindow(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["start_time"] =
-		flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindowStartTime(original["startTime"], d, config)
-	transformed["end_time"] =
-		flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindowEndTime(original["endTime"], d, config)
-	return []interface{}{transformed}
-}
-func flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindowStartTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindowEndTime(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsId(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1895,13 +1793,6 @@ func expandEdgecontainerClusterMaintenancePolicy(v interface{}, d tpgresource.Te
 		transformed["window"] = transformedWindow
 	}
 
-	transformedMaintenanceExclusions, err := expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusions(original["maintenance_exclusions"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedMaintenanceExclusions); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["maintenanceExclusions"] = transformedMaintenanceExclusions
-	}
-
 	return transformed, nil
 }
 
@@ -1985,73 +1876,6 @@ func expandEdgecontainerClusterMaintenancePolicyWindowRecurringWindowWindowEndTi
 }
 
 func expandEdgecontainerClusterMaintenancePolicyWindowRecurringWindowRecurrence(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusions(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	req := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		if raw == nil {
-			continue
-		}
-		original := raw.(map[string]interface{})
-		transformed := make(map[string]interface{})
-
-		transformedWindow, err := expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindow(original["window"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedWindow); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-			transformed["window"] = transformedWindow
-		}
-
-		transformedId, err := expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsId(original["id"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedId); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-			transformed["id"] = transformedId
-		}
-
-		req = append(req, transformed)
-	}
-	return req, nil
-}
-
-func expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindow(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedStartTime, err := expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindowStartTime(original["start_time"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedStartTime); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["startTime"] = transformedStartTime
-	}
-
-	transformedEndTime, err := expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindowEndTime(original["end_time"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedEndTime); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["endTime"] = transformedEndTime
-	}
-
-	return transformed, nil
-}
-
-func expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindowStartTime(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsWindowEndTime(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandEdgecontainerClusterMaintenancePolicyMaintenanceExclusionsId(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

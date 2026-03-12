@@ -20,7 +20,6 @@ package activedirectory
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -58,8 +57,8 @@ func ResourceActiveDirectoryDomainTrust() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
-				Description: `The fully qualified domain name. e.g. mydomain.myorganization.com, with the restrictions
-of https://cloud.google.com/managed-microsoft-ad/reference/rest/v1/projects.locations.global.domains.`,
+				Description: `The fully qualified domain name. e.g. mydomain.myorganization.com, with the restrictions,
+https://cloud.google.com/managed-microsoft-ad/reference/rest/v1/projects.locations.global.domains.`,
 			},
 			"target_dns_ip_addresses": {
 				Type:        schema.TypeSet,
@@ -182,7 +181,6 @@ func resourceActiveDirectoryDomainTrustCreate(d *schema.ResourceData, meta inter
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -191,7 +189,6 @@ func resourceActiveDirectoryDomainTrustCreate(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating DomainTrust: %s", err)
@@ -276,14 +273,12 @@ func resourceActiveDirectoryDomainTrustRead(d *schema.ResourceData, meta interfa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("ActiveDirectoryDomainTrust %q", d.Id()))
@@ -400,7 +395,6 @@ func resourceActiveDirectoryDomainTrustUpdate(d *schema.ResourceData, meta inter
 	}
 
 	log.Printf("[DEBUG] Updating DomainTrust %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 
 	// err == nil indicates that the billing_project value was found
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
@@ -415,7 +409,6 @@ func resourceActiveDirectoryDomainTrustUpdate(d *schema.ResourceData, meta inter
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutUpdate),
-		Headers:   headers,
 	})
 
 	if err != nil {
@@ -591,6 +584,7 @@ func expandNestedActiveDirectoryDomainTrustTrustHandshakeSecret(v interface{}, d
 }
 
 func resourceActiveDirectoryDomainTrustEncoder(d *schema.ResourceData, meta interface{}, obj map[string]interface{}) (map[string]interface{}, error) {
+
 	wrappedReq := map[string]interface{}{
 		"trust": obj,
 	}

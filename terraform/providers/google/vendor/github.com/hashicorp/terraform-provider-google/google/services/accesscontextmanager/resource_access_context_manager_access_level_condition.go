@@ -20,7 +20,6 @@ package accesscontextmanager
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -317,7 +316,6 @@ func resourceAccessContextManagerAccessLevelConditionCreate(d *schema.ResourceDa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "PATCH",
@@ -326,7 +324,6 @@ func resourceAccessContextManagerAccessLevelConditionCreate(d *schema.ResourceDa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating AccessLevelCondition: %s", err)
@@ -413,14 +410,12 @@ func resourceAccessContextManagerAccessLevelConditionRead(d *schema.ResourceData
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("AccessContextManagerAccessLevelCondition %q", d.Id()))
@@ -500,8 +495,6 @@ func resourceAccessContextManagerAccessLevelConditionDelete(d *schema.ResourceDa
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting AccessLevelCondition %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -511,7 +504,6 @@ func resourceAccessContextManagerAccessLevelConditionDelete(d *schema.ResourceDa
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "AccessLevelCondition")

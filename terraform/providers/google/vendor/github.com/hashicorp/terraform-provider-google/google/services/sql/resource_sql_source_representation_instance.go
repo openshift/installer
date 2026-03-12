@@ -20,7 +20,6 @@ package sql
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strconv"
 	"strings"
@@ -199,7 +198,6 @@ func resourceSQLSourceRepresentationInstanceCreate(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -208,7 +206,6 @@ func resourceSQLSourceRepresentationInstanceCreate(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating SourceRepresentationInstance: %s", err)
@@ -261,14 +258,12 @@ func resourceSQLSourceRepresentationInstanceRead(d *schema.ResourceData, meta in
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SQLSourceRepresentationInstance %q", d.Id()))
@@ -345,8 +340,6 @@ func resourceSQLSourceRepresentationInstanceDelete(d *schema.ResourceData, meta 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting SourceRepresentationInstance %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -356,7 +349,6 @@ func resourceSQLSourceRepresentationInstanceDelete(d *schema.ResourceData, meta 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "SourceRepresentationInstance")

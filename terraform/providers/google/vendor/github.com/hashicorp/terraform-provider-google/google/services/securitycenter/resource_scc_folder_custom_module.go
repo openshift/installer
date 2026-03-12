@@ -20,7 +20,6 @@ package securitycenter
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -292,7 +291,6 @@ func resourceSecurityCenterFolderCustomModuleCreate(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -301,7 +299,6 @@ func resourceSecurityCenterFolderCustomModuleCreate(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating FolderCustomModule: %s", err)
@@ -341,14 +338,12 @@ func resourceSecurityCenterFolderCustomModuleRead(d *schema.ResourceData, meta i
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("SecurityCenterFolderCustomModule %q", d.Id()))
@@ -415,7 +410,6 @@ func resourceSecurityCenterFolderCustomModuleUpdate(d *schema.ResourceData, meta
 	}
 
 	log.Printf("[DEBUG] Updating FolderCustomModule %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("enablement_state") {
@@ -447,7 +441,6 @@ func resourceSecurityCenterFolderCustomModuleUpdate(d *schema.ResourceData, meta
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -489,8 +482,6 @@ func resourceSecurityCenterFolderCustomModuleDelete(d *schema.ResourceData, meta
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting FolderCustomModule %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -500,7 +491,6 @@ func resourceSecurityCenterFolderCustomModuleDelete(d *schema.ResourceData, meta
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "FolderCustomModule")

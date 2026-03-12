@@ -10,8 +10,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/customdiff"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/id"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 
@@ -549,7 +548,7 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 	}
 
 	var operation *container.Operation
-	err = retry.Retry(timeout, func() *retry.RetryError {
+	err = resource.Retry(timeout, func() *resource.RetryError {
 		clusterNodePoolsCreateCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Create(nodePoolInfo.parent(), req)
 		if config.UserProjectOverride {
 			clusterNodePoolsCreateCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
@@ -562,9 +561,9 @@ func resourceContainerNodePoolCreate(d *schema.ResourceData, meta interface{}) e
 				// while we try to add the node pool.
 				// We get quota errors if there the number of running concurrent
 				// operations reaches the quota.
-				return retry.RetryableError(err)
+				return resource.RetryableError(err)
 			}
-			return retry.NonRetryableError(err)
+			return resource.NonRetryableError(err)
 		}
 		return nil
 	})
@@ -756,7 +755,7 @@ func resourceContainerNodePoolDelete(d *schema.ResourceData, meta interface{}) e
 	startTime := time.Now()
 
 	var operation *container.Operation
-	err = retry.Retry(timeout, func() *retry.RetryError {
+	err = resource.Retry(timeout, func() *resource.RetryError {
 		clusterNodePoolsDeleteCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Delete(nodePoolInfo.fullyQualifiedName(name))
 		if config.UserProjectOverride {
 			clusterNodePoolsDeleteCall.Header().Add("X-Goog-User-Project", nodePoolInfo.project)
@@ -769,9 +768,9 @@ func resourceContainerNodePoolDelete(d *schema.ResourceData, meta interface{}) e
 				// while we try to delete the node pool.
 				// We get quota errors if there the number of running concurrent
 				// operations reaches the quota.
-				return retry.RetryableError(err)
+				return resource.RetryableError(err)
 			}
-			return retry.NonRetryableError(err)
+			return resource.NonRetryableError(err)
 		}
 
 		return nil
@@ -875,9 +874,9 @@ func expandNodePool(d *schema.ResourceData, prefix string) (*container.NodePool,
 		}
 		name = v.(string)
 	} else if v, ok := d.GetOk(prefix + "name_prefix"); ok {
-		name = id.PrefixedUniqueId(v.(string))
+		name = resource.PrefixedUniqueId(v.(string))
 	} else {
-		name = id.UniqueId()
+		name = resource.UniqueId()
 	}
 
 	nodeCount := 0
@@ -2004,14 +2003,14 @@ var containerNodePoolRestingStates = RestingStates{
 // takes in a config object, full node pool name, project name and the current CRUD action timeout
 // returns a state with no error if the state is a resting state, and the last state with an error otherwise
 func containerNodePoolAwaitRestingState(config *transport_tpg.Config, name, project, userAgent string, timeout time.Duration) (state string, err error) {
-	err = retry.Retry(timeout, func() *retry.RetryError {
+	err = resource.Retry(timeout, func() *resource.RetryError {
 		clusterNodePoolsGetCall := config.NewContainerClient(userAgent).Projects.Locations.Clusters.NodePools.Get(name)
 		if config.UserProjectOverride {
 			clusterNodePoolsGetCall.Header().Add("X-Goog-User-Project", project)
 		}
 		nodePool, gErr := clusterNodePoolsGetCall.Do()
 		if gErr != nil {
-			return retry.NonRetryableError(gErr)
+			return resource.NonRetryableError(gErr)
 		}
 
 		state = nodePool.Status
@@ -2023,7 +2022,7 @@ func containerNodePoolAwaitRestingState(config *transport_tpg.Config, name, proj
 			log.Printf("[DEBUG] NodePool %q has error state %q with message %q.", name, state, nodePool.StatusMessage)
 			return nil
 		default:
-			return retry.RetryableError(fmt.Errorf("NodePool %q has state %q with message %q", name, state, nodePool.StatusMessage))
+			return resource.RetryableError(fmt.Errorf("NodePool %q has state %q with message %q", name, state, nodePool.StatusMessage))
 		}
 	})
 
@@ -2037,12 +2036,12 @@ func containerNodePoolAwaitRestingState(config *transport_tpg.Config, name, proj
 // retried until the incompatible operation completes, and the newly
 // requested operation can begin.
 func retryWhileIncompatibleOperation(timeout time.Duration, lockKey string, f func() error) error {
-	return retry.Retry(timeout, func() *retry.RetryError {
+	return resource.Retry(timeout, func() *resource.RetryError {
 		if err := transport_tpg.LockedCall(lockKey, f); err != nil {
 			if tpgresource.IsFailedPreconditionError(err) || tpgresource.IsQuotaError(err) {
-				return retry.RetryableError(err)
+				return resource.RetryableError(err)
 			}
-			return retry.NonRetryableError(err)
+			return resource.NonRetryableError(err)
 		}
 		return nil
 	})

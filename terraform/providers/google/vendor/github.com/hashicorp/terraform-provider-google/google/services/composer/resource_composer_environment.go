@@ -6,7 +6,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net"
 	"regexp"
 	"strings"
 	"time"
@@ -156,10 +155,6 @@ func ResourceComposerEnvironment() *schema.Resource {
 			tpgresource.DefaultProviderProject,
 			tpgresource.DefaultProviderRegion,
 			tpgresource.SetLabelsDiff,
-			customdiff.Sequence(
-				customdiff.ValidateChange("config.0.software_config.0.image_version", imageVersionChangeValidationFunc),
-				versionValidationCustomizeDiffFunc,
-			),
 		),
 
 		Schema: map[string]*schema.Schema{
@@ -420,6 +415,7 @@ func ResourceComposerEnvironment() *schema.Resource {
 										Type:             schema.TypeString,
 										Computed:         true,
 										Optional:         true,
+										ForceNew:         true,
 										AtLeastOneOf:     composerSoftwareConfigKeys,
 										ValidateFunc:     verify.ValidateRegexp(composerEnvironmentVersionRegexp),
 										DiffSuppressFunc: composerImageVersionDiffSuppress,
@@ -1073,21 +1069,6 @@ func resourceComposerEnvironmentUpdate(d *schema.ResourceData, meta interface{})
 		config, err := expandComposerEnvironmentConfig(d.Get("config"), d, tfConfig)
 		if err != nil {
 			return err
-		}
-
-		if d.HasChange("config.0.software_config.0.image_version") {
-			patchObj := &composer.Environment{
-				Config: &composer.EnvironmentConfig{
-					SoftwareConfig: &composer.SoftwareConfig{},
-				},
-			}
-			if config != nil && config.SoftwareConfig != nil {
-				patchObj.Config.SoftwareConfig.ImageVersion = config.SoftwareConfig.ImageVersion
-			}
-			err = resourceComposerEnvironmentPatchField("config.softwareConfig.imageVersion", userAgent, patchObj, d, tfConfig)
-			if err != nil {
-				return err
-			}
 		}
 
 		if d.HasChange("config.0.software_config.0.scheduler_count") {
@@ -2687,18 +2668,4 @@ func versionValidationCustomizeDiffFunc(ctx context.Context, d *schema.ResourceD
 		}
 	}
 	return nil
-}
-
-func validateComposerInternalIpv4CidrBlock(v any, k string) (warns []string, errs []error) {
-	cidr_range := v.(string)
-	_, ip_net, err := net.ParseCIDR(cidr_range)
-	if err != nil {
-		errs = append(errs, fmt.Errorf("Invalid CIDR range: %s", err))
-		return
-	}
-	ones, _ := ip_net.Mask.Size()
-	if ones != 20 {
-		errs = append(errs, fmt.Errorf("Composer Internal IPv4 CIDR range must have size /20"))
-	}
-	return
 }

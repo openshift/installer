@@ -20,7 +20,6 @@ package healthcare
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -163,7 +162,6 @@ Please refer to the field 'effective_labels' for all of the labels present on th
 			"notification_config": {
 				Type:        schema.TypeList,
 				Optional:    true,
-				Deprecated:  "`notification_config` is deprecated and will be removed in a future major release. Use `notification_configs` instead.",
 				Description: `A nested object resource`,
 				MaxItems:    1,
 				Elem: &schema.Resource{
@@ -177,43 +175,6 @@ It is guaranteed to be unique within the topic. PubsubMessage.PublishTime is the
 was published. Notifications are only sent if the topic is non-empty. Topic names must be scoped to a
 project. service-PROJECT_NUMBER@gcp-sa-healthcare.iam.gserviceaccount.com must have publisher permissions on the given
 Cloud Pub/Sub topic. Not having adequate permissions will cause the calls that send notifications to fail.`,
-						},
-					},
-				},
-			},
-			"notification_configs": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: `A list of notifcation configs that configure the notification for every resource mutation in this FHIR store.`,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"pubsub_topic": {
-							Type:     schema.TypeString,
-							Required: true,
-							Description: `The Cloud Pub/Sub topic that notifications of changes are published on. Supplied by the client.
-PubsubMessage.Data will contain the resource name. PubsubMessage.MessageId is the ID of this message.
-It is guaranteed to be unique within the topic. PubsubMessage.PublishTime is the time at which the message
-was published. Notifications are only sent if the topic is non-empty. Topic names must be scoped to a
-project. service-PROJECT_NUMBER@gcp-sa-healthcare.iam.gserviceaccount.com must have publisher permissions on the given
-Cloud Pub/Sub topic. Not having adequate permissions will cause the calls that send notifications to fail.`,
-						},
-						"send_full_resource": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							Description: `Whether to send full FHIR resource to this Pub/Sub topic for Create and Update operation.
-Note that setting this to true does not guarantee that all resources will be sent in the format of
-full FHIR resource. When a resource change is too large or during heavy traffic, only the resource name will be
-sent. Clients should always check the "payloadType" label from a Pub/Sub message to determine whether
-it needs to fetch the full resource as a separate operation.`,
-						},
-						"send_previous_resource_on_delete": {
-							Type:     schema.TypeBool,
-							Optional: true,
-							Description: `Whether to send full FHIR resource to this Pub/Sub topic for deleting FHIR resource. Note that setting this to
-true does not guarantee that all previous resources will be sent in the format of full FHIR resource. When a
-resource change is too large or during heavy traffic, only the resource name will be sent. Clients should always
-check the "payloadType" label from a Pub/Sub message to determine whether it needs to fetch the full previous
-resource as a separate operation.`,
 						},
 					},
 				},
@@ -402,12 +363,6 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 	} else if v, ok := d.GetOkExists("default_search_handling_strict"); !tpgresource.IsEmptyValue(reflect.ValueOf(defaultSearchHandlingStrictProp)) && (ok || !reflect.DeepEqual(v, defaultSearchHandlingStrictProp)) {
 		obj["defaultSearchHandlingStrict"] = defaultSearchHandlingStrictProp
 	}
-	notificationConfigsProp, err := expandHealthcareFhirStoreNotificationConfigs(d.Get("notification_configs"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("notification_configs"); !tpgresource.IsEmptyValue(reflect.ValueOf(notificationConfigsProp)) && (ok || !reflect.DeepEqual(v, notificationConfigsProp)) {
-		obj["notificationConfigs"] = notificationConfigsProp
-	}
 	labelsProp, err := expandHealthcareFhirStoreEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -428,7 +383,6 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -437,7 +391,6 @@ func resourceHealthcareFhirStoreCreate(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating FhirStore: %s", err)
@@ -474,14 +427,12 @@ func resourceHealthcareFhirStoreRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("HealthcareFhirStore %q", d.Id()))
@@ -530,9 +481,6 @@ func resourceHealthcareFhirStoreRead(d *schema.ResourceData, meta interface{}) e
 		return fmt.Errorf("Error reading FhirStore: %s", err)
 	}
 	if err := d.Set("default_search_handling_strict", flattenHealthcareFhirStoreDefaultSearchHandlingStrict(res["defaultSearchHandlingStrict"], d, config)); err != nil {
-		return fmt.Errorf("Error reading FhirStore: %s", err)
-	}
-	if err := d.Set("notification_configs", flattenHealthcareFhirStoreNotificationConfigs(res["notificationConfigs"], d, config)); err != nil {
 		return fmt.Errorf("Error reading FhirStore: %s", err)
 	}
 	if err := d.Set("terraform_labels", flattenHealthcareFhirStoreTerraformLabels(res["labels"], d, config)); err != nil {
@@ -585,12 +533,6 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 	} else if v, ok := d.GetOkExists("default_search_handling_strict"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, defaultSearchHandlingStrictProp)) {
 		obj["defaultSearchHandlingStrict"] = defaultSearchHandlingStrictProp
 	}
-	notificationConfigsProp, err := expandHealthcareFhirStoreNotificationConfigs(d.Get("notification_configs"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("notification_configs"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, notificationConfigsProp)) {
-		obj["notificationConfigs"] = notificationConfigsProp
-	}
 	labelsProp, err := expandHealthcareFhirStoreEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -604,7 +546,6 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 	}
 
 	log.Printf("[DEBUG] Updating FhirStore %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("complex_data_type_reference_parsing") {
@@ -625,10 +566,6 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 
 	if d.HasChange("default_search_handling_strict") {
 		updateMask = append(updateMask, "defaultSearchHandlingStrict")
-	}
-
-	if d.HasChange("notification_configs") {
-		updateMask = append(updateMask, "notificationConfigs")
 	}
 
 	if d.HasChange("effective_labels") {
@@ -656,7 +593,6 @@ func resourceHealthcareFhirStoreUpdate(d *schema.ResourceData, meta interface{})
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -691,8 +627,6 @@ func resourceHealthcareFhirStoreDelete(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting FhirStore %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -702,7 +636,6 @@ func resourceHealthcareFhirStoreDelete(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "FhirStore")
@@ -895,38 +828,6 @@ func flattenHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastU
 }
 
 func flattenHealthcareFhirStoreDefaultSearchHandlingStrict(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenHealthcareFhirStoreNotificationConfigs(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return v
-	}
-	l := v.([]interface{})
-	transformed := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		original := raw.(map[string]interface{})
-		if len(original) < 1 {
-			// Do not include empty json objects coming back from the api
-			continue
-		}
-		transformed = append(transformed, map[string]interface{}{
-			"pubsub_topic":                     flattenHealthcareFhirStoreNotificationConfigsPubsubTopic(original["pubsubTopic"], d, config),
-			"send_full_resource":               flattenHealthcareFhirStoreNotificationConfigsSendFullResource(original["sendFullResource"], d, config),
-			"send_previous_resource_on_delete": flattenHealthcareFhirStoreNotificationConfigsSendPreviousResourceOnDelete(original["sendPreviousResourceOnDelete"], d, config),
-		})
-	}
-	return transformed
-}
-func flattenHealthcareFhirStoreNotificationConfigsPubsubTopic(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenHealthcareFhirStoreNotificationConfigsSendFullResource(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenHealthcareFhirStoreNotificationConfigsSendPreviousResourceOnDelete(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	return v
 }
 
@@ -1139,54 +1040,6 @@ func expandHealthcareFhirStoreStreamConfigsBigqueryDestinationSchemaConfigLastUp
 }
 
 func expandHealthcareFhirStoreDefaultSearchHandlingStrict(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandHealthcareFhirStoreNotificationConfigs(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	req := make([]interface{}, 0, len(l))
-	for _, raw := range l {
-		if raw == nil {
-			continue
-		}
-		original := raw.(map[string]interface{})
-		transformed := make(map[string]interface{})
-
-		transformedPubsubTopic, err := expandHealthcareFhirStoreNotificationConfigsPubsubTopic(original["pubsub_topic"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedPubsubTopic); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-			transformed["pubsubTopic"] = transformedPubsubTopic
-		}
-
-		transformedSendFullResource, err := expandHealthcareFhirStoreNotificationConfigsSendFullResource(original["send_full_resource"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedSendFullResource); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-			transformed["sendFullResource"] = transformedSendFullResource
-		}
-
-		transformedSendPreviousResourceOnDelete, err := expandHealthcareFhirStoreNotificationConfigsSendPreviousResourceOnDelete(original["send_previous_resource_on_delete"], d, config)
-		if err != nil {
-			return nil, err
-		} else if val := reflect.ValueOf(transformedSendPreviousResourceOnDelete); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-			transformed["sendPreviousResourceOnDelete"] = transformedSendPreviousResourceOnDelete
-		}
-
-		req = append(req, transformed)
-	}
-	return req, nil
-}
-
-func expandHealthcareFhirStoreNotificationConfigsPubsubTopic(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandHealthcareFhirStoreNotificationConfigsSendFullResource(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandHealthcareFhirStoreNotificationConfigsSendPreviousResourceOnDelete(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

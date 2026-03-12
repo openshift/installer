@@ -20,7 +20,6 @@ package dialogflowcx
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"regexp"
 	"strings"
@@ -296,8 +295,6 @@ func resourceDialogflowCXIntentCreate(d *schema.ResourceData, meta interface{}) 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	// extract location from the parent
 	location := ""
 
@@ -348,7 +345,6 @@ func resourceDialogflowCXIntentCreate(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Intent: %s", err)
@@ -388,8 +384,6 @@ func resourceDialogflowCXIntentRead(d *schema.ResourceData, meta interface{}) er
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	// extract location from the parent
 	location := ""
 
@@ -410,7 +404,6 @@ func resourceDialogflowCXIntentRead(d *schema.ResourceData, meta interface{}) er
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DialogflowCXIntent %q", d.Id()))
@@ -514,7 +507,6 @@ func resourceDialogflowCXIntentUpdate(d *schema.ResourceData, meta interface{}) 
 	}
 
 	log.Printf("[DEBUG] Updating Intent %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("display_name") {
@@ -581,7 +573,6 @@ func resourceDialogflowCXIntentUpdate(d *schema.ResourceData, meta interface{}) 
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -615,8 +606,6 @@ func resourceDialogflowCXIntentDelete(d *schema.ResourceData, meta interface{}) 
 	if bp, err := tpgresource.GetBillingProject(d, config); err == nil {
 		billingProject = bp
 	}
-
-	headers := make(http.Header)
 
 	// extract location from the parent
 	location := ""
@@ -653,7 +642,6 @@ func resourceDialogflowCXIntentDelete(d *schema.ResourceData, meta interface{}) 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Intent")

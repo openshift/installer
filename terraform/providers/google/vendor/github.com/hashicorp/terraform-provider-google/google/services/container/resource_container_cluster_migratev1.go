@@ -700,7 +700,7 @@ func resourceContainerClusterResourceV1() *schema.Resource {
 										Type:             schema.TypeString,
 										Required:         true,
 										ValidateFunc:     verify.ValidateRFC3339Time,
-										DiffSuppressFunc: Rfc3339TimeDiffSuppress,
+										DiffSuppressFunc: tpgresource.Rfc3339TimeDiffSuppress,
 									},
 									"duration": {
 										Type:     schema.TypeString,
@@ -794,8 +794,8 @@ func resourceContainerClusterResourceV1() *schema.Resource {
 							Type:             schema.TypeString,
 							Optional:         true,
 							Computed:         true,
-							ValidateFunc:     validation.StringInSlice([]string{"DISABLED", "BASIC", "ENTERPRISE", "MODE_UNSPECIFIED"}, false),
-							Description:      `Sets the mode of the Kubernetes security posture API's off-cluster features. Available options include DISABLED, BASIC, and ENTERPRISE.`,
+							ValidateFunc:     validation.StringInSlice([]string{"DISABLED", "BASIC", "MODE_UNSPECIFIED"}, false),
+							Description:      `Sets the mode of the Kubernetes security posture API's off-cluster features. Available options include DISABLED and BASIC.`,
 							DiffSuppressFunc: tpgresource.EmptyOrDefaultStringSuppress("MODE_UNSPECIFIED"),
 						},
 						"vulnerability_mode": {
@@ -821,7 +821,7 @@ func resourceContainerClusterResourceV1() *schema.Resource {
 							Type:        schema.TypeList,
 							Optional:    true,
 							Computed:    true,
-							Description: `GKE components exposing metrics. Valid values include SYSTEM_COMPONENTS, APISERVER, SCHEDULER, CONTROLLER_MANAGER, STORAGE, HPA, POD, DAEMONSET, DEPLOYMENT, STATEFULSET and DCGM.`,
+							Description: `GKE components exposing metrics. Valid values include SYSTEM_COMPONENTS, APISERVER, SCHEDULER, CONTROLLER_MANAGER, STORAGE, HPA, POD, DAEMONSET, DEPLOYMENT and STATEFULSET.`,
 							Elem: &schema.Schema{
 								Type: schema.TypeString,
 							},
@@ -1421,7 +1421,7 @@ func resourceContainerClusterResourceV1() *schema.Resource {
 						"enabled": {
 							Type:        schema.TypeBool,
 							Required:    true,
-							Description: `When enabled, services with external ips specified will be allowed.`,
+							Description: `When enabled, services with exterenal ips specified will be allowed.`,
 						},
 					},
 				},

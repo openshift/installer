@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/hashicorp/errwrap"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/retry"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 )
 
 type RetryOptions struct {
@@ -38,7 +38,7 @@ func Retry(opt RetryOptions) error {
 			// The error is not retryable.
 			return "", "done", err
 		}
-		stateChange := &retry.StateChangeConf{
+		stateChange := &resource.StateChangeConf{
 			Pending: []string{
 				"retrying",
 			},
@@ -54,15 +54,15 @@ func Retry(opt RetryOptions) error {
 		return err
 	}
 
-	return retry.Retry(opt.Timeout, func() *retry.RetryError {
+	return resource.Retry(opt.Timeout, func() *resource.RetryError {
 		err := opt.RetryFunc()
 		if err == nil {
 			return nil
 		}
 		if IsRetryableError(err, opt.ErrorRetryPredicates, opt.ErrorAbortPredicates) {
-			return retry.RetryableError(err)
+			return resource.RetryableError(err)
 		}
-		return retry.NonRetryableError(err)
+		return resource.NonRetryableError(err)
 	})
 }
 

@@ -20,7 +20,6 @@ package netapp
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"strings"
 	"time"
@@ -93,35 +92,6 @@ func ResourceNetappVolume() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				Description: `Name of the storage pool to create the volume in. Pool needs enough spare capacity to accomodate the volume.`,
-			},
-			"backup_config": {
-				Type:        schema.TypeList,
-				Optional:    true,
-				Description: `Backup configuration for the volume.`,
-				MaxItems:    1,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"backup_policies": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							Description: `Specify a single backup policy ID for scheduled backups. Format: 'projects/{{projectId}}/locations/{{location}}/backupPolicies/{{backupPolicyName}}'`,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-						"backup_vault": {
-							Type:     schema.TypeString,
-							Optional: true,
-							Description: `ID of the backup vault to use. A backup vault is reqired to create manual or scheduled backups.
-Format: 'projects/{{projectId}}/locations/{{location}}/backupVaults/{{backupVaultName}}'`,
-						},
-						"scheduled_backup_enabled": {
-							Type:        schema.TypeBool,
-							Optional:    true,
-							Description: `When set to true, scheduled backup is enabled on the volume. Omit if no backup_policy is specified.`,
-						},
-					},
-				},
 			},
 			"description": {
 				Type:        schema.TypeString,
@@ -501,7 +471,7 @@ Format for SMB volumes: '\\\\netbios_prefix-four_random_hex_letters.domain_name\
 			"service_level": {
 				Type:        schema.TypeString,
 				Computed:    true,
-				Description: `Service level of the volume. Inherited from storage pool. Supported values are : PREMIUM, EXTERME, STANDARD, FLEX.`,
+				Description: `Service level of the volume. Inherited from storage pool.`,
 			},
 			"state": {
 				Type:        schema.TypeString,
@@ -636,12 +606,6 @@ func resourceNetappVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 	} else if v, ok := d.GetOkExists("snapshot_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(snapshotPolicyProp)) && (ok || !reflect.DeepEqual(v, snapshotPolicyProp)) {
 		obj["snapshotPolicy"] = snapshotPolicyProp
 	}
-	backupConfigProp, err := expandNetappVolumeBackupConfig(d.Get("backup_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("backup_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(backupConfigProp)) && (ok || !reflect.DeepEqual(v, backupConfigProp)) {
-		obj["backupConfig"] = backupConfigProp
-	}
 	labelsProp, err := expandNetappVolumeEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -668,7 +632,6 @@ func resourceNetappVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -677,7 +640,6 @@ func resourceNetappVolumeCreate(d *schema.ResourceData, meta interface{}) error 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Volume: %s", err)
@@ -730,14 +692,12 @@ func resourceNetappVolumeRead(d *schema.ResourceData, meta interface{}) error {
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("NetappVolume %q", d.Id()))
@@ -834,9 +794,6 @@ func resourceNetappVolumeRead(d *schema.ResourceData, meta interface{}) error {
 	if err := d.Set("snapshot_policy", flattenNetappVolumeSnapshotPolicy(res["snapshotPolicy"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Volume: %s", err)
 	}
-	if err := d.Set("backup_config", flattenNetappVolumeBackupConfig(res["backupConfig"], d, config)); err != nil {
-		return fmt.Errorf("Error reading Volume: %s", err)
-	}
 	if err := d.Set("terraform_labels", flattenNetappVolumeTerraformLabels(res["labels"], d, config)); err != nil {
 		return fmt.Errorf("Error reading Volume: %s", err)
 	}
@@ -917,12 +874,6 @@ func resourceNetappVolumeUpdate(d *schema.ResourceData, meta interface{}) error 
 	} else if v, ok := d.GetOkExists("snapshot_policy"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, snapshotPolicyProp)) {
 		obj["snapshotPolicy"] = snapshotPolicyProp
 	}
-	backupConfigProp, err := expandNetappVolumeBackupConfig(d.Get("backup_config"), d, config)
-	if err != nil {
-		return err
-	} else if v, ok := d.GetOkExists("backup_config"); !tpgresource.IsEmptyValue(reflect.ValueOf(v)) && (ok || !reflect.DeepEqual(v, backupConfigProp)) {
-		obj["backupConfig"] = backupConfigProp
-	}
 	labelsProp, err := expandNetappVolumeEffectiveLabels(d.Get("effective_labels"), d, config)
 	if err != nil {
 		return err
@@ -936,7 +887,6 @@ func resourceNetappVolumeUpdate(d *schema.ResourceData, meta interface{}) error 
 	}
 
 	log.Printf("[DEBUG] Updating Volume %q: %#v", d.Id(), obj)
-	headers := make(http.Header)
 	updateMask := []string{}
 
 	if d.HasChange("storage_pool") {
@@ -975,12 +925,6 @@ func resourceNetappVolumeUpdate(d *schema.ResourceData, meta interface{}) error 
 		updateMask = append(updateMask, "snapshotPolicy")
 	}
 
-	if d.HasChange("backup_config") {
-		updateMask = append(updateMask, "backup_config.backup_policies",
-			"backup_config.backup_vault",
-			"backup_config.scheduled_backup_enabled")
-	}
-
 	if d.HasChange("effective_labels") {
 		updateMask = append(updateMask, "labels")
 	}
@@ -1006,7 +950,6 @@ func resourceNetappVolumeUpdate(d *schema.ResourceData, meta interface{}) error 
 			UserAgent: userAgent,
 			Body:      obj,
 			Timeout:   d.Timeout(schema.TimeoutUpdate),
-			Headers:   headers,
 		})
 
 		if err != nil {
@@ -1054,7 +997,6 @@ func resourceNetappVolumeDelete(d *schema.ResourceData, meta interface{}) error 
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	// Delete volume even when nested snapshots do exist
 	if deletionPolicy := d.Get("deletion_policy"); deletionPolicy == "FORCE" {
 		url = url + "?force=true"
@@ -1069,7 +1011,6 @@ func resourceNetappVolumeDelete(d *schema.ResourceData, meta interface{}) error 
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Volume")
@@ -1631,35 +1572,6 @@ func flattenNetappVolumeSnapshotPolicyMonthlyScheduleDaysOfMonth(v interface{}, 
 	return v
 }
 
-func flattenNetappVolumeBackupConfig(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	if v == nil {
-		return nil
-	}
-	original := v.(map[string]interface{})
-	if len(original) == 0 {
-		return nil
-	}
-	transformed := make(map[string]interface{})
-	transformed["backup_policies"] =
-		flattenNetappVolumeBackupConfigBackupPolicies(original["backupPolicies"], d, config)
-	transformed["backup_vault"] =
-		flattenNetappVolumeBackupConfigBackupVault(original["backupVault"], d, config)
-	transformed["scheduled_backup_enabled"] =
-		flattenNetappVolumeBackupConfigScheduledBackupEnabled(original["scheduledBackupEnabled"], d, config)
-	return []interface{}{transformed}
-}
-func flattenNetappVolumeBackupConfigBackupPolicies(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenNetappVolumeBackupConfigBackupVault(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
-func flattenNetappVolumeBackupConfigScheduledBackupEnabled(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
-	return v
-}
-
 func flattenNetappVolumeTerraformLabels(v interface{}, d *schema.ResourceData, config *transport_tpg.Config) interface{} {
 	if v == nil {
 		return v
@@ -2151,51 +2063,6 @@ func expandNetappVolumeSnapshotPolicyMonthlyScheduleHour(v interface{}, d tpgres
 }
 
 func expandNetappVolumeSnapshotPolicyMonthlyScheduleDaysOfMonth(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandNetappVolumeBackupConfig(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	l := v.([]interface{})
-	if len(l) == 0 || l[0] == nil {
-		return nil, nil
-	}
-	raw := l[0]
-	original := raw.(map[string]interface{})
-	transformed := make(map[string]interface{})
-
-	transformedBackupPolicies, err := expandNetappVolumeBackupConfigBackupPolicies(original["backup_policies"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedBackupPolicies); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["backupPolicies"] = transformedBackupPolicies
-	}
-
-	transformedBackupVault, err := expandNetappVolumeBackupConfigBackupVault(original["backup_vault"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedBackupVault); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["backupVault"] = transformedBackupVault
-	}
-
-	transformedScheduledBackupEnabled, err := expandNetappVolumeBackupConfigScheduledBackupEnabled(original["scheduled_backup_enabled"], d, config)
-	if err != nil {
-		return nil, err
-	} else if val := reflect.ValueOf(transformedScheduledBackupEnabled); val.IsValid() && !tpgresource.IsEmptyValue(val) {
-		transformed["scheduledBackupEnabled"] = transformedScheduledBackupEnabled
-	}
-
-	return transformed, nil
-}
-
-func expandNetappVolumeBackupConfigBackupPolicies(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandNetappVolumeBackupConfigBackupVault(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
-	return v, nil
-}
-
-func expandNetappVolumeBackupConfigScheduledBackupEnabled(v interface{}, d tpgresource.TerraformResourceData, config *transport_tpg.Config) (interface{}, error) {
 	return v, nil
 }
 

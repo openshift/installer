@@ -258,15 +258,17 @@ func bigQueryTableNormalizePolicyTags(val interface{}) interface{} {
 
 // Compares two existing schema implementations and decides if
 // it is changeable.. pairs with a force new on not changeable
-func resourceBigQueryTableSchemaIsChangeable(old, new interface{}, isExternalTable bool, topLevel bool) (bool, error) {
+func resourceBigQueryTableSchemaIsChangeable(old, new interface{}) (bool, error) {
 	switch old.(type) {
 	case []interface{}:
 		arrayOld := old.([]interface{})
 		arrayNew, ok := new.([]interface{})
-		sameNameColumns := 0
-		droppedColumns := 0
 		if !ok {
 			// if not both arrays not changeable
+			return false, nil
+		}
+		if len(arrayOld) > len(arrayNew) {
+			// if not growing not changeable
 			return false, nil
 		}
 		if err := bigQueryTablecheckNameExists(arrayOld); err != nil {
@@ -289,28 +291,16 @@ func resourceBigQueryTableSchemaIsChangeable(old, new interface{}, isExternalTab
 			}
 		}
 		for key := range mapOld {
-			// dropping top level columns can happen in-place
-			// but this doesn't apply to external tables
+			// all old keys should be represented in the new config
 			if _, ok := mapNew[key]; !ok {
-				if !topLevel || isExternalTable {
-					return false, nil
-				}
-				droppedColumns += 1
-				continue
+				return false, nil
 			}
-
-			isChangable, err := resourceBigQueryTableSchemaIsChangeable(mapOld[key], mapNew[key], isExternalTable, false)
-			if err != nil || !isChangable {
+			if isChangable, err :=
+				resourceBigQueryTableSchemaIsChangeable(mapOld[key], mapNew[key]); err != nil || !isChangable {
 				return false, err
-			} else if isChangable && topLevel {
-				// top level column that exists in the new schema
-				sameNameColumns += 1
 			}
 		}
-		// in-place column dropping alongside column additions is not allowed
-		// as of now because user intention can be ambiguous (e.g. column renaming)
-		newColumns := len(arrayNew) - sameNameColumns
-		return (droppedColumns == 0) || (newColumns == 0), nil
+		return true, nil
 	case map[string]interface{}:
 		objectOld := old.(map[string]interface{})
 		objectNew, ok := new.(map[string]interface{})
@@ -349,7 +339,7 @@ func resourceBigQueryTableSchemaIsChangeable(old, new interface{}, isExternalTab
 					return false, nil
 				}
 			case "fields":
-				return resourceBigQueryTableSchemaIsChangeable(valOld, valNew, isExternalTable, false)
+				return resourceBigQueryTableSchemaIsChangeable(valOld, valNew)
 
 				// other parameters: description, policyTags and
 				// policyTags.names[] are changeable
@@ -388,8 +378,7 @@ func resourceBigQueryTableSchemaCustomizeDiffFunc(d tpgresource.TerraformResourc
 			// same as above
 			log.Printf("[DEBUG] unable to unmarshal json customized diff - %v", err)
 		}
-		_, isExternalTable := d.GetOk("external_data_configuration")
-		isChangeable, err := resourceBigQueryTableSchemaIsChangeable(old, new, isExternalTable, true)
+		isChangeable, err := resourceBigQueryTableSchemaIsChangeable(old, new)
 		if err != nil {
 			return err
 		}
@@ -515,7 +504,7 @@ func ResourceBigQueryTable() *schema.Resource {
 						"source_format": {
 							Type:        schema.TypeString,
 							Optional:    true,
-							Description: `Please see sourceFormat under ExternalDataConfiguration in Bigquery's public API documentation (https://cloud.google.com/bigquery/docs/reference/rest/v2/tables#externaldataconfiguration) for supported formats. To use "GOOGLE_SHEETS" the scopes must include "googleapis.com/auth/drive.readonly".`,
+							Description: ` Please see sourceFormat under ExternalDataConfiguration in Bigquery's public API documentation (https://cloud.google.com/bigquery/docs/reference/rest/v2/tables#externaldataconfiguration) for supported formats. To use "GOOGLE_SHEETS" the scopes must include "googleapis.com/auth/drive.readonly".`,
 							ValidateFunc: validation.StringInSlice([]string{
 								"CSV", "GOOGLE_SHEETS", "NEWLINE_DELIMITED_JSON", "AVRO", "ICEBERG", "DATASTORE_BACKUP", "PARQUET", "ORC", "BIGTABLE",
 							}, false),
@@ -621,7 +610,7 @@ func ResourceBigQueryTable() *schema.Resource {
 							Type:        schema.TypeList,
 							Optional:    true,
 							MaxItems:    1,
-							Description: `Additional properties to set if sourceFormat is set to JSON.`,
+							Description: `Additional properties to set if sourceFormat is set to JSON."`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"encoding": {
@@ -635,112 +624,11 @@ func ResourceBigQueryTable() *schema.Resource {
 							},
 						},
 
-						"json_extension": {
-							Type:         schema.TypeString,
-							Optional:     true,
-							ValidateFunc: validation.StringInSlice([]string{"GEOJSON"}, false),
-							Description:  `Load option to be used together with sourceFormat newline-delimited JSON to indicate that a variant of JSON is being loaded. To load newline-delimited GeoJSON, specify GEOJSON (and sourceFormat must be set to NEWLINE_DELIMITED_JSON).`,
-						},
-
-						"bigtable_options": {
-							Type:        schema.TypeList,
-							Optional:    true,
-							MaxItems:    1,
-							Description: `Additional options if sourceFormat is set to BIGTABLE.`,
-							Elem: &schema.Resource{
-								Schema: map[string]*schema.Schema{
-									"column_family": {
-										Type:        schema.TypeList,
-										Optional:    true,
-										Description: `A list of column families to expose in the table schema along with their types. This list restricts the column families that can be referenced in queries and specifies their value types. You can use this list to do type conversions - see the 'type' field for more details. If you leave this list empty, all column families are present in the table schema and their values are read as BYTES. During a query only the column families referenced in that query are read from Bigtable.`,
-										Elem: &schema.Resource{
-											Schema: map[string]*schema.Schema{
-												"column": {
-													Type:        schema.TypeList,
-													Optional:    true,
-													Description: `A List of columns that should be exposed as individual fields as opposed to a list of (column name, value) pairs. All columns whose qualifier matches a qualifier in this list can be accessed as Other columns can be accessed as a list through column field`,
-													Elem: &schema.Resource{
-														Schema: map[string]*schema.Schema{
-															"qualifier_encoded": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `Qualifier of the column. Columns in the parent column family that has this exact qualifier are exposed as . field. If the qualifier is valid UTF-8 string, it can be specified in the qualifierString field. Otherwise, a base-64 encoded value must be set to qualifierEncoded. The column field name is the same as the column qualifier. However, if the qualifier is not a valid BigQuery field identifier i.e. does not match [a-zA-Z][a-zA-Z0-9_]*, a valid identifier must be provided as fieldName.`,
-															},
-															"qualifier_string": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `Qualifier string.`,
-															},
-															"field_name": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `If the qualifier is not a valid BigQuery field identifier i.e. does not match [a-zA-Z][a-zA-Z0-9_]*, a valid identifier must be provided as the column field name and is used as field name in queries.`,
-															},
-															"type": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `The type to convert the value in cells of this column. The values are expected to be encoded using HBase Bytes.toBytes function when using the BINARY encoding value. Following BigQuery types are allowed (case-sensitive): "BYTES", "STRING", "INTEGER", "FLOAT", "BOOLEAN", "JSON", Default type is "BYTES". 'type' can also be set at the column family level. However, the setting at this level takes precedence if 'type' is set at both levels.`,
-															},
-															"encoding": {
-																Type:        schema.TypeString,
-																Optional:    true,
-																Description: `The encoding of the values when the type is not STRING. Acceptable encoding values are: TEXT - indicates values are alphanumeric text strings. BINARY - indicates values are encoded using HBase Bytes.toBytes family of functions. 'encoding' can also be set at the column family level. However, the setting at this level takes precedence if 'encoding' is set at both levels.`,
-															},
-															"only_read_latest": {
-																Type:        schema.TypeBool,
-																Optional:    true,
-																Description: `If this is set, only the latest version of value in this column are exposed. 'onlyReadLatest' can also be set at the column family level. However, the setting at this level takes precedence if 'onlyReadLatest' is set at both levels.`,
-															},
-														},
-													},
-												},
-												"family_id": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `Identifier of the column family.`,
-												},
-												"type": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `The type to convert the value in cells of this column family. The values are expected to be encoded using HBase Bytes.toBytes function when using the BINARY encoding value. Following BigQuery types are allowed (case-sensitive): "BYTES", "STRING", "INTEGER", "FLOAT", "BOOLEAN", "JSON". Default type is BYTES. This can be overridden for a specific column by listing that column in 'columns' and specifying a type for it.`,
-												},
-												"encoding": {
-													Type:        schema.TypeString,
-													Optional:    true,
-													Description: `The encoding of the values when the type is not STRING. Acceptable encoding values are: TEXT - indicates values are alphanumeric text strings. BINARY - indicates values are encoded using HBase Bytes.toBytes family of functions. This can be overridden for a specific column by listing that column in 'columns' and specifying an encoding for it.`,
-												},
-												"only_read_latest": {
-													Type:        schema.TypeBool,
-													Optional:    true,
-													Description: `If this is set only the latest version of value are exposed for all columns in this column family. This can be overridden for a specific column by listing that column in 'columns' and specifying a different setting for that column.`,
-												},
-											},
-										},
-									},
-									"ignore_unspecified_column_families": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Description: `If field is true, then the column families that are not specified in columnFamilies list are not exposed in the table schema. Otherwise, they are read with BYTES type values. The default value is false.`,
-									},
-									"read_rowkey_as_string": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Description: `If field is true, then the rowkey column families will be read and converted to string. Otherwise they are read with BYTES type values and users need to manually cast them with CAST if necessary. The default value is false.`,
-									},
-									"output_column_families_as_json": {
-										Type:        schema.TypeBool,
-										Optional:    true,
-										Description: `If field is true, then each column family will be read as a single JSON column. Otherwise they are read as a repeated cell structure containing timestamp/value tuples. The default value is false.`,
-									},
-								},
-							},
-						},
-
 						"parquet_options": {
 							Type:        schema.TypeList,
 							Optional:    true,
 							MaxItems:    1,
-							Description: `Additional properties to set if sourceFormat is set to PARQUET.`,
+							Description: `Additional properties to set if sourceFormat is set to PARQUET."`,
 							Elem: &schema.Resource{
 								Schema: map[string]*schema.Schema{
 									"enum_as_string": {
@@ -769,7 +657,7 @@ func ResourceBigQueryTable() *schema.Resource {
 									"range": {
 										Type:        schema.TypeString,
 										Optional:    true,
-										Description: `Range of a sheet to query from. Only used when non-empty. At least one of range or skip_leading_rows must be set. Typical format: "sheet_name!top_left_cell_id:bottom_right_cell_id" For example: "sheet1!A1:B20`,
+										Description: `Range of a sheet to query from. Only used when non-empty. At least one of range or skip_leading_rows must be set. Typical format: "sheet_name!top_left_cell_id:bottom_right_cell_id" For example: "sheet1!A1:B20"`,
 										AtLeastOneOf: []string{
 											"external_data_configuration.0.google_sheets_options.0.skip_leading_rows",
 											"external_data_configuration.0.google_sheets_options.0.range",
@@ -1249,7 +1137,7 @@ func ResourceBigQueryTable() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
-				Description: `Whether Terraform will be prevented from destroying the instance. When the field is set to true or unset in Terraform state, a terraform apply or terraform destroy that would delete the table will fail. When the field is set to false, deleting the table is allowed.`,
+				Description: `Whether or not to allow Terraform to destroy the instance. Unless this field is set to false in Terraform state, a terraform destroy or terraform apply that would delete the instance will fail.`,
 			},
 
 			// TableConstraints: [Optional] Defines the primary key and foreign keys.
@@ -1817,12 +1705,6 @@ func resourceBigQueryTableRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-type TableReference struct {
-	project   string
-	datasetID string
-	tableID   string
-}
-
 func resourceBigQueryTableUpdate(d *schema.ResourceData, meta interface{}) error {
 	config := meta.(*transport_tpg.Config)
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
@@ -1845,16 +1727,6 @@ func resourceBigQueryTableUpdate(d *schema.ResourceData, meta interface{}) error
 	datasetID := d.Get("dataset_id").(string)
 	tableID := d.Get("table_id").(string)
 
-	tableReference := &TableReference{
-		project:   project,
-		datasetID: datasetID,
-		tableID:   tableID,
-	}
-
-	if err = resourceBigQueryTableColumnDrop(config, userAgent, table, tableReference); err != nil {
-		return err
-	}
-
 	if _, err = config.NewBigQueryClient(userAgent).Tables.Update(project, datasetID, tableID, table).Do(); err != nil {
 		return err
 	}
@@ -1862,52 +1734,9 @@ func resourceBigQueryTableUpdate(d *schema.ResourceData, meta interface{}) error
 	return resourceBigQueryTableRead(d, meta)
 }
 
-func resourceBigQueryTableColumnDrop(config *transport_tpg.Config, userAgent string, table *bigquery.Table, tableReference *TableReference) error {
-	oldTable, err := config.NewBigQueryClient(userAgent).Tables.Get(tableReference.project, tableReference.datasetID, tableReference.tableID).Do()
-	if err != nil {
-		return err
-	}
-
-	if table.Schema == nil {
-		return nil
-	}
-
-	newTableFields := map[string]bool{}
-	for _, field := range table.Schema.Fields {
-		newTableFields[field.Name] = true
-	}
-
-	droppedColumns := []string{}
-	for _, field := range oldTable.Schema.Fields {
-		if !newTableFields[field.Name] {
-			droppedColumns = append(droppedColumns, field.Name)
-		}
-	}
-
-	if len(droppedColumns) > 0 {
-		droppedColumnsString := strings.Join(droppedColumns, ", DROP COLUMN ")
-
-		dropColumnsDDL := fmt.Sprintf("ALTER TABLE `%s.%s.%s` DROP COLUMN %s", tableReference.project, tableReference.datasetID, tableReference.tableID, droppedColumnsString)
-		log.Printf("[INFO] Dropping columns in-place: %s", dropColumnsDDL)
-
-		useLegacySQL := false
-		req := &bigquery.QueryRequest{
-			Query:        dropColumnsDDL,
-			UseLegacySql: &useLegacySQL,
-		}
-
-		_, err = config.NewBigQueryClient(userAgent).Jobs.Query(tableReference.project, req).Do()
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func resourceBigQueryTableDelete(d *schema.ResourceData, meta interface{}) error {
 	if d.Get("deletion_protection").(bool) {
-		return fmt.Errorf("cannot destroy table %v without setting deletion_protection=false and running `terraform apply`", d.Id())
+		return fmt.Errorf("cannot destroy instance without setting deletion_protection=false and running `terraform apply`")
 	}
 	config := meta.(*transport_tpg.Config)
 	userAgent, err := tpgresource.GenerateUserAgentString(d, config.UserAgent)
@@ -1957,18 +1786,11 @@ func expandExternalDataConfiguration(cfg interface{}) (*bigquery.ExternalDataCon
 		edc.Compression = v.(string)
 	}
 
-	if v, ok := raw["json_extension"]; ok {
-		edc.JsonExtension = v.(string)
-	}
-
 	if v, ok := raw["csv_options"]; ok {
 		edc.CsvOptions = expandCsvOptions(v)
 	}
 	if v, ok := raw["json_options"]; ok {
 		edc.JsonOptions = expandJsonOptions(v)
-	}
-	if v, ok := raw["bigtable_options"]; ok {
-		edc.BigtableOptions = expandBigtableOptions(v)
 	}
 	if v, ok := raw["google_sheets_options"]; ok {
 		edc.GoogleSheetsOptions = expandGoogleSheetsOptions(v)
@@ -2031,10 +1853,6 @@ func flattenExternalDataConfiguration(edc *bigquery.ExternalDataConfiguration) (
 		result["compression"] = edc.Compression
 	}
 
-	if edc.JsonExtension != "" {
-		result["json_extension"] = edc.JsonExtension
-	}
-
 	if edc.CsvOptions != nil {
 		result["csv_options"] = flattenCsvOptions(edc.CsvOptions)
 	}
@@ -2057,10 +1875,6 @@ func flattenExternalDataConfiguration(edc *bigquery.ExternalDataConfiguration) (
 
 	if edc.JsonOptions != nil {
 		result["json_options"] = flattenJsonOptions(edc.JsonOptions)
-	}
-
-	if edc.BigtableOptions != nil {
-		result["bigtable_options"] = flattenBigtableOptions(edc.BigtableOptions)
 	}
 
 	if edc.IgnoreUnknownValues {
@@ -2291,164 +2105,6 @@ func flattenParquetOptions(opts *bigquery.ParquetOptions) []map[string]interface
 	}
 
 	return []map[string]interface{}{result}
-}
-
-func expandBigtableOptions(configured interface{}) *bigquery.BigtableOptions {
-	if len(configured.([]interface{})) == 0 {
-		return nil
-	}
-
-	raw := configured.([]interface{})[0].(map[string]interface{})
-	opts := &bigquery.BigtableOptions{}
-
-	crs := []*bigquery.BigtableColumnFamily{}
-	if v, ok := raw["column_family"]; ok {
-		for _, columnFamily := range v.([]interface{}) {
-			crs = append(crs, expandBigtableColumnFamily(columnFamily))
-		}
-
-		if len(crs) > 0 {
-			opts.ColumnFamilies = crs
-		}
-	}
-
-	if v, ok := raw["ignore_unspecified_column_families"]; ok {
-		opts.IgnoreUnspecifiedColumnFamilies = v.(bool)
-	}
-
-	if v, ok := raw["read_rowkey_as_string"]; ok {
-		opts.ReadRowkeyAsString = v.(bool)
-	}
-
-	if v, ok := raw["output_column_families_as_json"]; ok {
-		opts.OutputColumnFamiliesAsJson = v.(bool)
-	}
-
-	return opts
-}
-
-func flattenBigtableOptions(opts *bigquery.BigtableOptions) []map[string]interface{} {
-	result := map[string]interface{}{}
-
-	if opts.ColumnFamilies != nil {
-		result["column_family"] = flattenBigtableColumnFamily(opts.ColumnFamilies)
-	}
-
-	if opts.IgnoreUnspecifiedColumnFamilies {
-		result["ignore_unspecified_column_families"] = opts.IgnoreUnspecifiedColumnFamilies
-	}
-
-	if opts.ReadRowkeyAsString {
-		result["read_rowkey_as_string"] = opts.ReadRowkeyAsString
-	}
-
-	if opts.OutputColumnFamiliesAsJson {
-		result["output_column_families_as_json"] = opts.OutputColumnFamiliesAsJson
-	}
-
-	return []map[string]interface{}{result}
-}
-
-func expandBigtableColumnFamily(configured interface{}) *bigquery.BigtableColumnFamily {
-	raw := configured.(map[string]interface{})
-
-	opts := &bigquery.BigtableColumnFamily{}
-
-	crs := []*bigquery.BigtableColumn{}
-	if v, ok := raw["column"]; ok {
-		for _, column := range v.([]interface{}) {
-			crs = append(crs, expandBigtableColumn(column))
-		}
-
-		if len(crs) > 0 {
-			opts.Columns = crs
-		}
-	}
-
-	if v, ok := raw["family_id"]; ok {
-		opts.FamilyId = v.(string)
-	}
-
-	if v, ok := raw["type"]; ok {
-		opts.Type = v.(string)
-	}
-
-	if v, ok := raw["encoding"]; ok {
-		opts.Encoding = v.(string)
-	}
-
-	if v, ok := raw["only_read_latest"]; ok {
-		opts.OnlyReadLatest = v.(bool)
-	}
-
-	return opts
-}
-
-func flattenBigtableColumnFamily(edc []*bigquery.BigtableColumnFamily) []map[string]interface{} {
-	results := []map[string]interface{}{}
-
-	for _, fr := range edc {
-		result := map[string]interface{}{}
-		if fr.Columns != nil {
-			result["column"] = flattenBigtableColumn(fr.Columns)
-		}
-		result["family_id"] = fr.FamilyId
-		result["type"] = fr.Type
-		result["encoding"] = fr.Encoding
-		result["only_read_latest"] = fr.OnlyReadLatest
-		results = append(results, result)
-	}
-
-	return results
-}
-
-func expandBigtableColumn(configured interface{}) *bigquery.BigtableColumn {
-	raw := configured.(map[string]interface{})
-
-	opts := &bigquery.BigtableColumn{}
-
-	if v, ok := raw["qualifier_encoded"]; ok {
-		opts.QualifierEncoded = v.(string)
-	}
-
-	if v, ok := raw["qualifier_string"]; ok {
-		opts.QualifierString = v.(string)
-	}
-
-	if v, ok := raw["field_name"]; ok {
-		opts.FieldName = v.(string)
-	}
-
-	if v, ok := raw["type"]; ok {
-		opts.Type = v.(string)
-	}
-
-	if v, ok := raw["encoding"]; ok {
-		opts.Encoding = v.(string)
-	}
-
-	if v, ok := raw["only_read_latest"]; ok {
-		opts.OnlyReadLatest = v.(bool)
-	}
-
-	return opts
-}
-
-func flattenBigtableColumn(edc []*bigquery.BigtableColumn) []map[string]interface{} {
-	results := []map[string]interface{}{}
-
-	for _, fr := range edc {
-		result := map[string]interface{}{}
-		result["qualifier_encoded"] = fr.QualifierEncoded
-		result["qualifier_string"] = fr.QualifierString
-		result["field_name"] = fr.FieldName
-		result["type"] = fr.Type
-		result["encoding"] = fr.Encoding
-		result["only_read_latest"] = fr.OnlyReadLatest
-		results = append(results, result)
-	}
-
-	return results
 }
 
 func expandJsonOptions(configured interface{}) *bigquery.JsonOptions {
@@ -2686,11 +2342,6 @@ func expandPrimaryKey(configured interface{}) *bigquery.TableConstraintsPrimaryK
 
 	columns := []string{}
 	for _, rawColumn := range raw["columns"].([]interface{}) {
-		if rawColumn == nil {
-			// Terraform reads "" as nil, which ends up crashing when we cast below
-			// sending "" to the API triggers a 400, which is okay.
-			rawColumn = ""
-		}
 		columns = append(columns, rawColumn.(string))
 	}
 	if len(columns) > 0 {

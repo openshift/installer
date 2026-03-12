@@ -20,7 +20,6 @@ package documentai
 import (
 	"fmt"
 	"log"
-	"net/http"
 	"reflect"
 	"time"
 
@@ -137,7 +136,6 @@ func resourceDocumentAIProcessorCreate(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "POST",
@@ -146,7 +144,6 @@ func resourceDocumentAIProcessorCreate(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutCreate),
-		Headers:   headers,
 	})
 	if err != nil {
 		return fmt.Errorf("Error creating Processor: %s", err)
@@ -192,14 +189,12 @@ func resourceDocumentAIProcessorRead(d *schema.ResourceData, meta interface{}) e
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
 		Method:    "GET",
 		Project:   billingProject,
 		RawURL:    url,
 		UserAgent: userAgent,
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, fmt.Sprintf("DocumentAIProcessor %q", d.Id()))
@@ -252,8 +247,6 @@ func resourceDocumentAIProcessorDelete(d *schema.ResourceData, meta interface{})
 		billingProject = bp
 	}
 
-	headers := make(http.Header)
-
 	log.Printf("[DEBUG] Deleting Processor %q", d.Id())
 	res, err := transport_tpg.SendRequest(transport_tpg.SendRequestOptions{
 		Config:    config,
@@ -263,7 +256,6 @@ func resourceDocumentAIProcessorDelete(d *schema.ResourceData, meta interface{})
 		UserAgent: userAgent,
 		Body:      obj,
 		Timeout:   d.Timeout(schema.TimeoutDelete),
-		Headers:   headers,
 	})
 	if err != nil {
 		return transport_tpg.HandleNotFoundError(err, d, "Processor")
