@@ -139,13 +139,15 @@ func TestCloudProviderConfig(t *testing.T) {
 	cases := []struct {
 		name                string
 		platform            *vsphere.Platform
-		cloudProviderFunc   func(string, *vsphere.Platform) (string, error)
+		cloudProviderFunc   func(string, *vsphere.Platform, string) (string, error)
+		secretName          string
 		expectedCloudConfig string
 	}{
 		{
 			name:                "valid intree cloud provider config",
 			platform:            validPlatform(),
 			cloudProviderFunc:   CloudProviderConfigIni,
+			secretName:          "vsphere-creds",
 			expectedCloudConfig: expectedIniConfig + expectIniLabelsSection,
 		},
 		{
@@ -159,6 +161,7 @@ func TestCloudProviderConfig(t *testing.T) {
 				return p
 			}(),
 			cloudProviderFunc: CloudProviderConfigIni,
+			secretName:        "vsphere-creds",
 			expectedCloudConfig: func() string {
 				// only a single datacenter would be provided to the datacenters
 				ini := strings.ReplaceAll(expectedIniConfig, ",test-datacenter2", "")
@@ -169,6 +172,7 @@ func TestCloudProviderConfig(t *testing.T) {
 			name:                "valid out of tree yaml cloud provider config",
 			platform:            validPlatform(),
 			cloudProviderFunc:   CloudProviderConfigYaml,
+			secretName:          "vsphere-creds",
 			expectedCloudConfig: expectedYamlConfig,
 		},
 	}
@@ -177,7 +181,7 @@ func TestCloudProviderConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			var cloudConfig string
 			var err error
-			cloudConfig, err = tc.cloudProviderFunc("infraID", tc.platform)
+			cloudConfig, err = tc.cloudProviderFunc("infraID", tc.platform, tc.secretName)
 			assert.NoError(t, err, "failed to create cloud provider config")
 			assert.Equal(t, tc.expectedCloudConfig, cloudConfig, "unexpected cloud provider config")
 		})
