@@ -8,7 +8,9 @@ MASTER_DISK_SIZE=100
 SNO_DISK_SIZE=100
 
 # Increase disk size requirements for NoRegistryClusterInstall
-if [ -f /etc/assisted/extra-manifests/internalreleaseimage.yaml ]; then
+# Check if any file in extra-manifests contains kind: InternalReleaseImage
+if [ -d /etc/assisted/extra-manifests ] && \
+   grep -q "^kind:[[:space:]]*InternalReleaseImage[[:space:]]*$" /etc/assisted/extra-manifests/* 2>/dev/null; then
     MASTER_DISK_SIZE=220
     SNO_DISK_SIZE=220
 fi
