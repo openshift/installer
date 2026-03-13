@@ -79,6 +79,8 @@ const (
 	// workerUserDataFileName is the filename used for the worker user-data secret.
 	workerUserDataFileName = "99_openshift-cluster-api_worker-user-data-secret.yaml"
 
+	workerNetworkConfigManifestFileName = "99_openshift-machine-config-operator_worker-host-network-config-manifests-%s.yaml"
+
 	// decimalRootVolumeSize is the size in GB we use for some platforms.
 	// See below.
 	decimalRootVolumeSize = 120
@@ -95,6 +97,7 @@ var (
 	workerMachineFileNamePattern    = fmt.Sprintf(workerMachineFileName, "*")
 	workerIPClaimFileNamePattern    = fmt.Sprintf(ipClaimFileName, "*worker*")
 	workerIPAddressFileNamePattern  = fmt.Sprintf(ipAddressFileName, "*worker*")
+	workerNetworkConfigManifestFileNamePattern  = fmt.Sprintf(workerNetworkConfigManifestFileName, "*")
 
 	_ asset.WritableAsset = (*Worker)(nil)
 )
@@ -290,6 +293,10 @@ type Worker struct {
 	MachineFiles       []*asset.File
 	IPClaimFiles       []*asset.File
 	IPAddrFiles        []*asset.File
+
+	// NetworkConfigManifests is used to apply NMState configs for
+	// creating br-ex on the host
+	NetworkConfigManifests []*asset.File
 }
 
 // Name returns a human friendly name for the Worker Asset.
@@ -445,6 +452,15 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				return errors.Wrap(err, "failed to create ignition to configure IPv6 for worker machines")
 			}
 			machineConfigs = append(machineConfigs, ignIPv6)
+		}
+
+		// Create MachineConfigs from provided NMState configuration
+		if ic.Networking != nil && ic.Networking.HostConfig != nil {
+			hostConfig, err := machineconfig.ForNetworkConfig("worker", ic.Networking.HostConfig)
+			if err != nil {
+				return errors.Wrap(err, "failed to create ignition to apply NMState configs for master machines")
+			}
+			machineConfigs = append(machineConfigs, hostConfig)
 		}
 
 		switch ic.Platform.Name() {
@@ -864,6 +880,7 @@ func (w *Worker) Files() []*asset.File {
 		files = append(files, w.UserDataFile)
 	}
 	files = append(files, w.MachineConfigFiles...)
+	files = append(files, w.NetworkConfigManifests...)
 	files = append(files, w.MachineSetFiles...)
 	files = append(files, w.MachineFiles...)
 	files = append(files, w.IPClaimFiles...)
@@ -911,6 +928,12 @@ func (w *Worker) Load(f asset.FileFetcher) (found bool, err error) {
 		return true, err
 	}
 	w.IPAddrFiles = fileList
+
+	fileList, err = f.FetchByPattern(filepath.Join(directory, workerNetworkConfigManifestFileNamePattern))
+	if err != nil {
+		return true, err
+	}
+	w.NetworkConfigManifests = fileList
 
 	return true, nil
 }
