@@ -201,7 +201,11 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	}
 
 	azureDisk := streamArch.RHELCoreOSExtensions.AzureDisk
-	imageURL := azureDisk.URL
+
+	imageURL := installConfig.Platform.Azure.ClusterOSImage
+	if imageURL == "" {
+		imageURL = azureDisk.URL
+	}
 
 	rawImageVersion := strings.ReplaceAll(azureDisk.Release, "-", "_")
 	imageVersion := rawImageVersion[:len(rawImageVersion)-6]

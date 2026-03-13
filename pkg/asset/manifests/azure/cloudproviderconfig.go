@@ -69,8 +69,16 @@ func (params CloudProviderConfig) JSON() (string, error) {
 	}
 
 	if params.CloudName == azure.StackCloud {
-		config.authConfig.ResourceManagerEndpoint = params.ResourceManagerEndpoint
+		config.authConfig.UseManagedIdentityExtension = false
+		config.LoadBalancerSku = "basic"
 		config.UseInstanceMetadata = false
+	}
+
+	if params.ResourceManagerEndpoint != "" {
+		config.authConfig.ResourceManagerEndpoint = params.ResourceManagerEndpoint
+		// Disable Azure Stack Cloud if resource manager endpoint is not empty and not
+		// azure stack cloud
+		config.DisableAzureStackCloud = params.CloudName != azure.StackCloud
 	}
 
 	buff := &bytes.Buffer{}
