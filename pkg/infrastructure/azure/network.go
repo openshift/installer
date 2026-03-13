@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"path"
+	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
@@ -28,6 +29,7 @@ type lbInput struct {
 	idPrefix               string
 	lbClient               *armnetwork.LoadBalancersClient
 	tags                   map[string]*string
+	isDualstack            bool
 }
 
 type pipInput struct {
@@ -37,6 +39,7 @@ type pipInput struct {
 	resourceGroup string
 	pipClient     *armnetwork.PublicIPAddressesClient
 	tags          map[string]*string
+	ipversion     armnetwork.IPVersion
 }
 
 type vmInput struct {
@@ -80,7 +83,7 @@ func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddr
 				Tier: to.Ptr(armnetwork.PublicIPAddressSKUTierRegional),
 			},
 			Properties: &armnetwork.PublicIPAddressPropertiesFormat{
-				PublicIPAddressVersion:   to.Ptr(armnetwork.IPVersionIPv4),
+				PublicIPAddressVersion:   to.Ptr(in.ipversion),
 				PublicIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodStatic),
 				DNSSettings: &armnetwork.PublicIPAddressDNSSettings{
 					DomainNameLabel: to.Ptr(in.infraID),
@@ -101,9 +104,123 @@ func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddr
 	return &resp.PublicIPAddress, nil
 }
 
-func createAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
+func createAPILoadBalancer(ctx context.Context, pip, pipv6 *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
 	probeName := "api-probe"
-
+	frontendIPv4Name := to.Ptr(fmt.Sprintf("%s-v4", in.frontendIPConfigName))
+	frontendIPv6Name := to.Ptr(fmt.Sprintf("%s-v6", in.frontendIPConfigName))
+	loadBalancer := armnetwork.LoadBalancer{
+		Location: to.Ptr(in.region),
+		SKU: &armnetwork.LoadBalancerSKU{
+			Name: to.Ptr(armnetwork.LoadBalancerSKUNameStandard),
+			Tier: to.Ptr(armnetwork.LoadBalancerSKUTierRegional),
+		},
+		Properties: &armnetwork.LoadBalancerPropertiesFormat{
+			FrontendIPConfigurations: []*armnetwork.FrontendIPConfiguration{
+				{
+					Name: frontendIPv4Name,
+					Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
+						PrivateIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodDynamic),
+						PublicIPAddress:           pip,
+					},
+				},
+			},
+			BackendAddressPools: []*armnetwork.BackendAddressPool{
+				{
+					Name: &in.backendAddressPoolName,
+				},
+			},
+			Probes: []*armnetwork.Probe{
+				{
+					Name: &probeName,
+					Properties: &armnetwork.ProbePropertiesFormat{
+						Protocol:          to.Ptr(armnetwork.ProbeProtocolHTTPS),
+						Port:              to.Ptr[int32](6443),
+						IntervalInSeconds: to.Ptr[int32](5),
+						ProbeThreshold:    to.Ptr[int32](2),
+						RequestPath:       to.Ptr("/readyz"),
+					},
+				},
+			},
+			LoadBalancingRules: []*armnetwork.LoadBalancingRule{
+				{
+					Name: to.Ptr("api-v4"),
+					Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+						Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+						FrontendPort:         to.Ptr[int32](6443),
+						BackendPort:          to.Ptr[int32](6443),
+						IdleTimeoutInMinutes: to.Ptr[int32](30),
+						EnableFloatingIP:     to.Ptr(false),
+						LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+						FrontendIPConfiguration: &armnetwork.SubResource{
+							ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, *frontendIPv4Name)),
+						},
+						BackendAddressPool: &armnetwork.SubResource{
+							ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
+						},
+						Probe: &armnetwork.SubResource{
+							ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, probeName)),
+						},
+					},
+				},
+			},
+		},
+		Tags: in.tags,
+	}
+	if in.isDualstack {
+		loadBalancer.Properties.FrontendIPConfigurations = append(loadBalancer.Properties.FrontendIPConfigurations,
+			&armnetwork.FrontendIPConfiguration{
+				Name: frontendIPv6Name,
+				Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
+					PrivateIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodDynamic),
+					PrivateIPAddressVersion:   to.Ptr(armnetwork.IPVersionIPv6),
+					PublicIPAddress:           pipv6,
+				},
+			})
+		// TODO: backend pool
+		backendAddressPoolsv6 := []*armnetwork.BackendAddressPool{
+			{Name: to.Ptr(fmt.Sprintf("%s-v6", in.backendAddressPoolName))},
+			{Name: to.Ptr(fmt.Sprintf("%s-outbound-lb-outboundBackendPool-v6", in.backendAddressPoolName))},
+		}
+		loadBalancer.Properties.BackendAddressPools = append(loadBalancer.Properties.BackendAddressPools, backendAddressPoolsv6...)
+		// TODO: load balancer rule
+		loadBalancerv6Rule := armnetwork.LoadBalancingRule{
+			Name: to.Ptr("api-v6"),
+			Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+				DisableOutboundSnat:  to.Ptr(true),
+				Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+				FrontendPort:         to.Ptr[int32](6443),
+				BackendPort:          to.Ptr[int32](6443),
+				IdleTimeoutInMinutes: to.Ptr[int32](30),
+				EnableFloatingIP:     to.Ptr(false),
+				LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+				FrontendIPConfiguration: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, *frontendIPv6Name)),
+				},
+				BackendAddressPool: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-v6", in.backendAddressPoolName))),
+				},
+				Probe: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, probeName)),
+				},
+			},
+		}
+		loadBalancer.Properties.LoadBalancingRules = append(loadBalancer.Properties.LoadBalancingRules, &loadBalancerv6Rule)
+		// TODO: create an outbound rule for v6.
+		loadBalancer.Properties.OutboundRules = append(loadBalancer.Properties.OutboundRules, &armnetwork.OutboundRule{
+			Name: to.Ptr("OutboundNATRulev6"),
+			Properties: &armnetwork.OutboundRulePropertiesFormat{
+				Protocol: to.Ptr(armnetwork.LoadBalancerOutboundRuleProtocolAll),
+				FrontendIPConfigurations: []*armnetwork.SubResource{
+					{
+						ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, *frontendIPv6Name)),
+					},
+				},
+				BackendAddressPool: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-outbound-lb-outboundBackendPool-v6", in.backendAddressPoolName))),
+				},
+			},
+		})
+	}
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
 		in.resourceGroup,
 		in.loadBalancerName,
@@ -177,7 +294,7 @@ func createAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress,
 	return &resp.LoadBalancer, nil
 }
 
-func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
+func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip, pipv6 *armnetwork.PublicIPAddress, in *lbInput) (*armnetwork.LoadBalancer, error) {
 	probeName := "api-probe"
 
 	// Get the CAPI-created outbound load balancer so we can modify it.
@@ -204,6 +321,84 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 			Name: &in.backendAddressPoolName,
 		})
 
+	// Add IPv4 load balancing rule
+	extLB.Properties.LoadBalancingRules = append(extLB.Properties.LoadBalancingRules,
+		&armnetwork.LoadBalancingRule{
+			Name: to.Ptr("api-v4"),
+			Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+				Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+				FrontendPort:         to.Ptr[int32](6443),
+				BackendPort:          to.Ptr[int32](6443),
+				IdleTimeoutInMinutes: to.Ptr[int32](30),
+				EnableFloatingIP:     to.Ptr(false),
+				LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+				FrontendIPConfiguration: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s-v4", in.idPrefix, in.loadBalancerName, in.frontendIPConfigName)),
+				},
+				BackendAddressPool: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
+				},
+				Probe: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, probeName)),
+				},
+			},
+		})
+
+	if in.isDualstack {
+		frontendIPv6Name := to.Ptr(fmt.Sprintf("%s-v6", in.frontendIPConfigName))
+		extLB.Properties.FrontendIPConfigurations = append(extLB.Properties.FrontendIPConfigurations,
+			&armnetwork.FrontendIPConfiguration{
+				Name: to.Ptr(*frontendIPv6Name),
+				Properties: &armnetwork.FrontendIPConfigurationPropertiesFormat{
+					PrivateIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodDynamic),
+					PublicIPAddress:           pipv6,
+				},
+			})
+		// TODO: backend pool
+		backendAddressPoolsv6 := []*armnetwork.BackendAddressPool{
+			{Name: to.Ptr(fmt.Sprintf("%s-v6", in.backendAddressPoolName))},
+			{Name: to.Ptr(fmt.Sprintf("%s-outbound-lb-outboundBackendPool-v6", in.backendAddressPoolName))},
+		}
+		extLB.Properties.BackendAddressPools = append(extLB.Properties.BackendAddressPools,
+			backendAddressPoolsv6...)
+		loadBalancerv6Rule := armnetwork.LoadBalancingRule{
+			Name: to.Ptr("api-v6"),
+			Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+				DisableOutboundSnat:  to.Ptr(true),
+				Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+				FrontendPort:         to.Ptr[int32](6443),
+				BackendPort:          to.Ptr[int32](6443),
+				IdleTimeoutInMinutes: to.Ptr[int32](30),
+				EnableFloatingIP:     to.Ptr(false),
+				LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+				FrontendIPConfiguration: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, *frontendIPv6Name)),
+				},
+				BackendAddressPool: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-v6", in.backendAddressPoolName))),
+				},
+				Probe: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, probeName)),
+				},
+			},
+		}
+		extLB.Properties.LoadBalancingRules = append(extLB.Properties.LoadBalancingRules, &loadBalancerv6Rule)
+		// TODO: create an outbound rule for v6.
+		extLB.Properties.OutboundRules = append(extLB.Properties.OutboundRules, &armnetwork.OutboundRule{
+			Name: to.Ptr("OutboundNATRulev6"),
+			Properties: &armnetwork.OutboundRulePropertiesFormat{
+				Protocol: to.Ptr(armnetwork.LoadBalancerOutboundRuleProtocolAll),
+				FrontendIPConfigurations: []*armnetwork.SubResource{
+					{
+						ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, *frontendIPv6Name)),
+					},
+				},
+				BackendAddressPool: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, fmt.Sprintf("%s-outbound-lb-outboundBackendPool-v6", in.backendAddressPoolName))),
+				},
+			},
+		})
+	}
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
 		in.resourceGroup,
 		in.loadBalancerName,
@@ -293,6 +488,11 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 	}
 	existingFrontEndIPConfigName := *(existingFrontEndIPConfig[0].Name)
 
+	// For dual-stack, we need separate backend pools for IPv4 and IPv6
+	// to avoid Azure error: RulesUseSameBackendPortProtocolAndPool
+	backendPoolV4 := in.backendAddressPoolName
+	backendPoolV6 := fmt.Sprintf("%s-v6", in.backendAddressPoolName)
+
 	mcsRule := &armnetwork.LoadBalancingRule{
 		Name: to.Ptr("sint-v4"),
 		Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
@@ -306,7 +506,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 				ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, existingFrontEndIPConfigName)),
 			},
 			BackendAddressPool: &armnetwork.SubResource{
-				ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, backendPoolV4)),
 			},
 			Probe: &armnetwork.SubResource{
 				ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, mcsProbeName)),
@@ -316,13 +516,46 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 
 	intLB.Properties.Probes = append(intLB.Properties.Probes, mcsProbe)
 	intLB.Properties.LoadBalancingRules = append(intLB.Properties.LoadBalancingRules, mcsRule)
+
+	// For dual-stack, create IPv6 resources
+	if in.isDualstack {
+		// Create IPv6 backend pool
+		backendPoolIPv6 := &armnetwork.BackendAddressPool{
+			Name: to.Ptr(backendPoolV6),
+		}
+		intLB.Properties.BackendAddressPools = append(intLB.Properties.BackendAddressPools, backendPoolIPv6)
+
+		// Create IPv6 load balancing rule
+		frontendIPv6Name := fmt.Sprintf("%s-v6", existingFrontEndIPConfigName)
+		mcsRulev6 := &armnetwork.LoadBalancingRule{
+			Name: to.Ptr("sint-v6"),
+			Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+				Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+				FrontendPort:         to.Ptr[int32](22623),
+				BackendPort:          to.Ptr[int32](22623),
+				IdleTimeoutInMinutes: to.Ptr[int32](30),
+				EnableFloatingIP:     to.Ptr(false),
+				LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+				FrontendIPConfiguration: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, frontendIPv6Name)),
+				},
+				BackendAddressPool: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, backendPoolV6)),
+				},
+				Probe: &armnetwork.SubResource{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, mcsProbeName)),
+				},
+			},
+		}
+		intLB.Properties.LoadBalancingRules = append(intLB.Properties.LoadBalancingRules, mcsRulev6)
+	}
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
 		in.resourceGroup,
 		in.loadBalancerName,
 		intLB,
 		nil)
 	if err != nil {
-		return nil, fmt.Errorf("cannot update load balancer: %w", err)
+		return nil, fmt.Errorf("cannot update internal load balancer: %w", err)
 	}
 
 	resp, err := pollerResp.PollUntilDone(ctx, nil)
@@ -349,7 +582,24 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 				return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
 			}
 			for _, ipconfig := range nic.Properties.IPConfigurations {
-				ipconfig.Properties.LoadBalancerBackendAddressPools = append(ipconfig.Properties.LoadBalancerBackendAddressPools, in.backendAddressPools...)
+				ipversion := armnetwork.IPVersionIPv4
+				if ipconfig.Properties.PrivateIPAddressVersion != nil {
+					ipversion = *ipconfig.Properties.PrivateIPAddressVersion
+				}
+				for _, pool := range in.backendAddressPools {
+					poolAddressVersion := armnetwork.IPVersionIPv4
+					if pool.Name != nil && strings.HasSuffix(*pool.Name, "v6") {
+						poolAddressVersion = armnetwork.IPVersionIPv6
+					}
+					// Add pool if IP versions match
+					if ipversion == poolAddressVersion {
+						ipconfig.Properties.LoadBalancerBackendAddressPools = append(
+							ipconfig.Properties.LoadBalancerBackendAddressPools,
+							pool,
+						)
+					}
+
+				}
 			}
 			pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroup, nicName, nic.Interface, nil)
 			if err != nil {
