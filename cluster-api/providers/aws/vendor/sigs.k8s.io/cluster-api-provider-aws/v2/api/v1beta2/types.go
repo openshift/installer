@@ -19,6 +19,7 @@ package v1beta2
 import (
 	"strings"
 
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
@@ -558,6 +559,13 @@ type SpotMarketOptions struct {
 	// +optional
 	// +kubebuilder:validation:pattern="^[0-9]+(\.[0-9]+)?$"
 	MaxPrice *string `json:"maxPrice,omitempty"`
+
+	// WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+	// If the timeout is reached and no Spot instance is available, the controller will fall back
+	// to creating an On-Demand instance instead.
+	// If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+	// +optional
+	WaitingTimeout *metav1.Duration `json:"waitingTimeout,omitempty"`
 }
 
 // EKSAMILookupType specifies which AWS AMI to use for a AWSMachine and AWSMachinePool.

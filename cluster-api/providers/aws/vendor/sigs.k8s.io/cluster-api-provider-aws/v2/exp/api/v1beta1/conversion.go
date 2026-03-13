@@ -20,6 +20,7 @@ import (
 	apiconversion "k8s.io/apimachinery/pkg/conversion"
 	"sigs.k8s.io/controller-runtime/pkg/conversion"
 
+	infrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/api/v1beta2"
 	expinfrav1 "sigs.k8s.io/cluster-api-provider-aws/v2/exp/api/v1beta2"
 	utilconversion "sigs.k8s.io/cluster-api/util/conversion"
 )
@@ -46,6 +47,12 @@ func (src *AWSMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 	}
 	if restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions != nil {
 		dst.Spec.AWSLaunchTemplate.InstanceMetadataOptions = restored.Spec.AWSLaunchTemplate.InstanceMetadataOptions
+	}
+	if restored.Spec.AWSLaunchTemplate.SpotMarketOptions != nil && restored.Spec.AWSLaunchTemplate.SpotMarketOptions.WaitingTimeout != nil {
+		if dst.Spec.AWSLaunchTemplate.SpotMarketOptions == nil {
+			dst.Spec.AWSLaunchTemplate.SpotMarketOptions = &infrav1.SpotMarketOptions{}
+		}
+		dst.Spec.AWSLaunchTemplate.SpotMarketOptions.WaitingTimeout = restored.Spec.AWSLaunchTemplate.SpotMarketOptions.WaitingTimeout
 	}
 	if restored.Spec.AvailabilityZoneSubnetType != nil {
 		dst.Spec.AvailabilityZoneSubnetType = restored.Spec.AvailabilityZoneSubnetType
@@ -135,6 +142,13 @@ func (src *AWSManagedMachinePool) ConvertTo(dstRaw conversion.Hub) error {
 
 		if preference := restored.Spec.AWSLaunchTemplate.CapacityReservationPreference; preference != "" {
 			dst.Spec.AWSLaunchTemplate.CapacityReservationPreference = preference
+		}
+
+		if restored.Spec.AWSLaunchTemplate.SpotMarketOptions != nil && restored.Spec.AWSLaunchTemplate.SpotMarketOptions.WaitingTimeout != nil {
+			if dst.Spec.AWSLaunchTemplate.SpotMarketOptions == nil {
+				dst.Spec.AWSLaunchTemplate.SpotMarketOptions = &infrav1.SpotMarketOptions{}
+			}
+			dst.Spec.AWSLaunchTemplate.SpotMarketOptions.WaitingTimeout = restored.Spec.AWSLaunchTemplate.SpotMarketOptions.WaitingTimeout
 		}
 	}
 	if restored.Spec.AvailabilityZoneSubnetType != nil {

@@ -26,13 +26,14 @@ import (
 
 // MachineInput defines the inputs needed to generate a machine asset.
 type MachineInput struct {
-	Role           string
-	Pool           *types.MachinePool
-	Subnets        aws.SubnetsByZone
-	Tags           capa.Tags
-	PublicIP       bool
-	PublicIpv4Pool string
-	Ignition       *capa.Ignition
+	Role              string
+	Pool              *types.MachinePool
+	Subnets           aws.SubnetsByZone
+	Tags              capa.Tags
+	PublicIP          bool
+	PublicIpv4Pool    string
+	Ignition          *capa.Ignition
+	SpotMarketOptions *capa.SpotMarketOptions
 }
 
 // GenerateMachines returns manifests and runtime objects to provision the control plane (including bootstrap, if applicable) nodes using CAPI.
@@ -114,6 +115,8 @@ func GenerateMachines(clusterID string, in *MachineInput) ([]*asset.RuntimeFile,
 					HTTPTokens:   imds,
 					HTTPEndpoint: capa.InstanceMetadataEndpointStateEnabled,
 				},
+				SpotMarketOptions: in.SpotMarketOptions,
+				MarketType:        spotMarketType(in.SpotMarketOptions),
 			},
 		}
 		awsMachine.SetGroupVersionKind(capa.GroupVersion.WithKind("AWSMachine"))
@@ -329,4 +332,12 @@ func MachineSubnetsByZones(ctx context.Context, ic *installconfig.InstallConfig,
 	}
 
 	return machineSubnets, nil
+}
+
+// spotMarketType returns MarketTypeSpot when spot options are configured, otherwise empty.
+func spotMarketType(opts *capa.SpotMarketOptions) capa.MarketType {
+	if opts != nil {
+		return capa.MarketTypeSpot
+	}
+	return ""
 }

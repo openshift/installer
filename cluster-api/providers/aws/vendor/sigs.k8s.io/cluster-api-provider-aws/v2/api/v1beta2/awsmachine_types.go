@@ -429,6 +429,18 @@ type AWSMachineStatus struct {
 	// +optional
 	Interruptible bool `json:"interruptible,omitempty"`
 
+	// SpotRequestStartTime is the time when the controller first attempted to create a Spot instance.
+	// This is used in conjunction with SpotMarketOptions.WaitingTimeout to determine when to fall back
+	// to an On-Demand instance if Spot capacity is not available.
+	// +optional
+	SpotRequestStartTime *metav1.Time `json:"spotRequestStartTime,omitempty"`
+
+	// SpotFallbackToOnDemand indicates that the controller should create an On-Demand instance
+	// instead of a Spot instance because the WaitingTimeout has elapsed without Spot capacity
+	// becoming available.
+	// +optional
+	SpotFallbackToOnDemand bool `json:"spotFallbackToOnDemand,omitempty"`
+
 	// Addresses contains the AWS instance associated addresses.
 	Addresses []clusterv1beta1.MachineAddress `json:"addresses,omitempty"`
 

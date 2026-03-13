@@ -3176,6 +3176,13 @@ spec:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
                         type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                        type: string
                     type: object
                   sshKeyName:
                     description: The name of the SSH key pair.
@@ -6578,6 +6585,13 @@ spec:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
                         type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                        type: string
                     type: object
                   sshKeyName:
                     description: |-
@@ -7251,6 +7265,13 @@ spec:
                       maxPrice:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
+                        type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                         type: string
                     type: object
                   sshKeyName:
@@ -8939,6 +8960,13 @@ spec:
                     description: MaxPrice defines the maximum price the user is willing
                       to pay for Spot VM instances
                     type: string
+                  waitingTimeout:
+                    description: |-
+                      WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                      If the timeout is reached and no Spot instance is available, the controller will fall back
+                      to creating an On-Demand instance instead.
+                      If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                    type: string
                 type: object
               sshKeyName:
                 description: SSHKeyName is the name of the ssh key to attach to the
@@ -9146,6 +9174,19 @@ spec:
               ready:
                 description: Ready is true when the provider resource is ready.
                 type: boolean
+              spotFallbackToOnDemand:
+                description: |-
+                  SpotFallbackToOnDemand indicates that the controller should create an On-Demand instance
+                  instead of a Spot instance because the WaitingTimeout has elapsed without Spot capacity
+                  becoming available.
+                type: boolean
+              spotRequestStartTime:
+                description: |-
+                  SpotRequestStartTime is the time when the controller first attempted to create a Spot instance.
+                  This is used in conjunction with SpotMarketOptions.WaitingTimeout to determine when to fall back
+                  to an On-Demand instance if Spot capacity is not available.
+                format: date-time
+                type: string
             type: object
         type: object
     served: true
@@ -10266,6 +10307,13 @@ spec:
                           maxPrice:
                             description: MaxPrice defines the maximum price the user
                               is willing to pay for Spot VM instances
+                            type: string
+                          waitingTimeout:
+                            description: |-
+                              WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                              If the timeout is reached and no Spot instance is available, the controller will fall back
+                              to creating an On-Demand instance instead.
+                              If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                             type: string
                         type: object
                       sshKeyName:
@@ -12266,6 +12314,13 @@ spec:
                       maxPrice:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
+                        type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                         type: string
                     type: object
                   sshKeyName:
@@ -14679,6 +14734,13 @@ spec:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
                         type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                        type: string
                     type: object
                   sshKeyName:
                     description: The name of the SSH key pair.
@@ -16956,6 +17018,13 @@ spec:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
                         type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
+                        type: string
                     type: object
                   sshKeyName:
                     description: |-
@@ -17629,6 +17698,13 @@ spec:
                       maxPrice:
                         description: MaxPrice defines the maximum price the user is
                           willing to pay for Spot VM instances
+                        type: string
+                      waitingTimeout:
+                        description: |-
+                          WaitingTimeout defines the maximum time to wait for a Spot instance to become available.
+                          If the timeout is reached and no Spot instance is available, the controller will fall back
+                          to creating an On-Demand instance instead.
+                          If not specified, the controller will wait indefinitely for a Spot instance (default behavior).
                         type: string
                     type: object
                   sshKeyName:

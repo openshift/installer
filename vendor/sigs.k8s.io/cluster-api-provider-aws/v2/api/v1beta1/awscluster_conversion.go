@@ -72,6 +72,12 @@ func (src *AWSCluster) ConvertTo(dstRaw conversion.Hub) error {
 		if restored.Status.Bastion.DynamicHostAllocation != nil {
 			dst.Status.Bastion.DynamicHostAllocation = restored.Status.Bastion.DynamicHostAllocation
 		}
+		if restored.Status.Bastion.SpotMarketOptions != nil && restored.Status.Bastion.SpotMarketOptions.WaitingTimeout != nil {
+			if dst.Status.Bastion.SpotMarketOptions == nil {
+				dst.Status.Bastion.SpotMarketOptions = &infrav1.SpotMarketOptions{}
+			}
+			dst.Status.Bastion.SpotMarketOptions.WaitingTimeout = restored.Status.Bastion.SpotMarketOptions.WaitingTimeout
+		}
 	}
 	dst.Spec.Partition = restored.Spec.Partition
 
