@@ -495,7 +495,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	p.lbBackendAddressPools = lbBaps
 
 	if in.InstallConfig.Config.Azure.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-		if err := createDNSEntries(ctx, in, extLBFQDN, p.publicLBIP, resourceGroupName, p.clientOptions); err != nil {
+		if err := createDNSEntries(ctx, in, extLBFQDN, p.publicLBIP, p.publicLBIPv6, resourceGroupName, p.clientOptions); err != nil {
 			return fmt.Errorf("error creating DNS records: %w", err)
 		}
 	}

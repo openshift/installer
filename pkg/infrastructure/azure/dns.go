@@ -6,6 +6,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/dns/armdns"
+	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/network/armnetwork/v2"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/privatedns/armprivatedns"
 	"k8s.io/utils/ptr"
 	capz "sigs.k8s.io/cluster-api-provider-azure/api/v1beta1"
@@ -37,7 +38,7 @@ type recordPrivateList struct {
 }
 
 // Create DNS entries for azure.
-func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN, publicIP, resourceGroup string, opts *arm.ClientOptions) error {
+func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBFQDN, publicIP, intIPv6IP, resourceGroup string, opts *arm.ClientOptions) error {
 	baseDomainResourceGroup := in.InstallConfig.Config.Azure.BaseDomainResourceGroupName
 	zone := in.InstallConfig.Config.BaseDomain
 	privatezone := in.InstallConfig.Config.ClusterDomain()
@@ -64,22 +65,21 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 		return fmt.Errorf("failed to get Azure cluster LB frontend IPs")
 	}
 	ipIlb := azureCluster.Spec.NetworkSpec.APIServerLB.FrontendIPs[0].PrivateIPAddress
-	// useIPv6 := false
-	// for _, network := range in.InstallConfig.Config.Networking.ServiceNetwork {
-	// 	if network.IP.To4() == nil {
-	// 		useIPv6 = true
-	// 	}
-	// }
 
 	privateRecords := []recordPrivateList{}
 	ttl := int64(300)
 	recordType := arecord
-	// if useIPv6 {
-	// 	recordType = aaaarecord
-	// }
 	privateRecords = append(privateRecords, createPrivateRecordSet("api-int", azureTags, ttl, recordType, ipIlb, ""))
 	privateRecords = append(privateRecords, createPrivateRecordSet("api", azureTags, ttl, recordType, ipIlb, ""))
 
+	if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+		// Get the internal LB's IPv6 address from Azure (dynamically assigned)
+		ipIlbV6, err := getInternalLBIPv6(ctx, in, resourceGroup, opts)
+		if err == nil && ipIlbV6 != "" {
+			privateRecords = append(privateRecords, createPrivateRecordSet("api-int", azureTags, ttl, aaaarecord, ipIlbV6, ""))
+			privateRecords = append(privateRecords, createPrivateRecordSet("api", azureTags, ttl, aaaarecord, ipIlbV6, ""))
+		}
+	}
 	session, err := in.InstallConfig.Azure.Session()
 	if err != nil {
 		return fmt.Errorf("failed to create session: %w", err)
@@ -124,7 +124,6 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 	// CAPI currently creates a record called "apiserver" instead of "api" so creating "api" for the installer in the private zone.
 	if in.InstallConfig.Config.PublicAPI() {
 		cnameRecordName := apiExternalName
-		// apiExternalNameV6 := fmt.Sprintf("v6-api.%s", infraID)
 		// if useIPv6 {
 		// 	cnameRecordName = apiExternalNameV6
 		// }
@@ -132,6 +131,14 @@ func createDNSEntries(ctx context.Context, in clusterapi.InfraReadyInput, extLBF
 		_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, publicRecords.Name, publicRecords.RecordType, publicRecords.RecordSet, nil)
 		if err != nil {
 			return fmt.Errorf("failed to create public record set: %w", err)
+		}
+		if in.InstallConfig.Config.Azure.IPFamily.DualStackEnabled() {
+			apiExternalNameV6 := fmt.Sprintf("api.%s", in.InstallConfig.Config.ObjectMeta.Name)
+			publicRecords := createRecordSet(apiExternalNameV6, azureTags, ttl, cname, "", extLBFQDN)
+			_, err = recordSetClient.CreateOrUpdate(ctx, baseDomainResourceGroup, zone, publicRecords.Name, publicRecords.RecordType, publicRecords.RecordSet, nil)
+			if err != nil {
+				return fmt.Errorf("failed to create public record set: %w", err)
+			}
 		}
 	}
 
@@ -213,4 +220,44 @@ func createRecordSet(lbType string, azureTags map[string]*string, ttl int64, rTy
 		}
 	}
 	return record
+}
+
+// getInternalLBIPv6 retrieves the IPv6 private IP address of the internal load balancer.
+func getInternalLBIPv6(ctx context.Context, in clusterapi.InfraReadyInput, resourceGroup string, opts *arm.ClientOptions) (string, error) {
+	session, err := in.InstallConfig.Azure.Session()
+	if err != nil {
+		return "", fmt.Errorf("failed to create azure session: %w", err)
+	}
+
+	subscriptionID := session.Credentials.SubscriptionID
+	tokenCredential := session.TokenCreds
+
+	networkClientFactory, err := armnetwork.NewClientFactory(subscriptionID, tokenCredential, opts)
+	if err != nil {
+		return "", fmt.Errorf("failed to create azure network factory: %w", err)
+	}
+
+	lbClient := networkClientFactory.NewLoadBalancersClient()
+	internalLBName := fmt.Sprintf("%s-internal", in.InfraID)
+
+	lb, err := lbClient.Get(ctx, resourceGroup, internalLBName, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to get internal load balancer: %w", err)
+	}
+
+	if lb.Properties == nil || lb.Properties.FrontendIPConfigurations == nil {
+		return "", fmt.Errorf("internal load balancer has no frontend IP configurations")
+	}
+
+	// Find the IPv6 frontend IP configuration (should be the second one for dual-stack)
+	for _, frontendIP := range lb.Properties.FrontendIPConfigurations {
+		if frontendIP.Properties != nil &&
+			frontendIP.Properties.PrivateIPAddress != nil &&
+			frontendIP.Properties.PrivateIPAddressVersion != nil &&
+			*frontendIP.Properties.PrivateIPAddressVersion == armnetwork.IPVersionIPv6 {
+			return *frontendIP.Properties.PrivateIPAddress, nil
+		}
+	}
+
+	return "", fmt.Errorf("no IPv6 frontend IP found on internal load balancer")
 }
