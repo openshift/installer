@@ -76,6 +76,7 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.BaremetalConfig{},
 		new(rhcos.Image),
 		&openshift.AzureCloudProviderSecret{},
+		&OSImageStream{},
 	}
 }
 
@@ -260,13 +261,15 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	baremetalConfig := &openshift.BaremetalConfig{}
 	rhcosImage := new(rhcos.Image)
+	osImageStream := &OSImageStream{}
 
 	dependencies.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader,
 		baremetalConfig,
-		rhcosImage)
+		rhcosImage,
+		osImageStream)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
@@ -299,6 +302,7 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 
 	o.FileList = append(o.FileList, openshiftInstall.Files()...)
 	o.FileList = append(o.FileList, featureGate.Files()...)
+	o.FileList = append(o.FileList, osImageStream.Files()...)
 
 	asset.SortFiles(o.FileList)
 

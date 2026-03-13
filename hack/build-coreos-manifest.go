@@ -119,6 +119,7 @@ func mergeMarketplaceStream(streamJSON []byte) ([]byte, error) {
 				arch.RHELCoreOSExtensions = &rhcos.Extensions{}
 			}
 			arch.RHELCoreOSExtensions.Marketplace = mkt
+			stream.Architectures[name] = arch
 		}
 	}
 
