@@ -348,6 +348,11 @@ Deprecated: use platform.Azure.Subnets section
 installing on Azure for machine pools which do not define their own
 platform configuration.
 
+    disallowSharedKeyAccess <boolean>
+      DisallowSharedKeyAccess specifies if shared access key should be disabled for the storage account.
+Default value is false (allows shared access key creation).
+Disabling this will require a new permission "Storage Blob Data Contributor" in azure.
+
     ipFamily <string>
       Default: "IPv4"
       Valid Values: "IPv4","DualStackIPv4Primary","DualStackIPv6Primary"
