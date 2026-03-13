@@ -156,6 +156,12 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 	goodArbiterACI.Spec.ProvisionRequirements.ArbiterAgents = 1
 	goodArbiterACI.Spec.ProvisionRequirements.WorkerAgents = 0
 
+	installConfigWithUserManagedLB := getValidOptionalInstallConfigWithUserManagedLB()
+	goodUserManagedLBACI := getGoodACI()
+	goodUserManagedLBACI.Spec.LoadBalancer = &hiveext.LoadBalancer{
+		Type: hiveext.LoadBalancerTypeUserManaged,
+	}
+
 	cases := []struct {
 		name           string
 		dependencies   []asset.Asset
@@ -321,6 +327,16 @@ func TestAgentClusterInstall_Generate(t *testing.T) {
 				&agentconfig.AgentConfig{},
 			},
 			expectedConfig: goodArbiterACI,
+		},
+		{
+			name: "valid configuration with UserManaged LoadBalancer",
+			dependencies: []asset.Asset{
+				&workflow.AgentWorkflow{Workflow: workflow.AgentWorkflowTypeInstall},
+				installConfigWithUserManagedLB,
+				&agentconfig.AgentHosts{},
+				&agentconfig.AgentConfig{},
+			},
+			expectedConfig: goodUserManagedLBACI,
 		},
 	}
 	for _, tc := range cases {
