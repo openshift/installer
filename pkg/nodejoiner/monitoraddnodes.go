@@ -5,11 +5,17 @@ import (
 
 	agentpkg "github.com/openshift/installer/pkg/agent"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	assetstore "github.com/openshift/installer/pkg/asset/store"
 )
 
 // NewMonitorAddNodesCommand creates a new command for monitor add nodes.
 func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) error {
 	err := saveParams(directory, kubeconfigPath)
+	if err != nil {
+		return err
+	}
+
+	assetStore, err := assetstore.NewStore(directory)
 	if err != nil {
 		return err
 	}
@@ -20,7 +26,7 @@ func NewMonitorAddNodesCommand(directory, kubeconfigPath string, ips []string) e
 	clusters := []*agentpkg.Cluster{}
 	ctx := context.Background()
 	for _, ip := range ips {
-		cluster, err := agentpkg.NewCluster(ctx, directory, ip, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeAddNodes)
+		cluster, err := agentpkg.NewCluster(ctx, assetStore, ip, kubeconfigPath, sshKey, workflow.AgentWorkflowTypeAddNodes)
 		if err != nil {
 			return err
 		}
