@@ -2,11 +2,13 @@ package powervs
 
 import (
 	"context"
+	"crypto/rsa"
 	"errors"
 	"fmt"
 	"strings"
 	"time"
 
+	"golang.org/x/crypto/ssh"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 
 	"github.com/openshift/installer/pkg/types"
@@ -350,4 +352,27 @@ func ValidateTransitGateway(client API, ic *types.InstallConfig) error {
 	}
 
 	return nil
+}
+
+// ValidateSSHKey checks if the SSH key uses the RSA Algorithm.
+func ValidateSSHKey(ic *types.InstallConfig) error {
+	var (
+		key       ssh.PublicKey
+		keyType   string
+		keyLength int
+		err       error
+	)
+	key, _, _, _, err = ssh.ParseAuthorizedKey([]byte(ic.SSHKey)) //nolint:dogsled
+	if err != nil {
+		return fmt.Errorf("provided ssh public key is not valid: %w", err)
+	}
+	keyType = key.Type()
+	if keyType == "ssh-rsa" {
+		keyLength = key.(ssh.CryptoPublicKey).CryptoPublicKey().(*rsa.PublicKey).N.BitLen()
+		if keyLength >= 2048 {
+			return nil
+		}
+		return fmt.Errorf("ssh public key is %d bits long. It must be minimum 2048 bits", keyLength)
+	}
+	return fmt.Errorf("unsupported ssh public key type %s. The public key must be of type RSA", keyType)
 }

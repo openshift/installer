@@ -113,10 +113,13 @@ var (
 			ID:   &validRG,
 		},
 	}
-	regionWithPER    = "dal10"
-	regionWithoutPER = "foo99"
-	regionPERUnknown = "bah77"
-	mapWithPERFalse  = map[string]bool{
+	rsaSSHKeyValidSize   = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDKwDrQ6Rqd3DmVj8FdrcSmJz2KFuRwWhIVFZNNwG9wxcFDAuELrb0iDi6ZcVpB+M5UBsS7W8lZaOxOJ1HuIMrQsxGfOjSLFAQeNP3RbCsb7GsjMXcWae/XH8G5ZREQAQ37e+6jKT1wHlZxDZwFMe1b5BINtDez8vG3O0UeZ5JNPflo2sxU7kHO8ZlR9HPSw3xFRIIzioQsdeiNa+c9lO0tYpQ4VV18NpBuMu/HWknG+3OGeg54TlUOOAsRsLL7i23HCjHlnwKp8uLfnsMATeCHf4jQvke+4fihhbWF1H7fFvTSNuPiPaK9IJ6qwPJs1L8c/H3guvLpzgqgL2QB3g+KfJvj+w2OUoO+l+SvaiULRNLl9s4b7Vpxi3DpBZ+nWe9HzmVYKWNSIMeaojdjr1jsh9V3WLPq2aJxdP5d/8RoDXFjf9q+0yiB9o/sWGgTSVyF6I3TOtdLSdE6Ahy9+beC+2WnN8lLcklIP5ukKfASryQwqRiGkkhFez/MKkVmajk= azuread\ashwinhendre2@DESKTOP-RSR2EUD"
+	nonRSASSHKey         = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIBKnZv4Fr3W7TUYd9YNvvGGvkULb6XbsaeB+uJ7zUlrR azuread\ashwinhendre2@DESKTOP-RSR2EUD"
+	rsaSSHKeyInvalidSize = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQC2edG/Q7/OpcLDP+pgy2GkQGTWa7DsrMVUnuiYT/MLse+NFkWYnVprFKx290TAzTesczGrgfJutG79R0hgqFymhjN+HAYRwhog3Z5zikdgS07ojwqxNudLfcFuic2uPM7GkIXNe10TDsXQZ4t+ylH2UWMprO2wvdSh/Ob7rREkXw== azuread\ashwinhendre2@DESKTOP-RSR2EUD"
+	regionWithPER        = "dal10"
+	regionWithoutPER     = "foo99"
+	regionPERUnknown     = "bah77"
+	mapWithPERFalse      = map[string]bool{
 		"disaster-recover-site": true,
 		"power-edge-router":     false,
 		"vpn-connections":       true,
@@ -678,6 +681,63 @@ func TestValidateServiceInstance(t *testing.T) {
 			}
 
 			aggregatedErrors := powervs.ValidateServiceInstance(powervsClient, editedInstallConfig)
+			if tc.errorMsg != "" {
+				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
+			} else {
+				assert.NoError(t, aggregatedErrors)
+			}
+		})
+	}
+}
+
+func TestValidateSSHKey(t *testing.T) {
+	cases := []struct {
+		name     string
+		edits    editFunctions
+		errorMsg string
+	}{
+		{
+			name: "Non-RSA public key",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.SSHKey = nonRSASSHKey
+				},
+			},
+			errorMsg: fmt.Sprintf("unsupported ssh public key type %s. The public key must be of type RSA", "ssh-ed25519"),
+		},
+		{
+			name: "Public key is RSA but too small",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.SSHKey = rsaSSHKeyInvalidSize
+				},
+			},
+			errorMsg: "ssh public key is 1024 bits long. It must be minimum 2048 bits",
+		},
+		{
+			name: "Valid RSA public key",
+			edits: editFunctions{
+				func(ic *types.InstallConfig) {
+					ic.SSHKey = rsaSSHKeyValidSize
+				},
+			},
+			errorMsg: "",
+		},
+	}
+	setMockEnvVars()
+
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	// Run tests
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			editedInstallConfig := validInstallConfig()
+			for _, edit := range tc.edits {
+				edit(editedInstallConfig)
+			}
+
+			aggregatedErrors := powervs.ValidateSSHKey(editedInstallConfig)
 			if tc.errorMsg != "" {
 				assert.Regexp(t, tc.errorMsg, aggregatedErrors)
 			} else {
