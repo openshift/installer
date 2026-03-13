@@ -58,6 +58,9 @@ const (
 	// PermissionKMSEncryptionKeys is an additional set of permissions required when the installer uses user provided kms encryption keys.
 	PermissionKMSEncryptionKeys PermissionGroup = "kms-encryption-keys"
 
+	// PermissionAMIEncryptionKeys is an additional set of permissions required when the installer uses an encrypted AMI.
+	PermissionAMIEncryptionKeys PermissionGroup = "ami-encryption-keys"
+
 	// PermissionPublicIpv4Pool is an additional set of permissions required when the installer uses public IPv4 pools.
 	PermissionPublicIpv4Pool PermissionGroup = "public-ipv4-pool"
 
@@ -316,6 +319,9 @@ var permissions = map[PermissionGroup][]string{
 		"kms:CreateGrant",
 		"kms:ListGrants",
 	},
+	PermissionAMIEncryptionKeys: {
+		"kms:ReEncrypt*",
+	},
 	PermissionPublicIpv4Pool: {
 		// Needed by CAPA to allocate an IP from the pool.
 		"ec2:AllocateAddress",
@@ -497,9 +503,13 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 		permissionGroups = append(permissionGroups, PermissionCreateHostedZone)
 	}
 
-	if includesKMSEncryptionKey(ic) {
+	if includesKMSEncryptionKey(ic) || usingCustomAMI(ic) {
 		logrus.Debugf("Adding %s to the group of permissions", PermissionKMSEncryptionKeys)
 		permissionGroups = append(permissionGroups, PermissionKMSEncryptionKeys)
+	}
+
+	if usingCustomAMI(ic) {
+		permissionGroups = append(permissionGroups, PermissionAMIEncryptionKeys)
 	}
 
 	isSecretRegion, err := IsSecretRegion(ic.AWS.Region)
@@ -653,6 +663,18 @@ func includesKMSEncryptionKey(installConfig *types.InstallConfig) bool {
 	}
 
 	return len(mpool.KMSKeyARN) > 0
+}
+
+// usingCustomAMI checks if a custom AMI is provided for control plane nodes along with KMS encryption keys.
+func usingCustomAMI(installConfig *types.InstallConfig) bool {
+	mpool := aws.MachinePool{}
+	mpool.Set(installConfig.AWS.DefaultMachinePlatform)
+
+	if mp := installConfig.ControlPlane; mp != nil {
+		mpool.Set(mp.Platform.AWS)
+	}
+
+	return len(mpool.AMIID) > 0
 }
 
 // includesExistingInstanceProfile checks if at least one BYO instance profile is included in the install-config.
