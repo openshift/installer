@@ -344,6 +344,22 @@ func getHostCapabilities(virConn *libvirt.Libvirt) (libvirtxml.Caps, error) {
 	return caps, nil
 }
 
+func configureDomainArch(dom *libvirtxml.Domain, arch string) {
+	dom.OS.Type.Arch = arch
+
+	switch arch {
+	case "x86_64":
+		dom.OS.Type.Machine = "q35"
+		dom.OS.Firmware = "efi"
+	case "aarch64":
+		// reference: https://libvirt.org/formatdomain.html#bios-bootloader
+		dom.OS.Firmware = "efi"
+		fallthrough
+	case "s390x", "ppc64le":
+		dom.Devices.Graphics = nil
+	}
+}
+
 func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, pool libvirt.StoragePool, liveCDVolume, scratchVolume libvirt.StorageVol) error {
 	bootstrapDom := newDomain(fmt.Sprintf("%s-bootstrap", config.ClusterID))
 
@@ -353,18 +369,7 @@ func createBootstrapDomain(virConn *libvirt.Libvirt, config baremetalConfig, poo
 	}
 
 	arch := capabilities.Host.CPU.Arch
-	bootstrapDom.OS.Type.Arch = arch
-
-	if arch == "aarch64" {
-		// for aarch64 speciffying this will automatically select the firmware and NVRAM file
-		// reference: https://libvirt.org/formatdomain.html#bios-bootloader
-		bootstrapDom.OS.Firmware = "efi"
-	}
-
-	// For aarch64, s390x, ppc64 and ppc64le spice is not supported
-	if arch == "aarch64" || arch == "s390x" || strings.HasPrefix(arch, "ppc64") {
-		bootstrapDom.Devices.Graphics = nil
-	}
+	configureDomainArch(&bootstrapDom, arch)
 
 	for _, bridge := range config.Bridges {
 		netIface := libvirtxml.DomainInterface{
