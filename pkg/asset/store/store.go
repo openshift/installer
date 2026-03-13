@@ -42,6 +42,10 @@ type assetState struct {
 	// presentOnDisk is true if the asset in on-disk. This is set whether the
 	// asset is sourced from on-disk or not. It is used in purging consumed assets.
 	presentOnDisk bool
+	// dirtyDueToUserConfigs is true if this asset is dirty only because of user-provided
+	// WritableAssets loaded from disk (not because of actual code changes or regeneration needs).
+	// This is used to preserve on-disk WritableAssets when multiple user configs coexist.
+	dirtyDueToUserConfigs bool
 }
 
 // storeImpl is the implementation of Store.
@@ -243,6 +247,7 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 
 	// Load dependencies from on-disk.
 	anyParentsDirty := false
+	dirtyDueToUserConfigs := true // Track if dirty only due to user-provided configs
 	for _, d := range a.Dependencies() {
 		state, err := s.load(d, increaseIndent(indent))
 		if err != nil {
@@ -250,6 +255,14 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 		}
 		if state.anyParentsDirty || state.source == onDiskSource {
 			anyParentsDirty = true
+			// Check if this dependency's dirtiness is due to user configs:
+			// - If it's a WritableAsset loaded from disk, it's a user config
+			// - If it's dirty only because of user configs (propagated), preserve that status
+			_, isWritable := d.(asset.WritableAsset)
+			isDueToUserConfig := (isWritable && state.source == onDiskSource) || state.dirtyDueToUserConfigs
+			if !isDueToUserConfig {
+				dirtyDueToUserConfigs = false
+			}
 		}
 	}
 
@@ -273,10 +286,13 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 		foundInStateFile       bool
 		onDiskMatchesStateFile bool
 	)
+	// Check if asset is in state file (needed for preserving user-provided configs).
+	// Normally we skip this check if anyParentsDirty, but we need it for the special case below.
+	foundInStateFile = s.isAssetInState(a)
+
 	// Do not need to bother with loading from state file if any of the parents
 	// are dirty because the asset must be re-generated in this case.
 	if !anyParentsDirty {
-		foundInStateFile = s.isAssetInState(a)
 		if foundInStateFile {
 			stateFileAsset = reflect.New(reflect.TypeOf(a).Elem()).Interface().(asset.Asset)
 			if err := s.loadAssetFromState(stateFileAsset); err != nil {
@@ -301,6 +317,16 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 		source       assetSource
 	)
 	switch {
+	// Special case: A parent is dirty, but the dirtiness is only due to user-provided configs from disk,
+	// AND this asset is also found on disk AND is not in the state file (newly user-provided).
+	// In this case, preserve the on-disk version instead of regenerating, since multiple user-provided
+	// configs should coexist (e.g., agent-config.yaml with rendezvousIP + nmstateconfig.yaml with
+	// network config in the OVE use case). If the asset IS in the state file, it was previously generated
+	// and should be regenerated when its inputs change.
+	case anyParentsDirty && dirtyDueToUserConfigs && foundOnDisk && !foundInStateFile:
+		logrus.Debugf("%sUsing %s loaded from target directory (preserving user-provided config despite on-disk dependencies)", indent, a.Name())
+		assetToStore = onDiskAsset
+		source = onDiskSource
 	// A parent is dirty. The asset must be re-generated.
 	case anyParentsDirty:
 		if foundOnDisk {
@@ -324,10 +350,11 @@ func (s *storeImpl) load(a asset.Asset, indent string) (*assetState, error) {
 	}
 
 	state := &assetState{
-		asset:           assetToStore,
-		source:          source,
-		anyParentsDirty: anyParentsDirty,
-		presentOnDisk:   foundOnDisk,
+		asset:                 assetToStore,
+		source:                source,
+		anyParentsDirty:       anyParentsDirty,
+		presentOnDisk:         foundOnDisk,
+		dirtyDueToUserConfigs: dirtyDueToUserConfigs && anyParentsDirty,
 	}
 	s.assets[reflect.TypeOf(a)] = state
 	return state, nil

@@ -16,6 +16,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/agent/common"
 	"github.com/openshift/installer/pkg/asset/agent/manifests"
 	"github.com/openshift/installer/pkg/asset/agent/workflow"
+	agenttypes "github.com/openshift/installer/pkg/types/agent"
 )
 
 func TestUnconfiguredIgnition_Generate(t *testing.T) {
@@ -24,6 +25,7 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 	defer setupEmbeddedResources(t)()
 
 	nmStateConfig := getTestNMStateConfig()
+	agentConfigWithRendezvousIPOnly := getTestAgentConfigWithRendezvousIPOnly()
 
 	cases := []struct {
 		name              string
@@ -45,6 +47,19 @@ func TestUnconfiguredIgnition_Generate(t *testing.T) {
 			name: "with-nmstateconfigs",
 			overrideDeps: []asset.Asset{
 				&nmStateConfig,
+			},
+			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/network/host0/eth0.nmconnection",
+				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
+			serviceEnabledMap: map[string]bool{
+				"pre-network-manager-config.service": true,
+				"oci-eval-user-data.service":         true,
+				"agent-check-config-image.service":   true},
+		},
+		{
+			name: "OVE case: agent-config with rendezvousIP only and nmstateconfig",
+			overrideDeps: []asset.Asset{
+				&nmStateConfig,
+				&agentConfigWithRendezvousIPOnly,
 			},
 			expectedFiles: generatedFilesUnconfiguredIgnition("/etc/assisted/network/host0/eth0.nmconnection",
 				"/etc/assisted/network/host0/mac_interface.ini", "/usr/local/bin/pre-network-manager-config.sh", "/usr/local/bin/oci-eval-user-data.sh"),
@@ -169,6 +184,22 @@ func getTestNMStateConfig() manifests.NMStateConfig {
 		File: &asset.File{
 			Filename: "nmstateconfig.yaml",
 			Data:     []byte("nmstateconfig"),
+		},
+	}
+}
+
+func getTestAgentConfigWithRendezvousIPOnly() agentconfig.AgentConfig {
+	return agentconfig.AgentConfig{
+		Config: &agenttypes.Config{
+			RendezvousIP: "192.168.111.20",
+			// No hosts defined - this is the OVE case where agent-config
+			// only provides rendezvousIP for the SaaS UI, and network
+			// configuration comes from nmstateconfig.yaml
+			Hosts: []agenttypes.Host{},
+		},
+		File: &asset.File{
+			Filename: "agent-config.yaml",
+			Data:     []byte("apiVersion: v1beta1\nkind: AgentConfig\nrendezvousIP: 192.168.111.20\n"),
 		},
 	}
 }
