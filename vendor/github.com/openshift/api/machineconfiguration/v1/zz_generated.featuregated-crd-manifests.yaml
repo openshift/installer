@@ -4,7 +4,8 @@ containerruntimeconfigs.machineconfiguration.openshift.io:
   CRDName: containerruntimeconfigs.machineconfiguration.openshift.io
   Capability: ""
   Category: ""
-  FeatureGates: []
+  FeatureGates:
+  - AdditionalStorageConfig
   FilenameOperatorName: machine-config
   FilenameOperatorOrdering: "01"
   FilenameRunLevel: "0000_80"

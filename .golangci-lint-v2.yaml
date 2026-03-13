@@ -1,6 +1,6 @@
 version: "2"
 run:
-  go: "1.24"
+  go: "1.25"
   modules-download-mode: vendor
   allow-parallel-runners: true
 linters:

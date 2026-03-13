@@ -327,16 +327,10 @@ var schemaYAML = typed.YAMLObject(`types:
         scalar: string
 - name: com.github.openshift.api.machineconfiguration.v1alpha1.OSImageStreamSpec
   map:
-    elementType:
-      scalar: untyped
-      list:
-        elementType:
-          namedType: __untyped_atomic_
-        elementRelationship: atomic
-      map:
-        elementType:
-          namedType: __untyped_deduced_
-        elementRelationship: separable
+    fields:
+    - name: defaultStream
+      type:
+        scalar: string
 - name: com.github.openshift.api.machineconfiguration.v1alpha1.OSImageStreamStatus
   map:
     fields:
