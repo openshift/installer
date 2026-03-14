@@ -138,6 +138,7 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 		serviceIKENat        = service{udp, 4500, 4500}
 		serviceInternal      = service{tcp | udp, 9000, 9999}
 		serviceKCM           = service{tcp, 10257, 10257}
+		serviceKonnectivity  = service{tcp, 8091, 8091}
 		serviceKubeScheduler = service{tcp, 10259, 10259}
 		serviceKubelet       = service{tcp, 10250, 10250}
 		serviceMCS           = service{tcp, 22623, 22623}
@@ -234,6 +235,7 @@ func SecurityGroups(ctx context.Context, installConfig *installconfig.InstallCon
 		addMasterRules(serviceDNS, ipVersion, CIDRs)
 		addMasterRules(serviceETCD, ipVersion, CIDRs)
 		addMasterRules(serviceKCM, ipVersion, CIDRs)
+		addMasterRules(serviceKonnectivity, ipVersion, CIDRs)
 		addMasterRules(serviceKubeScheduler, ipVersion, CIDRs)
 		addMasterRules(serviceMCS, ipVersion, CIDRs)
 		addMasterRules(serviceOVNDB, ipVersion, CIDRs)

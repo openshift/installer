@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Konnectivity bootstrap functions.
+# Sourced by bootkube.sh — do not execute directly.
+
+# konnectivity_setup detects the bootstrap node IP, generates certificates,
+# and creates the konnectivity server static pod manifest.
+konnectivity_setup() {
+    # Detect bootstrap node IP at runtime using the default route source address.
+    # Konnectivity agents use this to connect back to the bootstrap server.
+{{- if .UseIPv6ForNodeIP }}
+    BOOTSTRAP_NODE_IP=$(ip -6 -j route get 2001:4860:4860::8888 | jq -r '.[0].prefsrc')
+{{- else }}
+    BOOTSTRAP_NODE_IP=$(ip -j route get 1.1.1.1 | jq -r '.[0].prefsrc')
+{{- end }}
+    echo "Detected bootstrap node IP: ${BOOTSTRAP_NODE_IP}"
+
+    if [ ! -f konnectivity-certs.done ]; then
+        record_service_stage_start "konnectivity-certs"
+        /usr/local/bin/konnectivity-certs.sh "${BOOTSTRAP_NODE_IP}"
+        touch konnectivity-certs.done
+        record_service_stage_success
+    fi
+
+    if [ ! -f konnectivity-server-bootstrap.done ]; then
+        record_service_stage_start "konnectivity-server-bootstrap"
+        echo "Creating Konnectivity server static pod manifest..."
+        export KONNECTIVITY_IMAGE=$(image_for apiserver-network-proxy)
+        envsubst < /opt/openshift/konnectivity-server-pod.yaml > /etc/kubernetes/manifests/konnectivity-server-pod.yaml
+        touch konnectivity-server-bootstrap.done
+        record_service_stage_success
+    fi
+}
+
+# konnectivity_manifests creates the agent namespace, secret, and daemonset
+# manifests for cluster deployment.
+konnectivity_manifests() {
+    if [ ! -f konnectivity-agent-manifest.done ]; then
+        record_service_stage_start "konnectivity-agent-manifest"
+        echo "Creating Konnectivity agent manifests..."
+
+        KONNECTIVITY_CERT_DIR=/opt/openshift/tls/konnectivity
+
+        cp /opt/openshift/konnectivity-namespace.yaml manifests/konnectivity-namespace.yaml
+
+        export KONNECTIVITY_AGENT_CERT_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.crt")
+        export KONNECTIVITY_AGENT_KEY_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/agent.key")
+        export KONNECTIVITY_CA_CERT_BASE64=$(base64 -w0 "${KONNECTIVITY_CERT_DIR}/ca.crt")
+        envsubst < /opt/openshift/konnectivity-agent-certs-secret.yaml > manifests/konnectivity-agent-certs.yaml
+
+        export BOOTSTRAP_NODE_IP
+        envsubst < /opt/openshift/konnectivity-agent-daemonset.yaml > manifests/konnectivity-agent-daemonset.yaml
+
+        touch konnectivity-agent-manifest.done
+        record_service_stage_success
+    fi
+}
+
+# konnectivity_cleanup removes bootstrap konnectivity resources by deleting
+# the namespace (cascading to DaemonSet and Secret) and the server static pod.
+konnectivity_cleanup() {
+    if [ ! -f konnectivity-cleanup.done ]; then
+        record_service_stage_start "konnectivity-cleanup"
+        echo "Cleaning up bootstrap konnectivity resources..."
+        oc delete namespace openshift-bootstrap-konnectivity \
+            --kubeconfig=/opt/openshift/auth/kubeconfig \
+            --ignore-not-found=true || true
+        rm -f /etc/kubernetes/manifests/konnectivity-server-pod.yaml
+        touch konnectivity-cleanup.done
+        record_service_stage_success
+    fi
+}

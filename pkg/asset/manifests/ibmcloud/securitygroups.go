@@ -421,6 +421,24 @@ func buildControlPlaneSecurityGroup(infraID string) capibmcloud.VPCSecurityGroup
 					},
 				},
 			},
+			{
+				// Konnectivity
+				Action:    capibmcloud.VPCSecurityGroupRuleActionAllow,
+				Direction: capibmcloud.VPCSecurityGroupRuleDirectionInbound,
+				Source: &capibmcloud.VPCSecurityGroupRulePrototype{
+					PortRange: &capibmcloud.VPCSecurityGroupPortRange{
+						MaximumPort: 8091,
+						MinimumPort: 8091,
+					},
+					Protocol: capibmcloud.VPCSecurityGroupRuleProtocolTCP,
+					Remotes: []capibmcloud.VPCSecurityGroupRuleRemote{
+						{
+							RemoteType:        capibmcloud.VPCSecurityGroupRuleRemoteTypeSG,
+							SecurityGroupName: clusterWideSGNamePtr,
+						},
+					},
+				},
+			},
 		},
 	}
 }
