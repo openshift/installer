@@ -39,6 +39,7 @@ if test -f /run/ostree-live; then
     if [ -d /ostree/repo/refs/heads/ostree/container ]; then
         echo "Importing base content from system repo for deduplication"
         ostree pull-local --repo="${ostree_repo}" /ostree/repo
+        df -h "${ostree_repo}"
     fi
     # but we won't be able to force hardlinks cross-device
     hardlink=''
@@ -56,6 +57,7 @@ while ! ostree container image pull --authfile "/root/.docker/config.json" \
     echo 'Failed to fetch release image; retrying...'
     sleep 10
 done
+df -h "${ostree_repo}"
 
 # ideally, `ostree container image pull` would support `--write-ref` or a
 # command to escape a pullspec, but for now it's pretty easy to tell which ref
