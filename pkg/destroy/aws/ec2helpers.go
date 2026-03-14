@@ -172,7 +172,7 @@ func deleteEC2DHCPOptions(ctx context.Context, client *ec2v2.Client, id string, 
 		DhcpOptionsId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidDhcpOptions.NotFound" {
+		if HandleErrorCode(err) == "InvalidDhcpOptionsID.NotFound" {
 			return nil
 		}
 		return err
@@ -189,7 +189,7 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 		ImageIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidAMI.NotFound" {
+		if HandleErrorCode(err) == "InvalidAMIID.NotFound" {
 			return nil
 		}
 		return err
@@ -228,7 +228,7 @@ func deleteEC2Image(ctx context.Context, client *ec2v2.Client, id string, logger
 	if err != nil {
 		errCode := HandleErrorCode(err)
 		switch errCode {
-		case "InvalidAMI.NotFound":
+		case "InvalidAMIID.NotFound":
 			return nil
 		case "AuthFailure":
 			// AMIs, managed by AWS Backup service, cannot be deleted via EC2 APIs. When attempting to delete, the following error is returned
@@ -252,7 +252,7 @@ func deleteEC2ElasticIP(ctx context.Context, client *ec2v2.Client, id string, lo
 		AllocationId: aws.String(id),
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidAllocation.NotFound" {
+		if HandleErrorCode(err) == "InvalidAllocationID.NotFound" {
 			return nil
 		}
 		return err
@@ -267,7 +267,7 @@ func terminateEC2Instance(ctx context.Context, ec2Client *ec2v2.Client, iamClien
 		InstanceIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidInstance.NotFound" {
+		if HandleErrorCode(err) == "InvalidInstanceID.NotFound" {
 			return nil
 		}
 		return err
@@ -343,7 +343,7 @@ func deleteEC2CarrierGateway(ctx context.Context, client *ec2v2.Client, id strin
 		CarrierGatewayId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidCarrierGateway.NotFound" {
+		if HandleErrorCode(err) == "InvalidCarrierGatewayID.NotFound" {
 			return nil
 		}
 		return err
@@ -358,7 +358,7 @@ func deleteEC2NATGateway(ctx context.Context, client *ec2v2.Client, id string, l
 		NatGatewayId: aws.String(id),
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "NatGateway.NotFound" {
+		if HandleErrorCode(err) == "NatGatewayNotFound" {
 			return nil
 		}
 		return err
@@ -411,7 +411,7 @@ func deleteEC2PlacementGroup(ctx context.Context, client *ec2v2.Client, id strin
 		GroupIds: []string{id},
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidPlacementGroup.NotFound" {
+		if HandleErrorCode(err) == "InvalidPlacementGroup.Unknown" {
 			return nil
 		}
 		return err
@@ -892,7 +892,7 @@ func deleteEC2VPCPeeringConnection(ctx context.Context, client *ec2v2.Client, id
 		VpcPeeringConnectionId: &id,
 	})
 	if err != nil {
-		if HandleErrorCode(err) == "InvalidVpcPeeringConnection.NotFound" {
+		if HandleErrorCode(err) == "InvalidVpcPeeringConnectionID.NotFound" {
 			return nil
 		}
 		return errors.Wrapf(err, "cannot delete VPC Peering Connection %s", id)

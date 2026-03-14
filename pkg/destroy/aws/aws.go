@@ -9,8 +9,6 @@ import (
 	awsv2 "github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/arn"
 	awsmiddleware "github.com/aws/aws-sdk-go-v2/aws/middleware"
-	configv2 "github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	ec2v2 "github.com/aws/aws-sdk-go-v2/service/ec2"
 	ec2v2types "github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/aws-sdk-go-v2/service/efs"
@@ -23,8 +21,6 @@ import (
 	route53types "github.com/aws/aws-sdk-go-v2/service/route53/types"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	s3types "github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
-	"github.com/aws/smithy-go/middleware"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
@@ -80,20 +76,6 @@ type ClusterUninstaller struct {
 	S3Client      *s3.Client
 }
 
-const (
-	endpointUSEast1      = "us-east-1"
-	endpointCNNorth1     = "cn-north-1"
-	endpointCNNorthWest1 = "cn-northwest-1"
-	endpointISOEast1     = "us-iso-east-1"
-	endpointISOWest1     = "us-iso-west-1"
-	endpointISOBEast1    = "us-isob-east-1"
-	endpointUSGovEast1   = "us-gov-east-1"
-	endpointUSGovWest1   = "us-gov-west-1"
-
-	// OpenShiftInstallerDestroyerUserAgent is the User Agent key to add to the AWS Destroy API request header.
-	OpenShiftInstallerDestroyerUserAgent = "OpenShift/4.x Destroyer"
-)
-
 // New returns an AWS destroyer from ClusterMetadata.
 func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.Destroyer, error) {
 	filters := make([]Filter, 0, len(metadata.ClusterPlatformMetadata.AWS.Identifier))
@@ -103,94 +85,49 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 	region := metadata.ClusterPlatformMetadata.AWS.Region
 
 	ctx := context.Background()
-	ec2Client, err := awssession.NewEC2Client(ctx, awssession.EndpointOptions{
+	endpointOpts := awssession.EndpointOptions{
 		Region:    region,
 		Endpoints: metadata.AWS.ServiceEndpoints,
-	}, ec2v2.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
+	}
+
+	ec2Client, err := awssession.NewEC2Client(ctx, endpointOpts,
+		ec2v2.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create EC2 client: %w", err)
 	}
 
-	iamClient, err := awssession.NewIAMClient(ctx, awssession.EndpointOptions{
-		Region:    region,
-		Endpoints: metadata.AWS.ServiceEndpoints,
-	}, iamv2.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
+	iamClient, err := awssession.NewIAMClient(ctx, endpointOpts,
+		iamv2.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create IAM client: %w", err)
 	}
 
-	// FIXME: remove this code when the elb and elbv2 clients are "fixed" or figured out
-	elbCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region),
-		configv2.WithAPIOptions([]func(*middleware.Stack) error{
-			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
-		}))
+	elbClient, err := awssession.NewELBClient(ctx, endpointOpts,
+		elb.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS config for elb client: %w", err)
+		return nil, fmt.Errorf("failed to create ELB client: %w", err)
 	}
-	elbclient := elb.NewFromConfig(elbCfg, func(options *elb.Options) {
-		options.Region = region
-		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "elb") || strings.EqualFold(endpoint.Name, "elasticloadbalancing") {
-				options.BaseEndpoint = awsv2.String(endpoint.URL)
-			}
-		}
-	})
 
-	// FIXME: remove this code when the elb and elbv2 clients are "fixed" or figured out
-	elbv2Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region),
-		configv2.WithAPIOptions([]func(*middleware.Stack) error{
-			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
-		}))
+	elbv2Client, err := awssession.NewELBV2Client(ctx, endpointOpts,
+		elbv2.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS config for elbv2 client: %w", err)
+		return nil, fmt.Errorf("failed to create ELBV2 client: %w", err)
 	}
-	elbv2client := elbv2.NewFromConfig(elbv2Cfg, func(options *elbv2.Options) {
-		options.Region = region
-		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "elbv2") || strings.EqualFold(endpoint.Name, "elasticloadbalancingv2") {
-				options.BaseEndpoint = awsv2.String(endpoint.URL)
-			}
-		}
-	})
 
-	// FIXME: remove this code when the s3client is made
-	s3Cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region),
-		configv2.WithAPIOptions([]func(*middleware.Stack) error{
-			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
-		}))
+	s3Client, err := awssession.NewS3Client(ctx, endpointOpts,
+		s3.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS config for S3 client: %w", err)
+		return nil, fmt.Errorf("failed to create S3 client: %w", err)
 	}
-	s3Client := s3.NewFromConfig(s3Cfg, func(options *s3.Options) {
-		options.Region = region
-		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "s3") {
-				options.BaseEndpoint = awsv2.String(endpoint.URL)
-			}
-		}
-	})
 
-	// FIXME: remove this code when the EFS client is made
-	efsCfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(region),
-		configv2.WithAPIOptions([]func(*middleware.Stack) error{
-			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
-		}))
+	efsClient, err := awssession.NewEFSClient(ctx, endpointOpts,
+		efs.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS config for EFS client: %w", err)
+		return nil, fmt.Errorf("failed to create EFS client: %w", err)
 	}
-	efsClient := efs.NewFromConfig(efsCfg, func(options *efs.Options) {
-		options.Region = region
-		for _, endpoint := range metadata.AWS.ServiceEndpoints {
-			if strings.EqualFold(endpoint.Name, "elasticfilesystem") {
-				options.BaseEndpoint = awsv2.String(endpoint.URL)
-			}
-		}
-	})
 
-	route53Client, err := awssession.NewRoute53Client(ctx, awssession.EndpointOptions{
-		Region:    region,
-		Endpoints: metadata.AWS.ServiceEndpoints,
-	}, "", route53.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
+	route53Client, err := awssession.NewRoute53Client(ctx, endpointOpts, "",
+		route53.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Route53 client: %w", err)
 	}
@@ -205,8 +142,8 @@ func New(logger logrus.FieldLogger, metadata *types.ClusterMetadata) (providers.
 		endpoints:      metadata.AWS.ServiceEndpoints,
 		EC2Client:      ec2Client,
 		IAMClient:      iamClient,
-		ELBClient:      elbclient,
-		ELBV2Client:    elbv2client,
+		ELBClient:      elbClient,
+		ELBV2Client:    elbv2Client,
 		S3Client:       s3Client,
 		EFSClient:      efsClient,
 		Route53Client:  route53Client,
@@ -295,28 +232,6 @@ func (o *ClusterUninstaller) Run() (*types.ClusterQuota, error) {
 	return nil, err
 }
 
-func createResourceTaggingClientWithConfig(cfg awsv2.Config, region string, endpoints []awstypes.ServiceEndpoint) *resourcegroupstaggingapi.Client {
-	return resourcegroupstaggingapi.NewFromConfig(cfg, func(options *resourcegroupstaggingapi.Options) {
-		options.Region = region
-		for _, endpoint := range endpoints {
-			if strings.EqualFold(endpoint.Name, "tagging") {
-				options.BaseEndpoint = awsv2.String(endpoint.URL)
-			}
-		}
-	})
-}
-
-func createResourceTaggingClient(region string, endpoints []awstypes.ServiceEndpoint) (*resourcegroupstaggingapi.Client, error) {
-	cfg, err := awssession.GetConfigWithOptions(context.Background(), configv2.WithRegion(region),
-		configv2.WithAPIOptions([]func(*middleware.Stack) error{
-			awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw),
-		}))
-	if err != nil {
-		return nil, fmt.Errorf("failed to create AWS config for resource tagging client: %w", err)
-	}
-	return createResourceTaggingClientWithConfig(cfg, region, endpoints), nil
-}
-
 // RunWithContext runs the uninstall process with a context.
 // The first return is the list of ARNs for resources that could not be destroyed.
 func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, error) {
@@ -325,49 +240,50 @@ func (o *ClusterUninstaller) RunWithContext(ctx context.Context) ([]string, erro
 		return nil, err
 	}
 
-	baseTaggingClient, err := createResourceTaggingClient(o.Region, o.endpoints)
+	baseTaggingClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{
+		Region:    o.Region,
+		Endpoints: o.endpoints,
+	}, "", resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to create resource tagging client: %w", err)
 	}
 	tagClients := []*resourcegroupstaggingapi.Client{baseTaggingClient}
 
 	if o.HostedZoneRole != "" {
-		cfg, err := awssession.GetConfigWithOptions(ctx, configv2.WithRegion(endpointUSEast1))
-		if err != nil {
-			return nil, fmt.Errorf("failed to create AWS config for resource tagging client: %w", err)
-		}
-		stsSvc, err := awssession.NewSTSClient(ctx, awssession.EndpointOptions{
-			Region:    endpointUSEast1,
+		// Create tagging client with assumed role credentials for cross-account hosted zone access.
+		// This client is specifically for finding route53 zones in the us-east-1 region.
+		assumedRoleTagClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{
+			Region:    awstypes.UsEast1RegionID,
 			Endpoints: o.endpoints,
-		}, sts.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(OpenShiftInstallerDestroyerUserAgent, version.Raw)))
+		}, o.HostedZoneRole, resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 		if err != nil {
-			return nil, fmt.Errorf("failed to create STS client: %w", err)
+			return nil, fmt.Errorf("failed to create resource tagging client with assumed role: %w", err)
 		}
-
-		creds := stscreds.NewAssumeRoleProvider(stsSvc, o.HostedZoneRole)
-		cfg.Credentials = awsv2.NewCredentialsCache(creds)
-		// This client is specifically for finding route53 zones,
-		// so it needs to use the global us-east-1 region.
-
-		tagClients = append(tagClients, createResourceTaggingClientWithConfig(cfg, endpointUSEast1, o.endpoints))
+		tagClients = append(tagClients, assumedRoleTagClient)
 	}
 
 	switch o.Region {
-	case endpointCNNorth1, endpointCNNorthWest1:
+	case awstypes.CnNorth1RegionID, awstypes.CnNorthwest1RegionID:
 		break
-	case endpointISOEast1, endpointISOWest1, endpointISOBEast1:
+	case awstypes.UsIsoEast1RegionID, awstypes.UsIsoWest1RegionID, awstypes.UsIsoBEast1RegionID:
 		break
-	case endpointUSGovEast1, endpointUSGovWest1:
-		if o.Region != endpointUSGovWest1 {
-			tagClient, err := createResourceTaggingClient(endpointUSGovWest1, o.endpoints)
+	case awstypes.UsGovEast1RegionID, awstypes.UsGovWest1RegionID:
+		if o.Region != awstypes.UsGovWest1RegionID {
+			tagClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{
+				Region:    awstypes.UsGovWest1RegionID,
+				Endpoints: o.endpoints,
+			}, "", resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 			if err != nil {
 				return nil, fmt.Errorf("failed to create resource tagging client for us-gov-west-1: %w", err)
 			}
 			tagClients = append(tagClients, tagClient)
 		}
 	default:
-		if o.Region != endpointUSEast1 {
-			tagClient, err := createResourceTaggingClient(endpointUSEast1, o.endpoints)
+		if o.Region != awstypes.UsEast1RegionID {
+			tagClient, err := awssession.NewResourceGroupsTaggingAPIClient(ctx, awssession.EndpointOptions{
+				Region:    awstypes.UsEast1RegionID,
+				Endpoints: o.endpoints,
+			}, "", resourcegroupstaggingapi.WithAPIOptions(awsmiddleware.AddUserAgentKeyValue(awssession.OpenShiftInstallerDestroyerUserAgent, version.Raw)))
 			if err != nil {
 				return nil, fmt.Errorf("failed to create resource tagging client for default us-east-1: %w", err)
 			}

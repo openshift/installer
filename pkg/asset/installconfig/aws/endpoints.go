@@ -7,6 +7,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/aws/aws-sdk-go-v2/service/efs"
 	elb "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancing"
 	elbv2 "github.com/aws/aws-sdk-go-v2/service/elasticloadbalancingv2"
 	"github.com/aws/aws-sdk-go-v2/service/iam"
@@ -28,6 +29,7 @@ var (
 	// For backwards compatibility, we copy those constants from the SDK v1 and map it to ServiceID in SDK v2.
 	compatServiceIDMap = map[string]string{
 		"ec2":                  ec2.ServiceID,
+		"elasticfilesystem":    efs.ServiceID,
 		"elasticloadbalancing": elb.ServiceID,
 		"iam":                  iam.ServiceID,
 		"route53":              route53.ServiceID,
@@ -267,6 +269,48 @@ func (s *S3EndpointResolver) ResolveEndpoint(ctx context.Context, params s3.Endp
 	params.Endpoint = aws.String(endpoint.URL)
 	params.Region = aws.String(s.endpointOptions.Region)
 	return s3.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// EFSEndpointResolver implements EndpointResolverV2 interface for EFS.
+type EFSEndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for EFS.
+func (s *EFSEndpointResolver) ResolveEndpoint(ctx context.Context, params efs.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[efs.ServiceID]
+	if !ok {
+		return efs.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return efs.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+}
+
+// ResourceGroupsTaggingAPIEndpointResolver implements EndpointResolverV2 interface for Resource Groups Tagging API.
+type ResourceGroupsTaggingAPIEndpointResolver struct {
+	*ServiceEndpointResolver
+}
+
+// ResolveEndpoint for Resource Groups Tagging API.
+func (s *ResourceGroupsTaggingAPIEndpointResolver) ResolveEndpoint(ctx context.Context, params resourcegroupstaggingapi.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.UseDualStack = aws.Bool(s.endpointOptions.UseDualStack)
+	params.UseFIPS = aws.Bool(s.endpointOptions.UseFIPS)
+
+	// If custom endpoint not found, return default endpoint for the service.
+	endpoint, ok := s.endpoints[resourcegroupstaggingapi.ServiceID]
+	if !ok {
+		return resourcegroupstaggingapi.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
+	}
+
+	params.Endpoint = aws.String(endpoint.URL)
+	params.Region = aws.String(s.endpointOptions.Region)
+	return resourcegroupstaggingapi.NewDefaultEndpointResolverV2().ResolveEndpoint(ctx, params)
 }
 
 // GetDefaultServiceEndpoint will get the default service endpoint for a service and region.
