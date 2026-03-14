@@ -153,6 +153,14 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			PrivateIPAddress: lbip,
 		},
 	}}
+
+	// For dual-stack, add IPv6 frontend IP for internal LB (dynamic allocation)
+	if installConfig.Config.Azure.IPFamily.DualStackEnabled() {
+		apiServerLB.FrontendIPs = append(apiServerLB.FrontendIPs, capz.FrontendIP{
+			Name: fmt.Sprintf("%s-internal-frontEnd-v6", clusterID.InfraID),
+			// No PrivateIPAddress specified = dynamic allocation
+		})
+	}
 	vnetResourceGroup := installConfig.Config.Azure.ResourceGroupName
 	if installConfig.Config.Azure.VirtualNetwork != "" {
 		virtualNetworkAddressPrefixes = make([]string, 0)
