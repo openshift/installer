@@ -122,7 +122,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 			}
 			defer cleanup()
 
-			err = getRhcosStream(validationCtx)
+			err = getRhcosStream(validationCtx, ic.OSImageStream)
 			if err != nil {
 				return err
 			}
@@ -874,12 +874,12 @@ func compareCurrentToTemplate(templateProductVersion, rhcosStreamVersion string)
 	return nil
 }
 
-func getRhcosStream(validationCtx *validationContext) error {
+func getRhcosStream(validationCtx *validationContext, osImageStream types.OSImageStream) error {
 	var err error
 	ctx, cancel := context.WithTimeout(context.TODO(), 60*time.Second)
 	defer cancel()
 
-	validationCtx.rhcosStream, err = rhcos.FetchCoreOSBuild(ctx)
+	validationCtx.rhcosStream, err = rhcos.FetchCoreOSBuild(ctx, osImageStream)
 
 	if err != nil {
 		return err

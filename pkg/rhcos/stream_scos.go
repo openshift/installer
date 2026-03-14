@@ -2,13 +2,18 @@
 
 package rhcos
 
-func getStreamFileName() string {
+import "github.com/openshift/installer/pkg/types"
+
+// DefaultOSImageStream Not used in SCOS
+const DefaultOSImageStream types.OSImageStream = ""
+
+func getStreamFileName(_ types.OSImageStream) string {
 	return "coreos/scos.json"
 }
 
-func getMarketplaceStreamFileName() string {
+func getMarketplaceStreamFileName(_ types.OSImageStream) string {
 	// There is no current need for scos marketplace images,
 	// so this file does not currently exist. The calling
 	// functions will gracefully handle the missing file.
-	return "coreos/marketplace-scos.json"
+	return "coreos/marketplace/marketplace-scos.json"
 }

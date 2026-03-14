@@ -66,7 +66,7 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 
 	// validate PreloadedOSImageName if configured
 	if p.PreloadedOSImageName != "" {
-		err = validatePreloadedImage(ctx, nc, p)
+		err = validatePreloadedImage(ctx, nc, p, ic.OSImageStream)
 		if err != nil {
 			errList = append(errList, field.Invalid(parentPath.Child("preloadedOSImageName"), p.PreloadedOSImageName, fmt.Sprintf("fail to validate the preloaded rhcos image: %v", err)))
 		}
@@ -114,9 +114,9 @@ func ValidateForProvisioning(ic *types.InstallConfig) error {
 	return errList.ToAggregate()
 }
 
-func validatePreloadedImage(ctx context.Context, nc *nutanixclientv3.Client, p *nutanixtypes.Platform) error {
+func validatePreloadedImage(ctx context.Context, nc *nutanixclientv3.Client, p *nutanixtypes.Platform, osImageStream types.OSImageStream) error {
 	// retrieve the rhcos release version
-	rhcosStream, err := rhcos.FetchCoreOSBuild(ctx)
+	rhcosStream, err := rhcos.FetchCoreOSBuild(ctx, osImageStream)
 	if err != nil {
 		return err
 	}
