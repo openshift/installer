@@ -318,6 +318,9 @@ func (c *Client) GetVirtualMachineSku(ctx context.Context, name, region string) 
 
 // GetDiskEncryptionSet retrieves the specified disk encryption set.
 func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, groupName, diskEncryptionSetName string) (*azenc.DiskEncryptionSet, error) {
+	if !strings.EqualFold(c.ssn.Credentials.SubscriptionID, subscriptionID) {
+		return nil, fmt.Errorf("different subscription from resource group subscription. Azure does not support cross subscription encryption sets")
+	}
 	client := azenc.NewDiskEncryptionSetsClientWithBaseURI(c.ssn.Environment.ResourceManagerEndpoint, subscriptionID)
 	client.Authorizer = c.ssn.Authorizer
 	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
@@ -327,7 +330,6 @@ func (c *Client) GetDiskEncryptionSet(ctx context.Context, subscriptionID, group
 	if err != nil {
 		return nil, fmt.Errorf("failed to get disk encryption set: %w", err)
 	}
-
 	return &diskEncryptionSet, nil
 }
 

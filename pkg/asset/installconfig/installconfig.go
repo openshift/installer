@@ -165,6 +165,34 @@ func (a *InstallConfig) finishGCP() error {
 	return nil
 }
 
+// finishAzure set defaults for Azure platform.
+func (a *InstallConfig) finishAzure() error {
+	defaultConfig := a.Config.Azure.DefaultMachinePlatform
+	session, err := a.Azure.Session()
+	if err != nil {
+		return err
+	}
+	if defaultConfig != nil && defaultConfig.OSDisk.DiskEncryptionSet != nil &&
+		defaultConfig.OSDisk.DiskEncryptionSet.SubscriptionID == "" {
+		a.Config.Azure.DefaultMachinePlatform.OSDisk.SubscriptionID = session.Credentials.SubscriptionID
+	}
+
+	if a.Config.ControlPlane != nil && a.Config.ControlPlane.Platform.Azure != nil &&
+		a.Config.ControlPlane.Platform.Azure.OSDisk.DiskEncryptionSet != nil {
+		if a.Config.ControlPlane.Platform.Azure.OSDisk.SubscriptionID == "" {
+			a.Config.ControlPlane.Platform.Azure.OSDisk.SubscriptionID = session.Credentials.SubscriptionID
+		}
+	}
+
+	for _, compute := range a.Config.Compute {
+		if compute.Platform.Azure != nil && compute.Platform.Azure.OSDisk.DiskEncryptionSet != nil &&
+			compute.Platform.Azure.OSDisk.SubscriptionID == "" {
+			compute.Platform.Azure.OSDisk.SubscriptionID = session.Credentials.SubscriptionID
+		}
+	}
+	return nil
+}
+
 // finishAWS set defaults for AWS Platform before the config validation.
 func (a *InstallConfig) finishAWS() error {
 	// Set the Default Edge Compute pool when the subnets in AWS Local Zones are defined,
@@ -194,6 +222,9 @@ func (a *InstallConfig) finish(ctx context.Context, filename string) error {
 	}
 	if a.Config.Azure != nil {
 		a.Azure = icazure.NewMetadata(a.Config.Azure, a.Config.ControlPlane, &a.Config.Compute[0])
+		if err := a.finishAzure(); err != nil {
+			return err
+		}
 	}
 	if a.Config.GCP != nil {
 		if err := a.finishGCP(); err != nil {
