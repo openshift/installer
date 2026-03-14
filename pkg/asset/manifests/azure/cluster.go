@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	aznetwork "github.com/Azure/azure-sdk-for-go/profiles/2020-09-01/network/mgmt/network"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/pkg/errors"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -22,7 +21,6 @@ import (
 	azic "github.com/openshift/installer/pkg/asset/installconfig/azure"
 	capzash "github.com/openshift/installer/pkg/asset/manifests/azure/stack/v1beta1"
 	"github.com/openshift/installer/pkg/asset/manifests/capiutils"
-	"github.com/openshift/installer/pkg/asset/manifests/capiutils/cidr"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -32,16 +30,117 @@ import (
 // GenerateClusterAssets generates the manifests for the cluster-api.
 func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID *installconfig.ClusterID) (*capiutils.GenerateClusterAssetsOutput, error) {
 	manifests := []*asset.RuntimeFile{}
-	mainCIDR := capiutils.CIDRFromInstallConfig(installConfig).String()
+	resourceGroup := installConfig.Config.Platform.Azure.ClusterResourceGroupName(clusterID.InfraID)
+	controlPlaneSubnet := installConfig.Config.Platform.Azure.ControlPlaneSubnetName(clusterID.InfraID)
 	computeSubnet := installConfig.Config.Platform.Azure.ComputeSubnetName(clusterID.InfraID)
+	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
+	securityGroup := capz.SecurityGroup{Name: networkSecurityGroup}
+
+	cidrs := capiutils.CIDRsFromInstallConfig(installConfig)
+	addressFamilySubnets, err := azure.GetAddressFamilySubnets(cidrs)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to split cidrs into subnets")
+	}
+
+	defaultSecurityRules := []capz.SecurityRule{
+		{
+			Name:             "apiserver_in",
+			Protocol:         capz.SecurityGroupProtocolTCP,
+			Direction:        capz.SecurityRuleDirectionInbound,
+			Priority:         100,
+			SourcePorts:      ptr.To("*"),
+			DestinationPorts: ptr.To("6443"),
+			Source:           ptr.To("*"),
+			Destination:      ptr.To("*"),
+			Action:           capz.SecurityRuleActionAllow,
+		},
+		{
+			Name:             "ssh_in",
+			Protocol:         capz.SecurityGroupProtocolTCP,
+			Direction:        capz.SecurityRuleDirectionInbound,
+			Priority:         220,
+			SourcePorts:      ptr.To("*"),
+			DestinationPorts: ptr.To("22"),
+			Source:           ptr.To("*"),
+			Destination:      ptr.To("*"),
+			Action:           capz.SecurityRuleActionAllow,
+		},
+	}
+
+	// If we are using Internal publishing, we need a security rule for each CIDR
+	var securityRules []capz.SecurityRule
+	var securityRulePriority int32 = 100
+	if addressFamilySubnets.IPv4Count() > 0 && !installConfig.Config.PublicAPI() {
+		for i := 0; i < addressFamilySubnets.IPv4Count(); i++ {
+			securityRules = append(securityRules, capz.SecurityRule{
+				Name:             fmt.Sprintf("apiserver_in_ipv4_%02d", i),
+				Protocol:         capz.SecurityGroupProtocolTCP,
+				Direction:        capz.SecurityRuleDirectionInbound,
+				SourcePorts:      ptr.To("*"),
+				DestinationPorts: ptr.To("6443"),
+				Source:           ptr.To(addressFamilySubnets.GetIPv4Subnets()[i].String()),
+				Destination:      ptr.To("*"),
+				Priority:         securityRulePriority,
+				Action:           capz.SecurityRuleActionAllow,
+			})
+			securityRulePriority += 10
+
+			securityRules = append(securityRules, capz.SecurityRule{
+				Name:             fmt.Sprintf("ssh_in_ipv4_%02d", i),
+				Protocol:         capz.SecurityGroupProtocolTCP,
+				Direction:        capz.SecurityRuleDirectionInbound,
+				SourcePorts:      ptr.To("*"),
+				DestinationPorts: ptr.To("22"),
+				Source:           ptr.To(addressFamilySubnets.GetIPv4Subnets()[i].String()),
+				Destination:      ptr.To("*"),
+				Priority:         securityRulePriority,
+				Action:           capz.SecurityRuleActionAllow,
+			})
+			securityRulePriority += 10
+		}
+	}
+	if addressFamilySubnets.IPv6Count() > 0 && !installConfig.Config.PublicAPI() {
+		for i := 0; i < addressFamilySubnets.IPv6Count(); i++ {
+			securityRules = append(securityRules, capz.SecurityRule{
+				Name:             fmt.Sprintf("apiserver_in_ipv6_%02d", i),
+				Protocol:         capz.SecurityGroupProtocolTCP,
+				Direction:        capz.SecurityRuleDirectionInbound,
+				SourcePorts:      ptr.To("*"),
+				DestinationPorts: ptr.To("6443"),
+				Source:           ptr.To(addressFamilySubnets.GetIPv6Subnets()[i].String()),
+				Destination:      ptr.To("*"),
+				Priority:         securityRulePriority,
+				Action:           capz.SecurityRuleActionAllow,
+			})
+			securityRulePriority += 10
+
+			securityRules = append(securityRules, capz.SecurityRule{
+				Name:             fmt.Sprintf("ssh_in_ipv6_%02d", i),
+				Protocol:         capz.SecurityGroupProtocolTCP,
+				Direction:        capz.SecurityRuleDirectionInbound,
+				SourcePorts:      ptr.To("*"),
+				DestinationPorts: ptr.To("22"),
+				Source:           ptr.To(addressFamilySubnets.GetIPv6Subnets()[i].String()),
+				Destination:      ptr.To("*"),
+				Priority:         securityRulePriority,
+				Action:           capz.SecurityRuleActionAllow,
+			})
+			securityRulePriority += 10
+		}
+	}
+	if len(securityRules) == 0 {
+		securityRules = append(securityRules, defaultSecurityRules...)
+	}
+	securityGroup.SecurityGroupClass.SecurityRules = securityRules
 
 	session, err := installConfig.Azure.Session()
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to create Azure session")
 	}
 
-	splitLength := 2
+	splitLength := 0
 	zones := []string{}
+	// This is only relevant to IPv4 - v1 NAT gateways do not support IPv6
 	if installConfig.Config.Azure.OutboundType == azure.NATGatewayMultiZoneOutboundType {
 		numZones, err := installConfig.Azure.GenerateZonesSubnetMap(installConfig.Config.Azure.Subnets, computeSubnet)
 		if err != nil {
@@ -51,16 +150,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 			zones = append(zones, key)
 		}
 		sort.Strings(zones)
-		// Add one for control plane.
-		splitLength = len(zones) + 1
+		// If the splitLength is odd, an even number of subnets will be returned when we split
+		// the network. We aren't using VLSM, so we silently "lose" a block of addresses here.
+		splitLength = len(zones)
 	}
 
-	subnets, err := cidr.SplitIntoSubnetsIPv4(mainCIDR, splitLength)
+	err = addressFamilySubnets.SplitComputeSubnet(splitLength)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to split CIDR into subnets")
+		return nil, errors.Wrap(err, "unable to split compute subnet")
 	}
+	virtualNetworkAddressPrefixes := getVirtualNetworkAddressPrefixes(cidrs)
 
-	virtualNetworkAddressPrefixes := []string{mainCIDR}
 	// CAPZ expects the capz-system to be created.
 	azureNamespace := &corev1.Namespace{ObjectMeta: metav1.ObjectMeta{Name: "capz-system"}}
 	azureNamespace.SetGroupVersionKind(corev1.SchemeGroupVersion.WithKind("Namespace"))
@@ -68,45 +168,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		Object: azureNamespace,
 		File:   asset.File{Filename: "00_azure-namespace.yaml"},
 	})
-
-	resourceGroup := installConfig.Config.Platform.Azure.ClusterResourceGroupName(clusterID.InfraID)
-	controlPlaneSubnet := installConfig.Config.Platform.Azure.ControlPlaneSubnetName(clusterID.InfraID)
-	networkSecurityGroup := installConfig.Config.Platform.Azure.NetworkSecurityGroupName(clusterID.InfraID)
-
-	source := "*"
-	if installConfig.Config.Publish == types.InternalPublishingStrategy {
-		source = mainCIDR
-	}
-
-	securityGroup := capz.SecurityGroup{
-		Name: networkSecurityGroup,
-		SecurityGroupClass: capz.SecurityGroupClass{
-			SecurityRules: []capz.SecurityRule{
-				{
-					Name:             "apiserver_in",
-					Protocol:         capz.SecurityGroupProtocolTCP,
-					Direction:        capz.SecurityRuleDirectionInbound,
-					Priority:         101,
-					SourcePorts:      ptr.To("*"),
-					DestinationPorts: ptr.To("6443"),
-					Source:           ptr.To(source),
-					Destination:      ptr.To("*"),
-					Action:           capz.SecurityRuleActionAllow,
-				},
-				{
-					Name:             fmt.Sprintf("%s_ssh_in", clusterID.InfraID),
-					Protocol:         capz.SecurityGroupProtocolTCP,
-					Direction:        capz.SecurityRuleDirectionInbound,
-					Priority:         220,
-					SourcePorts:      ptr.To("*"),
-					DestinationPorts: ptr.To("22"),
-					Source:           ptr.To(source),
-					Destination:      ptr.To("*"),
-					Action:           capz.SecurityRuleActionAllow,
-				},
-			},
-		},
-	}
 
 	// Setting ID on the Subnet disables natgw creation. See:
 	// https://github.com/kubernetes-sigs/cluster-api-provider-azure/blob/21479a9a4c640b43e0bef028487c522c55605d06/api/v1beta1/azurecluster_default.go#L160
@@ -123,19 +184,39 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		nodeSubnetID = "UNKNOWN"
 	}
 
+	lbip4, err := getLBIP(addressFamilySubnets.GetIPv4Subnets(), installConfig)
+	if err != nil {
+		return nil, errors.Wrap(err, "unable to get IPv4 address for load balancer")
+	}
+	if lbip4 == "" {
+		return nil, errors.New("unable to get IPv4 address for load balancer")
+	}
+
+	apiServerLBFrontendConfigName := fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID)
+	apiServerBackendPoolName := fmt.Sprintf("%s-internal", clusterID.InfraID)
 	apiServerLB := capz.LoadBalancerSpec{
 		Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
 		BackendPool: capz.BackendPool{
-			Name: fmt.Sprintf("%s-internal", clusterID.InfraID),
+			Name: apiServerBackendPoolName,
 		},
 		LoadBalancerClassSpec: capz.LoadBalancerClassSpec{
 			Type: capz.Internal,
 		},
 	}
+	apiServerLB.FrontendIPs = []capz.FrontendIP{{
+		Name: apiServerLBFrontendConfigName,
+		FrontendIPClass: capz.FrontendIPClass{
+			PrivateIPAddress: lbip4,
+		},
+	}}
 
+	controlPlaneBackendPoolName := fmt.Sprintf("%s-outbound-lb-outboundBackendPool", clusterID.InfraID)
 	controlPlaneOutboundLB := &capz.LoadBalancerSpec{
 		Name:             clusterID.InfraID,
-		FrontendIPsCount: to.Ptr(int32(1)),
+		FrontendIPsCount: ptr.To(int32(1)),
+		BackendPool: capz.BackendPool{
+			Name: controlPlaneBackendPoolName,
+		},
 	}
 
 	if installConfig.Config.Platform.Azure.OutboundType == azure.UserDefinedRoutingOutboundType {
@@ -143,16 +224,6 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 	}
 
 	virtualNetworkID := ""
-	lbip, err := getLBIP(subnets, installConfig)
-	if err != nil {
-		return nil, err
-	}
-	apiServerLB.FrontendIPs = []capz.FrontendIP{{
-		Name: fmt.Sprintf("%s-internal-frontEnd", clusterID.InfraID),
-		FrontendIPClass: capz.FrontendIPClass{
-			PrivateIPAddress: lbip,
-		},
-	}}
 	vnetResourceGroup := installConfig.Config.Azure.ResourceGroupName
 	if installConfig.Config.Azure.VirtualNetwork != "" {
 		virtualNetworkAddressPrefixes = make([]string, 0)
@@ -166,15 +237,17 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		if err != nil {
 			return nil, fmt.Errorf("failed to get azure virtual network: %w", err)
 		}
-		if virtualNetwork != nil {
-			virtualNetworkID = *virtualNetwork.ID
+		if virtualNetwork == nil || virtualNetwork.ID == nil {
+			return nil, fmt.Errorf("failed to get azure virtual network: missing virtual network or ID")
 		}
-		lbip, err := getNextAvailableIPForLoadBalancer(ctx, installConfig, lbip)
+		virtualNetworkID = *virtualNetwork.ID
+		lbip4, err = getNextAvailableIPForLoadBalancer(ctx, installConfig, cidrs, lbip4)
 		if err != nil {
 			return nil, err
 		}
+		apiServerLB.FrontendIPs[0].Name = apiServerLBFrontendConfigName
 		apiServerLB.FrontendIPs[0].FrontendIPClass = capz.FrontendIPClass{
-			PrivateIPAddress: lbip,
+			PrivateIPAddress: lbip4,
 		}
 		if virtualNetwork.AddressSpace != nil && virtualNetwork.AddressSpace.AddressPrefixes != nil {
 			virtualNetworkAddressPrefixes = append(virtualNetworkAddressPrefixes, *virtualNetwork.AddressSpace.AddressPrefixes...)
@@ -190,7 +263,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		privateDNSZoneMode = capz.PrivateDNSZoneModeNone
 	}
 
-	subnetSpec, err := getSubnetSpec(installConfig, controlPlaneSubnet, computeSubnet, securityGroup, subnets, nodeSubnetID, clusterID.InfraID, zones)
+	subnetSpec, err := getSubnetSpec(installConfig, controlPlaneSubnet, computeSubnet, securityGroup, &addressFamilySubnets, nodeSubnetID, clusterID.InfraID, zones)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get subnets: %w", err)
 	}
@@ -318,16 +391,39 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		},
 	}, nil
 }
-func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubnet, computeSubnet string, securityGroup capz.SecurityGroup, subnets []*net.IPNet, nodeSubnetID string, infraID string, zones []string) ([]capz.SubnetSpec, error) {
+
+func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubnet, computeSubnet string, securityGroup capz.SecurityGroup, addressFamilySubnets *azure.AddressFamilySubnets, nodeSubnetID string, infraID string, zones []string) ([]capz.SubnetSpec, error) {
+	ipv4Subnets := addressFamilySubnets.GetIPv4AdditionalSubnets()
+	ipv6Subnets := addressFamilySubnets.GetIPv6AdditionalSubnets()
+
+	ipv4ComputeSubnets := addressFamilySubnets.GetIPv4ComputeSubnets()
+	ipv6ComputeSubnets := addressFamilySubnets.GetIPv6ComputeSubnets()
+
+	ipv4ControlPlaneCIDRBlocks := addressFamilySubnets.GetIPv4ControlPlaneCIDRBlocks()
+	var controlPlaneCIDRBlocks []string
+	if ipv4ControlPlaneCIDRBlocks != "" {
+		controlPlaneCIDRBlocks = append(controlPlaneCIDRBlocks, ipv4ControlPlaneCIDRBlocks)
+	}
+
+	ipv6ControlPlaneCIDRBlocks := addressFamilySubnets.GetIPv6ControlPlaneCIDRBlocks()
+	if ipv6ControlPlaneCIDRBlocks != "" {
+		controlPlaneCIDRBlocks = append(controlPlaneCIDRBlocks, ipv6ControlPlaneCIDRBlocks)
+	}
+
+	ipv4ComputeCIDRBlocks := addressFamilySubnets.GetIPv4ComputeCIDRBlocks()
+	ipv6ComputeCIDRBlocks := addressFamilySubnets.GetIPv6ComputeCIDRBlocks()
+	computeCIDRBlocks := ipv4ComputeCIDRBlocks
+	if len(ipv6ComputeCIDRBlocks) > 0 {
+		computeCIDRBlocks = append(computeCIDRBlocks, ipv6ComputeCIDRBlocks...)
+	}
+
 	// Set default control plane subnets for default installs.
 	defaultControlPlaneSubnet := capz.Subnets{
 		{
 			SubnetClassSpec: capz.SubnetClassSpec{
-				Name: controlPlaneSubnet,
-				Role: capz.SubnetControlPlane,
-				CIDRBlocks: []string{
-					subnets[0].String(),
-				},
+				Name:       controlPlaneSubnet,
+				Role:       capz.SubnetControlPlane,
+				CIDRBlocks: controlPlaneCIDRBlocks,
 			},
 			SecurityGroup: securityGroup,
 		},
@@ -335,16 +431,37 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 	defaultComputeSubnetSpec := capz.SubnetSpec{
 		ID: nodeSubnetID,
 		SubnetClassSpec: capz.SubnetClassSpec{
-			Name: computeSubnet,
-			Role: capz.SubnetNode,
-			CIDRBlocks: []string{
-				subnets[1].String(),
-			},
+			Name:       computeSubnet,
+			Role:       capz.SubnetNode,
+			CIDRBlocks: computeCIDRBlocks,
 		},
 		SecurityGroup: securityGroup,
 	}
 
 	subnetSpec := []capz.SubnetSpec{}
+	subnetsCount := max(len(ipv4Subnets), len(ipv6Subnets))
+	for i := 0; i < subnetsCount; i++ {
+		spec := capz.SubnetSpec{
+			SubnetClassSpec: capz.SubnetClassSpec{
+				Name: fmt.Sprintf("subnet_%02d", i),
+				Role: capz.SubnetNode,
+			},
+			SecurityGroup: securityGroup,
+		}
+		if nodeSubnetID != "" {
+			spec.ID = nodeSubnetID
+		}
+		var cidrBlocks []string
+		if i < len(ipv4Subnets) {
+			cidrBlocks = append(cidrBlocks, ipv4Subnets[i].String())
+		}
+		if i < len(ipv6Subnets) {
+			cidrBlocks = append(cidrBlocks, ipv6Subnets[i].String())
+		}
+		spec.CIDRBlocks = cidrBlocks
+		subnetSpec = append(subnetSpec, spec)
+	}
+
 	hasControlPlaneSubnet := false
 	hasComputePlaneSubnet := false
 	// Add the user specified subnets to the spec.
@@ -407,13 +524,9 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 	if !hasComputePlaneSubnet {
 		// For single zone, add a NAT gateway to the default value.
 		if installConfig.Config.Azure.OutboundType == azure.NATGatewayMultiZoneOutboundType {
-			for index, subnet := range subnets {
-				// The first one in subnets is the control plane subnet so ignoring.
+			for index, subnet := range ipv4ComputeSubnets {
+				name := fmt.Sprintf("%s-%d", computeSubnet, index+1)
 				if index == 0 {
-					continue
-				}
-				name := fmt.Sprintf("%s-%d", computeSubnet, index)
-				if index == 1 {
 					name = computeSubnet
 				}
 				specSubnet := capz.SubnetSpec{
@@ -429,6 +542,9 @@ func getSubnetSpec(installConfig *installconfig.InstallConfig, controlPlaneSubne
 						Zones:               []string{zones[zoneIndex]},
 					},
 					SecurityGroup: securityGroup,
+				}
+				if index < len(ipv6ComputeSubnets) {
+					specSubnet.SubnetClassSpec.CIDRBlocks = append(specSubnet.SubnetClassSpec.CIDRBlocks, ipv6ComputeSubnets[index].String())
 				}
 				zoneIndex++
 				if zoneIndex == len(zones) {
@@ -563,8 +679,17 @@ func stringifyAddressPrefixes(addressPrefixes []*net.IPNet) []string {
 	return strAddressPrefixes
 }
 
+func getVirtualNetworkAddressPrefixes(cidrs []ipnet.IPNet) []string {
+	virtualNetworkAddressPrefixes := make([]string, 0)
+	for _, cidr := range cidrs {
+		virtualNetworkAddressPrefixes = append(virtualNetworkAddressPrefixes, cidr.String())
+	}
+
+	return virtualNetworkAddressPrefixes
+}
+
 func getIPWithinCIDR(subnets []*net.IPNet, ip string) string {
-	if subnets == nil || ip == "" {
+	if len(subnets) == 0 || ip == "" {
 		return ""
 	}
 	// Check if default lbip is within control plane network.
@@ -585,14 +710,17 @@ func getIPWithinCIDR(subnets []*net.IPNet, ip string) string {
 	return ipSubnets.String()
 }
 
-func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *installconfig.InstallConfig, lbip string) (string, error) {
+func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *installconfig.InstallConfig, cidrs []ipnet.IPNet, lbip string) (string, error) {
 	client, err := installConfig.Azure.Client()
 	if err != nil {
 		return "", fmt.Errorf("failed to get azure client: %w", err)
 	}
 	networkResourceGroupName := installConfig.Config.Azure.NetworkResourceGroupName
 	virtualNetworkName := installConfig.Config.Azure.VirtualNetwork
-	machineCidr := installConfig.Config.MachineNetwork
+	machineCidr := make([]types.MachineNetworkEntry, 0, len(cidrs))
+	for _, cidr := range cidrs {
+		machineCidr = append(machineCidr, types.MachineNetworkEntry{CIDR: cidr})
+	}
 	var cpSubnet string
 	for _, subnetSpec := range installConfig.Config.Azure.Subnets {
 		if subnetSpec.Role == capz.SubnetControlPlane {
@@ -633,10 +761,13 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 		}
 		machineCidr = cidrRange
 	}
+	if len(machineCidr) == 0 {
+		return "", errors.New("no machine network CIDRs available for load balancer selection")
+	}
 	// AzureStack does not support the call to CheckIPAddressAvailability.
 	if installConfig.Azure.CloudName == azure.StackCloud {
 		cidr := machineCidr[0]
-		if cidr.CIDR.Contains(net.IP(lbip)) {
+		if cidr.CIDR.Contains(net.ParseIP(lbip)) {
 			return lbip, nil
 		}
 		ipSubnets := cidr.CIDR.IP
@@ -663,7 +794,7 @@ func getNextAvailableIPForLoadBalancer(ctx context.Context, installConfig *insta
 	}
 	for _, ip := range *ipAvail.AvailableIPAddresses {
 		for _, cidrRange := range machineCidr {
-			if cidrRange.CIDR.Contains(net.ParseIP(lbip)) {
+			if cidrRange.CIDR.Contains(net.ParseIP(ip)) {
 				return ip, nil
 			}
 		}

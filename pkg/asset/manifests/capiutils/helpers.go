@@ -18,6 +18,19 @@ func CIDRFromInstallConfig(installConfig *installconfig.InstallConfig) *ipnet.IP
 	return defaultCIDR
 }
 
+// CIDRsFromInstallConfig generates multiple CIDRs from the install config,
+// or returns the default IPv4 CIDR if none is found.
+func CIDRsFromInstallConfig(installConfig *installconfig.InstallConfig) []ipnet.IPNet {
+	cidrs := make([]ipnet.IPNet, 0)
+	for _, machineNetwork := range installConfig.Config.MachineNetwork {
+		cidrs = append(cidrs, machineNetwork.CIDR)
+	}
+	if len(cidrs) == 0 {
+		cidrs = append(cidrs, *defaultCIDR)
+	}
+	return cidrs
+}
+
 // IsEnabled returns true if the feature gate is enabled.
 func IsEnabled(installConfig *installconfig.InstallConfig) bool {
 	// TODO(padillon): refactor to remove IsEnabled function.
