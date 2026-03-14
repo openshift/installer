@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
@@ -115,6 +116,12 @@ func validatePlatform(ctx context.Context, meta *Metadata, fldPath *field.Path, 
 		allErrs = append(allErrs, validateSharedVPC(ctx, meta, fldPath.Child("vpc").Child("subnets"))...)
 	}
 	if platform.DefaultMachinePlatform != nil {
+		// Dedicated hosts cannot be configured in defaultMachinePlatform
+		if platform.DefaultMachinePlatform.HostPlacement != nil {
+			defaultPath := fldPath.Child("defaultMachinePlatform").Child("hostPlacement")
+			errMsg := "dedicated hosts cannot be configured in defaultMachinePlatform, they must be specified per machine pool"
+			allErrs = append(allErrs, field.Invalid(defaultPath, platform.DefaultMachinePlatform.HostPlacement, errMsg))
+		}
 		allErrs = append(allErrs, validateMachinePool(ctx, meta, fldPath.Child("defaultMachinePlatform"), platform, platform.DefaultMachinePlatform, controlPlaneReq, "", "")...)
 	}
 	return allErrs
@@ -479,6 +486,8 @@ func validateMachinePool(ctx context.Context, meta *Metadata, fldPath *field.Pat
 		}
 	}
 
+	allErrs = append(allErrs, validateHostPlacement(ctx, meta, fldPath, pool, poolName)...)
+
 	return allErrs
 }
 
@@ -495,6 +504,103 @@ func translateEC2Arches(arches []string) sets.Set[string] {
 		}
 	}
 	return res
+}
+
+// validateHostPlacement validates the HostPlacement for all instances.
+// HostPlacement must not have any duplicate dedicated hosts.
+// Dedicated Host must belong to a region and zone that this cluster is being installed into.
+// Dedicated Host must be only host in the region and zone for this install-config.
+// Dedicated Host must not have tags:
+// - "kubernetes.io/cluster/<another-cluster-id>: owned"
+// - "sigs.k8s.io/cluster-api-provider-aws/cluster/<another-cluster-id>: owned".
+func validateHostPlacement(ctx context.Context, meta *Metadata, fldPath *field.Path, pool *awstypes.MachinePool, poolName string) field.ErrorList {
+	allErrs := field.ErrorList{}
+
+	if pool.HostPlacement == nil {
+		return allErrs
+	}
+
+	if pool.HostPlacement.Affinity != nil && *pool.HostPlacement.Affinity == awstypes.HostAffinityDedicatedHost {
+		placementPath := fldPath.Child("hostPlacement")
+		if pool.HostPlacement.DedicatedHost != nil {
+			configuredHosts := pool.HostPlacement.DedicatedHost
+
+			// Check for duplicate host IDs in the configuration
+			{
+				seenHostIDs := make(map[string]int)
+				for idx, host := range configuredHosts {
+					if firstIdx, exists := seenHostIDs[host.ID]; exists {
+						dhPath := placementPath.Child("dedicatedHost").Index(idx)
+						errMsg := fmt.Sprintf("duplicate dedicated host %s (first seen at index %d)", host.ID, firstIdx)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+					} else {
+						seenHostIDs[host.ID] = idx
+					}
+				}
+			}
+
+			// Check to see if all configured hosts exist
+			foundHosts, err := meta.DedicatedHosts(ctx, configuredHosts)
+			if err != nil {
+				allErrs = append(allErrs, field.InternalError(placementPath.Child("dedicatedHost"), err))
+			} else {
+				// Track hosts by zone to ensure only one host per zone
+				seenZones := make(map[string]int)
+
+				// Check the returned configured hosts to see if the dedicated hosts defined in install-config exists.
+				for idx, host := range configuredHosts {
+					dhPath := placementPath.Child("dedicatedHost").Index(idx)
+
+					// Is host in AWS?
+					foundHost, ok := foundHosts[host.ID]
+					if !ok {
+						errMsg := fmt.Sprintf("dedicated host %s not found", host.ID)
+						allErrs = append(allErrs, field.Invalid(dhPath.Child("id"), host, errMsg))
+						continue
+					}
+
+					// Verify host is in the correct region
+					if !strings.HasPrefix(foundHost.Zone, meta.Region) {
+						errMsg := fmt.Sprintf("dedicated host %s is in zone %s which is not in the cluster's region %s", host.ID, foundHost.Zone, meta.Region)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+						continue
+					}
+
+					// Is host valid for pools region and zone config?
+					// Only check if zones are explicitly configured; if pool.Zones is empty, all zones are allowed
+					zones := pool.Zones
+					if len(zones) == 0 {
+						zones, err = meta.AvailabilityZones(ctx)
+						if err != nil {
+							allErrs = append(allErrs, field.InternalError(fldPath, fmt.Errorf("unable to retrieve availability zones: %w", err)))
+						}
+					}
+					if !slices.Contains(zones, foundHost.Zone) {
+						errMsg := fmt.Sprintf("machine pool specifies zones %v but dedicated host %s is in zone %s", pool.Zones, host.ID, foundHost.Zone)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+					}
+
+					// Check for multiple hosts in the same zone
+					if firstIdx, exists := seenZones[foundHost.Zone]; exists {
+						errMsg := fmt.Sprintf("multiple dedicated hosts configured for zone %s (host %s at index %d, host %s at index %d)",
+							foundHost.Zone, configuredHosts[firstIdx].ID, firstIdx, host.ID, idx)
+						allErrs = append(allErrs, field.Invalid(dhPath, host, errMsg))
+					} else {
+						seenZones[foundHost.Zone] = idx
+					}
+
+					// Check to make sure dedicated host is not owned by another cluster
+					clusterIDs := foundHost.Tags.GetClusterIDs(TagValueOwned)
+					if len(clusterIDs) > 0 {
+						allErrs = append(allErrs, field.Forbidden(dhPath,
+							fmt.Sprintf("Dedicated host %s is owned by other cluster %v and cannot be used for new installations, another Dedicated Host must be created separately", foundHost.ID, clusterIDs)))
+					}
+				}
+			}
+		}
+	}
+
+	return allErrs
 }
 
 func validateSecurityGroupIDs(ctx context.Context, meta *Metadata, fldPath *field.Path, platform *awstypes.Platform, pool *awstypes.MachinePool) field.ErrorList {

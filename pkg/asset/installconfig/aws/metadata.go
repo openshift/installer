@@ -25,6 +25,7 @@ type Metadata struct {
 	instanceTypes     map[string]InstanceType
 	images            map[string]ImageInfo
 
+	Hosts           map[string]Host
 	Region          string                     `json:"region,omitempty"`
 	ProvidedSubnets []typesaws.Subnet          `json:"subnets,omitempty"`
 	Services        []typesaws.ServiceEndpoint `json:"services,omitempty"`
@@ -405,4 +406,30 @@ func (m *Metadata) Images(ctx context.Context, amiID string) (ImageInfo, error) 
 	m.images[amiID] = imageInfo
 
 	return imageInfo, nil
+}
+
+// DedicatedHosts retrieves all hosts available for use to verify against this installation for configured region.
+func (m *Metadata) DedicatedHosts(ctx context.Context, hosts []typesaws.DedicatedHost) (map[string]Host, error) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	// Create array of host IDs for client
+	hostIDs := make([]string, len(hosts))
+	for idx, host := range hosts {
+		hostIDs[idx] = host.ID
+	}
+
+	if len(m.Hosts) == 0 {
+		client, err := m.EC2Client(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		m.Hosts, err = dedicatedHosts(ctx, client, hostIDs)
+		if err != nil {
+			return nil, fmt.Errorf("error listing dedicated hosts: %w", err)
+		}
+	}
+
+	return m.Hosts, nil
 }

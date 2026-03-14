@@ -2,12 +2,14 @@ package validation
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/util/validation/field"
 	"k8s.io/utils/ptr"
 
+	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
 )
 
@@ -16,6 +18,7 @@ func TestValidateMachinePool(t *testing.T) {
 	cases := []struct {
 		name     string
 		pool     *aws.MachinePool
+		poolName string
 		expected string
 	}{
 		{
@@ -226,10 +229,167 @@ func TestValidateMachinePool(t *testing.T) {
 			},
 			expected: `^test-path\.throughput: Invalid value: 125: throughput not supported for type gp2$`,
 		},
+		{
+			name: "host placement any available",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityAnyAvailable),
+				},
+			},
+		},
+		{
+			name: "valid dedicated hosts",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-09dcf61cb388b0149",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "invalid dedicated hosts - missing hostID",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{},
+					},
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost\[0].id: Required value: a hostID must be specified when configuring 'dedicatedHost'$`,
+		},
+		{
+			name: "invalid - hostPlacement without affinity",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{},
+			},
+			expected: `^test-path.hostPlacement.affinity: Required value: affinity is required when hostPlacement is configured$`,
+		},
+		{
+			name: "invalid unknown affinity",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinity("Unknown")),
+				},
+			},
+			expected: `^test-path.hostPlacement.affinity: Unsupported value: "Unknown": supported values: "AnyAvailable", "DedicatedHost"$`,
+		},
+		{
+			name: "any available with dedicated host set",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity:      ptr.To(aws.HostAffinityAnyAvailable),
+					DedicatedHost: []aws.DedicatedHost{{ID: "h-09dcf61cb388b0149"}},
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost: Required value: dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise$`,
+		},
+		{
+			name: "invalid - DedicatedHost affinity without dedicatedHost",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+				},
+			},
+			expected: `^test-path.hostPlacement.dedicatedHost: Required value: dedicatedHost is required when 'affinity' is set to DedicatedHost, and forbidden otherwise$`,
+		},
+		{
+			name: "valid dedicated host - 8 character format",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-1a2b3c4d"},
+					},
+				},
+			},
+		},
+		{
+			name: "valid dedicated host - 8 character format with zone",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-9876abcd",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid dedicated host with zone specified",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-09dcf61cb388b0149",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "valid dedicated host with multiple zones",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{
+							ID: "h-09dcf61cb388b0149",
+						},
+						{
+							ID: "h-0a1b2c3d4e5f60789",
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "dedicated hosts on control plane not allowed",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-1234567890abcdef0"},
+					},
+				},
+			},
+			poolName: "", // Empty poolName indicates control plane
+			expected: `^test-path.hostPlacement: Invalid value:.*: dedicated hosts are not supported on control plane pools$`,
+		},
+		{
+			name: "dedicated hosts on edge pool not allowed",
+			pool: &aws.MachinePool{
+				HostPlacement: &aws.HostPlacement{
+					Affinity: ptr.To(aws.HostAffinityDedicatedHost),
+					DedicatedHost: []aws.DedicatedHost{
+						{ID: "h-1234567890abcdef0"},
+					},
+				},
+			},
+			poolName: types.MachinePoolEdgeRoleName,
+			expected: `^test-path.hostPlacement: Invalid value:.*: dedicated hosts are only supported on worker pools, not on edge pools$`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			err := ValidateMachinePool(platform, tc.pool, field.NewPath("test-path")).ToAggregate()
+			poolName := tc.poolName
+			// If poolName is not specified, default to worker pool unless the test
+			// is explicitly testing control plane or edge pool behavior
+			if poolName == "" && tc.expected != "" &&
+				!strings.Contains(tc.expected, "control plane") &&
+				!strings.Contains(tc.expected, "edge pool") {
+				poolName = types.MachinePoolComputeRoleName
+			} else if poolName == "" && tc.expected == "" {
+				poolName = types.MachinePoolComputeRoleName
+			}
+			err := ValidateMachinePool(platform, tc.pool, poolName, field.NewPath("test-path")).ToAggregate()
 			if tc.expected == "" {
 				assert.NoError(t, err)
 			} else {
