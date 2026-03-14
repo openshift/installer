@@ -173,7 +173,6 @@ func (a *Common) Dependencies() []asset.Asset {
 		&tls.RootCA{},
 		&tls.ServiceAccountKeyPair{},
 		&tls.IronicTLSCert{},
-		&tls.BMCVerifyCA{},
 		&releaseimage.Image{},
 		new(rhcos.Image),
 	}
@@ -676,7 +675,6 @@ func (a *Common) addParentFiles(dependencies asset.Parents) {
 		&tls.ServiceAccountKeyPair{},
 		&tls.JournalCertKey{},
 		&tls.IronicTLSCert{},
-		&tls.BMCVerifyCA{},
 	} {
 		dependencies.Get(asset)
 
