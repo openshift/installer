@@ -8,6 +8,7 @@ spec:
   provisioningNetworkCIDR: "{{.Baremetal.ProvisioningNetworkCIDR}}"
   provisioningNetwork: "{{.Baremetal.ProvisioningNetwork}}"
   provisioningDHCPRange: "{{.Baremetal.ProvisioningDHCPRange}}"
+  provisioningNetworkGateway: "{{.Baremetal.ProvisioningNetworkGateway}}"
   provisioningOSDownloadURL: "{{.ProvisioningOSDownloadURL}}"
   additionalNTPServers: [{{range $index, $server := .Baremetal.AdditionalNTPServers}}{{if $index}},{{end}}"{{$server}}"{{end}}]
   watchAllNamespaces: false

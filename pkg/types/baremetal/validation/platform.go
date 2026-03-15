@@ -175,6 +175,10 @@ func validateDHCPRange(p *baremetal.Platform, fldPath *field.Path) (allErrs fiel
 			allErrs = append(allErrs, field.Invalid(fldPath.Child("bootstrapProvisioningIP"), p.BootstrapProvisioningIP, fmt.Sprintf("%q overlaps with the allocated DHCP range", p.BootstrapProvisioningIP)))
 		}
 	}
+	// Validate ProvisioningNetworkGateway is not in DHCP range
+	if provisioningNetworkGateway := net.ParseIP(p.ProvisioningNetworkGateway); provisioningNetworkGateway != nil && bytes.Compare(provisioningNetworkGateway, start) >= 0 && bytes.Compare(provisioningNetworkGateway, end) <= 0 {
+		allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkGateway"), p.ProvisioningNetworkGateway, fmt.Sprintf("%q overlaps with the allocated DHCP range", p.ProvisioningNetworkGateway)))
+	}
 
 	return
 }
@@ -461,6 +465,12 @@ func ValidatePlatform(p *baremetal.Platform, agentBasedInstallation bool, n *typ
 		}
 	}
 
+	if p.ProvisioningNetworkGateway != "" {
+		if err := validate.IP(p.ProvisioningNetworkGateway); err != nil {
+			allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkGateway"), p.ProvisioningNetworkGateway, err.Error()))
+		}
+	}
+
 	enabledCaps := c.GetEnabledCapabilities()
 	if !agentBasedInstallation && enabledCaps.Has(configv1.ClusterVersionCapabilityMachineAPI) && p.Hosts == nil {
 		allErrs = append(allErrs, field.Invalid(fldPath.Child("hosts"), p.Hosts, "bare metal hosts are missing"))
@@ -602,8 +612,21 @@ func ValidateProvisioningNetworking(p *baremetal.Platform, n *types.Networking, 
 		}
 
 		// Ensure clusterProvisioningIP is in the provisioningNetworkCIDR
-		if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.ClusterProvisioningIP)) {
-			allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.ClusterProvisioningIP)))
+		if p.ClusterProvisioningIP != "" {
+			if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.ClusterProvisioningIP)) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("clusterProvisioningIP"), p.ClusterProvisioningIP, fmt.Sprintf("%q is not in the provisioning network", p.ClusterProvisioningIP)))
+			}
+		}
+
+		// Ensure provisioningNetworkGateway is in the provisioningNetworkCIDR
+		if p.ProvisioningNetworkGateway != "" {
+			if !p.ProvisioningNetworkCIDR.Contains(net.ParseIP(p.ProvisioningNetworkGateway)) {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkGateway"), p.ProvisioningNetworkGateway, fmt.Sprintf("%q is not in the provisioning network", p.ProvisioningNetworkGateway)))
+			}
+			// Ensure gateway is not the same as clusterProvisioningIP
+			if p.ProvisioningNetworkGateway == p.ClusterProvisioningIP {
+				allErrs = append(allErrs, field.Invalid(fldPath.Child("provisioningNetworkGateway"), p.ProvisioningNetworkGateway, "cannot be the same as clusterProvisioningIP"))
+			}
 		}
 
 		// Ensure provisioningNetworkCIDR does not have any host bits set
