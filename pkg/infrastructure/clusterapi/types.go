@@ -72,6 +72,42 @@ type IgnitionInput struct {
 	RootCA           *tls.RootCA
 }
 
+// WithOutput returns a new IgnitionInput with ignition data from the output.
+// This allows chaining multiple ignition edits.
+func (in IgnitionInput) WithOutput(output *IgnitionOutput) IgnitionInput {
+	if output == nil {
+		return in
+	}
+	in.BootstrapIgnData = output.UpdatedBootstrapIgn
+	in.MasterIgnData = output.UpdatedMasterIgn
+	in.WorkerIgnData = output.UpdatedWorkerIgn
+	return in
+}
+
+// IgnitionEditFunc is a function that edits ignition data.
+type IgnitionEditFunc func(context.Context, IgnitionInput) (*IgnitionOutput, error)
+
+// ApplyIgnitionEdits applies multiple ignition edit functions in sequence, passing the ignition output
+// of each as input to the next. Returns the final output or the first error encountered.
+func ApplyIgnitionEdits(ctx context.Context, in IgnitionInput, edits ...IgnitionEditFunc) (*IgnitionOutput, error) {
+	output := &IgnitionOutput{
+		UpdatedBootstrapIgn: in.BootstrapIgnData,
+		UpdatedMasterIgn:    in.MasterIgnData,
+		UpdatedWorkerIgn:    in.WorkerIgnData,
+	}
+
+	for _, edit := range edits {
+		result, err := edit(ctx, in)
+		if err != nil {
+			return nil, err
+		}
+		output = result
+		in = in.WithOutput(result)
+	}
+
+	return output, nil
+}
+
 // IgnitionOutput collects updated Ignition Data for Bootstrap, Master and Worker nodes.
 type IgnitionOutput struct {
 	UpdatedBootstrapIgn []byte
