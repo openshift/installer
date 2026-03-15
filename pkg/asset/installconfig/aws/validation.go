@@ -864,9 +864,18 @@ func validateEndpointAccessibility(endpointURL string) error {
 	if _, err := url.Parse(endpointURL); err != nil {
 		return fmt.Errorf("failed to parse service endpoint url: %w", err)
 	}
-	if _, err := http.Head(endpointURL); err != nil { //nolint:gosec
+
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse // Don't follow redirects
+		},
+	}
+	resp, err := client.Head(endpointURL)
+	if err != nil {
 		return fmt.Errorf("failed to connect to service endpoint url: %w", err)
 	}
+	defer resp.Body.Close()
+
 	return nil
 }
 
