@@ -23,8 +23,6 @@ const (
 var validShortNameCharacters, _ = asciiset.MakeASCIISet("!#$%&'()-0123456789@ABCDEFGHIJKLMNOPQRSTUVWXYZ^_`{}~")
 
 // directoryEntry is a single directory entry
-//
-//nolint:structcheck // we are willing to leave unused elements here so that we can know their reference
 type directoryEntry struct {
 	filenameShort      string
 	fileExtension      string
@@ -66,6 +64,21 @@ func (de *directoryEntry) toBytes() ([]byte, error) {
 	createDate, createTime := timeToDateTime(de.createTime)
 	modifyDate, modifyTime := timeToDateTime(de.modifyTime)
 	accessDate, _ := timeToDateTime(de.accessTime)
+	if de.isSystem {
+		dosBytes[11] |= 0x04
+	} else {
+		dosBytes[11] &= ^byte(0x04)
+	}
+	if de.isHidden {
+		dosBytes[11] |= 0x02
+	} else {
+		dosBytes[11] &= ^byte(0x02)
+	}
+	if de.isReadOnly {
+		dosBytes[11] |= 0x01
+	} else {
+		dosBytes[11] &= ^byte(0x01)
+	}
 	binary.LittleEndian.PutUint16(dosBytes[14:16], createTime)
 	binary.LittleEndian.PutUint16(dosBytes[16:18], createDate)
 	binary.LittleEndian.PutUint16(dosBytes[18:20], accessDate)
@@ -103,7 +116,7 @@ func (de *directoryEntry) toBytes() ([]byte, error) {
 	}
 
 	if de.lowercaseExtension {
-		dosBytes[12] |= 0x04
+		dosBytes[12] |= 0x10
 	}
 	if de.lowercaseShortname {
 		dosBytes[12] |= 0x08
@@ -148,6 +161,9 @@ byteLoop:
 			lfn = tmpLfn + lfn
 			continue
 		}
+		isSystem := b[i+11]&0x04 == 0x04
+		isHidden := b[i+11]&0x02 == 0x02
+		isReadOnly := b[i+11]&0x01 == 0x01
 		// not LFN, so parse regularly
 		createTime := binary.LittleEndian.Uint16(b[i+14 : i+16])
 		createDate := binary.LittleEndian.Uint16(b[i+16 : i+18])
@@ -161,7 +177,7 @@ byteLoop:
 		isArchiveDirty := b[i+11]&0x20 == 0x20
 		isVolumeLabel := b[i+11]&0x08 == 0x08
 		lowercaseShortname := b[i+12]&0x08 == 0x08
-		lowercaseExtension := b[i+12]&0x04 == 0x04
+		lowercaseExtension := b[i+12]&0x10 == 0x10
 
 		entry := directoryEntry{
 			filenameLong:       lfn,
@@ -178,6 +194,9 @@ byteLoop:
 			isVolumeLabel:      isVolumeLabel,
 			lowercaseShortname: lowercaseShortname,
 			lowercaseExtension: lowercaseExtension,
+			isReadOnly:         isReadOnly,
+			isHidden:           isHidden,
+			isSystem:           isSystem,
 		}
 		lfn = ""
 		dirEntries = append(dirEntries, &entry)

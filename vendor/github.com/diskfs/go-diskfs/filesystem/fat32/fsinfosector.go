@@ -19,10 +19,8 @@ const (
 
 const (
 	// unknownFreeDataClusterCount is the fixed flag for unknown number of free data clusters
-	//nolint:varcheck,deadcode // keep for future reference
 	unknownFreeDataClusterCount uint32 = 0xffffffff
 	// unknownlastAllocatedCluster is the fixed flag for unknown most recently allocated cluster
-	//nolint:varcheck,deadcode // keep for future reference
 	unknownlastAllocatedCluster uint32 = 0xffffffff
 )
 

@@ -5,8 +5,8 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/diskfs/go-diskfs/backend"
 	"github.com/diskfs/go-diskfs/partition/part"
-	"github.com/diskfs/go-diskfs/util"
 )
 
 // Table represents an MBR partition table to be applied to a disk or read from a disk
@@ -134,7 +134,7 @@ func (t *Table) Type() string {
 // Read read a partition table from a disk, given the logical block size and physical block size
 //
 //nolint:unused,revive // not used in MBR, but it is important to implement the interface
-func Read(f util.File, logicalBlockSize, physicalBlockSize int) (*Table, error) {
+func Read(f backend.File, logicalBlockSize, physicalBlockSize int) (*Table, error) {
 	// read the data off of the disk
 	b := make([]byte, mbrSize)
 	read, err := f.ReadAt(b, 0)
@@ -168,10 +168,10 @@ func (t *Table) toBytes() []byte {
 }
 
 // Write writes a given MBR Table to disk.
-// Must be passed the util.File to write to and the size of the disk
+// Must be passed the backend.WritableFile to write to and the size of the disk
 //
 //nolint:unused,revive // not used in MBR, but it is important to implement the interface
-func (t *Table) Write(f util.File, size int64) error {
+func (t *Table) Write(f backend.WritableFile, size int64) error {
 	b := t.toBytes()
 
 	written, err := f.WriteAt(b, partitionEntriesStart)
@@ -196,7 +196,7 @@ func (t *Table) GetPartitions() []part.Partition {
 // Verify will attempt to evaluate the headers
 //
 //nolint:unused,revive // not used in MBR, but it is important to implement the interface
-func (t *Table) Verify(f util.File, diskSize uint64) error {
+func (t *Table) Verify(f backend.File, diskSize uint64) error {
 	return nil
 }
 

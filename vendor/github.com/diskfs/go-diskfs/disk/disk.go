@@ -8,28 +8,24 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"os"
 
-	log "github.com/sirupsen/logrus"
-
+	"github.com/diskfs/go-diskfs/backend"
 	"github.com/diskfs/go-diskfs/filesystem"
 	"github.com/diskfs/go-diskfs/filesystem/ext4"
 	"github.com/diskfs/go-diskfs/filesystem/fat32"
 	"github.com/diskfs/go-diskfs/filesystem/iso9660"
 	"github.com/diskfs/go-diskfs/filesystem/squashfs"
 	"github.com/diskfs/go-diskfs/partition"
+	log "github.com/sirupsen/logrus"
 )
 
 // Disk is a reference to a single disk block device or image that has been Create() or Open()
 type Disk struct {
-	File              *os.File
-	Info              os.FileInfo
-	Type              Type
+	Backend           backend.Storage
 	Size              int64
 	LogicalBlocksize  int64
 	PhysicalBlocksize int64
 	Table             partition.Table
-	Writable          bool
 	DefaultBlocks     bool
 }
 
@@ -43,17 +39,13 @@ const (
 	Device
 )
 
-var (
-	errIncorrectOpenMode = errors.New("disk file or device not open for write")
-)
-
 // GetPartitionTable retrieves a PartitionTable for a Disk
 //
 // If the table is able to be retrieved from the disk, it is saved in the instance.
 //
 // returns an error if the Disk is invalid or does not exist, or the partition table is unknown
 func (d *Disk) GetPartitionTable() (partition.Table, error) {
-	t, err := partition.Read(d.File, int(d.LogicalBlocksize), int(d.PhysicalBlocksize))
+	t, err := partition.Read(d.Backend, int(d.LogicalBlocksize), int(d.PhysicalBlocksize))
 	if err != nil {
 		return nil, err
 	}
@@ -68,24 +60,19 @@ func (d *Disk) GetPartitionTable() (partition.Table, error) {
 //
 // Actual writing of the table is delegated to the individual implementation
 func (d *Disk) Partition(table partition.Table) error {
-	if !d.Writable {
-		return errIncorrectOpenMode
+	rwBackingFile, err := d.Backend.Writable()
+	if err != nil {
+		return err
 	}
+
 	// fill in the uuid
-	err := table.Write(d.File, d.Size)
+	err = table.Write(rwBackingFile, d.Size)
 	if err != nil {
 		return fmt.Errorf("failed to write partition table: %v", err)
 	}
 	d.Table = table
-	// the partition table needs to be re-read only if
-	// the disk file is an actual block device
-	if d.Type == Device {
-		err = d.ReReadPartitionTable()
-		if err != nil {
-			return fmt.Errorf("unable to re-read the partition table. Kernel still uses old partition table: %v", err)
-		}
-	}
-	return nil
+
+	return d.ReReadPartitionTable()
 }
 
 // WritePartitionContents writes the contents of an io.Reader to a given partition
@@ -95,8 +82,10 @@ func (d *Disk) Partition(table partition.Table) error {
 // returns an error if there was an error writing to the disk, reading from the reader, the table
 // is invalid, or the partition is invalid
 func (d *Disk) WritePartitionContents(part int, reader io.Reader) (int64, error) {
-	if !d.Writable {
-		return -1, errIncorrectOpenMode
+	backingRwFile, err := d.Backend.Writable()
+
+	if err != nil {
+		return -1, err
 	}
 	if d.Table == nil {
 		return -1, fmt.Errorf("cannot write contents of a partition on a disk without a partition table")
@@ -109,7 +98,7 @@ func (d *Disk) WritePartitionContents(part int, reader io.Reader) (int64, error)
 	if part > len(partitions) {
 		return -1, fmt.Errorf("cannot write contents of partition %d which is greater than max partition %d", part, len(partitions))
 	}
-	written, err := partitions[part-1].WriteContents(d.File, reader)
+	written, err := partitions[part-1].WriteContents(backingRwFile, reader)
 	return int64(written), err
 }
 
@@ -131,7 +120,7 @@ func (d *Disk) ReadPartitionContents(part int, writer io.Writer) (int64, error) 
 	if part > len(partitions) {
 		return -1, fmt.Errorf("cannot read contents of partition %d which is greater than max partition %d", part, len(partitions))
 	}
-	return partitions[part-1].ReadContents(d.File, writer)
+	return partitions[part-1].ReadContents(d.Backend, writer)
 }
 
 // FilesystemSpec represents the specification of a filesystem to be created
@@ -162,9 +151,8 @@ func (d *Disk) CreateFilesystem(spec FilesystemSpec) (filesystem.FileSystem, err
 	var (
 		size, start int64
 	)
+
 	switch {
-	case !d.Writable:
-		return nil, errIncorrectOpenMode
 	case spec.Partition == 0:
 		size = d.Size
 		start = 0
@@ -183,13 +171,13 @@ func (d *Disk) CreateFilesystem(spec FilesystemSpec) (filesystem.FileSystem, err
 
 	switch spec.FSType {
 	case filesystem.TypeFat32:
-		return fat32.Create(d.File, size, start, d.LogicalBlocksize, spec.VolumeLabel)
+		return fat32.Create(d.Backend, size, start, d.LogicalBlocksize, spec.VolumeLabel)
 	case filesystem.TypeISO9660:
-		return iso9660.Create(d.File, size, start, d.LogicalBlocksize, spec.WorkDir)
+		return iso9660.Create(d.Backend, size, start, d.LogicalBlocksize, spec.WorkDir)
 	case filesystem.TypeExt4:
-		return ext4.Create(d.File, size, start, d.LogicalBlocksize, nil)
+		return ext4.Create(d.Backend, size, start, d.LogicalBlocksize, &ext4.Params{VolumeName: spec.VolumeLabel})
 	case filesystem.TypeSquashfs:
-		return nil, errors.New("squashfs is a read-only filesystem")
+		return squashfs.Create(d.Backend, size, start, d.LogicalBlocksize)
 	default:
 		return nil, errors.New("unknown filesystem type requested")
 	}
@@ -228,7 +216,7 @@ func (d *Disk) GetFilesystem(part int) (filesystem.FileSystem, error) {
 
 	// just try each type
 	log.Debug("trying fat32")
-	fat32FS, err := fat32.Read(d.File, size, start, d.LogicalBlocksize)
+	fat32FS, err := fat32.Read(d.Backend, size, start, d.LogicalBlocksize)
 	if err == nil {
 		return fat32FS, nil
 	}
@@ -238,17 +226,17 @@ func (d *Disk) GetFilesystem(part int) (filesystem.FileSystem, error) {
 		pbs = 0
 	}
 	log.Debugf("trying iso9660 with physical block size %d", pbs)
-	iso9660FS, err := iso9660.Read(d.File, size, start, pbs)
+	iso9660FS, err := iso9660.Read(d.Backend, size, start, pbs)
 	if err == nil {
 		return iso9660FS, nil
 	}
 	log.Debugf("iso9660 failed: %v", err)
-	squashFS, err := squashfs.Read(d.File, size, start, d.LogicalBlocksize)
+	squashFS, err := squashfs.Read(d.Backend, size, start, d.LogicalBlocksize)
 	if err == nil {
 		return squashFS, nil
 	}
 	log.Debug("trying ext4")
-	ext4FS, err := ext4.Read(d.File, size, start, d.LogicalBlocksize)
+	ext4FS, err := ext4.Read(d.Backend, size, start, d.LogicalBlocksize)
 	if err == nil {
 		return ext4FS, nil
 	}
@@ -258,7 +246,7 @@ func (d *Disk) GetFilesystem(part int) (filesystem.FileSystem, error) {
 
 // Close the disk. Once successfully closed, it can no longer be used.
 func (d *Disk) Close() error {
-	if err := d.File.Close(); err != nil {
+	if err := d.Backend.Close(); err != nil {
 		return err
 	}
 	*d = Disk{}

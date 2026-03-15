@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"io"
 	"os"
+
+	"github.com/diskfs/go-diskfs/filesystem"
 )
 
 // File represents a single file in a squashfs filesystem
@@ -18,6 +20,7 @@ type File struct {
 	offset        int64
 	filesystem    *FileSystem
 	blockLocation int64  // the position of the last block decompressed
+	blockSize     uint32 // the size of the last block decompressed, needed for sparse files
 	block         []byte // the actual last block decompressed
 }
 
@@ -45,7 +48,7 @@ func (fl *File) Read(b []byte) (int, error) {
 	// 5- read in and uncompress the necessary blocks
 	fs := fl.filesystem
 	size := fl.size() - fl.offset
-	location := int64(fl.startBlock)
+	location := int64(fl.blocksStart)
 	maxRead := len(b)
 
 	// if there is nothing left to read, just return EOF
@@ -102,7 +105,8 @@ func (fl *File) Read(b []byte) (int, error) {
 				return read, fmt.Errorf("unexpected block.size=%d > fs.blocksize=%d", block.size, fs.blocksize)
 			}
 			var input []byte
-			if fl.blockLocation == location && fl.block != nil {
+			// check location and size, location can be the same for sparse files but with a size of 0
+			if fl.blockLocation == location && fl.blockSize == block.size && fl.block != nil {
 				// Read last block from cache
 				input = fl.block
 			} else {
@@ -114,6 +118,7 @@ func (fl *File) Read(b []byte) (int, error) {
 				// Cache the last block
 				fl.blockLocation = location
 				fl.block = input
+				fl.blockSize = block.size
 			}
 			outputBlock(input)
 		}
@@ -148,7 +153,7 @@ func (fl *File) Read(b []byte) (int, error) {
 //
 //nolint:unused,revive // but it is important to implement the interface
 func (fl *File) Write(p []byte) (int, error) {
-	return 0, fmt.Errorf("cannot write to a read-only squashfs filesystem")
+	return 0, filesystem.ErrReadonlyFilesystem
 }
 
 // Seek set the offset to a particular point in the file
