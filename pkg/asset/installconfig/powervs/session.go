@@ -375,6 +375,10 @@ func getSecondSessionVarsFromUser(psv *SessionVars, pss *SessionStore) error {
 			return fmt.Errorf("failed to list resourceGroups: %w", err)
 		}
 
+		if len(resourceGroups.Resources) == 0 {
+			return fmt.Errorf("there are no resource groups in the account. Follow https://cloud.ibm.com/docs/account?topic=account-rgs for instructions to create a resource group")
+		}
+
 		resourceGroupsSurvey := make([]string, len(resourceGroups.Resources))
 		for i, resourceGroup := range resourceGroups.Resources {
 			resourceGroupsSurvey[i] = *resourceGroup.Name
@@ -384,8 +388,8 @@ func getSecondSessionVarsFromUser(psv *SessionVars, pss *SessionStore) error {
 			{
 				Prompt: &survey.Select{
 					Message: "Resource Group",
-					Help:    "The Power VS resource group to be used for installation.",
-					Default: "",
+					Help:    "The PowerVS resource group to be used for installation.",
+					Default: resourceGroupsSurvey[0],
 					Options: resourceGroupsSurvey,
 				},
 			},
