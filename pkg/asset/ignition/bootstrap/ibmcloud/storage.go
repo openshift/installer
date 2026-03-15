@@ -3,7 +3,7 @@ package ibmcloud
 import (
 	"fmt"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"k8s.io/utils/ptr"
 
 	"github.com/openshift/installer/pkg/asset/ignition"

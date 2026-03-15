@@ -9,7 +9,7 @@ import (
 	"strings"
 	"time"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/google/uuid"
 	"github.com/kdomanski/iso9660"
 	"github.com/nutanix-cloud-native/prism-go-client/utils"

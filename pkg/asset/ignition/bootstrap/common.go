@@ -17,7 +17,7 @@ import (
 
 	"github.com/containers/image/v5/pkg/sysregistriesv2"
 	ignutil "github.com/coreos/ignition/v2/config/util"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"github.com/vincent-petithory/dataurl"
@@ -254,6 +254,15 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 	case aztypes.Name:
 		// See https://issues.redhat.com/browse/OCPBUGS-43625
 		ignition.AppendVarPartition(a.Config)
+	}
+
+	if cc := installConfig.Config.ConfidentialCluster; cc != nil {
+		a.Config.Ignition.Config.Merge = append(
+			a.Config.Ignition.Config.Merge,
+			igntypes.Resource{
+				Source: &cc.IgnitionClevisPinTrustee,
+			},
+		)
 	}
 
 	return nil

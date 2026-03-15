@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/stretchr/testify/assert"
 	"k8s.io/utils/ptr"
 

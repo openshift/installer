@@ -231,6 +231,10 @@ type InstallConfig struct {
 	// OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
 	// +optional
 	OSImageStream OSImageStream `json:"osImageStream,omitempty"`
+
+	// ConfidentialCluster is the configuration for setting up a confidential cluster with remote attestation and disk encryption.
+	// +optional
+	ConfidentialCluster *ConfidentialCluster `json:"confidentialCluster,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
@@ -675,3 +679,15 @@ const (
 	// OSImageStreamRHCOS10 represents the RHEL 10 OS Image Stream.
 	OSImageStreamRHCOS10 OSImageStream = "rhel-10"
 )
+
+// ConfidentialCluster represents the configuration for confidential clusters with remote attestation and disk encryption.
+// Note: The underlying confidential computing used by cluster nodes(like SEV-SNP, TDX) is configured by platform-specific
+// configuration, not in this struct.
+type ConfidentialCluster struct {
+	// IgnitionClevisPinTrustee is the URL of the ignition configuration for LUKS encryption using Clevis. This ignition
+	// configuration is used by bootstrap, master and worker nodes to encrypt and decrypt their root disk. It's served by
+	// an external trustee server which performs remote attestation before returning the requested ignition config.
+	// Example: https://10.73.210.28:8000/ignition-clevis-pin-trustee
+	// +kubebuilder:validation:Required
+	IgnitionClevisPinTrustee string `json:"ignitionClevisPinTrustee"`
+}

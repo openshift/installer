@@ -6,7 +6,7 @@ import (
 	"net/url"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/vincent-petithory/dataurl"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -24,7 +24,8 @@ import (
 const directory = "openshift"
 
 // pointerIgnitionConfig generates a config which references the remote config
-// served by the machine config server.
+// served by the machine config server, and the trustee server if confidential
+// cluster with remote attestation is configured.
 func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *igntypes.Config {
 	var ignitionHost string
 	// Default platform independent ignitionHost
@@ -48,7 +49,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIPs[0], "22623")
 		}
 	}
-	return &igntypes.Config{
+	var config = &igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 			Config: igntypes.IgnitionConfig{
@@ -71,13 +72,39 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			},
 		},
 	}
+
+	if cc := installConfig.ConfidentialCluster; cc != nil {
+		config.Ignition.Config.Merge = append(
+			config.Ignition.Config.Merge,
+			igntypes.Resource{
+				Source: &cc.IgnitionClevisPinTrustee,
+			},
+		)
+	}
+
+	return config
 }
 
 // generatePointerMachineConfig generates a machineconfig when a user customizes
 // the pointer ignition file manually in an IPI deployment
 func generatePointerMachineConfig(config igntypes.Config, role string) (*mcfgv1.MachineConfig, error) {
-	// Remove the merge section from the pointer config
-	config.Ignition.Config.Merge = nil
+	// Remove only the installer-generated MCS pointer while preserving any
+	// additional merge sources, such as ConfidentialCluster trustee config.
+	filtered := config.Ignition.Config.Merge[:0]
+	for _, merge := range config.Ignition.Config.Merge {
+		if merge.Source == nil {
+			filtered = append(filtered, merge)
+			continue
+		}
+
+		u, err := url.Parse(*merge.Source)
+		if err == nil && u.Path == fmt.Sprintf("/config/%s", role) {
+			continue
+		}
+
+		filtered = append(filtered, merge)
+	}
+	config.Ignition.Config.Merge = filtered
 
 	rawExt, err := ignition.ConvertToRawExtension(config)
 	if err != nil {
