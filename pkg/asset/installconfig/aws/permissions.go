@@ -29,8 +29,14 @@ const (
 	// PermissionCreateNetworking is an additional set of permissions required when the installer creates networking resources.
 	PermissionCreateNetworking PermissionGroup = "create-networking"
 
+	// PermissionCreateDualstackNetworking is an additional set of permissions required when the installer creates dualstack networking resources.
+	PermissionCreateDualstackNetworking PermissionGroup = "create-dualstack-networking"
+
 	// PermissionDeleteNetworking is a set of permissions required when the installer destroys networking resources.
 	PermissionDeleteNetworking PermissionGroup = "delete-networking"
+
+	// PermissionDeleteDualstackNetworking is an additional set of permissions required when the installer destroys dualstack networking resources.
+	PermissionDeleteDualstackNetworking PermissionGroup = "delete-dualstack-networking"
 
 	// PermissionDeleteSharedNetworking is a set of permissions required when the installer destroys resources from a shared-network cluster.
 	PermissionDeleteSharedNetworking PermissionGroup = "delete-shared-networking"
@@ -258,6 +264,11 @@ var permissions = map[PermissionGroup][]string{
 		// Needed by CAPA to update outdated routes
 		"ec2:ReplaceRoute",
 	},
+	// Permissions required for creating dualstack network resources
+	PermissionCreateDualstackNetworking: {
+		"ec2:DescribeEgressOnlyInternetGateways",
+		"ec2:CreateEgressOnlyInternetGateway",
+	},
 	// Permissions required for deleting network resources
 	PermissionDeleteNetworking: {
 		"ec2:DeleteDhcpOptions",
@@ -272,6 +283,10 @@ var permissions = map[PermissionGroup][]string{
 		"ec2:DisassociateRouteTable",
 		"ec2:ReleaseAddress",
 		"ec2:ReplaceRouteTableAssociation",
+	},
+	// Permissions required for deleting dualstack network resources
+	PermissionDeleteDualstackNetworking: {
+		"ec2:DeleteEgressOnlyInternetGateway",
 	},
 	// Permissions required for deleting a cluster with shared network resources
 	PermissionDeleteSharedNetworking: {
@@ -491,6 +506,10 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 
 	if !usingExistingVPC {
 		permissionGroups = append(permissionGroups, PermissionCreateNetworking)
+
+		if ic.AWS.IPFamily.DualStackEnabled() {
+			permissionGroups = append(permissionGroups, PermissionCreateDualstackNetworking)
+		}
 	}
 
 	if !usingExistingPrivateZone {
@@ -514,6 +533,9 @@ func RequiredPermissionGroups(ic *types.InstallConfig) []PermissionGroup {
 			permissionGroups = append(permissionGroups, PermissionDeleteSharedNetworking)
 		} else {
 			permissionGroups = append(permissionGroups, PermissionDeleteNetworking)
+			if ic.AWS.IPFamily.DualStackEnabled() {
+				permissionGroups = append(permissionGroups, PermissionDeleteDualstackNetworking)
+			}
 		}
 		if !usingExistingPrivateZone {
 			permissionGroups = append(permissionGroups, PermissionDeleteHostedZone)

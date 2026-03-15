@@ -10,6 +10,7 @@ import (
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
 	"github.com/openshift/installer/pkg/types/aws"
+	"github.com/openshift/installer/pkg/types/network"
 )
 
 func basicInstallConfig() types.InstallConfig {
@@ -989,6 +990,53 @@ func TestIncludesEdgeDefaultInstance(t *testing.T) {
 			ic := validBYOSubnetsInstallConfig()
 			requiredPerms := RequiredPermissionGroups(ic)
 			assert.NotContains(t, requiredPerms, PermissionEdgeDefaultInstance)
+		})
+	})
+}
+
+func TestDualstackNetworkingPermissions(t *testing.T) {
+	t.Run("Should include", func(t *testing.T) {
+		t.Run("create and delete dualstack permissions when dualstack IPv4 primary enabled", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.AWS.VPC.Subnets = nil
+			ic.AWS.IPFamily = network.DualStackIPv4Primary
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionCreateDualstackNetworking)
+			assert.Contains(t, requiredPerms, PermissionDeleteDualstackNetworking)
+		})
+		t.Run("create and delete dualstack permissions when dualstack IPv6 primary enabled", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.AWS.VPC.Subnets = nil
+			ic.AWS.IPFamily = network.DualStackIPv6Primary
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.Contains(t, requiredPerms, PermissionCreateDualstackNetworking)
+			assert.Contains(t, requiredPerms, PermissionDeleteDualstackNetworking)
+		})
+	})
+
+	t.Run("Should not include", func(t *testing.T) {
+		t.Run("dualstack permissions when VPC specified", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.AWS.IPFamily = network.DualStackIPv4Primary
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCreateDualstackNetworking)
+			assert.NotContains(t, requiredPerms, PermissionDeleteDualstackNetworking)
+		})
+		t.Run("dualstack permissions when IPv4 only", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.AWS.VPC.Subnets = nil
+			ic.AWS.IPFamily = network.IPv4
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionCreateDualstackNetworking)
+			assert.NotContains(t, requiredPerms, PermissionDeleteDualstackNetworking)
+		})
+		t.Run("dualstack delete permissions on secret regions", func(t *testing.T) {
+			ic := validBYOSubnetsInstallConfig()
+			ic.AWS.VPC.Subnets = nil
+			ic.AWS.Region = "us-iso-east-1"
+			ic.AWS.IPFamily = network.DualStackIPv4Primary
+			requiredPerms := RequiredPermissionGroups(ic)
+			assert.NotContains(t, requiredPerms, PermissionDeleteDualstackNetworking)
 		})
 	})
 }
