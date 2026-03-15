@@ -19,6 +19,7 @@ type InstanceType struct {
 	DefaultVCpus int64
 	MemInMiB     int64
 	Arches       []string
+	Hypervisor   string
 	Networking   Networking
 	Features     []string
 }
@@ -38,6 +39,7 @@ func instanceTypes(ctx context.Context, client *ec2.Client) (map[string]Instance
 			typeInfo := InstanceType{
 				DefaultVCpus: int64(aws.ToInt32(sdkTypeInfo.VCpuInfo.DefaultVCpus)),
 				MemInMiB:     aws.ToInt64(sdkTypeInfo.MemoryInfo.SizeInMiB),
+				Hypervisor:   string(sdkTypeInfo.Hypervisor),
 			}
 
 			for _, arch := range sdkTypeInfo.ProcessorInfo.SupportedArchitectures {
