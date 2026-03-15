@@ -116,15 +116,16 @@ func TestCreatedAssetsAreNotDirty(t *testing.T) {
 			}
 
 			emptyAssets := map[string]bool{
-				"Arbiter Ignition Config":       true, // no files for non arbiter cluster
-				"Arbiter Machines":              true, // no files for the 'none' platform
-				"Master Machines":               true, // no files for the 'none' platform
-				"Worker Machines":               true, // no files for the 'none' platform
-				"Cluster API Manifests":         true, // no files for the 'none' platform and ClusterAPIInstall feature gate not set
-				"Cluster API Machine Manifests": true, // no files for the 'none' platform and ClusterAPIInstall feature gate not set
-				"Metadata":                      true, // read-only
-				"Kubeadmin Password":            true, // read-only
-				"InternalReleaseImageTLSSecret": true, // no files when NoRegistryClusterInstall feature gate is not set
+				"Arbiter Ignition Config":                true, // no files for non arbiter cluster
+				"Arbiter Machines":                       true, // no files for the 'none' platform
+				"Master Machines":                        true, // no files for the 'none' platform
+				"Worker Machines":                        true, // no files for the 'none' platform
+				"Cluster API Manifests":                  true, // no files for the 'none' platform and ClusterAPIInstall feature gate not set
+				"Cluster API Machine Manifests":          true, // no files for the 'none' platform and ClusterAPIInstall feature gate not set
+				"Metadata":                               true, // read-only
+				"Kubeadmin Password":                     true, // read-only
+				"InternalReleaseImageTLSSecret":          true, // no files when NoRegistryClusterInstall feature gate is not set
+				"InternalReleaseImageRegistryAuthSecret": true, // no files when NoRegistryClusterInstall feature gate is not set
 			}
 			for _, a := range tc.targets {
 				name := a.Name()
