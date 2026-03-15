@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -294,6 +295,7 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 		name                  string
 		assets                map[string][]string
 		onDiskAssets          []string
+		stateFileAssets       []string
 		target                string
 		expectedGenerationLog []string
 		expectedDirty         bool
@@ -305,6 +307,7 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 				"b": {},
 			},
 			onDiskAssets:          nil,
+			stateFileAssets:       nil,
 			target:                "a",
 			expectedGenerationLog: []string{"b", "a"},
 			expectedDirty:         false,
@@ -316,6 +319,7 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 				"b": {},
 			},
 			onDiskAssets:          []string{"a"},
+			stateFileAssets:       nil,
 			target:                "a",
 			expectedGenerationLog: []string{},
 			expectedDirty:         false,
@@ -327,6 +331,7 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 				"b": {},
 			},
 			onDiskAssets:          []string{"b"},
+			stateFileAssets:       nil,
 			target:                "a",
 			expectedGenerationLog: []string{"a"},
 			expectedDirty:         true,
@@ -340,17 +345,31 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 				"d": {},
 			},
 			onDiskAssets:          []string{"d"},
+			stateFileAssets:       nil,
 			target:                "a",
 			expectedGenerationLog: []string{"b", "c", "a"},
 			expectedDirty:         true,
 		},
 		{
-			name: "re-generate when both parents and children are on-disk",
+			name: "preserve both parent and child when both are user-provided on-disk configs",
 			assets: map[string][]string{
 				"a": {"b"},
 				"b": {},
 			},
 			onDiskAssets:          []string{"a", "b"},
+			stateFileAssets:       nil,
+			target:                "a",
+			expectedGenerationLog: []string{},
+			expectedDirty:         true,
+		},
+		{
+			name: "re-generate when child was previously generated (in state file) and parent is on-disk",
+			assets: map[string][]string{
+				"a": {"b"},
+				"b": {},
+			},
+			onDiskAssets:          []string{"a", "b"},
+			stateFileAssets:       []string{"a"}, // a was previously generated
 			target:                "a",
 			expectedGenerationLog: []string{"a"},
 			expectedDirty:         true,
@@ -360,7 +379,8 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			clearAssetBehaviors()
 			store := &storeImpl{
-				assets: map[reflect.Type]*assetState{},
+				assets:          map[reflect.Type]*assetState{},
+				stateFileAssets: map[string]json.RawMessage{},
 			}
 			assets := make(map[string]asset.Asset, len(tc.assets))
 			for name := range tc.assets {
@@ -376,6 +396,12 @@ func TestStoreFetchOnDiskAssets(t *testing.T) {
 			for _, name := range tc.onDiskAssets {
 				onDiskAssets[reflect.TypeOf(assets[name])] = true
 			}
+
+			// Simulate assets in state file
+			for _, name := range tc.stateFileAssets {
+				store.stateFileAssets[reflect.TypeOf(assets[name]).String()] = json.RawMessage("{}")
+			}
+
 			err := store.fetch(context.Background(), assets[tc.target], "")
 			assert.NoError(t, err, "unexpected error")
 			assert.EqualValues(t, tc.expectedGenerationLog, generationLog)
@@ -419,6 +445,112 @@ func TestStoreFetchIdempotency(t *testing.T) {
 	}
 	filepath.Walk(tempDir, walkFunc)
 	assert.Equal(t, expectedFiles, actualFiles, "unexpected files on disk")
+}
+
+func TestStoreFetchUserProvidedConfigs(t *testing.T) {
+	cases := []struct {
+		name                  string
+		assets                map[string][]string
+		onDiskAssets          []string
+		stateFileAssets       []string
+		target                string
+		expectedGenerationLog []string
+		expectedSource        assetSource
+		description           string
+	}{
+		{
+			name: "OVE case: both agent-config and nmstateconfig on disk, not in state file",
+			assets: map[string][]string{
+				"a": {"b"}, // a = nmstateconfig, b = agent-config
+				"b": {},
+			},
+			onDiskAssets:          []string{"a", "b"},
+			stateFileAssets:       nil,
+			target:                "a",
+			expectedGenerationLog: []string{},
+			expectedSource:        onDiskSource,
+			description:           "Both user configs should be preserved without regeneration",
+		},
+		{
+			name: "OVE case with intermediate asset: agent-config -> intermediate -> nmstateconfig",
+			assets: map[string][]string{
+				"a": {"c"}, // a = nmstateconfig (WritableAsset, on disk)
+				"c": {"b"}, // c = intermediate non-writable asset (AgentHosts, generated)
+				"b": {},    // b = agent-config (WritableAsset, on disk)
+			},
+			onDiskAssets:          []string{"a", "b"}, // c is NOT on disk (it's generated)
+			stateFileAssets:       nil,
+			target:                "a",
+			expectedGenerationLog: []string{},
+			expectedSource:        onDiskSource,
+			description:           "nmstateconfig should be preserved even with intermediate non-writable asset",
+		},
+		{
+			name: "Normal case: previously generated asset regenerated when parent changes",
+			assets: map[string][]string{
+				"a": {"b"},
+				"b": {},
+			},
+			onDiskAssets:          []string{"b"},
+			stateFileAssets:       []string{"a"},
+			target:                "a",
+			expectedGenerationLog: []string{"a"},
+			expectedSource:        generatedSource,
+			description:           "When child is in state file (previously generated), regenerate it when parent on disk",
+		},
+		{
+			name: "Multiple user configs: all on disk, none in state file",
+			assets: map[string][]string{
+				"a": {"b", "c"},
+				"b": {},
+				"c": {},
+			},
+			onDiskAssets:          []string{"a", "b", "c"},
+			stateFileAssets:       nil,
+			target:                "a",
+			expectedGenerationLog: []string{},
+			expectedSource:        onDiskSource,
+			description:           "All user-provided configs should be preserved",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			clearAssetBehaviors()
+			tempDir := t.TempDir()
+
+			// Create store with state file if needed
+			store := &storeImpl{
+				directory:       tempDir,
+				assets:          map[reflect.Type]*assetState{},
+				stateFileAssets: map[string]json.RawMessage{},
+			}
+
+			assets := make(map[string]asset.Asset, len(tc.assets))
+			for name := range tc.assets {
+				assets[name] = newTestStoreAsset(name)
+			}
+			for name, deps := range tc.assets {
+				dependenciesOfAsset := make([]asset.Asset, len(deps))
+				for i, d := range deps {
+					dependenciesOfAsset[i] = assets[d]
+				}
+				dependencies[reflect.TypeOf(assets[name])] = dependenciesOfAsset
+			}
+			for _, name := range tc.onDiskAssets {
+				onDiskAssets[reflect.TypeOf(assets[name])] = true
+			}
+
+			// Simulate assets in state file
+			for _, name := range tc.stateFileAssets {
+				store.stateFileAssets[reflect.TypeOf(assets[name]).String()] = json.RawMessage("{}")
+			}
+
+			err := store.fetch(context.Background(), assets[tc.target], "")
+			assert.NoError(t, err, "unexpected error: %s", tc.description)
+			assert.EqualValues(t, tc.expectedGenerationLog, generationLog, tc.description)
+			assert.Equal(t, tc.expectedSource, store.assets[reflect.TypeOf(assets[tc.target])].source, tc.description)
+		})
+	}
 }
 
 func TestStoreLoadOnDiskAssets(t *testing.T) {
