@@ -18,6 +18,7 @@ package v1beta1
 
 import (
 	"fmt"
+	"maps"
 	"reflect"
 )
 
@@ -69,9 +70,7 @@ func (t Tags) Difference(other Tags) Tags {
 
 // Merge merges in tags from other. If a tag already exists, it is replaced by the tag in other.
 func (t Tags) Merge(other Tags) {
-	for k, v := range other {
-		t[k] = v
-	}
+	maps.Copy(t, other)
 }
 
 // AddSpecVersionHashTag adds a spec version hash to the Azure resource tags to determine quickly if state has changed.
@@ -192,9 +191,7 @@ type BuildParams struct {
 // Build builds tags including the cluster tag and returns them in map form.
 func Build(params BuildParams) Tags {
 	tags := make(Tags)
-	for k, v := range params.Additional {
-		tags[k] = v
-	}
+	maps.Copy(tags, params.Additional)
 
 	tags[ClusterTagKey(params.ClusterName)] = string(params.Lifecycle)
 	if params.Role != nil {

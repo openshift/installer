@@ -26,7 +26,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/tools/record"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -77,7 +77,7 @@ func (r *AzureJSONMachinePoolReconciler) SetupWithManager(ctx context.Context, m
 			&clusterv1.Cluster{},
 			handler.EnqueueRequestsFromMapFunc(azureMachinePoolMapper),
 			builder.WithPredicates(
-				predicates.ClusterPausedTransitionsOrInfrastructureReady(mgr.GetScheme(), log),
+				predicates.ClusterPausedTransitionsOrInfrastructureProvisioned(mgr.GetScheme(), log),
 				predicates.ResourceNotPausedAndHasFilterLabel(mgr.GetScheme(), log, r.WatchFilterValue),
 			),
 		).
@@ -132,8 +132,8 @@ func (r *AzureJSONMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl
 
 	log = log.WithValues("cluster", cluster.Name)
 
-	if cluster.Spec.InfrastructureRef == nil {
-		log.Info("infra ref is nil")
+	if !cluster.Spec.InfrastructureRef.IsDefined() {
+		log.Info("infra ref is not defined")
 		return ctrl.Result{}, nil
 	}
 
@@ -177,8 +177,10 @@ func (r *AzureJSONMachinePoolReconciler) Reconcile(ctx context.Context, req ctrl
 	}
 
 	if azureMachinePool.Spec.Identity == infrav1.VMIdentityNone {
-		log.Info(fmt.Sprintf("WARNING, %s", spIdentityWarning))
-		r.Recorder.Eventf(azureMachinePool, corev1.EventTypeWarning, "VMIdentityNone", spIdentityWarning)
+		if azureCluster := getAzureClusterFromCluster(ctx, r.Client, cluster); azureCluster != nil && isUsingSPCredentials(ctx, r.Client, azureCluster) {
+			log.Info(fmt.Sprintf("WARNING, %s", spIdentityWarning))
+			r.Recorder.Eventf(azureMachinePool, corev1.EventTypeWarning, "VMIdentityNone", spIdentityWarning)
+		}
 	}
 
 	newSecret, err := GetCloudProviderSecret(

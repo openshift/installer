@@ -43,11 +43,10 @@ import (
 	cgrecord "k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
 	"k8s.io/utils/ptr"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
-	kubeadmv1 "sigs.k8s.io/cluster-api/bootstrap/kubeadm/api/v1beta1"
+	bootstrapv1 "sigs.k8s.io/cluster-api/api/bootstrap/kubeadm/v1beta2"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/controllers/clustercache"
 	"sigs.k8s.io/cluster-api/controllers/remote"
-	expv1 "sigs.k8s.io/cluster-api/exp/api/v1beta1"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/util/flags"
 	"sigs.k8s.io/cluster-api/util/record"
@@ -81,8 +80,7 @@ func init() {
 	_ = infrav1.AddToScheme(scheme)
 	_ = infrav1exp.AddToScheme(scheme)
 	_ = clusterv1.AddToScheme(scheme)
-	_ = expv1.AddToScheme(scheme)
-	_ = kubeadmv1.AddToScheme(scheme)
+	_ = bootstrapv1.AddToScheme(scheme)
 	_ = asoresourcesv1.AddToScheme(scheme)
 	_ = asocontainerservicev1api20210501.AddToScheme(scheme)
 	_ = asocontainerservicev1api20230201.AddToScheme(scheme)
@@ -433,6 +431,17 @@ func registerControllers(ctx context.Context, mgr manager.Manager) {
 		CredentialCache:  credCache,
 	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachineConcurrency}); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "AzureJSONTemplate")
+		os.Exit(1)
+	}
+
+	if err := (&controllers.AzureMachineTemplateReconciler{
+		Client:           mgr.GetClient(),
+		Recorder:         mgr.GetEventRecorderFor("azuremachinetemplate-controller"),
+		Timeouts:         timeouts,
+		WatchFilterValue: watchFilterValue,
+		CredentialCache:  credCache,
+	}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: azureMachineConcurrency, SkipNameValidation: ptr.To(true)}); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "AzureMachineTemplate")
 		os.Exit(1)
 	}
 

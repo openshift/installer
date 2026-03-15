@@ -26,10 +26,11 @@ import (
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/record"
-	clusterv1 "sigs.k8s.io/cluster-api/api/v1beta1"
+	"k8s.io/utils/ptr"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util"
 	"sigs.k8s.io/cluster-api/util/annotations"
-	"sigs.k8s.io/cluster-api/util/conditions"
+	v1beta1conditions "sigs.k8s.io/cluster-api/util/deprecated/v1beta1/conditions"
 	"sigs.k8s.io/cluster-api/util/predicates"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
@@ -246,8 +247,8 @@ func (ampmr *AzureMachinePoolMachineController) Reconcile(ctx context.Context, r
 		return ampmr.reconcileDelete(ctx, machineScope, clusterScope)
 	}
 
-	if !cluster.Status.InfrastructureReady {
-		logger.Info("Cluster infrastructure is not ready yet")
+	if !ptr.Deref(cluster.Status.Initialization.InfrastructureProvisioned, false) {
+		logger.Info("Cluster infrastructure is not provisioned yet")
 		return reconcile.Result{}, nil
 	}
 
@@ -303,7 +304,7 @@ func (ampmr *AzureMachinePoolMachineController) reconcileNormal(ctx context.Cont
 
 	log.V(2).Info(fmt.Sprintf("Scale Set VM is %s", state), "id", machineScope.ProviderID())
 
-	bootstrappingCondition := conditions.Get(machineScope.AzureMachinePoolMachine, infrav1.BootstrapSucceededCondition)
+	bootstrappingCondition := v1beta1conditions.Get(machineScope.AzureMachinePoolMachine, infrav1.BootstrapSucceededCondition)
 	if bootstrappingCondition != nil && bootstrappingCondition.Reason == infrav1.BootstrapFailedReason {
 		return reconcile.Result{}, nil
 	}

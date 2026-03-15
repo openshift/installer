@@ -279,7 +279,7 @@ func readyStatus(ctx context.Context, u *unstructured.Unstructured) (bool, error
 	}
 
 	for _, el := range statusConditions {
-		condition, ok := el.(map[string]interface{})
+		condition, ok := el.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -366,7 +366,7 @@ func parseOwnedKinds(value string) (sets.Set[metav1.TypeMeta], error) {
 	if value == "" {
 		return nil, nil
 	}
-	for _, ownedKind := range strings.Split(value, ownedKindsSep) {
+	for ownedKind := range strings.SplitSeq(value, ownedKindsSep) {
 		gvk, _ := schema.ParseKindArg(ownedKind)
 		if gvk == nil {
 			return nil, fmt.Errorf("invalid field %q: expected Kind.version.group", ownedKind)
