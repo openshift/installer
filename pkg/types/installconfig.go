@@ -231,6 +231,10 @@ type InstallConfig struct {
 	// OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
 	// +optional
 	OSImageStream OSImageStream `json:"osImageStream,omitempty"`
+
+	// ConfidentialCluster is the configuration for setting up a confidential cluster with remote attestation and disk encryption.
+	// +optional
+	ConfidentialCluster *ConfidentialCluster `json:"confidentialCluster,omitempty"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
@@ -680,4 +684,20 @@ const (
 var OSImageStreamValues = []OSImageStream{
 	OSImageStreamRHCOS9,
 	OSImageStreamRHCOS10,
+}
+
+// ConfidentialCluster configures features for confidential clusters.
+// This includes disk encryption with remote attestation-based automatic unlocking.
+// Note: The underlying confidential computing technology (such as AMD SEV-SNP or Intel TDX)
+// is configured through platform-specific settings, not in this struct.
+type ConfidentialCluster struct {
+	// IgnitionClevisPinTrustee is a URL to an Ignition configuration snippet that sets up LUKS disk encryption
+	// with Clevis Pin Trustee. Clevis Pin Trustee enables automatic disk unlocking through remote attestation:
+	// nodes prove their trustworthiness to an attestation service to receive decryption keys.
+	// This Ignition configuration is hosted on an external server and will be merged into the Ignition configs
+	// for bootstrap, control plane, and worker nodes.
+	// Example: http://10.73.210.28:8000/ignition-clevis-pin-trustee
+	// +kubebuilder:validation:Required
+	// +kubebuilder:validation:Format=uri
+	IgnitionClevisPinTrustee string `json:"ignitionClevisPinTrustee"`
 }

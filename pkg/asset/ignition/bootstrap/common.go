@@ -258,6 +258,15 @@ func (a *Common) generateConfig(dependencies asset.Parents, templateData *bootst
 		ignition.AppendVarPartition(a.Config)
 	}
 
+	if cc := installConfig.Config.ConfidentialCluster; cc != nil {
+		a.Config.Ignition.Config.Merge = append(
+			a.Config.Ignition.Config.Merge,
+			igntypes.Resource{
+				Source: &cc.IgnitionClevisPinTrustee,
+			},
+		)
+	}
+
 	return nil
 }
 
