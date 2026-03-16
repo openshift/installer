@@ -180,7 +180,7 @@ func (c *ClusterAPI) Generate(ctx context.Context, dependencies asset.Parents) e
 			PublicIP: publicOnlySubnets,
 			IPFamily: ic.AWS.IPFamily,
 			Ignition: &v1beta2.Ignition{
-				Version: "3.2",
+				Version: "3.6",
 				// master machines should get ignition from the MCS on the bootstrap node
 				StorageType: v1beta2.IgnitionStorageTypeOptionUnencryptedUserData,
 			},
