@@ -20,7 +20,15 @@ import (
 	"github.com/openshift/installer/data"
 )
 
+// DefaultCoreOSStreamName is the stream name used by FetchCoreOSBuild for
+// backward compatibility.
+const DefaultCoreOSStreamName = "rhcos-4.21"
+
 type marketplaceStream map[string]*rhcos.Marketplace
+
+// streamStore is a map of stream name to stream metadata, matching the
+// multi-stream format of the embedded rhcos.json file.
+type streamStore map[string]*stream.Stream
 
 // FetchRawCoreOSStream returns the raw stream metadata for the
 // bootimages embedded in the installer.
@@ -40,13 +48,23 @@ func FetchRawCoreOSStream(ctx context.Context) ([]byte, error) {
 // by the installer to provision the bootstrap node and control plane currently.
 // For more information, see e.g. https://github.com/openshift/enhancements/pull/201
 func FetchCoreOSBuild(ctx context.Context) (*stream.Stream, error) {
+	return FetchCoreOSBuildByStream(ctx, DefaultCoreOSStreamName)
+}
+
+// FetchCoreOSBuildByStream returns the pinned stream metadata for the given
+// stream name from the embedded multi-stream rhcos.json file.
+func FetchCoreOSBuildByStream(ctx context.Context, streamName string) (*stream.Stream, error) {
 	body, err := fetchRawCoreOSStream(ctx)
 	if err != nil {
 		return nil, err
 	}
-	var st stream.Stream
-	if err := json.Unmarshal(body, &st); err != nil {
-		return nil, fmt.Errorf("failed to parse CoreOS stream metadata: %w", err)
+	var store streamStore
+	if err := json.Unmarshal(body, &store); err != nil {
+		return nil, fmt.Errorf("failed to parse CoreOS stream store: %w", err)
+	}
+	st, ok := store[streamName]
+	if !ok {
+		return nil, fmt.Errorf("stream %q not found in CoreOS stream store", streamName)
 	}
 
 	// Merge marketplace json file into stream json file
@@ -54,7 +72,7 @@ func FetchCoreOSBuild(ctx context.Context) (*stream.Stream, error) {
 	if err != nil {
 		if errors.Is(err, fs.ErrNotExist) {
 			logrus.Debug("No marketplace json file found: skipping merge.")
-			return &st, nil
+			return st, nil
 		}
 		return nil, err
 	}
@@ -71,7 +89,7 @@ func FetchCoreOSBuild(ctx context.Context) (*stream.Stream, error) {
 			arch.RHELCoreOSExtensions.Marketplace = mkt
 		}
 	}
-	return &st, nil
+	return st, nil
 }
 
 // FormatURLWithIntegrity squashes an artifact into a URL string

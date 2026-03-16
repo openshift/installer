@@ -71,29 +71,43 @@ func run() error {
 	return nil
 }
 
+const rhcosStreamName = "rhcos-4.21"
+
 func getBootImages() ([]byte, error) {
 	var okd bool
-	var streamJSON string
+	var streamJSONFile string
+	var streamName string
 	tags, _ := os.LookupEnv("TAGS")
 	switch {
 	case strings.Contains(tags, scosTAG):
-		streamJSON = streamSCOSJSON
+		streamJSONFile = streamSCOSJSON
 		okd = true
 	default:
-		streamJSON = streamRHCOSJSON
+		streamJSONFile = streamRHCOSJSON
+		streamName = rhcosStreamName
 	}
 
-	bootimages, err := os.ReadFile(streamJSON)
+	fileData, err := os.ReadFile(streamJSONFile)
 	if err != nil {
 		return nil, err
 	}
 
 	if okd {
 		// okd does not yet have marketplace images, so we are done
-		return bootimages, nil
+		return fileData, nil
 	}
 
-	return mergeMarketplaceStream(bootimages)
+	// Parse the multi-stream map and extract the target stream
+	var store map[string]json.RawMessage
+	if err := json.Unmarshal(fileData, &store); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal stream store: %w", err)
+	}
+	streamJSON, ok := store[streamName]
+	if !ok {
+		return nil, fmt.Errorf("stream %q not found in stream store", streamName)
+	}
+
+	return mergeMarketplaceStream(streamJSON)
 }
 
 type marketplaceStream map[string]*rhcos.Marketplace

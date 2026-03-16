@@ -20,16 +20,49 @@ that data into the cluster as well.
 
 ### Updating pinned stream metadata
 
+`data/data/coreos/rhcos.json` is a multi-stream JSON file keyed by stream name
+(e.g. `"rhcos-4.21"`, `"rhel-coreos-10"`).  To update a stream, extract it,
+update it with `plume`, and merge it back:
 
-To update the bootimage for one or more architectures, use e.g.
+```bash
+# Step 1: Extract the stream to update into a temp file
+jq '.["rhcos-4.21"]' data/data/coreos/rhcos.json > /tmp/stream-update.json
 
+# Step 2: Update the extracted stream with plume (unchanged plume invocation)
+plume cosa2stream \
+  --target /tmp/stream-update.json \
+  --distro rhcos \
+  x86_64=9.6.YYYYMMDD-0 aarch64=9.6.YYYYMMDD-0 \
+  --url https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-9.6 \
+  --no-signatures
+
+# Step 3: Merge updated stream back into rhcos.json
+tmp=$(mktemp)
+jq --slurpfile s /tmp/stream-update.json '.["rhcos-4.21"] = $s[0]' \
+  data/data/coreos/rhcos.json > "$tmp" && mv "$tmp" data/data/coreos/rhcos.json
 ```
-$ plume cosa2stream --target data/data/coreos/rhcos.json --distro rhcos  x86_64=48.83.202102230316-0 s390x=47.83.202102090311-0 ppc64le=47.83.202102091015-0 --url https://rhcos-redirector.apps.art.xq1c.p1.openshiftapps.com/art/storage/releases --no-signatures
+
+For adding or updating the RHCOS 10 stream (run by ART with real build versions):
+
+```bash
+# Step 1: Generate stream metadata into a temp file
+plume cosa2stream \
+  --name rhel-coreos-10 \
+  --target /tmp/rhcos10.json \
+  --distro rhcos \
+  x86_64=10.0.YYYYMMDD-0 aarch64=10.0.YYYYMMDD-0 \
+  --url https://rhcos.mirror.openshift.com/art/storage/prod/streams/rhel-10.0 \
+  --no-signatures
+
+# Step 2: Merge into rhcos.json
+tmp=$(mktemp)
+jq --slurpfile s /tmp/rhcos10.json '.["rhel-coreos-10"] = $s[0]' \
+  data/data/coreos/rhcos.json > "$tmp" && mv "$tmp" data/data/coreos/rhcos.json
 ```
 
-For more information on this command, see:
+For more information on `plume cosa2stream`, see:
 
-- https://github.com/coreos/coreos-assembler/pull/2000 
+- https://github.com/coreos/coreos-assembler/pull/2000
 - https://github.com/coreos/coreos-assembler/pull/2052
 ### Origin of stream metadata
 
