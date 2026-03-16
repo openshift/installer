@@ -50,6 +50,17 @@ func (a Provider) DestroyBootstrap(ctx context.Context, dir string) error {
 func (a Provider) ExtractHostAddresses(dir string, ic *types.InstallConfig, ha *infrastructure.HostAddresses) error {
 	ha.Bootstrap = ic.Platform.BareMetal.BootstrapProvisioningIP
 
+	// When provisioningNetwork is Disabled, BootstrapProvisioningIP is not set
+	// because there is no provisioning network. Fall back to the bootstrap's
+	// external static IP, or the API VIP (which is hosted on the bootstrap
+	// node during early installation).
+	if ha.Bootstrap == "" {
+		ha.Bootstrap = ic.Platform.BareMetal.BootstrapExternalStaticIP
+	}
+	if ha.Bootstrap == "" && len(ic.Platform.BareMetal.APIVIPs) > 0 {
+		ha.Bootstrap = ic.Platform.BareMetal.APIVIPs[0]
+	}
+
 	masters, err := getMasterAddresses(dir)
 	if err != nil {
 		return err
