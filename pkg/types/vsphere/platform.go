@@ -311,6 +311,44 @@ type VCenter struct {
 	// +kubebuilder:validation:Required
 	// +kubebuilder:validation:MinItems=1
 	Datacenters []string `json:"datacenters"`
+
+	// ComponentCredentials specifies per-component credentials for this vCenter.
+	// If not specified, the main Username/Password is used for all components.
+	// This enables least-privilege security by allowing separate accounts
+	// for installer, machine-api, CSI driver, cloud controller, and diagnostics.
+	// +optional
+	ComponentCredentials *VCenterComponentCredentials `json:"componentCredentials,omitempty"`
+}
+
+// VCenterComponentCredentials defines per-component credentials for a single vCenter.
+// This allows separate accounts for each OpenShift component to support least-privilege security.
+type VCenterComponentCredentials struct {
+	// MachineAPI specifies credentials for machine-api-operator on this vCenter.
+	// +optional
+	MachineAPI *VCenterCredential `json:"machineAPI,omitempty"`
+
+	// CSIDriver specifies credentials for the vSphere CSI driver on this vCenter.
+	// +optional
+	CSIDriver *VCenterCredential `json:"csiDriver,omitempty"`
+
+	// CloudController specifies credentials for the cloud controller manager on this vCenter.
+	// +optional
+	CloudController *VCenterCredential `json:"cloudController,omitempty"`
+
+	// Diagnostics specifies credentials for vsphere-problem-detector on this vCenter.
+	// +optional
+	Diagnostics *VCenterCredential `json:"diagnostics,omitempty"`
+}
+
+// VCenterCredential stores username and password for a vCenter account.
+type VCenterCredential struct {
+	// User is the username for the account.
+	// +kubebuilder:validation:Required
+	User string `json:"user"`
+
+	// Password is the password for the account.
+	// +kubebuilder:validation:Required
+	Password string `json:"password"`
 }
 
 // Host defines host VMs to generate as part of the installation.

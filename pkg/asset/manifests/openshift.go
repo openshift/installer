@@ -36,6 +36,7 @@ import (
 	baremetaltypes "github.com/openshift/installer/pkg/types/baremetal"
 	gcptypes "github.com/openshift/installer/pkg/types/gcp"
 	ibmcloudtypes "github.com/openshift/installer/pkg/types/ibmcloud"
+	nutanixtypes "github.com/openshift/installer/pkg/types/nutanix"
 	openstacktypes "github.com/openshift/installer/pkg/types/openstack"
 	ovirttypes "github.com/openshift/installer/pkg/types/ovirt"
 	powervctypes "github.com/openshift/installer/pkg/types/powervc"
@@ -76,6 +77,10 @@ func (o *Openshift) Dependencies() []asset.Asset {
 		&openshift.BaremetalConfig{},
 		new(rhcos.Image),
 		&openshift.AzureCloudProviderSecret{},
+		&openshift.VSphereMachineAPICredsSecret{},
+		&openshift.VSphereCSIDriverCredsSecret{},
+		&openshift.VSphereCloudControllerCredsSecret{},
+		&openshift.VSphereDiagnosticsCredsSecret{},
 	}
 }
 
@@ -211,19 +216,34 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 			},
 		}
 	case vspheretypes.Name:
-		vsphereCredList := make([]*VSphereCredsSecretData, 0)
-
+		// Check if any vCenter has component credentials defined
+		hasComponentCredentials := false
 		for _, vCenter := range installConfig.Config.VSphere.VCenters {
-			vsphereCred := VSphereCredsSecretData{
-				VCenter:              vCenter.Server,
-				Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(vCenter.Username)),
-				Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(vCenter.Password)),
+			if vCenter.ComponentCredentials != nil {
+				hasComponentCredentials = true
+				break
 			}
-			vsphereCredList = append(vsphereCredList, &vsphereCred)
 		}
 
-		cloudCreds = cloudCredsSecretData{
-			VSphere: &vsphereCredList,
+		if hasComponentCredentials {
+			// Generate per-component secrets
+			cloudCreds = generateVSphereComponentSecrets(installConfig.Config.VSphere.VCenters)
+		} else {
+			// Legacy mode: generate single shared secret
+			vsphereCredList := make([]*VSphereCredsSecretData, 0)
+
+			for _, vCenter := range installConfig.Config.VSphere.VCenters {
+				vsphereCred := VSphereCredsSecretData{
+					VCenter:              vCenter.Server,
+					Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(vCenter.Username)),
+					Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(vCenter.Password)),
+				}
+				vsphereCredList = append(vsphereCredList, &vsphereCred)
+			}
+
+			cloudCreds = cloudCredsSecretData{
+				VSphere: &vsphereCredList,
+			}
 		}
 	case ovirttypes.Name:
 		conf, err := ovirt.NewConfig()
@@ -248,6 +268,26 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 				Base64encodeCABundle: base64.StdEncoding.EncodeToString([]byte(conf.CABundle)),
 			},
 		}
+	case nutanixtypes.Name:
+		// Format credentials as JSON array according to Nutanix format
+		credentialsData := fmt.Sprintf(`[{
+		"type": "basic_auth",
+		"data": {
+			"prismCentral": {
+				"username": "%s",
+				"password": "%s"
+			}
+		}
+	}]`,
+			installConfig.Config.Platform.Nutanix.PrismCentral.Username,
+			installConfig.Config.Platform.Nutanix.PrismCentral.Password,
+		)
+
+		cloudCreds = cloudCredsSecretData{
+			Nutanix: &NutanixCredsSecretData{
+				Base64encodeCredentials: base64.StdEncoding.EncodeToString([]byte(credentialsData)),
+			},
+		}
 	}
 
 	templateData := &openshiftTemplateData{
@@ -260,20 +300,54 @@ func (o *Openshift) Generate(ctx context.Context, dependencies asset.Parents) er
 	roleCloudCredsSecretReader := &openshift.RoleCloudCredsSecretReader{}
 	baremetalConfig := &openshift.BaremetalConfig{}
 	rhcosImage := new(rhcos.Image)
+	vsphereMachineAPICredsSecret := &openshift.VSphereMachineAPICredsSecret{}
+	vsphereCSIDriverCredsSecret := &openshift.VSphereCSIDriverCredsSecret{}
+	vsphereCloudControllerCredsSecret := &openshift.VSphereCloudControllerCredsSecret{}
+	vsphereDiagnosticsCredsSecret := &openshift.VSphereDiagnosticsCredsSecret{}
 
 	dependencies.Get(
 		cloudCredsSecret,
 		kubeadminPasswordSecret,
 		roleCloudCredsSecretReader,
 		baremetalConfig,
-		rhcosImage)
+		rhcosImage,
+		vsphereMachineAPICredsSecret,
+		vsphereCSIDriverCredsSecret,
+		vsphereCloudControllerCredsSecret,
+		vsphereDiagnosticsCredsSecret)
 
 	assetData := map[string][]byte{
 		"99_kubeadmin-password-secret.yaml": applyTemplateData(kubeadminPasswordSecret.Files()[0].Data, templateData),
 	}
 
 	switch platform {
-	case awstypes.Name, openstacktypes.Name, powervctypes.Name, vspheretypes.Name, azuretypes.Name, gcptypes.Name, ibmcloudtypes.Name, ovirttypes.Name:
+	case vspheretypes.Name:
+		// Check if using component credentials
+		hasComponentCredentials := false
+		for _, vCenter := range installConfig.Config.VSphere.VCenters {
+			if vCenter.ComponentCredentials != nil {
+				hasComponentCredentials = true
+				break
+			}
+		}
+
+		if hasComponentCredentials {
+			// Render component-specific secrets when using component credentials
+			if installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
+				assetData["99_vsphere-creds-machine-api.yaml"] = applyTemplateData(vsphereMachineAPICredsSecret.Files()[0].Data, templateData)
+				assetData["99_vsphere-creds-csi-driver.yaml"] = applyTemplateData(vsphereCSIDriverCredsSecret.Files()[0].Data, templateData)
+				assetData["99_vsphere-creds-cloud-controller.yaml"] = applyTemplateData(vsphereCloudControllerCredsSecret.Files()[0].Data, templateData)
+				assetData["99_vsphere-creds-diagnostics.yaml"] = applyTemplateData(vsphereDiagnosticsCredsSecret.Files()[0].Data, templateData)
+			}
+			// Note: Role is not needed for component-specific secrets since CCO doesn't use them
+		} else {
+			// Legacy mode: render single shared secret
+			if installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
+				assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
+			}
+			assetData["99_role-cloud-creds-secret-reader.yaml"] = applyTemplateData(roleCloudCredsSecretReader.Files()[0].Data, templateData)
+		}
+	case awstypes.Name, openstacktypes.Name, powervctypes.Name, azuretypes.Name, gcptypes.Name, ibmcloudtypes.Name, ovirttypes.Name:
 		if installConfig.Config.CredentialsMode != types.ManualCredentialsMode {
 			assetData["99_cloud-creds-secret.yaml"] = applyTemplateData(cloudCredsSecret.Files()[0].Data, templateData)
 		}
@@ -337,4 +411,82 @@ func (o *Openshift) Load(f asset.FileFetcher) (bool, error) {
 
 	asset.SortFiles(o.FileList)
 	return len(o.FileList) > 0, nil
+}
+
+// generateVSphereComponentSecrets creates per-component credential data for vSphere.
+// For each component, it uses component-specific credentials if available,
+// otherwise falls back to the main vCenter credentials.
+func generateVSphereComponentSecrets(vcenters []vspheretypes.VCenter) cloudCredsSecretData {
+	// Create separate credential lists for each component
+	machineAPICreds := make([]*VSphereCredsSecretData, 0)
+	csiDriverCreds := make([]*VSphereCredsSecretData, 0)
+	cloudControllerCreds := make([]*VSphereCredsSecretData, 0)
+	diagnosticsCreds := make([]*VSphereCredsSecretData, 0)
+
+	for _, vcenter := range vcenters {
+		// Fallback to main credentials if component credentials not specified
+		machineAPIUser := vcenter.Username
+		machineAPIPassword := vcenter.Password
+		csiDriverUser := vcenter.Username
+		csiDriverPassword := vcenter.Password
+		cloudControllerUser := vcenter.Username
+		cloudControllerPassword := vcenter.Password
+		diagnosticsUser := vcenter.Username
+		diagnosticsPassword := vcenter.Password
+
+		// Override with component-specific credentials if provided
+		if vcenter.ComponentCredentials != nil {
+			if vcenter.ComponentCredentials.MachineAPI != nil {
+				machineAPIUser = vcenter.ComponentCredentials.MachineAPI.User
+				machineAPIPassword = vcenter.ComponentCredentials.MachineAPI.Password
+			}
+			if vcenter.ComponentCredentials.CSIDriver != nil {
+				csiDriverUser = vcenter.ComponentCredentials.CSIDriver.User
+				csiDriverPassword = vcenter.ComponentCredentials.CSIDriver.Password
+			}
+			if vcenter.ComponentCredentials.CloudController != nil {
+				cloudControllerUser = vcenter.ComponentCredentials.CloudController.User
+				cloudControllerPassword = vcenter.ComponentCredentials.CloudController.Password
+			}
+			if vcenter.ComponentCredentials.Diagnostics != nil {
+				diagnosticsUser = vcenter.ComponentCredentials.Diagnostics.User
+				diagnosticsPassword = vcenter.ComponentCredentials.Diagnostics.Password
+			}
+		}
+
+		// Create credential entries for each component
+		machineAPICreds = append(machineAPICreds, &VSphereCredsSecretData{
+			VCenter:              vcenter.Server,
+			Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(machineAPIUser)),
+			Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(machineAPIPassword)),
+		})
+
+		csiDriverCreds = append(csiDriverCreds, &VSphereCredsSecretData{
+			VCenter:              vcenter.Server,
+			Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(csiDriverUser)),
+			Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(csiDriverPassword)),
+		})
+
+		cloudControllerCreds = append(cloudControllerCreds, &VSphereCredsSecretData{
+			VCenter:              vcenter.Server,
+			Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(cloudControllerUser)),
+			Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(cloudControllerPassword)),
+		})
+
+		diagnosticsCreds = append(diagnosticsCreds, &VSphereCredsSecretData{
+			VCenter:              vcenter.Server,
+			Base64encodeUsername: base64.StdEncoding.EncodeToString([]byte(diagnosticsUser)),
+			Base64encodePassword: base64.StdEncoding.EncodeToString([]byte(diagnosticsPassword)),
+		})
+	}
+
+	// Return component-specific credentials
+	return cloudCredsSecretData{
+		VSphereComponents: &VSphereComponentCredsSecretData{
+			MachineAPI:      &machineAPICreds,
+			CSIDriver:       &csiDriverCreds,
+			CloudController: &cloudControllerCreds,
+			Diagnostics:     &diagnosticsCreds,
+		},
+	}
 }

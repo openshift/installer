@@ -23,7 +23,8 @@ func printIfNotEmpty(buf *bytes.Buffer, k, v string) {
 }
 
 // CloudProviderConfigYaml generates the yaml out of tree cloud provider config for the vSphere platform.
-func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, error) {
+// secretName specifies which secret the cloud controller should use for credentials.
+func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform, secretName string) (string, error) {
 	vCenters := make(map[string]*cloudconfig.VirtualCenterConfigYAML)
 
 	for _, vCenter := range p.VCenters {
@@ -42,7 +43,7 @@ func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, 
 
 	cloudProviderConfig := cloudconfig.CommonConfigYAML{
 		Global: cloudconfig.GlobalYAML{
-			SecretName:      "vsphere-creds",
+			SecretName:      secretName,
 			SecretNamespace: "kube-system",
 			InsecureFlag:    true,
 		},
@@ -66,11 +67,12 @@ func CloudProviderConfigYaml(infraID string, p *vspheretypes.Platform) (string, 
 // CloudProviderConfigIni generates the multi-zone ini cloud provider config
 // for the vSphere platform. folderPath is the absolute path to the VM folder that will be
 // used for installation. p is the vSphere platform struct.
-func CloudProviderConfigIni(infraID string, p *vspheretypes.Platform) (string, error) {
+// secretName specifies which secret the cloud controller should use for credentials.
+func CloudProviderConfigIni(infraID string, p *vspheretypes.Platform, secretName string) (string, error) {
 	buf := new(bytes.Buffer)
 
 	fmt.Fprintln(buf, "[Global]")
-	printIfNotEmpty(buf, "secret-name", "vsphere-creds")
+	printIfNotEmpty(buf, "secret-name", secretName)
 	printIfNotEmpty(buf, "secret-namespace", "kube-system")
 	printIfNotEmpty(buf, "insecure-flag", "1")
 	fmt.Fprintln(buf, "")
