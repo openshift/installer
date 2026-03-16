@@ -24,7 +24,8 @@ import (
 const directory = "openshift"
 
 // pointerIgnitionConfig generates a config which references the remote config
-// served by the machine config server.
+// served by the machine config server, and the trustee server if confidential
+// cluster with remote attestation is configured.
 func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, role string) *igntypes.Config {
 	var ignitionHost string
 	// Default platform independent ignitionHost
@@ -48,7 +49,7 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			ignitionHost = net.JoinHostPort(installConfig.VSphere.APIVIPs[0], "22623")
 		}
 	}
-	return &igntypes.Config{
+	config := &igntypes.Config{
 		Ignition: igntypes.Ignition{
 			Version: igntypes.MaxVersion.String(),
 			Config: igntypes.IgnitionConfig{
@@ -71,6 +72,17 @@ func pointerIgnitionConfig(installConfig *types.InstallConfig, rootCA []byte, ro
 			},
 		},
 	}
+
+	if cc := installConfig.ConfidentialCluster; cc != nil {
+		config.Ignition.Config.Merge = append(
+			config.Ignition.Config.Merge,
+			igntypes.Resource{
+				Source: &cc.IgnitionClevisPinTrustee,
+			},
+		)
+	}
+
+	return config
 }
 
 // generatePointerMachineConfig generates a machineconfig when a user customizes

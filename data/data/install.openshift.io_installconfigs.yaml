@@ -3227,6 +3227,21 @@ spec:
               - platform
               type: object
             type: array
+          confidentialCluster:
+            description: ConfidentialCluster is the configuration for setting up a
+              confidential cluster with remote attestation and disk encryption.
+            properties:
+              ignitionClevisPinTrustee:
+                description: |-
+                  IgnitionClevisPinTrustee is the URL of the ignition configuration for LUKS encryption using Clevis Pin Trustee.
+                  This ignition configuration is served by an external server. And it is used by bootstrap, master and worker nodes
+                  to encrypt and decrypt their root disk.
+                  Example: http://10.73.210.28:8000/ignition-clevis-pin-trustee
+                format: uri
+                type: string
+            required:
+            - ignitionClevisPinTrustee
+            type: object
           controlPlane:
             description: |-
               ControlPlane is the configuration for the machines that comprise the
