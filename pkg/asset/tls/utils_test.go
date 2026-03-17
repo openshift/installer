@@ -1,0 +1,92 @@
+package tls
+
+import (
+	"crypto/ecdsa"
+	"crypto/rsa"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
+)
+
+func TestPrivateKeyToPemRoundtrip(t *testing.T) {
+	cases := []struct {
+		name       string
+		genFunc    func() (interface{}, error)
+		expectType interface{}
+	}{
+		{
+			name: "RSA key",
+			genFunc: func() (interface{}, error) {
+				return GenerateRSAPrivateKey(2048)
+			},
+			expectType: &rsa.PrivateKey{},
+		},
+		{
+			name: "ECDSA P256 key",
+			genFunc: func() (interface{}, error) {
+				return GenerateECDSAPrivateKey(configv1alpha1.ECDSACurveP256)
+			},
+			expectType: &ecdsa.PrivateKey{},
+		},
+		{
+			name: "ECDSA P384 key",
+			genFunc: func() (interface{}, error) {
+				return GenerateECDSAPrivateKey(configv1alpha1.ECDSACurveP384)
+			},
+			expectType: &ecdsa.PrivateKey{},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			key, err := tc.genFunc()
+			assert.NoError(t, err)
+
+			pemBytes, err := PrivateKeyToPem(key)
+			assert.NoError(t, err)
+			assert.NotEmpty(t, pemBytes)
+
+			decoded, err := PemToPrivateKey(pemBytes)
+			assert.NoError(t, err)
+			assert.IsType(t, tc.expectType, decoded)
+		})
+	}
+}
+
+func TestPemToPrivateKeyFormats(t *testing.T) {
+	t.Run("invalid PEM", func(t *testing.T) {
+		_, err := PemToPrivateKey([]byte("not a PEM"))
+		assert.Error(t, err)
+	})
+
+	t.Run("empty data", func(t *testing.T) {
+		_, err := PemToPrivateKey([]byte{})
+		assert.Error(t, err)
+	})
+
+	t.Run("RSA PEM block", func(t *testing.T) {
+		key, err := GenerateRSAPrivateKey(2048)
+		assert.NoError(t, err)
+		pemBytes, pemErr := PrivateKeyToPem(key)
+		assert.NoError(t, pemErr)
+
+		decoded, err := PemToPrivateKey(pemBytes)
+		assert.NoError(t, err)
+		_, ok := decoded.(*rsa.PrivateKey)
+		assert.True(t, ok, "expected *rsa.PrivateKey")
+	})
+
+	t.Run("EC PEM block", func(t *testing.T) {
+		key, err := GenerateECDSAPrivateKey(configv1alpha1.ECDSACurveP256)
+		assert.NoError(t, err)
+		pemBytes, pemErr := PrivateKeyToPem(key)
+		assert.NoError(t, pemErr)
+
+		decoded, err := PemToPrivateKey(pemBytes)
+		assert.NoError(t, err)
+		_, ok := decoded.(*ecdsa.PrivateKey)
+		assert.True(t, ok, "expected *ecdsa.PrivateKey")
+	})
+}

@@ -139,6 +139,12 @@ the cluster.
       Valid Values: "rhel-9","rhel-10"
       OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
 
+    pki <object>
+      PKI configures cryptographic parameters for installer-generated
+signer certificates. When specified, all signer certificates use the
+algorithm and parameters from signerCertificates.
+Feature gated by ConfigurablePKI.
+
     platform <object> -required-
       Platform is the configuration for the specific platform upon which to
 perform the installation.

@@ -13,6 +13,7 @@ import (
 	utilsslice "k8s.io/utils/strings/slices"
 
 	configv1 "github.com/openshift/api/config/v1"
+	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	operv1 "github.com/openshift/api/operator/v1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types"
@@ -3042,6 +3043,53 @@ func TestValidateInstallConfig(t *testing.T) {
 				return c
 			}(),
 			expectedError: "Unsupported OS Image Stream. Supported values are: rhel-9, rhel-10",
+		},
+		{
+			name: "valid PKI with signer certificates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.PKI = &types.PKIConfig{
+					SignerCertificates: configv1alpha1.CertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: configv1alpha1.KeyAlgorithmECDSA,
+							ECDSA:     configv1alpha1.ECDSAKeyConfig{Curve: configv1alpha1.ECDSACurveP384},
+						},
+					},
+				}
+				return c
+			}(),
+		},
+		{
+			name: "invalid PKI signer with unsupported algorithm",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PKI = &types.PKIConfig{
+					SignerCertificates: configv1alpha1.CertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: "EdDSA",
+						},
+					},
+				}
+				return c
+			}(),
+			expectedError: `pki\.signerCertificates\.key\.algorithm: Unsupported value: "EdDSA"`,
+		},
+		{
+			name: "invalid PKI signer with bad RSA key size",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PKI = &types.PKIConfig{
+					SignerCertificates: configv1alpha1.CertificateConfig{
+						Key: configv1alpha1.KeyConfig{
+							Algorithm: configv1alpha1.KeyAlgorithmRSA,
+							RSA:       configv1alpha1.RSAKeyConfig{KeySize: 1024},
+						},
+					},
+				}
+				return c
+			}(),
+			expectedError: `pki\.signerCertificates\.key\.rsa\.keySize: Invalid value: 1024`,
 		},
 	}
 	for _, tc := range cases {
