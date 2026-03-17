@@ -3057,6 +3057,53 @@ func TestValidateInstallConfig(t *testing.T) {
 			}(),
 			expectedError: `^bootstrapInPlace: Invalid value: "": Single Node OpenShift is not supported on the baremetal platform$`,
 		},
+		{
+			name: "valid PKI with signer certificates",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.FeatureSet = configv1.TechPreviewNoUpgrade
+				c.PKI = &types.PKIConfig{
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmECDSA,
+							ECDSA:     types.ECDSAKeyConfig{Curve: types.ECDSACurveP384},
+						},
+					},
+				}
+				return c
+			}(),
+		},
+		{
+			name: "invalid PKI signer with unsupported algorithm",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PKI = &types.PKIConfig{
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: "EdDSA",
+						},
+					},
+				}
+				return c
+			}(),
+			expectedError: `pki\.signerCertificates\.key\.algorithm: Unsupported value: "EdDSA"`,
+		},
+		{
+			name: "invalid PKI signer with bad RSA key size",
+			installConfig: func() *types.InstallConfig {
+				c := validInstallConfig()
+				c.PKI = &types.PKIConfig{
+					SignerCertificates: types.CertificateConfig{
+						Key: types.KeyConfig{
+							Algorithm: types.KeyAlgorithmRSA,
+							RSA:       types.RSAKeyConfig{KeySize: 1024},
+						},
+					},
+				}
+				return c
+			}(),
+			expectedError: `pki\.signerCertificates\.key\.rsa\.keySize: Invalid value: 1024`,
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
