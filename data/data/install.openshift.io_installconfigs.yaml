@@ -4928,6 +4928,99 @@ spec:
             - rhel-9
             - rhel-10
             type: string
+          pki:
+            description: |-
+              PKI configures cryptographic parameters for installer-generated
+              signer certificates. When specified, all signer certificates use the
+              algorithm and parameters from signerCertificates.
+              Feature gated by ConfigurablePKI.
+            properties:
+              signerCertificates:
+                description: |-
+                  signerCertificates specifies key parameters for all installer-generated
+                  certificate authority (CA) certificates.
+                  When set, all signer certificates use the specified algorithm and parameters.
+                minProperties: 1
+                properties:
+                  key:
+                    description: |-
+                      key specifies the cryptographic parameters for the certificate's key pair.
+                      Currently this is the only configurable parameter. When omitted in an
+                      overrides entry, the key configuration from defaults is used.
+                    properties:
+                      algorithm:
+                        description: |-
+                          algorithm specifies the key generation algorithm.
+                          Valid values are "RSA" and "ECDSA".
+
+                          When set to RSA, the rsa field must be specified and the generated key
+                          will be an RSA key with the configured key size.
+
+                          When set to ECDSA, the ecdsa field must be specified and the generated key
+                          will be an ECDSA key using the configured elliptic curve.
+                        enum:
+                        - RSA
+                        - ECDSA
+                        type: string
+                      ecdsa:
+                        description: |-
+                          ecdsa specifies ECDSA key parameters.
+                          Required when algorithm is ECDSA, and forbidden otherwise.
+                        properties:
+                          curve:
+                            description: |-
+                              curve specifies the NIST elliptic curve for ECDSA keys.
+                              Valid values are "P256", "P384", and "P521".
+
+                              When set to P256, the NIST P-256 curve (also known as secp256r1) is used,
+                              providing 128-bit security.
+
+                              When set to P384, the NIST P-384 curve (also known as secp384r1) is used,
+                              providing 192-bit security.
+
+                              When set to P521, the NIST P-521 curve (also known as secp521r1) is used,
+                              providing 256-bit security.
+                            enum:
+                            - P256
+                            - P384
+                            - P521
+                            type: string
+                        required:
+                        - curve
+                        type: object
+                      rsa:
+                        description: |-
+                          rsa specifies RSA key parameters.
+                          Required when algorithm is RSA, and forbidden otherwise.
+                        properties:
+                          keySize:
+                            description: |-
+                              keySize specifies the size of RSA keys in bits.
+                              Valid values are multiples of 1024 from 2048 to 8192.
+                            format: int32
+                            maximum: 8192
+                            minimum: 2048
+                            multipleOf: 1024
+                            type: integer
+                        required:
+                        - keySize
+                        type: object
+                    required:
+                    - algorithm
+                    type: object
+                    x-kubernetes-validations:
+                    - message: rsa is required when algorithm is RSA, and forbidden
+                        otherwise
+                      rule: 'has(self.algorithm) && self.algorithm == ''RSA'' ?  has(self.rsa)
+                        : !has(self.rsa)'
+                    - message: ecdsa is required when algorithm is ECDSA, and forbidden
+                        otherwise
+                      rule: 'has(self.algorithm) && self.algorithm == ''ECDSA'' ?  has(self.ecdsa)
+                        : !has(self.ecdsa)'
+                type: object
+            required:
+            - signerCertificates
+            type: object
           platform:
             description: |-
               Platform is the configuration for the specific platform upon which to

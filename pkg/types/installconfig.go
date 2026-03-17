@@ -9,6 +9,7 @@ import (
 	"k8s.io/apimachinery/pkg/util/sets"
 
 	configv1 "github.com/openshift/api/config/v1"
+	configv1alpha1 "github.com/openshift/api/config/v1alpha1"
 	"github.com/openshift/installer/pkg/ipnet"
 	"github.com/openshift/installer/pkg/types/aws"
 	"github.com/openshift/installer/pkg/types/azure"
@@ -231,6 +232,25 @@ type InstallConfig struct {
 	// OSImageStream is the global OS Image Stream to be used for all machines in the cluster.
 	// +optional
 	OSImageStream OSImageStream `json:"osImageStream,omitempty"`
+
+	// PKI configures cryptographic parameters for installer-generated
+	// signer certificates. When specified, all signer certificates use the
+	// algorithm and parameters from signerCertificates.
+	// Feature gated by ConfigurablePKI.
+	// +openshift:enable:FeatureGate=ConfigurablePKI
+	// +optional
+	PKI *PKIConfig `json:"pki,omitempty"`
+}
+
+// PKIConfig configures cryptographic parameters for installer-generated
+// signer certificates. When pki is present in the install config,
+// signerCertificates must be fully specified with algorithm and key parameters.
+type PKIConfig struct {
+	// signerCertificates specifies key parameters for all installer-generated
+	// certificate authority (CA) certificates.
+	// When set, all signer certificates use the specified algorithm and parameters.
+	// +required
+	SignerCertificates configv1alpha1.CertificateConfig `json:"signerCertificates"`
 }
 
 // ClusterDomain returns the DNS domain that all records for a cluster must belong to.
