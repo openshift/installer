@@ -2,6 +2,7 @@ package tls
 
 import (
 	"context"
+	"crypto/rsa"
 	"os"
 
 	"github.com/pkg/errors"
@@ -50,10 +51,14 @@ func (sk *BoundSASigningKey) Load(f asset.FileFetcher) (bool, error) {
 		return false, err
 	}
 
-	rsaKey, err := PemToPrivateKey(keyFile.Data)
+	key, err := PemToPrivateKey(keyFile.Data)
 	if err != nil {
-		logrus.Debugf("Failed to load rsa.PrivateKey from file: %s", err)
-		return false, errors.Wrap(err, "failed to load rsa.PrivateKey from the file")
+		logrus.Debugf("Failed to load private key from file: %s", err)
+		return false, errors.Wrap(err, "failed to load private key from the file")
+	}
+	rsaKey, ok := key.(*rsa.PrivateKey)
+	if !ok {
+		return false, errors.New("bound service account signing key must be RSA")
 	}
 	pubData, err := PublicKeyToPem(&rsaKey.PublicKey)
 	if err != nil {

@@ -2,10 +2,10 @@ package tls
 
 import (
 	"context"
-	"crypto/x509"
 	"crypto/x509/pkix"
 
 	"github.com/openshift/installer/pkg/asset"
+	"github.com/openshift/installer/pkg/asset/installconfig"
 )
 
 // RootCA contains the private key and the cert that acts as a certificate
@@ -24,19 +24,21 @@ var _ asset.WritableAsset = (*RootCA)(nil)
 
 // Dependencies returns nothing.
 func (c *RootCA) Dependencies() []asset.Asset {
-	return []asset.Asset{}
+	return []asset.Asset{&installconfig.InstallConfig{}}
 }
 
 // Generate generates the MCS/Ignition CA.
 func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
+	installConfig := &installconfig.InstallConfig{}
+	parents.Get(installConfig)
 	cfg := &CertCfg{
-		Subject:   pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
-		KeyUsages: x509.KeyUsageKeyEncipherment | x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
-		Validity:  ValidityTenYears(),
-		IsCA:      true,
+		Subject: pkix.Name{CommonName: "root-ca", OrganizationalUnit: []string{"openshift"}},
+		// KeyUsages is set by GenerateSelfSignedCertificate based on the key algorithm.
+		Validity: ValidityTenYears(),
+		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca")
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", installConfig.Config.PKI)
 }
 
 // Name returns the human-friendly name of the asset.
