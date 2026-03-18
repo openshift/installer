@@ -4,15 +4,50 @@ set -euo pipefail
 # shellcheck source=release-image.sh.template
 . /usr/local/bin/release-image.sh
 
-# yuck... this is a good argument for renaming the node image to just `node` in both OCP and OKD
-coreos_img=rhel-coreos
-{{ if .IsOKD }}
-coreos_img=stream-coreos
-{{ end }}
-until COREOS_IMAGE=$(image_for ${coreos_img}); do
-    echo 'Failed to query release image; retrying...'
-    sleep 10
-done
+get_default_node_image() {
+    until MCO_IMAGE=$(image_for 'machine-config-operator'); do
+        echo 'Failed to query release image; retrying...'
+        sleep 10
+    done
+
+    # Build proxy environment variable arguments if proxies are configured
+    PROXY_ENV_ARGS=""
+    if [ -n "${HTTP_PROXY:-}" ]; then
+        PROXY_ENV_ARGS="${PROXY_ENV_ARGS} -e HTTP_PROXY=${HTTP_PROXY}"
+    fi
+    if [ -n "${HTTPS_PROXY:-}" ]; then
+        PROXY_ENV_ARGS="${PROXY_ENV_ARGS} -e HTTPS_PROXY=${HTTPS_PROXY}"
+    fi
+    if [ -n "${NO_PROXY:-}" ]; then
+        PROXY_ENV_ARGS="${PROXY_ENV_ARGS} -e NO_PROXY=${NO_PROXY}"
+    fi
+
+    # Query the node image pullspec from the release using machine-config-osimagestream
+    until COREOS_IMAGE=$(podman run \
+        --quiet \
+        --rm \
+        --net=host \
+        --volume /etc/containers:/etc/containers:ro \
+        --volume /root/.docker/config.json:/root/.docker/config.json:ro,z \
+        ${PROXY_ENV_ARGS} \
+        --entrypoint /usr/bin/machine-config-osimagestream \
+        "${MCO_IMAGE}" \
+        get default-node-image \
+        --release-image "${RELEASE_IMAGE_DIGEST}" \
+        --pull-secret /root/.docker/config.json \
+        --per-host-certs /etc/containers/certs.d \
+        --registry-config /etc/containers/registries.conf \
+        --image-pullspec); do
+        echo 'Failed to query for OS image pullspec; retrying...'
+        sleep 10
+    done
+
+    echo "$COREOS_IMAGE"
+}
+
+
+# Query the node image pullspec from the release using machine-config-osimagestream
+COREOS_IMAGE="$(get_default_node_image)"
 
 # need to use rpm-ostree here since `bootc status` doesn't work in the live ISO currently
 # https://github.com/containers/bootc/issues/1043
