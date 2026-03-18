@@ -265,6 +265,41 @@ func UnconfiguredIgnCmp(ts *testscript.TestScript, neg bool, args []string) {
 	ignitionStorageCmp(ts, neg, argsNext)
 }
 
+// IsoIgnitionSystemdContains `isoPath` `unit` checks that the systemd unit
+// `unit` is present in the ignition config embedded in the ISO `isoPath`.
+func IsoIgnitionSystemdContains(ts *testscript.TestScript, neg bool, args []string) {
+	if len(args) != 2 {
+		ts.Fatalf("usage: isoIgnitionSystemdContains isoPath unit")
+	}
+
+	workDir := ts.Getenv("WORK")
+	isoPath, unitName := args[0], args[1]
+	isoPathAbs := filepath.Join(workDir, isoPath)
+
+	archiveFile, ignitionFile, err := archiveFileNames(isoPath)
+	if err != nil {
+		ts.Check(err)
+	}
+
+	ignition, err := extractIgnition(isoPathAbs, archiveFile, ignitionFile)
+	ts.Check(err)
+
+	found := false
+	for _, u := range ignition.Systemd.Units {
+		if u.Name == unitName {
+			found = true
+			break
+		}
+	}
+
+	if !found && !neg {
+		ts.Fatalf("systemd unit %s not found in ignition config of %s", unitName, isoPath)
+	}
+	if found && neg {
+		ts.Fatalf("systemd unit %s should not be present in ignition config of %s", unitName, isoPath)
+	}
+}
+
 // IsoContains `isoPath` `file` check if the specified `file` is stored
 // within the ISO `isoPath` image.
 func IsoContains(ts *testscript.TestScript, neg bool, args []string) {

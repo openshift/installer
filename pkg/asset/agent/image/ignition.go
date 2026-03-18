@@ -391,6 +391,7 @@ func getDefaultEnabledServices() []string {
 		"iscsistart.service",
 		"set-hostname.service",
 		"iscsiadm.service",
+		"agent-set-host-copy-network-arg.service",
 	}
 }
 

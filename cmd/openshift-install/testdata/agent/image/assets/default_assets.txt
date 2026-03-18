@@ -9,6 +9,34 @@ initrdImgContains agent.x86_64.iso /agent-files/agent-tui
 initrdImgContains agent.x86_64.iso /agent-files/libnmstate.so.*
 initrdImgContains agent.x86_64.iso /usr/lib/dracut/hooks/pre-pivot/99-agent-copy-files.sh
 
+# Verify all systemd units from getDefaultEnabledServices() are present in the ignition config
+isoIgnitionSystemdContains agent.x86_64.iso agent-extract-tui.service
+isoIgnitionSystemdContains agent.x86_64.iso agent-import-cluster.service
+isoIgnitionSystemdContains agent.x86_64.iso agent-interactive-console-serial@.service
+isoIgnitionSystemdContains agent.x86_64.iso agent-interactive-console.service
+isoIgnitionSystemdContains agent.x86_64.iso agent-register-cluster.service
+isoIgnitionSystemdContains agent.x86_64.iso agent-register-infraenv.service
+isoIgnitionSystemdContains agent.x86_64.iso agent-set-host-copy-network-arg.service
+isoIgnitionSystemdContains agent.x86_64.iso agent-ui.service
+isoIgnitionSystemdContains agent.x86_64.iso agent.service
+isoIgnitionSystemdContains agent.x86_64.iso assisted-service-db.service
+isoIgnitionSystemdContains agent.x86_64.iso assisted-service-pod.service
+isoIgnitionSystemdContains agent.x86_64.iso assisted-service.service
+isoIgnitionSystemdContains agent.x86_64.iso install-status.service
+isoIgnitionSystemdContains agent.x86_64.iso iscsiadm.service
+isoIgnitionSystemdContains agent.x86_64.iso iscsistart.service
+# multipathd.service is listed in getDefaultEnabledServices() but has no unit file
+# in data/data/agent/systemd/units/, so AddSystemdUnits never adds it to the ignition
+# config. It relies on RHCOS presets to be enabled and cannot be verified this way.
+# isoIgnitionSystemdContains agent.x86_64.iso multipathd.service
+isoIgnitionSystemdContains agent.x86_64.iso node-zero.service
+isoIgnitionSystemdContains agent.x86_64.iso oci-eval-user-data.service
+isoIgnitionSystemdContains agent.x86_64.iso selinux.service
+isoIgnitionSystemdContains agent.x86_64.iso set-hostname.service
+
+# Verify that the script for persisting manual network config is included
+isoIgnitionContains agent.x86_64.iso /usr/local/bin/agent-set-host-copy-network-arg.sh
+
 -- install-config.yaml --
 apiVersion: v1
 baseDomain: test.metalkube.org

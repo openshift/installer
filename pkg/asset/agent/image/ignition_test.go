@@ -510,6 +510,7 @@ func commonFiles() []string {
 		"/etc/udev/rules.d/80-agent-config-image.rules",
 		"/usr/local/bin/add-node.sh",
 		"/usr/local/bin/agent-auth-token-status.sh",
+		"/usr/local/bin/agent-set-host-copy-network-arg.sh",
 		"/usr/local/bin/common.sh",
 		"/usr/local/bin/configure-assisted-hw-requirements.sh",
 	}

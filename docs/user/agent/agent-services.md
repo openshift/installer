@@ -21,6 +21,7 @@ step is required because the agent-tui and nmstate libraries are too big to fit 
 * agent-register-infraenv - reads the ZTP manifests located at /etc/assisted/manifests and registers the infraenv
 * install-status - determines the current install status and writes it out to /etc/issue.d/
 * apply-host-config - applies root device hints and roles specified in agent-config.yaml
+* agent-set-host-copy-network-arg - detects manually-created NetworkManager keyfiles in /etc/NetworkManager/system-connections and sets the --copy-network installer arg for the current host via the assisted-service REST-API, ensuring that network configuration created via the agent-tui persists into the installed OS
 * start-cluster-installation - calls assisted-service REST-API to start cluster installation when all hosts are in ready state and have passed validations
 * iscsistart - calls the iscsistart utility which allows an iSCSI session to be started for booting off an iSCSI target
 * iscsiadm - calls the iscsiadm utility that will start iscsid to manage the iSCSI session needed to install the final rhcos image

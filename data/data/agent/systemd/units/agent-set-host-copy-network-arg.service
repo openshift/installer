@@ -1,0 +1,13 @@
+[Unit]
+Description=Set --copy-network installer arg if manual network config was detected
+After=agent.service
+Before=start-cluster-installation.service agent-add-node.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=true
+EnvironmentFile=/etc/assisted/rendezvous-host.env
+ExecStart=/usr/local/bin/agent-set-host-copy-network-arg.sh
+
+[Install]
+WantedBy=multi-user.target
