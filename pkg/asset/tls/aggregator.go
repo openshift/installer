@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // AggregatorCA is the asset that generates the aggregator-ca key/cert pair.
@@ -38,7 +39,7 @@ func (a *AggregatorCA) Generate(ctx context.Context, dependencies asset.Parents)
 		IsCA:     true,
 	}
 
-	return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", installConfig.Config.PKI)
+	return a.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-ca", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Name returns the human-friendly name of the asset.
@@ -108,7 +109,7 @@ func (c *AggregatorSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", installConfig.Config.PKI)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "aggregator-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Name returns the human-friendly name of the asset.

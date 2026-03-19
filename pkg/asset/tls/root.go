@@ -6,6 +6,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // RootCA contains the private key and the cert that acts as a certificate
@@ -38,7 +39,7 @@ func (c *RootCA) Generate(ctx context.Context, parents asset.Parents) error {
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", installConfig.Config.PKI)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "root-ca", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Name returns the human-friendly name of the asset.
