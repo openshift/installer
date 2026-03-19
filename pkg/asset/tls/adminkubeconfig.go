@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // AdminKubeConfigSignerCertKey is a key/cert pair that signs the admin kubeconfig client certs.
@@ -32,7 +33,7 @@ func (c *AdminKubeConfigSignerCertKey) Generate(ctx context.Context, parents ass
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", installConfig.Config.PKI)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "admin-kubeconfig-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Load reads the asset files from disk.

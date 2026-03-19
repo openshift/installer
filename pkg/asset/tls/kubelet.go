@@ -7,6 +7,7 @@ import (
 
 	"github.com/openshift/installer/pkg/asset"
 	"github.com/openshift/installer/pkg/asset/installconfig"
+	pkidefaults "github.com/openshift/installer/pkg/types/pki"
 )
 
 // KubeletCSRSignerCertKey is a key/cert pair that signs the kubelet client certs.
@@ -32,7 +33,7 @@ func (c *KubeletCSRSignerCertKey) Generate(ctx context.Context, parents asset.Pa
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", installConfig.Config.PKI)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Name returns the human-friendly name of the asset.
@@ -124,7 +125,7 @@ func (c *KubeletBootstrapCertSigner) Generate(ctx context.Context, parents asset
 		IsCA:     true,
 	}
 
-	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", installConfig.Config.PKI)
+	return c.SelfSignedCertKey.Generate(ctx, cfg, "kubelet-bootstrap-kubeconfig-signer", pkidefaults.EffectiveSignerPKIConfig(installConfig.Config))
 }
 
 // Name returns the human-friendly name of the asset.
