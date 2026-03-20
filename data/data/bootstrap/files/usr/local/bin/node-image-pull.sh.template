@@ -4,12 +4,38 @@ set -euo pipefail
 # shellcheck source=release-image.sh.template
 . /usr/local/bin/release-image.sh
 
-# yuck... this is a good argument for renaming the node image to just `node` in both OCP and OKD
-coreos_img={{.StreamTag}}
-until COREOS_IMAGE=$(image_for ${coreos_img}); do
-    echo 'Failed to query release image; retrying...'
+# Get the Machine Config Operator image from the release payload
+until MCO_IMAGE=$(image_for 'machine-config-operator'); do
+    echo 'Failed to query MCO image from release; retrying...'
     sleep 10
 done
+
+# Create temporary directory for binary extraction
+TEMP_DIR=$(mktemp -d)
+echo "Extracting machine-config-osimagestream binary to ${TEMP_DIR}"
+
+# Extract the machine-config-osimagestream binary from the MCO image. This avoids having to munge podman args, paths, env vars, etc.
+podman create --name mco-osimagestream "${MCO_IMAGE}"
+podman cp mco-osimagestream:/usr/bin/machine-config-osimagestream "${TEMP_DIR}/machine-config-osimagestream"
+podman rm mco-osimagestream
+
+# Execute the binary to get the CoreOS image pullspec
+# Note: Proxy environment variables (HTTP_PROXY, HTTPS_PROXY, NO_PROXY) are
+# automatically inherited from the environment if set via /etc/profile.d/proxy.sh
+until COREOS_IMAGE=$("${TEMP_DIR}/machine-config-osimagestream" \
+    get os-image-pullspec \
+    --release-image "${RELEASE_IMAGE_DIGEST}" \
+    --authfile /root/.docker/config.json \
+    --per-host-certs /etc/containers/certs.d \
+    --osimagestream-name '{{ .OSImageStream }}' \
+    --trust-bundle /etc/pki/ca-trust/source/anchors \
+    --registry-config /etc/containers/registries.conf); do
+    echo 'Failed to query for OS image pullspec; retrying...'
+    sleep 10
+done
+
+# Clean up temporary directory
+rm -rf "${TEMP_DIR}"
 
 # need to use rpm-ostree here since `bootc status` doesn't work in the live ISO currently
 # https://github.com/containers/bootc/issues/1043

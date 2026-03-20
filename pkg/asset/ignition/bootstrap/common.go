@@ -40,9 +40,9 @@ import (
 	"github.com/openshift/installer/pkg/asset/machines"
 	"github.com/openshift/installer/pkg/asset/manifests"
 	"github.com/openshift/installer/pkg/asset/releaseimage"
-	"github.com/openshift/installer/pkg/asset/rhcos"
+	rhcosAsset "github.com/openshift/installer/pkg/asset/rhcos"
 	"github.com/openshift/installer/pkg/asset/tls"
-	rhcosutils "github.com/openshift/installer/pkg/rhcos"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	awstypes "github.com/openshift/installer/pkg/types/aws"
 	aztypes "github.com/openshift/installer/pkg/types/azure"
@@ -99,7 +99,7 @@ type bootstrapTemplateData struct {
 	FeatureSet            configv1.FeatureSet
 	Invoker               string
 	ClusterDomain         string
-	StreamTag             string
+	OSImageStream         types.OSImageStream
 }
 
 // platformTemplateData is the data to use to replace values in bootstrap
@@ -177,7 +177,7 @@ func (a *Common) Dependencies() []asset.Asset {
 		&tls.ServiceAccountKeyPair{},
 		&tls.IronicTLSCert{},
 		&releaseimage.Image{},
-		new(rhcos.Image),
+		new(rhcosAsset.Image),
 	}
 }
 
@@ -287,7 +287,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 	installConfig := &installconfig.InstallConfig{}
 	proxy := &manifests.Proxy{}
 	releaseImage := &releaseimage.Image{}
-	rhcosImage := new(rhcos.Image)
+	rhcosImage := new(rhcosAsset.Image)
 	bootstrapSSHKeyPair := &tls.BootstrapSSHKeyPair{}
 	ironicCreds := &baremetal.IronicCreds{}
 	dependencies.Get(installConfig, proxy, releaseImage, rhcosImage, bootstrapSSHKeyPair, ironicCreds)
@@ -399,6 +399,11 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		pullSecret = merged
 	}
 
+	osImageStream := installConfig.Config.OSImageStream
+	if osImageStream == "" {
+		osImageStream = rhcos.DefaultOSImageStream
+	}
+
 	return &bootstrapTemplateData{
 		AdditionalTrustBundle: installConfig.Config.AdditionalTrustBundle,
 		FIPS:                  installConfig.Config.FIPS,
@@ -422,7 +427,7 @@ func (a *Common) getTemplateData(dependencies asset.Parents, bootstrapInPlace bo
 		FeatureSet:            installConfig.Config.FeatureSet,
 		Invoker:               openshiftInstallInvoker,
 		ClusterDomain:         installConfig.Config.ClusterDomain(),
-		StreamTag:             rhcosutils.GetPayloadImageStreamTag(installConfig.Config.OSImageStream),
+		OSImageStream:         osImageStream,
 	}
 }
 
