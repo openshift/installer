@@ -81,8 +81,15 @@ func (n *NMStateConfig) Generate(_ context.Context, dependencies asset.Parents) 
 		if err := validateHostCount(installConfig.Config, agentHosts); err != nil {
 			return err
 		}
-		clusterName = installConfig.ClusterName()
-		clusterNamespace = installConfig.ClusterNamespace()
+		if installConfig.Config != nil {
+			clusterName = installConfig.ClusterName()
+			clusterNamespace = installConfig.ClusterNamespace()
+		} else {
+			// No install-config (OVE unconfigured-ignition)
+			// Use default values
+			clusterName = "cluster"
+			clusterNamespace = "cluster0"
+		}
 
 	case workflow.AgentWorkflowTypeAddNodes:
 		if err := validateHostHostnameAndIPs(agentHosts, clusterInfo.Nodes); err != nil {
@@ -361,6 +368,11 @@ func buildMacInterfaceMap(nmStateConfig aiv1beta1.NMStateConfig) models.MacInter
 }
 
 func validateHostCount(installConfig *types.InstallConfig, agentHosts *agentconfig.AgentHosts) error {
+	if installConfig == nil {
+		// No install-config available - skip validation
+		return nil
+	}
+
 	numRequiredMasters, numRequiredArbiters, numRequiredWorkers := agent.GetReplicaCount(installConfig)
 
 	numMasters := int64(0)
