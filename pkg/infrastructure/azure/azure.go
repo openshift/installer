@@ -693,6 +693,7 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 	}
 	securityGroupName := fmt.Sprintf("%s-nsg", in.Metadata.InfraID)
 	sshRuleName := fmt.Sprintf("%s_ssh_in", in.Metadata.InfraID)
+	konnectivityRuleName := fmt.Sprintf("%s_konnectivity_in", in.Metadata.InfraID)
 
 	// See if a security group rule exists with the name ${InfraID}_ssh_in.
 	// If it does, this is a private cluster. If it does not, this is a
@@ -732,6 +733,26 @@ func (p *Provider) PostDestroy(ctx context.Context, in clusterapi.PostDestroyerI
 		})
 		if err != nil {
 			return fmt.Errorf("failed to delete inbound nat rule: %w", err)
+		}
+	}
+
+	// Remove konnectivity security group rule used during bootstrap.
+	_, err = networkClientFactory.NewSecurityRulesClient().Get(ctx,
+		resourceGroupName,
+		securityGroupName,
+		konnectivityRuleName,
+		nil,
+	)
+	if err == nil {
+		err = deleteSecurityGroupRule(ctx, &securityGroupInput{
+			resourceGroupName:    resourceGroupName,
+			securityGroupName:    securityGroupName,
+			securityRuleName:     konnectivityRuleName,
+			securityRulePort:     "8091",
+			networkClientFactory: networkClientFactory,
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete konnectivity security rule: %w", err)
 		}
 	}
 	return nil

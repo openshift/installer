@@ -319,7 +319,22 @@ func createBootstrapFirewallRules(ctx context.Context, in clusterapi.InfraReadyI
 		machineCIDR := in.InstallConfig.Config.Networking.MachineNetwork[0].CIDR.String()
 		srcRanges = []string{machineCIDR}
 	}
-	return addFirewallRule(ctx, svc, firewallName, network, projectID, getBootstrapSSHPorts(), srcTags, targetTags, srcRanges)
+	if err := addFirewallRule(ctx, svc, firewallName, network, projectID, getBootstrapSSHPorts(), srcTags, targetTags, srcRanges); err != nil {
+		return err
+	}
+
+	// Konnectivity is only needed during bootstrap
+	workerTag := fmt.Sprintf("%s-worker", in.InfraID)
+	firewallName = fmt.Sprintf("%s-bootstrap-in-konnectivity", in.InfraID)
+	srcTags = []string{workerTag, bootstrapTag}
+	targetTags = []string{bootstrapTag}
+	konnectivityPorts := []*compute.FirewallAllowed{
+		{
+			IPProtocol: "tcp",
+			Ports:      []string{"8091"},
+		},
+	}
+	return addFirewallRule(ctx, svc, firewallName, network, projectID, konnectivityPorts, srcTags, targetTags, nil)
 }
 
 // removeBootstrapFirewallRules removes the rules created for the bootstrap node.
@@ -334,6 +349,11 @@ func removeBootstrapFirewallRules(ctx context.Context, infraID, projectID string
 	}
 
 	firewallName := fmt.Sprintf("%s-bootstrap-in-ssh", infraID)
+	if err := deleteFirewallRule(ctx, svc, firewallName, projectID); err != nil {
+		return err
+	}
+
+	firewallName = fmt.Sprintf("%s-bootstrap-in-konnectivity", infraID)
 	return deleteFirewallRule(ctx, svc, firewallName, projectID)
 }
 
