@@ -21,7 +21,7 @@ type lbInput struct {
 	loadBalancerName       string
 	infraID                string
 	region                 string
-	resourceGroup          string
+	resourceGroupName      string
 	subscriptionID         string
 	frontendIPConfigName   string
 	backendAddressPoolName string
@@ -30,18 +30,44 @@ type lbInput struct {
 	tags                   map[string]*string
 }
 
+//nolint:unused
+type lbRuleInput struct {
+	idPrefix               string
+	loadBalancerName       string
+	probeName              string
+	ruleName               string
+	frontendIPConfigName   string
+	backendAddressPoolName string
+}
+
+//nolint:unused
+type vnetInput struct {
+	resourceGroupName    string
+	virtualNetworkName   string
+	networkClientFactory *armnetwork.ClientFactory
+}
+
+//nolint:unused
+type subnetInput struct {
+	resourceGroupName    string
+	virtualNetworkName   string
+	subnetName           string
+	networkClientFactory *armnetwork.ClientFactory
+}
+
 type pipInput struct {
-	infraID       string
-	name          string
-	region        string
-	resourceGroup string
-	pipClient     *armnetwork.PublicIPAddressesClient
-	tags          map[string]*string
+	infraID           string
+	name              string
+	region            string
+	resourceGroupName string
+	ipVersion         armnetwork.IPVersion
+	pipClient         *armnetwork.PublicIPAddressesClient
+	tags              map[string]*string
 }
 
 type vmInput struct {
 	infraID             string
-	resourceGroup       string
+	resourceGroupName   string
 	ids                 []string
 	backendAddressPools []*armnetwork.BackendAddressPool
 	vmClient            *armcompute.VirtualMachinesClient
@@ -67,10 +93,254 @@ type inboundNatRuleInput struct {
 	networkClientFactory *armnetwork.ClientFactory
 }
 
+//nolint:unused
+func mcsProbe() *armnetwork.Probe {
+	return &armnetwork.Probe{
+		Name: to.Ptr("sint-probe"),
+		Properties: &armnetwork.ProbePropertiesFormat{
+			Protocol:          to.Ptr(armnetwork.ProbeProtocolHTTPS),
+			Port:              to.Ptr[int32](22623),
+			IntervalInSeconds: to.Ptr[int32](5),
+			NumberOfProbes:    to.Ptr[int32](2),
+			RequestPath:       to.Ptr("/healthz"),
+		},
+	}
+}
+
+//nolint:unused
+func mcsRule(in *lbRuleInput) *armnetwork.LoadBalancingRule {
+	return &armnetwork.LoadBalancingRule{
+		Name: to.Ptr(in.ruleName),
+		Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+			Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+			FrontendPort:         to.Ptr[int32](22623),
+			BackendPort:          to.Ptr[int32](22623),
+			IdleTimeoutInMinutes: to.Ptr[int32](30),
+			EnableFloatingIP:     to.Ptr(false),
+			LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+			FrontendIPConfiguration: &armnetwork.SubResource{
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, in.frontendIPConfigName)),
+			},
+			BackendAddressPool: &armnetwork.SubResource{
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
+			},
+			Probe: &armnetwork.SubResource{
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, in.probeName)),
+			},
+		},
+	}
+}
+
+//nolint:unused
+func apiProbe() *armnetwork.Probe {
+	return &armnetwork.Probe{
+		//Name: to.Ptr("api-probe"),
+		Name: to.Ptr("HTTPSProbe"),
+		Properties: &armnetwork.ProbePropertiesFormat{
+			Protocol:          to.Ptr(armnetwork.ProbeProtocolHTTPS),
+			Port:              to.Ptr[int32](6443),
+			IntervalInSeconds: to.Ptr[int32](5),
+			NumberOfProbes:    to.Ptr[int32](2),
+			RequestPath:       to.Ptr("/readyz"),
+		},
+	}
+}
+
+//nolint:unused
+func apiRule(in *lbRuleInput) *armnetwork.LoadBalancingRule {
+	return &armnetwork.LoadBalancingRule{
+		Name: to.Ptr(in.ruleName),
+		Properties: &armnetwork.LoadBalancingRulePropertiesFormat{
+			Protocol:             to.Ptr(armnetwork.TransportProtocolTCP),
+			FrontendPort:         to.Ptr[int32](6443),
+			BackendPort:          to.Ptr[int32](6443),
+			IdleTimeoutInMinutes: to.Ptr[int32](30),
+			DisableOutboundSnat:  to.Ptr(true),
+			EnableFloatingIP:     to.Ptr(false),
+			LoadDistribution:     to.Ptr(armnetwork.LoadDistributionDefault),
+			FrontendIPConfiguration: &armnetwork.SubResource{
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, in.frontendIPConfigName)),
+			},
+			BackendAddressPool: &armnetwork.SubResource{
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
+			},
+			Probe: &armnetwork.SubResource{
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/probes/%s", in.idPrefix, in.loadBalancerName, in.probeName)),
+			},
+		},
+	}
+}
+
+//nolint:unused
+func outboundRule(in *lbRuleInput) *armnetwork.OutboundRule {
+	return &armnetwork.OutboundRule{
+		Name: to.Ptr(in.ruleName),
+		Properties: &armnetwork.OutboundRulePropertiesFormat{
+			Protocol:               to.Ptr(armnetwork.LoadBalancerOutboundRuleProtocolAll),
+			AllocatedOutboundPorts: to.Ptr[int32](1024), // configurable ??
+			IdleTimeoutInMinutes:   nil,
+			FrontendIPConfigurations: []*armnetwork.SubResource{
+				{
+					ID: to.Ptr(fmt.Sprintf("/%s/%s/frontendIPConfigurations/%s", in.idPrefix, in.loadBalancerName, in.frontendIPConfigName)),
+				},
+			},
+			BackendAddressPool: &armnetwork.SubResource{
+				ID: to.Ptr(fmt.Sprintf("/%s/%s/backendAddressPools/%s", in.idPrefix, in.loadBalancerName, in.backendAddressPoolName)),
+			},
+		},
+	}
+}
+
+//nolint:unused
+func addProbeToLoadBalancer(ctx context.Context, probe *armnetwork.Probe, in *lbInput) (*armnetwork.LoadBalancer, error) {
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get load balancer: %w", err)
+	}
+	lb := lbResp.LoadBalancer
+	if lb.Properties == nil {
+		return nil, fmt.Errorf("no load balancer properties found")
+	}
+
+	lb.Properties.Probes = append(lb.Properties.Probes, probe)
+
+	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.loadBalancerName, lb, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update load balancer: %w", err)
+	}
+
+	resp, err := pollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.LoadBalancer, nil
+}
+
+//nolint:unused
+func addLoadBalancingRuleToLoadBalancer(ctx context.Context, rule *armnetwork.LoadBalancingRule, in *lbInput) (*armnetwork.LoadBalancer, error) {
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get load balancer: %w", err)
+	}
+	lb := lbResp.LoadBalancer
+	if lb.Properties == nil {
+		return nil, fmt.Errorf("no load balancer properties found")
+	}
+
+	lb.Properties.LoadBalancingRules = append(lb.Properties.LoadBalancingRules, rule)
+
+	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.loadBalancerName, lb, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update load balancer: %w", err)
+	}
+
+	resp, err := pollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.LoadBalancer, nil
+}
+
+//nolint:unused
+func addOutboundRuleToLoadBalancer(ctx context.Context, rule *armnetwork.OutboundRule, in *lbInput) (*armnetwork.LoadBalancer, error) {
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get load balancer: %w", err)
+	}
+	lb := lbResp.LoadBalancer
+	if lb.Properties == nil {
+		return nil, fmt.Errorf("no load balancer properties found")
+	}
+
+	lb.Properties.OutboundRules = append(lb.Properties.OutboundRules, rule)
+
+	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.loadBalancerName, lb, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update load balancer: %w", err)
+	}
+
+	resp, err := pollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.LoadBalancer, nil
+}
+
+//nolint:unused
+func getSubnet(ctx context.Context, in *subnetInput) (*armnetwork.Subnet, error) {
+	subnetsClient := in.networkClientFactory.NewSubnetsClient()
+	subnetResp, err := subnetsClient.Get(ctx, in.resourceGroupName, in.virtualNetworkName, in.subnetName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get subnet: %w", err)
+	}
+	return &subnetResp.Subnet, nil
+}
+
+//nolint:unused
+func getVirtualNetwork(ctx context.Context, in *vnetInput) (*armnetwork.VirtualNetwork, error) {
+	virtualNetworksClient := in.networkClientFactory.NewVirtualNetworksClient()
+	virtualNetworksResp, err := virtualNetworksClient.Get(ctx, in.resourceGroupName, in.virtualNetworkName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get virtual network: %w", err)
+	}
+	return &virtualNetworksResp.VirtualNetwork, nil
+}
+
+//nolint:unused
+func addFrontendIPConfigurationToLoadBalancer(ctx context.Context, frontendIPConfiguration *armnetwork.FrontendIPConfiguration, in *lbInput) (*armnetwork.LoadBalancer, error) {
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get load balancer: %w", err)
+	}
+	lb := lbResp.LoadBalancer
+	if lb.Properties == nil {
+		return nil, fmt.Errorf("no load balancer properties found")
+	}
+
+	// We need a vnet & subnet
+	lb.Properties.FrontendIPConfigurations = append(lb.Properties.FrontendIPConfigurations, frontendIPConfiguration)
+
+	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.loadBalancerName, lb, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update load balancer: %w", err)
+	}
+
+	resp, err := pollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.LoadBalancer, nil
+}
+
+//nolint:unused
+func addBackendAddressPoolToLoadBalancer(ctx context.Context, backendAddressPool *armnetwork.BackendAddressPool, in *lbInput) (*armnetwork.LoadBalancer, error) {
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get load balancer: %w", err)
+	}
+	lb := lbResp.LoadBalancer
+	if lb.Properties == nil {
+		return nil, fmt.Errorf("no load balancer properties found")
+	}
+
+	lb.Properties.BackendAddressPools = append(lb.Properties.BackendAddressPools, backendAddressPool)
+
+	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, in.loadBalancerName, lb, nil)
+	if err != nil {
+		return nil, fmt.Errorf("cannot update load balancer: %w", err)
+	}
+
+	resp, err := pollerResp.PollUntilDone(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	return &resp.LoadBalancer, nil
+}
+
 func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddress, error) {
 	pollerResp, err := in.pipClient.BeginCreateOrUpdate(
 		ctx,
-		in.resourceGroup,
+		in.resourceGroupName,
 		in.name,
 		armnetwork.PublicIPAddress{
 			Name:     to.Ptr(in.name),
@@ -80,10 +350,10 @@ func createPublicIP(ctx context.Context, in *pipInput) (*armnetwork.PublicIPAddr
 				Tier: to.Ptr(armnetwork.PublicIPAddressSKUTierRegional),
 			},
 			Properties: &armnetwork.PublicIPAddressPropertiesFormat{
-				PublicIPAddressVersion:   to.Ptr(armnetwork.IPVersionIPv4),
+				PublicIPAddressVersion:   to.Ptr(in.ipVersion),
 				PublicIPAllocationMethod: to.Ptr(armnetwork.IPAllocationMethodStatic),
 				DNSSettings: &armnetwork.PublicIPAddressDNSSettings{
-					DomainNameLabel: to.Ptr(in.infraID),
+					DomainNameLabel: to.Ptr(in.name),
 				},
 			},
 			Tags: in.tags,
@@ -105,7 +375,7 @@ func createAPILoadBalancer(ctx context.Context, pip *armnetwork.PublicIPAddress,
 	probeName := "api-probe"
 
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
-		in.resourceGroup,
+		in.resourceGroupName,
 		in.loadBalancerName,
 		armnetwork.LoadBalancer{
 			Location: to.Ptr(in.region),
@@ -181,7 +451,7 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 	probeName := "api-probe"
 
 	// Get the CAPI-created outbound load balancer so we can modify it.
-	extLB, err := in.lbClient.Get(ctx, in.resourceGroup, in.loadBalancerName, nil)
+	extLB, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get external load balancer: %w", err)
 	}
@@ -205,7 +475,7 @@ func updateOutboundLoadBalancerToAPILoadBalancer(ctx context.Context, pip *armne
 		})
 
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
-		in.resourceGroup,
+		in.resourceGroupName,
 		in.loadBalancerName,
 		armnetwork.LoadBalancer{
 			Location: to.Ptr(in.region),
@@ -270,7 +540,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 	mcsProbeName := "sint-probe"
 
 	// Get the CAPI-created internal load balancer so we can modify it.
-	lbResp, err := in.lbClient.Get(ctx, in.resourceGroup, in.loadBalancerName, nil)
+	lbResp, err := in.lbClient.Get(ctx, in.resourceGroupName, in.loadBalancerName, nil)
 	if err != nil {
 		return nil, fmt.Errorf("could not get internal load balancer: %w", err)
 	}
@@ -317,7 +587,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 	intLB.Properties.Probes = append(intLB.Properties.Probes, mcsProbe)
 	intLB.Properties.LoadBalancingRules = append(intLB.Properties.LoadBalancingRules, mcsRule)
 	pollerResp, err := in.lbClient.BeginCreateOrUpdate(ctx,
-		in.resourceGroup,
+		in.resourceGroupName,
 		in.loadBalancerName,
 		intLB,
 		nil)
@@ -335,7 +605,7 @@ func updateInternalLoadBalancer(ctx context.Context, in *lbInput) (*armnetwork.L
 func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 	for _, id := range in.ids {
 		vmName := path.Base(id)
-		vm, err := in.vmClient.Get(ctx, in.resourceGroup, vmName, nil)
+		vm, err := in.vmClient.Get(ctx, in.resourceGroupName, vmName, nil)
 		if err != nil {
 			return fmt.Errorf("failed to get vm %s: %w", vmName, err)
 		}
@@ -344,14 +614,14 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 			nicRef := nics[0]
 
 			nicName := path.Base(*nicRef.ID)
-			nic, err := in.nicClient.Get(ctx, in.resourceGroup, nicName, nil)
+			nic, err := in.nicClient.Get(ctx, in.resourceGroupName, nicName, nil)
 			if err != nil {
 				return fmt.Errorf("failed to get nic for vm %s: %w", vmName, err)
 			}
 			for _, ipconfig := range nic.Properties.IPConfigurations {
 				ipconfig.Properties.LoadBalancerBackendAddressPools = append(ipconfig.Properties.LoadBalancerBackendAddressPools, in.backendAddressPools...)
 			}
-			pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroup, nicName, nic.Interface, nil)
+			pollerResp, err := in.nicClient.BeginCreateOrUpdate(ctx, in.resourceGroupName, nicName, nic.Interface, nil)
 			if err != nil {
 				return fmt.Errorf("failed to update nic for %s: %w", vmName, err)
 			}
@@ -360,7 +630,7 @@ func associateVMToBackendPool(ctx context.Context, in vmInput) error {
 				return fmt.Errorf("failed to update nic for vm %s: %w", vmName, err)
 			}
 		} else {
-			return fmt.Errorf("vm %s does not have a single nic: %w", vmName, err)
+			return fmt.Errorf("vm %s does not have a single nic", vmName)
 		}
 	}
 	return nil
