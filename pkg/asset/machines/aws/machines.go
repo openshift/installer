@@ -41,6 +41,7 @@ type machineProviderInput struct {
 }
 
 // Machines returns a list of machines for a machinepool.
+// func Machines(clusterID string, region string, subnets aws.SubnetsByZone, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string, publicSubnet bool, osImageStream string) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 func Machines(clusterID string, region string, subnets aws.SubnetsByZone, pool *types.MachinePool, role, userDataSecret string, userTags map[string]string, publicSubnet bool) ([]machineapi.Machine, *machinev1.ControlPlaneMachineSet, error) {
 	if poolPlatform := pool.Platform.Name(); poolPlatform != awstypes.Name {
 		return nil, nil, fmt.Errorf("non-AWS machine-pool: %q", poolPlatform)
@@ -98,6 +99,9 @@ func Machines(clusterID string, region string, subnets aws.SubnetsByZone, pool *
 					"machine.openshift.io/cluster-api-cluster":      clusterID,
 					"machine.openshift.io/cluster-api-machine-role": role,
 					"machine.openshift.io/cluster-api-machine-type": role,
+					// TODO: understand if the label needs to be set here or if just setting it in
+					// the MachineSet's Spec.Template.ObjectMeta.Labels is enough.
+					// "machine.openshift.io/os-image-stream":          osImageStream,
 				},
 			},
 			Spec: machineapi.MachineSpec{
@@ -177,6 +181,8 @@ func Machines(clusterID string, region string, subnets aws.SubnetsByZone, pool *
 							"machine.openshift.io/cluster-api-cluster":      clusterID,
 							"machine.openshift.io/cluster-api-machine-role": role,
 							"machine.openshift.io/cluster-api-machine-type": role,
+							// TODO: see if we need these labels on CPMSs
+							// "machine.openshift.io/os-image-stream":          osImageStream,
 						},
 					},
 					Spec: machineapi.MachineSpec{

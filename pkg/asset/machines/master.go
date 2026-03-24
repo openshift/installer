@@ -268,6 +268,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			masterUserDataSecretName,
 			installConfig.Config.Platform.AWS.UserTags,
 			awstypes.IsPublicOnlySubnetsEnabled(),
+			// GetOSImageStream(ic),
 		)
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
@@ -285,7 +286,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 			mpool.Zones = azs
 		}
 		pool.Platform.GCP = &mpool
-		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName)
+		machines, controlPlaneMachineSet, err = gcp.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, GetOSImageStream(ic))
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}
@@ -408,7 +409,7 @@ func (m *Master) Generate(ctx context.Context, dependencies asset.Parents) error
 		if err != nil {
 			return err
 		}
-		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, capabilities, session)
+		machines, controlPlaneMachineSet, err = azure.Machines(clusterID.InfraID, ic, &pool, rhcosImage.ControlPlane, "master", masterUserDataSecretName, capabilities, session, GetOSImageStream(ic))
 		if err != nil {
 			return errors.Wrap(err, "failed to create master machine objects")
 		}

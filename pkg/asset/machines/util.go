@@ -11,6 +11,7 @@ import (
 	"github.com/openshift/installer/pkg/asset/installconfig"
 	"github.com/openshift/installer/pkg/asset/machines/machineconfig"
 	"github.com/openshift/installer/pkg/asset/machines/vsphere"
+	"github.com/openshift/installer/pkg/rhcos"
 	"github.com/openshift/installer/pkg/types"
 	azuretypes "github.com/openshift/installer/pkg/types/azure"
 	vspheretypes "github.com/openshift/installer/pkg/types/vsphere"
@@ -19,6 +20,9 @@ import (
 const (
 	// VsphereScsiByPath defines the path format for vsphere disks being added.
 	VsphereScsiByPath = "/dev/disk/by-path/pci-0000:03:00.0-scsi-0:0:%d:0"
+
+	// OSImageStreamLabel is the label key used to identify the OS image stream for a machine.
+	OSImageStreamLabel = "machine.openshift.io/os-image-stream"
 )
 
 // NodeDiskSetup determines the path per disk type, and per platform and role, runs ForDiskSetup.
@@ -70,4 +74,13 @@ func NodeDiskSetup(installConfig *installconfig.InstallConfig, role string, disk
 		return nil, errors.Errorf("unsupported platform %q", ic.Platform.Name())
 	}
 	return nil, nil
+}
+
+// GetOSImageStream returns the OS image stream value from the install config, defaulting to the
+// value of `DefaultOSImageStream` in as defined in pkg/rhcos/stream.go if not specified.
+func GetOSImageStream(ic *types.InstallConfig) string {
+	if ic.OSImageStream == "" {
+		return string(rhcos.DefaultOSImageStream)
+	}
+	return string(ic.OSImageStream)
 }

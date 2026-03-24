@@ -554,6 +554,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				Role:                     pool.Name,
 				UserDataSecret:           workerUserDataSecretName,
 				Hosts:                    dHosts,
+				OSImageStream:            GetOSImageStream(ic),
 			})
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
@@ -625,7 +626,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				return err
 			}
 
-			sets, err := azure.MachineSets(clusterID.InfraID, installConfig, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, subnetZones, session)
+			sets, err := azure.MachineSets(clusterID.InfraID, installConfig, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, capabilities, subnetZones, session, GetOSImageStream(ic))
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
@@ -663,7 +664,7 @@ func (w *Worker) Generate(ctx context.Context, dependencies asset.Parents) error
 				mpool.Zones = azs
 			}
 			pool.Platform.GCP = &mpool
-			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName)
+			sets, err := gcp.MachineSets(clusterID.InfraID, ic, &pool, rhcosImage.Compute, "worker", workerUserDataSecretName, GetOSImageStream(ic))
 			if err != nil {
 				return errors.Wrap(err, "failed to create worker machine objects")
 			}
