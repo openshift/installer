@@ -412,7 +412,7 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 		loadBalancerName:       fmt.Sprintf("%s-internal", in.InfraID),
 		infraID:                in.InfraID,
 		region:                 platform.Region,
-		resourceGroup:          resourceGroupName,
+		resourceGroupName:      resourceGroupName,
 		subscriptionID:         session.Credentials.SubscriptionID,
 		frontendIPConfigName:   "public-lb-ip-v4",
 		backendAddressPoolName: fmt.Sprintf("%s-internal", in.InfraID),
@@ -434,12 +434,13 @@ func (p *Provider) InfraReady(ctx context.Context, in clusterapi.InfraReadyInput
 	var extLBFQDN string
 	if in.InstallConfig.Config.PublicAPI() {
 		publicIP, err := createPublicIP(ctx, &pipInput{
-			name:          fmt.Sprintf("%s-pip-v4", in.InfraID),
-			infraID:       in.InfraID,
-			region:        in.InstallConfig.Config.Azure.Region,
-			resourceGroup: resourceGroupName,
-			pipClient:     networkClientFactory.NewPublicIPAddressesClient(),
-			tags:          p.Tags,
+			name:              fmt.Sprintf("%s-pip-v4", in.InfraID),
+			infraID:           in.InfraID,
+			region:            in.InstallConfig.Config.Azure.Region,
+			resourceGroupName: resourceGroupName,
+			ipVersion:         armnetwork.IPVersionIPv4,
+			pipClient:         networkClientFactory.NewPublicIPAddressesClient(),
+			tags:              p.Tags,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to create public ip: %w", err)
@@ -525,7 +526,7 @@ func (p *Provider) PostProvision(ctx context.Context, in clusterapi.PostProvisio
 
 		vmInput := &vmInput{
 			infraID:             in.InfraID,
-			resourceGroup:       p.ResourceGroupName,
+			resourceGroupName:   p.ResourceGroupName,
 			vmClient:            vmClient,
 			nicClient:           p.NetworkClientFactory.NewInterfacesClient(),
 			ids:                 vmIDs,
