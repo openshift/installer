@@ -5,6 +5,7 @@
 # konnectivity_setup detects the bootstrap node IP, generates certificates,
 # and creates the konnectivity server static pod manifest.
 konnectivity_setup() {
+{{- if .KonnectivityEnabled }}
 {{- if .BootstrapNodeIP }}
     # Use explicitly configured bootstrap node IP
     export BOOTSTRAP_NODE_IP="{{.BootstrapNodeIP}}"
@@ -35,11 +36,14 @@ konnectivity_setup() {
         touch konnectivity-server-bootstrap.done
         record_service_stage_success
     fi
+{{- end }}
+    :
 }
 
 # konnectivity_manifests creates the agent namespace, secret, and daemonset
 # manifests for cluster deployment.
 konnectivity_manifests() {
+{{- if .KonnectivityEnabled }}
     if [ ! -f konnectivity-agent-manifest.done ]; then
         record_service_stage_start "konnectivity-agent-manifest"
         echo "Creating Konnectivity agent manifests..."
@@ -59,11 +63,14 @@ konnectivity_manifests() {
         touch konnectivity-agent-manifest.done
         record_service_stage_success
     fi
+{{- end }}
+    :
 }
 
 # konnectivity_cleanup removes bootstrap konnectivity resources by deleting
 # the namespace (cascading to DaemonSet and Secret) and the server static pod.
 konnectivity_cleanup() {
+{{- if .KonnectivityEnabled }}
     if [ ! -f konnectivity-cleanup.done ]; then
         record_service_stage_start "konnectivity-cleanup"
         echo "Cleaning up bootstrap konnectivity resources..."
@@ -74,4 +81,6 @@ konnectivity_cleanup() {
         touch konnectivity-cleanup.done
         record_service_stage_success
     fi
+{{- end }}
+    :
 }

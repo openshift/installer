@@ -274,11 +274,15 @@ then
 		--rendered-manifest-files=/assets/manifests \
 		--payload-version=$VERSION \
 		--operand-kubernetes-version="${KUBERNETES_VERSION}" \
+{{- if .KonnectivityEnabled }}
 		--config-override-files=/assets/konnectivity-config-override.yaml
+{{- end }}
 
 	cp kube-apiserver-bootstrap/config /etc/kubernetes/bootstrap-configs/kube-apiserver-config.yaml
+{{- if .KonnectivityEnabled }}
 	# Copy egress selector config to bootstrap-configs where KAS can read it
 	cp /opt/openshift/egress-selector-config.yaml /etc/kubernetes/bootstrap-configs/egress-selector-config.yaml
+{{- end }}
 	cp kube-apiserver-bootstrap/bootstrap-manifests/* bootstrap-manifests/
 	cp kube-apiserver-bootstrap/manifests/* manifests/
 
