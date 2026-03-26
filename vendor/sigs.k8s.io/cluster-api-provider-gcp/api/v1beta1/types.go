@@ -19,7 +19,7 @@ package v1beta1
 import (
 	"fmt"
 
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 // GCPMachineTemplateResource describes the data needed to create am GCPMachine from a template.
@@ -27,7 +27,7 @@ type GCPMachineTemplateResource struct {
 	// Standard object's metadata.
 	// More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#metadata
 	// +optional
-	ObjectMeta clusterv1.ObjectMeta `json:"metadata,omitempty"`
+	ObjectMeta clusterv1beta1.ObjectMeta `json:"metadata,omitempty"`
 
 	// Spec is the specification of the desired behavior of the machine.
 	Spec GCPMachineSpec `json:"spec"`
@@ -61,6 +61,12 @@ type Network struct {
 	// +optional
 	APIServerAddress *string `json:"apiServerIpAddress,omitempty"`
 
+	// APIServerIPv6Address is the IPv6 global address assigned to the load balancer
+	// created for the API Server. This field is only applicable for dual stack
+	// configurations.
+	// +optional
+	APIServerIPv6Address *string `json:"apiServerIpv6Address,omitempty"`
+
 	// APIServerHealthCheck is the full reference to the health check
 	// created for the API Server.
 	// +optional
@@ -86,10 +92,22 @@ type Network struct {
 	// +optional
 	APIServerForwardingRule *string `json:"apiServerForwardingRule,omitempty"`
 
+	// APIServerIPv6ForwardingRule is the full reference to the IPv6 forwarding rule
+	// created for the API Server. This field is only applicable during dual stack
+	// configurations.
+	// +optional
+	APIServerIPv6ForwardingRule *string `json:"apiServerIpv6ForwardingRule,omitempty"`
+
 	// APIInternalAddress is the IPV4 regional address assigned to the
 	// internal Load Balancer.
 	// +optional
 	APIInternalAddress *string `json:"apiInternalIpAddress,omitempty"`
+
+	// APIInternalIPv6Address is the IPV6 regional address assigned to the
+	// internal Load Balancer. This field is only applicable for dual stack
+	// configurations.
+	// +optional
+	APIInternalIPv6Address *string `json:"apiInternalIpv6IpAddress,omitempty"`
 
 	// APIInternalHealthCheck is the full reference to the health check
 	// created for the internal Load Balancer.
@@ -105,6 +123,165 @@ type Network struct {
 	// created for the internal Load Balancer.
 	// +optional
 	APIInternalForwardingRule *string `json:"apiInternalForwardingRule,omitempty"`
+
+	// APIIPv6InternalForwardingRule is the full reference to the forwarding rule
+	// created for the internal IPv6 Load Balancer during dual stack configurations.
+	// +optional
+	APIIPv6InternalForwardingRule *string `json:"apiIpv6InternalForwardingRule,omitempty"`
+}
+
+// FirewallProtocol is a string enum type representing the IP Protocol for the firewall rule.
+// +kubebuilder:validation:Enum=TCP;UDP;ICMP;ESP;AH;IPIP;SCTP
+type FirewallProtocol string
+
+const (
+	// FirewallProtocolTCP indicates that the firewall rule applies to TCP.
+	FirewallProtocolTCP FirewallProtocol = "TCP"
+
+	// FirewallProtocolUDP indicates that the firewall rule applies to UDP.
+	FirewallProtocolUDP FirewallProtocol = "UDP"
+
+	// FirewallProtocolICMP indicates that the firewall rule applies to ICMP.
+	FirewallProtocolICMP FirewallProtocol = "ICMP"
+
+	// FirewallProtocolESP indicates that the firewall rule applies to ESP.
+	FirewallProtocolESP FirewallProtocol = "ESP"
+
+	// FirewallProtocolAH indicates that the firewall rule applies to AH.
+	FirewallProtocolAH FirewallProtocol = "AH"
+
+	// FirewallProtocolIPIP indicates that the firewall rule applies to IPIP.
+	FirewallProtocolIPIP FirewallProtocol = "IPIP"
+
+	// FirewallProtocolSCTP indicates that the firewall rule applies to SCTP.
+	FirewallProtocolSCTP FirewallProtocol = "SCTP"
+)
+
+// FirewallDescriptor describes a GCP firewall rule.
+type FirewallDescriptor struct {
+	// IPProtocol is the IP protocol to which this rule applies. The protocol type is
+	// required when creating a firewall rule. This value can either be one of the
+	// following well known protocol strings (tcp, udp, icmp, esp, ah, ipip, sctp)
+	// or the IP protocol number.
+	// +kubebuilder:validation:Required
+	IPProtocol FirewallProtocol `json:"IPProtocol,omitempty"`
+	// Ports is an optional list of ports to which this rule applies. This field is
+	// only applicable for the UDP or TCP protocol. Each entry must be either an
+	// integer or a range. If not specified, this rule applies to connections
+	// through any port. Example inputs include: ["22"], ["80","443"], and
+	// ["12345-12349"].
+	// +kubebuilder:validation:MaxItems:=500
+	// +kubebuilder:validation:items:Pattern=`^[0-9]+(-[0-9]+)?$`
+	// +kubebuilder:validation:Optional
+	// +optional
+	Ports []string `json:"ports,omitempty"`
+}
+
+// FirewallRule describes a GCP firewall rule.
+type FirewallRule struct {
+	// Allowed is the list of ALLOW rules specified by this firewall. Each rule
+	// specifies a protocol and port-range tuple that describes a permitted
+	// connection.
+	// +kubebuilder:validation:MinItems=0
+	// +kubebuilder:validation:MaxItems=1024
+	Allowed []FirewallDescriptor `json:"allowed,omitempty"`
+	// Denied is the list of DENY rules specified by this firewall. Each rule
+	// specifies a protocol and port-range tuple that describes a denied
+	// connection. When a conflict applies between the Denied and Allowed fields,
+	// the Denied field will take precedent.
+	// +kubebuilder:validation:MinItems=0
+	// +kubebuilder:validation:MaxItems=1024
+	Denied []FirewallDescriptor `json:"denied,omitempty"`
+	// Description is an optional description of this resource. Provide this field
+	// when you create the resource.
+	// +kubebuilder:validation:Optional
+	// +kubebuilder:validation:MinLength=0
+	// +kubebuilder:validation:MaxLength=2000
+	Description string `json:"description,omitempty"`
+	// DestinationRanges is the list of IP addresses where traffic applies. An empty
+	// list means all destinations. These ranges must be expressed in CIDR format.
+	// Both IPv4 and IPv6 are supported.
+	// +kubebuilder:validation:MinItems=0
+	// +kubebuilder:validation:MaxItems=1024
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=43
+	// +kubebuilder:validation:XValidation:rule="self.all(i, isIP(i) || isCIDR(i))",message="must be a valid IPv4/IPv6 address or CIDR/Prefix"
+	DestinationRanges []string `json:"destinationRanges,omitempty"`
+	// Direction is the direction of traffic to which this firewall applies, either
+	// `Ingress` or `Egress`. The default is `Ingress`. For `Egress` traffic, you
+	// cannot specify the sourceTags fields.
+	//
+	// Possible values:
+	//   "Egress" - Indicates that firewall should apply to outgoing traffic.
+	//   "Ingress" - Indicates that firewall should apply to incoming traffic.
+	// +kubebuilder:validation:Enum=Ingress;Egress
+	// +kubebuilder:default=Ingress
+	// +optional
+	Direction FirewallRuleDirection `json:"direction,omitempty"`
+	// Name is the name of the resource; provided by the client when the resource is
+	// created. The name must be 1-63 characters long, and comply with RFC1035.
+	// Specifically, the name must be 1-63 characters long and match the regular
+	// expression `[a-z]([-a-z0-9]*[a-z0-9])?`. The first character must be a
+	// lowercase letter, and all following characters (except for the last
+	// character) must be a dash, lowercase letter, or digit. The last character
+	// must be a lowercase letter or digit.
+	// If the firewall does not begin with the cluster name, then the cluster name
+	// will be prepended during the creation of the firewall rule.
+	// +kubebuilder:validation:Optional
+	Name string `json:"name,omitempty"`
+	// Priority is the priority for this rule. This is an integer between `0` and
+	// `65535`, both inclusive. The default value is `1000`. Relative priorities
+	// determine which rule takes effect if multiple rules apply. Lower values
+	// indicate higher priority. For example, a rule with priority `0` has higher
+	// precedence than a rule with priority `1`. DENY rules take precedence over
+	// ALLOW rules if they have equal priority. Note that VPC networks have implied
+	// rules with a priority of `65535`. To avoid conflicts with the implied rules,
+	// use a priority number less than `65535`.
+	// +kubebuilder:validation:Optional
+	// +default:value=1000
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=65535
+	Priority int `json:"priority,omitempty"`
+	// SourceRanges: If source ranges are specified, the firewall rule applies only
+	// to traffic that has a source IP address in these ranges. These ranges must
+	// be expressed in CIDR format. One or both of sourceRanges and sourceTags may
+	// be set. If both fields are set, the rule applies to traffic that has a
+	// source IP address within sourceRanges OR a source IP from a resource with a
+	// matching tag listed in the sourceTags field. The connection does not need to
+	// match both fields for the rule to apply. Both IPv4 and IPv6 are supported.
+	// +kubebuilder:validation:MinItems=0
+	// +kubebuilder:validation:MaxItems=1024
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=43
+	// +kubebuilder:validation:XValidation:rule="self.all(i, isIP(i) || isCIDR(i))",message="must be a valid IPv4/IPv6 address or CIDR/Prefix"
+	SourceRanges []string `json:"sourceRanges,omitempty"`
+	// SourceTags are the rules applies only to traffic with source IPs that
+	// match the primary network interfaces of VM instances that have the tag and
+	// are in the same VPC network. Source tags cannot be used to control traffic
+	// to an instance's external IP address, it only applies to traffic between
+	// instances in the same virtual network. Because tags are associated with
+	// instances, not IP addresses. One or both of sourceRanges and sourceTags may be
+	// set. If both fields are set, the firewall applies to traffic that has a source
+	// IP address within sourceRanges OR a source IP from a resource with a matching
+	// tag listed in the sourceTags field. The connection does not need to match both
+	// fields for the firewall to apply.
+	// +kubebuilder:validation:MinItems=0
+	// +kubebuilder:validation:MaxItems=30
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=63
+	// +kubebuilder:validation:items:Pattern=`^([a-z0-9]+-)*[a-z0-9]+$`
+	SourceTags []string `json:"sourceTags,omitempty"`
+	// TargetTags is a list of tags that controls which instances the firewall rule
+	// applies to. If targetTags are specified, then the firewall rule applies only
+	// to instances in the VPC network that have one of those tags. If no
+	// targetTags are specified, the firewall rule applies to all instances on the
+	// specified network.
+	// +kubebuilder:validation:MinItems=0
+	// +kubebuilder:validation:MaxItems=70
+	// +kubebuilder:validation:items:MinLength=1
+	// +kubebuilder:validation:items:MaxLength=63
+	// +kubebuilder:validation:items:Pattern=`^([a-z0-9]+-)*[a-z0-9]+$`
+	TargetTags []string `json:"targetTags,omitempty"`
 }
 
 // FirewallSpec contains configuration for the firewall.
@@ -121,7 +298,25 @@ type FirewallSpec struct {
 	// +optional
 	// +kubebuilder:default:="Managed"
 	DefaultRulesManagement RulesManagementPolicy `json:"defaultRulesManagement,omitempty"`
+
+	// FirewallRules is a list of additional firewall rules to create. FirewallRules has no effect
+	// when a HostProject is specified.
+	// +kubebuilder:validation:MaxItems=50
+	// +optional
+	FirewallRules []FirewallRule `json:"firewallRules,omitempty"`
 }
+
+// FirewallRuleDirection is a string enum type for the direction of a firewall rule.
+// +kubebuilder:validation:Enum=Ingress;Egress
+type FirewallRuleDirection string
+
+const (
+	// FirewallRuleDirectionIngress indicates that the firewall rule applies to incoming traffic.
+	FirewallRuleDirectionIngress FirewallRuleDirection = "Ingress"
+
+	// FirewallRuleDirectionEgress indicates that the firewall rule applies to outgoing traffic.
+	FirewallRuleDirectionEgress FirewallRuleDirection = "Egress"
+)
 
 // RulesManagementPolicy is a string enum type for managing firewall rules.
 // +kubebuilder:validation:Enum=Managed;Unmanaged
@@ -135,6 +330,44 @@ const (
 	// RulesManagementUnmanaged indicates that the controller should not create or manage
 	// any firewall rules. If rules already exist, they will be left as-is.
 	RulesManagementUnmanaged RulesManagementPolicy = "Unmanaged"
+)
+
+// StackType is a string enum type indicating the types of network addresses that are valid.
+// +kubebuilder:validation:Enum=IPv4Only;DualStack
+type StackType string
+
+const (
+	// IPv4OnlyStackType indicates a stack type where only IPv4 addresses are valid.
+	IPv4OnlyStackType StackType = "IPv4Only"
+
+	// DualStackType indicates a stack type where both IPv4 and IPv6 addresses are valid.
+	DualStackType StackType = "DualStack"
+)
+
+// AddressPreferencePolicy is a string enum type indicating the preferred IP Address in a dual stack network configuration.
+// +kubebuilder:validation:Enum=IPv4Primary;IPv6Primary
+type AddressPreferencePolicy string
+
+const (
+	// IPv4Primary indicates a preference to use IPv4 addresses.
+	IPv4Primary AddressPreferencePolicy = "IPv4Primary"
+
+	// IPv6Primary indicates a preference to use IPv4 addresses.
+	IPv6Primary AddressPreferencePolicy = "IPv6Primary"
+)
+
+const (
+	// DualStackAdditionalResourceSuffix is an identifier appended to the resource name to indicate
+	// that it is not for the ipv4 [default] stack type.
+	DualStackAdditionalResourceSuffix string = "ipv6"
+
+	// DualStackNetworkAccess is an identifier to describe the network access settings
+	// for dual stack infrastructure. IPv4 resources are default to an internal settings, but
+	// IPv6 resources require the identifier for ULAs.
+	DualStackNetworkAccess = "INTERNAL"
+
+	// GCPDualStack is the identifier used by GCP to indicate a dual stack infrastructure.
+	GCPDualStack = "IPV4_IPV6"
 )
 
 // NetworkSpec encapsulates all things related to a GCP network.
@@ -167,7 +400,7 @@ type NetworkSpec struct {
 	// +optional
 	HostProject *string `json:"hostProject,omitempty"`
 
-	// Firewall configuration.
+	// Firewall contains the firewall configuration associated with this network.
 	// +optional
 	Firewall FirewallSpec `json:"firewall,omitempty,omitzero"`
 
@@ -191,6 +424,33 @@ type NetworkSpec struct {
 	// +kubebuilder:default:=64
 	// +optional
 	MinPortsPerVM int64 `json:"minPortsPerVm,omitempty"`
+
+	// Ipv6Address: An IPv6 internal network address for this network interface.
+	// To use a static internal IP address, it must be unused and in the same
+	// region as the instance's zone. If not specified, Google Cloud will
+	// automatically assign an internal IPv6 address from the instance's subnetwork.
+	// +optional
+	Ipv6Address string `json:"ipv6Address,omitempty"`
+
+	// StackType: The stackType for the subnets. If set to IPv4Only, new VMs in
+	// the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
+	// the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
+	// IPv4Only is used. This field can be both set at resource creation time and
+	// updated using patch.
+	// GCP allows subnet stack types to be set independently, but, for simplicity,
+	// all subnets in the network will be created with the same stackType.
+	//
+	// +kubebuilder:default=IPv4Only
+	// +optional
+	StackType StackType `json:"stackType,omitempty"`
+
+	// AddressPreferencePolicy: The AddressPreferencePolicy determines whether the
+	// IPv4 or IPv6 addresses should be preferred for load balancers. The value will
+	// also determine the address type in the APIEndpoint.
+	//
+	// +kubebuilder:default=IPv4Primary
+	// +optional
+	AddressPreferencePolicy AddressPreferencePolicy `json:"addressPreferencePolicy,omitempty"`
 }
 
 // LoadBalancerType defines the Load Balancer that should be created.
@@ -285,21 +545,18 @@ type SubnetSpec struct {
 	// +optional
 	Purpose *string `json:"purpose,omitempty"`
 
-	// StackType: The stack type for the subnet. If set to IPV4_ONLY, new VMs in
-	// the subnet are assigned IPv4 addresses only. If set to IPV4_IPV6, new VMs in
+	// StackType: The stackType for the subnet. If set to IPv4Only, new VMs in
+	// the subnet are assigned IPv4 addresses only. If set to DualStack, new VMs in
 	// the subnet can be assigned both IPv4 and IPv6 addresses. If not specified,
-	// IPV4_ONLY is used. This field can be both set at resource creation time and
+	// IPv4Only is used. This field can be both set at resource creation time and
 	// updated using patch.
 	//
-	// Possible values:
-	//   "IPV4_IPV6" - New VMs in this subnet can have both IPv4 and IPv6
-	// addresses.
-	//   "IPV4_ONLY" - New VMs in this subnet will only be assigned IPv4 addresses.
-	//   "IPV6_ONLY" - New VMs in this subnet will only be assigned IPv6 addresses.
-	// +kubebuilder:validation:Enum=IPV4_ONLY;IPV4_IPV6;IPV6_ONLY
-	// +kubebuilder:default=IPV4_ONLY
+	// NOT IMPLEMENTED: Stack type is currently set in the `NetworkSpec` and all
+	// subnets will have the same stack type.
+	//
+	// +kubebuilder:default=IPv4Only
 	// +optional
-	StackType string `json:"stackType,omitempty"`
+	StackType StackType `json:"stackType,omitempty"`
 }
 
 // String returns a string representation of the subnet.
