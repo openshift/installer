@@ -25,7 +25,6 @@ import (
 	"strings"
 
 	"github.com/go-logr/logr"
-
 	"github.com/pkg/errors"
 	"golang.org/x/mod/semver"
 	"google.golang.org/api/compute/v1"
@@ -36,9 +35,16 @@ import (
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/providerid"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud/services/shared"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+// Constants for GCP OnHostMaintenance values.
+// These are not exported, because they are not _our_ API, but they are used in multiple places.
+const (
+	onHostMaintenanceTerminate = "TERMINATE"
+	onHostMaintenanceMigrate   = "MIGRATE"
 )
 
 // MachineScopeParams defines the input parameters used to create a new MachineScope.
@@ -99,19 +105,15 @@ func (m *MachineScope) NetworkCloud() cloud.Cloud {
 
 // Zone returns the FailureDomain for the GCPMachine.
 func (m *MachineScope) Zone() string {
-	if m.Machine.Spec.FailureDomain == nil {
+	if m.Machine.Spec.FailureDomain == "" {
 		fd := m.ClusterGetter.FailureDomains()
 		if len(fd) == 0 {
 			return ""
 		}
-		zones := make([]string, 0, len(fd))
-		for zone := range fd {
-			zones = append(zones, zone)
-		}
-		sort.Strings(zones)
-		return zones[0]
+		sort.Strings(fd)
+		return fd[0]
 	}
-	return *m.Machine.Spec.FailureDomain
+	return m.Machine.Spec.FailureDomain
 }
 
 // Project return the project for the GCPMachine's cluster.
@@ -228,10 +230,7 @@ func (m *MachineScope) SetAddresses(addressList []corev1.NodeAddress) {
 
 // InstanceImageSpec returns compute instance image attched-disk spec.
 func (m *MachineScope) InstanceImageSpec() *compute.AttachedDisk {
-	version := ""
-	if m.Machine.Spec.Version != nil {
-		version = *m.Machine.Spec.Version
-	}
+	version := m.Machine.Spec.Version
 	image := "capi-ubuntu-1804-k8s-" + strings.ReplaceAll(semver.MajorMinor(version), ".", "-")
 	sourceImage := path.Join("projects", m.ClusterGetter.Project(), "global", "images", "family", image)
 	if m.GCPMachine.Spec.Image != nil {
@@ -327,12 +326,12 @@ func instanceAdditionalDiskSpec(ctx context.Context, spec []infrav1.AttachedDisk
 }
 
 // InstanceNetworkInterfaceSpec returns compute network interface spec.
-func (m *MachineScope) InstanceNetworkInterfaceSpec() *compute.NetworkInterface {
+func InstanceNetworkInterfaceSpec(cluster cloud.ClusterGetter, publicIP *bool, subnet *string, aliasIPRanges []infrav1.AliasIPRange) *compute.NetworkInterface {
 	networkInterface := &compute.NetworkInterface{
-		Network: path.Join("projects", m.ClusterGetter.NetworkProject(), "global", "networks", m.ClusterGetter.NetworkName()),
+		Network: path.Join("projects", cluster.NetworkProject(), "global", "networks", cluster.NetworkName()),
 	}
 
-	if m.GCPMachine.Spec.PublicIP != nil && *m.GCPMachine.Spec.PublicIP {
+	if publicIP != nil && *publicIP {
 		networkInterface.AccessConfigs = []*compute.AccessConfig{
 			{
 				Type: "ONE_TO_ONE_NAT",
@@ -341,22 +340,22 @@ func (m *MachineScope) InstanceNetworkInterfaceSpec() *compute.NetworkInterface 
 		}
 	}
 
-	if m.GCPMachine.Spec.Subnet != nil {
-		networkInterface.Subnetwork = path.Join("projects", m.ClusterGetter.NetworkProject(), "regions", m.ClusterGetter.Region(), "subnetworks", *m.GCPMachine.Spec.Subnet)
+	if subnet != nil {
+		networkInterface.Subnetwork = path.Join("projects", cluster.NetworkProject(), "regions", cluster.Region(), "subnetworks", *subnet)
 	}
 
-	networkInterface.AliasIpRanges = m.InstanceNetworkInterfaceAliasIPRangesSpec()
+	networkInterface.AliasIpRanges = InstanceNetworkInterfaceAliasIPRangesSpec(aliasIPRanges)
 
 	return networkInterface
 }
 
 // InstanceNetworkInterfaceAliasIPRangesSpec returns a slice of Alias IP Range specs.
-func (m *MachineScope) InstanceNetworkInterfaceAliasIPRangesSpec() []*compute.AliasIpRange {
-	if len(m.GCPMachine.Spec.AliasIPRanges) == 0 {
+func InstanceNetworkInterfaceAliasIPRangesSpec(spec []infrav1.AliasIPRange) []*compute.AliasIpRange {
+	if len(spec) == 0 {
 		return nil
 	}
-	aliasIPRanges := make([]*compute.AliasIpRange, 0, len(m.GCPMachine.Spec.AliasIPRanges))
-	for _, alias := range m.GCPMachine.Spec.AliasIPRanges {
+	aliasIPRanges := make([]*compute.AliasIpRange, 0, len(spec))
+	for _, alias := range spec {
 		aliasIPRange := &compute.AliasIpRange{
 			IpCidrRange:         alias.IPCidrRange,
 			SubnetworkRangeName: alias.SubnetworkRangeName,
@@ -384,9 +383,9 @@ func instanceServiceAccountsSpec(serviceAccount *infrav1.ServiceAccount) *comput
 }
 
 // InstanceAdditionalMetadataSpec returns additional metadata spec.
-func (m *MachineScope) InstanceAdditionalMetadataSpec() *compute.Metadata {
+func InstanceAdditionalMetadataSpec(spec []infrav1.MetadataItem) *compute.Metadata {
 	metadata := new(compute.Metadata)
-	for _, additionalMetadata := range m.GCPMachine.Spec.AdditionalMetadata {
+	for _, additionalMetadata := range spec {
 		metadata.Items = append(metadata.Items, &compute.MetadataItems{
 			Key:   additionalMetadata.Key,
 			Value: additionalMetadata.Value,
@@ -476,9 +475,9 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 	if m.GCPMachine.Spec.OnHostMaintenance != nil {
 		switch *m.GCPMachine.Spec.OnHostMaintenance {
 		case infrav1.HostMaintenancePolicyMigrate:
-			instance.Scheduling.OnHostMaintenance = "MIGRATE"
+			instance.Scheduling.OnHostMaintenance = onHostMaintenanceMigrate
 		case infrav1.HostMaintenancePolicyTerminate:
-			instance.Scheduling.OnHostMaintenance = "TERMINATE"
+			instance.Scheduling.OnHostMaintenance = onHostMaintenanceTerminate
 		default:
 			log.Error(errors.New("Invalid value"), "Unknown OnHostMaintenance value", "Spec.OnHostMaintenance", *m.GCPMachine.Spec.OnHostMaintenance)
 		}
@@ -503,12 +502,13 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 
 	instance.Disks = append(instance.Disks, m.InstanceImageSpec())
 	instance.Disks = append(instance.Disks, instanceAdditionalDiskSpec(ctx, m.GCPMachine.Spec.AdditionalDisks, m.GCPMachine.Spec.RootDiskEncryptionKey, m.Zone(), m.ResourceManagerTags())...)
-	instance.Metadata = m.InstanceAdditionalMetadataSpec()
+
+	instance.Metadata = InstanceAdditionalMetadataSpec(m.GCPMachine.Spec.AdditionalMetadata)
 	instance.ServiceAccounts = append(instance.ServiceAccounts, instanceServiceAccountsSpec(m.GCPMachine.Spec.ServiceAccount))
-	instance.NetworkInterfaces = append(instance.NetworkInterfaces, m.InstanceNetworkInterfaceSpec())
+	instance.NetworkInterfaces = append(instance.NetworkInterfaces, InstanceNetworkInterfaceSpec(m.ClusterGetter, m.GCPMachine.Spec.PublicIP, m.GCPMachine.Spec.Subnet, m.GCPMachine.Spec.AliasIPRanges))
 	instance.GuestAccelerators = instanceGuestAcceleratorsSpec(m.GCPMachine.Spec.GuestAccelerators)
 	if len(instance.GuestAccelerators) > 0 {
-		instance.Scheduling.OnHostMaintenance = "TERMINATE"
+		instance.Scheduling.OnHostMaintenance = onHostMaintenanceTerminate
 	}
 
 	return instance
@@ -517,15 +517,20 @@ func (m *MachineScope) InstanceSpec(log logr.Logger) *compute.Instance {
 // ANCHOR_END: MachineInstanceSpec
 
 // GetBootstrapData returns the bootstrap data from the secret in the Machine's bootstrap.dataSecretName.
-func (m *MachineScope) GetBootstrapData() (string, error) {
-	if m.Machine.Spec.Bootstrap.DataSecretName == nil {
+func (m *MachineScope) GetBootstrapData(ctx context.Context) (string, error) {
+	return GetBootstrapData(ctx, m.client, m.Machine, m.Machine.Spec.Bootstrap)
+}
+
+// GetBootstrapData returns the bootstrap data from the secret in the Machine's bootstrap.dataSecretName.
+func GetBootstrapData(ctx context.Context, client client.Client, parent client.Object, bootstrap clusterv1.Bootstrap) (string, error) {
+	if bootstrap.DataSecretName == nil {
 		return "", errors.New("error retrieving bootstrap data: linked Machine's bootstrap.dataSecretName is nil")
 	}
 
 	secret := &corev1.Secret{}
-	key := types.NamespacedName{Namespace: m.Namespace(), Name: *m.Machine.Spec.Bootstrap.DataSecretName}
-	if err := m.client.Get(context.TODO(), key, secret); err != nil {
-		return "", errors.Wrapf(err, "failed to retrieve bootstrap data secret for GCPMachine %s/%s", m.Namespace(), m.Name())
+	key := types.NamespacedName{Namespace: parent.GetNamespace(), Name: *bootstrap.DataSecretName}
+	if err := client.Get(ctx, key, secret); err != nil {
+		return "", errors.Wrapf(err, "failed to retrieve bootstrap data secret %s/%s", key.Namespace, key.Name)
 	}
 
 	value, ok := secret.Data["value"]

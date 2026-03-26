@@ -26,7 +26,7 @@ type GCPManagedMachinePoolTemplateSpec struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:path=gcpmanagedmachinepooltemplates,scope=Namespaced,categories=cluster-api,shortName=ammpt
+// +kubebuilder:resource:path=gcpmanagedmachinepooltemplates,scope=Namespaced,categories=cluster-api,shortName=gcpmmpt
 // +kubebuilder:storageversion
 
 // GCPManagedMachinePoolTemplate is the Schema for the GCPManagedMachinePoolTemplates API.
