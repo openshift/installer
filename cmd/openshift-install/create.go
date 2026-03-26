@@ -153,9 +153,11 @@ func clusterCreatePostRun(ctx context.Context) (int, error) {
 	}
 
 	// Handle the case when the API server is not reachable.
-	if err := handleUnreachableAPIServer(ctx, config); err != nil {
+	cleanupLBConfig, err := handleUnreachableAPIServer(ctx, config)
+	if err != nil {
 		logrus.Fatal(fmt.Errorf("unable to handle api server override: %w", err))
 	}
+	defer cleanupLBConfig()
 
 	//
 	// Wait for the bootstrap to complete.
@@ -501,37 +503,37 @@ func waitForEtcdBootstrapMemberRemoval(ctx context.Context, config *rest.Config)
 	return nil
 }
 
-func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error {
+func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) (func(), error) {
 	assetStore, err := assetstore.NewStore(command.RootOpts.Dir)
 	if err != nil {
-		return fmt.Errorf("failed to create asset store: %w", err)
+		return func() {}, fmt.Errorf("failed to create asset store: %w", err)
 	}
 
 	// Ensure that the install is expecting the user to provision their own DNS solution.
 	installConfig := &installconfig.InstallConfig{}
 	if err := assetStore.Fetch(ctx, installConfig); err != nil {
-		return fmt.Errorf("failed to fetch %s: %w", installConfig.Name(), err)
+		return func() {}, fmt.Errorf("failed to fetch %s: %w", installConfig.Name(), err)
 	}
 	switch installConfig.Config.Platform.Name() { //nolint:gocritic
 	case aws.Name:
 		if installConfig.Config.AWS.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-			return nil
+			return func() {}, nil
 		}
 	case azure.Name:
 		if installConfig.Config.Azure.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-			return nil
+			return func() {}, nil
 		}
 	case gcp.Name:
 		if installConfig.Config.GCP.UserProvisionedDNS != dns.UserProvisionedDNSEnabled {
-			return nil
+			return func() {}, nil
 		}
 	default:
-		return nil
+		return func() {}, nil
 	}
 
 	lbConfig := &lbconfig.Config{}
 	if err := assetStore.Fetch(ctx, lbConfig); err != nil {
-		return fmt.Errorf("failed to fetch %s: %w", lbConfig.Name(), err)
+		return func() {}, fmt.Errorf("failed to fetch %s: %w", lbConfig.Name(), err)
 	}
 
 	lbType := lbconfig.PublicLoadBalancer
@@ -541,7 +543,7 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 
 	_, ipAddrs, err := lbConfig.ParseDNSDataFromConfig(lbType)
 	if err != nil {
-		return fmt.Errorf("failed to parse lbconfig: %w", err)
+		return func() {}, fmt.Errorf("failed to parse lbconfig: %w", err)
 	}
 
 	// The kubeconfig handles one ip address
@@ -550,7 +552,7 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 		ipAddr = ipAddrs[0].String()
 	}
 	if ipAddr == "" {
-		return fmt.Errorf("no ip address found in lbconfig")
+		return func() {}, fmt.Errorf("no ip address found in lbconfig")
 	}
 
 	dialer := &net.Dialer{
@@ -559,12 +561,13 @@ func handleUnreachableAPIServer(ctx context.Context, config *rest.Config) error 
 	}
 	config.Dial = kubeconfig.CreateDialContext(dialer, ipAddr)
 
-	// The asset is currently saved in <install-dir>/openshift. This directory
-	// was consumed during install but this file is generated after that action. This
-	// artifact will hang around unless it is purged here.
-	if err := asset.DeleteAssetFromDisk(lbConfig, command.RootOpts.Dir); err != nil {
-		return fmt.Errorf("failed to delete %s from disk", lbConfig.Name())
+	// Return a cleanup function to delete the lb-config file after it is
+	// no longer needed (e.g. after gather bootstrap has had a chance to read it).
+	cleanup := func() {
+		if err := asset.DeleteAssetFromDisk(lbConfig, command.RootOpts.Dir); err != nil {
+			logrus.Warnf("failed to delete %s from disk: %v", lbConfig.Name(), err)
+		}
 	}
 
-	return nil
+	return cleanup, nil
 }
