@@ -19,6 +19,18 @@ const (
 	UnmanagedFirewallRules FirewallRulesManagementPolicy = "Unmanaged"
 )
 
+// StackType defines the IP stack type for the cluster network.
+// +kubebuilder:validation:Enum:="IPv4Only";"DualStack"
+type StackType string
+
+const (
+	// IPv4Only indicates that the cluster network should use IPv4 only.
+	IPv4Only StackType = "IPv4Only"
+
+	// DualStack indicates that the cluster network should support both IPv4 and IPv6.
+	DualStack StackType = "DualStack"
+)
+
 // DNS contains the gcp dns zone information for the cluster.
 type DNS struct {
 	// PrivateZone contains the information for a private DNS zone. The Private DNS Zone can
@@ -126,6 +138,12 @@ type Platform struct {
 	// and the firewall rules before the installation.
 	// +optional
 	FirewallRulesManagement FirewallRulesManagementPolicy `json:"firewallRulesManagement,omitempty"`
+
+	// StackType specifies the network infrastructure for the cluster. "IPv4Only" indicates that the cluster
+	// resources will only consist of IPv4 addresses. "DualStack" indicates that the cluster resources can
+	// consist of IPv4 or IPv6 addresses.
+	// +optional
+	StackType StackType `json:"stackType,omitempty"`
 }
 
 // UserLabel is a label to apply to GCP resources created for the cluster.

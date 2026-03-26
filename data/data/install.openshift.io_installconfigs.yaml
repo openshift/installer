@@ -6618,6 +6618,15 @@ spec:
                     description: Region specifies the GCP region where the cluster
                       will be created.
                     type: string
+                  stackType:
+                    description: |-
+                      StackType specifies the network infrastructure for the cluster. "IPv4Only" indicates that the cluster
+                      resources will only consist of IPv4 addresses. "DualStack" indicates that the cluster resources can
+                      consist of IPv4 or IPv6 addresses.
+                    enum:
+                    - IPv4Only
+                    - DualStack
+                    type: string
                   userLabels:
                     description: |-
                       userLabels has additional keys and values that the installer will add as

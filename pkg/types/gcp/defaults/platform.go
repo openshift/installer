@@ -20,4 +20,8 @@ func SetPlatformDefaults(p *gcp.Platform) {
 			}
 		}
 	}
+
+	if p.StackType == "" {
+		p.StackType = gcp.IPv4Only
+	}
 }
