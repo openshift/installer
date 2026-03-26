@@ -138,6 +138,11 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 		firewallRulesManagementPolicy = capg.RulesManagementUnmanaged
 	}
 
+	stackType := capg.IPv4OnlyStackType
+	if installConfig.Config.GCP.StackType == gcp.DualStack {
+		stackType = capg.DualStackType
+	}
+
 	gcpCluster := &capg.GCPCluster{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      clusterID.InfraID,
@@ -156,6 +161,7 @@ func GenerateClusterAssets(installConfig *installconfig.InstallConfig, clusterID
 				Firewall: capg.FirewallSpec{
 					DefaultRulesManagement: firewallRulesManagementPolicy,
 				},
+				StackType: stackType,
 			},
 			AdditionalLabels: labels,
 			FailureDomains:   findFailureDomains(installConfig),

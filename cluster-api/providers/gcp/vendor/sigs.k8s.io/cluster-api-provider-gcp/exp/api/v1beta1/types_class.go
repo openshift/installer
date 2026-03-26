@@ -16,7 +16,9 @@ limitations under the License.
 
 package v1beta1
 
-import infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
+import (
+	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
+)
 
 // GCPManagedControlPlaneClassSpec defines the GCPManagedControlPlane properties that may be shared across several gcp managed control planes.
 type GCPManagedControlPlaneClassSpec struct {

@@ -34,7 +34,7 @@ import (
 
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
 	bootstrapv1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/bootstrap/gke/api/v1beta1"
-	expclusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/predicates"
 )
 
@@ -97,7 +97,7 @@ func (r *GKEConfigReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	gcpMP := &infrav1exp.GCPManagedMachinePool{}
 	gcpMPKey := types.NamespacedName{
 		Name:      machinePool.Spec.Template.Spec.InfrastructureRef.Name,
-		Namespace: machinePool.Spec.Template.Spec.InfrastructureRef.Namespace,
+		Namespace: machinePool.Namespace,
 	}
 	if err := r.Get(ctx, gcpMPKey, gcpMP); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -148,13 +148,13 @@ func (r *GKEConfigReconciler) ManagedMachinePoolToGKEConfigMapFunc(_ context.Con
 		{
 			NamespacedName: client.ObjectKey{
 				Name:      machinePool.Spec.Template.Spec.InfrastructureRef.Name,
-				Namespace: machinePool.Spec.Template.Spec.InfrastructureRef.Namespace,
+				Namespace: machinePool.Namespace,
 			},
 		},
 	}
 }
 
-func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*expclusterv1.MachinePool, error) {
+func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.ObjectMeta) (*clusterv1.MachinePool, error) {
 	for _, ref := range obj.OwnerReferences {
 		if ref.Kind != "MachinePool" {
 			continue
@@ -163,7 +163,7 @@ func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.Object
 		if err != nil {
 			return nil, errors.WithStack(err)
 		}
-		if gv.Group == expclusterv1.GroupVersion.Group {
+		if gv.Group == clusterv1.GroupVersion.Group {
 			return getMachinePoolByName(ctx, c, obj.Namespace, ref.Name)
 		}
 	}
@@ -171,8 +171,8 @@ func getOwnerMachinePool(ctx context.Context, c client.Client, obj metav1.Object
 	return nil, nil
 }
 
-func getMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*expclusterv1.MachinePool, error) {
-	m := &expclusterv1.MachinePool{}
+func getMachinePoolByName(ctx context.Context, c client.Client, namespace, name string) (*clusterv1.MachinePool, error) {
+	m := &clusterv1.MachinePool{}
 	key := client.ObjectKey{Name: name, Namespace: namespace}
 	if err := c.Get(ctx, key, m); err != nil {
 		return nil, err

@@ -81,6 +81,7 @@ type subnetsInterface interface {
 type Scope interface {
 	cloud.Cluster
 	AddressSpec(name string) *compute.Address
+	IPv6AddressSpec(name string) *compute.Address
 	BackendServiceSpec(name string) *compute.BackendService
 	ForwardingRuleSpec(name string) *compute.ForwardingRule
 	HealthCheckSpec(name string) *compute.HealthCheck
