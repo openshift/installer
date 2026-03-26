@@ -89,7 +89,7 @@ RELEASE_NOTES_VER := v0.11.0
 RELEASE_NOTES_BIN := release-notes
 RELEASE_NOTES := $(TOOLS_BIN_DIR)/$(RELEASE_NOTES_BIN)-$(RELEASE_NOTES_VER)
 
-GINKGO_VER := v2.23.3
+GINKGO_VER := v2.27.5
 GINKGO_BIN := ginkgo
 GINKGO := $(TOOLS_BIN_DIR)/$(GINKGO_BIN)-$(GINKGO_VER)
 GINKGO_PKG := github.com/onsi/ginkgo/v2/ginkgo
@@ -107,6 +107,14 @@ SETUP_ENVTEST := $(TOOLS_BIN_DIR)/$(SETUP_ENVTEST_BIN)
 GOTESTSUM_VER := v1.6.4
 GOTESTSUM_BIN := gotestsum
 GOTESTSUM := $(TOOLS_BIN_DIR)/$(GOTESTSUM_BIN)
+
+KPROMO_VER := 5ab0dbc74b0228c22a93d240596dff77464aee8f
+KPROMO_BIN := kpromo
+KPROMO :=  $(TOOLS_BIN_DIR)/$(KPROMO_BIN)-$(KPROMO_VER)
+
+YQ_VER := v4.35.2
+YQ_BIN := yq
+YQ :=  $(TOOLS_BIN_DIR)/$(YQ_BIN)-$(YQ_VER)
 
 # Other tools versions
 CERT_MANAGER_VER := v1.16.3
@@ -233,6 +241,12 @@ manager: ## Build manager binary.
 ## Tooling Binaries
 ## --------------------------------------
 
+.PHONY: $(KPROMO_BIN)
+$(KPROMO_BIN): $(KPROMO) ## Build a local copy of kpromo
+
+.PHONY: $(YQ_BIN)
+$(YQ_BIN): $(YQ) ## Build a local copy of yq
+
 $(CLUSTERCTL): go.mod ## Build clusterctl binary.
 	go build -o $(BIN_DIR)/clusterctl sigs.k8s.io/cluster-api/cmd/clusterctl
 
@@ -247,6 +261,12 @@ $(KUSTOMIZE): ## Build kustomize from tools folder.
 
 $(SETUP_ENVTEST): go.mod # Build setup-envtest from tools folder.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) sigs.k8s.io/controller-runtime/tools/setup-envtest $(SETUP_ENVTEST_BIN) $(SETUP_ENVTEST_VER)
+
+$(KPROMO):
+	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) sigs.k8s.io/promo-tools/v4/cmd/kpromo $(KPROMO_BIN) $(KPROMO_VER)
+
+$(YQ):
+	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) github.com/mikefarah/yq/v4 $(YQ_BIN) $(YQ_VER)
 
 $(CONTROLLER_GEN): ## Build controller-gen from tools folder.
 	GOBIN=$(TOOLS_BIN_DIR) $(GO_INSTALL) sigs.k8s.io/controller-tools/cmd/controller-gen $(CONTROLLER_GEN_BIN) $(CONTROLLER_GEN_VER)
@@ -399,6 +419,7 @@ set-manifest-pull-policy:
 
 RELEASE_TAG ?= $(shell git describe --abbrev=0 2>/dev/null)
 RELEASE_DIR := out
+IMAGE_REVIEWERS ?= $(shell ./hack/get-project-maintainers.sh)
 
 $(RELEASE_DIR):
 	mkdir -p $(RELEASE_DIR)/
@@ -460,6 +481,9 @@ upload-staging-artifacts: ## Upload release artifacts to the staging bucket
 .PHONY: release-notes
 release-notes: $(RELEASE_NOTES)
 	$(RELEASE_NOTES)
+
+promote-images: $(KPROMO)
+	$(KPROMO) pr --project cluster-api-gcp --tag $(RELEASE_TAG) --reviewers "$(IMAGE_REVIEWERS)" --fork $(USER_FORK) --image cluster-api-gcp-controller
 
 ## --------------------------------------
 ## Development
