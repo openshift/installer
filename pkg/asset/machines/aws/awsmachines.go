@@ -240,7 +240,7 @@ func CapaIgnitionWithCertBundleAndProxy(userCA string, proxy *types.Proxy) (*cap
 		return nil, err
 	}
 	return &capa.Ignition{
-		Version: "3.2",
+		Version: "3.6",
 		TLS: &capa.IgnitionTLS{
 			CASources: carefs,
 		},

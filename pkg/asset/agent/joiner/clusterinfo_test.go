@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	ignutil "github.com/coreos/ignition/v2/config/util"
-	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
+	igntypes "github.com/coreos/ignition/v2/config/v3_6/types"
 	"github.com/coreos/stream-metadata-go/stream"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
@@ -135,7 +135,7 @@ func TestClusterInfo_Generate(t *testing.T) {
 						Config: runtime.RawExtension{
 							Raw: []byte(`
 ignition:
-  version: 3.2.0
+  version: 3.6.0
 storage:
   files:
   - path: /etc/chrony.conf
@@ -236,7 +236,7 @@ storage:
 						Config: runtime.RawExtension{
 							Raw: []byte(`
 ignition:
-  version: 3.2.0
+  version: 3.6.0
 passwd:
   users:
   - name: core
