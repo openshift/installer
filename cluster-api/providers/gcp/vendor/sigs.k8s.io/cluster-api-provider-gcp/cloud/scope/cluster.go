@@ -27,7 +27,8 @@ import (
 	"k8s.io/utils/ptr"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -106,17 +107,35 @@ func (s *ClusterScope) NetworkProject() string {
 	return ptr.Deref(s.GCPCluster.Spec.Network.HostProject, s.Project())
 }
 
-// SkipFirewallRuleCreation returns whether the spec indicates that firewall rules
-// should be created or not. If the RulesManagement for the default firewall rules is
-// set to unmanaged or when the cluster will include a shared VPC, the default firewall
-// rule creation will be skipped.
-func (s *ClusterScope) SkipFirewallRuleCreation() bool {
-	return (s.GCPCluster.Spec.Network.Firewall.DefaultRulesManagement == infrav1.RulesManagementUnmanaged) || s.IsSharedVpc()
+// SkipFirewallRulesManagement returns whether the spec indicates that firewall rules
+// should be created or not. Firewall rules will not be created when the cluster
+// contains a shared VPC network.
+func (s *ClusterScope) SkipFirewallRulesManagement() bool {
+	return s.IsSharedVpc()
 }
 
 // IsSharedVpc returns true If sharedVPC used else , returns false.
 func (s *ClusterScope) IsSharedVpc() bool {
 	return s.NetworkProject() != s.Project()
+}
+
+// StackType returns the network stack type for the cluster.
+func (s *ClusterScope) StackType() infrav1.StackType {
+	return s.GCPCluster.Spec.Network.StackType
+}
+
+// AddressPreferencePolicy returns the AddressPreferencePolicy for the cluster.
+func (s *ClusterScope) AddressPreferencePolicy() infrav1.AddressPreferencePolicy {
+	return s.GCPCluster.Spec.Network.AddressPreferencePolicy
+}
+
+// Ipv6Address returns the IPv6 address when one is provided in the spec and the cluster network is not IPv4 Only.
+func (s *ClusterScope) Ipv6Address() string {
+	address := ""
+	if s.StackType() != infrav1.IPv4OnlyStackType {
+		address = s.GCPCluster.Spec.Network.Ipv6Address
+	}
+	return address
 }
 
 // Region returns the cluster region.
@@ -185,17 +204,24 @@ func (s *ClusterScope) ResourceManagerTags() infrav1.ResourceManagerTags {
 
 // ControlPlaneEndpoint returns the cluster control-plane endpoint.
 func (s *ClusterScope) ControlPlaneEndpoint() clusterv1.APIEndpoint {
-	endpoint := s.GCPCluster.Spec.ControlPlaneEndpoint
-	endpoint.Port = 443
-	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
-		endpoint.Port = ptr.Deref(c.APIServerPort, 443)
+	endpoint := clusterv1.APIEndpoint{
+		Host: s.GCPCluster.Spec.ControlPlaneEndpoint.Host,
+		Port: 443,
+	}
+
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
+		endpoint.Port = s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	return endpoint
 }
 
 // FailureDomains returns the cluster failure domains.
-func (s *ClusterScope) FailureDomains() clusterv1.FailureDomains {
-	return s.GCPCluster.Status.FailureDomains
+func (s *ClusterScope) FailureDomains() []string {
+	failureDomains := []string{}
+	for failureDomainName := range s.GCPCluster.Status.FailureDomains {
+		failureDomains = append(failureDomains, failureDomainName)
+	}
+	return failureDomains
 }
 
 // ANCHOR_END: ClusterGetter
@@ -208,13 +234,16 @@ func (s *ClusterScope) SetReady() {
 }
 
 // SetFailureDomains sets cluster failure domains.
-func (s *ClusterScope) SetFailureDomains(fd clusterv1.FailureDomains) {
+func (s *ClusterScope) SetFailureDomains(fd clusterv1beta1.FailureDomains) {
 	s.GCPCluster.Status.FailureDomains = fd
 }
 
 // SetControlPlaneEndpoint sets cluster control-plane endpoint.
 func (s *ClusterScope) SetControlPlaneEndpoint(endpoint clusterv1.APIEndpoint) {
-	s.GCPCluster.Spec.ControlPlaneEndpoint = endpoint
+	s.GCPCluster.Spec.ControlPlaneEndpoint = clusterv1beta1.APIEndpoint{
+		Host: endpoint.Host,
+		Port: endpoint.Port,
+	}
 }
 
 // ANCHOR_END: ClusterSetter
@@ -230,6 +259,12 @@ func (s *ClusterScope) NetworkSpec() *compute.Network {
 		AutoCreateSubnetworks: createSubnet,
 		ForceSendFields:       []string{"AutoCreateSubnetworks"},
 		Mtu:                   s.NetworkMtu(),
+	}
+
+	if s.StackType() == infrav1.DualStackType {
+		// IPv6/Dual Stack networks will require ULAs, because the subnets are
+		// going to be set to INTERNAL Access
+		network.EnableUlaInternalIpv6 = true
 	}
 
 	return network
@@ -256,12 +291,19 @@ func (s *ClusterScope) NatRouterSpec() *compute.Router {
 // SubnetSpecs returns google compute subnets spec.
 func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 	subnets := []*compute.Subnetwork{}
+
+	stackType := "IPV4_ONLY"
+	if s.StackType() == infrav1.DualStackType {
+		stackType = infrav1.GCPDualStack
+	}
+
 	for _, subnetwork := range s.GCPCluster.Spec.Network.Subnets {
 		secondaryIPRanges := []*compute.SubnetworkSecondaryRange{}
 		for rangeName, secondaryCidrBlock := range subnetwork.SecondaryCidrBlocks {
 			secondaryIPRanges = append(secondaryIPRanges, &compute.SubnetworkSecondaryRange{RangeName: rangeName, IpCidrRange: secondaryCidrBlock})
 		}
-		subnets = append(subnets, &compute.Subnetwork{
+
+		subnet := &compute.Subnetwork{
 			Name:                  subnetwork.Name,
 			Region:                subnetwork.Region,
 			EnableFlowLogs:        ptr.Deref(subnetwork.EnableFlowLogs, false),
@@ -272,8 +314,16 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			Network:               s.NetworkLink(),
 			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
-			StackType:             subnetwork.StackType,
-		})
+			StackType:             stackType,
+		}
+
+		if s.StackType() == infrav1.DualStackType {
+			// IPv4 networks default to internal addresses. IPv6 does not, so
+			// access must be explicitly set to INTERNAL to enable ULAs.
+			subnet.Ipv6AccessType = infrav1.DualStackNetworkAccess
+		}
+
+		subnets = append(subnets, subnet)
 	}
 
 	return subnets
@@ -283,9 +333,19 @@ func (s *ClusterScope) SubnetSpecs() []*compute.Subnetwork {
 
 // FirewallRulesSpec returns google compute firewall spec.
 func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
+	return createFirewallRules(
+		s.Name(),
+		s.NetworkLink(),
+		s.GCPCluster.Spec.Network.Firewall.DefaultRulesManagement,
+		s.GCPCluster.Spec.Network.Firewall.FirewallRules,
+	)
+}
+
+// IPv6FirewallRulesSpec returns google compute firewall spec for ipv6 addresses.
+func (s *ClusterScope) IPv6FirewallRulesSpec() []*compute.Firewall {
 	firewallRules := []*compute.Firewall{
 		{
-			Name:    fmt.Sprintf("allow-%s-healthchecks", s.Name()),
+			Name:    fmt.Sprintf("allow-%s-healthchecks-ipv6", s.Name()),
 			Network: s.NetworkLink(),
 			Allowed: []*compute.FirewallAllowed{
 				{
@@ -297,29 +357,12 @@ func (s *ClusterScope) FirewallRulesSpec() []*compute.Firewall {
 			},
 			Direction: "INGRESS",
 			SourceRanges: []string{
-				"35.191.0.0/16",
-				"130.211.0.0/22",
+				// https://docs.cloud.google.com/load-balancing/docs/firewall-rules
+				"2600:2d00:1:b029::/64",
+				"2600:2d00:1:1::/64",
 			},
 			TargetTags: []string{
 				s.Name() + "-control-plane",
-			},
-		},
-		{
-			Name:    fmt.Sprintf("allow-%s-cluster", s.Name()),
-			Network: s.NetworkLink(),
-			Allowed: []*compute.FirewallAllowed{
-				{
-					IPProtocol: "all",
-				},
-			},
-			Direction: "INGRESS",
-			SourceTags: []string{
-				s.Name() + "-control-plane",
-				s.Name() + "-node",
-			},
-			TargetTags: []string{
-				s.Name() + "-control-plane",
-				s.Name() + "-node",
 			},
 		},
 	}
@@ -340,6 +383,15 @@ func (s *ClusterScope) AddressSpec(lbname string) *compute.Address {
 	}
 }
 
+// IPv6AddressSpec returns google compute IPv6 address spec.
+func (s *ClusterScope) IPv6AddressSpec(lbname string) *compute.Address {
+	return &compute.Address{
+		Name:        fmt.Sprintf("%s-%s-%s", s.Name(), lbname, infrav1.DualStackAdditionalResourceSuffix),
+		AddressType: "EXTERNAL",
+		IpVersion:   "IPV6",
+	}
+}
+
 // BackendServiceSpec returns google compute backend-service spec.
 func (s *ClusterScope) BackendServiceSpec(lbname string) *compute.BackendService {
 	return &compute.BackendService{
@@ -351,13 +403,14 @@ func (s *ClusterScope) BackendServiceSpec(lbname string) *compute.BackendService
 	}
 }
 
-// ForwardingRuleSpec returns google compute forwarding-rule spec.
+// ForwardingRuleSpec returns a google compute forwarding-rule spec.
 func (s *ClusterScope) ForwardingRuleSpec(lbname string) *compute.ForwardingRule {
 	port := int32(443)
-	if c := s.Cluster.Spec.ClusterNetwork; c != nil {
-		port = ptr.Deref(c.APIServerPort, 443)
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
+		port = s.Cluster.Spec.ClusterNetwork.APIServerPort
 	}
 	portRange := fmt.Sprintf("%d-%d", port, port)
+
 	return &compute.ForwardingRule{
 		Name:                fmt.Sprintf("%s-%s", s.Name(), lbname),
 		IPProtocol:          "TCP",
@@ -367,7 +420,7 @@ func (s *ClusterScope) ForwardingRuleSpec(lbname string) *compute.ForwardingRule
 	}
 }
 
-// HealthCheckSpec returns google compute health-check spec.
+// HealthCheckSpec returns a google compute health-check spec.
 func (s *ClusterScope) HealthCheckSpec(lbname string) *compute.HealthCheck {
 	return &compute.HealthCheck{
 		Name: fmt.Sprintf("%s-%s", s.Name(), lbname),

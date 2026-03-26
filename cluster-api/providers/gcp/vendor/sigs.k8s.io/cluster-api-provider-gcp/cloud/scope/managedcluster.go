@@ -27,7 +27,8 @@ import (
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/cloud"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	"sigs.k8s.io/cluster-api/util/patch"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -129,17 +130,35 @@ func (s *ManagedClusterScope) NetworkProject() string {
 	return ptr.Deref(s.GCPManagedCluster.Spec.Network.HostProject, s.Project())
 }
 
-// SkipFirewallRuleCreation returns whether the spec indicates that firewall rules
-// should be created or not. If the RulesManagement for the default firewall rules is
-// set to unmanaged or when the cluster will include a shared VPC, the default firewall
-// rule creation will be skipped.
-func (s *ManagedClusterScope) SkipFirewallRuleCreation() bool {
-	return (s.GCPManagedCluster.Spec.Network.Firewall.DefaultRulesManagement == infrav1.RulesManagementUnmanaged) || s.IsSharedVpc()
+// SkipFirewallRulesManagement returns whether the spec indicates that firewall rules
+// should be created or not. Firewall rules will not be created when the cluster
+// contains a shared VPC network.
+func (s *ManagedClusterScope) SkipFirewallRulesManagement() bool {
+	return s.IsSharedVpc()
 }
 
 // IsSharedVpc returns true If sharedVPC used else , returns false.
 func (s *ManagedClusterScope) IsSharedVpc() bool {
 	return s.NetworkProject() != s.Project()
+}
+
+// StackType returns the network stack type for the cluster.
+func (s *ManagedClusterScope) StackType() infrav1.StackType {
+	return s.GCPManagedCluster.Spec.Network.StackType
+}
+
+// AddressPreferencePolicy returns the AddressPreferencePolicy for the cluster.
+func (s *ManagedClusterScope) AddressPreferencePolicy() infrav1.AddressPreferencePolicy {
+	return s.GCPManagedCluster.Spec.Network.AddressPreferencePolicy
+}
+
+// Ipv6Address returns the IPv6 address when one is provided in the spec and the cluster network is not IPv4 Only.
+func (s *ManagedClusterScope) Ipv6Address() string {
+	address := ""
+	if s.StackType() != infrav1.IPv4OnlyStackType {
+		address = s.GCPManagedCluster.Spec.Network.Ipv6Address
+	}
+	return address
 }
 
 // NetworkLink returns the partial URL for the network.
@@ -173,14 +192,23 @@ func (s *ManagedClusterScope) ResourceManagerTags() infrav1.ResourceManagerTags 
 
 // ControlPlaneEndpoint returns the cluster control-plane endpoint.
 func (s *ManagedClusterScope) ControlPlaneEndpoint() clusterv1.APIEndpoint {
-	endpoint := s.GCPManagedCluster.Spec.ControlPlaneEndpoint
-	endpoint.Port = ptr.Deref(s.Cluster.Spec.ClusterNetwork.APIServerPort, 443)
+	endpoint := clusterv1.APIEndpoint{
+		Host: s.GCPManagedCluster.Spec.ControlPlaneEndpoint.Host,
+		Port: 443,
+	}
+	if s.Cluster.Spec.ClusterNetwork.APIServerPort != 0 {
+		endpoint.Port = s.Cluster.Spec.ClusterNetwork.APIServerPort
+	}
 	return endpoint
 }
 
 // FailureDomains returns the cluster failure domains.
-func (s *ManagedClusterScope) FailureDomains() clusterv1.FailureDomains {
-	return s.GCPManagedCluster.Status.FailureDomains
+func (s *ManagedClusterScope) FailureDomains() []string {
+	failureDomains := []string{}
+	for failureDomainName := range s.GCPManagedCluster.Status.FailureDomains {
+		failureDomains = append(failureDomains, failureDomainName)
+	}
+	return failureDomains
 }
 
 // ANCHOR_END: ClusterGetter
@@ -193,13 +221,16 @@ func (s *ManagedClusterScope) SetReady() {
 }
 
 // SetFailureDomains sets cluster failure domains.
-func (s *ManagedClusterScope) SetFailureDomains(fd clusterv1.FailureDomains) {
+func (s *ManagedClusterScope) SetFailureDomains(fd clusterv1beta1.FailureDomains) {
 	s.GCPManagedCluster.Status.FailureDomains = fd
 }
 
 // SetControlPlaneEndpoint sets cluster control-plane endpoint.
 func (s *ManagedClusterScope) SetControlPlaneEndpoint(endpoint clusterv1.APIEndpoint) {
-	s.GCPManagedCluster.Spec.ControlPlaneEndpoint = endpoint
+	s.GCPManagedCluster.Spec.ControlPlaneEndpoint = clusterv1beta1.APIEndpoint{
+		Host: endpoint.Host,
+		Port: endpoint.Port,
+	}
 }
 
 // ANCHOR_END: ClusterSetter
@@ -214,6 +245,12 @@ func (s *ManagedClusterScope) NetworkSpec() *compute.Network {
 		Description:           infrav1.ClusterTagKey(s.Name()),
 		AutoCreateSubnetworks: createSubnet,
 		ForceSendFields:       []string{"AutoCreateSubnetworks"},
+	}
+
+	if s.StackType() == infrav1.DualStackType {
+		// IPv6/Dual Stack networks will require ULAs, because the subnets are
+		// going to be set to INTERNAL Access
+		network.EnableUlaInternalIpv6 = true
 	}
 
 	return network
@@ -240,12 +277,19 @@ func (s *ManagedClusterScope) NatRouterSpec() *compute.Router {
 // SubnetSpecs returns google compute subnets spec.
 func (s *ManagedClusterScope) SubnetSpecs() []*compute.Subnetwork {
 	subnets := []*compute.Subnetwork{}
+
+	stackType := "IPV4_ONLY"
+	if s.StackType() == infrav1.DualStackType {
+		stackType = infrav1.GCPDualStack
+	}
+
 	for _, subnetwork := range s.GCPManagedCluster.Spec.Network.Subnets {
 		secondaryIPRanges := []*compute.SubnetworkSecondaryRange{}
 		for rangeName, secondaryCidrBlock := range subnetwork.SecondaryCidrBlocks {
 			secondaryIPRanges = append(secondaryIPRanges, &compute.SubnetworkSecondaryRange{RangeName: rangeName, IpCidrRange: secondaryCidrBlock})
 		}
-		subnets = append(subnets, &compute.Subnetwork{
+
+		subnet := &compute.Subnetwork{
 			Name:                  subnetwork.Name,
 			Region:                subnetwork.Region,
 			EnableFlowLogs:        ptr.Deref(subnetwork.EnableFlowLogs, false),
@@ -256,8 +300,16 @@ func (s *ManagedClusterScope) SubnetSpecs() []*compute.Subnetwork {
 			Network:               s.NetworkLink(),
 			Purpose:               ptr.Deref(subnetwork.Purpose, "PRIVATE_RFC_1918"),
 			Role:                  "ACTIVE",
-			StackType:             subnetwork.StackType,
-		})
+			StackType:             stackType,
+		}
+
+		if s.StackType() == infrav1.DualStackType {
+			// IPv4 networks default to internal addresses. IPv6 does not, so
+			// access must be explicitly set to INTERNAL to enable ULAs.
+			subnet.Ipv6AccessType = infrav1.DualStackNetworkAccess
+		}
+
+		subnets = append(subnets, subnet)
 	}
 
 	return subnets
@@ -267,9 +319,19 @@ func (s *ManagedClusterScope) SubnetSpecs() []*compute.Subnetwork {
 
 // FirewallRulesSpec returns google compute firewall spec.
 func (s *ManagedClusterScope) FirewallRulesSpec() []*compute.Firewall {
+	return createFirewallRules(
+		s.Name(),
+		s.NetworkLink(),
+		s.GCPManagedCluster.Spec.Network.Firewall.DefaultRulesManagement,
+		s.GCPManagedCluster.Spec.Network.Firewall.FirewallRules,
+	)
+}
+
+// IPv6FirewallRulesSpec returns google compute firewall spec for ipv6 addresses.
+func (s *ManagedClusterScope) IPv6FirewallRulesSpec() []*compute.Firewall {
 	firewallRules := []*compute.Firewall{
 		{
-			Name:    fmt.Sprintf("allow-%s-healthchecks", s.Name()),
+			Name:    fmt.Sprintf("allow-%s-healthchecks-ipv6", s.Name()),
 			Network: s.NetworkLink(),
 			Allowed: []*compute.FirewallAllowed{
 				{
@@ -281,29 +343,12 @@ func (s *ManagedClusterScope) FirewallRulesSpec() []*compute.Firewall {
 			},
 			Direction: "INGRESS",
 			SourceRanges: []string{
-				"35.191.0.0/16",
-				"130.211.0.0/22",
+				// https://docs.cloud.google.com/load-balancing/docs/firewall-rules
+				"2600:2d00:1:b029::/64",
+				"2600:2d00:1:1::/64",
 			},
 			TargetTags: []string{
 				s.Name() + "-control-plane",
-			},
-		},
-		{
-			Name:    fmt.Sprintf("allow-%s-cluster", s.Name()),
-			Network: s.NetworkLink(),
-			Allowed: []*compute.FirewallAllowed{
-				{
-					IPProtocol: "all",
-				},
-			},
-			Direction: "INGRESS",
-			SourceTags: []string{
-				s.Name() + "-control-plane",
-				s.Name() + "-node",
-			},
-			TargetTags: []string{
-				s.Name() + "-control-plane",
-				s.Name() + "-node",
 			},
 		},
 	}

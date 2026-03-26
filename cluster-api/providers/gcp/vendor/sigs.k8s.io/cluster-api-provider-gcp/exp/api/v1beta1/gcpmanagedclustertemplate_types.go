@@ -26,7 +26,7 @@ type GCPManagedClusterTemplateSpec struct {
 }
 
 // +kubebuilder:object:root=true
-// +kubebuilder:resource:path=gcpmanagedclustertemplates,scope=Namespaced,categories=cluster-api,shortName=amct
+// +kubebuilder:resource:path=gcpmanagedclustertemplates,scope=Namespaced,categories=cluster-api,shortName=gcpmct
 // +kubebuilder:storageversion
 
 // GCPManagedClusterTemplate is the Schema for the GCPManagedClusterTemplates API.

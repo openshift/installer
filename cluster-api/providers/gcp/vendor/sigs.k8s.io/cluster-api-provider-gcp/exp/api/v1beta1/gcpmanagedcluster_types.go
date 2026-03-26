@@ -19,7 +19,7 @@ package v1beta1
 import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	infrav1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
 
 const (
@@ -38,7 +38,7 @@ type GCPManagedClusterSpec struct {
 
 	// ControlPlaneEndpoint represents the endpoint used to communicate with the control plane.
 	// +optional
-	ControlPlaneEndpoint clusterv1.APIEndpoint `json:"controlPlaneEndpoint"`
+	ControlPlaneEndpoint clusterv1beta1.APIEndpoint `json:"controlPlaneEndpoint"`
 
 	// NetworkSpec encapsulates all things related to the GCP network.
 	// +optional
@@ -72,11 +72,11 @@ type GCPManagedClusterSpec struct {
 
 // GCPManagedClusterStatus defines the observed state of GCPManagedCluster.
 type GCPManagedClusterStatus struct {
-	FailureDomains clusterv1.FailureDomains `json:"failureDomains,omitempty"`
-	Network        infrav1.Network          `json:"network,omitempty"`
-	Ready          bool                     `json:"ready"`
+	FailureDomains clusterv1beta1.FailureDomains `json:"failureDomains,omitempty"`
+	Network        infrav1.Network               `json:"network,omitempty"`
+	Ready          bool                          `json:"ready"`
 	// Conditions specifies the conditions for the managed control plane
-	Conditions clusterv1.Conditions `json:"conditions,omitempty"`
+	Conditions clusterv1beta1.Conditions `json:"conditions,omitempty"`
 }
 
 // +kubebuilder:object:root=true

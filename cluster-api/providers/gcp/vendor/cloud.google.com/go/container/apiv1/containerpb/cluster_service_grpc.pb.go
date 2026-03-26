@@ -1,4 +1,4 @@
-// Copyright 2025 Google LLC
+// Copyright 2026 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ package containerpb
 
 import (
 	context "context"
+
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
@@ -89,7 +90,7 @@ type ClusterManagerClient interface {
 	// network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks).
 	//
 	// One firewall is added for the cluster. After cluster creation,
-	// the Kubelet creates routes for each node to allow the containers
+	// the kubelet creates routes for each node to allow the containers
 	// on that node to communicate with all other instances in the
 	// cluster.
 	//
@@ -534,7 +535,7 @@ type ClusterManagerServer interface {
 	// network](https://cloud.google.com/compute/docs/networks-and-firewalls#networks).
 	//
 	// One firewall is added for the cluster. After cluster creation,
-	// the Kubelet creates routes for each node to allow the containers
+	// the kubelet creates routes for each node to allow the containers
 	// on that node to communicate with all other instances in the
 	// cluster.
 	//

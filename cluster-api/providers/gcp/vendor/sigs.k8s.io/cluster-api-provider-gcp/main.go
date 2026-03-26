@@ -27,21 +27,25 @@ import (
 	"time"
 
 	// +kubebuilder:scaffold:imports
+
 	"github.com/spf13/pflag"
 	"k8s.io/apimachinery/pkg/runtime"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	cgrecord "k8s.io/client-go/tools/record"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	infrav1beta1 "sigs.k8s.io/cluster-api-provider-gcp/api/v1beta1"
 	"sigs.k8s.io/cluster-api-provider-gcp/controllers"
 	infrav1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/api/v1beta1"
 	gkebootstrapv1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/bootstrap/gke/api/v1beta1"
 	gkeboostrapcontrollersv1exp "sigs.k8s.io/cluster-api-provider-gcp/exp/bootstrap/gke/controllers"
 	expcontrollers "sigs.k8s.io/cluster-api-provider-gcp/exp/controllers"
+	expwebhooks "sigs.k8s.io/cluster-api-provider-gcp/exp/webhooks"
 	"sigs.k8s.io/cluster-api-provider-gcp/feature"
 	"sigs.k8s.io/cluster-api-provider-gcp/util/reconciler"
 	"sigs.k8s.io/cluster-api-provider-gcp/version"
-	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
+	gcpwebhooks "sigs.k8s.io/cluster-api-provider-gcp/webhooks"
+	clusterv1 "sigs.k8s.io/cluster-api/api/core/v1beta2"
 	capifeature "sigs.k8s.io/cluster-api/feature"
 	"sigs.k8s.io/cluster-api/util/flags"
 	"sigs.k8s.io/cluster-api/util/record"
@@ -97,7 +101,7 @@ func main() {
 	pflag.CommandLine.AddGoFlagSet(flag.CommandLine)
 	pflag.Parse()
 
-	_, metricsOptions, err := flags.GetManagerOptions(managerOptions)
+	tlsOptions, metricsOptions, err := flags.GetManagerOptions(managerOptions)
 	if err != nil {
 		setupLog.Error(err, "Unable to start manager: invalid flags")
 	}
@@ -151,6 +155,7 @@ func main() {
 		WebhookServer: webhook.NewServer(webhook.Options{
 			Port:    webhookPort,
 			CertDir: webhookCertDir,
+			TLSOpts: tlsOptions,
 		}),
 		HealthProbeBindAddress: healthAddr,
 		EventBroadcaster:       broadcaster,
@@ -205,6 +210,19 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) error {
 		return fmt.Errorf("setting up GCPCluster controller: %w", err)
 	}
 
+	if feature.Gates.Enabled(capifeature.MachinePool) {
+		setupLog.Info("Enabling MachinePool reconcilers")
+		gcpMachinePoolConcurrency := gcpMachineConcurrency
+
+		if err := (&expcontrollers.GCPMachinePoolReconciler{
+			Client:           mgr.GetClient(),
+			Recorder:         mgr.GetEventRecorderFor("gcpmachinepool-controller"),
+			WatchFilterValue: watchFilterValue,
+		}).SetupWithManager(ctx, mgr, controller.Options{MaxConcurrentReconciles: gcpMachinePoolConcurrency, RecoverPanic: ptr.To[bool](true)}); err != nil {
+			return fmt.Errorf("creating GCPMachinePool controller: %w", err)
+		}
+	}
+
 	if feature.Gates.Enabled(feature.GKE) {
 		setupLog.Info("Enabling GKE reconcilers")
 
@@ -247,38 +265,46 @@ func setupReconcilers(ctx context.Context, mgr ctrl.Manager) error {
 }
 
 func setupWebhooks(mgr ctrl.Manager) error {
-	if err := (&infrav1beta1.GCPCluster{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&gcpwebhooks.GCPCluster{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("setting up GCPCluster webhook: %w", err)
 	}
-	if err := (&infrav1beta1.GCPClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&gcpwebhooks.GCPClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("setting up GCPClusterTemplate webhook: %w", err)
 	}
-	if err := (&infrav1beta1.GCPMachine{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&gcpwebhooks.GCPMachine{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("setting up GCPMachine webhook: %w", err)
 	}
-	if err := (&infrav1beta1.GCPMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+	if err := (&gcpwebhooks.GCPMachineTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 		return fmt.Errorf("setting up GCPMachineTemplate webhook: %w", err)
+	}
+
+	if feature.Gates.Enabled(capifeature.MachinePool) {
+		setupLog.Info("Enabling GCPMachinePool webhooks")
+
+		if err := (&expwebhooks.GCPMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
+			return fmt.Errorf("creating GCPMachinePool webhook: %w", err)
+		}
 	}
 
 	if feature.Gates.Enabled(feature.GKE) {
 		setupLog.Info("Enabling GKE webhooks")
 
-		if err := (&infrav1exp.GCPManagedCluster{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.GCPManagedCluster{}).SetupWebhookWithManager(mgr); err != nil {
 			return fmt.Errorf("setting up GCPManagedCluster webhook: %w", err)
 		}
-		if err := (&infrav1exp.GCPManagedClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.GCPManagedClusterTemplate{}).SetupWebhookWithManager(mgr); err != nil {
 			return fmt.Errorf("setting up GCPManagedClusterTemplate webhook: %w", err)
 		}
-		if err := (&infrav1exp.GCPManagedControlPlane{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.GCPManagedControlPlane{}).SetupWebhookWithManager(mgr); err != nil {
 			return fmt.Errorf("setting up GCPManagedControlPlane webhook: %w", err)
 		}
-		if err := (&infrav1exp.GCPManagedControlPlaneTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := expwebhooks.SetupGCPManagedControlPlaneTemplateWebhookWithManager(mgr); err != nil {
 			return fmt.Errorf("setting up GCPManagedControlPlaneTemplate webhook: %w", err)
 		}
-		if err := (&infrav1exp.GCPManagedMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := (&expwebhooks.GCPManagedMachinePool{}).SetupWebhookWithManager(mgr); err != nil {
 			return fmt.Errorf("setting up GCPManagedMachinePool webhook: %w", err)
 		}
-		if err := (&infrav1exp.GCPManagedMachinePoolTemplate{}).SetupWebhookWithManager(mgr); err != nil {
+		if err := expwebhooks.SetupGCPManagedMachinePoolTemplateWebhookWithManager(mgr); err != nil {
 			return fmt.Errorf("setting up GCPManagedMachinePoolTemplate webhook: %w", err)
 		}
 	}

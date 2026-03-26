@@ -138,6 +138,16 @@ func (s *Service) deleteExternalLoadBalancer(ctx context.Context) error {
 	}
 	s.scope.Network().APIServerHealthCheck = nil
 
+	if s.scope.StackType() == infrav1.DualStackType {
+		if err := s.deleteForwardingRule(ctx, name+"-ipv6"); err != nil {
+			return fmt.Errorf("deleting ForwardingRule: %w", err)
+		}
+
+		if err := s.deleteAddress(ctx, name+"-ipv6"); err != nil {
+			return fmt.Errorf("deleting Address: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -163,6 +173,16 @@ func (s *Service) deleteInternalLoadBalancer(ctx context.Context, name string) e
 		return fmt.Errorf("deleting RegionalHealthCheck: %w", err)
 	}
 	s.scope.Network().APIInternalHealthCheck = nil
+
+	if s.scope.StackType() == infrav1.DualStackType {
+		if err := s.deleteForwardingRule(ctx, name+"-ipv6"); err != nil {
+			return fmt.Errorf("deleting ForwardingRule: %w", err)
+		}
+
+		if err := s.deleteAddress(ctx, name+"-ipv6"); err != nil {
+			return fmt.Errorf("deleting Address: %w", err)
+		}
+	}
 
 	return nil
 }
@@ -200,16 +220,37 @@ func (s *Service) createExternalLoadBalancer(ctx context.Context, lbType infrav1
 	if err != nil {
 		return err
 	}
-	s.scope.Network().APIServerAddress = ptr.To[string](addr.SelfLink)
-	endpoint := s.scope.ControlPlaneEndpoint()
-	endpoint.Host = addr.Address
-	s.scope.SetControlPlaneEndpoint(endpoint)
 
-	forwarding, err := s.createOrGetForwardingRule(ctx, name, target, addr)
+	endpoint := s.scope.ControlPlaneEndpoint()
+	s.scope.Network().APIServerAddress = ptr.To[string](addr.SelfLink)
+	// For now the ip address/host for the control plane endpoint will always be the IPv4 Address
+	endpoint.Host = addr.Address
+
+	forwardingrule, err := s.createOrGetForwardingRule(ctx, name, target, addr)
 	if err != nil {
 		return err
 	}
-	s.scope.Network().APIServerForwardingRule = ptr.To[string](forwarding.SelfLink)
+	// For now the forwarding rule associated with IPv4 address will always be set as the API Server Forwarding Rule
+	s.scope.Network().APIServerForwardingRule = ptr.To[string](forwardingrule.SelfLink)
+
+	if s.scope.StackType() == infrav1.DualStackType {
+		ipv6Addr, err := s.createOrGetIPv6Address(ctx, name)
+		if err != nil {
+			return err
+		}
+		s.scope.Network().APIServerIPv6Address = ptr.To[string](ipv6Addr.SelfLink)
+		if s.scope.AddressPreferencePolicy() == infrav1.IPv6Primary {
+			endpoint.Host = ipv6Addr.Address
+		}
+
+		ipv6ForwardingRule, err := s.createOrGetForwardingRule(ctx, name+"-ipv6", target, ipv6Addr)
+		if err != nil {
+			return err
+		}
+		s.scope.Network().APIServerIPv6ForwardingRule = ptr.To[string](ipv6ForwardingRule.SelfLink)
+	}
+
+	s.scope.SetControlPlaneEndpoint(endpoint)
 
 	return nil
 }
@@ -221,6 +262,7 @@ func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, l
 	if err != nil {
 		return err
 	}
+
 	s.scope.Network().APIInternalHealthCheck = ptr.To[string](healthcheck.SelfLink)
 
 	backendsvc, err := s.createOrGetRegionalBackendService(ctx, name, instancegroups, healthcheck)
@@ -229,36 +271,55 @@ func (s *Service) createInternalLoadBalancer(ctx context.Context, name string, l
 	}
 	s.scope.Network().APIInternalBackendService = ptr.To[string](backendsvc.SelfLink)
 
+	// During Dual Stack installations, an IPv4 and IPv6 address should be made available
+	// to the frontends and then connected to the backends to create the load balancer.
+	// An internal load balancer will only use an IPv4 Address, and the
+	// IpAddressSelectionPolicy cannot be set to PREFER_IPV6.
+
 	// Create an address on internal subnet.
 	addr, err := s.createOrGetInternalAddress(ctx, name)
 	if err != nil {
 		return err
 	}
 	s.scope.Network().APIInternalAddress = ptr.To[string](addr.SelfLink)
-	if lbType == infrav1.Internal {
-		// If only creating an internal Load Balancer, set the control plane endpoint
-		endpoint := s.scope.ControlPlaneEndpoint()
-		endpoint.Host = addr.Address
-		s.scope.SetControlPlaneEndpoint(endpoint)
-	}
+	endpoint := s.scope.ControlPlaneEndpoint()
+	endpoint.Host = addr.Address
 
 	// Create a regional forwarding rule to the backend service
-	forwarding, err := s.createOrGetRegionalForwardingRule(ctx, name, backendsvc, addr)
+	forwardingrule, err := s.createOrGetRegionalForwardingRule(ctx, name, backendsvc, addr)
 	if err != nil {
 		return err
 	}
-	s.scope.Network().APIInternalForwardingRule = ptr.To[string](forwarding.SelfLink)
+	s.scope.Network().APIInternalForwardingRule = ptr.To[string](forwardingrule.SelfLink)
+
+	if s.scope.StackType() == infrav1.DualStackType {
+		ipv6Addr, err := s.createOrGetInternalIPv6Address(ctx, name)
+		if err != nil {
+			return err
+		}
+		s.scope.Network().APIInternalIPv6Address = ptr.To[string](ipv6Addr.SelfLink)
+		if s.scope.AddressPreferencePolicy() == infrav1.IPv6Primary {
+			endpoint.Host = ipv6Addr.Address
+		}
+
+		ipv6ForwardingRule, err := s.createOrGetRegionalForwardingRule(ctx, name+"-ipv6", backendsvc, ipv6Addr)
+		if err != nil {
+			return err
+		}
+		s.scope.Network().APIIPv6InternalForwardingRule = ptr.To[string](ipv6ForwardingRule.SelfLink)
+	}
+
+	// If only creating an internal Load Balancer, set the control plane endpoint
+	if lbType == infrav1.Internal {
+		s.scope.SetControlPlaneEndpoint(endpoint)
+	}
 
 	return nil
 }
 
 func (s *Service) createOrGetInstanceGroups(ctx context.Context) ([]*compute.InstanceGroup, error) {
 	log := log.FromContext(ctx)
-	fd := s.scope.FailureDomains()
-	zones := make([]string, 0, len(fd))
-	for zone := range fd {
-		zones = append(zones, zone)
-	}
+	zones := s.scope.FailureDomains()
 
 	groups := make([]*compute.InstanceGroup, 0, len(zones))
 	groupsMap := s.scope.Network().APIServerInstanceGroups
@@ -319,7 +380,6 @@ func (s *Service) createOrGetHealthCheck(ctx context.Context, lbname string) (*c
 			return nil, err
 		}
 	}
-
 	return healthcheck, nil
 }
 
@@ -347,7 +407,6 @@ func (s *Service) createOrGetRegionalHealthCheck(ctx context.Context, lbname str
 			return nil, err
 		}
 	}
-
 	return healthcheck, nil
 }
 
@@ -490,6 +549,7 @@ func (s *Service) createOrGetTargetTCPProxy(ctx context.Context, service *comput
 func (s *Service) createOrGetAddress(ctx context.Context, lbname string) (*compute.Address, error) {
 	log := log.FromContext(ctx)
 	addrSpec := s.scope.AddressSpec(lbname)
+
 	log.V(2).Info("Looking for address", "name", addrSpec.Name)
 	key := meta.GlobalKey(addrSpec.Name)
 	addr, err := s.addresses.Get(ctx, key)
@@ -510,7 +570,37 @@ func (s *Service) createOrGetAddress(ctx context.Context, lbname string) (*compu
 			return nil, err
 		}
 	}
+	return addr, nil
+}
 
+// createOrGetIPv6Address is used to obtain a Global IPv6 address.
+func (s *Service) createOrGetIPv6Address(ctx context.Context, lbname string) (*compute.Address, error) {
+	log := log.FromContext(ctx)
+	addrSpec := s.scope.IPv6AddressSpec(lbname)
+	// When the IPv6EndpointType is set, the address is interpretted as EXTERNAL no
+	// matter what the AddressType is set to.
+	addrSpec.Ipv6EndpointType = "NETLB"
+
+	log.V(2).Info("Looking for address", "name", addrSpec.Name)
+	key := meta.GlobalKey(addrSpec.Name)
+	addr, err := s.addresses.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		log.V(2).Info("Creating an address", "name", addrSpec.Name)
+		if err := s.addresses.Insert(ctx, key, addrSpec); err != nil {
+			log.Error(err, "Error creating an address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		addr, err = s.addresses.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return addr, nil
 }
 
@@ -518,6 +608,7 @@ func (s *Service) createOrGetAddress(ctx context.Context, lbname string) (*compu
 func (s *Service) createOrGetInternalAddress(ctx context.Context, lbname string) (*compute.Address, error) {
 	log := log.FromContext(ctx)
 	addrSpec := s.scope.AddressSpec(lbname)
+
 	addrSpec.AddressType = string(loadBalanceTrafficInternal)
 	addrSpec.Region = s.scope.Region()
 	subnet, err := s.getSubnet(ctx)
@@ -552,7 +643,45 @@ func (s *Service) createOrGetInternalAddress(ctx context.Context, lbname string)
 			return nil, err
 		}
 	}
+	return addr, nil
+}
 
+// createOrGetInternalIPv6Address is used to obtain an internal IPv6 address.
+func (s *Service) createOrGetInternalIPv6Address(ctx context.Context, lbname string) (*compute.Address, error) {
+	log := log.FromContext(ctx)
+	addrSpec := s.scope.IPv6AddressSpec(lbname)
+
+	addrSpec.AddressType = string(loadBalanceTrafficInternal)
+	addrSpec.Region = s.scope.Region()
+	subnet, err := s.getSubnet(ctx)
+	if err != nil {
+		log.Error(err, "Error getting subnet for Internal Load Balancer")
+		return nil, err
+	}
+
+	addrSpec.Subnetwork = subnet.SelfLink
+	addrSpec.Purpose = "GCE_ENDPOINT"
+
+	log.V(2).Info("Looking for internal address", "name", addrSpec.Name)
+	key := meta.RegionalKey(addrSpec.Name, s.scope.Region())
+	addr, err := s.internaladdresses.Get(ctx, key)
+	if err != nil {
+		if !gcperrors.IsNotFound(err) {
+			log.Error(err, "Error looking for internal address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		log.V(2).Info("Creating an internal address", "name", addrSpec.Name)
+		if err := s.internaladdresses.Insert(ctx, key, addrSpec); err != nil {
+			log.Error(err, "Error creating an internal address", "name", addrSpec.Name)
+			return nil, err
+		}
+
+		addr, err = s.internaladdresses.Get(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return addr, nil
 }
 
@@ -560,6 +689,7 @@ func (s *Service) createOrGetInternalAddress(ctx context.Context, lbname string)
 func (s *Service) createOrGetForwardingRule(ctx context.Context, lbname string, target *compute.TargetTcpProxy, addr *compute.Address) (*compute.ForwardingRule, error) {
 	log := log.FromContext(ctx)
 	spec := s.scope.ForwardingRuleSpec(lbname)
+
 	spec.Target = target.SelfLink
 	spec.IPAddress = addr.SelfLink
 
@@ -626,6 +756,7 @@ func (s *Service) createOrGetRegionalForwardingRule(ctx context.Context, lbname 
 	}
 	spec.Subnetwork = subnet.SelfLink
 	spec.IPAddress = addr.SelfLink
+	spec.IpVersion = addr.IpVersion
 
 	key := meta.RegionalKey(spec.Name, s.scope.Region())
 	log.V(2).Info("Looking for regional forwardingrule", "name", spec.Name)
@@ -672,7 +803,6 @@ func (s *Service) deleteForwardingRule(ctx context.Context, lbname string) error
 		log.Error(err, "Error updating a forwardingrule", "name", spec.Name)
 		return err
 	}
-
 	return nil
 }
 
@@ -685,7 +815,6 @@ func (s *Service) deleteRegionalForwardingRule(ctx context.Context, lbname strin
 		log.Error(err, "Error updating a regional forwardingrule", "name", spec.Name)
 		return err
 	}
-
 	return nil
 }
 
@@ -697,7 +826,6 @@ func (s *Service) deleteAddress(ctx context.Context, lbname string) error {
 	if err := s.addresses.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
 		return err
 	}
-
 	return nil
 }
 
@@ -709,7 +837,6 @@ func (s *Service) deleteInternalAddress(ctx context.Context, lbname string) erro
 	if err := s.internaladdresses.Delete(ctx, key); err != nil && !gcperrors.IsNotFound(err) {
 		return err
 	}
-
 	return nil
 }
 
@@ -761,7 +888,6 @@ func (s *Service) deleteHealthCheck(ctx context.Context, lbname string) error {
 		log.Error(err, "Error deleting a healthcheck", "name", spec.Name)
 		return err
 	}
-
 	return nil
 }
 
@@ -774,7 +900,6 @@ func (s *Service) deleteRegionalHealthCheck(ctx context.Context, lbname string) 
 		log.Error(err, "Error deleting a regional healthcheck", "name", spec.Name)
 		return err
 	}
-
 	return nil
 }
 

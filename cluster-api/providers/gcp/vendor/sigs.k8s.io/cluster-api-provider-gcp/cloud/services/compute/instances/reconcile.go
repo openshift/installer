@@ -128,7 +128,7 @@ func (s *Service) Delete(ctx context.Context) error {
 func (s *Service) createOrGetInstance(ctx context.Context) (*compute.Instance, error) {
 	log := log.FromContext(ctx)
 	log.V(2).Info("Getting bootstrap data for machine")
-	bootstrapData, err := s.scope.GetBootstrapData()
+	bootstrapData, err := s.scope.GetBootstrapData(ctx)
 	if err != nil {
 		log.Error(err, "Error getting bootstrap data for machine")
 		return nil, errors.Wrap(err, "failed to retrieve bootstrap data")
