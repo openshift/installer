@@ -12,7 +12,6 @@ import (
 	igntypes "github.com/coreos/ignition/v2/config/v3_2/types"
 	"github.com/google/uuid"
 	"github.com/kdomanski/iso9660"
-	"github.com/nutanix-cloud-native/prism-go-client/utils"
 	nutanixclientv3 "github.com/nutanix-cloud-native/prism-go-client/v3"
 	"github.com/pkg/errors"
 	"github.com/vincent-petithory/dataurl"
@@ -201,7 +200,7 @@ func getTaskStatus(clientV3 nutanixclientv3.Service, taskUUID string) (string, e
 	}
 
 	if *v.Status == "INVALID_UUID" || *v.Status == "FAILED" {
-		return *v.Status, errors.Errorf("error_detail: %s, progress_message: %s", utils.StringValue(v.ErrorDetail), utils.StringValue(v.ProgressMessage))
+		return *v.Status, errors.Errorf("error_detail: %s, progress_message: %s", ptr.Deref(v.ErrorDetail, ""), ptr.Deref(v.ProgressMessage, ""))
 	}
 	return *v.Status, nil
 }
@@ -300,7 +299,7 @@ func GetGPUsForPE(ctx context.Context, client *nutanixclientv3.Client, peUUID st
 // FindImageUUIDByName retrieves the image resource uuid by the given image name from PC.
 func FindImageUUIDByName(ctx context.Context, ntnxclient *nutanixclientv3.Client, imageName string) (*string, error) {
 	res, err := ntnxclient.V3.ListImage(ctx, &nutanixclientv3.DSMetadata{
-		Filter: utils.StringPtr(fmt.Sprintf("name==%s", imageName)),
+		Filter: ptr.To(fmt.Sprintf("name==%s", imageName)),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to find image by name %q in PC/PE. err: %w", imageName, err)

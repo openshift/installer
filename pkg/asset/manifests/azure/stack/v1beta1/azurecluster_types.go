@@ -134,5 +134,5 @@ func (c *AzureCluster) SetFutures(futures Futures) {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureCluster{}, &AzureClusterList{})
+	objectTypes = append(objectTypes, &AzureCluster{}, &AzureClusterList{})
 }

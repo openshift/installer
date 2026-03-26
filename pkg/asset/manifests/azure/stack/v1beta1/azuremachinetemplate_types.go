@@ -48,7 +48,7 @@ type AzureMachineTemplateList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&AzureMachineTemplate{}, &AzureMachineTemplateList{})
+	objectTypes = append(objectTypes, &AzureMachineTemplate{}, &AzureMachineTemplateList{})
 }
 
 // AzureMachineTemplateResource describes the data needed to create an AzureMachine from a template.
