@@ -21,16 +21,17 @@ import (
 	"github.com/hashicorp/go-cleanhttp"
 	"go.uber.org/zap"
 
-	"github.com/nutanix-cloud-native/prism-go-client"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
 )
 
 type Scheme string
 
 const (
-	defaultBaseURL  = "%s://%s/"
-	mediaType       = "application/json"
-	formEncodedType = "application/x-www-form-urlencoded"
-	octetStreamType = "application/octet-stream"
+	defaultBaseURL      = "%s://%s/"
+	mediaType           = "application/json"
+	formEncodedType     = "application/x-www-form-urlencoded"
+	octetStreamType     = "application/octet-stream"
+	ntnxAPIKeyHeaderKey = "X-ntnx-api-key"
 
 	SchemeHTTP  Scheme = "http"
 	SchemeHTTPS Scheme = "https"
@@ -229,6 +230,20 @@ func NewClient(opts ...ClientOption) (*Client, error) {
 	return c, nil
 }
 
+func decorateRequestWithAuthHeaders(req *http.Request, c *prismgoclient.Credentials) {
+	if c.APIKey != "" {
+		decorateRequestWithAPIKeyHeaders(req, c.APIKey)
+		return
+	}
+	// If username equals the API token header key and password is provided,
+	// treat password as API key and set header accordingly.
+	if strings.EqualFold(c.Username, ntnxAPIKeyHeaderKey) && c.Password != "" {
+		decorateRequestWithAPIKeyHeaders(req, c.Password)
+		return
+	}
+	decorateRequestWithBasicAuthHeaders(req, c.Username, c.Password)
+}
+
 // NewRequest creates a request
 func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Request, error) {
 	req, err := c.NewUnAuthRequest(method, urlStr, body)
@@ -239,10 +254,15 @@ func (c *Client) NewRequest(method, urlStr string, body interface{}) (*http.Requ
 	if c.cookies != nil {
 		decorateRequestWithCookies(req, c.cookies)
 	} else {
-		decorateRequestWithBasicAuthHeaders(req, c.credentials.Username, c.credentials.Password)
+		decorateRequestWithAuthHeaders(req, c.credentials)
 	}
 
 	return req, nil
+}
+
+// decorateRequestWithAPIKeyHeaders adds the API key to the request header
+func decorateRequestWithAPIKeyHeaders(req *http.Request, apiKey string) {
+	req.Header.Add(ntnxAPIKeyHeaderKey, apiKey)
 }
 
 func (c *Client) refreshCookies(ctx context.Context) error {
@@ -252,13 +272,13 @@ func (c *Client) refreshCookies(ctx context.Context) error {
 	}
 
 	req = req.WithContext(ctx)
-	decorateRequestWithBasicAuthHeaders(req, c.credentials.Username, c.credentials.Password)
+	decorateRequestWithAuthHeaders(req, c.credentials)
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if err := CheckResponse(resp); err != nil {
 		return err
@@ -288,7 +308,7 @@ func clearCookiesInRequest(req *http.Request) {
 func (c *Client) NewUnAuthRequest(method, urlStr string, body interface{}) (*http.Request, error) {
 	// check if httpClient exists or not
 	if c.httpClient == nil {
-		return nil, fmt.Errorf(c.ErrorMsg)
+		return nil, fmt.Errorf("%s", c.ErrorMsg)
 	}
 
 	// create main api url
@@ -324,7 +344,7 @@ func (c *Client) NewUnAuthRequest(method, urlStr string, body interface{}) (*htt
 func (c *Client) NewUnAuthFormEncodedRequest(method, urlStr string, body map[string]string) (*http.Request, error) {
 	// check if httpClient exists or not
 	if c.httpClient == nil {
-		return nil, fmt.Errorf(c.ErrorMsg)
+		return nil, fmt.Errorf("%s", c.ErrorMsg)
 	}
 	// create main api url
 	rel, err := url.Parse(c.absolutePath + urlStr)
@@ -357,7 +377,7 @@ func (c *Client) NewUnAuthFormEncodedRequest(method, urlStr string, body map[str
 func (c *Client) NewUploadRequest(method, urlStr string, fileReader *os.File) (*http.Request, error) {
 	// check if httpClient exists or not
 	if c.httpClient == nil {
-		return nil, fmt.Errorf(c.ErrorMsg)
+		return nil, fmt.Errorf("%s", c.ErrorMsg)
 	}
 	rel, errp := url.Parse(c.absolutePath + urlStr)
 	if errp != nil {
@@ -386,8 +406,7 @@ func (c *Client) NewUploadRequest(method, urlStr string, fileReader *os.File) (*
 	req.Header.Add("Content-Type", octetStreamType)
 	req.Header.Add("Accept", mediaType)
 	req.Header.Add("User-Agent", c.UserAgent)
-	req.Header.Add("Authorization", "Basic "+
-		base64.StdEncoding.EncodeToString([]byte(c.credentials.Username+":"+c.credentials.Password)))
+	decorateRequestWithAuthHeaders(req, c.credentials)
 
 	return req, nil
 }
@@ -396,7 +415,7 @@ func (c *Client) NewUploadRequest(method, urlStr string, fileReader *os.File) (*
 func (c *Client) NewUnAuthUploadRequest(method, urlStr string, fileReader *os.File) (*http.Request, error) {
 	// check if httpClient exists or not
 	if c.httpClient == nil {
-		return nil, fmt.Errorf(c.ErrorMsg)
+		return nil, fmt.Errorf("%s", c.ErrorMsg)
 	}
 	rel, errp := url.Parse(c.absolutePath + urlStr)
 	if errp != nil {
@@ -448,7 +467,7 @@ func (c *Client) do(ctx context.Context, req *http.Request, v interface{}, retry
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if err := CheckResponse(resp); err != nil {
 		if resp.StatusCode == http.StatusUnauthorized && retryCount < maxRetries {
@@ -510,7 +529,7 @@ func searchSlice(slice []string, key string) bool {
 func (c *Client) DoWithFilters(ctx context.Context, req *http.Request, v interface{}, filters []*prismgoclient.AdditionalFilter, baseSearchPaths []string) error {
 	// check if httpClient exists or not
 	if c.httpClient == nil {
-		return fmt.Errorf(c.ErrorMsg)
+		return fmt.Errorf("%s", c.ErrorMsg)
 	}
 	req = req.WithContext(ctx)
 	resp, err := c.httpClient.Do(req)
@@ -678,7 +697,7 @@ func CheckResponse(r *http.Response) error {
 		return err
 	}
 
-	// karbon error check
+	// konnector-server error check
 	if messageInfo, ok := res["message_info"]; ok {
 		return fmt.Errorf("error: %s", messageInfo)
 	}

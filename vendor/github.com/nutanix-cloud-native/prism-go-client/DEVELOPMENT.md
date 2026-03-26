@@ -46,7 +46,7 @@ func TestMetaOperations_GetVersion(t *testing.T) {
 	interceptor := khttpclient.NewInterceptor(http.DefaultTransport)
 	
 	// Initialize the http client with the keploy interceptor as the round tripper
-	kc, err := NewKarbonAPIClient(creds, WithRoundTripper(interceptor))
+	kc, err := NewKonnectorAPIClient(creds, WithRoundTripper(interceptor))
 	require.NoError(t, err)
 
 	// create a new keploy mock context with keploy mock config name set to the name of the unit test e.g. `t.Name()`
@@ -75,7 +75,7 @@ unit test again. This will replay the API call from the recorded file.
 func TestMetaOperations_GetVersion(t *testing.T) {
 	creds := testhelpers.CredentialsFromEnvironment(t)
 	interceptor := khttpclient.NewInterceptor(http.DefaultTransport)
-	kc, err := NewKarbonAPIClient(creds, WithRoundTripper(interceptor))
+	kc, err := NewKonnectorAPIClient(creds, WithRoundTripper(interceptor))
 	require.NoError(t, err)
 
 	kctx := mock.NewContext(mock.Config{

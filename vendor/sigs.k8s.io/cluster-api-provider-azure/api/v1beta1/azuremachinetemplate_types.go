@@ -17,9 +17,63 @@ limitations under the License.
 package v1beta1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	clusterv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1"
 )
+
+// Architecture represents the CPU architecture of the node.
+// Its underlying type is a string and its value can be any of amd64, arm64.
+type Architecture string
+
+// Architecture constants.
+const (
+	// ArchitectureAmd64 represents the amd64 CPU architecture.
+	ArchitectureAmd64 Architecture = "amd64"
+	// ArchitectureArm64 represents the arm64 CPU architecture.
+	ArchitectureArm64 Architecture = "arm64"
+)
+
+// OperatingSystem represents the operating system of the node.
+// Its underlying type is a string and its value can be any of linux, windows.
+type OperatingSystem string
+
+// Operating system constants.
+const (
+	// OperatingSystemLinux represents the Linux operating system.
+	OperatingSystemLinux OperatingSystem = "linux"
+	// OperatingSystemWindows represents the Windows operating system.
+	OperatingSystemWindows OperatingSystem = "windows"
+)
+
+// NodeInfo contains information about the node's architecture and operating system.
+type NodeInfo struct {
+	// Architecture is the CPU architecture of the node.
+	// Its underlying type is a string and its value can be any of amd64, arm64.
+	// +kubebuilder:validation:Enum=amd64;arm64
+	// +optional
+	Architecture Architecture `json:"architecture,omitempty"`
+	// OperatingSystem is the operating system of the node.
+	// Its underlying type is a string and its value can be any of linux, windows.
+	// +kubebuilder:validation:Enum=linux;windows
+	// +optional
+	OperatingSystem OperatingSystem `json:"operatingSystem,omitempty"`
+}
+
+// AzureMachineTemplateStatus defines the observed state of AzureMachineTemplate.
+type AzureMachineTemplateStatus struct {
+	// Capacity defines the resource capacity for this machine.
+	// This value is used for autoscaling from zero operations as defined in:
+	// https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210310-opt-in-autoscaling-from-zero.md
+	// +optional
+	Capacity corev1.ResourceList `json:"capacity,omitempty"`
+
+	// NodeInfo contains information about the node's architecture and operating system.
+	// This value is used for autoscaling from zero operations as defined in:
+	// https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210310-opt-in-autoscaling-from-zero.md
+	// +optional
+	NodeInfo *NodeInfo `json:"nodeInfo,omitempty"`
+}
 
 // AzureMachineTemplateSpec defines the desired state of AzureMachineTemplate.
 type AzureMachineTemplateSpec struct {
@@ -29,13 +83,15 @@ type AzureMachineTemplateSpec struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:path=azuremachinetemplates,scope=Namespaced,categories=cluster-api
 // +kubebuilder:storageversion
+// +kubebuilder:subresource:status
 
 // AzureMachineTemplate is the Schema for the azuremachinetemplates API.
 type AzureMachineTemplate struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	Spec AzureMachineTemplateSpec `json:"spec,omitempty"`
+	Spec   AzureMachineTemplateSpec   `json:"spec,omitempty"`
+	Status AzureMachineTemplateStatus `json:"status,omitempty"`
 }
 
 // +kubebuilder:object:root=true

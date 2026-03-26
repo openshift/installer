@@ -19,6 +19,8 @@ package v1beta1
 import capiv1beta1 "sigs.k8s.io/cluster-api/api/core/v1beta1" //nolint:staticcheck // suppress complaining on Deprecated package
 
 const (
+	Succeeded = "Succeeded"
+
 	DeletionFailed = "DeletionFailed"
 
 	VolumeGroupDetachFailed = "VolumeGroupDetachFailed"
@@ -43,6 +45,9 @@ const (
 	// FailureDomainsMisconfiguredReason (Severity=Warning) indicates that some of the failure domains
 	// are misconfigured.
 	FailureDomainsMisconfiguredReason = "FailureDomainsMisconfigured"
+
+	// FailureDomainsValidatedCondition indicates that the failure domains are being validated.
+	FailureDomainsValidationInProgressReason = "FailureDomainsValidationInProgress"
 )
 
 const (
@@ -54,11 +59,11 @@ const (
 
 const (
 	// PrismCentralClientCondition indicates the status of the client used to connect to Prism Central
-	PrismCentralClientCondition   capiv1beta1.ConditionType = "PrismClientInit"
-	PrismCentralV4ClientCondition capiv1beta1.ConditionType = "PrismClientV4Init"
+	PrismCentralClientCondition            capiv1beta1.ConditionType = "PrismClientInit"
+	PrismCentralConvergedV4ClientCondition capiv1beta1.ConditionType = "PrismClientConvergedV4Init"
 
-	PrismCentralClientInitializationFailed   = "PrismClientInitFailed"
-	PrismCentralV4ClientInitializationFailed = "PrismClientV4InitFailed"
+	PrismCentralClientInitializationFailed            = "PrismClientInitFailed"
+	PrismCentralConvergedV4ClientInitializationFailed = "PrismClientConvergedV4InitFailed"
 )
 
 const (

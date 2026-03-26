@@ -7,7 +7,8 @@ import (
 	"net/http"
 
 	"github.com/go-logr/logr"
-	"github.com/nutanix-cloud-native/prism-go-client"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
+	"github.com/nutanix-cloud-native/prism-go-client/environment/types"
 	"github.com/nutanix-cloud-native/prism-go-client/internal"
 )
 
@@ -25,11 +26,8 @@ type Client struct {
 	clientOpts []internal.ClientOption
 }
 
-// ClientOption is a functional option for the Client
-type ClientOption func(*Client) error
-
 // WithCertificate sets the certificate for the client
-func WithCertificate(certificate *x509.Certificate) ClientOption {
+func WithCertificate(certificate *x509.Certificate) types.ClientOption[Client] {
 	return func(c *Client) error {
 		c.clientOpts = append(c.clientOpts, internal.WithCertificate(certificate))
 		return nil
@@ -37,7 +35,7 @@ func WithCertificate(certificate *x509.Certificate) ClientOption {
 }
 
 // WithPEMEncodedCertBundle sets the certificates for the client
-func WithPEMEncodedCertBundle(certBundle []byte) ClientOption {
+func WithPEMEncodedCertBundle(certBundle []byte) types.ClientOption[Client] {
 	return func(c *Client) error {
 		for block, rest := pem.Decode(certBundle); block != nil; block, rest = pem.Decode(rest) {
 			if block.Type != "CERTIFICATE" {
@@ -58,7 +56,7 @@ func WithPEMEncodedCertBundle(certBundle []byte) ClientOption {
 // WithRoundTripper overrides the transport for the underlying http client
 // Overriding transport is useful for testing against API Mocks
 // This is not recommended for production use
-func WithRoundTripper(transport http.RoundTripper) ClientOption {
+func WithRoundTripper(transport http.RoundTripper) types.ClientOption[Client] {
 	return func(c *Client) error {
 		c.clientOpts = append(c.clientOpts, internal.WithRoundTripper(transport))
 		return nil
@@ -66,7 +64,7 @@ func WithRoundTripper(transport http.RoundTripper) ClientOption {
 }
 
 // WithLogger sets the logger for the client
-func WithLogger(logger *logr.Logger) ClientOption {
+func WithLogger(logger *logr.Logger) types.ClientOption[Client] {
 	return func(c *Client) error {
 		c.clientOpts = append(c.clientOpts, internal.WithLogger(logger))
 		return nil
@@ -75,7 +73,7 @@ func WithLogger(logger *logr.Logger) ClientOption {
 
 // WithUserAgent sets the user agent for the client
 // If set, this will override the default user agent
-func WithUserAgent(userAgent string) ClientOption {
+func WithUserAgent(userAgent string) types.ClientOption[Client] {
 	return func(c *Client) error {
 		c.clientOpts = append(c.clientOpts, internal.WithUserAgent(userAgent))
 		return nil
@@ -83,9 +81,15 @@ func WithUserAgent(userAgent string) ClientOption {
 }
 
 // NewV3Client return a internal to operate V3 resources
-func NewV3Client(credentials prismgoclient.Credentials, opts ...ClientOption) (*Client, error) {
-	if credentials.Username == "" || credentials.Password == "" || credentials.Endpoint == "" {
-		return nil, fmt.Errorf("username, password and endpoint are required")
+func NewV3Client(credentials prismgoclient.Credentials, opts ...types.ClientOption[Client]) (*Client, error) {
+	if credentials.APIKey != "" {
+		if credentials.Endpoint == "" {
+			return nil, fmt.Errorf("endpoint is required for api key auth")
+		}
+	} else {
+		if credentials.Username == "" || credentials.Password == "" || credentials.Endpoint == "" {
+			return nil, fmt.Errorf("username, password and endpoint are required for basic auth")
+		}
 	}
 
 	v3Client := &Client{

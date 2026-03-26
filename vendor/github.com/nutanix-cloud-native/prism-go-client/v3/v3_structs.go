@@ -3,7 +3,8 @@ package v3
 import (
 	"time"
 
-	"github.com/nutanix-cloud-native/prism-go-client"
+	prismgoclient "github.com/nutanix-cloud-native/prism-go-client"
+	"github.com/nutanix-cloud-native/prism-go-client/v3/models"
 )
 
 // Reference ...
@@ -289,6 +290,13 @@ type VMResources struct {
 	SerialPortList []*VMSerialPort `json:"serial_port_list,omitempty" mapstructure:"serial_port_list,omitempty"`
 
 	MachineType *string `json:"machine_type,omitempty" mapstructure:"machine_type,omitempty"`
+
+	// VM vTPM configuration.
+	VtpmConfig *VMVtpmConfig `json:"vtpm_config,omitempty" mapstructure:"vtpm_config,omitempty"`
+
+	// Indicates whether hardware assisted virtualization should be enabled for the Guest OS. Once enabled, the Guest OS has the ability to deploy a nested hypervisor.
+	//
+	HardwareVirtualizationEnabled *bool `json:"hardware_virtualization_enabled,omitempty" mapstructure:"hardware_virtualization_enabled,omitempty"`
 }
 
 // VM An intentful representation of a vm spec
@@ -520,6 +528,13 @@ type VMResourcesDefStatus struct {
 	SerialPortList []*VMSerialPort `json:"serial_port_list,omitempty" mapstructure:"serial_port_list,omitempty"`
 
 	MachineType *string `json:"machine_type,omitempty" mapstructure:"machine_type,omitempty"`
+
+	// VM vTPM configuration.
+	VtpmConfig *VMVtpmStatus `json:"vtpm_config,omitempty" mapstructure:"vtpm_config,omitempty"`
+
+	// Indicates whether hardware assisted virtualization should be enabled for the Guest OS. Once enabled, the Guest OS has the ability to deploy a nested hypervisor.
+	//
+	HardwareVirtualizationEnabled *bool `json:"hardware_virtualization_enabled,omitempty" mapstructure:"hardware_virtualization_enabled,omitempty"`
 }
 
 // VMDefStatus An intentful representation of a vm status
@@ -605,175 +620,13 @@ type VMListIntentResponse struct {
 	Metadata *ListMetadataOutput `json:"metadata" mapstructure:"metadata"`
 }
 
-// SubnetMetadata The subnet kind metadata
-type SubnetMetadata struct {
-	// Categories for the subnet
-	Categories map[string]string `json:"categories,omitempty" mapstructure:"categories,omitempty"`
-
-	// UTC date and time in RFC-3339 format when subnet was created
-	CreationTime *time.Time `json:"creation_time,omitempty" mapstructure:"creation_time,omitempty"`
-
-	// The kind name
-	Kind *string `json:"kind" mapstructure:"kind"`
-
-	// UTC date and time in RFC-3339 format when subnet was last updated
-	LastUpdateTime *time.Time `json:"last_update_time,omitempty" mapstructure:"last_update_time,omitempty"`
-
-	// subnet name
-	Name *string `json:"name,omitempty" mapstructure:"name,omitempty"`
-
-	OwnerReference *Reference `json:"owner_reference,omitempty" mapstructure:"owner_reference,omitempty"`
-
-	// project reference
-	ProjectReference *Reference `json:"project_reference,omitempty" mapstructure:"project_reference,omitempty"`
-
-	// Hash of the spec. This will be returned from server.
-	SpecHash *string `json:"spec_hash,omitempty" mapstructure:"spec_hash,omitempty"`
-
-	// Version number of the latest spec.
-	SpecVersion *int64 `json:"spec_version,omitempty" mapstructure:"spec_version,omitempty"`
-
-	// subnet uuid
-	UUID *string `json:"uuid,omitempty" mapstructure:"uuid,omitempty"`
-}
-
-// Address represents the Host address.
-type Address struct {
-	// Fully qualified domain name.
-	FQDN *string `json:"fqdn,omitempty" mapstructure:"fqdn,omitempty"`
-
-	// IPV4 address.
-	IP *string `json:"ip,omitempty" mapstructure:"ip,omitempty"`
-
-	// IPV6 address.
-	IPV6 *string `json:"ipv6,omitempty" mapstructure:"ipv6,omitempty"`
-
-	// Port Number
-	Port *int64 `json:"port,omitempty" mapstructure:"port,omitempty"`
-}
-
-// IPPool represents IP pool.
-type IPPool struct {
-	// Range of IPs (example: 10.0.0.9 10.0.0.19).
-	Range *string `json:"range,omitempty" mapstructure:"range,omitempty"`
-}
-
-// DHCPOptions Spec for defining DHCP options.
-type DHCPOptions struct {
-	BootFileName *string `json:"boot_file_name,omitempty" mapstructure:"boot_file_name,omitempty"`
-
-	DomainName *string `json:"domain_name,omitempty" mapstructure:"domain_name,omitempty"`
-
-	DomainNameServerList []*string `json:"domain_name_server_list,omitempty" mapstructure:"domain_name_server_list,omitempty"`
-
-	DomainSearchList []*string `json:"domain_search_list,omitempty" mapstructure:"domain_search_list,omitempty"`
-
-	TFTPServerName *string `json:"tftp_server_name,omitempty" mapstructure:"tftp_server_name,omitempty"`
-}
-
-// IPConfig represents the configurtion of IP.
-type IPConfig struct {
-	// Default gateway IP address.
-	DefaultGatewayIP *string `json:"default_gateway_ip,omitempty" mapstructure:"default_gateway_ip,omitempty"`
-
-	DHCPOptions *DHCPOptions `json:"dhcp_options,omitempty" mapstructure:"dhcp_options,omitempty"`
-
-	DHCPServerAddress *Address `json:"dhcp_server_address,omitempty" mapstructure:"dhcp_server_address,omitempty"`
-
-	PoolList []*IPPool `json:"pool_list,omitempty" mapstructure:"pool_list,omitempty"`
-
-	PrefixLength *int64 `json:"prefix_length,omitempty" mapstructure:"prefix_length,omitempty"`
-
-	// Subnet IP address.
-	SubnetIP *string `json:"subnet_ip,omitempty" mapstructure:"subnet_ip,omitempty"`
-}
-
-// SubnetResources represents Subnet creation/modification spec.
-type SubnetResources struct {
-	IPConfig *IPConfig `json:"ip_config,omitempty" mapstructure:"ip_config,omitempty"`
-
-	NetworkFunctionChainReference *Reference `json:"network_function_chain_reference,omitempty" mapstructure:"network_function_chain_reference,omitempty"`
-
-	SubnetType *string `json:"subnet_type" mapstructure:"subnet_type"`
-
-	VlanID *int64 `json:"vlan_id,omitempty" mapstructure:"vlan_id,omitempty"`
-
-	VswitchName *string `json:"vswitch_name,omitempty" mapstructure:"vswitch_name,omitempty"`
-}
-
-// Subnet An intentful representation of a subnet spec
-type Subnet struct {
-	AvailabilityZoneReference *Reference `json:"availability_zone_reference,omitempty" mapstructure:"availability_zone_reference,omitempty"`
-
-	ClusterReference *Reference `json:"cluster_reference,omitempty" mapstructure:"cluster_reference,omitempty"`
-
-	// A description for subnet.
-	Description *string `json:"description,omitempty" mapstructure:"description,omitempty"`
-
-	// subnet Name.
-	Name *string `json:"name" mapstructure:"name"`
-
-	Resources *SubnetResources `json:"resources,omitempty" mapstructure:"resources,omitempty"`
-}
-
 // SubnetIntentInput An intentful representation of a subnet
 type SubnetIntentInput struct {
 	APIVersion *string `json:"api_version,omitempty" mapstructure:"api_version,omitempty"`
 
 	Metadata *Metadata `json:"metadata" mapstructure:"metadata"`
 
-	Spec *Subnet `json:"spec" mapstructure:"spec"`
-}
-
-// SubnetStatus represents The status of a REST API call. Only used when there is a failure to report.
-type SubnetStatus struct {
-	APIVersion *string `json:"api_version,omitempty" mapstructure:"api_version,omitempty"`
-
-	// The HTTP error code.
-	Code *int64 `json:"code,omitempty" mapstructure:"code,omitempty"`
-
-	// The kind name
-	Kind *string `json:"kind,omitempty" mapstructure:"kind,omitempty"`
-
-	MessageList []*MessageResource `json:"message_list,omitempty" mapstructure:"message_list,omitempty"`
-
-	State *string `json:"state,omitempty" mapstructure:"state,omitempty"`
-}
-
-// SubnetResourcesDefStatus represents a Subnet creation/modification status.
-type SubnetResourcesDefStatus struct {
-	IPConfig *IPConfig `json:"ip_config,omitempty" mapstructure:"ip_config,omitempty"`
-
-	NetworkFunctionChainReference *Reference `json:"network_function_chain_reference,omitempty" mapstructure:"network_function_chain_reference,omitempty"`
-
-	SubnetType *string `json:"subnet_type" mapstructure:"subnet_type"`
-
-	VlanID *int64 `json:"vlan_id,omitempty" mapstructure:"vlan_id,omitempty"`
-
-	VswitchName *string `json:"vswitch_name,omitempty" mapstructure:"vswitch_name,omitempty"`
-}
-
-// SubnetDefStatus An intentful representation of a subnet status
-type SubnetDefStatus struct {
-	AvailabilityZoneReference *Reference `json:"availability_zone_reference,omitempty" mapstructure:"availability_zone_reference,omitempty"`
-
-	ClusterReference *Reference `json:"cluster_reference,omitempty" mapstructure:"cluster_reference,omitempty"`
-
-	// A description for subnet.
-	Description *string `json:"description" mapstructure:"description"`
-
-	// Any error messages for the subnet, if in an error state.
-	MessageList []*MessageResource `json:"message_list,omitempty" mapstructure:"message_list,omitempty"`
-
-	// subnet Name.
-	Name *string `json:"name" mapstructure:"name"`
-
-	Resources *SubnetResourcesDefStatus `json:"resources,omitempty" mapstructure:"resources,omitempty"`
-
-	// The state of the subnet.
-	State *string `json:"state,omitempty" mapstructure:"state,omitempty"`
-
-	ExecutionContext *ExecutionContext `json:"execution_context,omitempty" mapstructure:"execution_context,omitempty"`
+	Spec *models.Subnet `json:"spec" mapstructure:"spec"`
 }
 
 // SubnetIntentResponse represents the response object for intentful operations on a subnet
@@ -782,9 +635,9 @@ type SubnetIntentResponse struct {
 
 	Metadata *Metadata `json:"metadata,omitempty" mapstructure:"metadata,omitempty"`
 
-	Spec *Subnet `json:"spec,omitempty" mapstructure:"spec,omitempty"`
+	Spec *models.Subnet `json:"spec,omitempty" mapstructure:"spec,omitempty"`
 
-	Status *SubnetDefStatus `json:"status,omitempty" mapstructure:"status,omitempty"`
+	Status *models.SubnetDefStatus `json:"status,omitempty" mapstructure:"status,omitempty"`
 }
 
 // SubnetIntentResource represents Response object for intentful operations on a subnet
@@ -793,9 +646,9 @@ type SubnetIntentResource struct {
 
 	Metadata *Metadata `json:"metadata" mapstructure:"metadata"`
 
-	Spec *Subnet `json:"spec,omitempty" mapstructure:"spec,omitempty"`
+	Spec *models.Subnet `json:"spec,omitempty" mapstructure:"spec,omitempty"`
 
-	Status *SubnetDefStatus `json:"status,omitempty" mapstructure:"status,omitempty"`
+	Status *models.SubnetDefStatus `json:"status,omitempty" mapstructure:"status,omitempty"`
 }
 
 // SubnetListIntentResponse represents the response object for intentful operation of subnets
@@ -1050,276 +903,22 @@ type ImageListIntentResponse struct {
 	Metadata *ListMetadataOutput `json:"metadata" mapstructure:"metadata"`
 }
 
-// ClusterListIntentResponse ...
+// ClusterListIntentResponse represents the response object for list operation of clusters
 type ClusterListIntentResponse struct {
 	APIVersion *string                  `json:"api_version" mapstructure:"api_version"`
 	Entities   []*ClusterIntentResponse `json:"entities,omitempty" mapstructure:"entities,omitempty"`
 	Metadata   *ListMetadataOutput      `json:"metadata" mapstructure:"metadata"`
 }
 
-// ClusterIntentResponse ...
+// ClusterIntentResponse is the response object for intentful operations on a cluster
 type ClusterIntentResponse struct {
 	APIVersion *string `json:"api_version,omitempty" mapstructure:"api_version,omitempty"`
 
 	Metadata *Metadata `json:"metadata" mapstructure:"metadata"`
 
-	Spec *Cluster `json:"spec,omitempty" mapstructure:"spec,omitempty"`
+	Spec *models.Cluster `json:"spec,omitempty" mapstructure:"spec,omitempty"`
 
-	Status *ClusterDefStatus `json:"status,omitempty" mapstructure:"status,omitempty"`
-}
-
-// Cluster ...
-type Cluster struct {
-	Name      *string          `json:"name,omitempty" mapstructure:"name,omitempty"`
-	Resources *ClusterResource `json:"resources,omitempty" mapstructure:"resources,omitempty"`
-}
-
-// ClusterDefStatus ...
-type ClusterDefStatus struct {
-	State       *string            `json:"state,omitempty" mapstructure:"state,omitempty"`
-	MessageList []*MessageResource `json:"message_list,omitempty" mapstructure:"message_list,omitempty"`
-	Name        *string            `json:"name,omitempty" mapstructure:"name,omitempty"`
-	Resources   *ClusterObj        `json:"resources,omitempty" mapstructure:"resources,omitempty"`
-}
-
-// ClusterObj ...
-type ClusterObj struct {
-	Nodes             *ClusterNodes    `json:"nodes,omitempty" mapstructure:"nodes,omitempty"`
-	Config            *ClusterConfig   `json:"config,omitempty" mapstructure:"config,omitempty"`
-	Network           *ClusterNetwork  `json:"network,omitempty" mapstructure:"network,omitempty"`
-	Analysis          *ClusterAnalysis `json:"analysis,omitempty" mapstructure:"analysis,omitempty"`
-	RuntimeStatusList []*string        `json:"runtime_status_list,omitempty" mapstructure:"runtime_status_list,omitempty"`
-}
-
-// ClusterNodes ...
-type ClusterNodes struct {
-	HypervisorServerList []*HypervisorServer `json:"hypervisor_server_list,omitempty" mapstructure:"hypervisor_server_list,omitempty"`
-}
-
-// SoftwareMapValues ...
-type SoftwareMapValues struct {
-	SoftwareType *string `json:"software_type,omitempty" mapstructure:"software_type,omitempty"`
-	Status       *string `json:"status,omitempty" mapstructure:"status,omitempty"`
-	Version      *string `json:"version,omitempty" mapstructure:"version,omitempty"`
-}
-
-// SoftwareMap ...
-type SoftwareMap struct {
-	NCC *SoftwareMapValues `json:"ncc,omitempty" mapstructure:"ncc,omitempty"`
-	NOS *SoftwareMapValues `json:"nos,omitempty" mapstructure:"nos,omitempty"`
-}
-
-// ClusterConfig ...
-type ClusterConfig struct {
-	GpuDriverVersion              *string                    `json:"gpu_driver_version,omitempty" mapstructure:"gpu_driver_version,omitempty"`
-	ClientAuth                    *ClientAuth                `json:"client_auth,omitempty" mapstructure:"client_auth,omitempty"`
-	AuthorizedPublicKeyList       []*PublicKey               `json:"authorized_public_key_list,omitempty" mapstructure:"authorized_public_key_list,omitempty"`
-	SoftwareMap                   *SoftwareMap               `json:"software_map,omitempty" mapstructure:"software_map,omitempty"`
-	EncryptionStatus              *string                    `json:"encryption_status,omitempty" mapstructure:"encryption_status,omitempty"`
-	SslKey                        *SslKey                    `json:"ssl_key,omitempty" mapstructure:"ssl_key,omitempty"`
-	ServiceList                   []*string                  `json:"service_list,omitempty" mapstructure:"service_list,omitempty"`
-	SupportedInformationVerbosity *string                    `json:"supported_information_verbosity,omitempty" mapstructure:"supported_information_verbosity,omitempty"`
-	CertificationSigningInfo      *CertificationSigningInfo  `json:"certification_signing_info,omitempty" mapstructure:"certification_signing_info,omitempty"`
-	RedundancyFactor              *int64                     `json:"redundancy_factor,omitempty" mapstructure:"redundancy_factor,omitempty"`
-	ExternalConfigurations        *ExternalConfigurations    `json:"external_configurations,omitempty" mapstructure:"external_configurations,omitempty"`
-	OperationMode                 *string                    `json:"operation_mode,omitempty" mapstructure:"operation_mode,omitempty"`
-	CaCertificateList             []*CaCert                  `json:"ca_certificate_list,omitempty" mapstructure:"ca_certificate_list,omitempty"`
-	EnabledFeatureList            []*string                  `json:"enabled_feature_list,omitempty" mapstructure:"enabled_feature_list,omitempty"`
-	IsAvailable                   *bool                      `json:"is_available,omitempty" mapstructure:"is_available,omitempty"`
-	Build                         *BuildInfo                 `json:"build,omitempty" mapstructure:"build,omitempty"`
-	Timezone                      *string                    `json:"timezone,omitempty" mapstructure:"timezone,omitempty"`
-	ClusterArch                   *string                    `json:"cluster_arch,omitempty" mapstructure:"cluster_arch,omitempty"`
-	ManagementServerList          []*ClusterManagementServer `json:"management_server_list,omitempty" mapstructure:"management_server_list,omitempty"`
-}
-
-// ClusterManagementServer ...
-type ClusterManagementServer struct {
-	IP         *string   `json:"ip,omitempty" mapstructure:"ip,omitempty"`
-	DrsEnabled *bool     `json:"drs_enabled,omitempty" mapstructure:"drs_enabled,omitempty"`
-	StatusList []*string `json:"status_list,omitempty" mapstructure:"status_list,omitempty"`
-	Type       *string   `json:"type,omitempty" mapstructure:"type,omitempty"`
-}
-
-// BuildInfo ...
-type BuildInfo struct {
-	CommitID      *string `json:"commit_id,omitempty" mapstructure:"commit_id,omitempty"`
-	FullVersion   *string `json:"full_version,omitempty" mapstructure:"full_version,omitempty"`
-	CommitDate    *string `json:"commit_date,omitempty" mapstructure:"commit_date,omitempty"`
-	Version       *string `json:"version,omitempty" mapstructure:"version,omitempty"`
-	ShortCommitID *string `json:"short_commit_id,omitempty" mapstructure:"short_commit_id,omitempty"`
-	BuildType     *string `json:"build_type,omitempty" mapstructure:"build_type,omitempty"`
-}
-
-// CaCert ...
-type CaCert struct {
-	CaName      *string `json:"ca_name,omitempty" mapstructure:"ca_name,omitempty"`
-	Certificate *string `json:"certificate,omitempty" mapstructure:"certificate,omitempty"`
-}
-
-// ExternalConfigurations ...
-type ExternalConfigurations struct {
-	CitrixConnectorConfig *CitrixConnectorConfigDetails `json:"citrix_connector_config,omitempty" mapstructure:"citrix_connector_config,omitempty"`
-}
-
-// CitrixConnectorConfigDetails ...
-type CitrixConnectorConfigDetails struct {
-	CitrixVMReferenceList *[]Reference            `json:"citrix_vm_reference_list,omitempty" mapstructure:"citrix_vm_reference_list,omitempty"`
-	ClientSecret          *string                 `json:"client_secret,omitempty" mapstructure:"client_secret,omitempty"`
-	CustomerID            *string                 `json:"customer_id,omitempty" mapstructure:"customer_id,omitempty"`
-	ClientID              *string                 `json:"client_id,omitempty" mapstructure:"client_id,omitempty"`
-	ResourceLocation      *CitrixResourceLocation `json:"resource_location,omitempty" mapstructure:"resource_location,omitempty"`
-}
-
-// CitrixResourceLocation ...
-type CitrixResourceLocation struct {
-	ID   *string `json:"id,omitempty" mapstructure:"id,omitempty"`
-	Name *string `json:"name,omitempty" mapstructure:"name,omitempty"`
-}
-
-// SslKey ...
-type SslKey struct {
-	KeyType        *string                   `json:"key_type,omitempty" mapstructure:"key_type,omitempty"`
-	KeyName        *string                   `json:"key_name,omitempty" mapstructure:"key_name,omitempty"`
-	SigningInfo    *CertificationSigningInfo `json:"signing_info,omitempty" mapstructure:"signing_info,omitempty"`
-	ExpireDatetime *string                   `json:"expire_datetime,omitempty" mapstructure:"expire_datetime,omitempty"`
-}
-
-// CertificationSigningInfo ...
-type CertificationSigningInfo struct {
-	City             *string `json:"city,omitempty" mapstructure:"city,omitempty"`
-	CommonNameSuffix *string `json:"common_name_suffix,omitempty" mapstructure:"common_name_suffix,omitempty"`
-	State            *string `json:"state,omitempty" mapstructure:"state,omitempty"`
-	CountryCode      *string `json:"country_code,omitempty" mapstructure:"country_code,omitempty"`
-	CommonName       *string `json:"common_name,omitempty" mapstructure:"common_name,omitempty"`
-	Organization     *string `json:"organization,omitempty" mapstructure:"organization,omitempty"`
-	EmailAddress     *string `json:"email_address,omitempty" mapstructure:"email_address,omitempty"`
-}
-
-// PublicKey ...
-type PublicKey struct {
-	Key  *string `json:"key,omitempty" mapstructure:"key,omitempty"`
-	Name *string `json:"name,omitempty" mapstructure:"name,omitempty"`
-}
-
-// ClientAuth ...
-type ClientAuth struct {
-	Status  *string `json:"status,omitempty" mapstructure:"status,omitempty"`
-	CaChain *string `json:"ca_chain,omitempty" mapstructure:"ca_chain,omitempty"`
-	Name    *string `json:"name,omitempty" mapstructure:"name,omitempty"`
-}
-
-// HypervisorServer ...
-type HypervisorServer struct {
-	IP      *string `json:"ip,omitempty" mapstructure:"ip,omitempty"`
-	Version *string `json:"version,omitempty" mapstructure:"version,omitempty"`
-	Type    *string `json:"type,omitempty" mapstructure:"type,omitempty"`
-}
-
-// ClusterResource ...
-type ClusterResource struct {
-	Config            *ConfigClusterSpec `json:"config,omitempty" mapstructure:"config,omitempty"`
-	Network           *ClusterNetwork    `json:"network,omitempty" mapstructure:"network,omitempty"`
-	RunTimeStatusList []*string          `json:"runtime_status_list,omitempty" mapstructure:"runtime_status_list,omitempty"`
-}
-
-// ConfigClusterSpec ...
-type ConfigClusterSpec struct {
-	GpuDriverVersion              *string                     `json:"gpu_driver_version,omitempty" mapstructure:"gpu_driver_version,omitempty"`
-	ClientAuth                    *ClientAuth                 `json:"client_auth,omitempty" mapstructure:"client_auth,omitempty"`
-	AuthorizedPublicKeyList       []*PublicKey                `json:"authorized_public_key_list,omitempty" mapstructure:"authorized_public_key_list,omitempty"`
-	SoftwareMap                   map[string]interface{}      `json:"software_map,omitempty" mapstructure:"software_map,omitempty"`
-	EncryptionStatus              string                      `json:"encryption_status,omitempty" mapstructure:"encryption_status,omitempty"`
-	RedundancyFactor              *int64                      `json:"redundancy_factor,omitempty" mapstructure:"redundancy_factor,omitempty"`
-	CertificationSigningInfo      *CertificationSigningInfo   `json:"certification_signing_info,omitempty" mapstructure:"certification_signing_info,omitempty"`
-	SupportedInformationVerbosity *string                     `json:"supported_information_verbosity,omitempty" mapstructure:"supported_information_verbosity,omitempty"`
-	ExternalConfigurations        *ExternalConfigurationsSpec `json:"external_configurations,omitempty" mapstructure:"external_configurations,omitempty"`
-	EnabledFeatureList            []*string                   `json:"enabled_feature_list,omitempty" mapstructure:"enabled_feature_list,omitempty"`
-	Timezone                      *string                     `json:"timezone,omitempty" mapstructure:"timezone,omitempty"`
-	OperationMode                 *string                     `json:"operation_mode,omitempty" mapstructure:"operation_mode,omitempty"`
-}
-
-// ExternalConfigurationsSpec ...
-type ExternalConfigurationsSpec struct {
-	CitrixConnectorConfig *CitrixConnectorConfigDetailsSpec `json:"citrix_connector_config,omitempty" mapstructure:"citrix_connector_config,omitempty"`
-}
-
-// CitrixConnectorConfigDetailsSpec ...
-type CitrixConnectorConfigDetailsSpec struct {
-	CitrixVMReferenceList []*Reference                `json:"citrix_connector_config,omitempty" mapstructure:"citrix_connector_config,omitempty"`
-	ClientSecret          *string                     `json:"client_secret,omitempty" mapstructure:"client_secret,omitempty"`
-	CustomerID            *string                     `json:"customer_id,omitempty" mapstructure:"customer_id,omitempty"`
-	ClientID              *string                     `json:"client_id,omitempty" mapstructure:"client_id,omitempty"`
-	ResourceLocation      *CitrixResourceLocationSpec `json:"resource_location,omitempty" mapstructure:"resource_location,omitempty"`
-}
-
-// CitrixResourceLocationSpec ...
-type CitrixResourceLocationSpec struct {
-	ID   *string `json:"id,omitempty" mapstructure:"id,omitempty"`
-	Name *string `json:"name,omitempty" mapstructure:"name,omitempty"`
-}
-
-// ClusterNetwork ...
-type ClusterNetwork struct {
-	MasqueradingPort       *int64                  `json:"masquerading_port,omitempty" mapstructure:"masquerading_port,omitempty"`
-	MasqueradingIP         *string                 `json:"masquerading_ip,omitempty" mapstructure:"masquerading_ip,omitempty"`
-	ExternalIP             *string                 `json:"external_ip,omitempty" mapstructure:"external_ip,omitempty"`
-	HTTPProxyList          []*ClusterNetworkEntity `json:"http_proxy_list,omitempty" mapstructure:"http_proxy_list,omitempty"`
-	SMTPServer             *SMTPServer             `json:"smtp_server,omitempty" mapstructure:"smtp_server,omitempty"`
-	NTPServerIPList        []*string               `json:"ntp_server_ip_list,omitempty" mapstructure:"ntp_server_ip_list,omitempty"`
-	ExternalSubnet         *string                 `json:"external_subnet,omitempty" mapstructure:"external_subnet,omitempty"`
-	NFSSubnetWhitelist     []*string               `json:"nfs_subnet_whitelist,omitempty" mapstructure:"nfs_subnet_whitelist,omitempty"`
-	ExternalDataServicesIP *string                 `json:"external_data_services_ip,omitempty" mapstructure:"external_data_services_ip,omitempty"`
-	DomainServer           *ClusterDomainServer    `json:"domain_server,omitempty" mapstructure:"domain_server,omitempty"`
-	NameServerIPList       []*string               `json:"name_server_ip_list,omitempty" mapstructure:"name_server_ip_list,omitempty"`
-	HTTPProxyWhitelist     []*HTTPProxyWhitelist   `json:"http_proxy_whitelist,omitempty" mapstructure:"http_proxy_whitelist,omitempty"`
-	InternalSubnet         *string                 `json:"internal_subnet,omitempty" mapstructure:"internal_subnet,omitempty"`
-}
-
-// HTTPProxyWhitelist ...
-type HTTPProxyWhitelist struct {
-	Target     *string `json:"target,omitempty" mapstructure:"target,omitempty"`
-	TargetType *string `json:"target_type,omitempty" mapstructure:"target_type,omitempty"`
-}
-
-// ClusterDomainServer ...
-type ClusterDomainServer struct {
-	Nameserver        *string      `json:"nameserver,omitempty" mapstructure:"nameserver,omitempty"`
-	Name              *string      `json:"name,omitempty" mapstructure:"name,omitempty"`
-	DomainCredentials *Credentials `json:"external_data_services_ip,omitempty" mapstructure:"external_data_services_ip,omitempty"`
-}
-
-// SMTPServer ...
-type SMTPServer struct {
-	Type         *string               `json:"type,omitempty" mapstructure:"type,omitempty"`
-	EmailAddress *string               `json:"email_address,omitempty" mapstructure:"email_address,omitempty"`
-	Server       *ClusterNetworkEntity `json:"server,omitempty" mapstructure:"server,omitempty"`
-}
-
-// ClusterNetworkEntity ...
-type ClusterNetworkEntity struct {
-	Credentials   *Credentials `json:"credentials,omitempty" mapstructure:"credentials,omitempty"`
-	ProxyTypeList []*string    `json:"proxy_type_list,omitempty" mapstructure:"proxy_type_list,omitempty"`
-	Address       *Address     `json:"address,omitempty" mapstructure:"address,omitempty"`
-}
-
-// Credentials ...
-type Credentials struct {
-	Username *string `json:"username,omitempty" mapstructure:"username,omitempty"`
-	Password *string `json:"password,omitempty" mapstructure:"password,omitempty"`
-}
-
-// VMEfficiencyMap ...
-type VMEfficiencyMap struct {
-	BullyVMNum           *string `json:"bully_vm_num,omitempty" mapstructure:"bully_vm_num,omitempty"`
-	ConstrainedVMNum     *string `json:"constrained_vm_num,omitempty" mapstructure:"constrained_vm_num,omitempty"`
-	DeadVMNum            *string `json:"dead_vm_num,omitempty" mapstructure:"dead_vm_num,omitempty"`
-	InefficientVMNum     *string `json:"inefficient_vm_num,omitempty" mapstructure:"inefficient_vm_num,omitempty"`
-	OverprovisionedVMNum *string `json:"overprovisioned_vm_num,omitempty" mapstructure:"overprovisioned_vm_num,omitempty"`
-}
-
-// ClusterAnalysis ...
-type ClusterAnalysis struct {
-	VMEfficiencyMap *VMEfficiencyMap `json:"vm_efficiency_map,omitempty" mapstructure:"vm_efficiency_map,omitempty"`
+	Status *models.ClusterDefStatus `json:"status,omitempty" mapstructure:"status,omitempty"`
 }
 
 // CategoryListMetadata All api calls that return a list will have this metadata block as input
@@ -2761,4 +2360,40 @@ type AvailabilityZoneStatus struct {
 	Resources   *AvailabilityZoneResources `json:"resources,omitempty"` // AvailabilityZone Resource Definition
 	MessageList []MessageResource          `json:"message_list,omitempty"`
 	State       *string                    `json:"state,omitempty"` // The state of the entity
+}
+
+// VMVtpmConfig VM vTPM configuration.
+//
+// Indicates how VM vTPM should be configured.
+//
+// swagger:model vm_vtpm_config
+type VMVtpmConfig struct {
+
+	// data source reference
+	DataSourceReference *Reference `json:"data_source_reference,omitempty" mapstructure:"data_source_reference,omitempty"`
+
+	// Indicates whether virtual trusted platform module should be enabled for the Guest OS.
+	//
+	VtpmEnabled *bool `json:"vtpm_enabled,omitempty" mapstructure:"vtpm_enabled,omitempty"`
+
+	// Virtual trusted platform module secret.
+	VtpmSecret *string `json:"vtpm_secret,omitempty" mapstructure:"vtpm_secret,omitempty"`
+}
+
+// VMVtpmStatus VM vTPM configuration status.
+//
+// Current status of the vTPM configuration.
+//
+// swagger:model vm_vtpm_status
+type VMVtpmStatus struct {
+
+	// data source reference
+	DataSourceReference *Reference `json:"data_source_reference,omitempty" mapstructure:"data_source_reference,omitempty"`
+
+	// Virtual trusted platform module version.
+	Version *string `json:"version,omitempty" mapstructure:"version,omitempty"`
+
+	// Indicates whether virtual trusted platform module is enabled for the the Guest OS.
+	//
+	VtpmEnabled *bool `json:"vtpm_enabled,omitempty" mapstructure:"vtpm_enabled,omitempty"`
 }
