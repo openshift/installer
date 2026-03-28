@@ -1133,107 +1133,6 @@ github.com/metal3-io/baremetal-operator/pkg/hardwareutils/bmc
 # github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d
 ## explicit
 github.com/mgutz/ansi
-# github.com/microsoft/kiota-abstractions-go v1.9.2
-## explicit; go 1.23.0
-github.com/microsoft/kiota-abstractions-go
-github.com/microsoft/kiota-abstractions-go/authentication
-github.com/microsoft/kiota-abstractions-go/serialization
-github.com/microsoft/kiota-abstractions-go/store
-# github.com/microsoft/kiota-authentication-azure-go v1.3.0
-## explicit; go 1.23.0
-github.com/microsoft/kiota-authentication-azure-go
-# github.com/microsoft/kiota-http-go v1.5.4
-## explicit; go 1.23.0
-github.com/microsoft/kiota-http-go
-# github.com/microsoft/kiota-serialization-form-go v1.1.2
-## explicit; go 1.23.0
-github.com/microsoft/kiota-serialization-form-go
-# github.com/microsoft/kiota-serialization-json-go v1.1.2
-## explicit; go 1.23.0
-github.com/microsoft/kiota-serialization-json-go
-# github.com/microsoft/kiota-serialization-text-go v1.1.2
-## explicit; go 1.23.0
-github.com/microsoft/kiota-serialization-text-go
-# github.com/microsoftgraph/msgraph-sdk-go v0.59.0
-## explicit; go 1.18
-github.com/microsoftgraph/msgraph-sdk-go
-github.com/microsoftgraph/msgraph-sdk-go/admin
-github.com/microsoftgraph/msgraph-sdk-go/agreementacceptances
-github.com/microsoftgraph/msgraph-sdk-go/agreements
-github.com/microsoftgraph/msgraph-sdk-go/appcatalogs
-github.com/microsoftgraph/msgraph-sdk-go/applications
-github.com/microsoftgraph/msgraph-sdk-go/applicationtemplates
-github.com/microsoftgraph/msgraph-sdk-go/auditlogs
-github.com/microsoftgraph/msgraph-sdk-go/authenticationmethodconfigurations
-github.com/microsoftgraph/msgraph-sdk-go/authenticationmethodspolicy
-github.com/microsoftgraph/msgraph-sdk-go/branding
-github.com/microsoftgraph/msgraph-sdk-go/certificatebasedauthconfiguration
-github.com/microsoftgraph/msgraph-sdk-go/chats
-github.com/microsoftgraph/msgraph-sdk-go/communications
-github.com/microsoftgraph/msgraph-sdk-go/compliance
-github.com/microsoftgraph/msgraph-sdk-go/connections
-github.com/microsoftgraph/msgraph-sdk-go/contacts
-github.com/microsoftgraph/msgraph-sdk-go/contracts
-github.com/microsoftgraph/msgraph-sdk-go/datapolicyoperations
-github.com/microsoftgraph/msgraph-sdk-go/deviceappmanagement
-github.com/microsoftgraph/msgraph-sdk-go/devicemanagement
-github.com/microsoftgraph/msgraph-sdk-go/devices
-github.com/microsoftgraph/msgraph-sdk-go/directory
-github.com/microsoftgraph/msgraph-sdk-go/directoryobjects
-github.com/microsoftgraph/msgraph-sdk-go/directoryroles
-github.com/microsoftgraph/msgraph-sdk-go/directoryroletemplates
-github.com/microsoftgraph/msgraph-sdk-go/domaindnsrecords
-github.com/microsoftgraph/msgraph-sdk-go/domains
-github.com/microsoftgraph/msgraph-sdk-go/drives
-github.com/microsoftgraph/msgraph-sdk-go/education
-github.com/microsoftgraph/msgraph-sdk-go/employeeexperience
-github.com/microsoftgraph/msgraph-sdk-go/external
-github.com/microsoftgraph/msgraph-sdk-go/grouplifecyclepolicies
-github.com/microsoftgraph/msgraph-sdk-go/groups
-github.com/microsoftgraph/msgraph-sdk-go/groupsettings
-github.com/microsoftgraph/msgraph-sdk-go/groupsettingtemplates
-github.com/microsoftgraph/msgraph-sdk-go/identity
-github.com/microsoftgraph/msgraph-sdk-go/identitygovernance
-github.com/microsoftgraph/msgraph-sdk-go/identityprotection
-github.com/microsoftgraph/msgraph-sdk-go/identityproviders
-github.com/microsoftgraph/msgraph-sdk-go/informationprotection
-github.com/microsoftgraph/msgraph-sdk-go/invitations
-github.com/microsoftgraph/msgraph-sdk-go/localizations
-github.com/microsoftgraph/msgraph-sdk-go/models
-github.com/microsoftgraph/msgraph-sdk-go/models/callrecords
-github.com/microsoftgraph/msgraph-sdk-go/models/externalconnectors
-github.com/microsoftgraph/msgraph-sdk-go/models/odataerrors
-github.com/microsoftgraph/msgraph-sdk-go/models/security
-github.com/microsoftgraph/msgraph-sdk-go/models/termstore
-github.com/microsoftgraph/msgraph-sdk-go/oauth2permissiongrants
-github.com/microsoftgraph/msgraph-sdk-go/organization
-github.com/microsoftgraph/msgraph-sdk-go/permissiongrants
-github.com/microsoftgraph/msgraph-sdk-go/places
-github.com/microsoftgraph/msgraph-sdk-go/planner
-github.com/microsoftgraph/msgraph-sdk-go/policies
-github.com/microsoftgraph/msgraph-sdk-go/print
-github.com/microsoftgraph/msgraph-sdk-go/privacy
-github.com/microsoftgraph/msgraph-sdk-go/reports
-github.com/microsoftgraph/msgraph-sdk-go/rolemanagement
-github.com/microsoftgraph/msgraph-sdk-go/schemaextensions
-github.com/microsoftgraph/msgraph-sdk-go/scopedrolememberships
-github.com/microsoftgraph/msgraph-sdk-go/search
-github.com/microsoftgraph/msgraph-sdk-go/security
-github.com/microsoftgraph/msgraph-sdk-go/serviceprincipals
-github.com/microsoftgraph/msgraph-sdk-go/shares
-github.com/microsoftgraph/msgraph-sdk-go/sites
-github.com/microsoftgraph/msgraph-sdk-go/solutions
-github.com/microsoftgraph/msgraph-sdk-go/subscribedskus
-github.com/microsoftgraph/msgraph-sdk-go/subscriptions
-github.com/microsoftgraph/msgraph-sdk-go/teams
-github.com/microsoftgraph/msgraph-sdk-go/teamstemplates
-github.com/microsoftgraph/msgraph-sdk-go/teamwork
-github.com/microsoftgraph/msgraph-sdk-go/tenantrelationships
-github.com/microsoftgraph/msgraph-sdk-go/users
-# github.com/microsoftgraph/msgraph-sdk-go-core v1.2.1
-## explicit; go 1.18
-github.com/microsoftgraph/msgraph-sdk-go-core
-github.com/microsoftgraph/msgraph-sdk-go-core/authentication
 # github.com/mitchellh/go-wordwrap v1.0.1
 ## explicit; go 1.14
 github.com/mitchellh/go-wordwrap
@@ -1580,9 +1479,6 @@ github.com/spiffe/go-spiffe/v2/internal/jwtutil
 github.com/spiffe/go-spiffe/v2/internal/pemutil
 github.com/spiffe/go-spiffe/v2/internal/x509util
 github.com/spiffe/go-spiffe/v2/spiffeid
-# github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.5
-## explicit; go 1.20
-github.com/std-uritemplate/std-uritemplate/go/v2
 # github.com/stretchr/testify v1.11.1
 ## explicit; go 1.17
 github.com/stretchr/testify/assert
