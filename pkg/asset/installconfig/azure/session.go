@@ -17,7 +17,6 @@ import (
 	"github.com/Azure/go-autorest/autorest"
 	azureenv "github.com/Azure/go-autorest/autorest/azure"
 	"github.com/jongio/azidext/go/azidext"
-	azurekiota "github.com/microsoft/kiota-authentication-azure-go"
 	"github.com/sirupsen/logrus"
 
 	"github.com/openshift/installer/pkg/types/azure"
@@ -42,13 +41,12 @@ const (
 
 // Session is an object representing session for subscription
 type Session struct {
-	Authorizer   autorest.Authorizer
-	Credentials  Credentials
-	Environment  azureenv.Environment
-	AuthProvider *azurekiota.AzureIdentityAuthenticationProvider
-	TokenCreds   azcore.TokenCredential
-	CloudConfig  cloud.Configuration
-	AuthType     AuthenticationType
+	Authorizer  autorest.Authorizer
+	Credentials Credentials
+	Environment azureenv.Environment
+	TokenCreds  azcore.TokenCredential
+	CloudConfig cloud.Configuration
+	AuthType    AuthenticationType
 }
 
 // Credentials is the data type for credentials as understood by the azure sdk
@@ -357,19 +355,6 @@ func newTokenCredentialFromMSI(credentials *Credentials, cloudConfig cloud.Confi
 }
 
 func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Credentials, cred azcore.TokenCredential) (*Session, error) {
-	var scope []string
-	// This can be empty for StackCloud
-	if cloudEnv.MicrosoftGraphEndpoint != "" {
-		// GovClouds need a properly set scope in the authenticator, otherwise we
-		// get an 'Invalid audience' error when doing MSGraph API calls
-		// https://learn.microsoft.com/en-us/graph/sdks/national-clouds?tabs=go
-		scope = []string{endpointToScope(cloudEnv.MicrosoftGraphEndpoint)}
-	}
-	authProvider, err := azurekiota.NewAzureIdentityAuthenticationProviderWithScopes(cred, scope)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get Azidentity authentication provider: %w", err)
-	}
-
 	// Use an adapter so azidentity in the Azure SDK can be used as
 	// Authorizer when calling the Azure Management Packages, which we
 	// currently use. Once the Azure SDK clients (found in /sdk) move to
@@ -379,11 +364,10 @@ func newSessionFromCredentials(cloudEnv azureenv.Environment, credentials *Crede
 	authorizer := azidext.NewTokenCredentialAdapter(cred, []string{endpointToScope(cloudEnv.TokenAudience)})
 
 	return &Session{
-		Authorizer:   authorizer,
-		Credentials:  *credentials,
-		Environment:  cloudEnv,
-		AuthProvider: authProvider,
-		TokenCreds:   cred,
+		Authorizer:  authorizer,
+		Credentials: *credentials,
+		Environment: cloudEnv,
+		TokenCreds:  cred,
 	}, nil
 }
 

@@ -66,8 +66,6 @@ require (
 	github.com/kdomanski/iso9660 v0.2.1
 	github.com/metal3-io/baremetal-operator/apis v0.4.0
 	github.com/metal3-io/baremetal-operator/pkg/hardwareutils v0.4.0
-	github.com/microsoft/kiota-authentication-azure-go v1.3.0
-	github.com/microsoftgraph/msgraph-sdk-go v0.59.0
 	github.com/nutanix-cloud-native/cluster-api-provider-nutanix v1.7.0
 	github.com/nutanix-cloud-native/prism-go-client v0.5.0
 	github.com/onsi/gomega v1.38.2
@@ -171,7 +169,6 @@ require (
 	github.com/golangci/plugin-module-register v0.1.2 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
-	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.5 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	go.opentelemetry.io/contrib/detectors/gcp v1.37.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.38.0 // indirect
@@ -281,12 +278,6 @@ require (
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mgutz/ansi v0.0.0-20200706080929-d51e80ef957d // indirect
-	github.com/microsoft/kiota-abstractions-go v1.9.2 // indirect
-	github.com/microsoft/kiota-http-go v1.5.4 // indirect
-	github.com/microsoft/kiota-serialization-form-go v1.1.2 // indirect
-	github.com/microsoft/kiota-serialization-json-go v1.1.2 // indirect
-	github.com/microsoft/kiota-serialization-text-go v1.1.2 // indirect
-	github.com/microsoftgraph/msgraph-sdk-go-core v1.2.1 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/moby/sys/mountinfo v0.7.2 // indirect
